@@ -1,50 +1,94 @@
 ---
+import { ViewTransitions } from "astro:transitions";
+import type { Preload } from "@/types/Preload";
+import SEO from "@/components/SEO.astro";
+//import "@/assets/styles/sonner-style.css";
+import LoadingIndicator from "astro-loading-indicator/component";
+
+import "@fontsource/anton";
+import "@fontsource-variable/rubik";
+
 interface Props {
-	title: string;
+  title?: string;
+  description?: string;
+  preload?: Array<Preload>;
+  canonical?: string;
+  image?: string;
 }
 
-const { title } = Astro.props;
+//const session = await getSession(Astro.request);
+
+const { title, description, preload, canonical, image } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="description" content="Astro description" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{title}</title>
-	</head>
-	<body>
-		<slot />
-	</body>
+<html lang="es" class="scroll-smooth bg-[#060109]">
+  <head>
+    <SEO
+      title={title}
+      description={description}
+      image={image}
+      canonical={canonical}
+    />
+    <ViewTransitions />
+    <LoadingIndicator color="#1f97ff" height="3px" />
+    <!-- <meta
+      id="current-user-data"
+      data-user={JSON.stringify({ user: session?.user || null })}
+    /> -->
+  </head>
+  <body
+    class="bg-repeat text-white overflow-x-hidden font-sans bg-[url(https://www.alexitoo.dev/bg.svg)] bg-cover"
+  >
+    <!--     <SiteHeader session={session} />
+ -->
+    <main class="px-6 sm:px-10">
+      <slot />
+    </main>
+    <!--     <Footer />
+ -->
+    <style is:global>
+      html {
+        font-family: "Jost Variable", system-ui, sans-serif;
+      }
+
+      body:has(dialog[open]) {
+        @apply overflow-hidden;
+      }
+
+      dialog {
+        opacity: 0;
+        transform: translateY(-5%);
+        transition:
+          all 0.3s ease-in-out,
+          display 0.3s ease allow-discrete;
+      }
+      dialog::backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      dialog[open] + .dialog-background {
+        display: block;
+        position: fixed;
+      }
+
+      .dialog-background {
+        display: none;
+      }
+
+      dialog[open] {
+        @apply translate-y-0 transition-all duration-500 ease-in-out opacity-100;
+        @starting-style {
+          transform: translateY(-5%);
+          opacity: 0;
+        }
+      }
+    </style>
+
+    <!--     <Toaster
+      client:only="preact"
+      transition:name="global-toast"
+      transition:persist
+    /> -->
+  </body>
 </html>
-<style is:global>
-	:root {
-		--accent: 136, 58, 234;
-		--accent-light: 224, 204, 250;
-		--accent-dark: 49, 10, 101;
-		--accent-gradient: linear-gradient(
-			45deg,
-			rgb(var(--accent)),
-			rgb(var(--accent-light)) 30%,
-			white 60%
-		);
-	}
-	html {
-		font-family: system-ui, sans-serif;
-		background: #13151a;
-	}
-	code {
-		font-family:
-			Menlo,
-			Monaco,
-			Lucida Console,
-			Liberation Mono,
-			DejaVu Sans Mono,
-			Bitstream Vera Sans Mono,
-			Courier New,
-			monospace;
-	}
-</style>
