@@ -1,0 +1,143 @@
+---
+import Layout from "@/layouts/Layout.astro";
+
+const LATEST_UPDATE_DATE = new Date("2024-11-19");
+---
+
+<Layout title="Políticas de Privacidad">
+  <article class="prose prose-invert max-w-2xl mx-auto mt-8">
+    <header>
+      <h1 class="text-2xl">Políticas de Privacidad</h1>
+      <p>
+        Última actualización: {
+          LATEST_UPDATE_DATE.toLocaleDateString("es-UY", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        }
+      </p>
+    </header>
+
+    <p>
+      En Salto Uruguay Server valoramos y respetamos tu privacidad. Esta
+      política de privacidad describe cómo recopilamos, utilizamos y protegemos
+      tu información al interactuar con nuestros servicios. Al utilizar nuestra
+      web, aceptas las prácticas descritas en esta política.
+    </p>
+
+    <h2>1. Información que Recopilamos</h2>
+    <p>
+      Utilizamos <strong>Twitch</strong> como método de autenticación para facilitar
+      el inicio de sesión en nuestra plataforma. Solo recopilamos información pública
+      de tu cuenta de Twitch, como:
+    </p>
+    <ul>
+      <li><strong>ID de usuario</strong></li>
+      <li><strong>Nombre de usuario</strong></li>
+      <li><strong>Avatar</strong></li>
+    </ul>
+    <p>
+      No accedemos a datos privados de tu cuenta ni solicitamos permisos
+      adicionales que los necesarios para identificarte en nuestra plataforma.
+    </p>
+
+    <h2>2. Uso de la Información</h2>
+    <p>
+      La información que recopilamos es utilizada para los siguientes fines:
+    </p>
+    <ul>
+      <li>
+        <strong>Identificación:</strong> Usamos tu ID de usuario y nombre de usuario
+        de Twitch para registrarte y autenticarte en nuestra plataforma.
+      </li>
+      <li>
+        <strong>Personalización:</strong> Utilizamos tu avatar y nombre de usuario
+        para mejorar tu experiencia en la plataforma.
+      </li>
+    </ul>
+    <p>
+      No compartimos tu información personal con terceros, excepto cuando es
+      necesario para proporcionar el servicio, cumplir con la ley o proteger
+      nuestros derechos.
+    </p>
+
+    <h2>3. Servicios de Terceros</h2>
+    <p>
+      Para operar nuestro sitio web y gestionar nuestros servicios, utilizamos
+      proveedores de terceros que pueden procesar tu información en nuestro
+      nombre. Estos proveedores incluyen:
+    </p>
+    <ul>
+      <li>
+        <strong>Vercel:</strong> Proveedor de hosting donde se aloja nuestro sitio
+        web.
+      </li>
+      <li>
+        <strong>Neon:</strong> Utilizamos este servicio para gestionar nuestra base
+        de datos y almacenar información pública sobre nuestros usuarios.
+      </li>
+      <li>
+        <strong>Upstash:</strong> Utilizamos Redis a través de Upstash para la gestión
+        de caché y optimización del rendimiento de nuestro sitio.
+      </li>
+    </ul>
+    <p>
+      Estos proveedores están sujetos a sus propias políticas de privacidad y
+      prácticas de seguridad.
+    </p>
+
+    <h2>4. Protección de la Información</h2>
+    <p>
+      Nos comprometemos a proteger la información de nuestros usuarios y tomamos
+      medidas razonables para salvaguardar tu información pública. Sin embargo,
+      ningún método de transmisión de datos por Internet o método de
+      almacenamiento electrónico es completamente seguro, por lo que no podemos
+      garantizar su absoluta seguridad.
+    </p>
+
+    <h2>5. Retención de la Información</h2>
+    <p>
+      La información pública que recopilamos se mantiene en nuestra base de
+      datos durante el tiempo que sea necesario para proporcionarte nuestros
+      servicios, o hasta que decidas eliminar tu cuenta de la plataforma.
+    </p>
+
+    <h2>6. Tus Derechos</h2>
+    <p>Tienes derecho a:</p>
+    <ul>
+      <li>
+        <strong>Acceder</strong> a los datos públicos que tenemos almacenados.
+      </li>
+      <li>
+        <strong>Solicitar la eliminación</strong> de tus datos si decides dejar de
+        utilizar nuestra plataforma.
+      </li>
+    </ul>
+    <p>
+      Para cualquier solicitud relacionada con tus datos personales, puedes
+      ponerte en contacto con nosotros a través del formulario de contacto en
+      nuestro sitio.
+    </p>
+
+    <h2>7. Cambios a esta Política de Privacidad</h2>
+    <p>
+      Nos reservamos el derecho a actualizar esta política de privacidad en
+      cualquier momento. Te notificaremos sobre cualquier cambio publicando la
+      nueva política de privacidad en nuestro sitio. Recomendamos revisar esta
+      política periódicamente para estar informado sobre cómo protegemos tu
+      información.
+    </p>
+
+    <h2>8. Contacto</h2>
+    <p>
+      Si tienes preguntas o inquietudes sobre esta política de privacidad, no
+      dudes en contactarnos a través de nuestro sitio web.
+    </p>
+
+    <p>
+      Gracias por confiar en Salto Uruguay Server. Nos comprometemos a proteger
+      tu privacidad y a garantizar una experiencia segura en nuestra plataforma.
+    </p>
+  </article>
+</Layout>
