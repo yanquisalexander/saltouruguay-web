@@ -13,16 +13,21 @@ const { session } = Astro.props;
 
 const links = [
   {
+    label: "Comunidad",
+    url: "/comunidad",
+    soon: true,
+  },
+  {
+    label: "Torneos",
+    url: "/torneos",
+    soon: true,
+  },
+  {
     label: "Awards",
     url: "/awards",
 
     soon: import.meta.env.PROD,
     specialComment: "VOTA AHORA",
-  },
-  {
-    label: "Servers",
-    url: "/servers",
-    soon: true,
   },
 ];
 const activeClasses = ["bg-brand-gray/10", "border-gray-900/10"];
