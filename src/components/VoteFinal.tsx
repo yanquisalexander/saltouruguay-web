@@ -1,8 +1,38 @@
 import { NOMINEES } from "@/awards/Nominees";
 import type { Category, Vote } from "@/types/Awards";
 import type { Session } from "@auth/core/types";
+import { ActionError, actions, type ActionReturnType, type Actions } from "astro:actions";
+import { LucideLoader } from "lucide-preact";
+import { useState } from "preact/hooks";
+import { toast } from "sonner";
 
 export const VoteFinal = ({ user, categories, votes, onReturn }: { user: Session['user'] | null, categories: Category[], votes: { [key: string]: Vote[] }, onReturn: () => void }) => {
+    const [loading, setLoading] = useState(false)
+
+    const sendVotes = async () => {
+        setLoading(true)
+        try {
+            // Enviar votos al servidor
+            toast.promise(actions.sendVotes({ votes }), {
+                loading: "Enviando votos...",
+                success: (data: ActionReturnType<Actions["sendVotes"]>) => {
+                    console.log({ data })
+                    if (data.error) {
+                        setLoading(false)
+                        throw new Error(data.error.message)
+                    }
+                    setLoading(false)
+                    return "Votos enviados correctamente"
+                },
+                error: (e: ActionError) => {
+                    setLoading(false)
+                    return e.message
+                }
+            })
+        } catch (error) {
+            console.error("Error al enviar votos", error)
+        }
+    }
 
     return (
         <div class="flex flex-col w-full max-w-xl">
@@ -51,9 +81,15 @@ export const VoteFinal = ({ user, categories, votes, onReturn }: { user: Session
                 </button>
 
                 <button
-                    class="bg-brand-gray/5 hover:bg-brand-gray/10 text-white font-bold py-2 px-4 rounded-[10px] transition-colors duration-300"
-                    onClick={() => console.log("Voting finished")}>
-                    Enviar votos
+                    disabled={loading}
+                    class="bg-brand-gray/5 flex gap-x-2 hover:bg-brand-gray/10 text-white font-bold py-2 px-4 rounded-[10px] transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={sendVotes}>
+                    {
+                        loading && <LucideLoader class="size-5 animate-rotate-360 animate-iteration-count-infinite" />
+                    }
+                    {
+                        loading ? "Enviando votos..." : "Enviar votos"
+                    }
                 </button>
             </footer>
         </div>
