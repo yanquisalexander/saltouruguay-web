@@ -6,5 +6,51 @@ const SHOW_INTRO = import.meta.env.PROD;
 ---
 
 <Layout title="SaltoAwards">
-  {SHOW_INTRO && <IntroAwards />}
+  {
+    SHOW_INTRO ? (
+      <IntroAwards />
+    ) : (
+        <div id="backdrop-awards" class="-mt-28 min-h-screen absolute inset-0 -z-10"></div>
+      <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+        <header class="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-4xl mx-auto ">
+          <div class="relative animate-fade-in-up">
+            <img
+              src="/images/logo_salto.webp"
+              alt="SaltoUruguayServer"
+              class="h-24 sm:h-32 md:h-40 w-auto object-contain aspect-square"
+            />
+            <img
+              src="/images/logo_salto.webp"
+              alt="SaltoUruguayServer"
+              class="absolute blur-md transform scale-110 animate-pulsing animate-iteration-count-infinite animate-duration-[3000ms] saturate-150 z-[-1] top-0 left-0 h-24 sm:h-32 md:h-40  w-auto object-contain aspect-square"
+            />
+          </div>
+          <h1 class="text-4xl animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen mt-8" data-astro-cid-x5yigsle="">
+            #SaltoAwards
+          </h1>
+          <h2 class="text-xl animate-fade-in-up animate-delay-300  font-rubik tracking-wider uppercase font-medium text-white mix-blend-screen  my-5 sm:pb-10" data-astro-cid-x5yigsle="">
+            ¡La entrega de premios <span class="text-yellow-500">más esperada</span>
+            del año!
+          </h2>
+        </header>
+      </div>
+    )
+  }
 </Layout>
+
+<style>
+  #backdrop-awards {
+    background-image: url("/images/awards-fondo.webp");
+    @apply saturate-150 opacity-55;
+    mask-image: linear-gradient(
+      black 0%,
+      rgba(0, 0, 0, 0.5) 30%,
+      rgba(0, 0, 0, 0.1) 50%,
+      transparent
+    );
+    background-size: cover;
+    background-position: center;
+
+
+  }
+</style>
