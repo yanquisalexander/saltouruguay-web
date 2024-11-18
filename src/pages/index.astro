@@ -4,6 +4,8 @@ import Layout from "../layouts/Layout.astro";
 import { VOTES_OPEN_TIMESTAMP } from "@/config";
 
 const IS_VOTING_OPEN = Date.now() > VOTES_OPEN_TIMESTAMP;
+
+export const prerender = true;
 ---
 
 <Layout title="Comunidad SaltoUruguayServer">
