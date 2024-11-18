@@ -2,6 +2,7 @@
 import MenuIcon from "@/icons/MenuIcon.astro";
 import type { Session } from "@auth/core/types";
 import { CurrentUser } from "./CurrentUser";
+import DiscordPresenceCount from "./DiscordPresenceCount.astro";
 
 interface Props {
   session?: Session | null;
@@ -104,9 +105,15 @@ const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
         }
       </ul>
     </nav>
+
     <div
       class="flex md:flex-grow md:basis-0 items-center gap-4 mr-4 ml-auto md:ml-0 justify-end"
     >
+      <DiscordPresenceCount
+        server:defer
+        transition:name="discord-widget-count"
+      />
+
       <CurrentUser
         user={session?.user || null}
         isPrerenderedPath={isPrerenderedPath}

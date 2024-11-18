@@ -1,0 +1,33 @@
+---
+import { SOCIAL_NETWORKS } from "@/consts/SocialNetworks";
+import DiscordIcon from "@/icons/Discord.astro";
+import { LucideDot } from "lucide-preact";
+
+const widgetData = await fetch(
+  "https://discordapp.com/api/guilds/700185692826763264/widget.json"
+);
+const { presence_count } = await widgetData.json();
+
+console.log(presence_count);
+---
+
+<a
+  class="flex items-center gap-2 group"
+  href={SOCIAL_NETWORKS.find((network) => network.name === "Discord")?.url}
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  <div
+    class="flex items-center gap-1 relative group-hover:scale-110 transform transition"
+  >
+    <DiscordIcon class="size-6" />
+    <span class="absolute p-1 rounded-full -right-1 -top-1 bg-green-500"></span>
+  </div>
+  {
+    presence_count && (
+      <span class="bg-zinc-500 text-zinc-100 font-rubik text-[10px] font-semibold rounded-full px-1">
+        {presence_count}
+      </span>
+    )
+  }
+</a>

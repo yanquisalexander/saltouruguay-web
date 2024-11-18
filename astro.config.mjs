@@ -14,5 +14,8 @@ export default defineConfig({
   integrations: [tailwind(), preact(), auth()],
   devToolbar: {
     enabled: false
+  },
+  experimental: {
+    serverIslands: true
   }
 });
