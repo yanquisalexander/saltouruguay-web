@@ -8,6 +8,8 @@ export const VoteNominee = ({ nominee, category, onVote, isVoted,
 
     const disabled = currentVotesCategory.length === 2 && !isVoted
 
+    const voteOrder = currentVotesCategory.findIndex(vote => vote.nomineeId === nominee.id) + 1
+
     const delay = `animation-delay: ${index * 75}ms`;
 
     return (
@@ -19,7 +21,6 @@ export const VoteNominee = ({ nominee, category, onVote, isVoted,
     z-0 group relative
     w-full flex flex-col gap-2 justify-center items-center
     transition-all p-1 
-    md:hover:scale-105
     hover:drop-shadow-[0_0px_20px_rgba(8,_112,_184,_0.9)]
     disabled:opacity-50 disabled:cursor-not-allowed
     ${isVoted
@@ -28,8 +29,17 @@ export const VoteNominee = ({ nominee, category, onVote, isVoted,
                     }
     `} onClick={() => onVote(nominee.id, category.id)}
             >
+                {
+                    isVoted && (
+                        <span class="absolute size-10 rounded-bl-md right-0 top-0 bg-white text-lg text-black font-anton p-1 ">
+                            #{voteOrder}
+                        </span>
+                    )
+                }
                 <span class="text-2xl font-anton">{nominee.id}</span>
                 <span class="text-sm">{category.name}</span>
+
+
             </button>
 
         </li>
