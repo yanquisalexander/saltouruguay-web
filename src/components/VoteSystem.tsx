@@ -127,20 +127,20 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                             </span>
                             <nav class="flex justify-between">
                                 <button
-                                    class="bg-brand-gray/5 hover:bg-brand-gray/10 text-white font-bold py-2 px-4 rounded-[10px] transition-colors duration-300"
+                                    class="bg-brand-gray/5 border border-transparent hover:bg-brand-gray/10 text-white font-bold py-2 px-4 rounded-[10px] transition-colors duration-300"
                                     onClick={handlePreviousCategory}>
                                     Anterior
                                 </button>
                                 {
                                     isLastCategory ? (
                                         <button
-                                            class="bg-[#5865F2]/20 border border-[#5865F2] hover:drop-shadow-[0_0px_20px_rgba(8,_112,_184,_0.9)] hover:scale-105 gap-1.5 text-white px-4 py-2 rounded-[10px] flex items-center transition-transform duration-300 will-change-transform transform disabled:opacity-50 disabled:cursor-progress"
+                                            class="bg-[#5865F2]/20 border border-[#5865F2] hover:drop-shadow-[0_0px_20px_rgba(8,_112,_184,_0.9)] hover:scale-105 gap-1.5 text-white px-4 py-2 rounded-[10px] flex items-center transition-transform duration-300 will-change-transform transform font-bold"
                                             onClick={showMyVotes}>
                                             Ver mis votos
                                         </button>
                                     ) : (
                                         <button
-                                            class="bg-brand-gray/5 hover:bg-brand-gray/10 text-white font-bold py-2 px-4 rounded-[10px] transition-colors duration-300"
+                                            class="bg-brand-gray/5 border border-transparent hover:bg-brand-gray/10 text-white font-bold py-2 px-4 rounded-[10px] transition-colors duration-300"
                                             onClick={handleNextCategory}>Siguiente</button>
                                     )
                                 }
