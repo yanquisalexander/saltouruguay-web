@@ -1,0 +1,51 @@
+---
+import { SOCIAL_NETWORKS } from "@/consts/SocialNetworks";
+---
+
+<footer class="py-8 text-center text-sm text-gray-200 relative">
+  <hr
+    aria-hidden="true"
+    class="my-12 h-[2px] w-full min-w-[18rem] border-t-0 bg-transparent bg-gradient-to-r from-transparent via-white to-transparent bg-center"
+  />
+
+  <nav>
+    <ul
+      class="flex flex-row items-center justify-center gap-x-6"
+      aria-label="Social networks"
+    >
+      {
+        SOCIAL_NETWORKS.map((network) => (
+          <li class="inline-block justify-center">
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href={network.url}
+              title={
+                network.name === "GitHub"
+                  ? "Contribuir a este sitio en GitHub"
+                  : `Sigue a SaltoUruguayServer en ${network.name}`
+              }
+              aria-label={`${network.name} de SaltoUruguayServer`}
+              class="inline-block hover:scale-125 motion-safe:transition motion-reduce:hover:scale-100 group  items-center"
+            >
+              <network.icon class="aspect-square object-cover size-7 text-white group-hover:text-purple-600" />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+
+  <p class="mt-4 text-base">
+    {new Date().getFullYear()} - &copy; SaltoUruguayServer
+  </p>
+
+  <p class="mt-2 text-xs">
+    Web desarrollada por{" "}
+    <a
+      href="https://instagram.com/alexitoo_uy"
+      class="text-blue-200 hover:underline transition-colors hover:text-white"
+      >Alexitoo_UY
+    </a>
+  </p>
+</footer>
