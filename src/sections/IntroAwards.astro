@@ -1,3 +1,8 @@
+---
+import LaunchCountdown from "@/components/LaunchCountdown";
+import { VOTES_OPEN_TIMESTAMP } from "@/config";
+---
+
 <section id="intro-saltoawards" class="h-[400vh] relative">
   <div
     class="sticky top-0 h-screen flex flex-col items-center justify-center font-bold text-center"
@@ -37,10 +42,14 @@
       </h3>
     </div>
     <div class="step" id="step-2">
-      <h3 class="overflow-hidden">
+      <h3 class="overflow-hidden flex flex-col gap-y-1">
         <span class="text-3xl"> ¿Listo para votar por tus favoritos? </span>
-        <br />
         <span class="text-xl"> ¡No falta casi nada! </span>
+
+        <LaunchCountdown
+          timestamp={VOTES_OPEN_TIMESTAMP}
+          id={"intro-awards-countdown"}
+        />
       </h3>
     </div>
   </div>
@@ -59,7 +68,7 @@
       [
         "#step-1 .animate-awards",
         { transform: "translateY(0%)" },
-        { duration: 0.1, at: 0.2 },
+        { duration: 0.1, at: 0.11 },
       ],
       // Transición de step-1 a step-2
       ["#step-1", { opacity: 0 }, { duration: 0.1, at: 0.3 }],
@@ -67,13 +76,19 @@
       [
         "#step-2 h3 span:first-child",
         { transform: "translateY(0%)" },
-        { duration: 0.3, at: 0.7 },
+        { duration: 0.2, at: 0.31 },
       ],
-      /* [
-        "#step-2 h3 span:last-child",
-        { opacity: 1, transform: "translateY(0%)", y: 0 },
-        { duration: 0.3, at: 0.8 },
-      ], */
+      [
+        "#step-2 h3 span:nth-child(2)",
+        { transform: "translateY(0%)" },
+        { duration: 0.3, at: 0.33 },
+      ],
+      [
+        "#step-2 h3 #intro-awards-countdown",
+        { transform: "translateY(0%)" },
+        { duration: 0.3, at: 0.5 },
+      ],
+      ["#step-2", { opacity: 0 }, { duration: 0.1, at: 0.7 }],
     ]);
 
     document.addEventListener("astro:page-load", () => {
@@ -101,35 +116,44 @@
     position: absolute;
   }
 
+  span {
+    @apply inline-block;
+  }
+
   #step-1 {
     opacity: 1;
+  }
 
-    h3 {
-      font-size: 4.5rem;
-      line-height: 1;
-    }
+  #step-1 h3 {
+    font-size: 4.5rem;
+    line-height: 1;
+  }
 
-    h3 {
+  #step-1 h3 {
+    line-height: 2;
+  }
+
+  #step-1 span {
+    transform: translateY(100%);
+  }
+
+  @media (min-width: 768px) {
+    #step-1 h3 {
+      font-size: 8rem;
       line-height: 2;
     }
-
-    & span {
-      transform: translateY(100%);
-    }
   }
 
-  #step-2 {
-    & span {
-      transform: translateY(100%);
-    }
+  #step-2 span {
+    transform: translateY(100%);
   }
 
-  #step-3,
-  #step-4,
-  #step-5 {
-    & h4,
-    h3 span {
-      transform: translateY(200%);
-    }
+  #step-3 h4,
+  #step-4 h4,
+  #step-5 h4,
+  #step-3 h3 span,
+  #step-4 h3 span,
+  #step-5 h3 span {
+    transform: translateY(200%);
   }
 </style>

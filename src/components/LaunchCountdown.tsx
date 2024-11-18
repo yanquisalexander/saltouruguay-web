@@ -12,7 +12,7 @@ const TimeDisplay = ({ value, label }: { value: number, label: string }) => (
     </div>
 );
 
-const LaunchCountdown = ({ timestamp }: CountdownProps & h.JSX.HTMLAttributes<HTMLDivElement>) => {
+const LaunchCountdown = ({ timestamp, ...props }: CountdownProps & h.JSX.HTMLAttributes<HTMLDivElement>) => {
     const calculateTimeLeft = () => {
         const now = new Date().getTime();
         const difference = timestamp - now;
@@ -36,7 +36,7 @@ const LaunchCountdown = ({ timestamp }: CountdownProps & h.JSX.HTMLAttributes<HT
     }, [timestamp]);
 
     return (
-        <div className="flex space-x-6 justify-center mt-8">
+        <div className={`flex space-x-6 justify-center mt-8 ${props.class}`} {...props}>
             <TimeDisplay value={timeLeft.days} label="Días" />
             <TimeDisplay value={timeLeft.hours} label="Horas" />
             <TimeDisplay value={timeLeft.minutes} label="Minutos" />
