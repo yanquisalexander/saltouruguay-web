@@ -17,6 +17,7 @@
     "@auth/core": "^0.37.4",
     "@fontsource-variable/rubik": "^5.1.0",
     "@fontsource/anton": "^5.1.0",
+    "@midudev/tailwind-animations": "^0.1.0",
     "astro": "^4.16.13",
     "astro-loading-indicator": "^0.6.1",
     "auth-astro": "^4.1.3",

@@ -1,0 +1,23 @@
+---
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout title="SaltoAwards">
+  <div class="min-h-screen flex justify-center items-center">
+    <div class="relative" style="--rotation-ms: 10000ms">
+      <!-- Imagen principal -->
+      <img
+        src="/images/trofeo-awards.webp"
+        alt="SaltoAwards"
+        class="w-auto h-56 animate-flip-x animate-iteration-count-infinite animate-duration-[var(--rotation-ms)] transform transition-transform hover:scale-105"
+      />
+
+      <!-- Sombra o reflejo con efecto de profundidad -->
+      <img
+        src="/images/trofeo-awards.webp"
+        alt="SaltoAwards"
+        class="w-auto h-56 animate-flip-x animate-iteration-count-infinite animate-duration-[var(--rotation-ms)] absolute blur-lg transform scale-125 saturate-150 opacity-50 z-[-1] top-2 left-2"
+      />
+    </div>
+  </div>
+</Layout>

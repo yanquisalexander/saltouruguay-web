@@ -29,6 +29,9 @@ importers:
       '@fontsource/anton':
         specifier: ^5.1.0
         version: 5.1.0
+      '@midudev/tailwind-animations':
+        specifier: ^0.1.0
+        version: 0.1.0(tailwindcss@3.4.15)
       astro:
         specifier: ^4.16.13
         version: 4.16.13(rollup@4.27.2)(typescript@5.6.3)
@@ -514,6 +517,11 @@ packages:
   '@mapbox/node-pre-gyp@1.0.11':
     resolution: {integrity: sha512-Yhlar6v9WQgUp/He7BdgzOz8lqMQ8sU+jkCq7Wx8Myc5YFJLbEe7lgui/V7G1qB1DJykHSGwreceSaD60Y0PUQ==}
     hasBin: true
+
+  '@midudev/tailwind-animations@0.1.0':
+    resolution: {integrity: sha512-Xedqc4uNo56x8snhM5dDHvIc+hahQ2jQhciBg9PF+sET1mJJFCvzglu9vzX/KkgN1qepG4vsUcYPnxf3H7ndyw==}
+    peerDependencies:
+      tailwindcss: ^3.0.0
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -2982,6 +2990,10 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
+
+  '@midudev/tailwind-animations@0.1.0(tailwindcss@3.4.15)':
+    dependencies:
+      tailwindcss: 3.4.15
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
