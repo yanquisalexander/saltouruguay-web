@@ -2,9 +2,17 @@
 import LaunchCountdown from "@/components/LaunchCountdown";
 import Layout from "../layouts/Layout.astro";
 import { VOTES_OPEN_TIMESTAMP } from "@/config";
+
+const preload = [
+  {
+    as: "image",
+    href: "/images/404-salto.webp",
+    type: "image/webp",
+  },
+];
 ---
 
-<Layout title="No encontrado">
+<Layout title="No encontrado" preload={preload}>
   <div class="min-h-dvh flex flex-col justify-center items-center h-full">
     <header
       class="flex items-center justify-center max-w-md w-full gap-x-14 gap-y-6 flex-col"
