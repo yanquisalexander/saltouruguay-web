@@ -39,7 +39,7 @@ preload?.push({
 ---
 
 <!doctype html>
-<html lang="es" class="scroll-smooth bg-[#060109]">
+<html lang="es" class="scroll-smooth bg-[#060109]" data-theme="dark">
   <head>
     <SEO
       title={title}
@@ -103,6 +103,11 @@ preload?.push({
       }
     </style>
 
-    <Toaster client:only transition:name="global-toast" transition:persist />
+    <Toaster
+      theme="dark"
+      client:only
+      transition:name="global-toast"
+      transition:persist
+    />
   </body>
 </html>
