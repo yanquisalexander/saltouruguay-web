@@ -5,22 +5,22 @@ import GitHubIcon from "@/icons/GitHub.astro";
 export const SOCIAL_NETWORKS = [
     {
         name: "Twitch",
-        url: "https://twitch.tv/TheTangerineClub",
+        url: "https://twitch.tv/saltouruguayserver",
         icon: TwitchIcon,
     },
     {
         name: "Instagram",
-        url: "https://instagram.com/thetangerineclubofficial",
+        url: "https://instagram.com/saltouruguayserver",
         icon: InstagramIcon,
     },
     {
         name: "YouTube",
-        url: "https://youtube.com/TheTangerineClub",
+        url: "https://www.youtube.com/channel/UCjDZNkQjIAHghGx-2cH6f0g",
         icon: YouTubeIcon,
     },
     {
         name: "GitHub",
-        url: "https://github.com/yanquisalexander/TheTangerineClub",
+        url: "https://github.com/yanquisalexander/saltouruguay-web",
         icon: GitHubIcon,
     }
 ];
