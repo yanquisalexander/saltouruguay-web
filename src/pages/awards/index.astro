@@ -1,6 +1,11 @@
 ---
+import { CATEGORIES } from "@/awards/Categories";
+import { VoteSystem } from "@/components/VoteSystem";
 import Layout from "@/layouts/Layout.astro";
 import IntroAwards from "@/sections/IntroAwards.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
 
 const SHOW_INTRO = import.meta.env.PROD;
 ---
@@ -33,6 +38,8 @@ const SHOW_INTRO = import.meta.env.PROD;
             del año!
           </h2>
         </header>
+
+        <VoteSystem categories={CATEGORIES} votes={[]} user={session?.user ?? null} client:load />
       </div>
     )
   }
