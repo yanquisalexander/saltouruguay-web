@@ -2,6 +2,7 @@
 import LaunchCountdown from "@/components/LaunchCountdown";
 import Layout from "../layouts/Layout.astro";
 import { VOTES_OPEN_TIMESTAMP } from "@/config";
+import Sponsors from "@/sections/Sponsors.astro";
 
 const IS_VOTING_OPEN = Date.now() > VOTES_OPEN_TIMESTAMP;
 
@@ -39,4 +40,6 @@ export const prerender = true;
       </div>
     )
   }
+
+  <Sponsors />
 </Layout>

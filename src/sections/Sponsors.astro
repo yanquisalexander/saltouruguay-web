@@ -1,0 +1,65 @@
+---
+import HolyHostingLogo from "@/icons/HolyHostingLogo.astro";
+
+const SPONSORS = [
+  {
+    name: "Holy Hosting",
+    logo: HolyHostingLogo,
+    url: "https://holy.gg",
+  },
+];
+---
+
+<section id="sponsors" class="max-w-5xl mx-auto px-6 sm:px-10 py-16">
+  <h2
+    class="text-2xl uppercase font-rubik font-medium text-center text-white tracking-wider"
+  >
+    ¡Gracias a nuestros patrocinadores!
+  </h2>
+  <p class="text-center text-white">
+    Estos son los patrocinadores que hacen posible que SaltoUruguayServer siga
+    adelante.
+  </p>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
+    {
+      SPONSORS.map((sponsor) => (
+        <a
+          href={sponsor.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="sponsor-block flex relative flex-col overflow-hidden gap-y-4 items-center justify-center p-4  border-line group shadow-2xl hover:bg-white/50 transition-all duration-300"
+        >
+          <sponsor.logo class="h-20 group-hover:scale-110 transition-transform duration-300 group-focus:scale-110 md:px-4" />
+          {sponsor.name}
+        </a>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .sponsor-block {
+    background: linear-gradient(#ffffff1a 0%, #0000 100%);
+    transition: all 0.5s;
+  }
+
+  .sponsor-block:before {
+    content: "";
+    opacity: 0;
+    background: linear-gradient(#fff3 0%, #0000);
+    height: 50%;
+    transition:
+      opacity 0.2s ease-in-out,
+      height 0.2s ease-in-out;
+    display: block;
+    position: absolute;
+    inset: 0;
+  }
+
+  .sponsor-block:hover::before,
+  .sponsor-block:focus::before {
+    opacity: 0.8;
+    height: 90%;
+    box-shadow: 0 0 3px rgba(50, 50, 50, 0.02);
+  }
+</style>
