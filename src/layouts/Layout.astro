@@ -4,10 +4,14 @@ import type { Preload } from "@/types/Preload";
 import SEO from "@/components/SEO.astro";
 //import "@/assets/styles/sonner-style.css";
 import LoadingIndicator from "astro-loading-indicator/component";
+import { getSession } from "auth-astro/server";
 
 import "@fontsource/anton";
 import "@fontsource-variable/rubik";
+import "@fontsource-variable/teko";
+
 import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
 
 interface Props {
   title?: string;
@@ -15,12 +19,15 @@ interface Props {
   preload?: Array<Preload>;
   canonical?: string;
   image?: string;
+  hideHeader?: boolean;
 }
 
 //const session = await getSession(Astro.request);
 if (!Astro.props.preload) Astro.props.preload = [];
 
 const { title, description, preload, canonical, image } = Astro.props;
+
+const session = await getSession(Astro.request);
 
 preload?.push({
   href: "/images/logo_salto.webp",
@@ -49,8 +56,8 @@ preload?.push({
   <body
     class="bg-repeat text-white overflow-x-hidden font-sans bg-[url(https://www.alexitoo.dev/bg.svg)] bg-cover"
   >
-    <!--     <SiteHeader session={session} />
- -->
+    <SiteHeader session={session} />
+
     <main class="px-6 sm:px-10">
       <slot />
     </main>

@@ -1,0 +1,165 @@
+---
+import MenuIcon from "@/icons/MenuIcon.astro";
+import type { Session } from "@auth/core/types";
+
+interface Props {
+  session?: Session | null;
+}
+
+const PRERENDERED_PATHS = ["/"];
+
+const currentPath = Astro.url.pathname;
+const { session } = Astro.props;
+
+const links = [
+  {
+    label: "Awards",
+    url: "/awards",
+
+    soon: true,
+  },
+  {
+    label: "Servers",
+    url: "/servers",
+    soon: true,
+  },
+];
+const activeClasses = ["bg-brand-gray/10", "border-gray-900/10"];
+
+const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
+---
+
+<header
+  class="z-[1001] header-animate sticky inset-x-0 flex items-center justify-between px-5 py-4 md:py-8 transition-all duration-300 md:px-10"
+>
+  <div
+    class="grid items-center justify-center md:justify-normal w-full grid-cols-[auto_1fr] mx-auto text-white gap-x-10 md:flex max-w-screen-full"
+  >
+    <div class="flex items-center">
+      <a
+        id="home-button"
+        href="/"
+        class="h-10 w-10 relative group rounded-full bg-black/20 flex items-center justify-center transform hover:scale-110 transition-transform duration-300"
+      >
+        <img
+          src="/favicon.svg"
+          alt="Inicio de SaltoUruguayServer"
+          class="h-10 w-10 group-hover:saturate-200 group-hover:brightness-150 transition-all duration-300"
+        />
+
+        <img
+          src="/favicon.svg"
+          alt="Inicio de SaltoUruguayServer"
+          class="h-10 w-10 absolute inset-0 blur-md brightness-150 saturate-200 opacity-50 group-hover:opacity-100 transition-opacity duration-300"
+        />
+      </a>
+    </div>
+    <nav
+      id="header-nav"
+      class="col-span-full overflow-x-auto row-[2/3] grid grid-rows-[0fr] transition-[grid-template-rows] data-[open]:grid-rows-[1fr] md:justify-center md:flex group/nav"
+    >
+      <ul
+        class="flex flex-col items-center overflow-x-hidden overflow-y-hidden md:flex-row gap-x-2"
+      >
+        {
+          links.map((link) =>
+            link.soon ? (
+              <li class="flex font-teko opacity-70 tracking-wide items-center md:w-auto md:text-xl justify-center gap-2 md:px-4 md:py-2 md:rounded-2xl border border-transparent  px-5 py-4 text-xl duration-300 w-full relative h-full pointer-events-none text-brand-gray">
+                {link.label}
+
+                <span class="text-[10px] font-rubik text-center w-max md:absolute left-1/2 md:-translate-x-1/2 bottom-[6px] md:translate-y-1/2 md:opacity-80">
+                  ¡Muy pronto!
+                </span>
+              </li>
+            ) : (
+              <li class="flex justify-center w-full first:mt-5 md:first:mt-0 md:block md:w-auto">
+                <a
+                  href={link.url}
+                  class:list={currentPath === link.url ? activeClasses : ""}
+                  class="flex items-center font-teko tracking-wide md:w-auto justify-center gap-2 md:px-4 md:py-2 hover:bg-brand-gray/5 md:rounded-md border border-transparent hover:border-brand-gray/10 transition-all min-h-[50px] md:text-xl px-5 py-4 text-xl duration-300 w-full"
+                >
+                  {link.label}
+                </a>
+              </li>
+            )
+          )
+        }
+      </ul>
+    </nav>
+    <div
+      class="flex md:flex-grow md:basis-0 items-center gap-4 mr-4 ml-auto md:ml-0 justify-end"
+    >
+      <!-- <CurrentUser
+        user={session?.user || null}
+        isPrerenderedPath={isPrerenderedPath}
+        client:load
+        transition:persist
+        transition:name="current-user"
+        transition:persist-props
+      /> -->
+
+      <button
+        id="toggle-nav"
+        aria-label="Alternar menú de navegación"
+        class="flex items-center justify-center py-2 md:hidden group"
+      >
+        <MenuIcon class="w-6 h-6" />
+      </button>
+    </div>
+  </div>
+</header>
+
+<style>
+  .header-animate {
+    top: 0;
+    left: 0;
+    right: 0;
+    animation: reduce-header linear both;
+    animation-timeline: scroll();
+    animation-range: 0 150px;
+    @apply transform-gpu;
+  }
+  @keyframes reduce-header {
+    to {
+      box-shadow:
+        0 5px 50px -5px #ffffff1a,
+        0 0 0 1px #ffffff1a;
+      background: #0000004d;
+      padding-block: 1rem;
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+  }
+</style>
+<script>
+  import { $ } from "@/lib/dom-selector";
+
+  document.addEventListener("astro:page-load", () => {
+    const $homeButton = $("#home-button");
+    const $headerNav = $("#header-nav");
+    const $toggleNav = $("#toggle-nav");
+    if ($homeButton) {
+      $homeButton.addEventListener("click", (event) => {
+        if (location.pathname === "/") {
+          event.preventDefault();
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+          });
+        }
+      });
+    }
+
+    if ($toggleNav) {
+      $toggleNav.addEventListener("click", () => {
+        if (!$headerNav) return;
+        // Remove attribute if exists
+        if ($headerNav.hasAttribute("data-open")) {
+          $headerNav.removeAttribute("data-open");
+        } else {
+          $headerNav.setAttribute("data-open", "");
+        }
+      });
+    }
+  });
+</script>

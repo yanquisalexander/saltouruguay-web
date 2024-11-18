@@ -26,6 +26,9 @@ importers:
       '@fontsource-variable/rubik':
         specifier: ^5.1.0
         version: 5.1.0
+      '@fontsource-variable/teko':
+        specifier: ^5.1.0
+        version: 5.1.0
       '@fontsource/anton':
         specifier: ^5.1.0
         version: 5.1.0
@@ -383,6 +386,9 @@ packages:
 
   '@fontsource-variable/rubik@5.1.0':
     resolution: {integrity: sha512-gmh3xts3ARd0ktWW/VX+MVxhJr6TxHVeGLsQEaQXDVxvuNjn5WRucfKfXK3EVN2BcgRxUe1Fctv/v9zgEd0DUg==}
+
+  '@fontsource-variable/teko@5.1.0':
+    resolution: {integrity: sha512-Wd+uWJh2JQpYso/RrSnl+LWYkbks5v+04ErKzZbZPma3Co4Y0jiRhQQi9J6xhYqopIPQ1VAPzVVeS7qGB6yayg==}
 
   '@fontsource/anton@5.1.0':
     resolution: {integrity: sha512-joGHu1IQHBxPkYl2VutIZgyfdyERgzz1GWoSRnFBOcRvCz7XWT+3xnK/iGy7z4Z34HU/ZiWy1UORHJRdEFJiTA==}
@@ -2872,6 +2878,8 @@ snapshots:
     optional: true
 
   '@fontsource-variable/rubik@5.1.0': {}
+
+  '@fontsource-variable/teko@5.1.0': {}
 
   '@fontsource/anton@5.1.0': {}
 

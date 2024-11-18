@@ -5,10 +5,13 @@ export default {
 	content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
 	theme: {
 		extend: {
+			colors: {
+				'brand-gray': '#acb5c7',
+			},
 			fontFamily: {
 				anton: ['Anton', 'sans-serif'],
-				rubik: ['Rubik', 'sans-serif'],
-
+				rubik: ['Rubik Variable', 'Rubik', 'sans-serif'],
+				teko: ['Teko Variable', 'Teko', 'sans-serif'],
 			}
 		},
 	},
