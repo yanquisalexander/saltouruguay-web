@@ -1,23 +1,10 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import IntroAwards from "@/sections/IntroAwards.astro";
+
+const SHOW_INTRO = true;
 ---
 
 <Layout title="SaltoAwards">
-  <div class="flex justify-center items-center">
-    <div class="relative group" style="--rotation-ms: 10000ms">
-      <!-- Imagen principal -->
-      <img
-        src="/images/trofeo-awards.webp"
-        alt="SaltoAwards"
-        class="w-auto h-56 animate-flip-x animate-iteration-count-infinite group-hover:[animation-play-state:paused] animate-duration-[var(--rotation-ms)] transform transition-transform group-hover:scale-105"
-      />
-
-      <!-- Sombra o reflejo con efecto de profundidad -->
-      <img
-        src="/images/trofeo-awards.webp"
-        alt="SaltoAwards"
-        class="w-auto h-56 animate-flip-x animate-iteration-count-infinite group-hover:[animation-play-state:paused] animate-duration-[var(--rotation-ms)] absolute blur-lg transform scale-125 saturate-150 opacity-50 z-[-1] top-2 left-2"
-      />
-    </div>
-  </div>
+  {SHOW_INTRO && <IntroAwards />}
 </Layout>

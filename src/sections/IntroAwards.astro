@@ -1,0 +1,135 @@
+<section id="intro-saltoawards" class="h-[400vh] relative">
+  <div
+    class="sticky top-0 h-screen flex flex-col items-center justify-center font-bold text-center"
+  >
+    <div class="step" id="step-1">
+      <h3
+        class="flex justify-center items-center w-full flex-col gap-8 font-teko"
+      >
+        <div class="relative">
+          <img
+            src="/images/trofeo-awards.webp"
+            class="h-48"
+            alt="Salto Awards"
+          />
+          <img
+            src="/images/trofeo-awards.webp"
+            class="h-48 absolute z-[-1] blur-xl saturate-150 inset-0"
+            alt="Salto Awards"
+          />
+        </div>
+        <footer class="flex gap-x-2">
+          <div class="relative text-4xl">
+            <span class="relative z-10 animate-salto">Salto</span>
+            <div
+              class="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-purple-500 to-pink-500 blur-xl opacity-40"
+            >
+            </div>
+          </div>
+          <div class="relative text-4xl">
+            <span class="relative z-10 animate-awards">Awards</span>
+            <div
+              class="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-purple-500 to-pink-500 blur-xl opacity-40"
+            >
+            </div>
+          </div>
+        </footer>
+      </h3>
+    </div>
+    <div class="step" id="step-2">
+      <h3 class="overflow-hidden">
+        <span class="text-3xl"> ¿Listo para votar por tus favoritos? </span>
+        <br />
+        <span class="text-xl"> ¡No falta casi nada! </span>
+      </h3>
+    </div>
+  </div>
+
+  <script>
+    import { $ } from "@/lib/dom-selector";
+    import { animate, scroll } from "motion";
+    const animations = animate([
+      // Animación para "Salto"
+      [
+        "#step-1 .animate-salto",
+        { transform: "translateY(0%)" },
+        { duration: 0.1 },
+      ],
+      // Animación para "Awards"
+      [
+        "#step-1 .animate-awards",
+        { transform: "translateY(0%)" },
+        { duration: 0.1, at: 0.2 },
+      ],
+      // Transición de step-1 a step-2
+      ["#step-1", { opacity: 0 }, { duration: 0.1, at: 0.3 }],
+      ["#step-2", { opacity: 1 }, { duration: 0.1, at: 0.31 }],
+      [
+        "#step-2 h3 span:first-child",
+        { opacity: 1, transform: "translateY(0%)", y: 0 },
+        { duration: 0.3, at: 0.7 },
+      ],
+      /* [
+        "#step-2 h3 span:last-child",
+        { opacity: 1, transform: "translateY(0%)", y: 0 },
+        { duration: 0.3, at: 0.8 },
+      ], */
+    ]);
+
+    document.addEventListener("astro:page-load", () => {
+      scroll(animations, {
+        target: $("#intro-saltoawards") as HTMLElement,
+        offset: ["-400px", "end end"],
+      });
+
+      scroll(
+        (progress, info) => {
+          console.log({ progress });
+        },
+        {
+          target: $("#intro-saltoawards") as HTMLElement,
+          offset: ["-400px", "end end"],
+        }
+      );
+    });
+  </script>
+</section>
+
+<style>
+  .step {
+    opacity: 0;
+    position: absolute;
+  }
+
+  #step-1 {
+    opacity: 1;
+
+    h3 {
+      font-size: 4.5rem;
+      line-height: 1;
+    }
+
+    h3 {
+      line-height: 2;
+    }
+
+    & span {
+      transform: translateY(100%);
+    }
+  }
+
+  #step-2 {
+    & span {
+      transform: translateY(100%);
+    }
+  }
+
+  #step-3,
+  #step-4,
+  #step-5 {
+    & h4,
+    h3 span {
+      transform: translateY(200%);
+    }
+  }
+</style>
