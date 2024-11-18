@@ -18,8 +18,15 @@ interface Props {
 }
 
 //const session = await getSession(Astro.request);
+if (!Astro.props.preload) Astro.props.preload = [];
 
 const { title, description, preload, canonical, image } = Astro.props;
+
+preload?.push({
+  href: "/images/logo_salto.webp",
+  as: "image",
+  type: "image/webp",
+});
 ---
 
 <!doctype html>
@@ -30,6 +37,7 @@ const { title, description, preload, canonical, image } = Astro.props;
       description={description}
       image={image}
       canonical={canonical}
+      preload={preload}
     />
     <ViewTransitions />
     <LoadingIndicator color="#1f97ff" height="3px" />
