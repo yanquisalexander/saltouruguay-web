@@ -2,7 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import IntroAwards from "@/sections/IntroAwards.astro";
 
-const SHOW_INTRO = true;
+const SHOW_INTRO = import.meta.env.PROD;
 ---
 
 <Layout title="SaltoAwards">
