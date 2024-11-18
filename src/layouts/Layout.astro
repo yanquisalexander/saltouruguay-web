@@ -12,7 +12,7 @@ import "@fontsource-variable/teko";
 
 import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
-
+import SignInModal from "@/components/SignInModal.astro";
 interface Props {
   title?: string;
   description?: string;
@@ -61,6 +61,7 @@ preload?.push({
     <main class="px-6 sm:px-10">
       <slot />
     </main>
+    <SignInModal />
     <SiteFooter />
     <style is:global>
       html {

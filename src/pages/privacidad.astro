@@ -1,7 +1,11 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 
-const LATEST_UPDATE_DATE = new Date("2024-11-19");
+const LATEST_UPDATE_DATE = new Date("2024-11-19").toLocaleDateString("es-UY", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
 
 export const prerender = true;
 ---
@@ -11,13 +15,7 @@ export const prerender = true;
     <header>
       <h1 class="text-2xl">Políticas de Privacidad</h1>
       <p>
-        Última actualización: {
-          LATEST_UPDATE_DATE.toLocaleDateString("es-UY", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })
-        }
+        Última actualización: {LATEST_UPDATE_DATE}
       </p>
     </header>
 
