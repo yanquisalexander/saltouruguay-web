@@ -8,3 +8,8 @@ export interface Category {
     name: string;
     nominees: CategoryNominee[];
 }
+
+export interface Vote {
+    nomineeId: string;
+    categoryId: string;
+}
