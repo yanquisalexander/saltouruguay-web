@@ -4,6 +4,11 @@ import { LucideMinus } from "lucide-preact"
 import { useEffect, useState } from "preact/hooks"
 import { VoteNominee } from "./VoteNominee"
 
+interface Vote {
+    nomineeId: string;
+    categoryId: string;
+}
+
 const MAX_VOTES_PER_CATEGORY = 2;
 
 export const VoteSystem = ({ user, categories, votes }: { user: Session['user'] | null, categories: Category[], votes: Vote[] }) => {
