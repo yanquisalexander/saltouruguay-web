@@ -1,0 +1,36 @@
+---
+import LaunchCountdown from "@/components/LaunchCountdown";
+import Layout from "../layouts/Layout.astro";
+import { VOTES_OPEN_TIMESTAMP } from "@/config";
+---
+
+<Layout title="No encontrado">
+  <div class="min-h-dvh flex flex-col justify-center items-center h-full">
+    <header
+      class="flex items-center justify-center max-w-md w-full gap-x-14 gap-y-6 flex-col"
+    >
+      <div class="relative">
+        <img
+          src="/images/404-salto.webp"
+          alt="SaltoUruguayServer"
+          class="h-24 sm:h-32 w-auto object-contain aspect-square"
+        />
+        <img
+          src="/images/404-salto.webp"
+          alt="SaltoUruguayServer"
+          class="absolute blur-md transform scale-110 saturate-150 z-[-1] top-0 left-0 h-24 sm:h-32 w-auto object-contain aspect-square"
+        />
+      </div>
+      <h1 class="text-2xl font-bold text-center flex-wrap">
+        Página no encontrada
+      </h1>
+    </header>
+
+    <p class="font-rubik uppercase text-lg text-center mt-6">
+      <span class="font-bold text-yellow-500"> ¡Upps! </span>
+      <br />
+      ¿Te perdiste? ¡No te preocupes! <br /><br />
+      <a href="/" class="text-blue-500 hover:underline">Volver al inicio</a>
+    </p>
+  </div>
+</Layout>
