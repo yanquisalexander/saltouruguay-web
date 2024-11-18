@@ -40,6 +40,13 @@ import { VOTES_OPEN_TIMESTAMP } from "@/config";
           </div>
         </footer>
       </h3>
+      <p
+        class="text-xl font-rubik transform translate-y-[100%] tracking-wider opacity-0"
+      >
+        Premios a la comunidad de <span class="font-bold !inline"
+          >Salto Uruguay Server</span
+        >
+      </p>
     </div>
     <div class="step" id="step-2">
       <h3 class="overflow-hidden flex flex-col gap-y-1">
@@ -47,6 +54,7 @@ import { VOTES_OPEN_TIMESTAMP } from "@/config";
         <span class="text-xl"> ¡No falta casi nada! </span>
 
         <LaunchCountdown
+          client:idle
           timestamp={VOTES_OPEN_TIMESTAMP}
           id={"intro-awards-countdown"}
         />
@@ -70,9 +78,14 @@ import { VOTES_OPEN_TIMESTAMP } from "@/config";
         { transform: "translateY(0%)" },
         { duration: 0.1, at: 0.11 },
       ],
+      [
+        "#step-1 p",
+        { transform: "translateY(0%)", opacity: 1 },
+        { duration: 0.1, at: 0.13 },
+      ],
       // Transición de step-1 a step-2
       ["#step-1", { opacity: 0 }, { duration: 0.1, at: 0.3 }],
-      ["#step-2", { opacity: 1 }, { duration: 0.1, at: 0.31 }],
+      ["#step-2", { opacity: 1 }, { duration: 0.1, at: 0.32 }],
       [
         "#step-2 h3 span:first-child",
         { transform: "translateY(0%)" },
