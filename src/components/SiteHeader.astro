@@ -6,7 +6,7 @@ interface Props {
   session?: Session | null;
 }
 
-const PRERENDERED_PATHS = ["/"];
+const PRERENDERED_PATHS = ["/", "/privacidad", "/terminos"];
 
 const currentPath = Astro.url.pathname;
 const { session } = Astro.props;
