@@ -3,6 +3,7 @@ import type { Session } from "@auth/core/types"
 import { LucideMinus } from "lucide-preact"
 import { useEffect, useState } from "preact/hooks"
 import { VoteNominee } from "./VoteNominee"
+import { toast } from "sonner"
 
 interface Vote {
     nomineeId: string;
@@ -11,15 +12,25 @@ interface Vote {
 
 const MAX_VOTES_PER_CATEGORY = 2;
 
-export const VoteSystem = ({ user, categories, votes }: { user: Session['user'] | null, categories: Category[], votes: Vote[] }) => {
+export const VoteSystem = ({ user, categories }: { user: Session['user'] | null, categories: Category[] }) => {
 
     const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0)
     const [votesByCategory, setVotesByCategory] = useState<{ [key: string]: Vote[] }>({})
 
     const currentCategory = categories[currentCategoryIndex]
-    const currentVotesCategory = votesByCategory[currentCategory.id] || []
+    const currentVotesCategory = currentCategory ? votesByCategory[currentCategory.id] || [] : []
 
     const isLastCategory = currentCategoryIndex === categories.length - 1
+
+    useEffect(() => {
+        const savedVotes = localStorage.getItem(`saltoawards-${new Date().getFullYear()}`)
+        if (savedVotes) {
+            // TODO: Validar que los votos guardados sean válidos, descartar los que no lo sean
+            setVotesByCategory(JSON.parse(savedVotes))
+            toast.success("Se han cargado tus votos guardados en borrador")
+            console.log("Votos guardados cargados")
+        }
+    }, [])
 
     const handleVote = (nomineeId: string, categoryId: string) => {
         const isVoted = currentVotesCategory.some(vote => vote.nomineeId === nomineeId)
@@ -47,6 +58,7 @@ export const VoteSystem = ({ user, categories, votes }: { user: Session['user'] 
 
     useEffect(() => {
         console.log({ votesByCategory })
+        localStorage.setItem(`saltoawards-${new Date().getFullYear()}`, JSON.stringify(votesByCategory))
     }, [votesByCategory])
 
     const handleNextCategory = () => {

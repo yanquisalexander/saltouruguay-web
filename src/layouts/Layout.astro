@@ -5,6 +5,8 @@ import SEO from "@/components/SEO.astro";
 //import "@/assets/styles/sonner-style.css";
 import LoadingIndicator from "astro-loading-indicator/component";
 import { getSession } from "auth-astro/server";
+import { Toaster } from "sonner";
+import "@/assets/styles/sonner-styles.css";
 
 import "@fontsource/anton";
 import "@fontsource-variable/rubik";
@@ -101,10 +103,6 @@ preload?.push({
       }
     </style>
 
-    <!--     <Toaster
-      client:only="preact"
-      transition:name="global-toast"
-      transition:persist
-    /> -->
+    <Toaster client:only transition:name="global-toast" transition:persist />
   </body>
 </html>
