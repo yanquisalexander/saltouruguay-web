@@ -1,0 +1,80 @@
+---
+import { LucideCode } from "lucide-preact";
+---
+
+<div
+  id="konami"
+  aria-hidden="true"
+  class="pointer-events-none z-[1001] opacity-0 fixed transition-opacity inset-0 items-center justify-center bg-black/50 text-white font-bold text-lg"
+>
+  <div
+    class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white font-bold text-lg"
+  >
+    <span class="flex items-center gap-2">
+      <LucideCode size={24} />
+      <span>¡Código Konami activado!</span>
+    </span>
+
+    <img
+      src="/images/salto-calvo.webp"
+      alt="Salto Uruguay"
+      class="size-48 object-cover animate-rotate-360 animate-iteration-count-infinite animate-duration-[3s]"
+    />
+  </div>
+</div>
+
+<script>
+  document.addEventListener("astro:page-load", () => {
+    // Secuencia del código Konami usando event.key
+    const konamiCode = [
+      "ArrowUp",
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+      "ArrowLeft",
+      "ArrowRight",
+      "b",
+      "a",
+    ];
+    let konamiCodePosition = 0;
+    let konamiCodeTimeout: NodeJS.Timeout;
+
+    const $konami = document.getElementById("konami");
+    const $html = document.querySelector("html");
+
+    document.addEventListener("keydown", (event) => {
+      // Verificar si la tecla coincide con la secuencia
+      if (event.key === konamiCode[konamiCodePosition]) {
+        konamiCodePosition++;
+
+        // Si se completa el código Konami
+        if (konamiCodePosition === konamiCode.length) {
+          const audio = new Audio("/sounds/konami-sound-salto.mp3");
+          audio.play();
+          $konami?.classList.remove("opacity-0", "pointer-events-none");
+          $konami?.removeAttribute("aria-hidden");
+          $html?.classList.add("overflow-hidden");
+
+          clearTimeout(konamiCodeTimeout);
+
+          konamiCodeTimeout = setTimeout(() => {
+            $konami?.classList.add("opacity-0", "pointer-events-none");
+            $konami?.setAttribute("aria-hidden", "true");
+            $html?.classList.remove("overflow-hidden");
+            // Reiniciar la posición para permitir reactivar el código
+            konamiCodePosition = 0;
+          }, 4500);
+        }
+      } else {
+        // Reiniciar si la tecla no coincide
+        konamiCodePosition = 0;
+      }
+    });
+
+    // Asegurar que el elemento esté oculto inicialmente
+    $konami?.classList.add("opacity-0", "pointer-events-none");
+    $konami?.setAttribute("aria-hidden", "true");
+  });
+</script>

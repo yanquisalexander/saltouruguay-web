@@ -15,6 +15,7 @@ import "@fontsource-variable/teko";
 import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import SignInModal from "@/components/SignInModal.astro";
+import KonamiCode from "@/components/KonamiCode.astro";
 interface Props {
   title?: string;
   description?: string;
@@ -109,5 +110,7 @@ preload?.push({
       transition:name="global-toast"
       transition:persist
     />
+
+    <KonamiCode />
   </body>
 </html>
