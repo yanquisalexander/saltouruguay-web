@@ -1,7 +1,7 @@
 // @ts-check
 import { defineConfig, envField } from 'astro/config';
 
-import vercel from '@astrojs/vercel/serverless';
+import vercel from '@astrojs/vercel';
 import tailwind from '@astrojs/tailwind';
 import preact from '@astrojs/preact';
 
@@ -21,14 +21,14 @@ export default defineConfig({
     enabled: false
   },
   trailingSlash: 'never',
+  env: {
+    schema: {
+      TWITCH_CLIENT_ID: envField.string({ context: 'server', access: 'public' }),
+      TWITCH_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret' }),
+    },
+  },
   site: "https://saltouruguayserver.com/",
+  serverIslands: true,
   experimental: {
-    serverIslands: true,
-    env: {
-      schema: {
-        TWITCH_CLIENT_ID: envField.string({ context: 'server', access: 'public' }),
-        TWITCH_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret' }),
-      }
-    }
   }
 });
