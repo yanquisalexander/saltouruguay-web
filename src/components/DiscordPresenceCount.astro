@@ -19,24 +19,28 @@ if (!widgetData.ok) {
 }
 ---
 
-<a
-  class="items-center gap-2 group hidden md:flex"
-  title={`Usuarios en línea: ${presenceCount}`}
-  href={SOCIAL_NETWORKS.find((network) => network.name === "Discord")?.url}
-  target="_blank"
-  rel="noopener noreferrer"
->
-  <div
-    class="flex items-center gap-1 relative group-hover:scale-110 transform transition"
+<div class="items-center gap-2 group hidden md:flex">
+  <a
+    class="items-center gap-2 group hidden md:flex"
+    title={`Usuarios en línea: ${presenceCount}`}
+    href={SOCIAL_NETWORKS.find((network) => network.name === "Discord")?.url}
+    target="_blank"
+    rel="noopener noreferrer"
   >
-    <DiscordIcon class="size-6" />
-    <span class="absolute p-1 rounded-full -right-1 -top-1 bg-green-500"></span>
-  </div>
+    <div
+      class="flex items-center gap-1 relative group-hover:scale-110 transform transition"
+    >
+      <DiscordIcon class="size-6" />
+      <span class="absolute p-1 rounded-full -right-1 -top-1 bg-green-500"
+      ></span>
+    </div>
+  </a>
+
   {
-    presenceCount && presenceCount > 0 && (
+    presenceCount > 0 ? (
       <span class="bg-zinc-500 text-zinc-100 font-rubik text-[10px] font-semibold rounded-full px-1">
         {presenceCount}
       </span>
-    )
+    ) : null
   }
-</a>
+</div>
