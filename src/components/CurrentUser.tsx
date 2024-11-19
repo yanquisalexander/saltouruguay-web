@@ -3,6 +3,7 @@ import type { Session } from "@auth/core/types";
 import { signIn, signOut } from "auth-astro/client";
 import { LucideLoader2, LucideLogIn, LucideX } from "lucide-preact";
 import { useState, useEffect, useRef } from "preact/hooks";
+import { toast } from "sonner";
 
 
 export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Session['user'] | null, isPrerenderedPath: boolean }) => {
@@ -37,6 +38,8 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     };
 
     const linkDiscord = async () => {
+        toast('Próximamente...')
+        return
         window.location.href = `/api/discord/link`
     }
 
