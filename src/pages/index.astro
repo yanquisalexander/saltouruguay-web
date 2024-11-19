@@ -4,13 +4,17 @@ import Layout from "../layouts/Layout.astro";
 import { VOTES_OPEN_TIMESTAMP } from "@/config";
 import Sponsors from "@/sections/Sponsors.astro";
 import LiveStream from "@/components/LiveStream.astro";
+import VoteCallToAction from "@/components/VoteCallToAction.astro";
 
 const IS_VOTING_OPEN = Date.now() > VOTES_OPEN_TIMESTAMP;
+
+const IS_PROD = import.meta.env.PROD;
 
 export const prerender = true;
 ---
 
 <Layout title="Comunidad SaltoUruguayServer">
+  {!IS_PROD && <VoteCallToAction server:defer />}
   {
     !IS_VOTING_OPEN && (
       <div class=" flex flex-col py-16 items-center h-full">

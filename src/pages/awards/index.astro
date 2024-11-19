@@ -11,7 +11,7 @@ const session = await getSession(Astro.request);
 
 const SHOW_INTRO = import.meta.env.PROD;
 
-let votes: Awaited<ReturnType<typeof currentUserVotes>> | null = null;
+let votes: Awaited<ReturnType<typeof currentUserVotes>> = null;
 
 if (session?.user) {
   votes = await currentUserVotes(session.user.id);

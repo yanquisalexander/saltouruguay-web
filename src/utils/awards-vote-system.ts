@@ -49,5 +49,9 @@ export const submitVotes = async (votes: Votes, user: Session['user']) => {
 
 export const currentUserVotes = async (userId: number) => {
     const votes = await client.select().from(VotesTable).where(eq(VotesTable.userId, userId)).execute();
+
+    if (votes.length === 0) {
+        return null;
+    }
     return votes;
 }
