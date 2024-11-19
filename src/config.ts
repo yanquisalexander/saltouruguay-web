@@ -1,3 +1,5 @@
 export const VOTES_OPEN_TIMESTAMP = 1733022000000;
 
 export const SALTO_BROADCASTER_ID = '238809411'
+
+export const IS_VOTES_OPEN = Date.now() > VOTES_OPEN_TIMESTAMP;
