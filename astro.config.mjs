@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, envField } from 'astro/config';
 
 import vercel from '@astrojs/vercel/serverless';
 import tailwind from '@astrojs/tailwind';
@@ -18,6 +18,12 @@ export default defineConfig({
     enabled: false
   },
   experimental: {
-    serverIslands: true
+    serverIslands: true,
+    env: {
+      schema: {
+        TWITCH_CLIENT_ID: envField.string({ context: 'server', access: 'public' }),
+        TWITCH_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret' }),
+      }
+    }
   }
 });

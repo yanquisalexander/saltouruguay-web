@@ -1,0 +1,111 @@
+---
+import { LucidePlayCircle } from "lucide-preact";
+
+interface Props {
+  channelId: string;
+  autoLoad?: boolean;
+  class?: string;
+  placeholder?: string;
+  username: string;
+}
+
+const {
+  channelId,
+  autoLoad = false,
+  class: classNames,
+  username,
+  placeholder,
+} = Astro.props;
+let thumbnailUrl =
+  placeholder ||
+  `https://static-cdn.jtvnw.net/previews-ttv/live_user_${channelId}-1280x720.jpg`;
+let title = `Twitch Stream - ${channelId}`;
+---
+
+<twitch-embed
+  class={`relative w-full flex max-w-3xl rounded-md overflow-hidden cursor-pointer bg-center bg-cover transition-transform duration-500 ${classNames}`}
+  channelid={channelId}
+  thumbnailurl={thumbnailUrl}
+  username={username}
+  data-username={username}
+  data-title={title}
+  aria-label="Reproducir stream"
+  role="button"
+  tabindex="0"
+  style="aspect-ratio: 16 / 9;"
+  {...autoLoad && { "data-autoplay": true }}
+>
+  <div
+    class="absolute inset-0 flex items-center justify-center bg-black/50 transition-opacity duration-300 hover:bg-black/75"
+    id={`Id${channelId}`}
+    title={title}
+  >
+    <LucidePlayCircle
+      class="w-16 h-16 text-white opacity-90 hover:opacity-100 transition-opacity duration-300"
+    />
+  </div>
+</twitch-embed>
+
+<script>
+  import { toast } from "sonner";
+
+  class TwitchEmbed extends HTMLElement {
+    channelId?: string;
+    username?: string;
+
+    connectedCallback() {
+      const thumbnailUrl = this.getAttribute("thumbnailurl");
+      this.channelId = this.getAttribute("channelid")!;
+      this.username = this.getAttribute("data-username")!;
+
+      this.style.backgroundImage = `url(${thumbnailUrl})`;
+
+      // Inicialmente agrega la clase para el efecto de escala
+      this.classList.add("hover:scale-105");
+
+      this.addEventListener("click", this.activateVideo);
+      this.addEventListener("keydown", this.handleKeyPress);
+    }
+
+    activateVideo() {
+      // Quita el fondo y la clase de escala
+      this.style.backgroundImage = "none";
+      this.classList.remove("hover:scale-105");
+
+      // Remueve el ícono de play
+      this.querySelector(`#Id${this.channelId}`)?.remove();
+
+      // Carga el iframe del video
+      const iframeEl = this.createIframe();
+      this.append(iframeEl);
+      iframeEl.focus();
+
+      // Muestra un mensaje de éxito
+      toast.success(
+        `Twitch cargado: ${this.getAttribute("data-title")?.slice(0, 50)}...`
+      );
+    }
+
+    handleKeyPress(event: KeyboardEvent) {
+      if (event.code === "Enter" || event.code === "Space") {
+        this.activateVideo();
+      }
+    }
+
+    createIframe() {
+      const iframeEl = document.createElement("iframe");
+      iframeEl.width = "100%";
+      iframeEl.height = "100%";
+      iframeEl.classList.add("rounded-md");
+      iframeEl.title = this.getAttribute("data-title")!;
+      iframeEl.allow =
+        "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; transparency";
+      iframeEl.allowFullscreen = true;
+      iframeEl.src = `https://player.twitch.tv/?channel=${this.username}&parent=${window.location.hostname}`;
+
+      return iframeEl;
+    }
+  }
+
+  customElements.define("twitch-embed", TwitchEmbed);
+</script>

@@ -1,0 +1,31 @@
+---
+import { SALTO_BROADCASTER_ID } from "@/config";
+import { getLiveStream } from "@/utils/twitch-runtime";
+import TwitchEmbed from "./TwitchEmbed.astro";
+
+const stream = await getLiveStream(SALTO_BROADCASTER_ID);
+
+const PREVIEW = stream?.getThumbnailUrl(1280, 720);
+---
+
+{
+  stream ? (
+    <section
+      id="live-stream"
+      class="max-w-5xl mx-auto mt-16 flex justify-center"
+    >
+      <TwitchEmbed
+        channelId={SALTO_BROADCASTER_ID}
+        username={stream.userName}
+        placeholder={PREVIEW || ""}
+        data-title={stream.title}
+      />
+    </section>
+  ) : (
+    <div class="aspect-16/9 bg-black">
+      <div class="flex items-center justify-center h-full">
+        <span class="text-white text-2xl">No hay transmisión en vivo</span>
+      </div>
+    </div>
+  )
+}
