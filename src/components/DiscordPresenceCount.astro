@@ -1,21 +1,25 @@
 ---
 import { SOCIAL_NETWORKS } from "@/consts/SocialNetworks";
 import DiscordIcon from "@/icons/Discord.astro";
-import { LucideDot } from "lucide-preact";
 
-const widgetData = await fetch(
-  "https://discordapp.com/api/guilds/700185692826763264/widget.json"
-);
+const DISCORD_WIDGET_URL =
+  "https://discordapp.com/api/guilds/700185692826763264/widget.json";
 
 let presenceCount = 0;
 
-if (!widgetData.ok) {
-  console.error("Error fetching Discord widget data");
-} else {
-  const { presence_count } = (await widgetData.json()) as {
+try {
+  const response = await fetch(DISCORD_WIDGET_URL);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch Discord widget: ${response.statusText}`);
+  }
+
+  const { presence_count } = (await response.json()) as {
     presence_count: number;
   };
   presenceCount = presence_count;
+} catch (error) {
+  console.error("Error fetching Discord widget data:", error);
 }
 ---
 
