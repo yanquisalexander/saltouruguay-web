@@ -9,7 +9,7 @@ const PREVIEW = stream?.getThumbnailUrl(1280, 720);
 ---
 
 {
-  stream ? (
+  stream && (
     <section
       id="live-stream"
       class="max-w-5xl mx-auto mt-16 flex flex-col items-center justify-center"
@@ -25,11 +25,5 @@ const PREVIEW = stream?.getThumbnailUrl(1280, 720);
         data-title={stream.title}
       />
     </section>
-  ) : (
-    <div class="aspect-16/9 bg-black">
-      <div class="flex items-center justify-center h-full">
-        <span class="text-white text-2xl">No hay transmisión en vivo</span>
-      </div>
-    </div>
   )
 }
