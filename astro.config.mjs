@@ -28,7 +28,7 @@ export default defineConfig({
     },
   },
   site: "https://saltouruguayserver.com/",
-  serverIslands: true,
   experimental: {
+
   }
 });
