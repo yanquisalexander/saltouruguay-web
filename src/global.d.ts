@@ -3,7 +3,7 @@ import type { Session as AuthSession } from "@auth/core/types";
 declare module "@auth/core/types" {
     interface Session extends AuthSession {
         user: {
-            id: string;
+            id: number;
             tier?: 1 | 2 | 3;
             isAdmin?: boolean;
             twitchId?: string;

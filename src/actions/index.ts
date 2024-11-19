@@ -1,3 +1,4 @@
+import { submitVotes } from "@/utils/awards-vote-system";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -8,10 +9,9 @@ export const server = {
             votes: z.record(z.array(z.object({
                 nomineeId: z.string(),
                 categoryId: z.string(),
-            }))),
+            })).max(2))
         }),
         handler: async ({ votes }, { request }) => {
-            console.log({ votes })
             await new Promise(resolve => setTimeout(resolve, 2000))
             const session = await getSession(request)
             if (!session) {
@@ -21,9 +21,16 @@ export const server = {
                 })
             }
 
-            console.log("Enviando votos al servidor...")
-            console.log(votes)
-            console.log("Votos enviados")
+
+            try {
+                await submitVotes(votes, session.user)
+                return { success: true }
+            } catch (error) {
+                throw new ActionError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: "Error al enviar los votos"
+                })
+            }
         }
     })
 }

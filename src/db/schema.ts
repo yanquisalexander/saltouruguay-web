@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, integer, pgTable, serial, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, serial, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 export const UsersTable = pgTable("users", {
     id: serial("id").primaryKey(),
@@ -18,3 +18,19 @@ export const UsersTable = pgTable("users", {
         .default(sql`current_timestamp`),
 });
 
+export const VotesTable = pgTable("votes", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id),
+    nomineeId: text("nominee_id").notNull(),
+    categoryId: text("category_id").notNull(),
+    ranking: integer("ranking").notNull(),
+    createdAt: timestamp("created_at")
+        .notNull()
+        .default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at")
+        .notNull()
+        .default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueUserIdNomineeIdCategoryId: unique().on(t.userId, t.nomineeId, t.categoryId),
+})
+)

@@ -90,6 +90,7 @@ export default defineConfig({
                 });
 
                 if (userRecord) {
+                    session.user.id = userRecord.id;
                     session.user.isAdmin = userRecord.admin;
                     session.user.twitchId = userRecord.twitchId;
                 }
@@ -101,7 +102,6 @@ export default defineConfig({
                 ...session,
                 user: {
                     ...session.user,
-                    id: token.user.sub,
                     tier: token.user.twitchTier,
                 },
             };

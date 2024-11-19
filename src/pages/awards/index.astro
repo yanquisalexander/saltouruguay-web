@@ -7,7 +7,7 @@ import { getSession } from "auth-astro/server";
 
 const session = await getSession(Astro.request);
 
-const SHOW_INTRO = import.meta.env.PROD;
+const SHOW_INTRO = false // import.meta.env.PROD;
 ---
 
 <Layout title="SaltoAwards">
