@@ -3,14 +3,16 @@ import type { Category, Vote } from "@/types/Awards";
 import type { Session } from "@auth/core/types";
 import { ActionError, actions, type ActionReturnType, type Actions } from "astro:actions";
 import { navigate } from "astro:transitions/client";
+import confetti from "canvas-confetti";
 import { LucideLoader } from "lucide-preact";
-import { useState } from "preact/hooks";
+import { useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 
 export const VoteFinal = ({ user, categories, votes, onReturn }: { user: Session['user'] | null, categories: Category[], votes: { [key: string]: Vote[] }, onReturn: () => void }) => {
     const [loading, setLoading] = useState(false)
     const [allowBack, setAllowBack] = useState(true)
     const [votesSent, setVotesSent] = useState(false)
+    const successMesageRef = useRef<HTMLDivElement>(null)
 
     const back = () => {
         navigate("/awards")
@@ -32,6 +34,13 @@ export const VoteFinal = ({ user, categories, votes, onReturn }: { user: Session
                     setLoading(false)
                     setVotesSent(true)
                     localStorage.removeItem(`saltoawards-${new Date().getFullYear()}`)
+
+                    successMesageRef.current?.scrollIntoView({ behavior: "smooth" })
+                    confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    })
                     return "Votos enviados correctamente"
                 },
                 error: (e: ActionError) => {
@@ -50,7 +59,7 @@ export const VoteFinal = ({ user, categories, votes, onReturn }: { user: Session
     return (
 
         votesSent ? (
-            <div class="flex flex-col w-full max-w-xl">
+            <div class="flex flex-col w-full max-w-xl" ref={successMesageRef}>
                 <h2 class="text-2xl animate-fade-in-up font-bold text-center uppercase font-rubik tracking-wider">
                     ¡Votos enviados!
                 </h2>
