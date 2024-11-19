@@ -5,6 +5,7 @@ import { VOTES_OPEN_TIMESTAMP } from "@/config";
 import Sponsors from "@/sections/Sponsors.astro";
 import LiveStream from "@/components/LiveStream.astro";
 import VoteCallToAction from "@/components/VoteCallToAction.astro";
+import NewsOnPage from "@/sections/NewsOnPage.astro";
 
 const IS_VOTING_OPEN = Date.now() > VOTES_OPEN_TIMESTAMP;
 
@@ -49,6 +50,8 @@ export const prerender = true;
   }
 
   <LiveStream server:defer />
+
+  <NewsOnPage />
 
   <Sponsors />
 </Layout>

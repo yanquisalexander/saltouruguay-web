@@ -1,0 +1,49 @@
+---
+import { Container3D } from "@/components/Container3D";
+import { MemberCard } from "@/components/MemberCard";
+---
+
+<section id="news-on-page" class="max-w-5xl mx-auto px-6 sm:px-10 pt-16 pb-8">
+  <h2
+    class="text-2xl uppercase font-rubik font-medium text-white tracking-wider"
+  >
+    Novedades del sitio
+  </h2>
+  <p class="text-white max-w-lg mt-4">
+    ¡Estamos trabajando en nuevas funcionalidades para el sitio! Pronto podrás
+    disfrutar de nuevas secciones y contenido exclusivo.
+  </p>
+
+  <ul class="flex flex-col gap-y-6 mt-12">
+    <li class="flex items-center gap-x-4">
+      <article class="flex flex-col gap-y-2">
+        <h3 class="text-xl font-rubik font-medium text-white">
+          Conocé la <span class="text-yellow-400">Member Card</span>
+        </h3>
+        <p class="text-white max-w-lg">
+          Creá tu tarjeta de miembro y accedé a eventos exclusivos y beneficios
+          <small class="text-gray-400 italic"
+            >Con tu suscripción a Twitch tenés mejoras en tu tarjeta</small
+          >
+        </p>
+
+        <div class="max-w-lg mt-2">
+          <Container3D client:only>
+            <MemberCard
+              client:idle
+              user={{
+                username: "Alexitoo_UY",
+                avatar: "https://www.alexitoo.dev/images/me.webp",
+              }}
+              number={1}
+              selectedStickers={{
+                limit: 2,
+                list: ["saltoSorpresa", "saltoBaile"],
+              }}
+            />
+          </Container3D>
+        </div>
+      </article>
+    </li>
+  </ul>
+</section>

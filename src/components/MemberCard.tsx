@@ -48,7 +48,7 @@ export const MemberCard = ({
                                 <img
                                     src={avatar}
                                     crossOrigin="anonymous"
-                                    className="block rounded-full w-20 h-20 md:w-[78px] md:h-[78px] object-cover"
+                                    className="block aspect-square rounded-full size-20 md:size-[70px] object-cover"
                                     alt={`${username}'s avatar`}
                                     width="78"
                                     height="78"
