@@ -2,6 +2,7 @@ import "atropos/css";
 import "@/components/styles/member-card.css";
 import { cn } from '@/lib/utils';
 import { Tooltip } from "./Tooltip";
+import { LucideLockKeyhole } from "lucide-preact";
 
 interface Props {
     number: number;
@@ -120,29 +121,13 @@ export const MemberCard = ({
                                                 tooltipClassName='w-[200px]'
                                                 key={index}
                                                 tooltipPosition='top'
-                                                text={`Unlock with Tier ${index + 1} on Twitch`}
+                                                text={`Desbloquea con Tier ${index + 1} en Twitch`}
                                                 offsetNumber={16}
                                             >
                                                 <div
                                                     className='flex items-center justify-center w-12 h-12 p-2 border border-dashed rounded-lg opacity-40'
                                                 >
-                                                    <svg
-                                                        xmlns='http://www.w3.org/2000/svg'
-                                                        width='24'
-                                                        height='24'
-                                                        viewBox='0 0 24 24'
-                                                        fill='none'
-                                                        stroke='currentColor'
-                                                        strokeWidth='2'
-                                                        strokeLinecap='round'
-                                                        strokeLinejoin='round'
-                                                        className='w-6 h-6'
-                                                    >
-                                                        <path stroke='none' d='M0 0h24v24H0z' fill='none' />
-                                                        <path d='M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z' />
-                                                        <path d='M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0' />
-                                                        <path d='M8 11v-4a4 4 0 1 1 8 0v4' />
-                                                    </svg>
+                                                    <LucideLockKeyhole size={24} />
                                                 </div>
                                             </Tooltip>
                                         )

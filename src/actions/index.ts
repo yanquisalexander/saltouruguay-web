@@ -1,4 +1,5 @@
 import { submitVotes } from "@/utils/awards-vote-system";
+import { updateStickers } from "@/utils/user";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -32,5 +33,23 @@ export const server = {
                 })
             }
         }
-    })
+    }),
+    updateStickers: defineAction({
+        input: z.object({
+            stickers: z.array(z.string().nullable())
+        }),
+        handler: async ({ stickers }, { request }) => {
+            const session = await getSession(request)
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para actualizar tus stickers"
+                })
+            }
+
+            await updateStickers(session.user.id, stickers as string[])
+            return { success: true }
+        }
+    }),
 }

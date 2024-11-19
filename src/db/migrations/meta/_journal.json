@@ -15,6 +15,13 @@
       "when": 1731987962557,
       "tag": "0001_glamorous_genesis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1732055167126,
+      "tag": "0002_sudden_ronan",
+      "breakpoints": true
     }
   ]
 }

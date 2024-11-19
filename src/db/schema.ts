@@ -34,3 +34,11 @@ export const VotesTable = pgTable("votes", {
     uniqueUserIdNomineeIdCategoryId: unique().on(t.userId, t.nomineeId, t.categoryId),
 })
 )
+
+export const MemberCards = pgTable("member_cards", {
+    userId: varchar("user_id").primaryKey(),
+    stickers: text("stickers").array().notNull(),
+    updatedAt: timestamp("updated_at")
+        .notNull()
+        .default(sql`current_timestamp`),
+});

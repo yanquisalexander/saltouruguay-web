@@ -1,0 +1,42 @@
+---
+import { MyMemberCard } from "@/components/MyMemberCard";
+import Layout from "@/layouts/Layout.astro";
+import { getMemberCardData } from "@/utils/user";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return new Response(null, { status: 404 });
+}
+
+let stickers: string[] = [];
+
+let dbMemberCard: Awaited<ReturnType<typeof getMemberCardData>> | null = null;
+
+dbMemberCard = await getMemberCardData(parseInt(session?.user?.id as string));
+---
+
+<Layout title={`Member Card - ${session.user.name}`}>
+  <p class="font-rubik uppercase text-lg text-center mt-8">
+    ¡Bienvenido a tu Member Card, <span class="text-purple-400 font-semibold"
+      >{session.user.name}</span
+    >!
+  </p>
+  <section
+    class="max-w-screen-xl m-auto mt-12 pb-20 gap-8 px-4 block lg:grid grid-cols-[auto_1fr] items-center"
+  >
+    {
+      session && (
+        <>
+          <MyMemberCard
+            session={session}
+            stickers={dbMemberCard?.stickers ?? stickers}
+            tier={session.user.tier ?? null}
+            client:only
+          />
+        </>
+      )
+    }
+  </section>
+</Layout>

@@ -1,6 +1,6 @@
 import { SALTO_BROADCASTER_ID } from "@/config";
 import { client } from "@/db/client";
-import { UsersTable } from "@/db/schema";
+import { MemberCards, UsersTable } from "@/db/schema";
 
 import {
     createUserApiClient,
@@ -36,3 +36,31 @@ export const getUserSubscription = async (twitchUserId: string, token: string) =
         return null;
     }
 };
+
+
+export const updateStickers = async (memberId: number, stickers: string[]) => {
+    try {
+        await client.insert(MemberCards).values({
+            userId: memberId.toString(),
+            stickers,
+        }).onConflictDoUpdate({
+            target: [MemberCards.userId],
+            set: {
+                stickers,
+                updatedAt: new Date()
+            }
+        })
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+export const getMemberCardData = async (memberId: number) => {
+
+
+    const card = await client.query.MemberCards.findFirst({
+        where: eq(MemberCards.userId, memberId.toString()),
+    })
+
+    return card
+}
