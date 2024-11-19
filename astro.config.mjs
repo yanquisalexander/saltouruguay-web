@@ -8,16 +8,19 @@ import preact from '@astrojs/preact';
 import auth from 'auth-astro';
 import migrateDatabaseIntegration from "./src/hooks/migrateDatabase";
 
+import sitemap from '@astrojs/sitemap';
+
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
   adapter: vercel(),
   integrations: [tailwind(), preact({
     compat: true
-  }), auth(), migrateDatabaseIntegration()],
+  }), auth(), migrateDatabaseIntegration(), sitemap()],
   devToolbar: {
     enabled: false
   },
+  trailingSlash: 'never',
   experimental: {
     serverIslands: true,
     env: {
