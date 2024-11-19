@@ -9,6 +9,8 @@ import IntroAwards from "@/sections/IntroAwards.astro";
 import { currentUserVotes } from "@/utils/awards-vote-system";
 import { getSession } from "auth-astro/server";
 
+const eventDate = new Date(EVENT_TIMESTAMP);
+
 const session = await getSession(Astro.request);
 
 const SHOW_INTRO = import.meta.env.PROD;
@@ -54,15 +56,23 @@ const SHOW_INTRO = import.meta.env.PROD;
       >
         Cada vez más cerca...
       </h2>
-      <span>
+      <span class="text-center text-sm font-rubik text-gray-300 mt-3">
         {
-          new Date(EVENT_TIMESTAMP).toLocaleDateString("es-UY", {
+          eventDate.toLocaleDateString("es-UY", {
             timeZone: "America/Montevideo",
             year: "numeric",
             month: "long",
             day: "numeric",
-            hour: "numeric",
+          })
+        }
+        <br />
+        {
+          eventDate.toLocaleTimeString("es-UY", {
+            timeZone: "America/Montevideo",
+            hour: "2-digit",
             minute: "numeric",
+            hourCycle: "h24",
+            timeZoneName: "long",
           })
         }
       </span>
