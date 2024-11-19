@@ -7,6 +7,7 @@ import { toPng } from "html-to-image";
 import { $ } from "@/lib/dom-selector";
 import { STICKERS } from "@/consts/Stickers";
 import { actions } from "astro:actions";
+import { toast } from "sonner";
 
 export const MyMemberCard = ({ session, stickers = [], tier }: { session: Session, stickers: string[], tier: number | null }) => {
     const [selectedStickers, setSelectedStickers] = useState(() => {
@@ -86,6 +87,8 @@ export const MyMemberCard = ({ session, stickers = [], tier }: { session: Sessio
             console.error('Failed to update stickers')
             return
         }
+
+        toast.success('Stickers actualizados')
     }
 
 
