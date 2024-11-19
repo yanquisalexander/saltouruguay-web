@@ -2,11 +2,12 @@
 import { CATEGORIES } from "@/awards/Categories";
 import VotesSummary from "@/components/VotesSummary.astro";
 import { VoteSystem } from "@/components/VoteSystem";
-import { IS_VOTES_OPEN } from "@/config";
+import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
 import Layout from "@/layouts/Layout.astro";
 import { currentUserVotes } from "@/utils/awards-vote-system";
 import { getSession } from "auth-astro/server";
 import TwitchIcon from "@/icons/Twitch.astro";
+import LaunchCountdown from "@/components/LaunchCountdown";
 
 const session = await getSession(Astro.request);
 
@@ -55,8 +56,21 @@ if (session?.user) {
 
     <main class="flex flex-col items-center justify-center h-full">
       {
-        session ? (
+        !IS_VOTES_OPEN ? (
+          // Mostrar cuenta regresiva si las votaciones están cerradas
+          <div class="flex flex-col items-center justify-center h-full">
+            <h2 class="text-2xl font-rubik font-bold text-white uppercase tracking-wider">
+              ¡Votación cerrada!
+            </h2>
+            <p class="text-white text-center font-rubik font-medium tracking-wider mt-4 max-w-2xl text-lg">
+              Las votaciones se abrirán pronto. Mantente atento para participar
+              en los <span class="text-yellow-500">SaltoAwards</span>.
+            </p>
+            <LaunchCountdown timestamp={VOTES_OPEN_TIMESTAMP} client:load />
+          </div>
+        ) : session ? (
           votes ? (
+            // Mostrar resumen si el usuario ya votó
             <>
               <div class="flex flex-col items-center justify-center h-full">
                 <h2 class="text-2xl font-rubik font-bold text-white uppercase tracking-wider">
@@ -71,6 +85,7 @@ if (session?.user) {
               <VotesSummary votes={votes} />
             </>
           ) : (
+            // Mostrar formulario de votación si el usuario no ha votado
             <VoteSystem
               categories={CATEGORIES}
               user={session.user}
@@ -78,11 +93,11 @@ if (session?.user) {
             />
           )
         ) : (
+          // Mostrar mensaje de inicio de sesión si el usuario no está autenticado
           <div class="flex flex-col items-center justify-center gap-y-4 h-full">
             <h2 class="text-xl font-rubik font-bold text-white uppercase tracking-wider">
               Por favor, inicia sesión para votar.
             </h2>
-
             <button
               id="awards-login"
               class=" bg-electric-violet-600 text-white font-rubik font-medium uppercase tracking-wider py-2 px-4 rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50"
