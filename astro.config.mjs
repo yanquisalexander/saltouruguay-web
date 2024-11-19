@@ -21,6 +21,7 @@ export default defineConfig({
     enabled: false
   },
   trailingSlash: 'never',
+  site: "https://saltouruguayserver.com/",
   experimental: {
     serverIslands: true,
     env: {
