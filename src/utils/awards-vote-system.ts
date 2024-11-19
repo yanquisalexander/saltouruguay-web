@@ -1,7 +1,10 @@
+import { CATEGORIES } from "@/awards/Categories";
 import { client } from "@/db/client";
 import { VotesTable } from "@/db/schema";
 import type { Session } from "@auth/core/types";
 import { z } from "astro/zod";
+import { count, eq } from "drizzle-orm";
+
 
 export const VoteSchema = z.object({
     nomineeId: z.string(),
@@ -41,4 +44,10 @@ export const submitVotes = async (votes: Votes, user: Session['user']) => {
     console.log("Votos guardados")
 
     return true;
+}
+
+
+export const currentUserVotes = async (userId: number) => {
+    const votes = await client.select().from(VotesTable).where(eq(VotesTable.userId, userId)).execute();
+    return votes;
 }

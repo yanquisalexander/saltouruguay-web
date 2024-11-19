@@ -1,13 +1,21 @@
 ---
 import { CATEGORIES } from "@/awards/Categories";
+import VotesSummary from "@/components/VotesSummary.astro";
 import { VoteSystem } from "@/components/VoteSystem";
 import Layout from "@/layouts/Layout.astro";
 import IntroAwards from "@/sections/IntroAwards.astro";
+import { currentUserVotes } from "@/utils/awards-vote-system";
 import { getSession } from "auth-astro/server";
 
 const session = await getSession(Astro.request);
 
 const SHOW_INTRO = import.meta.env.PROD;
+
+let votes: Awaited<ReturnType<typeof currentUserVotes>> | null = null;
+
+if (session?.user) {
+  votes = await currentUserVotes(session.user.id);
+}
 ---
 
 <Layout title="SaltoAwards">
@@ -39,7 +47,33 @@ const SHOW_INTRO = import.meta.env.PROD;
           </h2>
         </header>
 
-        <VoteSystem categories={CATEGORIES} user={session?.user ?? null} client:load />
+        {
+          !votes ? (
+            <VoteSystem categories={CATEGORIES} user={session?.user ?? null} client:load />
+
+          ) : (
+            <div class="flex flex-col items-center justify-center h-full">
+              <h2 class="text-2xl font-rubik font-bold text-white uppercase tracking-wider">
+                ¡Ya has votado!
+              </h2>
+              <p class="text-white
+                text-center
+                font-rubik
+                font-medium
+                tracking-wider
+                mt-4
+                max-w-2xl
+                text-lg
+              ">
+                ¡Gracias por participar en los <span class="text-yellow-500">SaltoAwards</span>! Los ganadores se
+                darán a conocer en la ceremonia de premiación.
+              </p>
+            </div>
+
+            <VotesSummary votes={votes} />
+          )
+        }
+
       </div>
     )
   }

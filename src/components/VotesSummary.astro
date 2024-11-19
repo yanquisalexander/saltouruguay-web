@@ -1,0 +1,67 @@
+---
+import { CATEGORIES } from "@/awards/Categories";
+import { NOMINEES } from "@/awards/Nominees";
+import type { currentUserVotes } from "@/utils/awards-vote-system";
+
+interface Props {
+  votes: Awaited<ReturnType<typeof currentUserVotes>> | null;
+}
+
+const { votes } = Astro.props;
+---
+
+{
+  votes && (
+    <div class="flex flex-col w-full max-w-5xl mx-auto gap-6 mt-8">
+      <h2 class="text-lg font-medium text-center uppercase font-rubik tracking-wider">
+        Estos han sido tus votos
+      </h2>
+
+      <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+        {CATEGORIES.map((category) => {
+          const categoryVotes = votes.filter(
+            (vote) => vote.categoryId === category.id
+          );
+          // Filtramos solo los nominados que han recibido votos
+          const votedNominees = category.nominees.filter((nominee) =>
+            categoryVotes.some((vote) => vote.nomineeId === nominee.id)
+          );
+
+          if (votedNominees.length === 0) return null; // No mostrar categorías sin votos
+
+          return (
+            <section class="w-full max-w-3xl mt-8">
+              <h3 class="text-xl font-bold text-center uppercase font-rubik tracking-wider italic text-blue-400">
+                {category.name}
+              </h3>
+              <ul class="grid grid-cols-1 gap-4 mt-4">
+                {votedNominees.map((nominee) => {
+                  const nomineeVotes = categoryVotes.filter(
+                    (vote) => vote.nomineeId === nominee.id
+                  );
+                  const nomineeFromConst = Object.values(NOMINEES).find(
+                    (n) => n.username === nominee.id
+                  );
+                  return (
+                    <li class="flex gap-y-2 gap-x-4 items-center">
+                      <img
+                        src={`https://ui-avatars.com/api/?name=${nomineeFromConst?.avatar}`}
+                        alt={nomineeFromConst?.displayName}
+                        class="size-10 rounded-full"
+                      />
+                      <div class="flex flex-col gap-y-2 items-center">
+                        <span class="font-bold">
+                          {nomineeFromConst?.displayName}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })}
+      </ul>
+    </div>
+  )
+}
