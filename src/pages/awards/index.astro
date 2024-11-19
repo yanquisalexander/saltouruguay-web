@@ -1,7 +1,9 @@
 ---
 import { CATEGORIES } from "@/awards/Categories";
+import LaunchCountdown from "@/components/LaunchCountdown";
 import VotesSummary from "@/components/VotesSummary.astro";
 import { VoteSystem } from "@/components/VoteSystem";
+import { VOTES_OPEN_TIMESTAMP } from "@/config";
 import Layout from "@/layouts/Layout.astro";
 import IntroAwards from "@/sections/IntroAwards.astro";
 import { currentUserVotes } from "@/utils/awards-vote-system";
@@ -10,73 +12,94 @@ import { getSession } from "auth-astro/server";
 const session = await getSession(Astro.request);
 
 const SHOW_INTRO = import.meta.env.PROD;
-
-let votes: Awaited<ReturnType<typeof currentUserVotes>> = null;
-
-if (session?.user) {
-  votes = await currentUserVotes(session.user.id);
-}
 ---
 
 <Layout title="SaltoAwards">
-  {
-    SHOW_INTRO ? (
-      <IntroAwards />
-    ) : (
-        <div id="backdrop-awards" class="-mt-28 min-h-screen absolute inset-0 -z-10"></div>
-      <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
-        <header class="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-4xl mx-auto ">
-          <div class="relative animate-fade-in-up">
-            <img
-              src="/images/logo_salto.webp"
-              alt="SaltoUruguayServer"
-              class="h-24 sm:h-32 md:h-40 w-auto object-contain aspect-square"
-            />
-            <img
-              src="/images/logo_salto.webp"
-              alt="SaltoUruguayServer"
-              class="absolute blur-md transform scale-110 animate-pulsing animate-iteration-count-infinite animate-duration-[3000ms] saturate-150 z-[-1] top-0 left-0 h-24 sm:h-32 md:h-40  w-auto object-contain aspect-square"
-            />
-          </div>
-          <h1 class="text-4xl animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen mt-8" data-astro-cid-x5yigsle="">
-            #SaltoAwards
-          </h1>
-          <h2 class="text-xl animate-fade-in-up animate-delay-300  font-rubik tracking-wider uppercase font-medium text-white mix-blend-screen  my-5 sm:pb-10" data-astro-cid-x5yigsle="">
-            ¡La entrega de premios <span class="text-yellow-500">más esperada</span>
-            del año!
-          </h2>
-        </header>
-
-        {
-          !votes ? (
-            <VoteSystem categories={CATEGORIES} user={session?.user ?? null} client:load />
-
-          ) : (
-            <div class="flex flex-col items-center justify-center h-full">
-              <h2 class="text-2xl font-rubik font-bold text-white uppercase tracking-wider">
-                ¡Ya has votado!
-              </h2>
-              <p class="text-white
-                text-center
-                font-rubik
-                font-medium
-                tracking-wider
-                mt-4
-                max-w-2xl
-                text-lg
-              ">
-                ¡Gracias por participar en los <span class="text-yellow-500">SaltoAwards</span>! Los ganadores se
-                darán a conocer en la ceremonia de premiación.
-              </p>
-            </div>
-
-            <VotesSummary votes={votes} />
-          )
-        }
-
+  <div id="backdrop-awards" class="-mt-28 min-h-screen absolute inset-0 -z-10">
+  </div>
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <header
+      class="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-4xl mx-auto"
+    >
+      <div class="relative animate-fade-in-up">
+        <img
+          src="/images/logo_salto.webp"
+          alt="SaltoUruguayServer"
+          class="h-24 sm:h-32 md:h-40 w-auto object-contain aspect-square"
+        />
+        <img
+          src="/images/logo_salto.webp"
+          alt="SaltoUruguayServer"
+          class="absolute blur-md transform scale-110 animate-pulsing animate-iteration-count-infinite animate-duration-[3000ms] saturate-150 z-[-1] top-0 left-0 h-24 sm:h-32 md:h-40 w-auto object-contain aspect-square"
+        />
       </div>
-    )
-  }
+      <h1
+        class="text-4xl animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen mt-8"
+        data-astro-cid-x5yigsle=""
+      >
+        #SaltoAwards
+      </h1>
+      <h2
+        class="text-xl animate-fade-in-up animate-delay-300 font-rubik tracking-wider uppercase font-medium text-white mix-blend-screen my-5 sm:pb-10"
+        data-astro-cid-x5yigsle=""
+      >
+        ¡La entrega de premios <span class="text-yellow-500">más esperada</span>
+        del año!
+      </h2>
+    </header>
+
+    <div class="flex flex-col items-center justify-center">
+      <h2
+        class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen my-5"
+      >
+        Cada vez más cerca...
+      </h2>
+      <LaunchCountdown timestamp={VOTES_OPEN_TIMESTAMP} client:idle />
+    </div>
+
+    <sections
+      id="casters"
+      class="flex flex-col items-center justify-center h-full text-center max-w-4xl mx-auto mt-16"
+    >
+      <h2
+        class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen my-5"
+      >
+        ¡Conoce a los presentadores!
+      </h2>
+      <p
+        class="text-white text-lg font-rubik uppercase text-balance tracking-wider sm:pb-10 pb-4"
+      >
+        <span class="text-yellow-500">#SaltoAwards</span> no sería lo mismo sin nuestros
+        presentadores.<br />¡Conócelos!
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="flex flex-col items-center justify-center gap-2">
+          <img
+            src="/images/casters/salto.webp"
+            alt="Salto Uruguay"
+            class="w-24 h-24 rounded-full object-cover"
+          />
+          <h3
+            class="text-lg font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen"
+          >
+            Salto Uruguay
+          </h3>
+        </div>
+        <div class="flex flex-col items-center justify-center gap-2">
+          <img
+            src="/images/casters/julianmartin.webp"
+            alt="Julian Martin"
+            class="w-24 h-24 rounded-full object-cover"
+          />
+          <h3
+            class="text-lg font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen"
+          >
+            Julian Martin
+          </h3>
+        </div>
+      </div>
+    </sections>
+  </div>
 </Layout>
 
 <style>
@@ -91,7 +114,5 @@ if (session?.user) {
     );
     background-size: cover;
     background-position: center;
-
-
   }
 </style>
