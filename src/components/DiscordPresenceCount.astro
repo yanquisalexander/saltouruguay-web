@@ -6,13 +6,22 @@ import { LucideDot } from "lucide-preact";
 const widgetData = await fetch(
   "https://discordapp.com/api/guilds/700185692826763264/widget.json"
 );
-const { presence_count } = await widgetData.json();
 
-console.log(presence_count);
+let presenceCount = 0;
+
+if (!widgetData.ok) {
+  console.error("Error fetching Discord widget data");
+} else {
+  const { presence_count } = (await widgetData.json()) as {
+    presence_count: number;
+  };
+  presenceCount = presence_count;
+}
 ---
 
 <a
   class="items-center gap-2 group hidden md:flex"
+  title={`Usuarios en línea: ${presenceCount}`}
   href={SOCIAL_NETWORKS.find((network) => network.name === "Discord")?.url}
   target="_blank"
   rel="noopener noreferrer"
@@ -24,9 +33,9 @@ console.log(presence_count);
     <span class="absolute p-1 rounded-full -right-1 -top-1 bg-green-500"></span>
   </div>
   {
-    presence_count && (
+    presenceCount && presenceCount > 0 && (
       <span class="bg-zinc-500 text-zinc-100 font-rubik text-[10px] font-semibold rounded-full px-1">
-        {presence_count}
+        {presenceCount}
       </span>
     )
   }
