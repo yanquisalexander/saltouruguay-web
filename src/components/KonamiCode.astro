@@ -1,6 +1,19 @@
 ---
-import { LucideCode } from "lucide-preact";
+import {
+  LucideArrowBigDownDash,
+  LucideArrowBigLeftDash,
+  LucideArrowBigRightDash,
+  LucideArrowBigUpDash,
+  LucideCode,
+} from "lucide-preact";
 ---
+
+<div id="konami-icons" class="hidden">
+  <LucideArrowBigUpDash id="arrowup" />
+  <LucideArrowBigDownDash id="arrowdown" />
+  <LucideArrowBigLeftDash id="arrowleft" />
+  <LucideArrowBigRightDash id="arrowright" />
+</div>
 
 <div
   id="konami"
@@ -21,6 +34,16 @@ import { LucideCode } from "lucide-preact";
       class="size-48 object-cover animate-rotate-360 animate-iteration-count-infinite animate-duration-[3s]"
     />
   </div>
+</div>
+
+<div
+  id="konami-current-key"
+  class="pointer-events-none opacity-0 transition-opacity fixed bottom-4 right-4"
+>
+  <span
+    class="size-8 justify-center items-center flex bg-black border-2 aspect-square overflow-hidden border-white rounded-md"
+    id="konami-current-key-icon"></span>
+  <span id="konami-combo" class="text-white font-bold text-lg"></span>
 </div>
 
 <script>
@@ -44,10 +67,41 @@ import { LucideCode } from "lucide-preact";
     const $konami = document.getElementById("konami");
     const $html = document.querySelector("html");
 
+    const $konamiCurrentKey = document.getElementById("konami-current-key");
+    const $konamiCurrentKeyIcon = document.getElementById(
+      "konami-current-key-icon"
+    );
+    const $konamiCombo = document.getElementById("konami-combo");
+
+    const $konamiIcons = document.getElementById("konami-icons");
+
     document.addEventListener("keydown", (event) => {
       // Verificar si la tecla coincide con la secuencia
       if (event.key === konamiCode[konamiCodePosition]) {
         konamiCodePosition++;
+
+        // Actualizar el ícono de la tecla actual
+        if ($konamiCurrentKeyIcon) {
+          $konamiCurrentKeyIcon.innerHTML =
+            $konamiIcons?.querySelector(`#${event.key.toLowerCase()}`)
+              ?.outerHTML || event.key.toUpperCase();
+        }
+
+        // Mostrar la tecla actual durante 1 segundo
+        if ($konamiCurrentKey) {
+          $konamiCurrentKey.classList.remove("opacity-0");
+          clearTimeout(konamiCodeTimeout);
+
+          konamiCodeTimeout = setTimeout(() => {
+            $konamiCurrentKey.classList.add("opacity-0");
+          }, 1000);
+        }
+
+        // Actualizar la combinación actual
+        if ($konamiCombo) {
+          const index = konamiCodePosition - 1;
+          $konamiCombo.textContent = `x${index}`;
+        }
 
         // Si se completa el código Konami
         if (konamiCodePosition === konamiCode.length) {
@@ -56,6 +110,8 @@ import { LucideCode } from "lucide-preact";
           $konami?.classList.remove("opacity-0", "pointer-events-none");
           $konami?.removeAttribute("aria-hidden");
           $html?.classList.add("overflow-hidden");
+
+          $konamiCurrentKey?.classList.add("opacity-0");
 
           clearTimeout(konamiCodeTimeout);
 
@@ -70,6 +126,14 @@ import { LucideCode } from "lucide-preact";
       } else {
         // Reiniciar si la tecla no coincide
         konamiCodePosition = 0;
+
+        // Ocultar la tecla actual
+        $konamiCurrentKey?.classList.add("opacity-0");
+
+        // Reiniciar la combinación actual
+        if ($konamiCombo) {
+          $konamiCombo.textContent = "";
+        }
       }
     });
 
