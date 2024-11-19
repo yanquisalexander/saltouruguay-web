@@ -99,7 +99,7 @@ const COMMUNITY_GRID_CARDS = [
                   </span>
                 </div>
               )}
-              {card.requiresLogin && !session && (
+              {card.requiresLogin && !session && !card.soon && (
                 <div class="absolute inset-0 flex bg-black/50 items-center justify-center text-white font-bold text-lg">
                   <span class="flex items-center flex-col gap-y-2">
                     <LucideLock size={24} />
