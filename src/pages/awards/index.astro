@@ -57,6 +57,7 @@ const SHOW_INTRO = import.meta.env.PROD;
       <span>
         {
           new Date(EVENT_TIMESTAMP).toLocaleDateString("es-UY", {
+            timeZone: "America/Montevideo",
             year: "numeric",
             month: "long",
             day: "numeric",
