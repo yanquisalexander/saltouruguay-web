@@ -34,3 +34,8 @@ export const createUserApiClient = (authProvider: StaticAuthProvider) => {
     return new ApiClient({ authProvider });
 };
 
+export const TWITCH_SCOPES = [
+    "openid",
+    "user:read:email",
+    "user:read:subscriptions",
+];

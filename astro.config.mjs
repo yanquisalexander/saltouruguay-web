@@ -6,6 +6,7 @@ import tailwind from '@astrojs/tailwind';
 import preact from '@astrojs/preact';
 
 import auth from 'auth-astro';
+import migrateDatabaseIntegration from "./src/hooks/migrateDatabase";
 
 // https://astro.build/config
 export default defineConfig({
@@ -13,7 +14,7 @@ export default defineConfig({
   adapter: vercel(),
   integrations: [tailwind(), preact({
     compat: true
-  }), auth()],
+  }), auth(), migrateDatabaseIntegration()],
   devToolbar: {
     enabled: false
   },
