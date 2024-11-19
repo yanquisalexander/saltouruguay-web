@@ -24,10 +24,12 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
     useEffect(() => {
         const savedVotes = localStorage.getItem(`saltoawards-${new Date().getFullYear()}`)
         if (savedVotes) {
-            // TODO: Validar que los votos guardados sean válidos, descartar los que no lo sean
-            setVotesByCategory(JSON.parse(savedVotes))
+            const parsedVotes = JSON.parse(savedVotes)
+
+            if (Object.keys(parsedVotes).length === 0) return
+            setVotesByCategory(parsedVotes)
+
             toast.success("Se han cargado tus votos guardados en borrador")
-            console.log("Votos guardados cargados")
         }
     }, [])
 
