@@ -19,6 +19,14 @@ const COMMUNITY_GRID_CARDS = [
     image: "/images/member-card.webp",
     soon: false,
   },
+  {
+    path: "/comunidad/achievements",
+    requiresLogin: true,
+    title: "Mis Logros",
+    description: "Descubre los logros que has desbloqueado.",
+    image: "/images/achievements.webp",
+    soon: true,
+  },
 ];
 
 const cache = cacheService.create({ ttl: 7200 });
