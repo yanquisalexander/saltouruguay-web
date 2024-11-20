@@ -5,6 +5,8 @@ import Layout from "@/layouts/Layout.astro";
 import { checkAdmin } from "@/lib/checkAdmin";
 import { createDataset } from "@/utils/chart";
 import { getSession } from "auth-astro/server";
+import { SALTO_BROADCASTER_ID } from "@/config";
+import { LucideBell } from "lucide-preact";
 
 const session = await getSession(Astro.request);
 
@@ -78,6 +80,25 @@ const chartOptions: Partial<ChartOptions> = {
         Hola, <span class="text-blue-400">{session?.user.name}</span>!
       </h2>
     </header>
+
+    {
+      session?.user.twitchId === SALTO_BROADCASTER_ID && (
+        <div class="flex justify-center flex-col items-center mb-8 sm:w-max font-rubik px-2 sm:px-6 uppercase font-medium text-sm text-white/70 mx-auto text-center py-1.5 rounded-full bg-violet-500/20 gap-1 hover:bg-violet-500/30 transition-all duration-300 hover:scale-105">
+          {" "}
+          <p class="text-white font-rubik text-md">
+            <LucideBell class="size-5 text-yellow-400 inline-block mr-2" />
+            Hemos habilitado
+            <span class="text-yellow-400 font-bold">
+              priviliegios especiales
+            </span>{" "}
+            para ti
+          </p>{" "}
+          <p class="normal-case	 text-white font-rubik text-md">
+            Podrás visualizar los votos de #SaltoAwards2024 y más
+          </p>
+        </div>
+      )
+    }
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div class="bg-black/50 rounded-lg p-4">
