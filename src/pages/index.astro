@@ -14,7 +14,10 @@ const IS_PROD = import.meta.env.PROD;
 export const prerender = true;
 ---
 
-<Layout title="Comunidad SaltoUruguayServer">
+<Layout
+  title="Comunidad SaltoUruguayServer"
+  description="Te damos la bienvenida a la comunidad del canal de SaltoUruguayServer en Twitch. ¡Votaciones abiertas para los #SaltoAwards2024!"
+>
   {!IS_PROD && <VoteCallToAction server:defer />}
   {
     !IS_VOTING_OPEN && (
