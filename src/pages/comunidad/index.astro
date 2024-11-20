@@ -34,6 +34,7 @@ const COMMUNITY_GRID_CARDS = [
     description: "Administra tus SaltoCoins y realiza transacciones.",
     image: "/images/banco.webp",
     soon: true,
+    soonCustomText: "Disponible el Viernes",
   },
 ];
 
@@ -117,7 +118,7 @@ if (!totalOfMemberCards) {
               aria-disabled={isDisabled}
               title={
                 card.soon
-                  ? "Próximamente"
+                  ? card.soonCustomText || "Próximamente"
                   : card.requiresLogin && !session
                     ? "Inicia sesión para acceder"
                     : ""
@@ -140,7 +141,7 @@ if (!totalOfMemberCards) {
                 <div class="absolute inset-0 flex bg-black/50 items-center justify-center text-white font-bold text-lg">
                   <span class="flex items-center flex-col gap-y-2">
                     <LucidePencilRuler size={24} />
-                    <span>Próximamente</span>
+                    <span>{card.soonCustomText || "Próximamente"}</span>
                   </span>
                 </div>
               )}
