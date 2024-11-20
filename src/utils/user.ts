@@ -7,7 +7,7 @@ import {
     createStaticAuthProvider,
     TWITCH_SCOPES,
 } from "@/lib/Twitch";
-import { eq, QueryPromise } from "drizzle-orm";
+import { count, eq, QueryPromise } from "drizzle-orm";
 
 
 
@@ -63,4 +63,10 @@ export const getMemberCardData = async (memberId: number) => {
     })
 
     return card
+}
+
+export const getTotalOfMemberCards = async () => {
+    const result = await client.select({ value: count() }).from(MemberCards).execute();
+    const { value } = result[0];
+    return value;
 }

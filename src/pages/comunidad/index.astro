@@ -2,6 +2,9 @@
 import { Container3D } from "@/components/Container3D";
 import { MemberCard } from "@/components/MemberCard";
 import Layout from "@/layouts/Layout.astro";
+import cacheService from "@/services/cache";
+
+import { getTotalOfMemberCards } from "@/utils/user";
 import { getSession } from "auth-astro/server";
 import { LucideLock, LucidePencilRuler } from "lucide-preact";
 
@@ -17,6 +20,16 @@ const COMMUNITY_GRID_CARDS = [
     soon: false,
   },
 ];
+
+const cache = cacheService.create({ ttl: 3600 });
+let totalOfMemberCards: number | null = await cache.get(
+  "total-of-member-cards"
+);
+
+if (!totalOfMemberCards) {
+  totalOfMemberCards = await getTotalOfMemberCards();
+  await cache.set("total-of-member-cards", totalOfMemberCards);
+}
 ---
 
 <Layout title="Comunidad">
@@ -55,6 +68,20 @@ const COMMUNITY_GRID_CARDS = [
         >!
       </h2>
     </header>
+
+    {
+      totalOfMemberCards && (
+        <div class="flex justify-center flex-col items-center mb-8 sm:w-max font-rubik px-2 sm:px-6 uppercase font-medium text-sm text-white/70 mx-auto text-center py-1.5 rounded-full bg-violet-500/20 gap-1 hover:bg-violet-500/30 transition-all duration-300 hover:scale-105">
+          <p class="text-white font-rubik text-md">
+            🔥
+            <span class="text-yellow-400 font-bold">{totalOfMemberCards}</span>
+            saltanos ya tienen su{" "}
+            <span class="text-yellow-400 font-bold">Member Card</span>
+            🔥
+          </p>
+        </div>
+      )
+    }
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
       {
