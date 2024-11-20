@@ -1,4 +1,4 @@
-import { ACHIEVEMENTS } from "@/consts/Achievements";
+import { ACHIEVEMENTS } from "../consts/Achievements";
 import { client } from "./client";
 import { AchievementsTable } from "./schema";
 
