@@ -22,7 +22,7 @@ const determineCanonicalURL = () => {
   return canonical || Astro.url.pathname;
 };
 
-//const canonicalURL = new URL(determineCanonicalURL(), Astro.site);
+const canonicalURL = new URL(determineCanonicalURL(), Astro.url);
 
 const titleToRender = computedTitle(title);
 ---
@@ -31,8 +31,7 @@ const titleToRender = computedTitle(title);
 
 <meta charset="UTF-8" />
 <meta name="description" content={description} />
-<!-- <link rel="canonical" href={canonicalURL} />
- -->
+<link rel="canonical" href={canonicalURL} />
 {
   preload?.map(({ href, as, type, rel = "preload", crossorigin }) => (
     <link {rel} {href} {as} {type} {crossorigin} />
@@ -51,8 +50,8 @@ const titleToRender = computedTitle(title);
 <meta name="twitter:title" content={titleToRender} />
 <meta name="twitter:image" content={new URL(image, Astro.url)} />
 
-<!-- <meta property="og:url" content={canonicalURL} />
- -->
+<meta property="og:url" content={canonicalURL} />
+
 <meta property="og:type" content="website" />
 <meta property="og:title" content={titleToRender} />
 <meta property="og:description" content={description} />
