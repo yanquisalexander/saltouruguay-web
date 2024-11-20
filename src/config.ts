@@ -5,3 +5,5 @@ export const EVENT_TIMESTAMP = 1734737400000;
 export const SALTO_BROADCASTER_ID = '238809411'
 
 export const IS_VOTES_OPEN = Date.now() > VOTES_OPEN_TIMESTAMP;
+
+export const PUSHER_KEY = "15af022785152446b456"

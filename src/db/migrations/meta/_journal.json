@@ -22,6 +22,20 @@
       "when": 1732055167126,
       "tag": "0002_sudden_ronan",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1732070898786,
+      "tag": "0003_odd_loa",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1732071158022,
+      "tag": "0004_brave_jack_power",
+      "breakpoints": true
     }
   ]
 }

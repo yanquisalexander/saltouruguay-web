@@ -8,6 +8,8 @@ import {
     TWITCH_SCOPES,
 } from "@/lib/Twitch";
 import { count, eq, QueryPromise } from "drizzle-orm";
+import { unlockAchievement } from "./achievements";
+import { ACHIEVEMENTS } from "@/consts/Achievements";
 
 
 
@@ -40,24 +42,47 @@ export const getUserSubscription = async (twitchUserId: string, token: string) =
 
 export const updateStickers = async (memberId: number, stickers: string[]) => {
     try {
-        await client.insert(MemberCards).values({
-            userId: memberId.toString(),
-            stickers,
-        }).onConflictDoUpdate({
-            target: [MemberCards.userId],
-            set: {
-                stickers,
-                updatedAt: new Date()
+        // Verifica si ya existe un registro para la membercard
+        const existingMemberCard = await client
+            .select()
+            .from(MemberCards)
+            .where(eq(MemberCards.userId, memberId.toString()))
+            .execute();
+
+        // Si no existe un registro previo, desbloquea el logro
+        if (!existingMemberCard.length) {
+            try {
+                await unlockAchievement({
+                    userId: memberId,
+                    achievementId: ACHIEVEMENTS.CREATED_MEMBER_CARD,
+                });
+            } catch (error) {
+                console.error("Error unlocking achievement: Maybe it was already unlocked?", error);
             }
-        })
+        }
+
+        // Inserta o actualiza el registro
+        await client
+            .insert(MemberCards)
+            .values({
+                userId: memberId.toString(),
+                stickers,
+            })
+            .onConflictDoUpdate({
+                target: [MemberCards.userId],
+                set: {
+                    stickers,
+                    updatedAt: new Date(),
+                },
+            });
+
     } catch (error) {
-        console.error(error)
+        console.error("Error updating stickers:", error);
     }
-}
+};
+
 
 export const getMemberCardData = async (memberId: number) => {
-
-
     const card = await client.query.MemberCards.findFirst({
         where: eq(MemberCards.userId, memberId.toString()),
     })

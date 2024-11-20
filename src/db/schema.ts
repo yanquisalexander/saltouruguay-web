@@ -42,3 +42,19 @@ export const MemberCards = pgTable("member_cards", {
         .notNull()
         .default(sql`current_timestamp`),
 });
+
+export const AchievementsTable = pgTable('achievements', {
+    achievementId: text('achievement_id').primaryKey(),
+    createdAt: text('created_at'),
+    updatedAt: text('updated_at'),
+
+})
+
+export const UserAchievementsTable = pgTable('user_achievements', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => UsersTable.id),
+    achievementId: text('achievement_id').references(() => AchievementsTable.achievementId),
+    unlockedAt: timestamp('unlocked_at').notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueUserAchievement: unique().on(t.userId, t.achievementId)
+}));

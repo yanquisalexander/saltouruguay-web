@@ -25,6 +25,10 @@ export default defineConfig({
     schema: {
       TWITCH_CLIENT_ID: envField.string({ context: 'server', access: 'public' }),
       TWITCH_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret' }),
+      PUSHER_APP_ID: envField.string({ context: 'server', access: 'public' }),
+      PUSHER_APP_KEY: envField.string({ context: 'server', access: 'public' }),
+      PUSHER_APP_SECRET: envField.string({ context: 'server', access: 'secret' }),
+      PUSHER_APP_CLUSTER: envField.string({ context: 'server', access: 'public' }),
     },
   },
   site: "https://saltouruguayserver.com/",

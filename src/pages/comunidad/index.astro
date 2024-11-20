@@ -70,7 +70,7 @@ if (!totalOfMemberCards) {
     </header>
 
     {
-      totalOfMemberCards && (
+      totalOfMemberCards ? (
         <div class="flex justify-center flex-col items-center mb-8 sm:w-max font-rubik px-2 sm:px-6 uppercase font-medium text-sm text-white/70 mx-auto text-center py-1.5 rounded-full bg-violet-500/20 gap-1 hover:bg-violet-500/30 transition-all duration-300 hover:scale-105">
           <p class="text-white font-rubik text-md">
             🔥
@@ -80,7 +80,7 @@ if (!totalOfMemberCards) {
             🔥
           </p>
         </div>
-      )
+      ) : null
     }
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">

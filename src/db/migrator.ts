@@ -2,19 +2,20 @@ import "dotenv/config";
 import { client, pool } from "./client";
 import { resolve } from "node:path";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { seed } from "./seed";
 
 const __dirname = resolve();
 
 export const migrateDatabase = async () => {
-    await migrate(client, {
-        migrationsFolder: resolve(__dirname, "./src/db/migrations"),
-    });
+  await migrate(client, {
+    migrationsFolder: resolve(__dirname, "./src/db/migrations"),
+  });
 
-    /* try {
-      await seed();
-    } catch (error) {
-      console.error("Error seeding database", error);
-    } */
+  try {
+    await seed();
+  } catch (error) {
+    console.error("Error seeding database", error);
+  }
 };
 
 /* 
@@ -23,13 +24,13 @@ export const migrateDatabase = async () => {
 */
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-    migrateDatabase()
-        .then(() => {
-            console.log("Database migrated successfully");
-            pool.end();
-        })
-        .catch((err) => {
-            console.error("Error migrating database", err);
-            pool.end();
-        });
+  migrateDatabase()
+    .then(() => {
+      console.log("Database migrated successfully");
+      pool.end();
+    })
+    .catch((err) => {
+      console.error("Error migrating database", err);
+      pool.end();
+    });
 }

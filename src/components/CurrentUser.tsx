@@ -4,6 +4,7 @@ import { signIn, signOut } from "auth-astro/client";
 import { LucideLoader2, LucideLogIn, LucideX } from "lucide-preact";
 import { useState, useEffect, useRef } from "preact/hooks";
 import { toast } from "sonner";
+import { AchievementsNotifier } from "./AchievementsNotifier";
 
 
 export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Session['user'] | null, isPrerenderedPath: boolean }) => {
@@ -95,60 +96,63 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
 
             {/* Mostrar información del usuario solo si hay un usuario autenticado */}
             {user && (
-                <div className="relative" ref={dropdownRef}>
-                    <button
-                        className="py-2 px-3 justify-center rounded-[10px] font-bold border border-transparent hover:bg-brand-gray/5 hover:border-brand-gray/10 flex items-center gap-x-2.5 leading-none hover:scale-105 transition-transform duration-300 text-white"
-                        onClick={toggleDropdown}
-                    >
-                        <img
-                            src={user?.image || undefined}
-                            alt={user?.name || "User"}
-                            className="rounded-full w-8 h-8"
-                        />
-                        <span className="hidden md:flex">{user?.name}</span>
-                    </button>
-                    {dropdownOpen && (
-                        <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                            <div className="py-1" role="menu">
-                                {
-                                    !user.discordId && (
-                                        <button
-                                            onClick={linkDiscord}
-                                            className="block w-full text-left px-4 text-nowrap py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            Vincular Discord
-                                        </button>
-                                    )
-                                }
-                                <a
-                                    href="/profile"
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                    Perfil
-                                </a>
-                                {user.isAdmin && (
+                <>
+                    <div className="relative" ref={dropdownRef}>
+                        <button
+                            className="py-2 px-3 justify-center rounded-[10px] font-bold border border-transparent hover:bg-brand-gray/5 hover:border-brand-gray/10 flex items-center gap-x-2.5 leading-none hover:scale-105 transition-transform duration-300 text-white"
+                            onClick={toggleDropdown}
+                        >
+                            <img
+                                src={user?.image || undefined}
+                                alt={user?.name || "User"}
+                                className="rounded-full w-8 h-8"
+                            />
+                            <span className="hidden md:flex">{user?.name}</span>
+                        </button>
+                        {dropdownOpen && (
+                            <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                <div className="py-1" role="menu">
+                                    {
+                                        !user.discordId && (
+                                            <button
+                                                onClick={linkDiscord}
+                                                className="block w-full text-left px-4 text-nowrap py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                Vincular Discord
+                                            </button>
+                                        )
+                                    }
                                     <a
-                                        href="/admin"
+                                        href="/profile"
                                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                     >
-                                        Administración
+                                        Perfil
                                     </a>
-                                )}
-                                <a
-                                    href="/api/auth/signout"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        // @ts-ignore
-                                        signOut({ callbackUrl: '/' });
-                                    }}
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                    Cerrar sesión
-                                </a>
+                                    {user.isAdmin && (
+                                        <a
+                                            href="/admin"
+                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                        >
+                                            Administración
+                                        </a>
+                                    )}
+                                    <a
+                                        href="/api/auth/signout"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            // @ts-ignore
+                                            signOut({ callbackUrl: '/' });
+                                        }}
+                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    >
+                                        Cerrar sesión
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                    <AchievementsNotifier userId={user.id} />
+                </>
             )}
         </div>
     );
