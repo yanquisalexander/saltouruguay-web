@@ -1,5 +1,16 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { checkAdmin } from "@/lib/checkAdmin";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+// Si la función `checkAdmin` retorna un `Response`, deberías manejarlo explícitamente:
+const checkResult = await checkAdmin(session);
+if (checkResult) {
+  // Manejar la respuesta retornada (404 en este caso).
+  return checkResult;
+}
 ---
 
 <Layout title="Administrador" />
