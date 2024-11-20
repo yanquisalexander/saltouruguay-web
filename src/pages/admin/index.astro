@@ -1,6 +1,9 @@
 ---
+import Chart from "@/components/Chart.astro";
+import type { ChartOptions } from "chart.js";
 import Layout from "@/layouts/Layout.astro";
 import { checkAdmin } from "@/lib/checkAdmin";
+import { createDataset } from "@/utils/chart";
 import { getSession } from "auth-astro/server";
 
 const session = await getSession(Astro.request);
@@ -11,6 +14,79 @@ if (checkResult) {
   // Manejar la respuesta retornada (404 en este caso).
   return checkResult;
 }
+
+const visitorStats = await fetch(
+  "https://librecounter.org/saltouruguayserver.com/siteStats"
+).then((res) => res.json());
+
+const data = {
+  labels: visitorStats.byDay.map((stat: any) => stat.day),
+  datasets: [
+    createDataset({
+      label: "Visitas",
+      data: visitorStats.byDay.map((stat: any) => stat.value),
+      borderColor: "rgb(75, 192, 192)",
+      tension: 0.2,
+      fill: true,
+    }),
+  ],
+};
+
+const chartOptions: Partial<ChartOptions> = {
+  responsive: true,
+  interaction: {
+    intersect: false,
+    mode: "index",
+  },
+  plugins: {
+    legend: {
+      display: false,
+    },
+  },
+};
 ---
 
-<Layout title="Administrador" />
+<Layout title="Administrador">
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <header class="relative z-10 flex flex-col justify-center h-full">
+      <div class="flex items-center gap-x-4">
+        <div
+          class="relative animate-fade-in-up"
+          style="--floating-duration: 5000ms"
+        >
+          <img
+            src="/images/logo_salto.webp"
+            alt="SaltoUruguayServer"
+            class="size-18 md:size-24 w-auto object-contain aspect-square animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)] saturate-150"
+          />
+          <img
+            src="/images/logo_salto.webp"
+            alt="SaltoUruguayServer"
+            class="absolute blur-md brightness-125 saturate-200 inset-0 size-18 md:size-24 w-auto object-contain aspect-square z-[-1] animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)]"
+          />
+        </div>
+        <h1
+          class="text-3xl animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen"
+        >
+          Administrador
+        </h1>
+      </div>
+
+      <h2
+        class="text-lg animate-fade-in-up animate-delay-300 font-rubik uppercase text-white mix-blend-screen my-5 sm:pb-10"
+      >
+        Hola, <span class="text-blue-400">{session?.user.name}</span>!
+      </h2>
+    </header>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-10">
+      <div class="bg-black/50 rounded-lg p-4">
+        <h3 class="text-xl font-bold text-white">Estadísticas de visitas</h3>
+        <p class="text-white/70 mb-4">
+          Estadísticas de visitas a la página por día.
+        </p>
+        <Chart data={data} chartOptions={chartOptions} />
+      </div>
+    </div>
+  </div>
+</Layout>

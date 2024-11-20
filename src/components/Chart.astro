@@ -1,0 +1,58 @@
+---
+import type { createDataset } from "@/utils/chart";
+import type { ChartOptions } from "chart.js";
+
+interface Props {
+  data: {
+    labels: string[];
+    datasets: ReturnType<typeof createDataset>[];
+  };
+  chartOptions?: Partial<ChartOptions>;
+}
+
+const { data, chartOptions } = Astro.props;
+---
+
+<canvas
+  class="chart-element flex-1 bg-black/50 rounded-lg"
+  data-chart-data={JSON.stringify(data)}
+  data-chart-options={JSON.stringify(chartOptions)}></canvas>
+
+<script>
+  import { $, $$ } from "@/lib/dom-selector";
+  import Chart from "chart.js/auto";
+
+  document.addEventListener("astro:page-load", () => {
+    const charts = $$(".chart-element");
+    charts.forEach((chartElement: HTMLElement) => {
+      const canvasElement = chartElement as HTMLCanvasElement;
+
+      let data = [];
+
+      const dataAttr = chartElement.getAttribute("data-chart-data");
+      if (dataAttr) {
+        data = JSON.parse(dataAttr);
+        console.log(data);
+      }
+
+      let options = {};
+
+      const optionsAttr = chartElement.getAttribute("data-chart-options");
+      if (optionsAttr) {
+        options = JSON.parse(optionsAttr);
+      }
+
+      const ctx = canvasElement.getContext("2d");
+
+      if (!ctx) {
+        return;
+      }
+
+      new Chart(ctx, {
+        type: "line",
+        data,
+        options,
+      });
+    });
+  });
+</script>
