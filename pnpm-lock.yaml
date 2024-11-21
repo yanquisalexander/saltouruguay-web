@@ -86,6 +86,9 @@ importers:
       lucide-preact:
         specifier: ^0.460.0
         version: 0.460.0(preact@10.24.3)
+      luxon:
+        specifier: ^3.5.0
+        version: 3.5.0
       motion:
         specifier: ^11.11.17
         version: 11.11.17(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -117,6 +120,9 @@ importers:
       '@types/canvas-confetti':
         specifier: ^1.6.4
         version: 1.6.4
+      '@types/luxon':
+        specifier: ^3.4.2
+        version: 3.4.2
       '@types/pg':
         specifier: ^8.11.10
         version: 8.11.10
@@ -1431,6 +1437,9 @@ packages:
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
 
+  '@types/luxon@3.4.2':
+    resolution: {integrity: sha512-TifLZlFudklWlMBfhubvgqTXRzLDI5pCbGa4P8a3wPyUQSW+1xQ5eDsreP9DWHX3tjq1ke96uYG/nwundroWcA==}
+
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
 
@@ -2414,6 +2423,10 @@ packages:
     resolution: {integrity: sha512-5wjHmK5PZrCg4wjlRUZOyhNSnUEMNW42f4fIn11s0K5COeSQpRLuPaH+QFrjz+1Me5DBgfBBL528rgD9ClFqCA==}
     peerDependencies:
       preact: ^10.5.13
+
+  luxon@3.5.0:
+    resolution: {integrity: sha512-rh+Zjr6DNfUYR3bPwJEnuwDdqMbxZW7LOQfUN4B54+Cl+0o5zaU9RJ6bcidfDtC1cWCZXQ+nvX8bf6bAji37QQ==}
+    engines: {node: '>=12'}
 
   magic-string@0.30.13:
     resolution: {integrity: sha512-8rYBO+MsWkgjDSOvLomYnzhdwEG51olQ4zL5KXnNJWV5MNmrb4rTZdrtkhxjnD/QyZUqR/Z/XDsUs/4ej2nx0g==}
@@ -4679,6 +4692,8 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
 
+  '@types/luxon@3.4.2': {}
+
   '@types/mdast@4.0.4':
     dependencies:
       '@types/unist': 3.0.3
@@ -5741,6 +5756,8 @@ snapshots:
   lucide-preact@0.460.0(preact@10.24.3):
     dependencies:
       preact: 10.24.3
+
+  luxon@3.5.0: {}
 
   magic-string@0.30.13:
     dependencies:
