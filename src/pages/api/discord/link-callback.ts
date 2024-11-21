@@ -95,7 +95,7 @@ export const GET = async ({ request, site }: APIContext) => {
         return new Response(null, {
             status: 302,
             headers: {
-                Location: "/?discordLinked",
+                Location: "/?discordLinked=true",
             },
         });
 

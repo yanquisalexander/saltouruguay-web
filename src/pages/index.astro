@@ -58,3 +58,15 @@ export const prerender = true;
 
   <Sponsors />
 </Layout>
+
+<script>
+  import { toast } from "sonner";
+
+  document.addEventListener("astro:page-load", () => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (Boolean(params.get("discordLinked"))) {
+      toast.success("¡Tu cuenta de Discord ha sido vinculada correctamente!");
+    }
+  });
+</script>
