@@ -39,8 +39,8 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     };
 
     const linkDiscord = async () => {
-        toast('Próximamente...')
-        return
+        //toast('Próximamente...')
+        //return
         window.location.href = `/api/discord/link`
     }
 

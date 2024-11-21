@@ -9,6 +9,8 @@ export const SALTO_BROADCASTER_ID = '238809411'
 
 export const PUSHER_KEY = "15af022785152446b456"
 
+export const SALTO_DISCORD_GUILD_ID = '700185692826763264'
+
 
 const VOTES_CLOSE_TIMESTAMP = DateTime.fromMillis(EVENT_TIMESTAMP, { zone: 'America/Montevideo' })
     .minus({ days: 1 })
