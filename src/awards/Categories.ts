@@ -241,19 +241,19 @@ Gusarz */
                 id: NOMINEES.vickyskyger.username,
             },
             {
-                id: NOMINEES.ssebasensei.username,
+                id: NOMINEES.ssebasensei08.username,
             },
             {
                 id: NOMINEES.raika_frost.username,
             },
             {
-                id: NOMINEES.lehuan.username,
+                id: NOMINEES.leuhan_ssj.username,
             },
             {
-                id: NOMINEES.unicornio.username,
+                id: NOMINEES.unicorniio25.username,
             },
             {
-                id: NOMINEES.gameover.username,
+                id: NOMINEES.gameoveruy.username,
             },
             {
                 id: NOMINEES.julianmartinr.username,
@@ -267,7 +267,7 @@ Gusarz */
 
 
             {
-                id: NOMINEES.guada_tostado.username,
+                id: NOMINEES.guadatostado.username,
             },
             {
                 id: NOMINEES.maarizzz.username,
@@ -276,13 +276,13 @@ Gusarz */
                 id: NOMINEES.cabezagames.username,
             },
             {
-                id: NOMINEES.solbella.username,
+                id: NOMINEES.solbela__.username,
             },
             {
                 id: NOMINEES.labarista_.username,
             },
             {
-                id: NOMINEES.darkmoon.username,
+                id: NOMINEES.the_darkmoon.username,
             },
             {
                 id: NOMINEES.everexpro.username,

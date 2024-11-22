@@ -19,17 +19,17 @@ export const NOMINEES = {
         username: "turbante_uy",
         displayName: "Turbante_uy"
     },
-    darkmoon: {
-        username: "darkmoon",
-        displayName: "DarkMoon"
+    the_darkmoon: {
+        username: "the_darkmoon",
+        displayName: "the_darkmoon"
     },
     chunninja: {
         username: "chunninja",
         displayName: "chunninja"
     },
-    gameover: {
-        username: "gameover",
-        displayName: "GameOver"
+    gameoveruy: {
+        username: "gameoveruy",
+        displayName: "GameOverUY"
     },
     dunk1to: {
         username: "dunk1to",
@@ -76,8 +76,8 @@ export const NOMINEES = {
         username: "vickyskyger",
         displayName: "VickySkyger"
     },
-    guada_tostado: {
-        username: "guada_tostado",
+    guadatostado: {
+        username: "guadatostado",
         displayName: "Guada Tostado"
     },
     maarizzz: {
@@ -128,9 +128,9 @@ export const NOMINEES = {
         username: "andruxnorris",
         displayName: "Andruxnorris"
     },
-    ssebasensei: {
-        username: "ssebasensei",
-        displayName: "Ssebasensei"
+    ssebasensei08: {
+        username: "ssebasensei08",
+        displayName: "SsebaSensei08"
     },
     coroneljuan: {
         username: "coroneljuan",
@@ -186,11 +186,11 @@ export const NOMINEES = {
     },
     raika_frost: {
         username: "raika_frost",
-        displayName: "raika_frost"
+        displayName: "Raika_Frost"
     },
     cabezagames: {
         username: "cabezagames",
-        displayName: "Cabezagames"
+        displayName: "CabezaGames"
     },
     mailo_duy: {
         username: "mailo_duy",
@@ -236,13 +236,13 @@ export const NOMINEES = {
         username: "gordoyorugua",
         displayName: "gordoyorugua"
     },
-    lehuan: {
-        username: "lehuan",
-        displayName: "lehuan"
+    leuhan_ssj: {
+        username: "leuhan_ssj",
+        displayName: "Leuhan_SSJ"
     },
-    solbella: {
-        username: "solbella",
-        displayName: "Solbella"
+    solbela__: {
+        username: "solbela__",
+        displayName: "Solbela__"
     },
     criiiisss_19: {
         username: "criiiisss_19",
@@ -292,9 +292,9 @@ export const NOMINEES = {
         username: "conejomalvado435",
         displayName: "conejomalvado435"
     },
-    unicornio: {
-        username: "unicornio",
-        displayName: "Unicornio"
+    unicorniio25: {
+        username: "unicorniio25",
+        displayName: "Unicorniio25"
     },
     groopsy: {
         username: "groopsy",

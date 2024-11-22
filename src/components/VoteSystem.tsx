@@ -6,6 +6,7 @@ import { VoteNominee } from "./VoteNominee"
 import { toast } from "sonner"
 import { VoteFinal } from "./VoteFinal"
 import { IS_VOTES_OPEN } from "@/config"
+import { NOMINEES } from "@/awards/Nominees"
 
 const MAX_VOTES_PER_CATEGORY = 2;
 
