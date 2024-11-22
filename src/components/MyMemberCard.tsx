@@ -152,6 +152,7 @@ export const MyMemberCard = ({ session, stickers = [], tier }: { session: Sessio
                                     className="max-w-[400px] md:max-w-[700px] mx-auto"
                                     number={parseInt(session?.user?.id as string)}
                                     selectedStickers={selectedStickers}
+                                    skin="classic"
                                     user={{
                                         avatar,
                                         username,
@@ -166,6 +167,7 @@ export const MyMemberCard = ({ session, stickers = [], tier }: { session: Sessio
                             number={parseInt(session?.user?.id as string)}
                             selectedStickers={selectedStickers}
                             handleRemoveSticker={handleRemoveSticker}
+                            skin="classic"
                             user={{
                                 avatar,
                                 username,
