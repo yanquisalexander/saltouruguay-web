@@ -45,7 +45,7 @@ const { votes } = Astro.props;
                   return (
                     <li class="flex gap-y-2 gap-x-4 items-center">
                       <img
-                        src={`https://ui-avatars.com/api/?name=${nomineeFromConst?.avatar}`}
+                        src={`/images/nominees/${nomineeFromConst?.username}.webp`}
                         alt={nomineeFromConst?.displayName}
                         class="size-10 rounded-full"
                       />

@@ -101,7 +101,7 @@ export const VoteFinal = ({ user, categories, votes, onReturn }: { user: Session
                                         const nomineeFromConst = Object.values(NOMINEES).find(n => n.username === nominee.id)
                                         return (
                                             <li key={nominee.id} class="flex gap-y-2 gap-x-4 items-center">
-                                                <img src={`https://ui-avatars.com/api/?name=${nomineeFromConst?.avatar}`} alt={nomineeFromConst?.displayName} class="size-10 rounded-full" />
+                                                <img src={`/images/nominees/${nomineeFromConst?.username}.webp`} alt={nomineeFromConst?.displayName} class="size-10 rounded-full" />
                                                 <div class="flex flex-col gap-y-2 items-center">
                                                     <span class="font-bold">{nomineeFromConst?.displayName}</span>
 
