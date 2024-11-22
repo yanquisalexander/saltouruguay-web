@@ -40,6 +40,7 @@ export const VotesTable = pgTable("votes", {
 export const MemberCards = pgTable("member_cards", {
     userId: varchar("user_id").primaryKey(),
     stickers: text("stickers").array().notNull(),
+    skin: varchar("skin").notNull().default("classic"),
     updatedAt: timestamp("updated_at")
         .notNull()
         .default(sql`current_timestamp`),
