@@ -19,6 +19,8 @@ export const VoteFinal = ({ user, categories, votes, onReturn }: { user: Session
     }
 
     const sendVotes = async () => {
+        console.log("Enviando votos")
+        console.log({ votes })
         setLoading(true)
         setAllowBack(false)
         try {
