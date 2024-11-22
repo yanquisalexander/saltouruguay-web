@@ -44,9 +44,9 @@ export const NOMINEES = {
         username: "acucala_pinki",
         displayName: "acucala_pinki"
     },
-    ronaldoelcubano: {
-        username: "ronaldoelcubano",
-        displayName: "Ronaldoelcubano"
+    ronaldoelcubanoo: {
+        username: "ronaldoelcubanoo",
+        displayName: "ronaldoelcubanoo"
     },
     itspapidraku: {
         username: "itspapidraku",
@@ -112,9 +112,9 @@ export const NOMINEES = {
         username: "queen_judith",
         displayName: "Queen_Judith"
     },
-    munione: {
-        username: "munione",
-        displayName: "Munione"
+    mun1one: {
+        username: "mun1one",
+        displayName: "mun1one"
     },
     bradterra: {
         username: "bradterra",
@@ -160,9 +160,9 @@ export const NOMINEES = {
         username: "nellyuru",
         displayName: "NellyURU"
     },
-    rubiorusso: {
-        username: "rubiorusso",
-        displayName: "rubiorusso"
+    elrubiusruso: {
+        username: "elrubiusruso",
+        displayName: "elrubiusruso"
     },
     claudio25uru: {
         username: "claudio25uru",
@@ -375,6 +375,10 @@ export const NOMINEES = {
     ville064: {
         username: "ville064",
         displayName: "Ville064"
-    }
+    },
+    zombita_renegada: {
+        username: "zombita_renegada",
+        displayName: "Zombita Renegada"
+    },
 };
 

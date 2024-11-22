@@ -39,7 +39,7 @@ export const CATEGORIES: Category[] = [
         name: "Más fieles",
         nominees: [
             {
-                id: NOMINEES.ronaldoelcubano.username,
+                id: NOMINEES.ronaldoelcubanoo.username,
             },
             {
                 id: NOMINEES.hayafoxuy.username,
@@ -76,7 +76,7 @@ export const CATEGORIES: Category[] = [
                 id: NOMINEES.csilveira10.username,
             },
             {
-                id: NOMINEES.rubiorusso.username,
+                id: NOMINEES.elrubiusruso.username,
             },
             {
                 id: NOMINEES.fixner.username,
@@ -136,7 +136,7 @@ Gusarz */
                 id: NOMINEES.tellier50.username,
             },
             {
-                id: NOMINEES.munione.username,
+                id: NOMINEES.mun1one.username,
             },
             {
                 id: NOMINEES.labarista_.username,
@@ -209,14 +209,7 @@ Gusarz */
         id: "mas-alegre-del-chat",
         name: "Más alegre del chat",
         nominees: [
-            /* 
-            Flordeluna
- Andruxnorris
- DimaNacho
- Gordoyorugua
- Conejomalvado
- chunninja
- viejokamikazi */
+
             {
                 id: NOMINEES.florrdeluna.username,
             },
@@ -392,7 +385,7 @@ Faku Zárate */
                 id: NOMINEES.tommysl18.username,
             },
             {
-                id: NOMINEES.munione.username,
+                id: NOMINEES.mun1one.username,
             },
             {
                 id: NOMINEES.cianuro1503.username,
@@ -416,13 +409,7 @@ Faku Zárate */
         id: "mas-dispuesto",
         name: "Más dispuesto",
         nominees: [
-            /* fabi y guille
-  Calderita de lata
-  Claymore
-  Tranquiencasa
-  titer tv
-  genarox
-  astilla09 */
+
             {
                 id: NOMINEES.fabi_guille.username,
             },
@@ -443,6 +430,9 @@ Faku Zárate */
             },
             {
                 id: NOMINEES.astilla09.username,
+            },
+            {
+                id: NOMINEES.zombita_renegada.username,
             }
         ]
 
