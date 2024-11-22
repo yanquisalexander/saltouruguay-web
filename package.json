@@ -12,6 +12,7 @@
     "db:migrate": "tsx ./src/db/migrator.ts"
   },
   "dependencies": {
+    "@appnest/masonry-layout": "^2.2.3",
     "@astrojs/check": "^0.9.4",
     "@astrojs/preact": "^3.5.4",
     "@astrojs/sitemap": "^3.2.1",
