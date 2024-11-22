@@ -1,0 +1,70 @@
+---
+import { LucideX } from "lucide-preact";
+import { markdown } from "@astropub/md";
+
+const earnCoinsContent = `
+**¡Gana más SaltoCoins!**
+
+Aquí tienes algunas formas de obtener más SaltoCoins:
+
+- **Participa en eventos semanales** como "¿Dónde está el Calvo?" para obtener puntos que se convierten en SaltoCoins.
+- **Completa misiones diarias**, como iniciar sesión o interactuar con otros usuarios.
+- **Presta SaltoCoins** en el Banco Saltano para recibir pagos con intereses.
+- **Invita amigos** a unirse a la plataforma y recibe recompensas por cada registro exitoso.
+`;
+
+const parsedMarkdown = markdown(earnCoinsContent);
+---
+
+<dialog
+  id="earn-coins-modal"
+  class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+>
+  <form id="earn-coins-modal-close" class="absolute top-5 right-5">
+    <button type="button" class="text-white">
+      <LucideX class="w-6 h-6" />
+    </button>
+  </form>
+
+  <div class="flex flex-col items-center space-y-4">
+    <img src="/favicon.svg" class="aspect-square size-24" />
+
+    <div
+      class="text-center prose prose-invert font-rubik text-sm"
+      set:html={parsedMarkdown}
+    />
+  </div>
+
+  <div class="flex flex-col space-y-4 mt-8">
+    <button
+      type="button"
+      class="accept w-full py-3 bg-electric-violet-500 rounded-lg text-white transition duration-300 hover:bg-electric-violet-600"
+    >
+      Entendido
+    </button>
+  </div>
+</dialog>
+
+<div
+  class="dialog-background inset-0 w-dvw h-dvh backdrop-blur-sm bg-white/5 z-[9999999] animate-blurred-fade-in"
+>
+</div>
+
+<script>
+  import { $ } from "@/lib/dom-selector";
+
+  const addEarnCoinsListeners = () => {
+    const $earnCoinsModal = $("#earn-coins-modal") as HTMLDialogElement;
+    const $closeButton = $("#earn-coins-modal-close button");
+
+    $closeButton?.addEventListener("click", () => {
+      $earnCoinsModal.close();
+    });
+
+    $earnCoinsModal.querySelector(".accept")?.addEventListener("click", () => {
+      $earnCoinsModal.close();
+    });
+  };
+
+  document.addEventListener("astro:page-load", addEarnCoinsListeners);
+</script>
