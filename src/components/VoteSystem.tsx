@@ -5,6 +5,7 @@ import { useEffect, useState } from "preact/hooks"
 import { VoteNominee } from "./VoteNominee"
 import { toast } from "sonner"
 import { VoteFinal } from "./VoteFinal"
+import { IS_VOTES_OPEN } from "@/config"
 
 const MAX_VOTES_PER_CATEGORY = 2;
 
@@ -21,9 +22,17 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
 
     const hasAlmostOneVotePerCategory = categories.every(category => votesByCategory[category.id]?.length > 0)
 
+    const storageDraftKey = `saltoawards-${new Date().getFullYear()}`
+
     useEffect(() => {
-        const savedVotes = localStorage.getItem(`saltoawards-${new Date().getFullYear()}`)
+        const savedVotes = localStorage.getItem(storageDraftKey)
         if (savedVotes) {
+
+            if (!IS_VOTES_OPEN) {
+                localStorage.removeItem(storageDraftKey)
+                return
+            }
+
             const parsedVotes = JSON.parse(savedVotes)
 
             if (Object.keys(parsedVotes).length === 0) return
@@ -75,7 +84,7 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
 
     useEffect(() => {
         console.log({ votesByCategory })
-        localStorage.setItem(`saltoawards-${new Date().getFullYear()}`, JSON.stringify(votesByCategory))
+        localStorage.setItem(storageDraftKey, JSON.stringify(votesByCategory))
     }, [votesByCategory])
 
     const handleNextCategory = () => {
