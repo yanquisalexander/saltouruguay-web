@@ -9,6 +9,7 @@ import { STICKERS } from "@/consts/Stickers";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
+import { Tooltip } from "./Tooltip";
 
 export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'classic' }: { session: Session, stickers: string[], tier: number | null, initialSkin: typeof MemberCardSkins[number]['id'] }) => {
     const [selectedStickers, setSelectedStickers] = useState(() => {
@@ -223,16 +224,25 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
 
                     <div
                         class="flex flex-row w-full p-8 max-h-[30rem] overflow-x-auto text-center flex-nowrap md:flex-wrap gap-x-8 gap-y-12 lg:pb-20 hidden-scroll h-40 relative"
-                        style="mask-image:linear-gradient(to top, transparent, #000 40%)"
                     >
                         {
-                            MemberCardSkins.map(({ id, name }) => (
-                                <button class={`aspect-square size-12 flex items-center justify-center border-2 p-2 rounded-md border-white/40 transition-all hover:bg-green-500/20 hover:border-white/60 ${skin === id ? 'border-white/60 bg-green-900/40' : 'border-transparent'}`}
-                                    onClick={() => handleSkinChange(id)}>
-                                    <div class="flex items-center justify-center w-12 h-12 transition-all cursor-pointer">
-                                        <img class="size-8 aspect-square object-contain" src={`/images/member-card-skins/${id}-icon.webp`} alt="" />
-                                    </div>
-                                </button>
+                            MemberCardSkins.map(({ id, name, description }) => (
+                                <Tooltip
+                                    tooltipClassName='w-[200px]'
+                                    key={`tooltip-skin-${id}`}
+                                    tooltipPosition='top'
+                                    text={description}
+                                    offsetNumber={16}
+                                >
+                                    <button class={`aspect-square size-12 flex items-center justify-center border-2 p-2 rounded-md border-white/40 transition-all hover:bg-green-500/20 hover:border-white/60 ${skin === id ? 'border-white/60 bg-green-900/40' : 'border-transparent'}`}
+                                        onClick={() => handleSkinChange(id)}>
+
+                                        <div class="flex items-center justify-center w-12 h-12 transition-all cursor-pointer">
+                                            <img class="size-8 aspect-square object-contain" src={`/images/member-card-skins/${id}-icon.webp`} alt="" />
+                                        </div>
+                                    </button>
+                                </Tooltip>
+
                             ))
 
                         }
