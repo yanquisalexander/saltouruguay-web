@@ -5,6 +5,9 @@ import { LucideLoader2, LucideLogIn, LucideX } from "lucide-preact";
 import { useState, useEffect, useRef } from "preact/hooks";
 import { toast } from "sonner";
 import { AchievementsNotifier } from "./AchievementsNotifier";
+import { CinematicPlayer } from "./CinematicPlayer";
+import Pusher from "pusher-js";
+import { PUSHER_KEY } from "@/config";
 
 
 export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Session['user'] | null, isPrerenderedPath: boolean }) => {
@@ -14,6 +17,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [signingIn, setSigningIn] = useState(false);
     const [user, setUser] = useState<Session['user'] | null>(initialUser);
+    const [pusher, setPusher] = useState<Pusher | null>(null);
 
     const fetchUserFromServer = async () => {
         setLoading(true);
@@ -67,6 +71,14 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [dropdownOpen]);
+
+    if (user && !pusher) {
+        setPusher(new Pusher(PUSHER_KEY, {
+            cluster: "us2"
+        }));
+    }
+
+
 
     return (
         <div className="flex items-center ml-2">
@@ -151,7 +163,15 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                             </div>
                         )}
                     </div>
-                    <AchievementsNotifier userId={user.id} />
+                    {
+                        pusher && (
+                            <>
+                                <AchievementsNotifier userId={user.id} pusher={pusher} />
+                                <CinematicPlayer userId={user.id} pusher={pusher} />
+                            </>
+                        )
+                    }
+
                 </>
             )}
         </div>

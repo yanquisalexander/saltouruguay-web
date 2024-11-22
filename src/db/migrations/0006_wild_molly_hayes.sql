@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "played_system_cinematics" text[] DEFAULT '{}';

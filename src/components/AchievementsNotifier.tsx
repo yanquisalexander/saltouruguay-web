@@ -1,25 +1,20 @@
-import { PUSHER_KEY } from "@/config";
 import confetti from "canvas-confetti";
 import { LucideTrophy } from "lucide-preact";
 import { useEffect } from "preact/hooks";
-import Pusher from "pusher-js";
+import type Pusher from "pusher-js";
 import { toast } from "sonner";
 
 interface AchievementsNotifierProps {
     userId: string; // ID del usuario para identificar eventos específicos
 }
 
-export function AchievementsNotifier({ userId }: AchievementsNotifierProps) {
+export function AchievementsNotifier({ userId, pusher }: AchievementsNotifierProps & { pusher: Pusher }) {
     useEffect(() => {
         if (!userId) {
             console.error("No userId provided to AchievementsNotifier");
             return;
         }
 
-        // Configura la conexión a Pusher
-        const pusher = new Pusher(PUSHER_KEY, {
-            cluster: "us2"
-        });
 
         // Genera dinámicamente el nombre del canal basado en el userId
         const channelName = `user-${userId}-achievements`;

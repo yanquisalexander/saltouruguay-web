@@ -181,7 +181,7 @@ if (!totalOfMemberCards) {
 <script>
   import { showSignInDialog } from "@/lib/utils";
 
-  document.addEventListener("astro:page-load", () => {
+  document.addEventListener("astro:page-load", async () => {
     const cards = document.querySelectorAll("[data-click-to-login]");
     cards.forEach((card) => {
       card.addEventListener("click", (event) => {
@@ -191,5 +191,10 @@ if (!totalOfMemberCards) {
         }
       });
     });
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await fetch("/api/cinematics?name=community");
+    } catch (error) {}
   });
 </script>

@@ -43,6 +43,13 @@
       "when": 1732218766841,
       "tag": "0005_spicy_corsair",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1732240558710,
+      "tag": "0006_wild_molly_hayes",
+      "breakpoints": true
     }
   ]
 }

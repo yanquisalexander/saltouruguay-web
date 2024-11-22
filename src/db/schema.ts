@@ -11,6 +11,7 @@ export const UsersTable = pgTable("users", {
     twitchTier: integer("twitch_tier"),
     discordId: varchar("discord_id").unique(),
     admin: boolean("admin").notNull().default(false),
+    playedSystemCinematics: text("played_system_cinematics").array().default([]),
     createdAt: timestamp("created_at")
         .notNull()
         .default(sql`current_timestamp`),
