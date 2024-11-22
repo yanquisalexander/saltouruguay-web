@@ -330,7 +330,7 @@ Nile_cx
 TurbanteUy
 Faku Zárate */
             {
-                id: NOMINEES.eldeadpooluruguayo.username,
+                id: NOMINEES.eldeadpool_uruguayo.username,
             },
             {
                 id: NOMINEES.goldenplay.username,

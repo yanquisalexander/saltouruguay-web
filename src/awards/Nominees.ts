@@ -84,8 +84,8 @@ export const NOMINEES = {
         username: "maarizzz",
         displayName: "maarizzz"
     },
-    eldeadpooluruguayo: {
-        username: "eldeadpooluruguayo",
+    eldeadpool_uruguayo: {
+        username: "eldeadpool_uruguayo",
         displayName: "El Deadpool Uruguayo"
     },
     titoleproso: {
