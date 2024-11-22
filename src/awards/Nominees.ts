@@ -15,9 +15,9 @@ export const NOMINEES = {
         username: "malaso",
         displayName: "Malaso"
     },
-    turbante_uy: {
-        username: "turbante_uy",
-        displayName: "Turbante_uy"
+    turbanteuy: {
+        username: "turbanteuy",
+        displayName: "TurbanteUY"
     },
     the_darkmoon: {
         username: "the_darkmoon",
@@ -136,9 +136,9 @@ export const NOMINEES = {
         username: "coroneljuan",
         displayName: "coroneljuan"
     },
-    goldenplay: {
-        username: "goldenplay",
-        displayName: "Goldenplay"
+    goldenplayyt1: {
+        username: "goldenplayyt1",
+        displayName: "GoldenPlayYT1"
     },
     xdiegouy: {
         username: "xdiegouy",
@@ -250,7 +250,7 @@ export const NOMINEES = {
     },
     mundounouy: {
         username: "mundounouy",
-        displayName: "MundounoUy"
+        displayName: "MundoUnoUy"
     },
     caewolf_5: {
         username: "caewolf_5",
@@ -298,11 +298,11 @@ export const NOMINEES = {
     },
     groopsy: {
         username: "groopsy",
-        displayName: "groopsy"
+        displayName: "Groopsy"
     },
     nile_cx: {
         username: "nile_cx",
-        displayName: "Nile_cx"
+        displayName: "Nile_Cx"
     },
     mch__: {
         username: "mch__",
@@ -350,7 +350,7 @@ export const NOMINEES = {
     },
     faku_zarate: {
         username: "faku_zarate",
-        displayName: "Faku Zárate"
+        displayName: "Faku Zarate"
     },
     luiz: {
         username: "luiz",

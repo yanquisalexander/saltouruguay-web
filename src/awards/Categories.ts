@@ -333,7 +333,7 @@ Faku Zárate */
                 id: NOMINEES.eldeadpool_uruguayo.username,
             },
             {
-                id: NOMINEES.goldenplay.username,
+                id: NOMINEES.goldenplayyt1.username,
             },
             {
                 id: NOMINEES.sirplace.username,
@@ -345,7 +345,7 @@ Faku Zárate */
                 id: NOMINEES.nile_cx.username,
             },
             {
-                id: NOMINEES.turbante_uy.username,
+                id: NOMINEES.turbanteuy.username,
             },
             {
                 id: NOMINEES.faku_zarate.username,
