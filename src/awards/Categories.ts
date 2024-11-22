@@ -73,7 +73,7 @@ export const CATEGORIES: Category[] = [
                 id: NOMINEES.itspapidraku.username,
             },
             {
-                id: NOMINEES.csilveira.username,
+                id: NOMINEES.csilveira10.username,
             },
             {
                 id: NOMINEES.rubiorusso.username,
@@ -139,7 +139,7 @@ Gusarz */
                 id: NOMINEES.munione.username,
             },
             {
-                id: NOMINEES.la_barista.username,
+                id: NOMINEES.labarista_.username,
             },
             {
                 id: NOMINEES.yonivoy.username,
@@ -286,7 +286,7 @@ Gusarz */
                 id: NOMINEES.solbella.username,
             },
             {
-                id: NOMINEES.la_barista.username,
+                id: NOMINEES.labarista_.username,
             },
             {
                 id: NOMINEES.darkmoon.username,

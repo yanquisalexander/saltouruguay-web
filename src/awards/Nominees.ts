@@ -104,9 +104,9 @@ export const NOMINEES = {
         username: "hayafoxuy",
         displayName: "hayafoxUy"
     },
-    csilveira: {
-        username: "csilveira",
-        displayName: "csilveira"
+    csilveira10: {
+        username: "csilveira10",
+        displayName: "csilveira10"
     },
     queen_judith: {
         username: "queen_judith",
@@ -168,8 +168,8 @@ export const NOMINEES = {
         username: "claudio25uru",
         displayName: "claudio25uru"
     },
-    la_barista: {
-        username: "la_barista",
+    labarista_: {
+        username: "labarista_",
         displayName: "La Barista"
     },
     charly7: {
@@ -226,7 +226,7 @@ export const NOMINEES = {
     },
     yonivoy: {
         username: "yonivoy",
-        displayName: "Yonivoy"
+        displayName: "yonivoy"
     },
     yosoysecond: {
         username: "yosoysecond",
