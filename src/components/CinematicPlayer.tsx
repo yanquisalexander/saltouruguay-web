@@ -110,12 +110,12 @@ export const CinematicPlayer = ({ userId, pusher }: CinematicPlayerProps) => {
                 {mute ? <LucideVolume2 size={24} /> : <LucideVolumeX size={24} />}
             </button>
 
-            <button
+            {/*       <button
                 className="absolute top-4 left-4 bg-blue-500 bg-opacity-50 size-8 flex items-center justify-center p-2 rounded-full"
                 onClick={handleVideoEnd}
             >
                 <LucideX size={24} />
-            </button>
+            </button> */}
 
             <div className="absolute bottom-8 flex flex-col">
                 <span className="text-white text-sm">
