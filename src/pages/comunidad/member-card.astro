@@ -1,5 +1,6 @@
 ---
 import { MyMemberCard } from "@/components/MyMemberCard";
+import type { MemberCardSkins } from "@/consts/MemberCardSkins";
 import Layout from "@/layouts/Layout.astro";
 import { getMemberCardData } from "@/utils/user";
 import { getSession } from "auth-astro/server";
@@ -32,6 +33,9 @@ dbMemberCard = await getMemberCardData(parseInt(session?.user?.id as string));
           <MyMemberCard
             session={session}
             stickers={dbMemberCard?.stickers ?? stickers}
+            initialSkin={
+              dbMemberCard?.skin as (typeof MemberCardSkins)[number]["id"]
+            }
             tier={session.user.tier ?? null}
             client:only
           />

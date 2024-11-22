@@ -1,8 +1,9 @@
 import { CATEGORIES } from "@/awards/Categories";
 import { NOMINEES } from "@/awards/Nominees";
 import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
+import type { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { submitVotes } from "@/utils/awards-vote-system";
-import { updateStickers } from "@/utils/user";
+import { updateCardSkin, updateStickers } from "@/utils/user";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -78,4 +79,22 @@ export const server = {
             return { success: true }
         }
     }),
+    updateMemberCardSkin: defineAction({
+        input: z.object({
+            skin: z.string()
+        }),
+        handler: async ({ skin }, { request }) => {
+            const session = await getSession(request)
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para actualizar tu skin"
+                })
+            }
+
+            await updateCardSkin(session.user.id, skin as typeof MemberCardSkins[number]['id'])
+            return { success: true }
+        }
+    })
 }

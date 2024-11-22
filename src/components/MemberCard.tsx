@@ -3,6 +3,7 @@ import "@/components/styles/member-card.css";
 import { cn } from '@/lib/utils';
 import { Tooltip } from "./Tooltip";
 import { LucideLockKeyhole } from "lucide-preact";
+import { MemberCardSkins } from "@/consts/MemberCardSkins";
 
 interface Props {
     number: number;
@@ -19,6 +20,8 @@ interface Props {
     skin?: string;
 }
 
+
+
 export const MemberCard = ({
     number,
     user,
@@ -30,6 +33,8 @@ export const MemberCard = ({
     const { username = 'Unknown User', avatar = '' } = user;
     const memberCardNumber = `#${number != null ? number.toString().padStart(5, "0") : ""}`;
 
+    const memberCardBg = MemberCardSkins.find((s) => s.id === skin)?.image;
+
     return (
         <div className={cn("block h-full overflow-hidden rounded-[60px] border p-5 aspect-none w-full md:aspect-[2/1] border-white/30 bg-white/10 transition duration-500 ease-in-out", className)}>
             <div className={`relative h-full overflow-hidden border rounded-[40px] member-card-gradient-bg grid md:flex border-white/80 transition duration-500 ease-in-out skin-${skin}`}>
@@ -39,7 +44,7 @@ export const MemberCard = ({
                 </span>
                 <div className="-rotate-12 md:w-auto row-[2/3] mb-8 md:mb-0 left-0 mx-auto md:mx-0 h-32 relative flex justify-center w-full md:block bottom-0 md:left-[25%] md:bottom-[20%] md:absolute">
                     <img
-                        src="/favicon.svg"
+                        src={memberCardBg ?? MemberCardSkins[0].image}
                         className="w-auto h-full md:h-auto opacity-60 size-40 md:size-60"
                         alt=""
                     />

@@ -8,8 +8,9 @@ import { $ } from "@/lib/dom-selector";
 import { STICKERS } from "@/consts/Stickers";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
+import { MemberCardSkins } from "@/consts/MemberCardSkins";
 
-export const MyMemberCard = ({ session, stickers = [], tier }: { session: Session, stickers: string[], tier: number | null }) => {
+export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'classic' }: { session: Session, stickers: string[], tier: number | null, initialSkin: typeof MemberCardSkins[number]['id'] }) => {
     const [selectedStickers, setSelectedStickers] = useState(() => {
         const stickersList = new Array(3).fill(null)
         stickers.forEach((sticker, index) => {
@@ -21,6 +22,7 @@ export const MyMemberCard = ({ session, stickers = [], tier }: { session: Sessio
         }
     })
     const [generating, setGenerating] = useState(false)
+    const [skin, setSkin] = useState(initialSkin)
 
     console.log({ session, stickers, tier, selectedStickers })
 
@@ -139,6 +141,18 @@ export const MyMemberCard = ({ session, stickers = [], tier }: { session: Sessio
         // Generate image on initial render
     }, [])
 
+    const handleSkinChange = async (skin: typeof MemberCardSkins[number]['id']) => {
+        setSkin(skin)
+
+        const { error } = await actions.updateMemberCardSkin({ skin })
+
+        if (error) {
+            toast.error('Error al actualizar la skin de la tarjeta')
+            return
+        }
+
+        toast.success('Skin actualizada')
+    }
 
 
     return (
@@ -152,7 +166,7 @@ export const MyMemberCard = ({ session, stickers = [], tier }: { session: Sessio
                                     className="max-w-[400px] md:max-w-[700px] mx-auto"
                                     number={parseInt(session?.user?.id as string)}
                                     selectedStickers={selectedStickers}
-                                    skin="classic"
+                                    skin={skin}
                                     user={{
                                         avatar,
                                         username,
@@ -167,7 +181,7 @@ export const MyMemberCard = ({ session, stickers = [], tier }: { session: Sessio
                             number={parseInt(session?.user?.id as string)}
                             selectedStickers={selectedStickers}
                             handleRemoveSticker={handleRemoveSticker}
-                            skin="classic"
+                            skin={skin}
                             user={{
                                 avatar,
                                 username,
@@ -202,8 +216,27 @@ export const MyMemberCard = ({ session, stickers = [], tier }: { session: Sessio
             <div class="w-full md:order-none">
                 <div>
                     <h2 class="mt-10 text-2xl font-bold text-white lg:pl-8">
+                        Skin
+                    </h2>
+
+                    <div
+                        class="flex flex-row w-full p-8 max-h-[30rem] overflow-x-auto text-center flex-nowrap md:flex-wrap gap-x-8 gap-y-12 lg:pb-20 hidden-scroll h-40 relative"
+                        style="mask-image:linear-gradient(to top, transparent, #000 40%)"
+                    >
+                        {
+                            MemberCardSkins.map(({ id, name }) => (
+                                <button class={`aspect-square size-12 flex items-center justify-center border-2 p-2 rounded-md border-white/40 transition-all hover:bg-green-500/20 hover:border-white/60 ${skin === id ? 'border-white/60 bg-green-900/40' : 'border-transparent'}`}
+                                    onClick={() => handleSkinChange(id)}>
+                                    <div class="flex items-center justify-center w-12 h-12 transition-all cursor-pointer">
+                                        <img class="size-8 aspect-square object-contain" src={`/images/member-card-skins/${id}-icon.webp`} alt="" />
+                                    </div>
+                                </button>
+                            ))
+
+                        }
+                    </div>
+                    <h2 class="mt-10 text-2xl font-bold text-white lg:pl-8">
                         Stickers
-                        <div></div>
                     </h2>
                     <div
                         class="flex flex-row w-full p-8 max-h-[30rem] overflow-x-auto text-center flex-nowrap md:flex-wrap gap-x-8 gap-y-12 lg:pb-20 hidden-scroll h-40 relative"
