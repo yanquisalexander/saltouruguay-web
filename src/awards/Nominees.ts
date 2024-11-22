@@ -92,9 +92,9 @@ export const NOMINEES = {
         username: "titoleproso",
         displayName: "TitoLeproso"
     },
-    king: {
-        username: "king",
-        displayName: "king"
+    iiiiiiikingiiiiiii: {
+        username: "iiiiiiikingiiiiiii",
+        displayName: "iiiiiiikingiiiiiii"
     },
     fabi_guille: {
         username: "fabi_guille",
@@ -140,8 +140,8 @@ export const NOMINEES = {
         username: "goldenplay",
         displayName: "Goldenplay"
     },
-    xdiego_uy: {
-        username: "xdiego_uy",
+    xdiegouy: {
+        username: "xdiegouy",
         displayName: "xDiegoUy"
     },
     tommysl18: {
@@ -304,13 +304,13 @@ export const NOMINEES = {
         username: "nile_cx",
         displayName: "Nile_cx"
     },
-    mdb_: {
-        username: "mdb_",
-        displayName: "mdb_"
+    mch__: {
+        username: "mch__",
+        displayName: "mch__"
     },
-    brillanteca: {
-        username: "brillanteca",
-        displayName: "Brillanteca"
+    elbrillanteca: {
+        username: "elbrillanteca",
+        displayName: "elbrillanteca"
     },
     titertv: {
         username: "titertv",

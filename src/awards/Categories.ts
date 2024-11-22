@@ -170,7 +170,7 @@ Gusarz */
                 id: NOMINEES.titoleproso.username,
             },
             {
-                id: NOMINEES.xdiego_uy.username,
+                id: NOMINEES.xdiegouy.username,
             },
             {
                 id: NOMINEES.queen_judith.username,
@@ -360,7 +360,7 @@ Faku Zárate */
                 id: NOMINEES.titoleproso.username,
             },
             {
-                id: NOMINEES.xdiego_uy.username,
+                id: NOMINEES.xdiegouy.username,
             },
             {
                 id: NOMINEES.h0ru5_.username,
@@ -369,7 +369,7 @@ Faku Zárate */
                 id: NOMINEES.caewolf_5.username,
             },
             {
-                id: NOMINEES.mdb_.username,
+                id: NOMINEES.mch__.username,
             },
 
         ]
@@ -379,7 +379,7 @@ Faku Zárate */
         name: "Más Tryhard",
         nominees: [
             {
-                id: NOMINEES.king.username,
+                id: NOMINEES.iiiiiiikingiiiiiii.username,
             },
             {
                 id: NOMINEES.tommysl18.username,
@@ -391,7 +391,7 @@ Faku Zárate */
                 id: NOMINEES.cianuro1503.username,
             },
             {
-                id: NOMINEES.brillanteca.username,
+                id: NOMINEES.elbrillanteca.username,
             },
             {
                 id: NOMINEES.malaso.username,
