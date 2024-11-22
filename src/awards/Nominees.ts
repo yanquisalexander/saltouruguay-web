@@ -178,11 +178,11 @@ export const NOMINEES = {
     },
     alexitoo_uy: {
         username: "alexitoo_uy",
-        displayName: "Alexitoo"
+        displayName: "Alexitoo_UY"
     },
     dimanacho: {
         username: "dimanacho",
-        displayName: "DimaNacho"
+        displayName: "DiMaNacho"
     },
     raika_frost: {
         username: "raika_frost",
@@ -234,7 +234,7 @@ export const NOMINEES = {
     },
     gordoyorugua: {
         username: "gordoyorugua",
-        displayName: "Gordoyorugua"
+        displayName: "gordoyorugua"
     },
     lehuan: {
         username: "lehuan",
