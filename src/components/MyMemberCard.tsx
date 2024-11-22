@@ -151,6 +151,8 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
             return
         }
 
+        await generateImage()
+
         toast.success('Skin actualizada')
     }
 
