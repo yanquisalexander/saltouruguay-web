@@ -1,13 +1,10 @@
 ---
-import { CATEGORIES } from "@/awards/Categories";
 import LaunchCountdown from "@/components/LaunchCountdown";
-import VotesSummary from "@/components/VotesSummary.astro";
-import { VoteSystem } from "@/components/VoteSystem";
 import { EVENT_TIMESTAMP, VOTES_OPEN_TIMESTAMP } from "@/config";
 import Layout from "@/layouts/Layout.astro";
-import IntroAwards from "@/sections/IntroAwards.astro";
 import { currentUserVotes } from "@/utils/awards-vote-system";
 import { getSession } from "auth-astro/server";
+import { LucideChevronRight } from "lucide-preact";
 
 const eventDate = new Date(EVENT_TIMESTAMP);
 
@@ -49,6 +46,20 @@ const SHOW_INTRO = import.meta.env.PROD;
         del año!
       </h2>
     </header>
+
+    {
+      session?.user.isAdmin && (
+        <a
+          href="/awards/vota"
+          class="flex items-center justify-center gap-2 mt-8"
+        >
+          <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-yellow-500 rounded-md font-rubik uppercase tracking-wider font-bold text-sm hover:bg-yellow-600 transition-all duration-300">
+            <span>Probar la votación</span>
+            <LucideChevronRight size="24" />
+          </button>
+        </a>
+      )
+    }
 
     <div class="flex flex-col items-center justify-center">
       <h2

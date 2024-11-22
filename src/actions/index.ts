@@ -1,3 +1,4 @@
+import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
 import { submitVotes } from "@/utils/awards-vote-system";
 import { updateStickers } from "@/utils/user";
 import { ActionError, defineAction } from "astro:actions";
@@ -22,6 +23,14 @@ export const server = {
                 })
             }
 
+            if (!IS_VOTES_OPEN) {
+                const openDate = new Date(VOTES_OPEN_TIMESTAMP)
+                throw new ActionError({
+                    code: "PRECONDITION_FAILED",
+                    message: `La votación está cerrada, se abrirá el ${openDate.toLocaleDateString()} a las ${openDate.toLocaleTimeString()}`
+
+                })
+            }
 
             try {
                 await submitVotes(votes, session.user)

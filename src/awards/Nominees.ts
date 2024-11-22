@@ -90,7 +90,7 @@ export const NOMINEES = {
     },
     titoleproso: {
         username: "titoleproso",
-        displayName: "TitoÑeproso"
+        displayName: "TitoLeproso"
     },
     king: {
         username: "king",

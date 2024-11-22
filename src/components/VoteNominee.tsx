@@ -1,5 +1,19 @@
+import { NOMINEES } from "@/awards/Nominees";
 import type { Category, CategoryNominee } from "@/types/Awards";
+import { LucideTwitch } from "lucide-preact";
 
+
+
+import { h } from 'preact';
+import type { JSX } from 'preact';
+
+const MdiTwitch = (props: JSX.IntrinsicElements['svg']) => {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
+            <path fill="currentColor" d="M11.64 5.93h1.43v4.28h-1.43m3.93-4.28H17v4.28h-1.43M7 2L3.43 5.57v12.86h4.28V22l3.58-3.57h2.85L20.57 12V2m-1.43 9.29l-2.85 2.85h-2.86l-2.5 2.5v-2.5H7.71V3.43h11.43Z"></path>
+        </svg>
+    );
+}
 export const VoteNominee = ({ nominee, category, onVote, isVoted,
     index,
     currentVotesCategory
@@ -11,6 +25,10 @@ export const VoteNominee = ({ nominee, category, onVote, isVoted,
     const voteOrder = currentVotesCategory.findIndex(vote => vote.nomineeId === nominee.id) + 1
 
     const delay = `animation-delay: ${index * 75}ms`;
+
+    const nomineeInConst = Object.values(NOMINEES).find(n => n.username === nominee.id)
+
+    const avatar = `/images/nominees/${nomineeInConst?.username}.webp`
 
     return (
         <li key={nominee.id} class={`overflow-hidden group hover:shadow-lg transition-transform transform  flex w-full h-40 aspect-video animate-fade-in-up ${!disabled && 'hover:scale-105'} `} style={delay}>
@@ -36,9 +54,22 @@ export const VoteNominee = ({ nominee, category, onVote, isVoted,
                         </span>
                     )
                 }
-                <span class="text-2xl font-anton">{nominee.id}</span>
+                <img class="group-hover:mix-blend-normal aspect-square object-cover size-16 transition-all rounded mix-blend-luminosity" src={avatar} alt={nomineeInConst?.displayName} onError={(e) => {
+                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${nomineeInConst?.displayName}&background=random&color=fff`
+                }} />
+
+                <span class="text-2xl font-anton">{nomineeInConst?.displayName || nominee.id}</span>
                 <span class="text-sm">{category.name}</span>
 
+                <a href={`https://www.twitch.tv/${nominee.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    disabled={disabled}
+                    aria-disabled={disabled}
+                    title={`Ver a ${nomineeInConst?.displayName} en Twitch`}
+                    class="absolute bottom-0 hover:bg-white hover:text-electric-violet-600 transition rounded-none rounded-tr-md flex items-center gap-x-2 left-0  bg-electric-violet-500 text-white text-sm p-1.5 text-center">
+                    <MdiTwitch class="size-6" />
+                </a>
 
             </button>
 
