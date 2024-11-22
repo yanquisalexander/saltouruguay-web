@@ -9,14 +9,23 @@ import auth from 'auth-astro';
 import migrateDatabaseIntegration from "./src/hooks/migrateDatabase";
 
 import sitemap from '@astrojs/sitemap';
+import { SITEMAP_EXCLUDED_PATHS } from "./src/config";
 
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
   adapter: vercel(),
-  integrations: [tailwind(), preact({
-    compat: true
-  }), auth(), migrateDatabaseIntegration(), sitemap()],
+  integrations: [
+    tailwind(),
+    preact({
+      compat: true
+    }),
+    auth(),
+    migrateDatabaseIntegration(),
+    sitemap({
+      //filter: (page) => !SITEMAP_EXCLUDED_PATHS.includes(`${this.site ?? ''}${page}`)
+    })
+  ],
   devToolbar: {
     enabled: false
   },
