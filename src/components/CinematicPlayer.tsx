@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 import clsx from 'clsx';
 import Pusher from 'pusher-js';
 import { $ } from "@/lib/dom-selector";
-import { LucideVolume2, LucideVolumeX } from "lucide-preact";
+import { LucideVolume2, LucideVolumeX, LucideX } from "lucide-preact";
+import { toast } from "sonner";
 
 interface CinematicPlayerProps {
     userId: string; // Identificador único del usuario actual
@@ -32,15 +33,45 @@ export const CinematicPlayer = ({ userId, pusher }: CinematicPlayerProps) => {
         };
     }, [userId, pusher]);
 
-    const handleVideoPlay = () => {
-        // Intenta poner el video en pantalla completa
-        if (videoRef.current) {
 
-            videoRef.current.play();
 
-            $('body')?.classList.add('overflow-hidden');
+    useEffect(() => {
+        let playTimeout: NodeJS.Timeout;
+
+        const handleVideoPlay = () => {
+            if (videoRef.current) {
+                videoRef.current.play();
+
+                // Si ocurre un error al intentar reproducir el video
+                videoRef.current.onerror = () => {
+                    toast.error('Ocurrió un error al cargar la cinemática');
+                    handleVideoEnd();
+                };
+
+                // Inicia un temporizador para verificar si el video no comienza a reproducirse en 2 segundos
+                playTimeout = setTimeout(() => {
+                    toast.error('El video tardó demasiado en comenzar a reproducirse');
+                    handleVideoEnd();
+                }, 3000);
+
+                // Escucha el evento 'playing' para confirmar que el video comenzó a reproducirse
+                videoRef.current.onplaying = () => {
+                    clearTimeout(playTimeout); // Cancela el temporizador si comienza a reproducirse
+                };
+
+                $('body')?.classList.add('overflow-hidden');
+            }
+        };
+
+        if (isVisible) {
+            handleVideoPlay();
         }
-    };
+
+        return () => {
+            clearTimeout(playTimeout); // Asegura que el temporizador se limpie al desmontar
+        };
+    }, []);
+
 
     const handleVideoEnd = () => {
         setIsVisible(false);
@@ -66,7 +97,6 @@ export const CinematicPlayer = ({ userId, pusher }: CinematicPlayerProps) => {
                     muted={mute}
                     className="max-w-full max-h-full aspect-video"
                     autoPlay={true}
-                    onPlay={handleVideoPlay} // Llama a pantalla completa al reproducir
                     onEnded={handleVideoEnd}
                     controls={false}
                     onTimeUpdate={() => setVideoTimes({ currentTime: videoRef.current?.currentTime || 0, duration: videoRef.current?.duration || 0 })}
@@ -78,6 +108,13 @@ export const CinematicPlayer = ({ userId, pusher }: CinematicPlayerProps) => {
                 onClick={() => setMute(!mute)}
             >
                 {mute ? <LucideVolume2 size={24} /> : <LucideVolumeX size={24} />}
+            </button>
+
+            <button
+                className="absolute top-4 left-4 bg-blue-500 bg-opacity-50 size-8 flex items-center justify-center p-2 rounded-full"
+                onClick={handleVideoEnd}
+            >
+                <LucideX size={24} />
             </button>
 
             <div className="absolute bottom-8 flex flex-col">
