@@ -334,7 +334,7 @@ export const NOMINEES = {
     },
     julianmartinr: {
         username: "julianmartinr",
-        displayName: "Julianmartinr"
+        displayName: "JulianMartinr"
     },
     jamoa7w7: {
         username: "jamoa7w7",
