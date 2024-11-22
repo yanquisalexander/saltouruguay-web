@@ -54,9 +54,11 @@ export const VoteNominee = ({ nominee, category, onVote, isVoted,
                         </span>
                     )
                 }
-                <img class="group-hover:mix-blend-normal aspect-square object-cover size-16 transition-all rounded mix-blend-luminosity" src={avatar} alt={nomineeInConst?.displayName} onError={(e) => {
-                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${nomineeInConst?.displayName}&background=random&color=fff`
-                }} />
+                <img class={`group-hover:mix-blend-normal aspect-square object-cover size-16 transition-all rounded mix-blend-luminosity
+                    ${isVoted && '!mix-blend-normal'}
+                `} src={avatar} alt={nomineeInConst?.displayName} onError={(e) => {
+                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${nomineeInConst?.displayName}&background=random&color=fff`
+                    }} />
 
                 <span class="text-2xl font-anton">{nomineeInConst?.displayName || nominee.id}</span>
                 <span class="text-sm">{category.name}</span>
