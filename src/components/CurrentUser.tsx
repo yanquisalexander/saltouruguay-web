@@ -114,11 +114,17 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                             className="py-2 px-3 justify-center rounded-[10px] font-bold border border-transparent hover:bg-brand-gray/5 hover:border-brand-gray/10 flex items-center gap-x-2.5 leading-none hover:scale-105 transition-transform duration-300 text-white"
                             onClick={toggleDropdown}
                         >
-                            <img
-                                src={user?.image || undefined}
-                                alt={user?.name || "User"}
-                                className="rounded-full w-8 h-8"
-                            />
+                            <div class="relative">
+
+                                <img
+                                    src={user?.image || undefined}
+                                    alt={user?.name || "User"}
+                                    className="rounded-full w-8 h-8"
+                                />
+
+                                <img src={'/images/guirnalda.webp'} class="z-10 absolute inset-0 size-8 object-contain scale-[1.5] -top-1 left-0.5  aspect-square rounded-full" />
+                            </div>
+
                             <span className="hidden md:flex">{user?.name}</span>
                         </button>
                         {dropdownOpen && (
