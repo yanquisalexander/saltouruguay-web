@@ -27,12 +27,14 @@ const LaunchCountdown = ({ timestamp, ...props }: CountdownProps & h.JSX.HTMLAtt
 
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
+    // Actualiza el tiempo restante cada segundo
     useEffect(() => {
         const timer = setInterval(() => {
             setTimeLeft(calculateTimeLeft());
         }, 1000);
 
-        return () => clearInterval(timer);
+        // @ts-ignore
+        return () => clearInterval(timer)
     }, [timestamp]);
 
     return (
