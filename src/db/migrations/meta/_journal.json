@@ -57,6 +57,20 @@
       "when": 1732289212250,
       "tag": "0007_hard_mephistopheles",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1732296113165,
+      "tag": "0008_icy_bucky",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1732296117916,
+      "tag": "0009_certain_stranger",
+      "breakpoints": true
     }
   ]
 }

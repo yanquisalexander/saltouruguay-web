@@ -1,0 +1,1 @@
+ALTER TABLE "loans" ADD COLUMN "status" "status" DEFAULT 'pending' NOT NULL;

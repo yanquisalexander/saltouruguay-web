@@ -9,6 +9,7 @@ declare module "@auth/core/types" {
             isAdmin?: boolean;
             twitchId?: string;
             discordId?: string;
+            coins?: number;
         } & DefaultSession["user"]; // Extiende las propiedades originales del tipo `user`
     }
 }

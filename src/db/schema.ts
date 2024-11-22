@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, integer, pgTable, serial, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { boolean, integer, pgEnum, pgTable, serial, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 export const UsersTable = pgTable("users", {
     id: serial("id").primaryKey(),
@@ -12,6 +12,7 @@ export const UsersTable = pgTable("users", {
     discordId: varchar("discord_id").unique(),
     admin: boolean("admin").notNull().default(false),
     playedSystemCinematics: text("played_system_cinematics").array().default([]),
+    coins: integer("coins").notNull().default(0),
     createdAt: timestamp("created_at")
         .notNull()
         .default(sql`current_timestamp`),
@@ -61,3 +62,16 @@ export const UserAchievementsTable = pgTable('user_achievements', {
 }, (t) => ({
     uniqueUserAchievement: unique().on(t.userId, t.achievementId)
 }));
+
+export const LOANS_STATUS = pgEnum('status', ['pending', 'repaid', 'defaulted'])
+
+export const LoansTable = pgTable('loans', {
+    id: serial('id').primaryKey(),
+    lenderId: integer('lender_id').references(() => UsersTable.id),
+    borrowerId: integer('borrower_id').references(() => UsersTable.id),
+    amount: integer('amount').notNull(),
+    dueDate: timestamp('due_date').notNull(),
+    status: LOANS_STATUS('status').notNull().default('pending'),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+})

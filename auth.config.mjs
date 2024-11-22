@@ -88,6 +88,7 @@ export default defineConfig({
                         twitchId: true,
                         twitchTier: true,
                         discordId: true,
+                        coins: true,
                     },
                 });
 
@@ -97,6 +98,7 @@ export default defineConfig({
                     session.user.twitchId = userRecord.twitchId;
                     session.user.tier = userRecord.twitchTier;
                     session.user.discordId = userRecord.discordId;
+                    session.user.coins = userRecord.coins;
                 }
             } catch (error) {
                 console.error("Error fetching user admin status:", error);
