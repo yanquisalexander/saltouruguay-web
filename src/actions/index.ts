@@ -1,3 +1,5 @@
+import { CATEGORIES } from "@/awards/Categories";
+import { NOMINEES } from "@/awards/Nominees";
 import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
 import { submitVotes } from "@/utils/awards-vote-system";
 import { updateStickers } from "@/utils/user";
@@ -31,6 +33,21 @@ export const server = {
 
                 })
             }
+
+            /* 
+                Verificar que haya al menos un voto en cada categoría
+            */
+
+            const categories = Object.keys(CATEGORIES);
+            for (const categoryId of categories) {
+                if (!votes[categoryId] || votes[categoryId].length === 0) {
+                    throw new ActionError({
+                        code: "BAD_REQUEST",
+                        message: `Debe haber al menos un voto en la categoría: ${CATEGORIES.find(c => c.id === categoryId)?.name || 'desconocida'}`
+                    });
+                }
+            }
+
 
             try {
                 await submitVotes(votes, session.user)

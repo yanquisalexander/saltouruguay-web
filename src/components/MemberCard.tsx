@@ -16,6 +16,7 @@ interface Props {
         list: (string | null)[];
         limit: number;
     };
+    skin?: string;
 }
 
 export const MemberCard = ({
@@ -24,13 +25,14 @@ export const MemberCard = ({
     className,
     handleRemoveSticker,
     selectedStickers,
+    skin = 'classic',
 }: Props) => {
     const { username = 'Unknown User', avatar = '' } = user;
     const memberCardNumber = `#${number != null ? number.toString().padStart(5, "0") : ""}`;
 
     return (
         <div className={cn("block h-full overflow-hidden rounded-[60px] border p-5 aspect-none w-full md:aspect-[2/1] border-white/30 bg-white/10 transition duration-500 ease-in-out", className)}>
-            <div className="relative h-full overflow-hidden border rounded-[40px] member-card-gradient-bg grid md:flex border-white/80 transition duration-500 ease-in-out">
+            <div className={`relative h-full overflow-hidden border rounded-[40px] member-card-gradient-bg grid md:flex border-white/80 transition duration-500 ease-in-out skin-${skin}`}>
                 <div className="absolute w-1/2 rotate-45 h-[300%] left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#41b3ff00] via-[#b0a9ff13] to-[#41b3ff00]"></div>
                 <span className="h-full font-mono text-center text-white font-bold member-card-dash-border-top row-[3/4] px-4 py-4 md:py-0 text-4xl md:px-4 md:text-3xl md:[writing-mode:vertical-lr] md:member-card-dash-border">
                     {memberCardNumber}
