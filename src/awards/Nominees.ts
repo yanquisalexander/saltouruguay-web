@@ -3,9 +3,9 @@ export const NOMINEES = {
         username: "sakkarot",
         displayName: "Sakkarot"
     },
-    shadowfinch: {
-        username: "shadowfinch",
-        displayName: "ShadowFinch"
+    shadowmaxuy: {
+        username: "shadowmaxuy",
+        displayName: "ShadowMaxUY"
     },
     genarox: {
         username: "genarox",
@@ -42,15 +42,15 @@ export const NOMINEES = {
     },
     acucala_pinki: {
         username: "acucala_pinki",
-        displayName: "Acucala Pinki"
+        displayName: "acucala_pinki"
     },
     ronaldoelcubano: {
         username: "ronaldoelcubano",
         displayName: "Ronaldoelcubano"
     },
-    papi_draku: {
-        username: "papi_draku",
-        displayName: "papi_draku"
+    itspapidraku: {
+        username: "itspapidraku",
+        displayName: "ItsPapiDraku"
     },
     nono_javi: {
         username: "nono_javi",
@@ -100,9 +100,9 @@ export const NOMINEES = {
         username: "fabi_guille",
         displayName: "Fabi & Guille"
     },
-    hayafox: {
-        username: "hayafox",
-        displayName: "Hayafox"
+    hayafoxuy: {
+        username: "hayafoxuy",
+        displayName: "hayafoxUy"
     },
     csilveira: {
         username: "csilveira",
@@ -158,7 +158,7 @@ export const NOMINEES = {
     },
     nellyuru: {
         username: "nellyuru",
-        displayName: "NellyUru"
+        displayName: "NellyURU"
     },
     rubiorusso: {
         username: "rubiorusso",
@@ -208,13 +208,13 @@ export const NOMINEES = {
         username: "claymore",
         displayName: "Claymore"
     },
-    elderoscuro: {
-        username: "elderoscuro",
-        displayName: "Elderoscuro"
+    elderoscuro_8: {
+        username: "elderoscuro_8",
+        displayName: "ElderOscuro_8"
     },
-    tlari: {
-        username: "tlari",
-        displayName: "Tlari"
+    tlari_: {
+        username: "tlari_",
+        displayName: "tlari_"
     },
     fixner: {
         username: "fixner",
@@ -268,9 +268,9 @@ export const NOMINEES = {
         username: "mandijp",
         displayName: "MandiJP"
     },
-    kruguer: {
-        username: "kruguer",
-        displayName: "Kruguer"
+    kruguertw: {
+        username: "kruguertw",
+        displayName: "kruguertw"
     },
     mativa19: {
         username: "mativa19",
@@ -316,9 +316,9 @@ export const NOMINEES = {
         username: "titer_tv",
         displayName: "titer tv"
     },
-    keoma: {
-        username: "keoma",
-        displayName: "Keoma"
+    keoma_hn: {
+        username: "keoma_hn",
+        displayName: "Keoma_hn"
     },
     yoruguachannel: {
         username: "yoruguachannel",
@@ -360,9 +360,9 @@ export const NOMINEES = {
         username: "astilla09",
         displayName: "astilla09"
     },
-    javimei: {
-        username: "javimei",
-        displayName: "javimei"
+    javimei_: {
+        username: "javimei_",
+        displayName: "javimei_"
     },
     inmguerrero: {
         username: "inmguerrero",

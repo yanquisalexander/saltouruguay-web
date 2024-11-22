@@ -18,19 +18,19 @@ export const CATEGORIES: Category[] = [
                 id: NOMINEES.nzerrikuy.username,
             },
             {
-                id: NOMINEES.elderoscuro.username,
+                id: NOMINEES.elderoscuro_8.username,
             },
             {
                 id: NOMINEES.mandijp.username,
             },
             {
-                id: NOMINEES.keoma.username,
+                id: NOMINEES.keoma_hn.username,
             },
             {
-                id: NOMINEES.shadowfinch.username,
+                id: NOMINEES.shadowmaxuy.username,
             },
             {
-                id: NOMINEES.javimei.username,
+                id: NOMINEES.javimei_.username,
             },
         ]
     },
@@ -42,16 +42,16 @@ export const CATEGORIES: Category[] = [
                 id: NOMINEES.ronaldoelcubano.username,
             },
             {
-                id: NOMINEES.hayafox.username,
+                id: NOMINEES.hayafoxuy.username,
             },
             {
                 id: NOMINEES.nellyuru.username,
             },
             {
-                id: NOMINEES.tlari.username,
+                id: NOMINEES.tlari_.username,
             },
             {
-                id: NOMINEES.kruguer.username,
+                id: NOMINEES.kruguertw.username,
             },
             {
                 id: NOMINEES.yoruguachannel.username,
@@ -70,7 +70,7 @@ export const CATEGORIES: Category[] = [
         name: "Más censurado",
         nominees: [
             {
-                id: NOMINEES.papi_draku.username,
+                id: NOMINEES.itspapidraku.username,
             },
             {
                 id: NOMINEES.csilveira.username,
