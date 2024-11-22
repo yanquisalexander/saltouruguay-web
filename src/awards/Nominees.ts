@@ -25,7 +25,7 @@ export const NOMINEES = {
     },
     chunninja: {
         username: "chunninja",
-        displayName: "ChunNinja"
+        displayName: "chunninja"
     },
     gameover: {
         username: "gameover",
@@ -120,9 +120,9 @@ export const NOMINEES = {
         username: "bradterra",
         displayName: "BradTerra"
     },
-    romi_gaymer: {
-        username: "romi_gaymer",
-        displayName: "Romi_gaymer"
+    romisdraws: {
+        username: "romisdraws",
+        displayName: "RomisDraws"
     },
     andruxnorris: {
         username: "andruxnorris",
@@ -272,9 +272,9 @@ export const NOMINEES = {
         username: "kruguertw",
         displayName: "kruguertw"
     },
-    mativa19: {
-        username: "mativa19",
-        displayName: "Mativa19"
+    mativa_12: {
+        username: "mativa_12",
+        displayName: "Mativa_12"
     },
     eligil19: {
         username: "eligil19",
@@ -288,9 +288,9 @@ export const NOMINEES = {
         username: "matdol_",
         displayName: "MatDol_"
     },
-    conejomalvado: {
-        username: "conejomalvado",
-        displayName: "Conejomalvado"
+    conejomalvado435: {
+        username: "conejomalvado435",
+        displayName: "conejomalvado435"
     },
     unicornio: {
         username: "unicornio",

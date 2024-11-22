@@ -82,7 +82,7 @@ export const CATEGORIES: Category[] = [
                 id: NOMINEES.fixner.username,
             },
             {
-                id: NOMINEES.mativa19.username,
+                id: NOMINEES.mativa_12.username,
             },
             {
                 id: NOMINEES.persona_activa.username,
@@ -186,7 +186,7 @@ Gusarz */
                 id: NOMINEES.luixmaidden.username,
             },
             {
-                id: NOMINEES.romi_gaymer.username,
+                id: NOMINEES.romisdraws.username,
             },
             {
                 id: NOMINEES.alexitoo_uy.username,
@@ -230,7 +230,7 @@ Gusarz */
                 id: NOMINEES.gordoyorugua.username,
             },
             {
-                id: NOMINEES.conejomalvado.username,
+                id: NOMINEES.conejomalvado435.username,
             },
             {
                 id: NOMINEES.chunninja.username,
