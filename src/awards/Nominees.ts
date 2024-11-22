@@ -7,9 +7,9 @@ export const NOMINEES = {
         username: "shadowmaxuy",
         displayName: "ShadowMaxUY"
     },
-    genarox: {
-        username: "genarox",
-        displayName: "Genarox"
+    genaarox: {
+        username: "genaarox",
+        displayName: "Genaarox"
     },
     malaso: {
         username: "malaso",
@@ -148,9 +148,9 @@ export const NOMINEES = {
         username: "tommysl18",
         displayName: "tommysl18"
     },
-    calderita_de_lata: {
-        username: "calderita_de_lata",
-        displayName: "Calderita de lata"
+    calderitadelata: {
+        username: "calderitadelata",
+        displayName: "CalderitaDeLata"
     },
     nzerrikuy: {
         username: "nzerrikuy",
@@ -204,9 +204,9 @@ export const NOMINEES = {
         username: "h0ru5_",
         displayName: "H0ru5_"
     },
-    claymore: {
-        username: "claymore",
-        displayName: "Claymore"
+    maurimax96: {
+        username: "maurimax96",
+        displayName: "maurimax96"
     },
     elderoscuro_8: {
         username: "elderoscuro_8",
@@ -312,9 +312,9 @@ export const NOMINEES = {
         username: "brillanteca",
         displayName: "Brillanteca"
     },
-    titer_tv: {
-        username: "titer_tv",
-        displayName: "titer tv"
+    titertv: {
+        username: "titertv",
+        displayName: "TiterTv"
     },
     keoma_hn: {
         username: "keoma_hn",

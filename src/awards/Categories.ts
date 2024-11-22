@@ -414,19 +414,19 @@ Faku Zárate */
                 id: NOMINEES.fabi_guille.username,
             },
             {
-                id: NOMINEES.calderita_de_lata.username,
+                id: NOMINEES.calderitadelata.username,
             },
             {
-                id: NOMINEES.claymore.username,
+                id: NOMINEES.maurimax96.username,
             },
             {
                 id: NOMINEES.tranquiencasa.username,
             },
             {
-                id: NOMINEES.titer_tv.username,
+                id: NOMINEES.titertv.username,
             },
             {
-                id: NOMINEES.genarox.username,
+                id: NOMINEES.genaarox.username,
             },
             {
                 id: NOMINEES.astilla09.username,
