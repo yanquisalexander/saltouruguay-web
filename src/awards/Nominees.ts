@@ -52,9 +52,9 @@ export const NOMINEES = {
         username: "itspapidraku",
         displayName: "ItsPapiDraku"
     },
-    nono_javi: {
-        username: "nono_javi",
-        displayName: "nono javi"
+    el_nono_javi: {
+        username: "el_nono_javi",
+        displayName: "El_Nono_Javi"
     },
     tellier50: {
         username: "tellier50",
@@ -110,7 +110,7 @@ export const NOMINEES = {
     },
     queen_judith: {
         username: "queen_judith",
-        displayName: "Queen_Judith"
+        displayName: "Queen Judith"
     },
     mun1one: {
         username: "mun1one",
@@ -230,7 +230,7 @@ export const NOMINEES = {
     },
     yosoysecond: {
         username: "yosoysecond",
-        displayName: "YosoySecond"
+        displayName: "YoSoySecond"
     },
     gordoyorugua: {
         username: "gordoyorugua",
@@ -282,7 +282,7 @@ export const NOMINEES = {
     },
     fabricape: {
         username: "fabricape",
-        displayName: "Fabricape"
+        displayName: "FabriCape"
     },
     matdol_: {
         username: "matdol_",
@@ -330,7 +330,7 @@ export const NOMINEES = {
     },
     tapitabal: {
         username: "tapitabal",
-        displayName: "Tapitabal"
+        displayName: "tapitabal"
     },
     julianmartinr: {
         username: "julianmartinr",
@@ -368,9 +368,9 @@ export const NOMINEES = {
         username: "inmguerrero",
         displayName: "inmguerrero"
     },
-    gusarz: {
-        username: "gusarz",
-        displayName: "Gusarz"
+    gusarz130: {
+        username: "gusarz130",
+        displayName: "gusarz130"
     },
     ville064: {
         username: "ville064",

@@ -102,7 +102,7 @@ Tapitabal
 little_muside18
 Gusarz */
             {
-                id: NOMINEES.nono_javi.username,
+                id: NOMINEES.el_nono_javi.username,
             },
             {
                 id: NOMINEES.queen_judith.username,
@@ -123,7 +123,7 @@ Gusarz */
                 id: NOMINEES.little_muside18.username,
             },
             {
-                id: NOMINEES.gusarz.username,
+                id: NOMINEES.gusarz130.username,
             },
         ]
     },
