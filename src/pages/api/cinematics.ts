@@ -3,7 +3,7 @@ const CINEMATICS = {
         url: 'https://cdn.saltouruguayserver.com/cinematics/comunidad_salto.mp4',
     },
     awards: {
-        url: 'https://cdn.saltouruguayserver.com/cinematics/que-es-salto-awards.mp4',
+        url: 'https://cdn.saltouruguayserver.com/cinematics/que-es-salto-awards.webm',
     },
 } as const;
 
