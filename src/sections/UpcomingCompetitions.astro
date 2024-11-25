@@ -37,15 +37,17 @@ const UPCOMING_EVENTS = [
 
   <!-- Snap scroll -->
 
-  <div class="flex gap-4 overflow-x-auto snap-mandatory mt-6">
+  <div
+    class="flex overflow-scroll gap-x-4 md:gap-x-8 snap-mandatory snap-x mt-8 -mr-4 pr-4 md:mr-0 md:pr-0"
+  >
     {
       UPCOMING_EVENTS.map((event) => (
-        <article class="flex relative bg-white/10 group rounded-lg p-4 w-64 items-center justify-center gap-2 snap-align-start">
+        <article class="flex relative snap-center bg-white/10 group rounded-lg p-4 items-center justify-center gap-2 snap-align-start">
           <div
             class="absolute inset-0 bg-black/50 bg-cover bg-center blur-md -z-10 rounded-lg group-hover:scale-105 transition-all duration-300 group-hover:saturate-200 group-hover:brightness-125"
             style={{ backgroundImage: `url(${event.background})` }}
           />
-          <div class="flex flex-col w-full">
+          <div class="flex flex-col w-56 md:w-1/3">
             <img
               src={event.logo}
               alt={event.name}
