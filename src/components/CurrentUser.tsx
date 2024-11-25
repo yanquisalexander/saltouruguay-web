@@ -90,8 +90,9 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                 // @ts-ignore
                 enabledTransports: ['ws', 'wss']
             }
-            setPusher(new Pusher(PUSHER_KEY, pusherSettings));
         }
+        setPusher(new Pusher(PUSHER_KEY, pusherSettings));
+
     }
 
 
