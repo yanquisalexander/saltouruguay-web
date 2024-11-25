@@ -46,9 +46,9 @@ export const POST = async ({ request }: APIContext) => {
 
 
                 const cache = cacheService.create({ ttl: 60 * 60 * 48 /* 48 hours */ });
-                cache.delete("calculatedVotes"); // Clear the cache before setting the new value
+                await cache.delete("calculatedVotes"); // Clear the cache before setting the new value
 
-                cache.set("calculatedVotes", groupedVotes);
+                await cache.set("calculatedVotes", groupedVotes);
 
                 break;
 

@@ -131,7 +131,7 @@ export const getGroupedVotes = async () => {
         const calculatedVotes = await calculateVotes();
         const groupedVotes = createGroupedVotes({ calculatedVotes });
 
-        cache.set("calculatedVotes", groupedVotes);
+        await cache.set("calculatedVotes", groupedVotes);
 
         return groupedVotes;
     }
