@@ -8,7 +8,7 @@ import { AchievementsNotifier } from "./AchievementsNotifier";
 import { CinematicPlayer } from "./CinematicPlayer";
 import Pusher from "pusher-js";
 import { PUSHER_KEY } from "@/config";
-import { PUSHER_APP_CLUSTER } from "astro:env/server";
+import { PUSHER_APP_CLUSTER } from "astro:env/client";
 
 
 export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Session['user'] | null, isPrerenderedPath: boolean }) => {

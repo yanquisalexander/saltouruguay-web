@@ -1,10 +1,9 @@
 import Pusher from 'pusher';
 import {
-    PUSHER_APP_ID,
     PUSHER_APP_KEY,
     PUSHER_APP_SECRET,
-    PUSHER_APP_CLUSTER
 } from 'astro:env/server'
+import { PUSHER_APP_CLUSTER, PUSHER_APP_ID } from "astro:env/client";
 
 const host = import.meta.env.DEV ? 'localhost' : `api-${PUSHER_APP_CLUSTER}.pusher.com`;
 const port = (import.meta.env.DEV ? 6001 : 443).toString();
