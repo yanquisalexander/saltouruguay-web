@@ -6,6 +6,7 @@ import Sponsors from "@/sections/Sponsors.astro";
 import LiveStream from "@/components/LiveStream.astro";
 import VoteCallToAction from "@/components/VoteCallToAction.astro";
 import NewsOnPage from "@/sections/NewsOnPage.astro";
+import UpcomingCompetitions from "@/sections/UpcomingCompetitions.astro";
 
 const IS_PROD = import.meta.env.PROD;
 
@@ -53,6 +54,8 @@ export const prerender = true;
   }
 
   <LiveStream server:defer />
+
+  <UpcomingCompetitions server:defer />
 
   <NewsOnPage />
 
