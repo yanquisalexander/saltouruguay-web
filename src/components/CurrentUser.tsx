@@ -8,6 +8,7 @@ import { AchievementsNotifier } from "./AchievementsNotifier";
 import { CinematicPlayer } from "./CinematicPlayer";
 import Pusher from "pusher-js";
 import { PUSHER_KEY } from "@/config";
+import { PUSHER_APP_CLUSTER } from "astro:env/server";
 
 
 export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Session['user'] | null, isPrerenderedPath: boolean }) => {
@@ -73,7 +74,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     }, [dropdownOpen]);
 
     if (!pusher) {
-        const host = import.meta.env.DEV ? 'localhost' : 'api.pusherapp.com';
+        const host = import.meta.env.DEV ? 'localhost' : `api-${PUSHER_APP_CLUSTER}.pusher.com`;
         const port = (import.meta.env.DEV ? 6001 : 443)
 
         let pusherSettings = {
