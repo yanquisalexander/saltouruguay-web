@@ -74,7 +74,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     }, [dropdownOpen]);
 
     if (!pusher) {
-        const host = import.meta.env.DEV ? 'localhost' : `api-${PUSHER_APP_CLUSTER}.pusher.com`;
+        const host = import.meta.env.DEV ? 'localhost' : `ws-${PUSHER_APP_CLUSTER}.pusher.com`;
         const port = (import.meta.env.DEV ? 6001 : 443)
 
         let pusherSettings = {
