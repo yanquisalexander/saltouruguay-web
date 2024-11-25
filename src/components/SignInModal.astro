@@ -2,50 +2,51 @@
 import { getSession } from "auth-astro/server";
 import { LucideX } from "lucide-preact";
 import TwitchIcon from "@/icons/Twitch.astro";
-
-const session = await getSession(Astro.request);
 ---
 
-{
-  !session && (
-    <>
-      <dialog
-        id="login-modal"
-        class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
-      >
-        <form
-          id="login-modal-close"
-          class="absolute top-5 right-5"
-          name="login-modal-close"
-        />
-        <div class="flex flex-col items-center space-y-4">
-          <img src="/favicon.svg" class="aspect-square size-24" alt="favicon" />
-          <p class="text-center">
-            Al acceder con tu cuenta de Twitch, aceptas haber leído nuestros{" "}
-            <a href="/terminos" class="underline">
-              Términos de Servicio
-            </a>{" "}
-            y{" "}
-            <a href="/privacidad" class="underline">
-              Política de Privacidad
-            </a>
-            .
-          </p>
-        </div>
-        <div class="flex flex-col space-y-4 mt-8">
-          <button
-            type="button"
-            class="flex items-center justify-center w-full py-3 bg-electric-violet-500 rounded-lg text-white transition duration-300 hover:bg-electric-violet-600"
-            data-provider="twitch"
-          >
-            <span>Acceder con Twitch</span>
-          </button>
-        </div>
-      </dialog>
-      <div class="dialog-background inset-0 w-dvw h-dvh backdrop-blur-sm bg-white/5 z-[9999999] animate-blurred-fade-in" />
-    </>
-  )
-}
+<dialog
+  id="login-modal"
+  class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+>
+  <form id="login-modal-close" class="absolute top-5 right-5">
+    <button type="button" class="text-white">
+      <LucideX class="w-6 h-6" />
+    </button>
+  </form>
+
+  <div class="flex flex-col items-center space-y-4">
+    <img src="/favicon.svg" class="aspect-square size-24" />
+
+    <p class="text-center">
+      Al acceder con tu cuenta de Twitch, aceptas haber leído nuestros <a
+        href="/terminos"
+        class="underline">Términos de Servicio</a
+      > y <a href="/privacidad" class="underline">Política de Privacidad</a>.
+    </p>
+  </div>
+
+  <div class="flex flex-col space-y-4 mt-8">
+    <button
+      type="button"
+      class="flex items-center justify-center w-full py-3 bg-electric-violet-500 rounded-lg text-white transition duration-300 hover:bg-electric-violet-600"
+      data-provider="twitch"
+    >
+      <TwitchIcon class="w-6 h-6 mr-2" />
+      <span>Acceder con Twitch</span>
+    </button>
+
+    <!-- <span
+      class="text-center text-yellow-400 tracking-wider font-medium font-rubik uppercase text-md"
+    >
+      Estamos trabajando en la integración con Twitch. Por favor, vuelve más
+      tarde.
+    </span> -->
+  </div>
+</dialog>
+<div
+  class="dialog-background inset-0 w-dvw h-dvh backdrop-blur-sm bg-white/5 z-[9999999] animate-blurred-fade-in"
+>
+</div>
 
 <script>
   import { $ } from "@/lib/dom-selector";
@@ -54,19 +55,20 @@ const session = await getSession(Astro.request);
   const addListeners = () => {
     const $loginModal = $("#login-modal") as HTMLDialogElement;
     const $twitchButton = $('#login-modal button[data-provider="twitch"]');
+    const $googleButton = $('#login-modal button[data-provider="google"]');
     const $closeButton = $("#login-modal-close button");
 
-    $twitchButton &&
-      $twitchButton.addEventListener("click", async () => {
-        await signIn("twitch");
-      });
+    $twitchButton?.addEventListener("click", async () => {
+      await signIn("twitch");
+    });
 
-    /*  $closeButton?.addEventListener("click", () => {
+    $googleButton?.addEventListener("click", async () => {
+      await signIn("google");
+    });
+
+    $closeButton?.addEventListener("click", () => {
       $loginModal.close();
-    }); */
+    });
   };
-
-  (() => {
-    addListeners();
-  })();
+  document.addEventListener("astro:page-load", addListeners);
 </script>
