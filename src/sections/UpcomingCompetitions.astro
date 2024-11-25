@@ -5,10 +5,12 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 
-dayjs.tz.setDefault("America/Montevideo");
+const PLUGINS = [relativeTime, utc, timezone];
 
-dayjs.extend(relativeTime);
+PLUGINS.forEach((plugin) => dayjs.extend(plugin));
+
 dayjs.locale("es-us");
+dayjs.tz.setDefault("America/Montevideo");
 
 const UPCOMING_EVENTS = [
   {
