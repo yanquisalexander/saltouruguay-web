@@ -1,15 +1,15 @@
 ---
 import LaunchCountdown from "@/components/LaunchCountdown";
 import Layout from "../layouts/Layout.astro";
-import { VOTES_OPEN_TIMESTAMP } from "@/config";
+import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
 import Sponsors from "@/sections/Sponsors.astro";
 import LiveStream from "@/components/LiveStream.astro";
 import VoteCallToAction from "@/components/VoteCallToAction.astro";
 import NewsOnPage from "@/sections/NewsOnPage.astro";
 
-const IS_VOTING_OPEN = Date.now() > VOTES_OPEN_TIMESTAMP;
-
 const IS_PROD = import.meta.env.PROD;
+
+const SHOW_AWARDS_VOTES_COUNTDOWN = true;
 
 export const prerender = true;
 ---
@@ -20,7 +20,7 @@ export const prerender = true;
 >
   {!IS_PROD && <VoteCallToAction server:defer />}
   {
-    !IS_VOTING_OPEN && (
+    SHOW_AWARDS_VOTES_COUNTDOWN && (
       <div class=" flex flex-col py-16 items-center h-full">
         <header class="flex items-center justify-center max-w-md w-full gap-x-14 gap-y-6 flex-col md:flex-row">
           <div class="relative">
