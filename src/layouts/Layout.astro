@@ -16,6 +16,7 @@ import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import SignInModal from "@/components/SignInModal.astro";
 import KonamiCode from "@/components/KonamiCode.astro";
+import { DebugInfo } from "@/components/DebugInfo";
 interface Props {
   title?: string;
   description?: string;
@@ -112,6 +113,8 @@ preload?.push({
     />
 
     <KonamiCode />
+
+    <DebugInfo client:load transition:name="debug-info" transition:persist />
 
     <img
       decoding="async"

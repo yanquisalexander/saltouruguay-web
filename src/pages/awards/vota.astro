@@ -124,3 +124,11 @@ if (session?.user) {
     });
   });
 </script>
+
+<script data-astro-rerun>
+  (async () => {
+    try {
+      await fetch("/api/cinematics?name=awards");
+    } catch (error) {}
+  })();
+</script>
