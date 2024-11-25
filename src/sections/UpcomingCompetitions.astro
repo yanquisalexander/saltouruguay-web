@@ -2,6 +2,10 @@
 import dayjs from "dayjs";
 import "dayjs/locale/es-us";
 import relativeTime from "dayjs/plugin/relativeTime";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.tz.setDefault("America/Montevideo");
 
 dayjs.extend(relativeTime);
 dayjs.locale("es-us");
