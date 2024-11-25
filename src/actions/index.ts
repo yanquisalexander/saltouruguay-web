@@ -26,7 +26,7 @@ export const server = {
                 })
             }
 
-            if (!IS_VOTES_OPEN) {
+            if (!IS_VOTES_OPEN()) {
                 const openDate = new Date(VOTES_OPEN_TIMESTAMP)
                 throw new ActionError({
                     code: "PRECONDITION_FAILED",

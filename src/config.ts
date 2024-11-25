@@ -17,9 +17,9 @@ const VOTES_CLOSE_TIMESTAMP = DateTime.fromMillis(EVENT_TIMESTAMP, { zone: 'Amer
     .set({ hour: 19, minute: 0, second: 0, millisecond: 0 })
     .toMillis();
 
-const nowInUruguay = DateTime.now().setZone('America/Montevideo').toMillis();
+export const nowInUruguay = () => DateTime.now().setZone('America/Montevideo').toMillis();
 
-export const IS_VOTES_OPEN = nowInUruguay > VOTES_OPEN_TIMESTAMP && nowInUruguay < VOTES_CLOSE_TIMESTAMP;
+export const IS_VOTES_OPEN = () => nowInUruguay() > VOTES_OPEN_TIMESTAMP && nowInUruguay() < VOTES_CLOSE_TIMESTAMP;
 
 export const SITEMAP_EXCLUDED_PATHS = [
     '/admin',

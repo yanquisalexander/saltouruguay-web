@@ -1,16 +1,23 @@
 ---
 import LaunchCountdown from "@/components/LaunchCountdown";
-import { EVENT_TIMESTAMP, VOTES_OPEN_TIMESTAMP } from "@/config";
+import {
+  EVENT_TIMESTAMP,
+  IS_VOTES_OPEN,
+  nowInUruguay,
+  VOTES_OPEN_TIMESTAMP,
+} from "@/config";
 import Layout from "@/layouts/Layout.astro";
 import { currentUserVotes } from "@/utils/awards-vote-system";
 import { getSession } from "auth-astro/server";
-import { LucideChevronRight } from "lucide-preact";
+import {
+  LucideArrowRight,
+  LucideChevronRight,
+  LucideWrench,
+} from "lucide-preact";
 
 const eventDate = new Date(EVENT_TIMESTAMP);
 
 const session = await getSession(Astro.request);
-
-const SHOW_INTRO = import.meta.env.PROD;
 ---
 
 <Layout title="SaltoAwards">
@@ -51,44 +58,72 @@ const SHOW_INTRO = import.meta.env.PROD;
       session?.user.isAdmin && (
         <a
           href="/awards/vota"
-          class="flex items-center justify-center gap-2 mt-8"
+          class="flex items-center justify-center gap-2 mt-8 fixed bottom-4 right-4 z-10"
         >
-          <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-yellow-500 rounded-md font-rubik uppercase tracking-wider font-bold text-sm hover:bg-yellow-600 transition-all duration-300">
+          <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-blue-500 rounded-md font-rubik uppercase tracking-wider font-bold text-sm hover:bg-yellow-600 transition-all duration-300">
             <span>Probar la votación</span>
-            <LucideChevronRight size="24" />
+            <LucideWrench size="24" />
           </button>
         </a>
       )
     }
 
-    <div class="flex flex-col items-center justify-center">
-      <h2
-        class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen mt-5"
-      >
-        Cada vez más cerca...
-      </h2>
-      <span class="text-center text-sm font-rubik text-gray-300 mt-3">
-        {
-          eventDate.toLocaleDateString("es-UY", {
-            timeZone: "America/Montevideo",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })
-        }
-        <br />
-        {
-          eventDate.toLocaleTimeString("es-UY", {
-            timeZone: "America/Montevideo",
-            hour: "2-digit",
-            minute: "numeric",
-            hourCycle: "h24",
-            timeZoneName: "long",
-          })
-        }
-      </span>
-      <LaunchCountdown timestamp={EVENT_TIMESTAMP} client:idle />
-    </div>
+    {
+      IS_VOTES_OPEN() && (
+        <div class="flex flex-col items-center justify-center mt-4">
+          <h2 class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen">
+            ¡Votaciones abiertas!
+          </h2>
+          <p class="text-white text-lg font-rubik uppercase text-balance tracking-wider sm:pb-10 pb-4">
+            ¡Vota por tus favoritos!
+          </p>
+          <a
+            href="/awards/vota"
+            class="flex items-center justify-center gap-2 relative"
+          >
+            <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-yellow-500 rounded-md uppercase tracking-wider font-bold font-rubik hover:bg-yellow-600 transition-all duration-300">
+              <span>¡Vota ahora!</span>
+              <LucideArrowRight
+                size="24"
+                class="group-hover:translate-x-1 transition-transform duration-300"
+              />
+            </button>
+            {/* 
+              Golden glow
+            */}
+
+            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-r blur-lg from-yellow-500 to-yellow-600 rounded-md animate-pulsing animate-iteration-count-infinite animate-duration-[3000ms] saturate-150 z-[-1]" />
+          </a>
+        </div>
+      )
+    }
+
+    {
+      !IS_VOTES_OPEN() && (
+        <div class="flex flex-col items-center justify-center">
+          <h2 class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen mt-5">
+            Cada vez más cerca...
+          </h2>
+          <span class="text-center text-sm font-rubik text-gray-300 mt-3">
+            {eventDate.toLocaleDateString("es-UY", {
+              timeZone: "America/Montevideo",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+            <br />
+            {eventDate.toLocaleTimeString("es-UY", {
+              timeZone: "America/Montevideo",
+              hour: "2-digit",
+              minute: "numeric",
+              hourCycle: "h24",
+              timeZoneName: "long",
+            })}
+          </span>
+          <LaunchCountdown timestamp={EVENT_TIMESTAMP} client:idle />
+        </div>
+      )
+    }
 
     <sections
       id="casters"

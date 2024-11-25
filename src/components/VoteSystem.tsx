@@ -29,7 +29,7 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
         const savedVotes = localStorage.getItem(storageDraftKey)
         if (savedVotes) {
 
-            if (!IS_VOTES_OPEN) {
+            if (!IS_VOTES_OPEN()) {
                 localStorage.removeItem(storageDraftKey)
                 return
             }
