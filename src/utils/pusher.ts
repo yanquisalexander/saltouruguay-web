@@ -6,8 +6,15 @@ import {
     PUSHER_APP_CLUSTER
 } from 'astro:env/server'
 
-const host = import.meta.env.DEV ? 'localhost' : 'api.pusherapp.com';
+const host = import.meta.env.DEV ? 'localhost' : `api-${PUSHER_APP_CLUSTER}.pusher.com`;
 const port = (import.meta.env.DEV ? 6001 : 443).toString();
+
+const pusherConfig = {
+    wsHost: host,
+    wsPort: port,
+    forceTLS: port === '443',
+    cluster: PUSHER_APP_CLUSTER,
+};
 
 export const pusher = new Pusher({
     host,
