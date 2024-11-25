@@ -56,13 +56,14 @@ const session = await getSession(Astro.request);
     const $twitchButton = $('#login-modal button[data-provider="twitch"]');
     const $closeButton = $("#login-modal-close button");
 
-    $twitchButton?.addEventListener("click", async () => {
-      await signIn("twitch");
-    });
+    $twitchButton &&
+      $twitchButton.addEventListener("click", async () => {
+        await signIn("twitch");
+      });
 
-    $closeButton?.addEventListener("click", () => {
+    /*  $closeButton?.addEventListener("click", () => {
       $loginModal.close();
-    });
+    }); */
   };
 
   (() => {
