@@ -41,6 +41,7 @@ export default defineConfig({
         PUSHER_APP_KEY: envField.string({ context: 'server', access: 'public' }),
         PUSHER_APP_SECRET: envField.string({ context: 'server', access: 'secret' }),
         PUSHER_APP_CLUSTER: envField.string({ context: 'server', access: 'public' }),
+        CRON_SECRET: envField.string({ context: 'server', access: 'public' }),
       },
     },
     serverIslands: true,
