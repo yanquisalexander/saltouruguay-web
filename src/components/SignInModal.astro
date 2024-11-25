@@ -52,7 +52,6 @@ const session = await getSession(Astro.request);
   import { signIn } from "auth-astro/client";
 
   const addListeners = () => {
-    console.log("Adding listeners to login modal");
     const $loginModal = $("#login-modal") as HTMLDialogElement;
     const $twitchButton = $('#login-modal button[data-provider="twitch"]');
     const $closeButton = $("#login-modal-close button");
