@@ -68,5 +68,21 @@ export const prerender = true;
     if (Boolean(params.get("discordLinked"))) {
       toast.success("¡Tu cuenta de Discord ha sido vinculada correctamente!");
     }
+
+    let userHasBeenActive = false;
+
+    const handleUserActivation = async () => {
+      if (userHasBeenActive) return;
+
+      userHasBeenActive = true; // Evitar múltiples activaciones
+      try {
+        const response = await fetch("/api/cinematics?name=liga-fortnite");
+        if (!response.ok) throw new Error("Error al cargar la cinemática");
+        console.log("Cinemática cargada exitosamente");
+      } catch (error) {}
+    };
+
+    window.addEventListener("click", handleUserActivation, { once: true });
+    window.addEventListener("keydown", handleUserActivation, { once: true });
   });
 </script>

@@ -7,7 +7,7 @@ export const EVENT_TIMESTAMP = 1734737400000;
 
 export const SALTO_BROADCASTER_ID = '238809411'
 
-export const PUSHER_KEY = "15af022785152446b456"
+export const PUSHER_KEY = import.meta.env.PROD ? "15af022785152446b456" : "app-key"
 
 export const SALTO_DISCORD_GUILD_ID = '700185692826763264'
 

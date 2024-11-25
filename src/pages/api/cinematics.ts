@@ -5,6 +5,9 @@ const CINEMATICS = {
     awards: {
         url: 'https://cdn.saltouruguayserver.com/cinematics/que-es-salto-awards.webm',
     },
+    'liga-fortnite': {
+        url: 'https://cdn.saltouruguayserver.com/cinematics/liga-fortnite.mp4',
+    },
 } as const;
 
 
@@ -64,14 +67,22 @@ export const GET = async ({ request, site }: APIContext) => {
         de cinematicas vistas por el usuario
     */
 
+    console.log(pusher)
+
+
+    try {
+        await pusher.trigger('cinematic-player', 'new-event', {
+            targetUsers: [user.id],
+            videoUrl: CINEMATICS[requestedCinematic].url
+        })
+    } catch (error) {
+        console.error(error)
+        return new Response(null, { status: 500 });
+    }
+
     await client.update(UsersTable).set({
         playedSystemCinematics: [...playedSystemCinematics, requestedCinematic]
     }).where(eq(UsersTable.id, user.id))
-
-    await pusher.trigger('cinematic-player', 'new-event', {
-        targetUsers: [user.id],
-        videoUrl: CINEMATICS[requestedCinematic].url
-    })
 
     return new Response(null, { status: 204 });
 }

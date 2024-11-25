@@ -16,5 +16,5 @@ export const pusher = new Pusher({
     key: PUSHER_APP_KEY,
     secret: PUSHER_APP_SECRET,
     cluster: PUSHER_APP_CLUSTER,
-    useTLS: true
+    useTLS: !import.meta.env.DEV,
 });
