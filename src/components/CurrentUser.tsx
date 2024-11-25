@@ -72,7 +72,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
         };
     }, [dropdownOpen]);
 
-    if (user && !pusher) {
+    if (!pusher) {
         const host = import.meta.env.DEV ? 'localhost' : 'api.pusherapp.com';
         const port = (import.meta.env.DEV ? 6001 : 443)
 
@@ -83,7 +83,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
             cluster: "us2",
         }
 
-        /* if (import.meta.env.DEV) {
+        if (import.meta.env.DEV) {
             pusherSettings = {
                 ...pusherSettings,
                 // @ts-ignore
@@ -91,111 +91,113 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
             }
             setPusher(new Pusher(PUSHER_KEY, pusherSettings));
         }
- */
+    }
 
 
 
-        return (
-            <div className="flex items-center ml-2">
-                {/* Mostrar el spinner si estamos obteniendo datos en una ruta prerenderizada */}
-                {fetchingUser ? (
-                    <LucideLoader2 class="animate-spin-clockwise animate-iteration-count-infinite inline-block mr-2" size={20} />
-                ) : (
-                    // Mostrar el botón de iniciar sesión solo si no hay un usuario autenticado y no estamos cargando
-                    !user && !loading && (
+
+
+
+    return (
+        <div className="flex items-center ml-2">
+            {/* Mostrar el spinner si estamos obteniendo datos en una ruta prerenderizada */}
+            {fetchingUser ? (
+                <LucideLoader2 class="animate-spin-clockwise animate-iteration-count-infinite inline-block mr-2" size={20} />
+            ) : (
+                // Mostrar el botón de iniciar sesión solo si no hay un usuario autenticado y no estamos cargando
+                !user && !loading && (
+                    <button
+                        className="bg-[#5865F2]/20 border border-[#5865F2] hover:drop-shadow-[0_0px_20px_rgba(8,_112,_184,_0.9)] hover:scale-105 gap-1.5 text-white px-4 py-2 rounded-md flex items-center transition-transform duration-300 will-change-transform transform disabled:opacity-50 disabled:cursor-progress"
+                        onClick={handleSignIn}
+                        disabled={loading}
+                        aria-label="Iniciar sesión"
+                        aria-busy={loading}
+                        aria-disabled={loading}
+                    >
+                        {signingIn ? (
+                            <LucideLoader2 class="animate-spin-clockwise animate-iteration-count-infinite inline-block mr-2" size={20} />
+                        ) : (
+                            <LucideLogIn size={20} className="inline-block mr-2" />
+                        )}
+                        Iniciar sesión
+                    </button>
+                )
+            )}
+
+            {/* Mostrar información del usuario solo si hay un usuario autenticado */}
+            {user && (
+                <>
+                    <div className="relative" ref={dropdownRef}>
                         <button
-                            className="bg-[#5865F2]/20 border border-[#5865F2] hover:drop-shadow-[0_0px_20px_rgba(8,_112,_184,_0.9)] hover:scale-105 gap-1.5 text-white px-4 py-2 rounded-md flex items-center transition-transform duration-300 will-change-transform transform disabled:opacity-50 disabled:cursor-progress"
-                            onClick={handleSignIn}
-                            disabled={loading}
-                            aria-label="Iniciar sesión"
-                            aria-busy={loading}
-                            aria-disabled={loading}
+                            className="py-2 px-3 justify-center rounded-[10px] font-bold border border-transparent hover:bg-brand-gray/5 hover:border-brand-gray/10 flex items-center gap-x-2.5 leading-none hover:scale-105 transition-transform duration-300 text-white"
+                            onClick={toggleDropdown}
                         >
-                            {signingIn ? (
-                                <LucideLoader2 class="animate-spin-clockwise animate-iteration-count-infinite inline-block mr-2" size={20} />
-                            ) : (
-                                <LucideLogIn size={20} className="inline-block mr-2" />
-                            )}
-                            Iniciar sesión
+                            <div class="relative">
+
+                                <img
+                                    src={user?.image || undefined}
+                                    alt={user?.name || "User"}
+                                    className="rounded-full w-8 h-8"
+                                />
+
+                                <img src={'/images/guirnalda.webp'} class="z-10 absolute inset-0 size-8 object-contain scale-[1.5] -top-1 left-0.5  aspect-square rounded-full" />
+                            </div>
+
+                            <span className="hidden md:flex">{user?.name}</span>
                         </button>
-                    )
-                )}
-
-                {/* Mostrar información del usuario solo si hay un usuario autenticado */}
-                {user && (
-                    <>
-                        <div className="relative" ref={dropdownRef}>
-                            <button
-                                className="py-2 px-3 justify-center rounded-[10px] font-bold border border-transparent hover:bg-brand-gray/5 hover:border-brand-gray/10 flex items-center gap-x-2.5 leading-none hover:scale-105 transition-transform duration-300 text-white"
-                                onClick={toggleDropdown}
-                            >
-                                <div class="relative">
-
-                                    <img
-                                        src={user?.image || undefined}
-                                        alt={user?.name || "User"}
-                                        className="rounded-full w-8 h-8"
-                                    />
-
-                                    <img src={'/images/guirnalda.webp'} class="z-10 absolute inset-0 size-8 object-contain scale-[1.5] -top-1 left-0.5  aspect-square rounded-full" />
-                                </div>
-
-                                <span className="hidden md:flex">{user?.name}</span>
-                            </button>
-                            {dropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                                    <div className="py-1" role="menu">
-                                        {
-                                            !user.discordId && (
-                                                <button
-                                                    onClick={linkDiscord}
-                                                    className="block w-full text-left px-4 text-nowrap py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                >
-                                                    Vincular Discord
-                                                </button>
-                                            )
-                                        }
-                                        <a
-                                            href="/profile"
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            Perfil
-                                        </a>
-                                        {user.isAdmin && (
-                                            <a
-                                                href="/admin"
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        {dropdownOpen && (
+                            <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                <div className="py-1" role="menu">
+                                    {
+                                        !user.discordId && (
+                                            <button
+                                                onClick={linkDiscord}
+                                                className="block w-full text-left px-4 text-nowrap py-2 text-sm text-gray-700 hover:bg-gray-100"
                                             >
-                                                Administración
-                                            </a>
-                                        )}
+                                                Vincular Discord
+                                            </button>
+                                        )
+                                    }
+                                    <a
+                                        href="/profile"
+                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    >
+                                        Perfil
+                                    </a>
+                                    {user.isAdmin && (
                                         <a
-                                            href="/api/auth/signout"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                // @ts-ignore
-                                                signOut({ callbackUrl: '/' });
-                                            }}
+                                            href="/admin"
                                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                         >
-                                            Cerrar sesión
+                                            Administración
                                         </a>
-                                    </div>
+                                    )}
+                                    <a
+                                        href="/api/auth/signout"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            // @ts-ignore
+                                            signOut({ callbackUrl: '/' });
+                                        }}
+                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    >
+                                        Cerrar sesión
+                                    </a>
                                 </div>
-                            )}
-                        </div>
-                        {
-                            pusher && (
-                                <>
-                                    <AchievementsNotifier userId={user.id} pusher={pusher} />
-                                    <CinematicPlayer userId={user.id} pusher={pusher} />
-                                </>
-                            )
-                        }
+                            </div>
+                        )}
+                    </div>
+                    {
+                        pusher && (
+                            <>
+                                <AchievementsNotifier userId={user.id} pusher={pusher} />
+                                <CinematicPlayer userId={user.id} pusher={pusher} />
+                            </>
+                        )
+                    }
 
-                    </>
-                )}
-            </div>
-        );
-    };
-}
+                </>
+            )}
+        </div>
+    );
+};
