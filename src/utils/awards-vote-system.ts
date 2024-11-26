@@ -83,6 +83,7 @@ GROUP BY v.category_id, v.nominee_id */
                 ELSE 0
             END
         )`.as("total_points"),
+        count: count().as("votes"),
     }).from(VotesTable).groupBy(VotesTable.categoryId, VotesTable.nomineeId).execute();
 
     return votes;
@@ -99,6 +100,7 @@ export const createGroupedVotes = ({ calculatedVotes }: { calculatedVotes: Await
                 realTotalPoints: 0,
                 roundTotalPoints: 0,
                 percentage: 0.00,
+                votes: 0,
             })),
         ])
     );
@@ -114,6 +116,7 @@ export const createGroupedVotes = ({ calculatedVotes }: { calculatedVotes: Await
             if (nominee) {
                 nominee.realTotalPoints = totalPoints;
                 nominee.roundTotalPoints = Math.round(totalPoints);
+                nominee.votes = vote.count || 0;
                 nominee.percentage = Math.round((totalPoints / category.reduce((acc, n) => acc + n.realTotalPoints, 0)) * 100)
             }
         }
@@ -122,19 +125,17 @@ export const createGroupedVotes = ({ calculatedVotes }: { calculatedVotes: Await
     return groupedVotes;
 }
 
-export const getGroupedVotes = async () => {
+export const getGroupedVotes = async (): Promise<ReturnType<typeof createGroupedVotes>> => {
     const cache = cacheService.create({ ttl: 60 * 60 * 48 /* 48 hours */ });
 
-    const groupedVotes = await cache.get("calculatedVotes");
+    let groupedVotes = await cache.get("calculatedVotes");
 
     if (!groupedVotes) {
         const calculatedVotes = await calculateVotes();
-        const groupedVotes = createGroupedVotes({ calculatedVotes });
+        groupedVotes = createGroupedVotes({ calculatedVotes });
 
         await cache.set("calculatedVotes", groupedVotes);
-
-        return groupedVotes;
     }
 
-    return groupedVotes;
-}
+    return groupedVotes as ReturnType<typeof createGroupedVotes>;
+};

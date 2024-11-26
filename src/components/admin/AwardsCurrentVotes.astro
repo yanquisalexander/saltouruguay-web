@@ -1,0 +1,69 @@
+---
+import { CATEGORIES } from "@/awards/Categories";
+import { getGroupedVotes } from "@/utils/awards-vote-system";
+
+const groupedVotes = await getGroupedVotes();
+---
+
+<section>
+  <h2
+    class="text-2xl uppercase font-rubik font-medium text-white tracking-wider"
+  >
+    Votos actuales
+  </h2>
+
+  <p class="text-white max-w-lg mt-4">
+    ¡Estos son los votos actuales de los premios de la comunidad!
+  </p>
+
+  <div class="flex flex-col gap-4 mt-8">
+    {
+      Object.entries(groupedVotes).map(([category, votes]) => {
+        // Encuentra al que tiene más puntos en la categoría
+        const highestPoints = Math.max(
+          ...votes.map((vote) => vote.roundTotalPoints)
+        );
+
+        return (
+          <article class="bg-white/10 rounded-lg p-4">
+            <h3 class="text-white text-lg font-rubik font-bold">
+              {CATEGORIES.find((cat) => cat.id === category)?.name}
+            </h3>
+            <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+              {votes.map((vote) => (
+                <li
+                  class={`rounded-lg p-2 flex flex-col items-center justify-center gap-2 transition ${
+                    vote.roundTotalPoints === highestPoints
+                      ? "bg-purple-500/30"
+                      : "bg-white/20 hover:bg-white/30"
+                  }`}
+                >
+                  <img
+                    src={`/images/nominees/${vote.displayName.toLowerCase()}.webp`}
+                    alt={vote.displayName}
+                    class="h-16 w-16 rounded-full object-cover"
+                  />
+                  <p class="text-white text-sm font-rubik font-medium uppercase text-center">
+                    {vote.displayName}
+                  </p>
+                  <p class="text-white text-xs font-rubik text-center">
+                    {vote.votes} votos
+                  </p>
+                  <p class="text-white text-xs font-rubik text-center">
+                    {vote.percentage.toFixed(2)}%
+                  </p>
+                  <p class="text-white text-xs font-rubik text-center">
+                    Puntos (Redondeado): {vote.roundTotalPoints}
+                  </p>
+                  <p class="text-white text-xs font-rubik text-center">
+                    Puntos (Decimales): {vote.realTotalPoints}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </article>
+        );
+      })
+    }
+  </div>
+</section>
