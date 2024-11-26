@@ -81,8 +81,7 @@ export const MemberCard = ({
                                         'relative h-auto group justify-center flex text-white items-center opacity-80',
                                     )}
                                 >
-                                    {index < selectedStickers.limit &&
-                                        sticker != null &&
+                                    {sticker && index < selectedStickers.limit &&
                                         handleRemoveSticker != null && (
                                             <button
                                                 onClick={() => handleRemoveSticker(index)}
