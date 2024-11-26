@@ -1,6 +1,6 @@
 import { SALTO_BROADCASTER_ID } from "@/config";
 import { client } from "@/db/client";
-import { MemberCards } from "@/db/schema";
+import { MemberCards, UserAchievementsTable } from "@/db/schema";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { createUserApiClient, createStaticAuthProvider } from "@/lib/Twitch";
 import { count, eq } from "drizzle-orm";
@@ -104,3 +104,9 @@ const ensureMemberCardExists = async (memberId: number) => {
         }
     }
 };
+
+export const getUserAchievements = async (userId: number) => {
+    return await client.query.UserAchievementsTable.findMany({
+        where: eq(UserAchievementsTable.userId, userId),
+    });
+}
