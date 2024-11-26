@@ -4,5 +4,8 @@ export const STICKERS = [
     },
     {
         id: 'saltoBaile'
+    },
+    {
+        id: 'saltoPelado'
     }
 ]
