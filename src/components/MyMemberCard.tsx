@@ -110,7 +110,7 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
             list: newStickers,
         })
 
-        updateStickers(newStickers)
+        await updateStickers(newStickers)
     }
 
 
@@ -134,7 +134,7 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
             list: newStickers,
         })
 
-        updateStickers(newStickers)
+        await updateStickers(newStickers)
     }
 
     useEffect(() => {
@@ -156,6 +156,7 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
 
         toast.success('Skin actualizada')
     }
+
 
 
     return (
