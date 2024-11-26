@@ -110,7 +110,6 @@ const chartOptions: Partial<ChartOptions> = {
         <Chart data={data} chartOptions={chartOptions} />
       </div>
     </div>
-
-    <AwardsCurrentVotes />
+    {session?.user.twitchId === SALTO_BROADCASTER_ID && <AwardsCurrentVotes />}
   </div>
 </Layout>
