@@ -14,7 +14,7 @@ export default defineConfig({
             clientSecret: import.meta.env.TWITCH_CLIENT_SECRET,
             authorization: {
                 params: {
-                    scope: EXTENDED_TWITCH_SCOPES.join(" "),
+                    scope: TWITCH_SCOPES.join(" "),
                     force_verify: true,
                 },
             },
