@@ -11,9 +11,9 @@
     "strapi": "strapi"
   },
   "dependencies": {
-    "@strapi/plugin-cloud": "5.4.1",
-    "@strapi/plugin-users-permissions": "5.4.1",
-    "@strapi/strapi": "5.4.1",
+    "@strapi/plugin-cloud": "5.4.2",
+    "@strapi/plugin-users-permissions": "5.4.2",
+    "@strapi/strapi": "5.4.2",
     "better-sqlite3": "11.3.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
@@ -31,6 +31,6 @@
     "npm": ">=6.0.0"
   },
   "strapi": {
-    "uuid": "b56b21f1-edad-410d-b2e0-778723e0f0ad"
+    "uuid": "46ac9c97-0e6c-46c2-adc5-b227c5fdd391"
   }
 }
