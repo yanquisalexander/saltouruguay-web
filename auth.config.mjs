@@ -1,6 +1,6 @@
 import TwitchProvider from "@auth/core/providers/twitch";
 import { defineConfig } from "auth-astro";
-import { TWITCH_SCOPES } from "@/lib/Twitch";
+import { EXTENDED_TWITCH_SCOPES, TWITCH_SCOPES } from "@/lib/Twitch";
 import { client } from "@/db/client";
 import { UsersTable } from "@/db/schema";
 import { getUserSubscription } from "@/utils/user";
@@ -14,7 +14,7 @@ export default defineConfig({
             clientSecret: import.meta.env.TWITCH_CLIENT_SECRET,
             authorization: {
                 params: {
-                    scope: TWITCH_SCOPES.join(" "),
+                    scope: EXTENDED_TWITCH_SCOPES.join(" "),
                     force_verify: true,
                 },
             },

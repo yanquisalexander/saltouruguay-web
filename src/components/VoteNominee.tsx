@@ -2,9 +2,6 @@ import { NOMINEES } from "@/awards/Nominees";
 import type { Category, CategoryNominee } from "@/types/Awards";
 import { LucideTwitch } from "lucide-preact";
 
-
-
-import { h } from 'preact';
 import type { JSX } from 'preact';
 
 const MdiTwitch = (props: JSX.IntrinsicElements['svg']) => {

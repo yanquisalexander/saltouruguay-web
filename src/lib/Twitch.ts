@@ -7,6 +7,10 @@ import {
     RefreshingAuthProvider,
     StaticAuthProvider,
 } from "@twurple/auth";
+import { TwitchEvents } from "./TwitchEvents";
+import { SALTO_BROADCASTER_ID } from "@/config";
+
+const hostName = import.meta.env.TWITCH_EVENTSUB_HOSTNAME ?? "localhost";
 
 export const createStaticAuthProvider = (accessToken: string) => {
     return new StaticAuthProvider(TWITCH_CLIENT_ID, accessToken);
@@ -39,3 +43,28 @@ export const TWITCH_SCOPES = [
     "user:read:email",
     "user:read:subscriptions",
 ];
+
+/* 
+    TODO: Estos scopes solo deberían ser utilizados por la cuenta de SaltoUruguayServer
+*/
+export const EXTENDED_TWITCH_SCOPES = [
+    ...TWITCH_SCOPES,
+    'moderator:read:followers',
+    'bits:read',
+    'channel:read:subscriptions'
+];
+
+export const createTwitchEventsInstance = () => {
+    return new TwitchEvents(
+        TWITCH_CLIENT_SECRET,
+        appApiClient,
+        hostName,
+        '/api/twitch/event-sub/webhooks'
+    )
+}
+
+export const setupEventSub = async () => {
+
+    const eventSub = createTwitchEventsInstance()
+    await eventSub.registerEventSub(SALTO_BROADCASTER_ID)
+}
