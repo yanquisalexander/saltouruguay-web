@@ -30,6 +30,9 @@ export const VoteNominee = ({ nominee, category, onVote, isVoted,
 
     const avatar = `/images/nominees/${nomineeInConst?.username}.webp`
 
+    const placeholderAvatar = `https://ui-avatars.com/api/?name=${nomineeInConst?.displayName}&background=random&color=fff`
+
+
     return (
         <li key={nominee.id} class={`overflow-hidden group hover:shadow-lg transition-transform transform  flex w-full h-40 aspect-video animate-fade-in-up ${!disabled && 'hover:scale-105'} `} style={delay}>
             <button
@@ -57,9 +60,8 @@ export const VoteNominee = ({ nominee, category, onVote, isVoted,
                 <img class={`group-hover:mix-blend-normal aspect-square object-cover size-16 transition-all rounded mix-blend-luminosity
                     ${isVoted && '!mix-blend-normal'}
                 `} src={avatar} alt={nomineeInConst?.displayName} onError={(e) => {
-                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${nomineeInConst?.displayName}&background=random&color=fff`
+                        e.currentTarget.src = placeholderAvatar
                     }} />
-
                 <span class="text-2xl font-anton">{nomineeInConst?.displayName || nominee.id}</span>
                 <span class="text-sm">{category.name}</span>
 
