@@ -1,0 +1,26 @@
+---
+import { NOMINEES } from "@/awards/Nominees";
+import { getLiveStreams } from "@/utils/twitch-runtime";
+import TwitchEmbed from "./TwitchEmbed.astro";
+
+const { data: liveNow } = await getLiveStreams(
+  Object.values(NOMINEES).map((nominee) => nominee.username)
+);
+---
+
+{
+  liveNow.length > 0 && (
+    <section
+      id="live-now"
+      class="max-w-5xl mx-auto mt-16 flex flex-col items-center justify-center mb-8"
+    >
+      <p class="font-rubik uppercase text-lg text-center mb-8">
+        ¡Estos nominados están en vivo ahora!
+      </p>
+
+      {liveNow.map((stream) => (
+        <p>{stream.userName}</p>
+      ))}
+    </section>
+  )
+}
