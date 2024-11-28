@@ -143,19 +143,19 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 10000 }) => {
                                     {news.tags.map((tag) => (
                                         <li
                                             key={tag}
-                                            className="w-max border border-white/20 rounded-2xl px-4 py-1 text-sm md:text-base font-semibold text-white bg-blue-900/20 backdrop-blur-xl"
+                                            className="w-max font-rubik border border-white/20 rounded-2xl px-4 py-1 text-sm md:text-base font-semibold text-white bg-blue-900/20 backdrop-blur-xl"
                                         >
                                             {tag}
                                         </li>
                                     ))}
                                 </ol>
-                                <h2 className="font-bold text-2xl md:text-4xl [text-shadow:_0_1px_0_rgb(0_0_0_/_40%)]">
+                                <h2 className="font-bold font-rubik text-2xl md:text-4xl [text-shadow:_0_1px_0_rgb(0_0_0_/_40%)]">
                                     {news.title}
                                 </h2>
-                                <p className="text-base md:text-lg max-w-[42ch] [text-shadow:_0_1px_0_rgb(0_0_0_/_40%)]">
+                                <p className="text-base font-rubik md:text-lg max-w-[42ch] [text-shadow:_0_1px_0_rgb(0_0_0_/_40%)]">
                                     {news.description}
                                 </p>
-                                <span className="px-8 py-3 inline-flex mt-4 rounded-2xl border border-white/20 transition-all duration-500 text-base w-max md:text-lg font-semibold text-white bg-white/10 backdrop-blur-xl hover:bg-white/20 hover:border-white/30 hover:scale-105 group-hover:bg-white/20 group-hover:border-white/30 group-hover:scale-105">
+                                <span className="px-8 py-3 font-rubik inline-flex mt-4 rounded-2xl border border-white/20 transition-all duration-500 text-base w-max md:text-lg font-semibold text-white bg-white/10 backdrop-blur-xl hover:bg-white/20 hover:border-white/30 hover:scale-105 group-hover:bg-white/20 group-hover:border-white/30 group-hover:scale-105">
                                     {news.ctaLink.text}
                                 </span>
                             </div>
