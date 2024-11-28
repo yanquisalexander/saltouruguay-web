@@ -19,7 +19,15 @@ export const prerender = true;
   title="Comunidad SaltoUruguayServer"
   description="Te damos la bienvenida a la comunidad del canal de SaltoUruguayServer en Twitch. ¡Las votaciones para los #SaltoAwards2024 abrirán muy pronto!"
 >
-  {!IS_PROD && <VoteCallToAction server:defer />}
+  <!--   {!IS_PROD && <VoteCallToAction server:defer />}
+ -->
+  <div
+    class="flex justify-center flex-col items-center mt-8 sm:w-max font-rubik px-2 sm:px-6 uppercase font-medium text-sm text-white/70 mx-auto text-center py-1.5 rounded-full bg-violet-500/20 gap-1 hover:bg-violet-500/30 transition-all duration-300 hover:scale-105"
+  >
+    <span class="text-yellow-500 font-bold">🔥 #SaltoAwards2024 🔥</span>
+    <span> Podrás ver a los nominados a partir del 30 de noviembre </span>
+  </div>
+
   {
     SHOW_AWARDS_VOTES_COUNTDOWN && (
       <div class=" flex flex-col py-16 items-center h-full">
