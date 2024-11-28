@@ -85,6 +85,9 @@ export const CATEGORIES: Category[] = [
                 id: NOMINEES.mativa_12.username,
             },
             {
+                id: NOMINEES.bypolaquito.username,
+            },
+            {
                 id: NOMINEES.persona_activa.username,
             },
         ]
@@ -302,10 +305,10 @@ Gusarz */
                 id: NOMINEES.coroneljuan.username,
             },
             {
-                id: NOMINEES.mailo_duy.username,
+                id: NOMINEES.mailoduy7w7.username,
             },
             {
-                id: NOMINEES.criiiisss_19.username,
+                id: NOMINEES.criiiisss__19.username,
             },
             {
                 id: NOMINEES.groopsy.username,
@@ -337,6 +340,9 @@ Faku Zárate */
             },
             {
                 id: NOMINEES.sirplace.username,
+            },
+            {
+                id: NOMINEES.h_angrygirl.username,
             },
             {
                 id: NOMINEES.mundounouy.username,

@@ -192,9 +192,9 @@ export const NOMINEES = {
         username: "cabezagames",
         displayName: "CabezaGames"
     },
-    mailo_duy: {
-        username: "mailo_duy",
-        displayName: "Mailo_Duy"
+    mailoduy7w7: {
+        username: "mailoduy7w7",
+        displayName: "mailoduy7w7"
     },
     sirplace: {
         username: "sirplace",
@@ -244,8 +244,8 @@ export const NOMINEES = {
         username: "solbela__",
         displayName: "Solbela__"
     },
-    criiiisss_19: {
-        username: "criiiisss_19",
+    criiiisss__19: {
+        username: "criiiisss__19",
         displayName: "criiiisss__19"
     },
     mundounouy: {
@@ -376,9 +376,17 @@ export const NOMINEES = {
         username: "ville064",
         displayName: "Ville064"
     },
+    h_angrygirl: {
+        username: "h_angrygirl",
+        displayName: "H_angryGirl"
+    },
     zombita_renegada: {
         username: "zombita_renegada",
         displayName: "Zombita Renegada"
+    },
+    bypolaquito: {
+        username: "bypolaquito",
+        displayName: "ByPolaquito"
     },
 };
 
