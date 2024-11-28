@@ -18,6 +18,24 @@ const NEWS = [
             newTab: false,
         },
     },
+    {
+        title: "Bienvenido a la nueva web",
+        description: `
+        ¡SaltoUruguayServer tiene una nueva web! 🎉
+        Entérate de todas las novedades, eventos y torneos en un solo lugar.
+    `,
+        tags: ["Web"],
+        background: {
+            img: "/og.webp",
+        },
+        navImage: "/og.webp",
+        ctaLink: {
+            text: "🎉 Descubre más",
+            url: "/",
+            newTab: false,
+        },
+    }
+
 
 ].map((news, index) => {
     return {
