@@ -16,7 +16,7 @@ export default defineConfig({
   output: 'server',
   adapter: vercel(),
   integrations: [
-    tailwind(),
+    tailwind({ applyBaseStyles: false }),
     preact({
       compat: true
     }),

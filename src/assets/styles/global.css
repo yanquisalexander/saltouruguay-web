@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Animaciones */
+@keyframes slide {
+  0% {
+    transform: translate(-50%, -50%);
+  }
+
+  to {
+    transform: translate(0);
+  }
+}
+
+@keyframes opacity {
+  0% {
+    opacity: 0.4;
+  }
+
+  to {
+    opacity: 0.8;
+  }
+}
+
+@keyframes zoomOut {
+  0% {
+    transform: scale(1.01);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes zoomIn {
+  0% {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.01);
+  }
+}
+
+/* Utilidades */
+@layer utilities {
+  .border-line {
+    @apply border-blue-500/20;
+  }
+}
+
+/* Clases personalizadas */
+.slider-border {
+  overflow: hidden;
+  position: relative;
+  /* Esto es necesario para los pseudo-elementos */
+}
+
+.slider-border:before {
+  content: "";
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  left: 0;
+  top: 0;
+  z-index: -10;
+  background: linear-gradient(
+    -90deg,
+    transparent 50%,
+    rgba(152, 179, 255, 0.5) 50%
+  );
+  animation: slide var(--slider-timeout, 5s) linear;
+  transform: translate(-50%, -50%);
+}
+
+[class*="slide-zoom-animation-"] {
+  opacity: 0.8;
+}
+
+.slide-zoom-animation-zoom-out {
+  transform: scale(1.01);
+  animation: zoomOut 1s cubic-bezier(0.4, 0, 0.2, 1) forwards,
+    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-zoom-animation-zoom-in {
+  transform: scale(1);
+  animation: zoomIn 1s cubic-bezier(0.4, 0, 0.2, 1) forwards,
+    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
