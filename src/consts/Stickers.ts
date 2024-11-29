@@ -7,5 +7,8 @@ export const STICKERS = [
     },
     {
         id: 'saltoPelado'
+    },
+    {
+        id: 'saltoBocaAbierta'
     }
 ]
