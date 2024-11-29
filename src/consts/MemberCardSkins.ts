@@ -16,5 +16,11 @@ export const MemberCardSkins = [
         name: 'Fortnite',
         description: 'Un diseño inspirado en el juego Fortnite',
         image: '/images/member-card-skins/fortnite.webp',
+    },
+    {
+        id: 'awards',
+        name: 'Salto Awards',
+        description: 'Un diseño inspirado en los Salto Awards',
+        image: '/images/member-card-skins/awards.webp',
     }
 ] as const
