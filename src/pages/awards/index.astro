@@ -68,20 +68,27 @@ const isAfterTargetTime = nowInUruguay() > targetTime;
     </header>
 
     {
-      !IS_VOTES_OPEN() && isAfterTargetTime && (
-        <a
-          href="/awards/vota"
-          class="flex items-center justify-center gap-2 mb-8"
-        >
-          <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-yellow-500 rounded-md uppercase tracking-wider font-bold font-rubik hover:bg-yellow-600 transition-all duration-300">
-            <span>Ver a los nominados</span>
-            <LucideChevronRight
-              size="24"
-              class="group-hover:translate-x-1 transition-transform duration-300"
-            />
-          </button>
-        </a>
-      )
+      !IS_VOTES_OPEN() &&
+        isAfterTargetTime &&
+        (() => {
+          const TAG = session ? "a" : "div";
+
+          return (
+            <TAG
+              href={session ? "/awards/vota" : undefined}
+              class="flex items-center justify-center gap-2 mb-8"
+              {...(!session && { "data-login-on-click": true })}
+            >
+              <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-yellow-500 rounded-md uppercase tracking-wider font-bold font-rubik hover:bg-yellow-600 transition-all duration-300">
+                <span>Ver a los nominados</span>
+                <LucideChevronRight
+                  size="24"
+                  className="group-hover:translate-x-1 transition-transform duration-300"
+                />
+              </button>
+            </TAG>
+          );
+        })()
     }
 
     {
@@ -200,3 +207,17 @@ const isAfterTargetTime = nowInUruguay() > targetTime;
     background-position: center;
   }
 </style>
+
+<script>
+  import { $ } from "@/lib/dom-selector";
+  import { showSignInDialog } from "@/lib/utils";
+
+  document.addEventListener("astro:page-load", () => {
+    const $viewNominees = $("div[data-login-on-click]");
+    if ($viewNominees) {
+      $viewNominees.addEventListener("click", (e) => {
+        showSignInDialog();
+      });
+    }
+  });
+</script>
