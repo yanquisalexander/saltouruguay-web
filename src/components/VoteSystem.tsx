@@ -119,9 +119,9 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
 
     return (
         <div class="flex w-full max-w-5xl flex-col justify-center items-center gap-y-8">
-            <div class="flex bg-brand-gray/5 w-full p-4 rounded-[10px] gap-x-4 items-center">
+            <div class="bg-brand-gray/5 border w-full p-4 rounded-[10px] gap-x-2 items-center">
                 <strong class="text-white">
-                    Recordatorio:
+                    Recordatorio
                 </strong>
                 <p class="text-white text-sm">
                     Las votaciones abren el 01 de Diciembre de 2024
