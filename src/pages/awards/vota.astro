@@ -11,11 +11,28 @@ import LaunchCountdown from "@/components/LaunchCountdown";
 
 const session = await getSession(Astro.request);
 
+if (!session) {
+  return new Response(null, { status: 404 });
+}
+
 let votes: Awaited<ReturnType<typeof currentUserVotes>> = null;
 
 if (session?.user) {
   votes = await currentUserVotes(session.user.id);
 }
+
+/* 
+ Son más de las 9:30 AM del 30 de Noviembre de 2024 en Uruguay?
+*/
+
+import { DateTime } from "luxon";
+
+const now = DateTime.now().setZone("America/Montevideo");
+const targetTime = DateTime.local(2024, 11, 30, 9, 30).setZone(
+  "America/Montevideo"
+);
+
+const isAfterTargetTime = now > targetTime;
 ---
 
 <Layout title="Votación">
@@ -56,7 +73,7 @@ if (session?.user) {
 
     <main class="flex flex-col items-center justify-center h-full">
       {
-        !IS_VOTES_OPEN() && !session?.user.isAdmin ? (
+        !IS_VOTES_OPEN() && !isAfterTargetTime ? (
           // Mostrar cuenta regresiva si las votaciones están cerradas
           <div class="flex flex-col items-center justify-center h-full">
             <h2 class="text-2xl font-rubik font-bold text-white uppercase tracking-wider">
