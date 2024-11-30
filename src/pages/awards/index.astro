@@ -18,6 +18,19 @@ import {
 const eventDate = new Date(EVENT_TIMESTAMP);
 
 const session = await getSession(Astro.request);
+
+/* 
+ Son más de las 9:30 AM del 30 de Noviembre de 2024 en Uruguay?
+*/
+
+import { DateTime } from "luxon";
+
+const now = DateTime.now().setZone("America/Montevideo");
+const targetTime = DateTime.local(2024, 11, 30, 9, 30).setZone(
+  "America/Montevideo"
+);
+
+const isAfterTargetTime = now > targetTime;
 ---
 
 <Layout title="SaltoAwards">
@@ -55,13 +68,13 @@ const session = await getSession(Astro.request);
     </header>
 
     {
-      session?.user.isAdmin && (
+      !IS_VOTES_OPEN() && isAfterTargetTime && (
         <a
           href="/awards/vota"
           class="flex items-center justify-center gap-2 mt-8 fixed bottom-4 right-4 z-10"
         >
           <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-blue-500 rounded-md font-rubik uppercase tracking-wider font-bold text-sm hover:bg-yellow-600 transition-all duration-300">
-            <span>Probar la votación</span>
+            <span>Ver a los nominados</span>
             <LucideWrench size="24" />
           </button>
         </a>

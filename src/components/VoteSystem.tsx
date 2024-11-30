@@ -7,6 +7,12 @@ import { toast } from "sonner"
 import { VoteFinal } from "./VoteFinal"
 import { IS_VOTES_OPEN } from "@/config"
 import { NOMINEES } from "@/awards/Nominees"
+/* 
+ Son más de las 9:30 AM del 30 de Noviembre de 2024 en Uruguay?
+*/
+
+import { DateTime } from "luxon";
+
 
 const MAX_VOTES_PER_CATEGORY = 2;
 
@@ -24,6 +30,13 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
     const hasAlmostOneVotePerCategory = categories.every(category => votesByCategory[category.id]?.length > 0)
 
     const storageDraftKey = `saltoawards-${new Date().getFullYear()}`
+
+    const now = DateTime.now().setZone("America/Montevideo");
+    const targetTime = DateTime.local(2024, 11, 30, 9, 30).setZone(
+        "America/Montevideo"
+    );
+
+    const isAfterTargetTime = now > targetTime;
 
     useEffect(() => {
         const savedVotes = localStorage.getItem(storageDraftKey)
@@ -106,6 +119,15 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
 
     return (
         <div class="flex w-full max-w-5xl flex-col justify-center items-center gap-y-8">
+            <div class="flex bg-brand-gray/5 w-full p-4 rounded-[10px] gap-x-4 items-center">
+                <strong class="text-white">
+                    Recordatorio:
+                </strong>
+                <p class="text-white text-sm">
+                    Las votaciones abren el 01 de Diciembre de 2024
+                </p>
+
+            </div>
             {
                 isVotingFinished ? (
                     <VoteFinal user={user} categories={categories} votes={votesByCategory} onReturn={returnToVoting} />
