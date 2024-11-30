@@ -73,7 +73,7 @@ const isAfterTargetTime = now > targetTime;
 
     <main class="flex flex-col items-center justify-center h-full">
       {
-        !IS_VOTES_OPEN() && !session.user.isAdmin ? (
+        !IS_VOTES_OPEN() && !isAfterTargetTime ? (
           // Mostrar cuenta regresiva si las votaciones están cerradas
           <div class="flex flex-col items-center justify-center h-full">
             <h2 class="text-2xl font-rubik font-bold text-white uppercase tracking-wider">
