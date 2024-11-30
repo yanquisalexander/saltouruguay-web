@@ -25,12 +25,11 @@ const session = await getSession(Astro.request);
 
 import { DateTime } from "luxon";
 
-const now = DateTime.now().setZone("America/Montevideo");
-const targetTime = DateTime.local(2024, 11, 30, 9, 30).setZone(
-  "America/Montevideo"
-);
+const targetTime = DateTime.local(2024, 11, 30, 9, 30)
+  .setZone("America/Montevideo")
+  .toMillis();
 
-const isAfterTargetTime = now > targetTime;
+const isAfterTargetTime = nowInUruguay() > targetTime;
 ---
 
 <Layout title="SaltoAwards">
@@ -71,11 +70,14 @@ const isAfterTargetTime = now > targetTime;
       !IS_VOTES_OPEN() && isAfterTargetTime && (
         <a
           href="/awards/vota"
-          class="flex items-center justify-center gap-2 mt-8 fixed bottom-4 right-4 z-10"
+          class="flex items-center justify-center gap-2 mb-8"
         >
-          <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-blue-500 rounded-md font-rubik uppercase tracking-wider font-bold text-sm hover:bg-yellow-600 transition-all duration-300">
+          <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-yellow-500 rounded-md uppercase tracking-wider font-bold font-rubik hover:bg-yellow-600 transition-all duration-300">
             <span>Ver a los nominados</span>
-            <LucideWrench size="24" />
+            <LucideChevronRight
+              size="24"
+              class="group-hover:translate-x-1 transition-transform duration-300"
+            />
           </button>
         </a>
       )
