@@ -2,7 +2,7 @@
 import { CATEGORIES } from "@/awards/Categories";
 import VotesSummary from "@/components/VotesSummary.astro";
 import { VoteSystem } from "@/components/VoteSystem";
-import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
+import { IS_VOTES_OPEN, nowInUruguay, VOTES_OPEN_TIMESTAMP } from "@/config";
 import Layout from "@/layouts/Layout.astro";
 import { currentUserVotes } from "@/utils/awards-vote-system";
 import { getSession } from "auth-astro/server";
@@ -27,12 +27,11 @@ if (session?.user) {
 
 import { DateTime } from "luxon";
 
-const now = DateTime.now().setZone("America/Montevideo");
-const targetTime = DateTime.local(2024, 11, 30, 9, 30).setZone(
-  "America/Montevideo"
-);
+const targetTime = DateTime.local(2024, 11, 30, 9, 30)
+  .setZone("America/Montevideo")
+  .toMillis();
 
-const isAfterTargetTime = now > targetTime;
+const isAfterTargetTime = nowInUruguay() > targetTime;
 ---
 
 <Layout title="Votación">
