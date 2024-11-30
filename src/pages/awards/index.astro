@@ -25,8 +25,9 @@ const session = await getSession(Astro.request);
 
 import { DateTime } from "luxon";
 
-const targetTime = DateTime.local(2024, 11, 30, 9, 30)
+const targetTime = DateTime.fromMillis(Date.now())
   .setZone("America/Montevideo")
+  .set({ hour: 9, minute: 30, second: 0, millisecond: 0 })
   .toMillis();
 
 const isAfterTargetTime = nowInUruguay() > targetTime;
