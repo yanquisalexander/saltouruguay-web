@@ -30,7 +30,7 @@ export const server = {
                 const openDate = new Date(VOTES_OPEN_TIMESTAMP)
                 throw new ActionError({
                     code: "PRECONDITION_FAILED",
-                    message: `La votación está cerrada, se abrirá el ${openDate.toLocaleDateString('es-UY', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Montevideo' })}
+                    message: `La votación está cerrada, se abrirá el ${openDate.toLocaleDateString('es-UY', { dateStyle: 'full', timeZone: 'America/Montevideo' })}
                     a las ${openDate.toLocaleTimeString('es-UY', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'America/Montevideo' })}`
 
                 })
