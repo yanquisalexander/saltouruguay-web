@@ -109,14 +109,15 @@ export const createGroupedVotes = ({ calculatedVotes }: { calculatedVotes: Await
     // Fill the structure with actual data
     for (const vote of calculatedVotes) {
         const { categoryId, nomineeId, totalPoints } = vote;
+        console.log({ vote })
 
         const category = groupedVotes[categoryId];
         if (category) {
             const nominee = category.find(n => n.nomineeId === nomineeId);
 
             if (nominee) {
-                nominee.realTotalPoints = totalPoints;
-                nominee.roundTotalPoints = Math.round(totalPoints);
+                nominee.realTotalPoints = parseFloat(totalPoints); // Convert to number
+                nominee.roundTotalPoints = Math.round(parseFloat(totalPoints));
                 nominee.votes = vote.count || 0;
             }
         }
@@ -124,6 +125,7 @@ export const createGroupedVotes = ({ calculatedVotes }: { calculatedVotes: Await
 
     // Calculate percentages per category
     for (const [categoryId, nominees] of Object.entries(groupedVotes)) {
+        console.log({ categoryId, nominees })
         const totalPointsInCategory = nominees.reduce((acc, n) => acc + n.realTotalPoints, 0);
 
         if (totalPointsInCategory > 0) {
@@ -137,6 +139,7 @@ export const createGroupedVotes = ({ calculatedVotes }: { calculatedVotes: Await
 
     return groupedVotes;
 };
+
 
 export const getGroupedVotes = async (): Promise<ReturnType<typeof createGroupedVotes>> => {
     const cache = cacheService.create({ ttl: 60 * 60 * 48 /* 48 hours */ });
