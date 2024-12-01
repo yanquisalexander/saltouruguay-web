@@ -116,7 +116,9 @@ export const createGroupedVotes = ({ calculatedVotes }: { calculatedVotes: Await
             const nominee = category.find(n => n.nomineeId === nomineeId);
 
             if (nominee) {
+                // @ts-ignore
                 nominee.realTotalPoints = parseFloat(totalPoints); // Convert to number
+                // @ts-ignore
                 nominee.roundTotalPoints = Math.round(parseFloat(totalPoints));
                 nominee.votes = vote.count || 0;
             }
