@@ -10,17 +10,18 @@ const { data: liveNow } = await getLiveStreams(
 
 {
   liveNow.length > 0 && (
-    <section
-      id="live-now"
-      class="max-w-5xl mx-auto mt-16 flex flex-col items-center justify-center mb-8"
-    >
-      <p class="font-rubik uppercase text-lg text-center mb-8">
+    <section id="live-now" class="max-w-5xl mx-auto flex flex-col mb-8">
+      <p class="text-xl font-bold text-white">
         ¡Estos nominados están en vivo ahora!
       </p>
 
-      {liveNow.map((stream) => (
-        <p>{stream.userName}</p>
-      ))}
+      <ul class="flex flex-col list-disc prose prose-invert  gap-2">
+        {liveNow.map((stream) => (
+          <a href={`https://twitch.tv/${stream.userName}`} target="_blank">
+            {stream.userDisplayName}
+          </a>
+        ))}
+      </ul>
     </section>
   )
 }
