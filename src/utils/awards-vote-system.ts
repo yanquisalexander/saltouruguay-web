@@ -90,20 +90,14 @@ GROUP BY v.category_id, v.nominee_id */
     return votes;
 }
 
-export const createGroupedVotes = ({
-    calculatedVotes,
-}: {
-    calculatedVotes: Awaited<ReturnType<typeof calculateVotes>>;
-}) => {
+export const createGroupedVotes = ({ calculatedVotes }: { calculatedVotes: Awaited<ReturnType<typeof calculateVotes>> }) => {
     // Initialize the structure with all categories and their nominees
     const groupedVotes = Object.fromEntries(
         CATEGORIES.map(category => [
             category.id,
             category.nominees.map(({ id: nomineeId }) => ({
                 nomineeId,
-                displayName:
-                    Object.values(NOMINEES).find(n => n.username === nomineeId)
-                        ?.displayName || "Unknown",
+                displayName: Object.values(NOMINEES).find(n => n.username === nomineeId)?.displayName || "Unknown",
                 realTotalPoints: 0,
                 roundTotalPoints: 0,
                 percentage: 0.0,
@@ -112,9 +106,9 @@ export const createGroupedVotes = ({
         ])
     );
 
-    // Aggregate points for each nominee
+    // Fill the structure with actual data
     for (const vote of calculatedVotes) {
-        const { categoryId, nomineeId, totalPoints, count } = vote;
+        const { categoryId, nomineeId, totalPoints } = vote;
 
         const category = groupedVotes[categoryId];
         if (category) {
@@ -123,32 +117,26 @@ export const createGroupedVotes = ({
             if (nominee) {
                 nominee.realTotalPoints = totalPoints;
                 nominee.roundTotalPoints = Math.round(totalPoints);
-                nominee.votes = count || 0;
+                nominee.votes = vote.count || 0;
             }
         }
     }
 
-    // Calculate total points per category and percentages
-    for (const categoryId in groupedVotes) {
-        const category = groupedVotes[categoryId];
+    // Calculate percentages per category
+    for (const [categoryId, nominees] of Object.entries(groupedVotes)) {
+        const totalPointsInCategory = nominees.reduce((acc, n) => acc + n.realTotalPoints, 0);
 
-        const totalPoints = category.reduce(
-            (acc, n) => acc + n.realTotalPoints,
-            0
-        );
-
-        if (totalPoints > 0) {
-            category.forEach(nominee => {
+        if (totalPointsInCategory > 0) {
+            for (const nominee of nominees) {
                 nominee.percentage = parseFloat(
-                    ((nominee.realTotalPoints / totalPoints) * 100).toFixed(2)
+                    ((nominee.realTotalPoints / totalPointsInCategory) * 100).toFixed(2)
                 );
-            });
+            }
         }
     }
 
     return groupedVotes;
 };
-
 
 export const getGroupedVotes = async (): Promise<ReturnType<typeof createGroupedVotes>> => {
     const cache = cacheService.create({ ttl: 60 * 60 * 48 /* 48 hours */ });
