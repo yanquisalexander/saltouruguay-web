@@ -359,8 +359,8 @@ Faku Zárate */
         ]
     },
     {
-        id: "mas-sortudo",
-        name: "Más sortudo",
+        id: "mas-suertudo",
+        name: "Más suertudo",
         nominees: [
             {
                 id: NOMINEES.titoleproso.username,
