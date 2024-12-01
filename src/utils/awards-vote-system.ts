@@ -77,7 +77,7 @@ GROUP BY v.category_id, v.nominee_id */
     const votes = await client.select({
         categoryId: VotesTable.categoryId,
         nomineeId: VotesTable.nomineeId,
-        totalPoints: sql<number>`SUM(
+        totalPoints: sql<string>`SUM(
             CASE 
                 WHEN ${VotesTable.ranking} = 0 THEN 1
                 WHEN ${VotesTable.ranking} = 1 THEN 0.5
@@ -87,7 +87,11 @@ GROUP BY v.category_id, v.nominee_id */
         count: count().as("votes"),
     }).from(VotesTable).groupBy(VotesTable.categoryId, VotesTable.nomineeId).execute();
 
-    return votes;
+    return votes.map((vote) => ({
+        ...vote,
+        totalPoints: parseFloat(vote.totalPoints),
+
+    }));
 }
 
 export const createGroupedVotes = ({ calculatedVotes }: { calculatedVotes: Awaited<ReturnType<typeof calculateVotes>> }) => {
@@ -116,26 +120,20 @@ export const createGroupedVotes = ({ calculatedVotes }: { calculatedVotes: Await
             const nominee = category.find(n => n.nomineeId === nomineeId);
 
             if (nominee) {
-                // @ts-ignore
-                nominee.realTotalPoints = parseFloat(totalPoints); // Convert to number
-                // @ts-ignore
-                nominee.roundTotalPoints = Math.round(parseFloat(totalPoints));
+                nominee.realTotalPoints = totalPoints;
+                nominee.roundTotalPoints = Math.round(totalPoints);
                 nominee.votes = vote.count || 0;
             }
         }
     }
 
     // Calculate percentages per category
-    for (const [categoryId, nominees] of Object.entries(groupedVotes)) {
-        console.log({ categoryId, nominees })
-        const totalPointsInCategory = nominees.reduce((acc, n) => acc + n.realTotalPoints, 0);
+    for (const category of CATEGORIES) {
+        const nominees = groupedVotes[category.id];
+        const totalPoints = nominees.reduce((acc, nominee) => acc + nominee.realTotalPoints, 0);
 
-        if (totalPointsInCategory > 0) {
-            for (const nominee of nominees) {
-                nominee.percentage = parseFloat(
-                    ((nominee.realTotalPoints / totalPointsInCategory) * 100).toFixed(2)
-                );
-            }
+        for (const nominee of nominees) {
+            nominee.percentage = totalPoints === 0 ? 0 : (nominee.realTotalPoints / totalPoints) * 100;
         }
     }
 
