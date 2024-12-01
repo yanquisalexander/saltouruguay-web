@@ -39,7 +39,7 @@ export const server = {
             /* 
                 Verificar que haya al menos un voto en cada categoría
             */
-
+            /*
             const categories = Object.keys(CATEGORIES);
             for (const categoryId of categories) {
                 if (!votes[categoryId] || votes[categoryId].length === 0) {
@@ -48,7 +48,7 @@ export const server = {
                         message: `Debe haber al menos un voto en la categoría: ${CATEGORIES.find(c => c.id === categoryId)?.name || 'desconocida'}`
                     });
                 }
-            }
+            } */
 
 
             try {
