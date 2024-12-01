@@ -7,7 +7,7 @@ import {
   VOTES_OPEN_TIMESTAMP,
 } from "@/config";
 import Layout from "@/layouts/Layout.astro";
-import { currentUserVotes } from "@/utils/awards-vote-system";
+import { currentUserVotes, getTotalVotes } from "@/utils/awards-vote-system";
 import { getSession } from "auth-astro/server";
 import {
   LucideArrowRight,
@@ -83,8 +83,26 @@ const isAfterTargetTime = nowInUruguay() > targetTime;
     }
 
     {
+      IS_VOTES_OPEN() &&
+        (async () => {
+          const votesAtTheMoment = await getTotalVotes();
+          return (
+            <div class="flex justify-center flex-col items-center mt-8 sm:w-max font-rubik px-2 sm:px-6 uppercase font-medium text-sm text-white/70 mx-auto text-center py-1.5 rounded-full bg-violet-500/20 gap-1 hover:bg-violet-500/30 transition-all duration-300 hover:scale-105">
+              <span class="text-yellow-500 font-bold">
+                🔥 #SaltoAwards2024 🔥
+              </span>
+              <span>
+                <span class="text-white">{votesAtTheMoment}</span> votos hasta
+                el momento
+              </span>
+            </div>
+          );
+        })()
+    }
+
+    {
       IS_VOTES_OPEN() && (
-        <div class="flex flex-col items-center justify-center mt-4 mb-16">
+        <div class="flex flex-col items-center justify-center mt-12 mb-16">
           <h2 class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen">
             ¡Votaciones abiertas!
           </h2>
