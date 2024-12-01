@@ -101,9 +101,16 @@ export const VoteFinal = ({ user, categories, votes, onReturn }: { user: Session
                                     {votedNominees.map(nominee => {
                                         const nomineeVotes = categoryVotes.filter(vote => vote.nomineeId === nominee.id)
                                         const nomineeFromConst = Object.values(NOMINEES).find(n => n.username === nominee.id)
+                                        const placeholderAvatar = `https://ui-avatars.com/api/?name=${nomineeFromConst?.displayName}&background=random&color=fff`
+
                                         return (
                                             <li key={nominee.id} class="flex gap-y-2 gap-x-4 items-center">
-                                                <img src={`/images/nominees/${nomineeFromConst?.username}.webp`} alt={nomineeFromConst?.displayName} class="size-10 rounded-full" />
+                                                <img src={`/images/nominees/${nomineeFromConst?.username}.webp`}
+                                                    alt={nomineeFromConst?.displayName} class="size-10 rounded-full"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = placeholderAvatar
+                                                    }}
+                                                />
                                                 <div class="flex flex-col gap-y-2 items-center">
                                                     <span class="font-bold">{nomineeFromConst?.displayName}</span>
 

@@ -1,6 +1,6 @@
 import type { Category, Vote } from "@/types/Awards"
 import type { Session } from "@auth/core/types"
-import { LucideMinus } from "lucide-preact"
+import { LucideMinus, LucideTrophy } from "lucide-preact"
 import { useEffect, useState } from "preact/hooks"
 import { VoteNominee } from "./VoteNominee"
 import { toast } from "sonner"
@@ -30,13 +30,6 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
     const hasAlmostOneVotePerCategory = categories.every(category => votesByCategory[category.id]?.length > 0)
 
     const storageDraftKey = `saltoawards-${new Date().getFullYear()}`
-
-    const now = DateTime.now().setZone("America/Montevideo");
-    const targetTime = DateTime.local(2024, 11, 30, 9, 30).setZone(
-        "America/Montevideo"
-    );
-
-    const isAfterTargetTime = now > targetTime;
 
     useEffect(() => {
         const savedVotes = localStorage.getItem(storageDraftKey)
@@ -117,17 +110,24 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
         setCurrentCategoryIndex(currentCategoryIndex - 1)
     }
 
+    const currentUserIsNominee = Object.values(NOMINEES).some(nominee => nominee.username === user?.name?.toLowerCase())
+
     return (
         <div class="flex w-full max-w-5xl flex-col justify-center items-center gap-y-8">
-            <div class="bg-brand-gray/5 border w-full p-4 rounded-[10px] gap-x-2 items-center">
-                <strong class="text-white">
-                    Recordatorio
-                </strong>
-                <p class="text-white text-sm">
-                    Las votaciones abren el 01 de Diciembre de 2024
-                </p>
+            {
+                currentUserIsNominee && (
+                    <div class="bg-blue-500/5 border w-full font-rubik p-4 border-dashed  gap-x-2 items-center">
+                        <strong class="text-white font-normal font-anton">
+                            ¡Eres un nominado! 🎉
+                        </strong>
+                        <p class="text-white text-sm">
+                            Pronto recibirás el logro <strong>"Yo estuve ahí Ⅲ"</strong> por ser parte de los nominados de los Salto Awards 2024
+                        </p>
 
-            </div>
+                    </div>
+                )
+            }
+
             {
                 isVotingFinished ? (
                     <VoteFinal user={user} categories={categories} votes={votesByCategory} onReturn={returnToVoting} />
@@ -154,6 +154,8 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                                 )
                             })}
                         </ul>
+
+
 
                         <footer class="flex flex-col w-full gap-y-4">
                             <span class="font-teko text-2xl">

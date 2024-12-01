@@ -1,7 +1,7 @@
 ---
 import LaunchCountdown from "@/components/LaunchCountdown";
 import Layout from "../layouts/Layout.astro";
-import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
+import { EVENT_TIMESTAMP, IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
 import Sponsors from "@/sections/Sponsors.astro";
 import LiveStream from "@/components/LiveStream.astro";
 import VoteCallToAction from "@/components/VoteCallToAction.astro";
@@ -11,7 +11,7 @@ import { FeaturedNews } from "@/components/FeaturedNews";
 
 const IS_PROD = import.meta.env.PROD;
 
-const SHOW_AWARDS_VOTES_COUNTDOWN = true;
+const SHOW_AWARDS_COUNTDOWN = true;
 
 export const prerender = true;
 ---
@@ -20,17 +20,10 @@ export const prerender = true;
   title="Comunidad SaltoUruguayServer"
   description="Te damos la bienvenida a la comunidad del canal de SaltoUruguayServer en Twitch. ¡Las votaciones para los #SaltoAwards2024 abrirán muy pronto!"
 >
-  <!--   {!IS_PROD && <VoteCallToAction server:defer />}
- -->
-  <div
-    class="flex justify-center flex-col items-center mt-8 sm:w-max font-rubik px-2 sm:px-6 uppercase font-medium text-sm text-white/70 mx-auto text-center py-1.5 rounded-full bg-violet-500/20 gap-1 hover:bg-violet-500/30 transition-all duration-300 hover:scale-105"
-  >
-    <span class="text-yellow-500 font-bold">🔥 #SaltoAwards2024 🔥</span>
-    <span> ¡Ya puedes ver a los nominados! </span>
-  </div>
+  <VoteCallToAction server:defer />
 
   {
-    SHOW_AWARDS_VOTES_COUNTDOWN && (
+    SHOW_AWARDS_COUNTDOWN && (
       <div class=" flex flex-col py-16 items-center h-full">
         <header class="flex items-center justify-center max-w-md w-full gap-x-14 gap-y-6 flex-col md:flex-row">
           <div class="relative">
@@ -53,11 +46,11 @@ export const prerender = true;
         </header>
 
         <p class="font-rubik uppercase text-lg text-center mt-8">
-          ¡Las votaciones para{" "}
+          ¡Los
           <span class="font-bold text-yellow-500">#SaltoAwards2024 </span>
-          abrirán muy pronto!
+          será un evento inolvidable!
         </p>
-        <LaunchCountdown timestamp={VOTES_OPEN_TIMESTAMP} client:idle />
+        <LaunchCountdown timestamp={EVENT_TIMESTAMP} client:idle />
       </div>
     )
   }
