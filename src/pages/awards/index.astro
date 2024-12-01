@@ -71,22 +71,13 @@ const isAfterTargetTime = nowInUruguay() > targetTime;
       !IS_VOTES_OPEN() &&
         isAfterTargetTime &&
         (() => {
-          const TAG = session ? "a" : "div";
-
           return (
-            <TAG
-              href={session ? "/awards/vota" : undefined}
-              class="flex items-center justify-center gap-2 mb-8"
-              {...(!session && { "data-login-on-click": true })}
-            >
-              <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-yellow-500 rounded-md uppercase tracking-wider font-bold font-rubik hover:bg-yellow-600 transition-all duration-300">
-                <span>Ver a los nominados</span>
-                <LucideChevronRight
-                  size="24"
-                  className="group-hover:translate-x-1 transition-transform duration-300"
-                />
-              </button>
-            </TAG>
+            <div class="flex items-center flex-col md:flex-row justify-center gap-y-2 gap-4 mb-8 italic text-lg font-rubik">
+              <span class="max-w-48">
+                En menos de 1 hora se abrirán las votaciones
+              </span>
+              <LaunchCountdown timestamp={VOTES_OPEN_TIMESTAMP} client:load />
+            </div>
           );
         })()
     }
