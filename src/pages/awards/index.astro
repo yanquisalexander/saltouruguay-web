@@ -73,9 +73,7 @@ const isAfterTargetTime = nowInUruguay() > targetTime;
         (() => {
           return (
             <div class="flex items-center flex-col md:flex-row justify-center gap-y-2 gap-4 mb-8 italic text-lg font-rubik">
-              <span class="max-w-48">
-                En menos de 1 hora se abrirán las votaciones
-              </span>
+              <span class="max-w-48">En breve se abrirán las votaciones</span>
               <LaunchCountdown timestamp={VOTES_OPEN_TIMESTAMP} client:load />
             </div>
           );
