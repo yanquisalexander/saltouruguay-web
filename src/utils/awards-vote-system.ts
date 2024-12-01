@@ -135,7 +135,7 @@ export const createGroupedVotes = ({ calculatedVotes }: { calculatedVotes: Await
         for (const nominee of nominees) {
             nominee.percentage = totalPoints === 0
                 ? 0
-                : parseFloat(((nominee.realTotalPoints / totalPoints) * 100).toFixed(1));
+                : parseFloat(((nominee.realTotalPoints / totalPoints) * 100).toFixed(2));
         }
     }
 
