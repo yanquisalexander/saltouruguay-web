@@ -5,7 +5,7 @@ import { VotesTable } from "@/db/schema";
 import cacheService from "@/services/cache";
 import type { Session } from "@auth/core/types";
 import { z } from "astro/zod";
-import { count, eq, sql } from "drizzle-orm";
+import { asc, count, eq, sql } from "drizzle-orm";
 
 
 export const VoteSchema = z.object({
@@ -50,12 +50,13 @@ export const submitVotes = async (votes: Votes, user: Session['user']) => {
 
 
 export const currentUserVotes = async (userId: number) => {
-    const votes = await client.select().from(VotesTable).where(eq(VotesTable.userId, userId)).execute();
+    const votes = await client.select().from(VotesTable).where(eq(VotesTable.userId, userId))
+        .orderBy(VotesTable.ranking, asc(VotesTable.ranking)).execute();
 
     if (votes.length === 0) {
         return null;
     }
-    return votes;
+    return votes
 }
 
 export const calculateVotes = async () => {
