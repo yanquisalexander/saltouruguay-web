@@ -50,7 +50,8 @@ const groupedVotes = await getGroupedVotes();
                     {vote.votes} votos
                   </p>
                   <p class="text-white text-xs font-rubik text-center">
-                    {vote.percentage.toFixed(2)}%
+                    {vote.percentage && vote.percentage.toFixed(2)}% de los
+                    votos
                   </p>
                   <p class="text-white text-xs font-rubik text-center">
                     Puntos (Redondeado): {vote.roundTotalPoints}
