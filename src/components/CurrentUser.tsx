@@ -74,24 +74,19 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     }, [dropdownOpen]);
 
     if (!pusher) {
-        const host = import.meta.env.DEV ? 'localhost' : `ws-${PUSHER_APP_CLUSTER}.pusher.com`;
-        const port = (import.meta.env.DEV ? 6001 : 443)
+        const host = /* import.meta.env.DEV ? 'localhost' :  */`saltosoketi2.holy.gg`;
 
-        let pusherSettings = {
+
+
+
+        setPusher(new Pusher(PUSHER_KEY, {
             wsHost: host,
-            wsPort: port,
-            forceTLS: port === 443,
+            wsPort: 6001,
+            wssPort: 6002,
             cluster: "us2",
-        }
-
-        if (import.meta.env.DEV) {
-            pusherSettings = {
-                ...pusherSettings,
-                // @ts-ignore
-                enabledTransports: ['ws', 'wss']
-            }
-        }
-        setPusher(new Pusher(PUSHER_KEY, pusherSettings));
+            enabledTransports: ['ws', 'wss'],
+            forceTLS: import.meta.env.PROD
+        }));
 
     }
 
