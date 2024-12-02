@@ -30,7 +30,8 @@ interface Props {
 //const session = await getSession(Astro.request);
 if (!Astro.props.preload) Astro.props.preload = [];
 
-const { title, description, preload, canonical, image } = Astro.props;
+const { title, description, preload, canonical, image, hideHeader } =
+  Astro.props;
 
 const session = await getSession(Astro.request);
 
@@ -61,7 +62,7 @@ preload?.push({
   <body
     class="bg-repeat text-white overflow-x-hidden font-sans bg-[url(https://www.alexitoo.dev/bg.svg)] bg-cover"
   >
-    <SiteHeader session={session} />
+    {!hideHeader && <SiteHeader session={session} />}
 
     <main class="px-6 sm:px-10">
       <slot />
