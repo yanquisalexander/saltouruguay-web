@@ -1,7 +1,7 @@
 import type { Category, Vote } from "@/types/Awards"
 import type { Session } from "@auth/core/types"
-import { LucideMinus, LucideTrophy } from "lucide-preact"
-import { useEffect, useState } from "preact/hooks"
+import { LucideCheckCircle2, LucideCircleDashed, LucideMinus, LucideTrophy } from "lucide-preact"
+import { useEffect, useRef, useState } from "preact/hooks"
 import { VoteNominee } from "./VoteNominee"
 import { toast } from "sonner"
 import { VoteFinal } from "./VoteFinal"
@@ -155,7 +155,63 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                             })}
                         </ul>
 
+                        <footer class="flex gap-x-2 w-full overflow-x-scroll snap-x snap-center snap-mandatory">
+                            {
+                                /* 
+                                    Si no ha votado en una categoría, renderizar LucideCircleDashed en coloor text-gray-500
+                                    Si ha votado en una categoría, renderizar LucideCheckCircle en color text-green-500
 
+                                    La categoría actual debe ser un botón en color azul redondeado
+
+                                */
+
+                                <div class="relative overflow-x-auto scroll-timeline-axis-block" style={{ scrollbarColor: '#5865F2 #060109', scrollbarWidth: '2px' }}>
+                                    {/* Degradados laterales */}
+                                    <div class="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#060109]/50 to-transparent pointer-events-none"></div>
+                                    <div class="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#060109]/50 to-transparent pointer-events-none"></div>
+
+                                    <div class="flex gap-4 overflow-x-auto scrollbar-hide">
+                                        {categories.map((category, index) => {
+                                            const hasVoted = votesByCategory[category.id]?.length > 0;
+                                            const isCurrentCategory = currentCategory.id === category.id;
+                                            const ref = useRef<HTMLButtonElement>(null);
+
+                                            useEffect(() => {
+                                                if (isCurrentCategory && ref.current) {
+                                                    ref.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                                                }
+                                            }, [isCurrentCategory]);
+
+                                            return (
+                                                <button
+                                                    ref={ref}
+                                                    class={`flex w-full items-center border gap-2 font-rubik text-sm font-bold py-2 px-4 rounded-[10px] transition-colors duration-300 ${isCurrentCategory
+                                                        ? 'bg-[#5865F2]/20 border-[#5865F2]'
+                                                        : 'bg-brand-gray/5 border-transparent'
+                                                        } ${hasVoted ? 'text-green-500' : 'text-gray-500'}`}
+                                                    onClick={() => setCurrentCategoryIndex(index)}
+                                                >
+                                                    <span class="w-full flex items-center gap-x-2 whitespace-nowrap text-left">
+                                                        {isCurrentCategory
+                                                            ? category.name
+                                                            : <>
+                                                                {hasVoted ? (
+                                                                    <LucideCheckCircle2 class="w-6 h-6" />
+                                                                ) : (
+                                                                    <LucideCircleDashed class="w-6 h-6" />
+                                                                )}
+                                                                {category.name}
+                                                            </>}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+
+                            }
+                        </footer>
 
                         <footer class="flex flex-col w-full gap-y-4">
                             <span class="font-teko text-2xl">
