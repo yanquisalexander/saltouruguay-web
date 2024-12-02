@@ -74,18 +74,16 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     }, [dropdownOpen]);
 
     if (!pusher) {
-        const host = /* import.meta.env.DEV ? 'localhost' :  */`saltosoketi2.holy.gg`;
+        const host = /* import.meta.env.DEV ? 'localhost' :  */`soketi.saltouruguayserver.com`;
 
 
 
 
         setPusher(new Pusher(PUSHER_KEY, {
             wsHost: host,
-            wsPort: 6001,
-            wssPort: 6002,
             cluster: "us2",
             enabledTransports: ['ws', 'wss'],
-            forceTLS: import.meta.env.PROD
+            forceTLS: true
         }));
 
     }
