@@ -31,8 +31,18 @@ const COMMUNITY_GRID_CARDS = [
     title: "Banco Saltano",
     description: "Administra tus SaltoCoins y realiza transacciones.",
     image: "/images/banco.webp",
-    soon: import.meta.env.PROD,
+    soon: true,
     soonCustomText: "Próximamente",
+  },
+  {
+    path: "/comunidad/debate-salto-awards",
+    requiresLogin: true,
+    title: "Debate SaltoAwards",
+    description:
+      "Comparte tus opiniones sobre los SaltoAwards de forma anónima.",
+    image: "/images/debate-salto-awards.webp",
+    soon: true,
+    soonCustomText: "Disponible el Jueves durante el stream",
   },
 ];
 

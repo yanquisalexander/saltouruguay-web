@@ -75,3 +75,19 @@ export const LoansTable = pgTable('loans', {
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
 })
+
+/* 
+    Tabla para mensajes anónimos de debate
+    Hecho exclusivamente para el debate SaltoAwards del día Jueves 5 de Diciembre de 2024
+
+    Se liga a la tabla de usuarios únicamente
+    para posible limitación de mensajes por usuario
+*/
+
+export const DebateAnonymousMessagesTable = pgTable('debate_anonymous_messages', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => UsersTable.id),
+    message: text('message').notNull(),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+})
