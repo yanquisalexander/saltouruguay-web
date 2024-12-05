@@ -34,7 +34,7 @@ export const DebateOverlayPinneWidget = () => {
     return (
         <div class="flex items-center justify-center fixed inset-0 pointer-events-none">
             <div
-                class={`p-4 bg-[#060109] text-white min-w-64 max-w-3xl w-max shadow-lg rounded transition-all duration-300
+                class={`p-4 bg-[#0b1422]/95 border-2 border-line rounded-lg text-white min-w-64 max-w-3xl w-max  transition-all duration-300
                 ${isVisible ? "animate-fade-in-up" : currentOpinion ? "animate-fade-out-down" : "hidden"}`}
             >
                 {currentOpinion && (
