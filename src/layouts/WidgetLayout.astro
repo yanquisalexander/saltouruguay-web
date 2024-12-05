@@ -1,0 +1,32 @@
+---
+import "@/assets/styles/sonner-styles.css";
+import "@/assets/styles/global.css";
+
+import "@fontsource/anton";
+import "@fontsource-variable/rubik";
+import "@fontsource-variable/teko";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <!-- <meta
+      id="current-user-data"
+      data-user={JSON.stringify({ user: session?.user || null })}
+    /> -->
+  </head>
+  <body>
+    <main>
+      <slot />
+    </main>
+    <style is:global>
+      html {
+        font-family: "Jost Variable", system-ui, sans-serif;
+      }
+
+      * {
+        background-color: transparent;
+      }
+    </style>
+  </body>
+</html>

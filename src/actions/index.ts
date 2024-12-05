@@ -191,7 +191,7 @@ export const server = {
             }
 
             try {
-                await pusher.trigger('debate', 'pin-opinion', { opinionId })
+                await pusher.trigger('debate', 'pin-debate-message', { opinionId })
                 return { success: true }
             } catch (error) {
                 throw new ActionError({
@@ -199,6 +199,27 @@ export const server = {
                     message: "Error al pinear la opinión"
                 })
             }
+        }
+    }),
+    getDebateMessageById: defineAction({
+        input: z.object({
+            opinionId: z.number()
+        }),
+        handler: async ({ opinionId }) => {
+            const opinion = await client
+                .select()
+                .from(DebateAnonymousMessagesTable)
+                .where(eq(DebateAnonymousMessagesTable.id, opinionId))
+                .execute();
+
+            if (!opinion.length) {
+                throw new ActionError({
+                    code: 'NOT_FOUND',
+                    message: "Opinión no encontrada"
+                })
+            }
+
+            return { opinion: opinion[0] }
         }
     }),
 }
