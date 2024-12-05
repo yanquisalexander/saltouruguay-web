@@ -194,31 +194,31 @@ const pendingMessages = messageBoard.filter(
       $messageDialog.close();
     });
 
-    $messageDialog
-      .querySelector("form#add-message-form")
-      ?.addEventListener("submit", async (event) => {
-        event.preventDefault();
+    const $form = $messageDialog.querySelector("form#add-message-form");
 
-        const $textarea = $messageDialog.querySelector(
-          "textarea"
-        ) as HTMLTextAreaElement;
-        const message = $textarea.value;
+    $form?.addEventListener("submit", async (event) => {
+      event.preventDefault();
 
-        if (!message) {
-          return;
-        }
+      const $textarea = $messageDialog.querySelector(
+        "textarea"
+      ) as HTMLTextAreaElement;
+      const message = $textarea.value;
 
-        const { error } = await actions.addDebateOpinion({ message });
+      if (!message) {
+        return;
+      }
 
-        if (error) {
-          toast.error("Ocurrió un error al enviar tu opinión.");
-          return;
-        }
+      const { error } = await actions.addDebateOpinion({ message });
 
-        toast.success("Opinión enviada correctamente.");
-        $messageDialog.close();
-        navigate(location.pathname);
-      });
+      if (error) {
+        toast.error("Ocurrió un error al enviar tu opinión.");
+        return;
+      }
+
+      toast.success("Opinión enviada correctamente.");
+      $messageDialog.close();
+      navigate(location.pathname);
+    });
 
     const $approveButtons = $$("[data-message-id]");
 
