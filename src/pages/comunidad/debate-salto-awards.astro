@@ -1,0 +1,277 @@
+---
+import { SALTO_BROADCASTER_ID } from "@/config";
+import Layout from "@/layouts/Layout.astro";
+import { getDebateMessages } from "@/utils/user";
+import { getSession } from "auth-astro/server";
+import { LucideMessageSquareDiff, LucidePin, LucideX } from "lucide-preact";
+
+const session = await getSession(Astro.request);
+
+const messageBoard = await getDebateMessages();
+
+const approvedMessages = messageBoard.filter(
+  (message) => message.approvedAt !== null
+);
+const pendingMessages = messageBoard.filter(
+  (message) => message.approvedAt === null
+);
+---
+
+<Layout title="Debate Salto Awards">
+  <meta
+    id="current-user-data"
+    data-user={JSON.stringify({ user: session?.user || null })}
+  />
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <header
+      class="relative z-10 flex flex-col items-center justify-center h-full max-w-4xl mx-auto"
+    >
+      <div class="flex items-center justify-center gap-x-4">
+        <div
+          class="relative animate-fade-in-up"
+          style="--floating-duration: 5000ms"
+        >
+          <img
+            src="/images/logo_salto.webp"
+            alt="SaltoUruguayServer"
+            class="size-20 md:size-24 w-auto object-contain aspect-square animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)] saturate-150"
+          />
+          <img
+            src="/images/logo_salto.webp"
+            alt="SaltoUruguayServer"
+            class="absolute blur-md brightness-125 saturate-200 inset-0 size-20 md:size-24 w-auto object-contain aspect-square z-[-1] animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)]"
+          />
+        </div>
+        <h1
+          class="text-3xl animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen"
+        >
+          Debate #SaltoAwards
+        </h1>
+      </div>
+
+      <h2
+        class="text-xl animate-fade-in-up text-center md:text-left animate-delay-300 font-rubik uppercase text-white mix-blend-screen my-5 sm:pb-10"
+      >
+        Compartí tus <span class="text-yellow-400">opiniones</span> sobre los SaltoAwards
+        de forma anónima.
+      </h2>
+    </header>
+
+    <dialog
+      class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+      id="add-message-dialog"
+    >
+      <form id="modal-close" class="absolute top-5 right-5">
+        <button type="button" class="text-white">
+          <LucideX class="w-6 h-6" />
+        </button>
+      </form>
+
+      <div class="flex flex-col items-center space-y-4">
+        <img src="/favicon.svg" class="aspect-square size-24" />
+
+        <div class="text-center prose prose-invert font-rubik text-sm">
+          <p>Compartí tus opiniones sobre los SaltoAwards de forma anónima.</p>
+        </div>
+      </div>
+
+      <form class="flex flex-col space-y-4 mt-8" id="add-message-form">
+        <textarea
+          class="w-full p-4 bg-[#0b1422] border border-line rounded-lg text-white"
+          placeholder="Escribí tu opinión..."></textarea>
+
+        <button
+          type="submit"
+          class="w-full py-3 bg-electric-violet-500 rounded-lg text-white transition duration-300 hover:bg-electric-violet-600"
+        >
+          Enviar opinión
+        </button>
+      </form>
+    </dialog>
+
+    {
+      session && (
+        <button
+          id="open-dialog-button"
+          class="fixed bottom-4 right-4 z-20 flex items-center gap-2 p-2 px-4 rounded-full bg-yellow-600 text-white font-rubik font-medium shadow-lg hover:bg-yellow-800 transition-all duration-300"
+        >
+          <span> Compartir opinión </span>
+          <LucideMessageSquareDiff size={24} />
+        </button>
+      )
+    }
+
+    <!-- Grid -->
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+      <div class="flex flex-col gap-4">
+        <h2 class="text-2xl font-bold font-rubik">Opiniones</h2>
+        <div class="flex flex-col gap-4">
+          {
+            approvedMessages.map((message) => (
+              <div class="flex flex-col gap-2 p-4 bg-[#0b1422] border border-line rounded-lg relative">
+                {session?.user.isAdmin && (
+                  <div class="flex gap-4">
+                    <img
+                      src={message.user?.avatar}
+                      class="size-8 rounded-full"
+                    />
+                    <p class="text-white font-rubik">
+                      {message.user?.displayName}
+                    </p>
+                  </div>
+                )}
+                <p class="text-white font-rubik">{message.message}</p>
+                {session?.user.isAdmin ? (
+                  <button
+                    class="absolute top-2 right-2 bg-blue-800 text-white size-8 p-1 rounded-full flex items-center justify-center"
+                    data-pin-message-id={message.id}
+                  >
+                    <LucidePin size={24} />
+                  </button>
+                ) : null}
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+
+    {
+      session?.user.isAdmin ? (
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+          <div class="flex flex-col gap-4">
+            <h2 class="text-2xl font-bold font-rubik">Opiniones pendientes</h2>
+            <div class="flex flex-col gap-4">
+              {pendingMessages.map((message) => (
+                <div class="flex flex-col gap-2 p-4 bg-[#0b1422] border border-line rounded-lg">
+                  <p class="text-white font-rubik">
+                    {message.user?.displayName}
+                  </p>
+                  <p class="text-white font-rubik">{message.message}</p>
+                  <div class="flex gap-4">
+                    <button
+                      class="bg-green-500 text-white font-rubik px-4 py-2 rounded-lg"
+                      data-message-id={message.id}
+                    >
+                      Aprobar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null
+    }
+  </div>
+</Layout>
+
+<script>
+  import { $, $$ } from "@/lib/dom-selector";
+  import { createPusher } from "@/lib/utils";
+  import type { Session } from "@auth/core/types";
+  import { actions } from "astro:actions";
+  import { navigate } from "astro:transitions/client";
+  import { toast } from "sonner";
+
+  document.addEventListener("astro:page-load", () => {
+    const $messageDialog = $("#add-message-dialog") as HTMLDialogElement;
+    const $openDialogButton = $("#open-dialog-button") as HTMLButtonElement;
+    const $closeDialogButton = $("#modal-close button");
+    const $metaCurrentUser = $("#current-user-data") as HTMLMetaElement;
+    const pusher = createPusher();
+
+    const { user: currentUser } = JSON.parse(
+      $metaCurrentUser.getAttribute("data-user") || "{}"
+    ) as Session;
+
+    $openDialogButton.addEventListener("click", () => {
+      $messageDialog.showModal();
+    });
+
+    $closeDialogButton?.addEventListener("click", () => {
+      $messageDialog.close();
+    });
+
+    $messageDialog
+      .querySelector("form#add-message-form")
+      ?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const $textarea = $messageDialog.querySelector(
+          "textarea"
+        ) as HTMLTextAreaElement;
+        const message = $textarea.value;
+
+        if (!message) {
+          return;
+        }
+
+        const { error } = await actions.addDebateOpinion({ message });
+
+        if (error) {
+          toast.error("Ocurrió un error al enviar tu opinión.");
+          return;
+        }
+
+        toast.success("Opinión enviada correctamente.");
+        $messageDialog.close();
+        navigate(location.pathname);
+      });
+
+    const $approveButtons = $$("[data-message-id]");
+
+    $approveButtons.forEach(($button) => {
+      $button.addEventListener("click", async () => {
+        const messageId = $button.getAttribute("data-message-id");
+
+        if (!messageId) {
+          return;
+        }
+
+        const { error } = await actions.approveDebateOpinion({
+          opinionId: Number(messageId),
+        });
+
+        if (error) {
+          toast.error("Ocurrió un error al aprobar la opinión.");
+          return;
+        }
+
+        toast.success("Opinión aprobada correctamente.");
+        navigate(location.pathname);
+      });
+    });
+
+    if (currentUser.isAdmin) {
+      pusher.subscribe("admins").bind("approved-opinion", (data: any) => {
+        toast.success(`Una opinión fue aprobada.`);
+        navigate(location.pathname);
+      });
+    }
+
+    const $pinButtons = $$("[data-pin-message-id]");
+    $pinButtons.forEach(($button) => {
+      $button.addEventListener("click", async () => {
+        const messageId = $button.getAttribute("data-pin-message-id");
+
+        if (!messageId) {
+          return;
+        }
+
+        const { error } = await actions.pinDebateOpinion({
+          opinionId: Number(messageId),
+        });
+
+        if (error) {
+          toast.error("Ocurrió un error al pinear la opinión.");
+          return;
+        }
+
+        toast.success("Opinión pineada correctamente.");
+        navigate(location.pathname);
+      });
+    });
+  });
+</script>

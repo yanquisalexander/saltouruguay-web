@@ -110,3 +110,16 @@ export const getUserAchievements = async (userId: number) => {
         where: eq(UserAchievementsTable.userId, userId),
     });
 }
+
+export const getDebateMessages = async () => {
+    return await client.query.DebateAnonymousMessagesTable.findMany({
+        with: {
+            user: {
+                columns: {
+                    displayName: true,
+                    avatar: true,
+                }
+            }
+        }
+    })
+}

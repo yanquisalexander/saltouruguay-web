@@ -2,11 +2,15 @@ import { CATEGORIES } from "@/awards/Categories";
 import { NOMINEES } from "@/awards/Nominees";
 import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
 import type { MemberCardSkins } from "@/consts/MemberCardSkins";
+import { client } from "@/db/client";
+import { DebateAnonymousMessagesTable } from "@/db/schema";
 import { submitVotes } from "@/utils/awards-vote-system";
+import { pusher } from "@/utils/pusher";
 import { updateCardSkin, updateStickers } from "@/utils/user";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
+import { eq } from "drizzle-orm";
 
 export const server = {
     sendVotes: defineAction({
@@ -97,5 +101,104 @@ export const server = {
             await updateCardSkin(session.user.id, skin as typeof MemberCardSkins[number]['id'])
             return { success: true }
         }
-    })
+    }),
+    addDebateOpinion: defineAction({
+        input: z.object({
+            message: z.string().min(1).max(500),
+        }),
+        handler: async ({ message }, { request }) => {
+            const session = await getSession(request)
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para enviar tu opinión"
+                })
+            }
+
+            try {
+                await client
+                    .insert(DebateAnonymousMessagesTable)
+                    .values({ userId: session.user.id, message })
+                    .execute();
+                return { success: true }
+            } catch (error) {
+                throw new ActionError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: "Error al enviar la opinión"
+                })
+            }
+        }
+
+    }),
+    approveDebateOpinion: defineAction({
+        input: z.object({
+            opinionId: z.number()
+        }),
+        handler: async ({ opinionId }, { request }) => {
+            const session = await getSession(request)
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para aprobar opiniones"
+                })
+            }
+
+            if (!session.user.isAdmin) {
+                throw new ActionError({
+                    code: "FORBIDDEN",
+                    message: "No tienes permisos para aprobar opiniones"
+                })
+            }
+
+            try {
+                await client
+                    .update(DebateAnonymousMessagesTable)
+                    .set({ approvedAt: new Date() })
+                    .where(eq(DebateAnonymousMessagesTable.id, opinionId))
+                    .execute();
+
+                await pusher.trigger('admins', 'approved-opinion', { opinionId })
+                return { success: true }
+            } catch (error) {
+                throw new ActionError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: "Error al aprobar la opinión"
+                })
+            }
+        }
+    }),
+    pinDebateOpinion: defineAction({
+        input: z.object({
+            opinionId: z.number()
+        }),
+        handler: async ({ opinionId }, { request }) => {
+            const session = await getSession(request)
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para pinear opiniones"
+                })
+            }
+
+            if (!session.user.isAdmin) {
+                throw new ActionError({
+                    code: "FORBIDDEN",
+                    message: "No tienes permisos para pinear opiniones"
+                })
+            }
+
+            try {
+                await pusher.trigger('debate', 'pin-opinion', { opinionId })
+                return { success: true }
+            } catch (error) {
+                throw new ActionError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: "Error al pinear la opinión"
+                })
+            }
+        }
+    }),
 }

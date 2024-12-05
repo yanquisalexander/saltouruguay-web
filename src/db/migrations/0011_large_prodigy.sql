@@ -1,0 +1,1 @@
+ALTER TABLE "debate_anonymous_messages" ADD COLUMN "approved_at" timestamp;

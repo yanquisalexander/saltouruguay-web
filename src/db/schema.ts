@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { boolean, integer, pgEnum, pgTable, serial, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
 
 export const UsersTable = pgTable("users", {
@@ -88,6 +88,19 @@ export const DebateAnonymousMessagesTable = pgTable('debate_anonymous_messages',
     id: serial('id').primaryKey(),
     userId: integer('user_id').references(() => UsersTable.id),
     message: text('message').notNull(),
+    approvedAt: timestamp('approved_at'),
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
 })
+
+export const debateMessagesUserRelation = relations(DebateAnonymousMessagesTable, ({ one, many }) => ({
+    user: one(UsersTable, {
+        fields: [DebateAnonymousMessagesTable.userId],
+        references: [UsersTable.id],
+    })
+}))
+
+export const userRelations = relations(UsersTable, ({ one, many }) => ({
+    debateMessages: many(DebateAnonymousMessagesTable)
+}))
+
