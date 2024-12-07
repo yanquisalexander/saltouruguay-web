@@ -1,0 +1,74 @@
+---
+import { LucidePlayCircle } from "lucide-preact";
+
+interface Props {
+  videoSrc: string;
+  placeholder: string;
+  autoLoad?: boolean;
+  class?: string;
+}
+
+const {
+  videoSrc,
+  placeholder,
+  autoLoad = false,
+  class: classNames,
+} = Astro.props;
+---
+
+<vertical-video-player
+  class={`rounded-[16px] aspect-[9/16] h-[400px] group snap-center bg-black relative shrink-0 cursor-pointer bg-center bg-cover ${classNames}`}
+  videosrc={videoSrc}
+  placeholder={placeholder}
+  role="button"
+  tabindex="0"
+>
+  <div
+    class="p-4 bg-white rounded-full absolute bottom-6 right-6 hover:scale-110 transition-transform duration-300"
+    title="Reproducir video"
+  >
+    <LucidePlayCircle class="size-6 text-black" />
+  </div>
+</vertical-video-player>
+
+<script>
+  class VerticalVideoPlayer extends HTMLElement {
+    videoSrc?: string;
+    placeholder?: string;
+
+    connectedCallback() {
+      this.videoSrc = this.getAttribute("videosrc")!;
+      this.placeholder = this.getAttribute("placeholder")!;
+      this.style.backgroundImage = `url(${this.placeholder})`;
+
+      this.addEventListener("click", this.activateVideo);
+      this.addEventListener("keydown", this.handleKeyPress);
+    }
+
+    activateVideo = () => {
+      this.style.backgroundImage = "none";
+      this.innerHTML = ""; // Limpia el contenido previo
+
+      const videoEl = document.createElement("video");
+      videoEl.src = this.videoSrc!;
+      videoEl.controls = true;
+      videoEl.autoplay = true;
+      videoEl.classList.add("rounded-[16px]", "w-full", "h-full");
+      this.append(videoEl);
+
+      videoEl.focus();
+
+      // Elimina los listeners después de iniciar el video
+      this.removeEventListener("click", this.activateVideo);
+      this.removeEventListener("keydown", this.handleKeyPress);
+    };
+
+    handleKeyPress = (event: KeyboardEvent) => {
+      if (event.code === "Enter" || event.code === "Space") {
+        this.activateVideo();
+      }
+    };
+  }
+
+  customElements.define("vertical-video-player", VerticalVideoPlayer);
+</script>

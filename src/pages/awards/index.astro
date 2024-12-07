@@ -1,5 +1,6 @@
 ---
 import LaunchCountdown from "@/components/LaunchCountdown";
+import VerticalVideoPlayer from "@/components/VerticalVideoPlayer.astro";
 import {
   EVENT_TIMESTAMP,
   IS_VOTES_OPEN,
@@ -12,6 +13,7 @@ import { getSession } from "auth-astro/server";
 import {
   LucideArrowRight,
   LucideChevronRight,
+  LucidePlayCircle,
   LucideWrench,
 } from "lucide-preact";
 
@@ -155,7 +157,7 @@ const isAfterTargetTime = nowInUruguay() > targetTime;
       )
     }
 
-    <sections
+    <section
       id="casters"
       class="flex flex-col items-center justify-center h-full text-center max-w-4xl mx-auto mt-16"
     >
@@ -196,35 +198,57 @@ const isAfterTargetTime = nowInUruguay() > targetTime;
           </h3>
         </div>
       </div>
-    </sections>
+    </section>
+
+    <section
+      id="live-show"
+      class="flex flex-col items-center justify-center h-full text-center max-w-4xl mx-auto mt-16"
+    >
+      <h2
+        class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen my-5"
+      >
+        Contaremos con un show en vivo
+      </h2>
+      <p
+        class="text-white text-lg font-rubik uppercase text-balance tracking-wider sm:pb-10 pb-4"
+      >
+        Por parte del ganador de <span class="text-yellow-500"
+          >#LaVozArgentina2018</span
+        > ¡No te lo pierdas!
+      </p>
+
+      <VerticalVideoPlayer
+        videoSrc="https://cdn.saltouruguayserver.com/braulio.webm"
+        placeholder="/images/braulio.webp"
+      />
+    </section>
   </div>
-</Layout>
-
-<style>
-  #backdrop-awards {
-    background-image: url("/images/awards-fondo.webp");
-    @apply saturate-150 opacity-55;
-    mask-image: linear-gradient(
-      black 0%,
-      rgba(0, 0, 0, 0.5) 30%,
-      rgba(0, 0, 0, 0.1) 50%,
-      transparent
-    );
-    background-size: cover;
-    background-position: center;
-  }
-</style>
-
-<script>
-  import { $ } from "@/lib/dom-selector";
-  import { showSignInDialog } from "@/lib/utils";
-
-  document.addEventListener("astro:page-load", () => {
-    const $viewNominees = $("div[data-login-on-click]");
-    if ($viewNominees) {
-      $viewNominees.addEventListener("click", (e) => {
-        showSignInDialog();
-      });
+  <style>
+    #backdrop-awards {
+      background-image: url("/images/awards-fondo.webp");
+      @apply saturate-150 opacity-55;
+      mask-image: linear-gradient(
+        black 0%,
+        rgba(0, 0, 0, 0.5) 30%,
+        rgba(0, 0, 0, 0.1) 50%,
+        transparent
+      );
+      background-size: cover;
+      background-position: center;
     }
-  });
-</script>
+  </style>
+
+  <script>
+    import { $ } from "@/lib/dom-selector";
+    import { showSignInDialog } from "@/lib/utils";
+
+    document.addEventListener("astro:page-load", () => {
+      const $viewNominees = $("div[data-login-on-click]");
+      if ($viewNominees) {
+        $viewNominees.addEventListener("click", (e) => {
+          showSignInDialog();
+        });
+      }
+    });
+  </script>
+</Layout>
