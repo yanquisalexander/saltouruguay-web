@@ -39,6 +39,7 @@
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.36.3",
+    "glightbox": "^3.3.0",
     "html-to-image": "^1.11.11",
     "ioredis": "^5.4.1",
     "lucide-preact": "^0.460.0",

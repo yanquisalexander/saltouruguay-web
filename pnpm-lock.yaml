@@ -89,6 +89,9 @@ importers:
       drizzle-orm:
         specifier: ^0.36.3
         version: 0.36.3(@types/pg@8.11.10)(pg@8.13.1)(react@18.3.1)
+      glightbox:
+        specifier: ^3.3.0
+        version: 3.3.0
       html-to-image:
         specifier: ^1.11.11
         version: 1.11.11
@@ -2103,6 +2106,9 @@ packages:
 
   github-slugger@2.0.0:
     resolution: {integrity: sha512-IaOQ9puYtjrkq7Y0Ygl9KDZnrf/aiUJYUpVf89y8kyaxbRG7Y1SrX/jaumrv81vc61+kiMempujsM3Yw7w5qcw==}
+
+  glightbox@3.3.0:
+    resolution: {integrity: sha512-SJukatHBZZ/POMOpLUQ6/dhXf/wJTDx1wZ/FwApjseXw2WrRj3Ze9DzNCFYzca0oU7RjXQhi9o02aIZ9SuCz1A==}
 
   glob-parent@5.1.2:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
@@ -5488,6 +5494,8 @@ snapshots:
       resolve-pkg-maps: 1.0.0
 
   github-slugger@2.0.0: {}
+
+  glightbox@3.3.0: {}
 
   glob-parent@5.1.2:
     dependencies:

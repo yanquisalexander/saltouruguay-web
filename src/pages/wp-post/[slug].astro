@@ -1,0 +1,100 @@
+---
+import { getPostBySlug } from "@/consts/Torneos";
+import Layout from "@/layouts/Layout.astro";
+import "glightbox/dist/css/glightbox.min.css";
+
+interface Post {
+  slug: string;
+  title: string;
+  content: string;
+  featuredImage: string;
+}
+
+const { slug } = Astro.params;
+
+if (!slug) {
+  return new Response(null, { status: 404 });
+}
+
+const post = (await getPostBySlug(slug)) as Post;
+
+if (!post) {
+  return new Response(null, { status: 404 });
+}
+---
+
+<Layout
+  title={post.title}
+  description={post.content}
+  image={post.featuredImage}
+>
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <!-- Hero Section -->
+    <header
+      class="relative flex flex-col justify-center items-center mb-16 overflow-hidden"
+    >
+      <div class="relative z-10 text-center">
+        <h1
+          class="text-4xl md:text-5xl font-extrabold text-white uppercase tracking-wide"
+        >
+          {post.title}
+        </h1>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex flex-col gap-8 px-4 md:px-0">
+      <section class="bg-black/40 rounded-lg shadow-md p-6">
+        <div
+          id="content-body"
+          class="prose prose-invert max-w-none font-rubik leading-relaxed"
+          set:html={post.content}
+        />
+      </section>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  import { $$ } from "@/lib/dom-selector";
+  import GLightbox from "glightbox";
+
+  document.addEventListener("astro:page-load", () => {
+    const $images = $$("#content-body img") as unknown as HTMLImageElement[];
+    const $links = $$("#content-body a") as unknown as HTMLAnchorElement[];
+
+    /* 
+        Make buttons and link to open in /wp-post/${slug}, because 
+        we are using Astro to fetch the content from the WordPress API
+    */
+
+    $links.forEach(($link) => {
+      const href = $link.getAttribute("href");
+      const url = new URL(href || "", window.location.origin);
+      const pathname = url.pathname.replace(/\/$/, ""); // Elimina la barra final si existe
+      const slug = pathname.split("/").pop(); // Obtiene el último segmento de la URL
+
+      // Reemplaza el href del enlace con el formato interno
+      $link.setAttribute("href", `/wp-post/${slug}`);
+    });
+
+    $images.forEach(($img) => {
+      $img.setAttribute("data-glightbox", `src: ${$img.src}`);
+      $img.classList.add(
+        ...[
+          "cursor-pointer",
+          "hover:opacity-80",
+          "transition",
+          "duration-300",
+          "ease-in-out",
+          "hover:scale-105",
+        ]
+      );
+      $img.addEventListener("click", (e) => e.preventDefault());
+    });
+
+    const lightbox = GLightbox({
+      selector: "[data-glightbox]",
+    });
+  });
+</script>
