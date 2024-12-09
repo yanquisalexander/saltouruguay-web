@@ -18,14 +18,26 @@ export default defineConfig({
                     force_verify: true,
                 },
             },
+
         }),
     ],
     callbacks: {
+        signIn: async ({ user, account, profile }) => {
+            console.log("signIn", user, account, profile);
+            if (account.provider === "twitch") {
+                if (!user.email) {
+                    throw new Error("Email is required to sign in");
+                }
+            }
+            return true;
+        },
         jwt: async ({ token, user, account, profile }) => {
             if (user && account?.provider === "twitch") {
                 token.user = profile;
                 const email = profile?.email || null;
                 const username = user?.name?.toLowerCase();
+
+
 
                 try {
                     // Buscar si existe un usuario con el email o twitchId
@@ -113,6 +125,8 @@ export default defineConfig({
         },
     },
     pages: {
+        error: "/",
         signIn: "/",
-    }
+
+    },
 });
