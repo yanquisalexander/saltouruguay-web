@@ -23,7 +23,7 @@ export const fetchTorneos = async () => {
         const formattedPosts = posts.map((post: any) => ({
             slug: post.slug,
             title: post.title.rendered, // Título del post
-            excerpt: post.excerpt.rendered, // Resumen (HTML incluido)
+            excerpt: post.excerpt.rendered?.replace(/<\/?[^>]+(>|$)/g, ""),
             link: post.link, // Enlace al post
             featuredImage: post._embedded?.['wp:featuredmedia']?.[0]?.source_url || null, // Imagen destacada
         }));
