@@ -3,7 +3,7 @@ import { NOMINEES } from "@/awards/Nominees";
 import cacheService from "@/services/cache";
 import { calculateVotes, createGroupedVotes } from "@/utils/awards-vote-system";
 import type { APIContext } from "astro";
-//import { CRON_SECRET } from "astro:env/server";
+import { CRON_SECRET } from "astro:env/server";
 
 /* 
     This is an Endpoint called by http-cron to execute "cron jobs" on the server.
@@ -22,7 +22,7 @@ export const POST = async ({ request }: APIContext) => {
         };
 
         // Validate the secret
-        if (secret !== import.meta.env["CRON_SECRET"]) {
+        if (secret !== CRON_SECRET) {
             return new Response("Cannot execute cron jobs: invalid secret", { status: 400 });
         }
 

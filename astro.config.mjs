@@ -42,5 +42,11 @@ export default defineConfig({
       PUSHER_APP_CLUSTER: envField.string({ context: 'client', access: 'public' }),
       CRON_SECRET: envField.string({ context: 'server', access: 'public' }),
     },
+  },
+  security: {
+    /* 
+      TODO: Only allow some origins
+    */
+    checkOrigin: false
   }
 });
