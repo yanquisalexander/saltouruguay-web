@@ -5,7 +5,7 @@ const NEWS = [
     {
         title: "RUSTico 5",
         description: `
-        Se viene Nuevo servidor de RUST! 🚀
+        Servidor de Rust!
     `,
         tags: ["Servidor"],
         background: {
@@ -13,7 +13,7 @@ const NEWS = [
         },
         navImage: "/images/ads/RUSTico.webp",
         ctaLink: {
-            text: "🚀 Pronto",
+            text: "Visitá nuestro Discord",
             url: "#",
             newTab: false,
         },
