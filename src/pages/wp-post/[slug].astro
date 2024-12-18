@@ -71,6 +71,8 @@ if (!post) {
     $links.forEach(($link) => {
       const href = $link.getAttribute("href");
 
+      console.log({ href });
+
       // Solo procede si href no es nulo o vacío
       if (href) {
         const url = new URL(href, window.location.origin);
