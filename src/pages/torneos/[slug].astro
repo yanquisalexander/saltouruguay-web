@@ -110,12 +110,24 @@ if (!torneo) {
 
     $links.forEach(($link) => {
       const href = $link.getAttribute("href");
-      const url = new URL(href || "", window.location.origin);
-      const pathname = url.pathname.replace(/\/$/, ""); // Elimina la barra final si existe
-      const slug = pathname.split("/").pop(); // Obtiene el último segmento de la URL
 
-      // Reemplaza el href del enlace con el formato interno
-      $link.setAttribute("href", `/wp-post/${slug}`);
+      // Solo procede si href no es nulo o vacío
+      if (href) {
+        const url = new URL(href, window.location.origin);
+
+        // Verifica que el host sea cms.saltouruguayserver.com
+        if (url.host === "cms.saltouruguayserver.com") {
+          const pathname = url.pathname.replace(/\/$/, ""); // Elimina la barra final si existe
+          const slug = pathname.split("/").pop(); // Obtiene el último segmento de la URL
+
+          // Reemplaza el href del enlace con el formato interno
+          $link.setAttribute("href", `/wp-post/${slug}`);
+        } else {
+          // Abre enlaces externos en una nueva pestaña
+          $link.setAttribute("target", "_blank");
+          $link.setAttribute("rel", "noopener noreferrer");
+        }
+      }
     });
 
     $images.forEach(($img) => {
