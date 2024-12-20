@@ -1,6 +1,7 @@
 ---
 import LaunchCountdown from "@/components/LaunchCountdown";
 import VerticalVideoPlayer from "@/components/VerticalVideoPlayer.astro";
+import VotesSummary from "@/components/VotesSummary.astro";
 import {
   EVENT_TIMESTAMP,
   IS_VOTES_OPEN,
@@ -33,6 +34,12 @@ const targetTime = DateTime.fromMillis(Date.now())
   .toMillis();
 
 const isAfterTargetTime = nowInUruguay() > targetTime;
+
+let votes: Awaited<ReturnType<typeof currentUserVotes>> = null;
+
+if (session?.user) {
+  votes = await currentUserVotes(session.user.id);
+}
 ---
 
 <Layout title="SaltoAwards">
@@ -74,9 +81,12 @@ const isAfterTargetTime = nowInUruguay() > targetTime;
         isAfterTargetTime &&
         (() => {
           return (
-            <div class="flex items-center flex-col md:flex-row justify-center gap-y-2 gap-4 mb-8 italic text-lg font-rubik">
-              <span class="max-w-48">En breve se abrirán las votaciones</span>
-              <LaunchCountdown timestamp={VOTES_OPEN_TIMESTAMP} client:load />
+            <div class="flex flex-col items-center justify-center mb-16">
+              <p class="text-white text-center font-rubik font-medium tracking-wider mt-4 max-w-2xl text-lg">
+                ¡Gracias por participar en los{" "}
+                <span class="text-yellow-500">SaltoAwards</span>!<br /> Los
+                ganadores se darán a conocer en la ceremonia de premiación.
+              </p>
             </div>
           );
         })()

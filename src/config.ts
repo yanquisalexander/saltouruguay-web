@@ -19,7 +19,7 @@ export const SALTO_DISCORD_GUILD_ID = '700185692826763264'
 
 export const nowInUruguay = () => DateTime.now().setZone('America/Montevideo').toMillis();
 
-export const IS_VOTES_OPEN = () => nowInUruguay() > VOTES_OPEN_TIMESTAMP && nowInUruguay() < VOTES_CLOSE_TIMESTAMP;
+export const IS_VOTES_OPEN = () => false// nowInUruguay() > VOTES_OPEN_TIMESTAMP && nowInUruguay() < VOTES_CLOSE_TIMESTAMP;
 
 export const SITEMAP_EXCLUDED_PATHS = [
     '/admin',
