@@ -34,12 +34,6 @@ const targetTime = DateTime.fromMillis(Date.now())
   .toMillis();
 
 const isAfterTargetTime = nowInUruguay() > targetTime;
-
-let votes: Awaited<ReturnType<typeof currentUserVotes>> = null;
-
-if (session?.user) {
-  votes = await currentUserVotes(session.user.id);
-}
 ---
 
 <Layout title="SaltoAwards">
@@ -87,6 +81,19 @@ if (session?.user) {
                 <span class="text-yellow-500">SaltoAwards</span>!<br /> Los
                 ganadores se darán a conocer en la ceremonia de premiación.
               </p>
+
+              <a
+                href="/awards/vota"
+                class="flex items-center justify-center gap-2 mt-4 relative"
+              >
+                <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-yellow-500 rounded-md uppercase tracking-wider font-bold font-rubik hover:bg-yellow-600 transition-all duration-300">
+                  <span>Ver mis votos</span>
+                  <LucideChevronRight
+                    size="24"
+                    class="group-hover:translate-x-1 transition-transform duration-300"
+                  />
+                </button>
+              </a>
             </div>
           );
         })()

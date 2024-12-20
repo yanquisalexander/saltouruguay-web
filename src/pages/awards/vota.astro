@@ -63,10 +63,12 @@ if (session?.user) {
               ¡Votación cerrada!
             </h2>
             <p class="text-white text-center font-rubik font-medium tracking-wider mt-4 max-w-2xl text-lg">
-              Las votaciones se abrirán pronto. Mantente atento para participar
-              en los <span class="text-yellow-500">SaltoAwards</span>.
+              Los ganadores de esta edición de los{" "}
+              <span class="text-yellow-500">SaltoAwards</span> se darán a
+              conocer en la ceremonia de premiación.
             </p>
-            <LaunchCountdown timestamp={VOTES_OPEN_TIMESTAMP} client:load />
+
+            {session && votes && <VotesSummary votes={votes} />}
           </div>
         ) : session ? (
           votes ? (
