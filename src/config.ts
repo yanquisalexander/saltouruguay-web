@@ -5,7 +5,7 @@ import { DateTime } from 'luxon';
 
 export const VOTES_OPEN_TIMESTAMP = 1733022000000;
 
-export const VOTES_CLOSE_TIMESTAMP = 1734666300;
+export const VOTES_CLOSE_TIMESTAMP = 1734666300000;
 
 export const EVENT_TIMESTAMP = 1734737400000;
 
