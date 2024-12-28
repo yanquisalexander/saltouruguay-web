@@ -1,0 +1,70 @@
+---
+import { AWARDS_VOTES_RESULT } from "@/data/awards-winners";
+import { NOMINEES } from "@/awards/Nominees";
+import { CATEGORIES } from "@/awards/Categories";
+---
+
+<section
+  id="last-edition-winners"
+  class="relative flex flex-col justify-center items-center"
+>
+  <h3
+    class="max-w-xl text-center text-yellow-400 tracking-wider uppercase font-medium mix-blend-screen mt-2 pb-6"
+  >
+    ¡Conoce a los ganadores de la última edición de los #SaltoAwards!
+  </h3>
+  <div class="gap-8 gap-y-16 mt-10 flex flex-col">
+    {
+      Object.entries(AWARDS_VOTES_RESULT["2024"]).map(
+        ([category, nominees]) => {
+          const highestPointsInCategory = Math.max(
+            ...nominees.map((vote) => vote.roundTotalPoints)
+          );
+
+          return (
+            <div class="flex flex-col items-center justify-center gap-6">
+              <h3 class="text-lg font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen">
+                {CATEGORIES.find((c) => c.id === category)?.name}
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {nominees
+                  .sort((a, b) => b.roundTotalPoints - a.roundTotalPoints)
+                  .map((nominee) => {
+                    const { nomineeId, displayName, percentage, votes } =
+                      nominee;
+                    const isWinner =
+                      nominee.roundTotalPoints === highestPointsInCategory;
+                    const placeholderAvatar = `https://ui-avatars.com/api/?name=${displayName}&background=random&color=fff`;
+                    return (
+                      <div
+                        class={[
+                          "flex flex-col items-center justify-center gap-2",
+                          isWinner &&
+                            "border-2 border-yellow-400 border-opacity-50 p-2 rounded-lg",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        <img
+                          onerror={`this.src='${placeholderAvatar}'`}
+                          src={`/images/nominees/${nomineeId}.webp`}
+                          alt={displayName}
+                          class="size-12 rounded-full object-cover"
+                        />
+                        <h4 class="text-lg font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen">
+                          {displayName}
+                        </h4>
+                        <p class="text-sm text-gray-300">
+                          {votes} votos • {percentage}%
+                        </p>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          );
+        }
+      )
+    }
+  </div>
+</section>

@@ -1,39 +1,9 @@
 ---
-import LaunchCountdown from "@/components/LaunchCountdown";
+export const prerender = true;
+import LastEditionWinners from "@/components/LastEditionWinners.astro";
 import VerticalVideoPlayer from "@/components/VerticalVideoPlayer.astro";
-import VotesSummary from "@/components/VotesSummary.astro";
-import {
-  EVENT_TIMESTAMP,
-  IS_VOTES_OPEN,
-  nowInUruguay,
-  VOTES_OPEN_TIMESTAMP,
-} from "@/config";
+
 import Layout from "@/layouts/Layout.astro";
-import { currentUserVotes, getTotalVotes } from "@/utils/awards-vote-system";
-import { getSession } from "auth-astro/server";
-import {
-  LucideArrowRight,
-  LucideChevronRight,
-  LucidePlayCircle,
-  LucideWrench,
-} from "lucide-preact";
-
-const eventDate = new Date(EVENT_TIMESTAMP);
-
-const session = await getSession(Astro.request);
-
-/* 
- Son más de las 9:30 AM del 30 de Noviembre de 2024 en Uruguay?
-*/
-
-import { DateTime } from "luxon";
-
-const targetTime = DateTime.fromMillis(Date.now())
-  .setZone("America/Montevideo")
-  .set({ hour: 9, minute: 30, second: 0, millisecond: 0 })
-  .toMillis();
-
-const isAfterTargetTime = nowInUruguay() > targetTime;
 ---
 
 <Layout title="SaltoAwards">
@@ -70,111 +40,9 @@ const isAfterTargetTime = nowInUruguay() > targetTime;
       </h2>
     </header>
 
-    {
-      !IS_VOTES_OPEN() &&
-        isAfterTargetTime &&
-        (() => {
-          return (
-            <div class="flex flex-col items-center justify-center mb-16">
-              <p class="text-white text-center font-rubik font-medium tracking-wider mt-4 max-w-2xl text-lg">
-                ¡Gracias por participar en los{" "}
-                <span class="text-yellow-500">SaltoAwards</span>!<br /> Los
-                ganadores se darán a conocer en la ceremonia de premiación.
-              </p>
+    <LastEditionWinners />
 
-              <a
-                href="/awards/vota"
-                class="flex items-center justify-center gap-2 mt-4 relative"
-              >
-                <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-yellow-500 rounded-md uppercase tracking-wider font-bold font-rubik hover:bg-yellow-600 transition-all duration-300">
-                  <span>Ver mis votos</span>
-                  <LucideChevronRight
-                    size="24"
-                    class="group-hover:translate-x-1 transition-transform duration-300"
-                  />
-                </button>
-              </a>
-            </div>
-          );
-        })()
-    }
-
-    {
-      IS_VOTES_OPEN() &&
-        (async () => {
-          const votesAtTheMoment = await getTotalVotes();
-          return (
-            <div class="flex justify-center flex-col items-center mt-8 sm:w-max font-rubik px-2 sm:px-6 uppercase font-medium text-sm text-white/70 mx-auto text-center py-1.5 rounded-full bg-violet-500/20 gap-1 hover:bg-violet-500/30 transition-all duration-300 hover:scale-105">
-              <span class="text-yellow-500 font-bold">
-                🔥 #SaltoAwards2024 🔥
-              </span>
-              <span>
-                <span class="text-white">{votesAtTheMoment}</span> votos hasta
-                el momento
-              </span>
-            </div>
-          );
-        })()
-    }
-
-    {
-      IS_VOTES_OPEN() && (
-        <div class="flex flex-col items-center justify-center mt-12 mb-16">
-          <h2 class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen">
-            ¡Votaciones abiertas!
-          </h2>
-          <p class="text-white text-lg font-rubik uppercase text-balance tracking-wider sm:pb-10 pb-4">
-            ¿Listo para votar por tus favoritos?
-          </p>
-          <a
-            href="/awards/vota"
-            class="flex items-center justify-center gap-2 relative"
-          >
-            <button class="flex items-center justify-center gap-2 px-4 py-2 text-white bg-yellow-500 rounded-md uppercase tracking-wider font-bold font-rubik hover:bg-yellow-600 transition-all duration-300">
-              <span>¡Vota ahora!</span>
-              <LucideArrowRight
-                size="24"
-                class="group-hover:translate-x-1 transition-transform duration-300"
-              />
-            </button>
-            {/* 
-              Golden glow
-            */}
-
-            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-r blur-lg from-yellow-500 to-yellow-600 rounded-md animate-pulsing animate-iteration-count-infinite animate-duration-[3000ms] saturate-150 z-[-1]" />
-          </a>
-        </div>
-      )
-    }
-
-    {
-      !IS_VOTES_OPEN() && (
-        <div class="flex flex-col items-center justify-center">
-          <h2 class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen mt-5">
-            Será un evento inolvidable...
-          </h2>
-          <span class="text-center text-sm font-rubik text-gray-300 mt-3">
-            {eventDate.toLocaleDateString("es-UY", {
-              timeZone: "America/Montevideo",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-            <br />
-            {eventDate.toLocaleTimeString("es-UY", {
-              timeZone: "America/Montevideo",
-              hour: "2-digit",
-              minute: "numeric",
-              hourCycle: "h23",
-              timeZoneName: "long",
-            })}
-          </span>
-          <LaunchCountdown timestamp={EVENT_TIMESTAMP} client:idle />
-        </div>
-      )
-    }
-
-    <section
+    <!--  <section
       id="casters"
       class="flex flex-col items-center justify-center h-full text-center max-w-4xl mx-auto mt-16"
     >
@@ -238,7 +106,7 @@ const isAfterTargetTime = nowInUruguay() > targetTime;
         videoSrc="https://cdn.saltouruguayserver.com/braulio.webm"
         placeholder="/images/braulio.webp"
       />
-    </section>
+    </section> -->
   </div>
   <style>
     #backdrop-awards {
