@@ -22,74 +22,84 @@ export const prerender = true;
 >
   <!--VoteCallToAction server:defer /-->
 
-  {
-    SHOW_AWARDS_COUNTDOWN && (
-      <div class=" flex flex-col py-16 items-center h-full">
-        <header class="flex items-center justify-center max-w-md w-full gap-x-14 gap-y-6 flex-col md:flex-row">
-          <div class="relative">
-            <img
-              src="/images/logo_salto.webp"
-              alt="SaltoUruguayServer"
-              draggable="false"
-              class="h-24 sm:h-32 md:h-40 lg:h-48 xl:h-56 w-auto object-contain aspect-square"
-            />
-            <img
-              src="/images/logo_salto.webp"
-              alt="SaltoUruguayServer"
-              draggable="false"
-              class="absolute blur-md transform scale-110 saturate-150 z-[-1] top-0 left-0 h-24 sm:h-32 md:h-40 lg:h-48 xl:h-56 w-auto object-contain aspect-square"
-            />
-          </div>
-          <h1 class="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-anton text-balance flex-wrap">
-            SALTO URUGUAY SERVER
-          </h1>
-        </header>
-
-        <p class="font-rubik uppercase text-lg text-center mt-8">
-          ¡Los
-          <span class="font-bold text-yellow-500">#SaltoAwards2024 </span>
-          será un evento inolvidable!
-        </p>
-        <LaunchCountdown timestamp={EVENT_TIMESTAMP} client:idle />
+  <div class="flex flex-col py-16 items-center h-full">
+    <header
+      class="flex items-center justify-center max-w-md w-full gap-x-14 gap-y-6 flex-col md:flex-row"
+    >
+      <div class="relative">
+        <img
+          src="/images/logo_salto.webp"
+          alt="SaltoUruguayServer"
+          draggable="false"
+          class="h-24 sm:h-32 md:h-40 lg:h-48 xl:h-56 w-auto object-contain aspect-square"
+        />
+        <img
+          src="/images/logo_salto.webp"
+          alt="SaltoUruguayServer"
+          draggable="false"
+          class="absolute blur-md transform scale-110 saturate-150 z-[-1] top-0 left-0 h-24 sm:h-32 md:h-40 lg:h-48 xl:h-56 w-auto object-contain aspect-square"
+        />
       </div>
-    )
-  }
+      <h1
+        class="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-anton text-balance flex-wrap"
+      >
+        SALTO URUGUAY SERVER
+      </h1>
+    </header>
 
-  <LiveStream server:defer />
+    <p class="font-rubik uppercase text-lg text-center mt-8">
+      ¡Los resultados de los
+      <span class="font-bold text-yellow-500">#SaltoAwards2024 </span>
+      ya están disponibles!
+    </p>
+    <a
+      href="/awards"
+      class="py-2 px-4 mt-4 bg-brand-gray text-black font-rubik uppercase text-sm font-bold rounded-md hover:bg-yellow-500 hover:text-black transition-all duration-300"
+    >
+      Ver resultados
+    </a>
 
-  <FeaturedNews client:visible={{ rootMargin: "120px" }} />
+    <div class="flex flex-col gap-4 mt-8 mb-32">
+      <p class="text-center text-yellow-500 text-lg italic">
+        Gracias por acompañarnos en los #SaltoAwards2024. <br />
+        ¡Felices fiestas y nos vemos en el próximo año!
+      </p>
+    </div>
+    <LiveStream server:defer />
 
-  <!--   <UpcomingCompetitions server:defer />
+    <FeaturedNews client:visible={{ rootMargin: "120px" }} />
+
+    <!--   <UpcomingCompetitions server:defer />
  -->
-  <NewsOnPage />
+    <NewsOnPage />
 
-  <Sponsors />
-</Layout>
+    <Sponsors />
+  </div>
 
-<script>
-  import { toast } from "sonner";
+  <script>
+    import { toast } from "sonner";
 
-  document.addEventListener("astro:page-load", () => {
-    const params = new URLSearchParams(window.location.search);
+    document.addEventListener("astro:page-load", () => {
+      const params = new URLSearchParams(window.location.search);
 
-    if (Boolean(params.get("discordLinked"))) {
-      toast.success("¡Tu cuenta de Discord ha sido vinculada correctamente!");
-    }
-
-    const error = params.get("error");
-
-    if (error) {
-      switch (error) {
-        case "AccessDenied":
-          toast.warning("Ocurrió un error al Iniciar sesión.", {
-            richColors: true,
-            description: "Verifica que tu email de Twitch esté verificado",
-          });
-          break;
+      if (Boolean(params.get("discordLinked"))) {
+        toast.success("¡Tu cuenta de Discord ha sido vinculada correctamente!");
       }
-    }
 
-    /*     let userHasBeenActive = false;
+      const error = params.get("error");
+
+      if (error) {
+        switch (error) {
+          case "AccessDenied":
+            toast.warning("Ocurrió un error al Iniciar sesión.", {
+              richColors: true,
+              description: "Verifica que tu email de Twitch esté verificado",
+            });
+            break;
+        }
+      }
+
+      /*     let userHasBeenActive = false;
 
     const handleUserActivation = async () => {
       if (userHasBeenActive) return;
@@ -104,5 +114,6 @@ export const prerender = true;
 
     window.addEventListener("click", handleUserActivation, { once: true });
     window.addEventListener("keydown", handleUserActivation, { once: true }); */
-  });
-</script>
+    });
+  </script>
+</Layout>
