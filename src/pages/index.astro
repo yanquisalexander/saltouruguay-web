@@ -65,41 +65,42 @@ export const prerender = true;
         ¡Felices fiestas y nos vemos en el próximo año!
       </p>
     </div>
-    <LiveStream server:defer />
-
-    <FeaturedNews client:visible={{ rootMargin: "120px" }} />
-
-    <!--   <UpcomingCompetitions server:defer />
- -->
-    <NewsOnPage />
-
-    <Sponsors />
   </div>
+  <LiveStream server:defer />
 
-  <script>
-    import { toast } from "sonner";
+  <FeaturedNews client:visible={{ rootMargin: "120px" }} />
 
-    document.addEventListener("astro:page-load", () => {
-      const params = new URLSearchParams(window.location.search);
+  <!--   <UpcomingCompetitions server:defer />
+ -->
+  <NewsOnPage />
 
-      if (Boolean(params.get("discordLinked"))) {
-        toast.success("¡Tu cuenta de Discord ha sido vinculada correctamente!");
+  <Sponsors />
+</Layout>
+
+<script>
+  import { toast } from "sonner";
+
+  document.addEventListener("astro:page-load", () => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (Boolean(params.get("discordLinked"))) {
+      toast.success("¡Tu cuenta de Discord ha sido vinculada correctamente!");
+    }
+
+    const error = params.get("error");
+
+    if (error) {
+      switch (error) {
+        case "AccessDenied":
+          toast.warning("Ocurrió un error al Iniciar sesión.", {
+            richColors: true,
+            description: "Verifica que tu email de Twitch esté verificado",
+          });
+          break;
       }
+    }
 
-      const error = params.get("error");
-
-      if (error) {
-        switch (error) {
-          case "AccessDenied":
-            toast.warning("Ocurrió un error al Iniciar sesión.", {
-              richColors: true,
-              description: "Verifica que tu email de Twitch esté verificado",
-            });
-            break;
-        }
-      }
-
-      /*     let userHasBeenActive = false;
+    /*     let userHasBeenActive = false;
 
     const handleUserActivation = async () => {
       if (userHasBeenActive) return;
@@ -114,6 +115,5 @@ export const prerender = true;
 
     window.addEventListener("click", handleUserActivation, { once: true });
     window.addEventListener("keydown", handleUserActivation, { once: true }); */
-    });
-  </script>
-</Layout>
+  });
+</script>

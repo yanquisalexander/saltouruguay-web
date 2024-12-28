@@ -3,17 +3,17 @@ import { useEffect, useState } from "preact/hooks";
 
 const NEWS = [
     {
-        title: "RUSTico 5",
+        title: "Guerra de Streamers",
         description: `
-        Servidor de Rust!
+        Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
     `,
-        tags: ["Servidor"],
+        tags: ["Comunidad"],
         background: {
-            img: "/images/ads/RUSTico.webp",
+            img: "/images/ads/guerra-streamers.webp",
         },
-        navImage: "/images/ads/RUSTico.webp",
+        navImage: "/images/ads/guerra-streamers.webp",
         ctaLink: {
-            text: "Visitá nuestro Discord",
+            text: "Novedades en breve",
             url: "#",
             newTab: false,
         },
