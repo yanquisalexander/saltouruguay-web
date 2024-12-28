@@ -11,7 +11,7 @@ import { FeaturedNews } from "@/components/FeaturedNews";
 
 const IS_PROD = import.meta.env.PROD;
 
-const SHOW_AWARDS_COUNTDOWN = true;
+const SHOW_AWARDS_COUNTDOWN = false;
 
 export const prerender = true;
 ---
@@ -20,7 +20,7 @@ export const prerender = true;
   title="Comunidad SaltoUruguayServer"
   description="Te damos la bienvenida a la comunidad del canal de SaltoUruguayServer en Twitch. ¡Los #SaltoAwards2024 será un evento inolvidable!"
 >
-  <VoteCallToAction server:defer />
+  <!--VoteCallToAction server:defer /-->
 
   {
     SHOW_AWARDS_COUNTDOWN && (
