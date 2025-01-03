@@ -3,7 +3,7 @@ import { NOMINEES } from "@/awards/Nominees";
 import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
 import type { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { client } from "@/db/client";
-import { DebateAnonymousMessagesTable } from "@/db/schema";
+import { DebateAnonymousMessagesTable, StreamerWarsInscriptionsTable } from "@/db/schema";
 import { submitVotes } from "@/utils/awards-vote-system";
 import { pusher } from "@/utils/pusher";
 import { updateCardSkin, updateStickers } from "@/utils/user";
@@ -220,6 +220,43 @@ export const server = {
             }
 
             return { opinion: opinion[0] }
+        }
+    }),
+    inscribeToStreamerWars: defineAction({
+        input: z.object({
+            discordUsername: z.string(),
+            acceptedTerms: z.boolean()
+        }),
+        handler: async ({ discordUsername, acceptedTerms }, { request }) => {
+            const session = await getSession(request)
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para inscribirte a Guerra de Streamers"
+                })
+            }
+
+            if (!acceptedTerms) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: "Debes aceptar los términos y condiciones para inscribirte a Guerra de Streamers"
+                })
+            }
+
+            await client.insert(StreamerWarsInscriptionsTable)
+                .values(
+                    {
+                        userId: session.user.id,
+                        acceptedTerms,
+                        discordUsername
+                    }
+                )
+                .onConflictDoNothing()
+                .execute()
+
+            return { success: true }
+
         }
     }),
 }

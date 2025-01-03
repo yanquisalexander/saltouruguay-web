@@ -1,0 +1,261 @@
+---
+import Discord from "@/icons/Discord.astro";
+import Layout from "@/layouts/Layout.astro";
+import { getDiscordUser } from "@/services/discord";
+import { getSession } from "auth-astro/server";
+import { LucideX } from "lucide-preact";
+import { markdown } from "@astropub/md";
+import { StreamerWarsInscriptionsTable } from "@/db/schema";
+import { client } from "@/db/client";
+import { eq } from "drizzle-orm";
+
+const inscripcionTOS = `
+### 1) Modificaciones por parte de la Organización
+LA ORGANIZACIÓN se reserva el derecho de alterar o modificar los datos del evento, incluyendo los presentes términos y condiciones, comprometiéndose a avisar de la debida forma.
+
+### 2) Derecho de admisión
+LA ORGANIZACIÓN se reserva el derecho de admisión.
+
+### 3) Derechos de propiedad intelectual
+EL PARTICIPANTE reconoce y acepta que LA ORGANIZACIÓN ostenta y es titular de todos los derechos de propiedad intelectual y cualesquiera otros, incluidos los de imagen, derivados, directa o indirectamente, de las representaciones artísticas o cualesquiera otras que tuvieran lugar con motivo de la celebración del evento.
+
+### 4) Transmisión y exclusividad
+El evento no podrá ser emitido por ningún medio sin previa autorización por parte de LA ORGANIZACIÓN. LA ORGANIZACIÓN tiene la exclusividad del vivo y en directo del evento. La retransmisión de imágenes podrá autorizarse con fines de generación de contenido y publicitarios, siempre haciendo hincapié en que la exclusividad del evento corresponde al canal SaltoUruguayServer. En estos casos, se podrá exigir la inclusión del logo, leyenda o marca de agua en las imágenes.
+
+### 5) Premios y ganadores
+Los premios y las condiciones para determinarlos serán detallados por LA ORGANIZACIÓN y estarán sujetos a los presentes términos y condiciones. LA ORGANIZACIÓN se reserva el derecho de modificar las reglas de asignación de premios en caso de fuerza mayor o circunstancias imprevistas, notificándolo oportunamente.
+
+---
+
+En caso de cualquier consulta o duda, favor de comunicarse con el equipo de organización.
+`.trim();
+
+const session = await getSession(Astro.request);
+
+console.log({ session });
+
+const HAS_DISCORD_LINKED = !!session?.user.discordId;
+
+const discordInfo = await getDiscordUser(
+  session?.user.discordId as string
+).catch((error) => {
+  console.error("Error getting Discord user", error);
+  return null;
+});
+
+const IS_USER_INSCRIBED = await client
+  .select()
+  .from(StreamerWarsInscriptionsTable)
+  .where(eq(StreamerWarsInscriptionsTable.userId, session?.user?.id ?? 0))
+  .execute()
+  .then((inscriptions) => {
+    return inscriptions.length > 0;
+  });
+---
+
+<Layout
+  title="Inscripción Guerra de Streamers"
+  description="Inscripción para el torneo de streamers de Guerra de Streamers"
+>
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <header class="flex flex-col items-center justify-center space-y-4 mb-16">
+      <h1
+        class="with-glyph flex relative w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen !skew-x-[-20deg] -rotate-6"
+      >
+        <span class="flex !skew-x-[20deg] transform">
+          Guerra de Streamers
+        </span>
+      </h1>
+    </header>
+    {
+      !session ? (
+        <div class="flex flex-col items-center justify-center space-y-4">
+          <p class="text-center italic font-rubik">
+            Debes iniciar sesión para poder inscribirte.
+          </p>
+          <button
+            id="login"
+            class="px-4 py-2 bg-[#b4cd02] text-black rounded-md hover:bg-[#a3b802] transition-colors"
+          >
+            Iniciar sesión
+          </button>
+        </div>
+      ) : (
+        <div class="flex flex-col items-center justify-center space-y-4">
+          <div class="flex flex-col items-center gap-2">
+            <article class="flex items-center gap-2">
+              <img
+                src={session?.user.image}
+                alt={`Avatar de ${session?.user.name}`}
+                class="size-12 p-0.5 rounded-full border-[3px] border-[#b4cd02] border-dashed"
+              />
+              <span class="font-anton font-light text-xl">
+                {session?.user.name}
+              </span>
+            </article>
+            <button
+              id="logout"
+              class="text-[#b4cd02] hover:underline cursor-pointer"
+            >
+              ¿No eres tú? Cerrar sesión
+            </button>
+          </div>
+          {IS_USER_INSCRIBED ? (
+            <div class="flex flex-col items-center">
+              <span class="text-center">¡Ya estás inscrito en el torneo!</span>
+              <span class="text-center">
+                Pronto te contactaremos para más información.
+              </span>
+            </div>
+          ) : (
+            <p class="text-center">
+              {HAS_DISCORD_LINKED ? (
+                <div class="flex flex-col items-center gap-2">
+                  <div
+                    class="hidden"
+                    data-discord-username={discordInfo?.username}
+                  />
+                  <span class="text-center">
+                    ¡Ya tienes tu cuenta de Discord{" "}
+                    <strong>
+                      {discordInfo?.username}#{discordInfo?.discriminator}
+                    </strong>{" "}
+                    vinculada!
+                    <br />
+                    Ahora puedes inscribirte en el torneo.
+                  </span>
+                  <button
+                    id="inscribirse"
+                    class="px-4 py-2 bg-[#b4cd02] text-black rounded-md"
+                  >
+                    Inscribirse
+                  </button>
+                </div>
+              ) : (
+                <div class="flex flex-col items-center text-center gap-2">
+                  <span>
+                    Debes vincular tu cuenta de Discord para poder inscribirte.
+                  </span>
+                  <button
+                    id="link-discord"
+                    class="px-4 py-2 bg-[#b4cd02] text-black rounded-md"
+                  >
+                    <Discord class="size-6 inline-block mr-2" />
+                    Vincular Discord
+                  </button>
+                </div>
+              )}
+            </p>
+          )}
+        </div>
+      )
+    }
+  </div>
+
+  <dialog
+    id="inscripcion-modal"
+    class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+  >
+    <form id="login-modal-close" class="absolute top-5 right-5">
+      <button type="button" class="text-white">
+        <LucideX class="w-6 h-6" />
+      </button>
+    </form>
+
+    <div class="flex flex-col items-center space-y-4">
+      <img src="/favicon.svg" class="aspect-square size-24" />
+    </div>
+
+    <div class="flex flex-col space-y-4 mt-8">
+      <div class="prose prose-invert font-rubik text-sm">
+        <h2 class="text-2xl font-bold text-center">Términos y condiciones</h2>
+        <div
+          class="prose prose-invert font-rubik text-sm"
+          set:html={markdown(inscripcionTOS)}
+        />
+        <form class="flex flex-col space-y-4 mt-8" id="accept-tos-form">
+          <button
+            type="submit"
+            class="accept w-full py-3 bg-electric-violet-500 rounded-lg text-white transition duration-300 hover:bg-electric-violet-600"
+          >
+            Aceptar y continuar
+          </button>
+        </form>
+      </div>
+    </div>
+  </dialog>
+</Layout>
+
+<script>
+  import { $ } from "@/lib/dom-selector";
+  import { actions } from "astro:actions";
+  import { signOut } from "auth-astro/client";
+  import { toast } from "sonner";
+
+  document.addEventListener("astro:page-load", () => {
+    const $loginButton = $("#login");
+    const $signInModal = $("#login-modal") as HTMLDialogElement;
+
+    $loginButton?.addEventListener("click", () => {
+      $signInModal.showModal();
+    });
+
+    const $linkDiscordButton = $("#link-discord");
+
+    $linkDiscordButton?.addEventListener("click", () => {
+      window.location.href = `/api/discord/link`;
+    });
+
+    const $logoutButton = $("#logout");
+
+    $logoutButton?.addEventListener("click", (e) => {
+      e.preventDefault();
+      signOut();
+    });
+
+    const $inscribirseButton = $("#inscribirse");
+    const $inscripcionModal = $("#inscripcion-modal") as HTMLDialogElement;
+
+    const $closeInscripcionModal = $inscripcionModal.querySelector(
+      "#login-modal-close button"
+    );
+
+    $closeInscripcionModal?.addEventListener("click", () => {
+      $inscripcionModal.close();
+    });
+
+    $inscribirseButton?.addEventListener("click", () => {
+      $inscripcionModal.showModal();
+    });
+
+    const $acceptTOSForm = $("#accept-tos-form");
+
+    $acceptTOSForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const discordUsername =
+        $(".hidden[data-discord-username]")?.textContent ?? "";
+
+      const { error } = await actions.inscribeToStreamerWars({
+        discordUsername,
+        acceptedTerms: true,
+      });
+
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      toast.success("¡Te has inscrito correctamente!");
+      $inscripcionModal.close();
+      window.location.reload();
+    });
+  });
+</script>
+
+<style>
+  h1.with-glyph:after {
+    content: "a";
+    @apply !font-atomic-extras text-[80px] mt-8 absolute inset-x-0 text-center;
+    z-index: -1;
+  }
+</style>

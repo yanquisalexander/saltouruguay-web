@@ -26,6 +26,8 @@ export default {
 				anton: ['Anton', 'sans-serif'],
 				rubik: ['Rubik Variable', 'Rubik', 'sans-serif'],
 				teko: ['Teko Variable', 'Teko', 'sans-serif'],
+				atomic: ["Atomic Marker", "cursive"],
+				"atomic-extras": ["Atomic Marker Extras", "cursive"],
 			}
 		},
 	},
