@@ -234,13 +234,13 @@ const IS_USER_INSCRIBED = await client
       e.preventDefault();
       const $discordUsername = $("[data-discord-username]");
 
-      if (!$discordUsername || !$discordUsername.textContent) {
+      if (!$discordUsername || !$discordUsername.dataset.discordUsername) {
         toast.error("No hemos podido obtener tu nombre de usuario de Discord.");
         return;
       }
 
       const { error } = await actions.inscribeToStreamerWars({
-        discordUsername: $discordUsername.textContent,
+        discordUsername: $discordUsername.dataset.discordUsername,
         acceptedTerms: true,
       });
 
