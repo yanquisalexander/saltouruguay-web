@@ -232,11 +232,17 @@ const IS_USER_INSCRIBED = await client
 
     $acceptTOSForm?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const discordUsername =
-        $(".hidden[data-discord-username]")?.textContent ?? "";
+      const $discordUsername = $inscripcionModal.querySelector(
+        "[data-discord-username]"
+      );
+
+      if (!$discordUsername || !$discordUsername.textContent) {
+        toast.error("No hemos podido obtener tu nombre de usuario de Discord.");
+        return;
+      }
 
       const { error } = await actions.inscribeToStreamerWars({
-        discordUsername,
+        discordUsername: $discordUsername.textContent,
         acceptedTerms: true,
       });
 
