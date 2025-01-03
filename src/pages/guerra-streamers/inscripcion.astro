@@ -232,9 +232,7 @@ const IS_USER_INSCRIBED = await client
 
     $acceptTOSForm?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const $discordUsername = $inscripcionModal.querySelector(
-        "[data-discord-username]"
-      );
+      const $discordUsername = $("[data-discord-username]");
 
       if (!$discordUsername || !$discordUsername.textContent) {
         toast.error("No hemos podido obtener tu nombre de usuario de Discord.");
