@@ -9,12 +9,12 @@ const NEWS = [
     `,
         tags: ["Comunidad"],
         background: {
-            img: "/images/ads/guerra-streamers.webp",
+            img: "/images/ads/stream-wars.webp",
         },
-        navImage: "/images/ads/guerra-streamers.webp",
+        navImage: "/images/ads/stream-wars.webp",
         ctaLink: {
-            text: "Novedades en breve",
-            url: "#",
+            text: "🎮 ¡Inscríbete ya!",
+            url: "/guerra-streamers/inscripcion",
             newTab: false,
         },
     },
