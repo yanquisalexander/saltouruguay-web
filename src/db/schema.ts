@@ -111,4 +111,6 @@ export const StreamerWarsInscriptionsTable = pgTable('streamer_wars_inscriptions
     acceptedTerms: boolean('accepted_terms').notNull().default(false),
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
-})
+}, (t) => ({
+    uniqueUserId: unique().on(t.userId)
+}))

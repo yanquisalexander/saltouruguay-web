@@ -1,0 +1,1 @@
+ALTER TABLE "streamer_wars_inscriptions" ADD CONSTRAINT "streamer_wars_inscriptions_user_id_unique" UNIQUE("user_id");
