@@ -36,6 +36,7 @@ export default defineConfig({
                 token.user = profile;
                 const email = profile?.email || null;
                 const username = user?.name?.toLowerCase();
+                console.log({ token, profile, account, user });
 
 
 
@@ -63,7 +64,7 @@ export default defineConfig({
                                 twitchId,
                                 avatar: profile?.picture,
                                 username,
-                                displayName: profile?.name ?? username,
+                                displayName: profile?.preferred_username ?? username,
                                 twitchTier,
                                 updatedAt: new Date(),
                             })
@@ -78,7 +79,7 @@ export default defineConfig({
                             .insert(UsersTable)
                             .values({
                                 email,
-                                displayName: profile?.name ?? username,
+                                displayName: profile?.preferred_username ?? username,
                                 avatar: profile?.picture,
                                 username,
                                 twitchId: profile?.sub,
