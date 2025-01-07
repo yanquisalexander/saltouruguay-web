@@ -36,7 +36,6 @@ export default defineConfig({
                 token.user = profile;
                 const email = profile?.email || null;
                 const username = user?.name?.toLowerCase();
-                console.log({ token, profile, account, user });
 
 
 
