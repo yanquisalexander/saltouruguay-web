@@ -15,6 +15,9 @@ const currentInscriptions = await getCurrentInscriptions().catch((e) => {
     Inscripciones actuales
   </h2>
 
+  <p class="text-slate-400">
+    {currentInscriptions.length} inscripciones en total
+  </p>
   <div class="flex flex-col gap-4 mt-8 max-h-96 overflow-y-auto">
     {
       currentInscriptions.map((inscription) => (
