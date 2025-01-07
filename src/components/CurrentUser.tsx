@@ -97,7 +97,9 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
         <div className="flex items-center ml-2">
             {/* Mostrar el spinner si estamos obteniendo datos en una ruta prerenderizada */}
             {fetchingUser ? (
-                <LucideLoader2 class="animate-spin-clockwise animate-iteration-count-infinite inline-block mr-2" size={20} />
+                <div className="flex items-center py-[17px] px-3">
+                    <LucideLoader2 class="animate-spin-clockwise animate-iteration-count-infinite inline-block mr-2" size={20} />
+                </div>
             ) : (
                 // Mostrar el botón de iniciar sesión solo si no hay un usuario autenticado y no estamos cargando
                 !user && !loading && (
