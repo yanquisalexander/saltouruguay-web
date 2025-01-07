@@ -122,12 +122,12 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 10000 }) => {
     };
 
     return (
-        <section id="latest-news" className="">
+        <section id="latest-news" className="max-w-screen-lg mx-auto">
             <ol>
                 {newsItems.map((news, index) => (
                     <li
                         key={news.id}
-                        className={`relative w-full min-h-[400px] aspect-[9/5] lg:aspect-[20/8] flex items-end rounded-[40px] overflow-hidden group transition-all duration-500 ${index !== selectedIndex && "hidden"}`}
+                        className={`relative w-full min-h-[400px] aspect-[9/12] lg:aspect-[20/9] flex items-end rounded-[40px] overflow-hidden group transition-all duration-500 ${index !== selectedIndex && "hidden"}`}
                     >
                         <div
                             className="w-full h-full bg-black/80 absolute inset-0 select-none pointer-events-none"
