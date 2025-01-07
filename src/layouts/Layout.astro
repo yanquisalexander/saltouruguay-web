@@ -40,9 +40,10 @@ const { title, description, preload, canonical, image, hideHeader } =
 const session = await getSession(Astro.request);
 
 preload?.push({
-  href: "/images/logo_salto.webp",
+  href: "/favicon.svg",
   as: "image",
-  type: "image/webp",
+  type: "image/svg+xml",
+  crossorigin: "anonymous",
 });
 
 preload?.push({
