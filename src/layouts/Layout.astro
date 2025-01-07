@@ -13,6 +13,10 @@ import "@fontsource/anton";
 import "@fontsource-variable/rubik";
 import "@fontsource-variable/teko";
 
+import anton from "@fontsource/anton/files/anton-latin-400-normal.woff2";
+import teko from "@fontsource-variable/teko/files/teko-latin-wght-normal.woff2";
+import rubik from "@fontsource-variable/rubik/files/rubik-latin-wght-normal.woff2";
+
 import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import SignInModal from "@/components/SignInModal.astro";
@@ -39,6 +43,27 @@ preload?.push({
   href: "/images/logo_salto.webp",
   as: "image",
   type: "image/webp",
+});
+
+preload?.push({
+  href: anton,
+  as: "font",
+  type: "font/woff2",
+  crossorigin: "anonymous",
+});
+
+preload?.push({
+  href: teko,
+  as: "font",
+  type: "font/woff2",
+  crossorigin: "anonymous",
+});
+
+preload?.push({
+  href: rubik,
+  as: "font",
+  type: "font/woff2",
+  crossorigin: "anonymous",
 });
 ---
 
