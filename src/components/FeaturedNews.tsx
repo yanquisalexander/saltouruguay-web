@@ -1,8 +1,128 @@
 import { navigate } from "astro:transitions/client";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 const NEWS = [
     {
+        title: "Guerra de Streamers",
+        description: `
+        Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
+    `,
+        tags: ["Comunidad"],
+        background: {
+            img: "/images/ads/stream-wars.webp",
+        },
+        navImage: "/images/ads/stream-wars.webp",
+        ctaLink: {
+            text: "🎮 ¡Inscríbete ya!",
+            url: "/guerra-streamers/inscripcion",
+            newTab: false,
+        },
+    }, {
+        title: "Guerra de Streamers",
+        description: `
+        Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
+    `,
+        tags: ["Comunidad"],
+        background: {
+            img: "/images/ads/stream-wars.webp",
+        },
+        navImage: "/images/ads/stream-wars.webp",
+        ctaLink: {
+            text: "🎮 ¡Inscríbete ya!",
+            url: "/guerra-streamers/inscripcion",
+            newTab: false,
+        },
+    }, {
+        title: "Guerra de Streamers",
+        description: `
+        Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
+    `,
+        tags: ["Comunidad"],
+        background: {
+            img: "/images/ads/stream-wars.webp",
+        },
+        navImage: "/images/ads/stream-wars.webp",
+        ctaLink: {
+            text: "🎮 ¡Inscríbete ya!",
+            url: "/guerra-streamers/inscripcion",
+            newTab: false,
+        },
+    }, {
+        title: "Guerra de Streamers",
+        description: `
+        Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
+    `,
+        tags: ["Comunidad"],
+        background: {
+            img: "/images/ads/stream-wars.webp",
+        },
+        navImage: "/images/ads/stream-wars.webp",
+        ctaLink: {
+            text: "🎮 ¡Inscríbete ya!",
+            url: "/guerra-streamers/inscripcion",
+            newTab: false,
+        },
+    }, {
+        title: "Guerra de Streamers",
+        description: `
+        Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
+    `,
+        tags: ["Comunidad"],
+        background: {
+            img: "/images/ads/stream-wars.webp",
+        },
+        navImage: "/images/ads/stream-wars.webp",
+        ctaLink: {
+            text: "🎮 ¡Inscríbete ya!",
+            url: "/guerra-streamers/inscripcion",
+            newTab: false,
+        },
+    }, {
+        title: "Guerra de Streamers",
+        description: `
+        Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
+    `,
+        tags: ["Comunidad"],
+        background: {
+            img: "/images/ads/stream-wars.webp",
+        },
+        navImage: "/images/ads/stream-wars.webp",
+        ctaLink: {
+            text: "🎮 ¡Inscríbete ya!",
+            url: "/guerra-streamers/inscripcion",
+            newTab: false,
+        },
+    }, {
+        title: "Guerra de Streamers",
+        description: `
+        Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
+    `,
+        tags: ["Comunidad"],
+        background: {
+            img: "/images/ads/stream-wars.webp",
+        },
+        navImage: "/images/ads/stream-wars.webp",
+        ctaLink: {
+            text: "🎮 ¡Inscríbete ya!",
+            url: "/guerra-streamers/inscripcion",
+            newTab: false,
+        },
+    }, {
+        title: "Guerra de Streamers",
+        description: `
+        Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
+    `,
+        tags: ["Comunidad"],
+        background: {
+            img: "/images/ads/stream-wars.webp",
+        },
+        navImage: "/images/ads/stream-wars.webp",
+        ctaLink: {
+            text: "🎮 ¡Inscríbete ya!",
+            url: "/guerra-streamers/inscripcion",
+            newTab: false,
+        },
+    }, {
         title: "Guerra de Streamers",
         description: `
         Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
@@ -34,7 +154,41 @@ const NEWS = [
             url: "/",
             newTab: false,
         },
-    }
+    },
+    {
+        title: "Bienvenido a la nueva web",
+        description: `
+        ¡SaltoUruguayServer tiene una nueva web! 🎉
+        Entérate de todas las novedades, eventos y torneos en un solo lugar.
+    `,
+        tags: ["Web"],
+        background: {
+            img: "/og.webp",
+        },
+        navImage: "/og.webp",
+        ctaLink: {
+            text: "🎉 Descubre más",
+            url: "/",
+            newTab: false,
+        },
+    },
+    {
+        title: "Bienvenido a la nueva web",
+        description: `
+        ¡SaltoUruguayServer tiene una nueva web! 🎉
+        Entérate de todas las novedades, eventos y torneos en un solo lugar.
+    `,
+        tags: ["Web"],
+        background: {
+            img: "/og.webp",
+        },
+        navImage: "/og.webp",
+        ctaLink: {
+            text: "🎉 Descubre más",
+            url: "/",
+            newTab: false,
+        },
+    },
 
 
 ].map((news, index) => {
@@ -48,11 +202,26 @@ const NEWS = [
 export const FeaturedNews = ({ newsItems = NEWS, duration = 10000 }) => {
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [intervalId, setIntervalId] = useState<number | null>(null);
+    const scrollContainerRef = useRef<HTMLOListElement | null>(null);
+
+
+    useEffect(() => {
+        // Scroll to the selected slide
+        if (scrollContainerRef.current && selectedIndex !== null) {
+            const scrollContainer = scrollContainerRef.current;
+            const selectedSlide = scrollContainer.children[selectedIndex] as HTMLElement;
+            const scrollLeft = selectedSlide.offsetLeft - (scrollContainer.offsetWidth - selectedSlide.offsetWidth) / 2;
+            scrollContainer.scrollTo({
+                left: scrollLeft,
+                behavior: "smooth",
+            });
+        }
+    }, [selectedIndex]);
 
     // Manejador del cambio de slide
     const handleChangeSlide = (index: number) => {
         setSelectedIndex(index);
-        resetAutoSlide(); // Resetea el auto-slide cuando se cambia manualmente
+        resetAutoSlide();
     };
 
     // Función para iniciar el auto-slide
@@ -107,7 +276,7 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 10000 }) => {
     };
 
     return (
-        <section id="latest-news" className="max-w-screen-full mx-auto">
+        <section id="latest-news" className="">
             <ol>
                 {newsItems.map((news, index) => (
                     <li
@@ -163,28 +332,39 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 10000 }) => {
                     </li>
                 ))}
             </ol>
-            <nav className="overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 w-full">
-                <ol className="px-4 md:w-full mt-8 flex items-center justify-center gap-4 max-w-full mx-auto">
+            <nav className="w-full mt-10">
+                <ol
+                    className="flex gap-2 overflow-x-scroll w-full scrollbar-hide"
+                    ref={scrollContainerRef}
+                >
                     {newsItems.map((news, index) => (
                         <li key={news.id} className="contents">
                             <button
                                 style={{
                                     "--slider-timeout": `${duration}ms`,
                                 }}
-                                className={`h-32 rounded-xl p-0.5 relative transition-all duration-500 group ${selectedIndex === index ? "w-[calc(0.6_*_100vw)] md:w-[calc(0.23_*_100%)] slider-border" : "w-[calc(0.4_*_100vw)] md:w-[calc(0.2_*_100%)]"}`}
+                                className={`h-32 rounded-xl p-0.5 relative transition-all duration-500 group ${selectedIndex === index
+                                    ? "w-[calc(0.6_*_100vw)] md:w-[calc(0.23_*_100%)] slider-border"
+                                    : "w-[calc(0.4_*_100vw)] md:w-[calc(0.2_*_100%)]"
+                                    }`}
                                 aria-label={news.ctaLink.text}
                                 title={news.ctaLink.text}
                                 onClick={() => handleChangeSlide(index)}
                             >
                                 <img
-                                    className={`w-full h-full object-cover rounded-xl border-[4px] transition-all ${selectedIndex === index ? "border-[#020617]" : "border-transparent"}`}
+                                    className={`w-full h-full object-cover rounded-xl border-[4px] transition-all ${selectedIndex === index
+                                        ? "border-[#020617]"
+                                        : "border-transparent"
+                                        }`}
                                     src={news.navImage}
                                     alt={news.title}
                                     width="1920"
                                     height="1080"
                                 />
                                 <img
-                                    className={`w-full h-full object-cover absolute inset-0 rounded-[40px] blur-lg -z-10 transition-all translate-y-0 opacity-10 duration-500 ${selectedIndex !== index && "group-hover:opacity-40 group-hover:translate-y-2"}`}
+                                    className={`w-full h-full object-cover absolute inset-0 rounded-[40px] blur-lg -z-10 transition-all translate-y-0 opacity-10 duration-500 ${selectedIndex !== index &&
+                                        "group-hover:opacity-40 group-hover:translate-y-2"
+                                        }`}
                                     src={news.navImage}
                                     alt={news.title}
                                     width="1920"
@@ -195,6 +375,7 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 10000 }) => {
                     ))}
                 </ol>
             </nav>
+
         </section>
     );
 };

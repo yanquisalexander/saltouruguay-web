@@ -1,0 +1,17 @@
+---
+import { StreamerWars } from "@/components/streamer-wars/StreamerWars";
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session || !session.user.isAdmin) {
+  return new Response(null, { status: 404 });
+}
+---
+
+<Layout title="Guerra de Streamers">
+  <div class="max-w-6xl w-full mt-8 mx-auto">
+    <StreamerWars session={session} client:idle />
+  </div>
+</Layout>

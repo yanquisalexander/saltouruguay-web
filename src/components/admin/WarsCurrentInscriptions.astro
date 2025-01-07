@@ -1,0 +1,52 @@
+---
+import { getCurrentInscriptions } from "@/utils/streamer-wars";
+import { LucideExternalLink } from "lucide-preact";
+
+const currentInscriptions = await getCurrentInscriptions().catch((e) => {
+  console.error(e);
+  return [];
+});
+---
+
+<section class="mt-8">
+  <h2
+    class="text-2xl uppercase font-rubik font-medium text-white tracking-wider"
+  >
+    Inscripciones actuales
+  </h2>
+
+  <div class="flex flex-col gap-4 mt-8">
+    {
+      currentInscriptions.map((inscription) => (
+        <div class="flex flex-col gap-2 p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
+          <div class="flex items-center gap-4">
+            <img
+              src={inscription.user?.avatar}
+              alt={inscription.user?.displayName}
+              class="size-8 rounded-full object-cover"
+            />
+            <h3 class="text-lg font-rubik font-medium text-white">
+              {inscription.user?.displayName} ({inscription.discordUsername}#0)
+            </h3>
+          </div>
+          <footer class="flex items-center justify-between">
+            <a
+              href={`https://discord.com/users/${inscription.user?.discordId}`}
+              class="text-blue-400"
+            >
+              <LucideExternalLink class="w-4 h-4 inline-block mr-1" />
+              Ver en Discord
+            </a>
+            <a
+              href={`https://twitch.tv/${inscription.user?.displayName}`}
+              class="text-purple-400"
+            >
+              <LucideExternalLink class="w-4 h-4 inline-block mr-1" />
+              Ver en Twitch
+            </a>
+          </footer>
+        </div>
+      ))
+    }
+  </div>
+</section>

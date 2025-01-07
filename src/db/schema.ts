@@ -114,3 +114,10 @@ export const StreamerWarsInscriptionsTable = pgTable('streamer_wars_inscriptions
 }, (t) => ({
     uniqueUserId: unique().on(t.userId)
 }))
+
+export const streamerWarsRelations = relations(StreamerWarsInscriptionsTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [StreamerWarsInscriptionsTable.userId],
+        references: [UsersTable.id],
+    })
+}))
