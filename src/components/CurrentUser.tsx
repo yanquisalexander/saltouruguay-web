@@ -132,10 +132,11 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                                 <img
                                     src={user?.image || undefined}
                                     alt={user?.name || "User"}
-                                    className="rounded-full w-8 h-8"
+                                    // gradient border
+                                    className="rounded-full size-9 p-0.5 border-2 border-dotted border-l-lime-400 border-t-lime-500 border-r-lime-600 border-b-lime-700 border-tl-transparent border-tr-transparent border-bl-transparent border-br-transparent transition-all duration-300"
+
                                 />
 
-                                <img src={'/images/guirnalda.webp'} class="z-10 absolute inset-0 size-8 object-contain scale-[1.5] -top-1 left-0.5  aspect-square rounded-full" />
                             </div>
 
                             <span className="hidden md:flex">{user?.name}</span>
