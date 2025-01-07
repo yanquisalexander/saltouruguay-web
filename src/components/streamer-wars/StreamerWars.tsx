@@ -1,6 +1,5 @@
 import type { Session } from "@auth/core/types";
 import { useEffect, useState } from "preact/hooks";
-import { MemoryGame } from "./games/MemoryGame";
 import { toast } from "sonner";
 
 const SplashScreen = () => {
