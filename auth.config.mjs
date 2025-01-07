@@ -63,6 +63,7 @@ export default defineConfig({
                                 twitchId,
                                 avatar: profile?.picture,
                                 username,
+                                displayName: profile?.name ?? username,
                                 twitchTier,
                                 updatedAt: new Date(),
                             })
