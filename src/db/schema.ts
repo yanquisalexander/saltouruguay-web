@@ -121,3 +121,14 @@ export const streamerWarsRelations = relations(StreamerWarsInscriptionsTable, ({
         references: [UsersTable.id],
     })
 }))
+
+export const StreamerWarsPlayersTable = pgTable('streamer_wars_players', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => UsersTable.id),
+    playerNumber: integer('player_number').notNull(),
+    eliminated: boolean('eliminated').notNull().default(false),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueUserIdStreamerId: unique().on(t.userId, t.playerNumber)
+}))

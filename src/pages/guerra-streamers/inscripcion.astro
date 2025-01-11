@@ -130,6 +130,16 @@ const IS_USER_INSCRIBED = await client
                   >
                     Inscribirse
                   </button>
+
+                  <div class="flex flex-col mt-4 gap-2 mask bg-[#b4cd02] w-full">
+                    <span class="text-center font-anton text-lg text-black">
+                      Recuerda
+                    </span>
+                    <p class="text-center max-w-96 px-8 pb-8 text-black">
+                      Para tu participación, es necesario que cuentes con una{" "}
+                      <strong>webcam</strong> y un <strong>micrófono</strong>.
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div class="flex flex-col items-center text-center gap-2">
@@ -261,5 +271,17 @@ const IS_USER_INSCRIBED = await client
     content: "a";
     @apply !font-atomic-extras text-[80px] mt-8 absolute inset-x-0 text-center;
     z-index: -1;
+  }
+
+  .mask {
+    -webkit-mask-composite: source-in;
+    mask-image: url(/images/mask.webp);
+    mask-position: 50%;
+    mask-size: cover;
+    mask-repeat: no-repeat;
+    mask-clip: content-box;
+    mask-origin: content-box;
+    mask-composite: source-in;
+    mask-mode: alpha;
   }
 </style>
