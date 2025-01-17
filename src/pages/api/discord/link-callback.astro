@@ -1,0 +1,168 @@
+---
+import { SALTO_DISCORD_GUILD_ID } from "@/config";
+import { SOCIAL_NETWORKS } from "@/consts/SocialNetworks";
+import { client } from "@/db/client";
+import { UsersTable } from "@/db/schema";
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+import { eq } from "drizzle-orm";
+import { LucideLoader } from "lucide-preact";
+
+const DISCORD_LINK_ERRORS = {
+  USER_IS_NOT_MEMBER: "USER_IS_NOT_MEMBER",
+};
+
+async function linkDiscordAccount(request: Request) {
+  const code = new URL(request.url).searchParams.get("code");
+  const clientId = import.meta.env.DISCORD_CLIENT_ID;
+  const clientSecret = import.meta.env.DISCORD_CLIENT_SECRET;
+
+  if (!code) {
+    console.error("Código de autorización no encontrado.");
+    return { error: "Código de autorización no encontrado", status: 400 };
+  }
+
+  if (!clientId || !clientSecret) {
+    console.error("Faltan parámetros o configuraciones.");
+    return { error: "Configuración inválida", status: 500 };
+  }
+
+  const session = await getSession(request);
+  if (!session) {
+    console.error("Sesión no encontrada.");
+    return { error: "Sesión no válida", status: 404 };
+  }
+
+  const baseUrl = new URL(request.url).origin;
+  const discordTokenUrl = "https://discord.com/api/oauth2/token";
+  const discordUserUrl = "https://discord.com/api/users/@me";
+  const discordGuildsUrl = "https://discord.com/api/users/@me/guilds";
+
+  // Solicitar token de Discord
+  const body = new URLSearchParams({
+    client_id: clientId,
+    client_secret: clientSecret,
+    code,
+    grant_type: "authorization_code",
+    redirect_uri: `${baseUrl}/api/discord/link-callback`,
+  });
+
+  const tokenResponse = await fetch(discordTokenUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+  });
+
+  if (!tokenResponse.ok) {
+    const errorData = await tokenResponse.json();
+    return { error: errorData.error_description, status: 500 };
+  }
+
+  const tokenData = await tokenResponse.json();
+
+  // Obtener datos del usuario
+  const userResponse = await fetch(discordUserUrl, {
+    headers: { Authorization: `Bearer ${tokenData.access_token}` },
+  });
+
+  if (!userResponse.ok) {
+    console.error(
+      "Error al obtener datos del usuario:",
+      await userResponse.text()
+    );
+    return { error: "Error al obtener datos del usuario", status: 500 };
+  }
+
+  const userData = await userResponse.json();
+
+  // Verificar si el usuario pertenece al servidor
+  const guildResponse = await fetch(discordGuildsUrl, {
+    headers: { Authorization: `Bearer ${tokenData.access_token}` },
+  });
+
+  if (!guildResponse.ok) {
+    console.error(
+      "Error al obtener datos de los servidores:",
+      await guildResponse.text()
+    );
+    return { error: "Error al obtener datos del servidor", status: 500 };
+  }
+
+  const guilds = await guildResponse.json();
+  const isMember = guilds.some(
+    (guild: { id: string }) => guild.id === SALTO_DISCORD_GUILD_ID
+  );
+
+  if (!isMember) {
+    return {
+      error: true,
+      error_code: DISCORD_LINK_ERRORS.USER_IS_NOT_MEMBER,
+      status: 403,
+    };
+  }
+
+  // Actualizar base de datos
+  try {
+    await client
+      .update(UsersTable)
+      .set({ discordId: userData.id })
+      .where(eq(UsersTable.id, session.user.id));
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error al actualizar la base de datos:", error);
+    return { error: "Error interno del servidor", status: 500 };
+  }
+}
+
+// Ejecución en el layout
+const result = await linkDiscordAccount(Astro.request);
+---
+
+<Layout title="Vinculando...">
+  <div class="flex mt-20 items-center justify-center flex-col">
+    {
+      result.error ? (
+        result.error_code === DISCORD_LINK_ERRORS.USER_IS_NOT_MEMBER ? (
+          <div class="bg-black/20 rounded-2xl p-8 flex flex-col items-center border border-white/20 ring-4 ring-black/20 border-dotted mx-4">
+            <p class="text-base flex-col mt-2 flex items-center gap-2 text-center max-w-xl">
+              Parece que no eres miembro del servidor de Discord. <br />
+              Por favor, únete antes de vincular tu cuenta.
+            </p>
+            <a
+              href={
+                SOCIAL_NETWORKS.find((network) => network.name === "Discord")
+                  ?.url
+              }
+              class="text-blue-500 hover:underline mt-4"
+              target="_blank"
+            >
+              Unirse a Discord
+            </a>
+          </div>
+        ) : (
+          <div class="bg-red-500/20 rounded-2xl p-8 flex flex-col items-center border border-white/20 ring-4 ring-red-500/20 border-dotted mx-4">
+            <h2 class="text-lg font-medium font-rubik">
+              Ocurrío un error al vincular tu cuenta
+            </h2>
+            <p class="text-base flex-col mt-2 flex items-center gap-2">
+              {result.error}
+            </p>
+          </div>
+        )
+      ) : (
+        <div class="bg-black/20 rounded-2xl p-8 flex flex-col items-center border border-white/20 ring-4 ring-black/20 border-dotted mx-4">
+          <p class="text-base flex-col mt-2 flex items-center gap-2">
+            <LucideLoader class="w-8 h-8 animate-rotate-360 animate-iteration-count-infinite animate-duration-500" />
+            Vinculando con Discord...
+          </p>
+          <script is:inline>
+            setTimeout(() => {
+              window.location.href = "/?discordLinked=true";
+            }, 2000);
+            </script>
+        </div>
+      )
+    }
+  </div>
+</Layout>;
