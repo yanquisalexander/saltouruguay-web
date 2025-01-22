@@ -133,5 +133,7 @@ export const getUsers = async ({ page = 1, search = "", limit = 15 }) => {
         }
     });
 
-    return users;
+    const totalPages = Math.ceil(users.length / limit);
+
+    return { users, totalPages };
 }

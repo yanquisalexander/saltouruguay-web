@@ -27,6 +27,7 @@ export const users = {
             }
 
             const users = await getUsers({ page, search, limit });
+            console.log("Users: ", users);
             return users;
         }
     }),
