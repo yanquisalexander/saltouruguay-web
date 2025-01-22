@@ -157,10 +157,11 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                                         )
                                     }
                                     <a
-                                        href="/profile"
-                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                        href="/usuario"
+                                        className="w-full items-center justify-between  gap-1 px-4 py-2 flex text-sm text-gray-700 hover:bg-gray-100"
                                     >
-                                        Perfil
+                                        Mi cuenta
+                                        <span class="px-2 py-0.5 text-xs text-white group-hover:opacity-100 transition bg-[#09f] rounded-lg">Nuevo</span>
                                     </a>
                                     {user.isAdmin && (
                                         <a
