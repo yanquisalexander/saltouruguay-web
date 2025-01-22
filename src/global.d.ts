@@ -5,6 +5,7 @@ declare module "@auth/core/types" {
     interface Session extends AuthSession {
         user: {
             id: number;
+            username: string;
             tier?: 1 | 2 | 3;
             isAdmin?: boolean;
             twitchId?: string;

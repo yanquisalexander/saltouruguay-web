@@ -1,0 +1,82 @@
+---
+import DiscordIcon from "@/icons/Discord.astro";
+import TwitchIcon from "@/icons/Twitch.astro";
+
+const ADVANTAGES = [
+  {
+    title: "Discord",
+    icon: DiscordIcon,
+    iconClasses: "text-[#5865F2]",
+    href: "https://discord.gg/zXHhjExy92",
+    image: "/images/advantages/ventaja-discord.webp",
+    description:
+      "Espacio exclusivo con soporte personalizado y contenido valioso.",
+    customClasses:
+      "before:[background-image:radial-gradient(circle,_rgba(88,101,242)_0,_rgba(13,16,35,0.4)_100%)]",
+  },
+  {
+    title: "Twitch",
+    icon: TwitchIcon,
+    iconClasses: "text-[#9146FF]",
+    href: "https://www.twitch.tv/SaltoUruguayServer",
+    image: "/images/advantages/ventaja-twitch.webp",
+    description:
+      "Contenido en vivo, sorteos y eventos exclusivos para la comunidad.",
+    customClasses:
+      "before:[background-image:radial-gradient(circle,_rgba(145,70,255,0.7)_0,_rgba(13,16,35,0.4)_100%)]",
+  },
+];
+---
+
+<section id="advantages" class="px-4 md:px-12 max-w-screen-full mx-auto my-32">
+  <h2
+    class="max-w-[28ch] font-rubik text-pretty text-center mx-auto font-medium text-4xl [text-shadow:_0_1px_2px_#000]"
+  >
+    Disfrutá las ventajas de ser parte de la comunidad de <span
+      class="text-yellow-500">SaltoUruguayServer</span
+    >
+  </h2>
+  <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+    {
+      ADVANTAGES.map(
+        ({
+          title,
+          icon: Icon,
+          description,
+          iconClasses,
+          href,
+          image,
+          customClasses,
+        }) => (
+          <li>
+            <a
+              href={href}
+              {...(href.startsWith("http")
+                ? { target: "_blank", rel: "noopener noreferrer" }
+                : {})}
+              class="p-0.5 block rounded-2xl group bg-gradient-to-b transition from-[rgba(32,35,91,0.7)] to-[rgba(7,9,33,0.7)]"
+            >
+              <article
+                class={`bg-gradient-to-tl z-0 overflow-hidden relative rounded-xl before:absolute before:w-full before:aspect-square before:left-0 before:top-0 before:rounded-full before:blur-3xl before:opacity-80 before:-z-10 before:transition from-[rgba(32,35,91,0.7)] to-[rgba(7,9,33,0.7)] ${customClasses}`}
+              >
+                <header class="flex items-center gap-3 p-6">
+                  {Icon && <Icon class={`w-8 h-auto ${iconClasses}`} />}
+                  <h3 class="font-bold text-lg">{title}</h3>
+                </header>
+                <p class="text-balance px-6 pb-4">{description}</p>
+                <div class="w-full h-[1px] bg-white/5 m-6" />
+                {image && (
+                  <img
+                    class="w-[calc(100%_-_56px)] object-contain h-auto rounded-3xl max-w-96 group-hover:translate-y-3 group-hover:-translate-x-1 transition group-hover:scale-[101%] translate-y-4  ml-auto"
+                    src={image}
+                    alt=""
+                  />
+                )}
+              </article>
+            </a>
+          </li>
+        )
+      )
+    }
+  </ul>
+</section>

@@ -9,6 +9,7 @@ import { SALTO_BROADCASTER_ID } from "@/config";
 import { LucideBell } from "lucide-preact";
 import NomineesLiveNow from "@/components/NomineesLiveNow.astro";
 import WarsCurrentInscriptions from "@/components/admin/WarsCurrentInscriptions.astro";
+import { UsersManager } from "@/components/admin/UsersManager";
 
 const session = await getSession(Astro.request);
 
@@ -93,6 +94,10 @@ const chartOptions: Partial<ChartOptions> = {
       </div>
       <div class="bg-black/50 rounded-lg p-4">
         <WarsCurrentInscriptions server:defer />
+      </div>
+
+      <div class="bg-black/50 rounded-lg p-4">
+        <UsersManager client:idle />
       </div>
     </div>
   </div>

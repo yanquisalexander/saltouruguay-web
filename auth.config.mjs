@@ -102,11 +102,13 @@ export default defineConfig({
                         twitchTier: true,
                         discordId: true,
                         coins: true,
+                        username: true,
                     },
                 });
 
                 if (userRecord) {
                     session.user.id = userRecord.id;
+                    session.user.username = userRecord.username;
                     session.user.isAdmin = userRecord.admin;
                     session.user.twitchId = userRecord.twitchId;
                     session.user.tier = userRecord.twitchTier;

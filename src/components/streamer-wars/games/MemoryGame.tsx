@@ -1,3 +1,4 @@
+import type { MemoryGameGameState } from "@/utils/streamer-wars";
 import type { Session } from "@auth/core/types";
 import { LucideCircleDotDashed } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
@@ -7,10 +8,12 @@ export const MemoryGame = ({
     session,
     onGameEnd,
     onMissedPattern,
+    initialGameState,
 }: {
     session: Session;
     onGameEnd: () => void;
     onMissedPattern: () => void;
+    initialGameState?: MemoryGameGameState;
 }) => {
     const colors = ["red", "blue", "green", "yellow"] as const;
     const [waitingForPattern, setWaitingForPattern] = useState(false);
@@ -102,7 +105,7 @@ export const MemoryGame = ({
                         {colors.map((color) => (
                             <div
                                 key={color}
-                                className={`w-24 h-24 flex font-teko text-xl uppercase italic font-medium animate-duration-400 justify-center items-center border-2 bg-opacity-20 rounded-lg shadow-md cursor-pointer transition-transform 
+                                className={`size-48 skew-x-6 flex font-teko text-xl uppercase italic font-medium animate-duration-400 justify-center items-center border-2 bg-opacity-20 rounded-lg shadow-md cursor-pointer transition-transform 
                                     hover:scale-105 active:scale-95
                                     ${color === "red"
                                         ? "bg-red-500 border-red-500"

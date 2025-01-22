@@ -123,3 +123,15 @@ export const getDebateMessages = async () => {
         }
     })
 }
+
+export const getUsers = async ({ page = 1, search = "", limit = 15 }) => {
+    const users = await client.query.UsersTable.findMany({
+        where: (users, { like }) => {
+            if (search) {
+                return like(users.username, `%${search}%`);
+            }
+        }
+    });
+
+    return users;
+}
