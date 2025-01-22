@@ -130,7 +130,8 @@ export const getUsers = async ({ page = 1, search = "", limit = 15 }) => {
             if (search) {
                 return like(users.username, `%${search}%`);
             }
-        }
+        },
+        limit,
     });
 
     const totalPages = Math.ceil(users.length / limit);
