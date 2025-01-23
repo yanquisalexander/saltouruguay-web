@@ -12,6 +12,7 @@ import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
 import { eq } from "drizzle-orm";
 import { users } from "./admin/users";
+import { streamerWars } from "./streamerWars";
 
 export const server = {
     sendVotes: defineAction({
@@ -262,5 +263,6 @@ export const server = {
     }),
     admin: {
         users
-    }
+    },
+    streamerWars
 }

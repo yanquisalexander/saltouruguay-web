@@ -7,16 +7,39 @@ import { PlayersGrid } from "./PlayersGrid";
 import Pusher from "pusher-js";
 import { PUSHER_KEY } from "@/config";
 import { ConnectedPlayers } from "./ConnectedPlayers";
+import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+
+const PRELOAD_SOUNDS = () => {
+    const CDN_PREFIX = "https://cdn.saltouruguayserver.com/sounds/";
+    Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
+        const audio = new Audio(`${CDN_PREFIX}${sound}.mp3`);
+        audio.preload = "auto";
+        console.log(`Preloading sound: ${sound}`);
+    })
+}
+
+const FOR_BETTER_EXPERIENCE = () => {
+    playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION });
+    toast.success("Para una mejor experiencia, te recomendamos utiliza pantalla completa (F11) y activar el sonido 🔊");
+}
 
 const SplashScreen = () => {
     const [loading, setLoading] = useState(true);
     const [fadingOut, setFadingOut] = useState(false);
     const [progress, setProgress] = useState(0);
+    const [alertedBetterExperience, setAlertedBetterExperience] = useState(false);
 
     useEffect(() => {
+        // Precargar los sonidos
         // Simular progreso de la barra de carga
         const progressInterval = setInterval(() => {
             setProgress((prev) => (prev < 100 ? prev + 1 : 100));
+            if (progress > 50) {
+                if (!alertedBetterExperience) {
+                    FOR_BETTER_EXPERIENCE();
+                    setAlertedBetterExperience(true);
+                }
+            }
         }, 50); // Incrementa el progreso cada 50ms
 
         // Gestionar el fade-out
@@ -29,7 +52,7 @@ const SplashScreen = () => {
             clearTimeout(timer);
             clearInterval(progressInterval); // Limpiar los intervalos si el componente se desmonta
         };
-    }, []);
+    }, [progress, alertedBetterExperience]);
 
     if (loading) {
         return (
@@ -67,6 +90,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [players, setPlayers] = useState<any[]>([]);
 
     useEffect(() => {
+        PRELOAD_SOUNDS();
+
         if (session) {
             const host = /* import.meta.env.DEV ? 'localhost' :  */`soketi.saltouruguayserver.com`;
 
@@ -83,7 +108,17 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
     useEffect(() => {
         if (pusher) {
+            const globalChannel = pusher.subscribe("streamer-wars");
             const presenceChannel = pusher.subscribe("presence-streamer-wars");
+
+            globalChannel.bind("player-eliminated", function ({ playerNumber, audioBase64 }: { playerNumber: number, audioBase64: string }) {
+                playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.5 }).then(async () => {
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                    const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
+                    audio.play();
+                })
+
+            })
 
             presenceChannel.bind("pusher:subscription_succeeded", function (members: any) {
                 console.log("Members: ", members);
