@@ -48,5 +48,12 @@ export default defineConfig({
       TODO: Only allow some origins
     */
     checkOrigin: false
+  },
+  vite: {
+    resolve: {
+      alias: {
+        fs: require.resolve('rollup-pligin-node-builtins'),
+      }
+    }
   }
 });

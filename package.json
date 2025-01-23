@@ -66,6 +66,7 @@
     "@types/luxon": "^3.4.2",
     "@types/pg": "^8.11.10",
     "drizzle-kit": "^0.28.1",
+    "rollup-plugin-node-builtins": "^2.1.2",
     "tsx": "^4.19.2"
   }
 }
