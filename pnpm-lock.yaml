@@ -104,6 +104,9 @@ importers:
       drizzle-orm:
         specifier: ^0.36.3
         version: 0.36.3(@types/pg@8.11.10)(pg@8.13.1)(react@18.3.1)
+      edge-tts:
+        specifier: ^1.0.1
+        version: 1.0.1(typescript@5.6.3)
       ejs:
         specifier: ^3.1.10
         version: 3.1.10
@@ -2212,6 +2215,11 @@ packages:
 
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
+
+  edge-tts@1.0.1:
+    resolution: {integrity: sha512-Yv5S4y5k3bWC+0iyD6PDCOI0SLpBN5B1Mv6apgyWjhHzU8GDrBMv6BvT9lZBY5O/4Ow7KFcYaItXC/H0BFmewA==}
+    peerDependencies:
+      typescript: ^5.0.0
 
   ejs@3.1.10:
     resolution: {integrity: sha512-UeJmFfOrAQS8OJWPZ4qtgHyWExa088/MtK5UEyoJGFH67cDEXkZSviOiKRCZ4Xij0zxI3JECgYs3oKx+AizQBA==}
@@ -5986,6 +5994,14 @@ snapshots:
   dset@3.1.4: {}
 
   eastasianwidth@0.2.0: {}
+
+  edge-tts@1.0.1(typescript@5.6.3):
+    dependencies:
+      typescript: 5.6.3
+      ws: 8.18.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   ejs@3.1.10:
     dependencies:

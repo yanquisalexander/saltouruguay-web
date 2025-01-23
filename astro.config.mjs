@@ -1,8 +1,8 @@
 // @ts-check
 import { defineConfig, envField } from 'astro/config';
 // @ts-ignore
-import rollupPluginNodeBuiltins from 'rollup-plugin-node-builtins';
-
+/* import rollupPluginNodeBuiltins from 'rollup-plugin-node-builtins';
+ */
 import vercel from '@astrojs/vercel';
 import tailwind from '@astrojs/tailwind';
 import preact from '@astrojs/preact';
@@ -51,11 +51,11 @@ export default defineConfig({
     */
     checkOrigin: false
   },
-  vite: {
+  /* vite: {
     resolve: {
       alias: {
         fs: 'memfs',
       }
     }
-  }
+  } */
 });

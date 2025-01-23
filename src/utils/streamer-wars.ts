@@ -3,8 +3,7 @@ import { StreamerWarsInscriptionsTable, StreamerWarsPlayersTable } from "@/db/sc
 import cacheService from "@/services/cache";
 import { asc, eq, or } from "drizzle-orm";
 import { pusher } from "./pusher";
-// @ts-ignore
-import { EdgeTTS } from '@andresaya/edge-tts';
+import { tts } from 'edge-tts'
 
 
 const MEMORY_GAME_INITIAL_TIME = 120; // 2 minutes
@@ -123,16 +122,16 @@ export const eliminatePlayer = async (playerNumber: number) => {
     let audioBase64: string | undefined = undefined;
 
     try {
-        const tts = new EdgeTTS();
 
-        await tts.synthesize(`Jugador, ${playerNumber}, eliminado`, "es-ES-XimenaNeural", {
+        const audioBuffer = await tts(`Jugador, ${playerNumber}, eliminado`, {
+            voice: "es-ES-XimenaNeural",
             rate: '-15%',       // Speech rate (range: -100% to 100%)
             volume: '0%',     // Speech volume (range: -100% to 100%)
             pitch: '-5Hz'      // Voice pitch (range: -100Hz to 100Hz)
         });
 
 
-        audioBase64 = tts.toBase64();
+        audioBase64 = Buffer.from(new Uint8Array(audioBuffer)).toString("base64");
     } catch (error) {
         console.error(error);
     }

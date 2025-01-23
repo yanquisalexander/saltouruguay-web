@@ -44,6 +44,7 @@
     "discord-api-types": "^0.37.115",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.36.3",
+    "edge-tts": "^1.0.1",
     "ejs": "^3.1.10",
     "glightbox": "^3.3.0",
     "html-to-image": "^1.11.11",
