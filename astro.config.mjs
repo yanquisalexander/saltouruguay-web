@@ -1,5 +1,7 @@
 // @ts-check
 import { defineConfig, envField } from 'astro/config';
+// @ts-ignore
+import rollupPluginNodeBuiltins from 'rollup-plugin-node-builtins';
 
 import vercel from '@astrojs/vercel';
 import tailwind from '@astrojs/tailwind';
@@ -52,7 +54,7 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: {
-        fs: require.resolve('rollup-pligin-node-builtins'),
+        fs: rollupPluginNodeBuiltins
       }
     }
   }
