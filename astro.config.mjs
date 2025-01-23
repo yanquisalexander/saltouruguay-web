@@ -51,11 +51,9 @@ export default defineConfig({
     */
     checkOrigin: false
   },
-  /* vite: {
-    resolve: {
-      alias: {
-        fs: 'memfs',
-      }
+  vite: {
+    optimizeDeps: {
+      exclude: ['edge-tts']
     }
-  } */
+  }
 });
