@@ -54,7 +54,7 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: {
-        fs: rollupPluginNodeBuiltins
+        fs: 'memfs',
       }
     }
   }
