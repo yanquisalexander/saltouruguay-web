@@ -12,7 +12,6 @@
     "db:migrate": "tsx ./src/db/migrator.ts"
   },
   "dependencies": {
-    "@andresaya/edge-tts": "^1.2.4",
     "@appnest/masonry-layout": "^2.2.3",
     "@astrojs/check": "^0.9.4",
     "@astrojs/preact": "^4.0.0",
@@ -44,7 +43,6 @@
     "discord-api-types": "^0.37.115",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.36.3",
-    "edge-tts": "^1.0.1",
     "ejs": "^3.1.10",
     "glightbox": "^3.3.0",
     "html-to-image": "^1.11.11",
