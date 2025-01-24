@@ -1,4 +1,4 @@
-import { TEAMS } from "@/consts/Teams";
+import { TEAMS } from "../consts/Teams";
 import { ACHIEVEMENTS } from "../consts/Achievements";
 import { client } from "./client";
 import { AchievementsTable, StreamerWarsTeamsTable } from "./schema";
