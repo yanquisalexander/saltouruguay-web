@@ -98,7 +98,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         {
             name: "ButtonBox",
             component: ButtonBox,
-            props: { session, pusher, teamsQuantity: 5, playersPerTeam: 4 }
+            props: { session, pusher, teamsQuantity: 5, playersPerTeam: 1 }
         }
     ]
 
