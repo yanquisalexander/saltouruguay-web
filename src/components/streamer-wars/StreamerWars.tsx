@@ -9,6 +9,7 @@ import { PUSHER_KEY } from "@/config";
 import { ConnectedPlayers } from "./ConnectedPlayers";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { PlayerEliminated } from "./PlayerEliminated";
+import { WaitingRoom } from "./views/WaitingRoom";
 
 const PRELOAD_SOUNDS = () => {
     const CDN_PREFIX = "https://cdn.saltouruguayserver.com/sounds/";
@@ -159,9 +160,11 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
             </div>
 
-            {/* <DaySelector /> */}
-            {/*             <PlayersGrid initialPlayers={[]} />
- */}
+            {
+                pusher && (
+                    <WaitingRoom session={session} pusher={pusher} />
+                )
+            }
 
             <ConnectedPlayers players={[]} />
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />

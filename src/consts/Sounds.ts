@@ -4,6 +4,7 @@ export const STREAMER_WARS_SOUNDS = {
     NOTIFICATION: "streamer-wars-notification",
     ATENCION_JUGADORES: "atencion_jugadores",
     DISPARO: "gun",
+    NUEVO_MENSAJE: "new-message",
 }
 
 

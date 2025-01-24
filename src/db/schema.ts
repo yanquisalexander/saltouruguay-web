@@ -137,10 +137,25 @@ export const StreamerWarsPlayersTable = pgTable('streamer_wars_players', {
     uniqueUserIdStreamerId: unique().on(t.userId, t.playerNumber)
 }))
 
-export const streamerWarsPlayersRelations = relations(StreamerWarsPlayersTable, ({ one }) => ({
+export const streamerWarsPlayersRelations = relations(StreamerWarsPlayersTable, ({ one, many }) => ({
     user: one(UsersTable, {
         fields: [StreamerWarsPlayersTable.userId],
         references: [UsersTable.id],
-    })
+    }),
+    messages: many(StreamerWarsChatMessagesTable)
 }))
 
+export const StreamerWarsChatMessagesTable = pgTable('streamer_wars_chat_messages', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => UsersTable.id),
+    message: text('message').notNull(),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+})
+
+export const streamerWarsChatMessagesRelations = relations(StreamerWarsChatMessagesTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [StreamerWarsChatMessagesTable.userId],
+        references: [UsersTable.id],
+    })
+}))
