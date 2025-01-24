@@ -171,6 +171,17 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                                             Administración
                                         </a>
                                     )}
+
+                                    {
+                                        user.streamerWarsPlayerNumber && (
+                                            <a
+                                                href="/guerra-streamers"
+                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                Guerra de Streamers
+                                            </a>
+                                        )
+                                    }
                                     <a
                                         href="/api/auth/signout"
                                         onClick={(e) => {
