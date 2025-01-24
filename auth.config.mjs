@@ -104,6 +104,13 @@ export default defineConfig({
                         coins: true,
                         username: true,
                     },
+                    with: {
+                        streamerWarsPlayer: {
+                            columns: {
+                                playerNumber: true,
+                            }
+                        }
+                    }
                 });
 
                 if (userRecord) {
@@ -114,6 +121,7 @@ export default defineConfig({
                     session.user.tier = userRecord.twitchTier;
                     session.user.discordId = userRecord.discordId;
                     session.user.coins = userRecord.coins;
+                    session.user.streamerWarsPlayerNumber = userRecord.streamerWarsPlayer?.playerNumber;
                 }
             } catch (error) {
                 console.error("Error fetching user admin status:", error);

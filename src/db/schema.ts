@@ -101,7 +101,11 @@ export const debateMessagesUserRelation = relations(DebateAnonymousMessagesTable
 }))
 
 export const userRelations = relations(UsersTable, ({ one, many }) => ({
-    debateMessages: many(DebateAnonymousMessagesTable)
+    debateMessages: many(DebateAnonymousMessagesTable),
+    streamerWarsPlayer: one(StreamerWarsPlayersTable, {
+        fields: [UsersTable.id],
+        references: [StreamerWarsPlayersTable.userId],
+    }),
 }))
 
 export const StreamerWarsInscriptionsTable = pgTable('streamer_wars_inscriptions', {
@@ -132,3 +136,11 @@ export const StreamerWarsPlayersTable = pgTable('streamer_wars_players', {
 }, (t) => ({
     uniqueUserIdStreamerId: unique().on(t.userId, t.playerNumber)
 }))
+
+export const streamerWarsPlayersRelations = relations(StreamerWarsPlayersTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [StreamerWarsPlayersTable.userId],
+        references: [UsersTable.id],
+    })
+}))
+

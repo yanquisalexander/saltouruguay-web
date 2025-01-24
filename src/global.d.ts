@@ -11,6 +11,7 @@ declare module "@auth/core/types" {
             twitchId?: string;
             discordId?: string;
             coins?: number;
+            streamerWarsPlayerNumber?: number;
         } & DefaultSession["user"]; // Extiende las propiedades originales del tipo `user`
     }
 }

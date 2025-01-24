@@ -8,6 +8,7 @@ import Pusher from "pusher-js";
 import { PUSHER_KEY } from "@/config";
 import { ConnectedPlayers } from "./ConnectedPlayers";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { PlayerEliminated } from "./PlayerEliminated";
 
 const PRELOAD_SOUNDS = () => {
     const CDN_PREFIX = "https://cdn.saltouruguayserver.com/sounds/";
@@ -88,6 +89,7 @@ const SplashScreen = () => {
 export const StreamerWars = ({ session }: { session: Session }) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
     const [players, setPlayers] = useState<any[]>([]);
+    const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
 
     useEffect(() => {
         PRELOAD_SOUNDS();
@@ -116,6 +118,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                     await new Promise((resolve) => setTimeout(resolve, 1000));
                     const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
                     audio.play();
+                    setRecentlyEliminatedPlayer(playerNumber);
                 })
 
             })
@@ -161,6 +164,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
  */}
 
             <ConnectedPlayers players={[]} />
+            <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
 
         </>
     );
