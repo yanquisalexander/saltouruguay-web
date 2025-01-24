@@ -23,6 +23,11 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
             return;
         }
 
+        if (Object.keys(playersTeams).some((team) => playersTeams[team].length >= playersPerTeam)) {
+            toast.error("El equipo ya está lleno");
+            return;
+        }
+
         actions.streamerWars.joinTeam({ team: selectedTeam }).then(({ error, data }) => {
             if (error) {
                 console.error(error);
