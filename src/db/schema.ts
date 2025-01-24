@@ -129,7 +129,7 @@ export const streamerWarsRelations = relations(StreamerWarsInscriptionsTable, ({
 export const StreamerWarsPlayersTable = pgTable('streamer_wars_players', {
     id: serial('id').primaryKey(),
     userId: integer('user_id').references(() => UsersTable.id),
-    playerNumber: integer('player_number').notNull(),
+    playerNumber: integer('player_number').notNull().unique(),
     eliminated: boolean('eliminated').notNull().default(false),
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
@@ -142,7 +142,11 @@ export const streamerWarsPlayersRelations = relations(StreamerWarsPlayersTable, 
         fields: [StreamerWarsPlayersTable.userId],
         references: [UsersTable.id],
     }),
-    messages: many(StreamerWarsChatMessagesTable)
+    messages: many(StreamerWarsChatMessagesTable),
+    teamPlayer: one(StreamerWarsTeamPlayersTable, {
+        fields: [StreamerWarsPlayersTable.playerNumber],
+        references: [StreamerWarsTeamPlayersTable.playerNumber],
+    })
 }))
 
 export const StreamerWarsChatMessagesTable = pgTable('streamer_wars_chat_messages', {
@@ -153,9 +157,35 @@ export const StreamerWarsChatMessagesTable = pgTable('streamer_wars_chat_message
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
 })
 
+export const StreamerWarsTeamsTable = pgTable('streamer_wars_teams', {
+    id: serial('id').primaryKey(),
+    color: varchar('color').notNull().unique(),
+})
+
+export const StreamerWarsTeamPlayersTable = pgTable('streamer_wars_team_players', {
+    id: serial('id').primaryKey(),
+    teamId: integer('team_id').references(() => StreamerWarsTeamsTable.id),
+    playerNumber: integer('player_number').references(() => StreamerWarsPlayersTable.playerNumber),
+})
+
 export const streamerWarsChatMessagesRelations = relations(StreamerWarsChatMessagesTable, ({ one }) => ({
     user: one(UsersTable, {
         fields: [StreamerWarsChatMessagesTable.userId],
         references: [UsersTable.id],
+    })
+}))
+
+export const streamerWarsTeamsRelations = relations(StreamerWarsTeamsTable, ({ one, many }) => ({
+    players: many(StreamerWarsTeamPlayersTable),
+}))
+
+export const streamerWarsTeamPlayersRelations = relations(StreamerWarsTeamPlayersTable, ({ one }) => ({
+    team: one(StreamerWarsTeamsTable, {
+        fields: [StreamerWarsTeamPlayersTable.teamId],
+        references: [StreamerWarsTeamsTable.id],
+    }),
+    player: one(StreamerWarsPlayersTable, {
+        fields: [StreamerWarsTeamPlayersTable.playerNumber],
+        references: [StreamerWarsPlayersTable.playerNumber],
     })
 }))

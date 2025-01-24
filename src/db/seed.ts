@@ -1,6 +1,7 @@
+import { TEAMS } from "@/consts/Teams";
 import { ACHIEVEMENTS } from "../consts/Achievements";
 import { client } from "./client";
-import { AchievementsTable } from "./schema";
+import { AchievementsTable, StreamerWarsTeamsTable } from "./schema";
 
 export const seed = async () => {
     console.log('Seeding database...');
@@ -14,5 +15,17 @@ export const seed = async () => {
             updatedAt: new Date().toISOString(),
         }).onConflictDoNothing();
     }
+
+    const teams = Object.values(TEAMS);
+
+    for (const team of teams) {
+        await client
+            .insert(StreamerWarsTeamsTable)
+            .values({
+                color: team,
+            })
+            .onConflictDoNothing();
+    }
+
 
 }

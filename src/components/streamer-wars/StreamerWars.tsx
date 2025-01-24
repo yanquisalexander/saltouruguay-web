@@ -10,6 +10,7 @@ import { ConnectedPlayers } from "./ConnectedPlayers";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { PlayerEliminated } from "./PlayerEliminated";
 import { WaitingRoom } from "./views/WaitingRoom";
+import { ButtonBox } from "./views/ButtonBox";
 
 const PRELOAD_SOUNDS = () => {
     const CDN_PREFIX = "https://cdn.saltouruguayserver.com/sounds/";
@@ -91,6 +92,15 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
     const [players, setPlayers] = useState<any[]>([]);
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
+    const [selectedGame, setSelectedGame] = useState<string | null>("ButtonBox");
+
+    const GAMES = [
+        {
+            name: "ButtonBox",
+            component: ButtonBox,
+            props: { session, pusher, teamsQuantity: 5, playersPerTeam: 4 }
+        }
+    ]
 
     useEffect(() => {
         PRELOAD_SOUNDS();
@@ -162,7 +172,22 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
             {
                 pusher && (
-                    <WaitingRoom session={session} pusher={pusher} />
+                    <>
+                        {
+                            !selectedGame ? (
+                                <WaitingRoom session={session} pusher={pusher} />
+                            ) : (
+                                GAMES.map((game) => {
+                                    if (game.name === selectedGame) {
+                                        const Component = game.component;
+                                        return <Component {...{ ...game.props, pusher: pusher! }} />
+                                    }
+                                }
+                                )
+                            )
+                        }
+
+                    </>
                 )
             }
 

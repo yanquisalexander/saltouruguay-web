@@ -1,7 +1,7 @@
 import { client } from "@/db/client";
 import { StreamerWarsChatMessagesTable } from "@/db/schema";
 import { pusher } from "@/utils/pusher";
-import { eliminatePlayer } from "@/utils/streamer-wars";
+import { eliminatePlayer, joinTeam } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -80,6 +80,87 @@ export const streamerWars = {
             }).execute().then((data) => data.map(({ user, message }) => ({ user: user?.username as string, message })))
 
             return { messages }
+        }
+    }),
+    joinTeam: defineAction({
+        input: z.object({
+            team: z.string(),
+        }),
+        handler: async ({ team }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para unirte a un equipo"
+                })
+            }
+
+            if (!session.user.streamerWarsPlayerNumber) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: "Debes ser jugador para unirte a un equipo"
+                })
+            }
+
+            const { success, error } = await joinTeam(session.user.streamerWarsPlayerNumber, team);
+            if (!success) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: error
+                })
+            }
+
+            return { success: true }
+        }
+    }),
+    getPlayersTeams: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para ver los equipos"
+                })
+            }
+
+            const playersTeams = await client.query.StreamerWarsTeamPlayersTable.findMany({
+                with: {
+                    player: {
+                        columns: {
+                            playerNumber: true,
+                        },
+                        with: {
+                            user: {
+                                columns: {
+                                    avatar: true,
+                                    displayName: true
+                                }
+                            }
+                        }
+                    },
+                    team: {
+                        columns: {
+                            color: true,
+                        }
+                    }
+                }
+            }).execute().then((data) => data.reduce((acc, { player, team }) => {
+                if (team && !acc[team.color]) {
+                    acc[team.color] = [];
+                }
+                if (team) {
+                    acc[team.color].push({
+                        playerNumber: player?.playerNumber as number,
+                        avatar: player?.user?.avatar as string,
+                        displayName: player?.user?.displayName as string
+                    });
+                }
+                return acc;
+            }, {} as { [team: string]: { playerNumber: number; avatar: string; displayName: string }[] }))
+
+            return { playersTeams }
         }
     })
 }

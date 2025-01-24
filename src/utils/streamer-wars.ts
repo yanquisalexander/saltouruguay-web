@@ -1,11 +1,11 @@
 import { client } from "@/db/client";
-import { StreamerWarsInscriptionsTable, StreamerWarsPlayersTable } from "@/db/schema";
+import { StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable, UsersTable } from "@/db/schema";
 import cacheService from "@/services/cache";
-import { asc, eq, or } from "drizzle-orm";
+import { and, asc, eq, or } from "drizzle-orm";
 import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
-/* import { tts } from 'edge-tts'
- */
+
+
 
 const MEMORY_GAME_INITIAL_TIME = 120; // 2 minutes
 const MEMORY_GAME_MIN_ROUND_TIME = 30; // 30 seconds
@@ -148,4 +148,106 @@ export const getPlayers = async () => {
             }
         }
     })
+}
+
+
+export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
+    try {
+        // Verificar si el jugador ya pertenece a algún equipo
+        const existingPlayerTeam = await client
+            .select()
+            .from(StreamerWarsTeamPlayersTable)
+            .where(eq(StreamerWarsTeamPlayersTable.playerNumber, playerNumber))
+            .execute();
+
+        if (existingPlayerTeam.length > 0) {
+            return {
+                success: false,
+                error: "Ya perteneces a un equipo",
+            };
+        }
+
+        // Verificar si el equipo al que se desea unir existe
+        const team = await client
+            .select()
+            .from(StreamerWarsTeamsTable)
+            .where(eq(StreamerWarsTeamsTable.color, teamToJoin))
+            .execute()
+            .then((res) => res[0]);
+
+        if (!team) {
+            return {
+                success: false,
+                error: "El equipo no existe",
+            };
+        }
+
+        // Insertar al jugador en el equipo
+        await client
+            .insert(StreamerWarsTeamPlayersTable)
+            .values({
+                playerNumber,
+                teamId: team.id,
+            })
+            .execute();
+
+        await pusher.trigger("streamer-wars", "player-joined", null)
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        console.error("Error en joinTeam:", error);
+        return {
+            success: false,
+            error: "Ocurrió un error al intentar unirse al equipo",
+        };
+    }
+};
+
+export const getPlayersTeams = async () => {
+    try {
+        const playersTeams = await client.query.StreamerWarsTeamPlayersTable.findMany({
+            with: {
+                player: {
+                    columns: {
+                        playerNumber: true,
+                    },
+                    with: {
+                        user: {
+                            columns: {
+                                avatar: true,
+                                displayName: true
+                            }
+                        }
+                    }
+                },
+                team: {
+                    columns: {
+                        color: true,
+                    }
+                }
+            }
+        }).execute();
+
+        const teams = playersTeams.reduce((acc, { player, team }) => {
+            if (team && !acc[team.color]) {
+                acc[team.color] = [];
+            }
+            if (team) {
+                acc[team.color].push({
+                    playerNumber: player?.playerNumber as number,
+                    avatar: player?.user?.avatar as string,
+                    displayName: player?.user?.displayName as string
+                });
+            }
+            return acc;
+        }, {} as { [team: string]: { playerNumber: number; avatar: string; displayName: string }[] });
+
+        return { playersTeams: teams };
+    }
+    catch (error) {
+        console.error("Error en getPlayersTeams:", error);
+        return { playersTeams: {} };
+    }
 }

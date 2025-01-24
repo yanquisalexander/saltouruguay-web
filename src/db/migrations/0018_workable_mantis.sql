@@ -1,0 +1,1 @@
+ALTER TABLE "streamer_wars_teams" ADD CONSTRAINT "streamer_wars_teams_color_unique" UNIQUE("color");
