@@ -2,7 +2,7 @@ import type { Session } from "@auth/core/types";
 import { useEffect, useState } from "preact/hooks";
 
 export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: number | null, session: Session }) => {
-    const [showing, setShowing] = useState(true);
+    const [showing, setShowing] = useState(false);
 
     /* 
         Cuando playerNumber sea diferente de null, mostrar un mensaje de eliminación
@@ -12,7 +12,7 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
     useEffect(() => {
         if (playerNumber) {
             setShowing(true);
-            //setTimeout(() => setShowing(false), 5000);
+            setTimeout(() => setShowing(false), 5000);
         }
     }, [playerNumber]);
 
