@@ -26,6 +26,7 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
         actions.streamerWars.joinTeam({ team: selectedTeam }).then(({ error, data }) => {
             if (error) {
                 console.error(error);
+                toast.warning(error)
                 return;
             }
             toast.success("Te has unido al equipo correctamente");
