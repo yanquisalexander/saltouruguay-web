@@ -26,6 +26,12 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
                 return
             }
             setMessages(data.messages);
+            if (!manuallyScrolled) {
+                const container = messagesContainer.current;
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }
         })
 
         const channel = pusher.subscribe("streamer-wars");
