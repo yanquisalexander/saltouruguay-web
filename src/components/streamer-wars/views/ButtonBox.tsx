@@ -2,6 +2,7 @@ import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { TEAMS } from "@/consts/Teams";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
+import { LucideDot } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
@@ -89,10 +90,13 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
             {/* Lista de Jugadores */}
             <div class="flex flex-col items-center justify-center w-full space-y-4 pt-16">
                 <h2 class="text-white text-xl font-bold">Jugadores en cada equipo</h2>
-                <div class="flex flex-wrap items-center justify-center gap-8">
+                <div class="grid grid-cols-4 gap-4">
                     {Object.keys(playersTeams).map((team) => (
-                        <div key={team} class="flex flex-col items-center justify-center w-1/4">
-                            <h3 class="text-white text-lg font-medium">{team}</h3>
+                        <div key={team} class="flex flex-col items-center justify-center">
+                            <span class="text-white text-lg font-bold">
+                                Equipo {team} (x{playersTeams[team].length} / {playersPerTeam})
+                                <LucideDot class="inline-block align-middle" size={56} color={COLORS.find(({ team: t }) => t === team)?.color} />
+                            </span>
                             <div class="space-y-2 mt-2">
                                 {playersTeams[team].map(({ avatar, displayName }) => (
                                     <div key={displayName} class="flex items-center space-x-3">
