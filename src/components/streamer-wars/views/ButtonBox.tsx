@@ -76,7 +76,7 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
                 <h1 class="text-white text-2xl font-bold">Selecciona un equipo</h1>
             </header>
             <div class="flex flex-wrap items-center justify-center gap-4">
-                {COLORS.map(({ team, color }) => (
+                {COLORS.slice(0, teamsQuantity).map(({ team, color }) => (
                     <div key={team} class="flex flex-col items-center">
                         <button
                             class={`w-20 h-20 rounded-full bg-[var(--bg)] shadow-lg hover:scale-110 transform transition duration-200`}
