@@ -3,8 +3,9 @@ import { StreamerWarsInscriptionsTable, StreamerWarsPlayersTable } from "@/db/sc
 import cacheService from "@/services/cache";
 import { asc, eq, or } from "drizzle-orm";
 import { pusher } from "./pusher";
-import { tts } from 'edge-tts'
-
+import { tts } from "@/services/tts";
+/* import { tts } from 'edge-tts'
+ */
 
 const MEMORY_GAME_INITIAL_TIME = 120; // 2 minutes
 const MEMORY_GAME_MIN_ROUND_TIME = 30; // 30 seconds
@@ -113,38 +114,26 @@ export const games = {
 
 
 export const eliminatePlayer = async (playerNumber: number) => {
-    await client.update(StreamerWarsPlayersTable)
-        .set({ eliminated: true })
-        .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
-        .execute();
-
-
-    let audioBase64: string | undefined = undefined;
-
     try {
+        // Actualiza el estado del jugador en la base de datos.
+        await client
+            .update(StreamerWarsPlayersTable)
+            .set({ eliminated: true })
+            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+            .execute();
 
-        const audioBuffer = await tts(`Jugador, ${playerNumber}, eliminado`, {
-            voice: "es-ES-XimenaNeural",
-            rate: '-15%',       // Speech rate (range: -100% to 100%)
-            volume: '0%',     // Speech volume (range: -100% to 100%)
-            pitch: '-5Hz'      // Voice pitch (range: -100Hz to 100Hz)
+        // Genera el audio.
+        const audioBase64 = await tts(`Jugador, ${playerNumber}, eliminado`);
+
+        // Envía el evento a Pusher con los datos actualizados.
+        await pusher.trigger("streamer-wars", "player-eliminated", {
+            playerNumber,
+            audioBase64,
         });
-
-
-        audioBase64 = Buffer.from(new Uint8Array(audioBuffer)).toString("base64");
     } catch (error) {
-        console.error(error);
+        console.error("Error en eliminatePlayer:", error);
     }
-
-    await pusher.trigger("streamer-wars", "player-eliminated", {
-        playerNumber,
-        audioBase64
-    });
-
-
-
-
-}
+};
 
 export const getPlayers = async () => {
     return await client.query.StreamerWarsPlayersTable.findMany({
