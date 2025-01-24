@@ -75,7 +75,7 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
             </header>
             <div class="flex w-full h-full">
                 <div class="flex flex-col w-max h-full">
-                    <h3 class="text-xl font-bold">Chat de participantes</h3>
+                    <h3 class="text-xl font-bold py-4">Chat de participantes</h3>
                     <div class="max-h-[400px] overflow-y-scroll px-2"
                         ref={messagesContainer}
                         style="scrollbar-width: thin; scrollbar-color: #4B5563 #E5E7EB; 

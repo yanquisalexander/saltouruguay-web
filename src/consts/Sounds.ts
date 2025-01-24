@@ -1,10 +1,11 @@
 export const CDN_PREFIX = "https://cdn.saltouruguayserver.com/sounds/";
 
 export const STREAMER_WARS_SOUNDS = {
-    NOTIFICATION: "streamer-wars-notification",
+    NOTIFICATION: "notification",
     ATENCION_JUGADORES: "atencion_jugadores",
     DISPARO: "gun",
     NUEVO_MENSAJE: "new-message",
+    BUTTON_CLICK: "button-click",
 }
 
 
