@@ -16,8 +16,9 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
         }
     }, [playerNumber]);
 
+
     return (
-        <div class={`z-[9999] fixed bottom-0 left-0 right-0 min-h-screen w-full bg-black/90 p-4 flex items-center justify-center transition-opacity duration-[2500ms] ${showing ? "opacity-100" : "opacity-0"}`}>
+        <div class={`z-[9999] fixed bottom-0 left-0 right-0 min-h-screen w-full bg-black/90 p-4 flex items-center justify-center transition animate-duration-[2500ms] ${showing ? "animate-fade-in" : "animate-fade-out pointer-events-none"}`}>
             <div class=" text-white p-4 rounded-lg">
                 <span class={`relative text-center animate-duration-[4000ms] ${showing && "animate-scale"}`}>
                     <h2 class="text-6xl font-bold font-atomic text-red-500 -rotate-6 skew-x-12">
