@@ -3,6 +3,7 @@ import MenuIcon from "@/icons/MenuIcon.astro";
 import type { Session } from "@auth/core/types";
 import { CurrentUser } from "./CurrentUser";
 import DiscordPresenceCount from "./DiscordPresenceCount";
+import { Notifications } from "./Notifications";
 
 interface Props {
   session?: Session | null;
@@ -105,6 +106,13 @@ const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
             client:idle
             transition:name="discord-widget-count"
             transition:persist
+            transition:persist-props
+          />
+
+          <Notifications
+            client:load
+            transition:persist
+            transition:name="notifications"
             transition:persist-props
           />
 
