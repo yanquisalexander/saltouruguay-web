@@ -298,11 +298,11 @@ export const server = {
                 const finalTargetUsers = targetUsers.length > 0 ? targetUsers : "everyone";
 
                 // Enviar evento a través de Pusher
-                /* await pusher.trigger('cinematic-player', 'new-event', {
+                await pusher.trigger('cinematic-player', 'new-event', {
                     targetUsers: finalTargetUsers,
                     videoUrl: url,
                 });
- */
+
                 return { success: true };
             },
         })
