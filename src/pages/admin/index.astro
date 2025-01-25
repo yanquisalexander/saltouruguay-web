@@ -10,6 +10,7 @@ import { LucideBell } from "lucide-preact";
 import NomineesLiveNow from "@/components/NomineesLiveNow.astro";
 import WarsCurrentInscriptions from "@/components/admin/WarsCurrentInscriptions.astro";
 import { UsersManager } from "@/components/admin/UsersManager";
+import { CinematicLauncher } from "@/components/admin/CinematicLauncher";
 
 const session = await getSession(Astro.request);
 
@@ -96,9 +97,11 @@ const chartOptions: Partial<ChartOptions> = {
         <WarsCurrentInscriptions server:defer />
       </div>
 
-      <div class="bg-black/50 rounded-lg p-4">
+      <!--       <div class="bg-black/50 rounded-lg p-4">
         <UsersManager client:idle />
-      </div>
+      </div> -->
+
+      <CinematicLauncher client:idle />
     </div>
   </div>
 </Layout>

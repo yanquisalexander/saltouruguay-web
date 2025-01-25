@@ -262,7 +262,51 @@ export const server = {
         }
     }),
     admin: {
-        users
+        users,
+        launchCinematic: defineAction({
+            input: z.object({
+                url: z.string().url(),
+                targetUsers: z.array(z.number()).default([]),
+            }),
+            handler: async ({ url, targetUsers }, { request }) => {
+                const session = await getSession(request);
+
+                // Verificar si el usuario está autenticado
+                if (!session) {
+                    throw new ActionError({
+                        code: "UNAUTHORIZED",
+                        message: "Debes iniciar sesión para lanzar cinemáticas",
+                    });
+                }
+
+                // Verificar si el usuario tiene permisos de administrador
+                if (!session.user.isAdmin) {
+                    throw new ActionError({
+                        code: "FORBIDDEN",
+                        message: "No tienes permisos para lanzar cinemáticas",
+                    });
+                }
+
+                // Verificar si se proporcionó una URL válida
+                if (!url) {
+                    throw new ActionError({
+                        code: "BAD_REQUEST",
+                        message: "Debes proporcionar una URL para lanzar la cinemática",
+                    });
+                }
+
+                const finalTargetUsers = targetUsers.length > 0 ? targetUsers : "everyone";
+
+                // Enviar evento a través de Pusher
+                /* await pusher.trigger('cinematic-player', 'new-event', {
+                    targetUsers: finalTargetUsers,
+                    videoUrl: url,
+                });
+ */
+                return { success: true };
+            },
+        })
+
     },
     streamerWars
 }
