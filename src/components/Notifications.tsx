@@ -13,12 +13,9 @@ const notifications = [
         id: "administrar-cuenta",
         title: '"Mi cuenta" ahora disponible',
         description: "Administra tu cuenta de forma más sencilla y rápida. ¡Descubre todas las novedades!",
-        //imageURL: "/images/ads/stream-wars.webp",
         link: { title: "Mi Cuenta", url: "/usuario" },
         tags: [{ type: "ads", title: "" }],
     },
-
-
 ];
 
 interface Notification {
@@ -40,22 +37,32 @@ export const Notifications = () => {
     const [isOpen, setIsOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
-    const handleToggle = () => setIsOpen(!isOpen);
-    const handleClickOutside = (event: MouseEvent) => {
-        if (ref.current && !ref.current.contains(event.target as Node)) {
-            setIsOpen(false);
-        }
-    };
+    useEffect(() => {
+        // Cargar estado desde localStorage
+        const storedRead = localStorage.getItem("notifications-read");
+        const read = storedRead ? JSON.parse(storedRead) : [];
+        const unread = notifications.filter((n) => !read.find((r: Notification) => r.id === n.id));
+
+        setState({ read, unread });
+    }, []);
 
     useEffect(() => {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    const handleToggle = () => setIsOpen(!isOpen);
+
+    const handleClickOutside = (event: MouseEvent) => {
+        if (ref.current && !ref.current.contains(event.target as Node)) {
+            setIsOpen(false);
+        }
+    };
+
     const markAllAsRead = () => {
         const updatedRead = [...state.read, ...state.unread];
         setState({ read: updatedRead, unread: [] });
-        localStorage.setItem("notifications", JSON.stringify(updatedRead));
+        localStorage.setItem("notifications-read", JSON.stringify(updatedRead));
     };
 
     return (
@@ -92,23 +99,18 @@ export const Notifications = () => {
                                 <a
                                     key={notification.id}
                                     href={notification.link.url}
-                                    className="opacity-60 hover:opacity-80 block p-2 last:border-b-0 relative border-b border-line hover:bg-line/40 transition"
+                                    className="opacity-80 hover:opacity-100 block p-2 last:border-b-0 relative border-b border-line hover:bg-line/40 transition"
                                 >
                                     <h5 className="font-semibold max-w-[26ch] text-balance">{notification.title}</h5>
-                                    <p className="text-sm text-balance text-white/60">
-                                        {notification.description}
-                                    </p>
-                                    {
-                                        notification.imageURL && (
-                                            <img
-                                                src={notification.imageURL}
-                                                alt={notification.title}
-                                                style="mask-image: linear-gradient(to left, rgb(0, 0, 0), rgba(0, 0, 0, 0));"
-                                                className="w-1/2 h-full rounded-md absolute top-0 right-0 opacity-40 -z-10"
-                                            />
-                                        )
-                                    }
-
+                                    <p className="text-sm text-balance text-white/60">{notification.description}</p>
+                                    {notification.imageURL && (
+                                        <img
+                                            src={notification.imageURL}
+                                            alt={notification.title}
+                                            style="mask-image: linear-gradient(to left, rgb(0, 0, 0), rgba(0, 0, 0, 0));"
+                                            className="w-1/2 h-full rounded-md absolute top-0 right-0 opacity-40 -z-10"
+                                        />
+                                    )}
                                 </a>
                             ))}
                         </>
@@ -122,10 +124,18 @@ export const Notifications = () => {
                                 <a
                                     key={notification.id}
                                     href={notification.link.url}
-                                    className="block p-2 text-gray-400 hover:opacity-80 transition"
+                                    className="opacity-60 hover:opacity-100 block p-2 last:border-b-0 relative border-b border-line hover:bg-line/40 transition"
                                 >
-                                    <h5 className="font-semibold">{notification.title}</h5>
-                                    <p className="text-sm">{notification.description}</p>
+                                    <h5 className="font-semibold max-w-[26ch] text-balance">{notification.title}</h5>
+                                    <p className="text-sm text-balance text-white/60">{notification.description}</p>
+                                    {notification.imageURL && (
+                                        <img
+                                            src={notification.imageURL}
+                                            alt={notification.title}
+                                            style="mask-image: linear-gradient(to left, rgb(0, 0, 0), rgba(0, 0, 0, 0));"
+                                            className="w-1/2 h-full rounded-md absolute top-0 right-0 opacity-40 -z-10"
+                                        />
+                                    )}
                                 </a>
                             ))}
                         </>
@@ -140,4 +150,4 @@ export const Notifications = () => {
             )}
         </section>
     );
-}
+};
