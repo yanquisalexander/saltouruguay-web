@@ -53,21 +53,5 @@ if (checkResult) {
     <GameSelector client:idle />
 
     <StreamerWarsAdmin client:idle />
-
-    <button class="px-4 py-2 bg-blue-900 text-white" id="eliminar-jugador-1">
-      Eliminar jugador 1
-    </button>
   </div>
 </Layout>
-
-<script>
-  import { actions } from "astro:actions";
-
-  document.addEventListener("astro:page-load", () => {
-    const button = document.querySelector("button#eliminar-jugador-1");
-    console.log("button", button);
-    button?.addEventListener("click", async () => {
-      await actions.streamerWars.eliminatePlayer({ playerNumber: 1 });
-    });
-  });
-</script>
