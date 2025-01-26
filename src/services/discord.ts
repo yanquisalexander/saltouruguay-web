@@ -9,3 +9,11 @@ export const getDiscordUser = async (userId: string) => {
     if (!userId) return null;
     return discord.get(Routes.user(userId)) as Promise<RESTGetAPIUserResult>;
 }
+
+export const addRoleToUser = async (guildId: Snowflake, userId: Snowflake, roleId: Snowflake) => {
+    return discord.put(Routes.guildMemberRole(guildId, userId, roleId));
+}
+
+export const removeRoleFromUser = async (guildId: Snowflake, userId: Snowflake, roleId: Snowflake) => {
+    return discord.delete(Routes.guildMemberRole(guildId, userId, roleId));
+}

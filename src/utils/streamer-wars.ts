@@ -4,6 +4,8 @@ import cacheService from "@/services/cache";
 import { and, asc, eq, or } from "drizzle-orm";
 import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
+import { addRoleToUser } from "@/services/discord";
+import { SALTO_DISCORD_GUILD_ID } from "@/config";
 
 
 
@@ -190,6 +192,8 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
                 teamId: team.id,
             })
             .execute();
+
+        //await addRoleToUser(SALTO_DISCORD_GUILD_ID)
 
         await pusher.trigger("streamer-wars", "player-joined", null)
 
