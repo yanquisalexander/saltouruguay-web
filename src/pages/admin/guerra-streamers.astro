@@ -4,6 +4,8 @@ import { checkAdmin } from "@/lib/checkAdmin";
 import { getSession } from "auth-astro/server";
 import { SALTO_BROADCASTER_ID } from "@/config";
 import { GameSelector } from "@/components/admin/streamer-wars/GameSelector";
+import { StreamerWarsPlayers } from "@/components/admin/streamer-wars/Players";
+import { StreamerWarsAdmin } from "@/components/admin/StreamerWarsAdmin";
 
 const session = await getSession(Astro.request);
 
@@ -49,6 +51,8 @@ if (checkResult) {
     </header>
 
     <GameSelector client:idle />
+
+    <StreamerWarsAdmin client:idle />
 
     <button class="px-4 py-2 bg-blue-900 text-white" id="eliminar-jugador-1">
       Eliminar jugador 1

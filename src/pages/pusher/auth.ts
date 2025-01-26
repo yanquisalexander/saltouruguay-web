@@ -25,6 +25,7 @@ export const POST = async ({ params, request }: APIContext) => {
             name: session.user.name || session.user.username,
             avatar: session.user.image,
             admin: session.user.isAdmin,
+            playerNumber: session.user.streamerWarsPlayerNumber,
         },
     });
 
