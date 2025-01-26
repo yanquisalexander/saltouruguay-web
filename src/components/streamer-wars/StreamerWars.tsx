@@ -92,11 +92,11 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
     const [players, setPlayers] = useState<any[]>([]);
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
-    const [selectedGame, setSelectedGame] = useState<string | null>("ButtonBox");
+    const [selectedGame, setSelectedGame] = useState<string | null>(null);
 
     const GAMES = [
         {
-            name: "ButtonBox",
+            id: "ButtonBox",
             component: ButtonBox,
             props: { session, pusher, teamsQuantity: 5, playersPerTeam: 10 }
         }
@@ -178,7 +178,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                                 <WaitingRoom session={session} pusher={pusher} />
                             ) : (
                                 GAMES.map((game) => {
-                                    if (game.name === selectedGame) {
+                                    if (game.id === selectedGame) {
                                         const Component = game.component;
                                         return <Component {...{ ...game.props, pusher: pusher! }} />
                                     }

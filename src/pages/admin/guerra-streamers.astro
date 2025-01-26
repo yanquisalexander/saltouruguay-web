@@ -1,15 +1,9 @@
 ---
-import Chart from "@/components/Chart.astro";
-import type { ChartOptions } from "chart.js";
 import Layout from "@/layouts/Layout.astro";
 import { checkAdmin } from "@/lib/checkAdmin";
-import { createDataset } from "@/utils/chart";
 import { getSession } from "auth-astro/server";
 import { SALTO_BROADCASTER_ID } from "@/config";
-import { LucideBell } from "lucide-preact";
-import NomineesLiveNow from "@/components/NomineesLiveNow.astro";
-import WarsCurrentInscriptions from "@/components/admin/WarsCurrentInscriptions.astro";
-import { UsersManager } from "@/components/admin/UsersManager";
+import { GameSelector } from "@/components/admin/streamer-wars/GameSelector";
 
 const session = await getSession(Astro.request);
 
@@ -53,6 +47,8 @@ if (checkResult) {
         Hola, <span class="text-blue-400">{session?.user.name}</span>!
       </h2>
     </header>
+
+    <GameSelector client:idle />
 
     <button class="px-4 py-2 bg-blue-900 text-white" id="eliminar-jugador-1">
       Eliminar jugador 1
