@@ -4,7 +4,7 @@ import cacheService from "@/services/cache";
 import { and, asc, eq, or } from "drizzle-orm";
 import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
-import { addRoleToUser, DISCORD_ROLES } from "@/services/discord";
+import { addRoleToUser, DISCORD_ROLES, removeRoleFromUser, ROLE_GUERRA_STREAMERS } from "@/services/discord";
 import { SALTO_DISCORD_GUILD_ID } from "@/config";
 
 
@@ -132,6 +132,8 @@ export const eliminatePlayer = async (playerNumber: number) => {
             playerNumber,
             audioBase64,
         });
+
+        //await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, playerNumber, ROLE_GUERRA_STREAMERS);
     } catch (error) {
         console.error("Error en eliminatePlayer:", error);
     }

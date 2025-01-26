@@ -13,6 +13,8 @@ export const DISCORD_ROLES = {
 
 }
 
+export const ROLE_GUERRA_STREAMERS = "1326980362127020072"
+
 export const getDiscordUser = async (userId: string) => {
     if (!userId) return null;
     return discord.get(Routes.user(userId)) as Promise<RESTGetAPIUserResult>;
