@@ -92,13 +92,18 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
     const [players, setPlayers] = useState<any[]>([]);
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
-    const [selectedGame, setSelectedGame] = useState<string | null>("ButtonBox");
+    const [selectedGame, setSelectedGame] = useState<string | null>("MemoryGame");
 
     const GAMES = [
         {
             id: "ButtonBox",
             component: ButtonBox,
             props: { session, pusher, teamsQuantity: 4, playersPerTeam: 5 }
+        },
+        {
+            id: "MemoryGame",
+            component: MemoryGame,
+            props: { session, pusher }
         }
     ]
 

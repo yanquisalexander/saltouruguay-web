@@ -6,12 +6,12 @@ export const GAMES = [
     {
         id: "ButtonBox",
         props: {
-            teams: {
+            teamsQuantity: {
                 type: Number,
                 min: 2,
                 max: 5,
             },
-            maxPlayersPerTeam: 0,
+            playersPerTeam: 0,
         },
     },
 ];
