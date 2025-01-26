@@ -4,7 +4,7 @@ import cacheService from "@/services/cache";
 import { and, asc, eq, or } from "drizzle-orm";
 import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
-import { addRoleToUser } from "@/services/discord";
+import { addRoleToUser, DISCORD_ROLES } from "@/services/discord";
 import { SALTO_DISCORD_GUILD_ID } from "@/config";
 
 
@@ -184,6 +184,29 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
             };
         }
 
+        // Obtener el discordId del jugador desde una relación con playerNumber
+        const user = await client
+            .select({
+                discordId: UsersTable.discordId,
+            })
+            .from(UsersTable)
+            .innerJoin(
+                StreamerWarsPlayersTable, // Tabla que contiene playerNumber
+                eq(StreamerWarsPlayersTable.userId, UsersTable.id) // Relación entre tablas
+            )
+            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+            .execute()
+            .then((res) => res[0]);
+
+        console.log({ user });
+
+        if (!user || !user.discordId) {
+            return {
+                success: false,
+                error: "No se encontró el usuario asociado al jugador",
+            };
+        }
+
         // Insertar al jugador en el equipo
         await client
             .insert(StreamerWarsTeamPlayersTable)
@@ -193,9 +216,32 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
             })
             .execute();
 
-        //await addRoleToUser(SALTO_DISCORD_GUILD_ID)
+        let roleId: string | null = null;
+        switch (teamToJoin) {
+            case "red":
+                roleId = DISCORD_ROLES.EQUIPO_ROJO;
+                break;
+            case "blue":
+                roleId = DISCORD_ROLES.EQUIPO_AZUL;
+                break;
+            case "yellow":
+                roleId = DISCORD_ROLES.EQUIPO_AMARILLO;
+                break;
+            case "purple":
+                roleId = DISCORD_ROLES.EQUIPO_MORADO;
+                break;
+            case "white":
+                roleId = DISCORD_ROLES.EQUIPO_BLANCO;
+                break;
+        }
 
-        await pusher.trigger("streamer-wars", "player-joined", null)
+        if (roleId) {
+            // Agregar rol al usuario en Discord
+            await addRoleToUser(SALTO_DISCORD_GUILD_ID, user.discordId, roleId);
+        }
+
+        // Notificar al canal mediante Pusher
+        await pusher.trigger("streamer-wars", "player-joined", null);
 
         return {
             success: true,
@@ -208,6 +254,7 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
         };
     }
 };
+
 
 export const getPlayersTeams = async () => {
     try {

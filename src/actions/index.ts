@@ -308,5 +308,5 @@ export const server = {
         })
 
     },
-    streamerWars
+    streamerWars,
 }

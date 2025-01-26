@@ -92,7 +92,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
     const [players, setPlayers] = useState<any[]>([]);
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
-    const [selectedGame, setSelectedGame] = useState<string | null>(null);
+    const [selectedGame, setSelectedGame] = useState<string | null>("ButtonBox");
 
     const GAMES = [
         {
