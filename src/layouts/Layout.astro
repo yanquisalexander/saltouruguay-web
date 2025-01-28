@@ -29,13 +29,21 @@ interface Props {
   canonical?: string;
   image?: string;
   hideHeader?: boolean;
+  hideFooter?: boolean;
 }
 
 //const session = await getSession(Astro.request);
 if (!Astro.props.preload) Astro.props.preload = [];
 
-const { title, description, preload, canonical, image, hideHeader } =
-  Astro.props;
+const {
+  title,
+  description,
+  preload,
+  canonical,
+  image,
+  hideHeader,
+  hideFooter,
+} = Astro.props;
 
 const session = await getSession(Astro.request);
 
@@ -94,7 +102,7 @@ preload?.push({
       <slot />
     </main>
     <SignInModal />
-    <SiteFooter />
+    {!hideFooter && <SiteFooter />}
     <style is:global>
       @font-face {
         font-family: "Atomic Marker";

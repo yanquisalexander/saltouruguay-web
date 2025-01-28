@@ -1,0 +1,88 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+import { LucideChevronsLeftRightEllipsis } from "lucide-preact";
+
+const session = await getSession(Astro.request);
+
+if (session) {
+  Astro.redirect("/");
+}
+---
+
+<Layout title="Iniciando sesión..." hideHeader hideFooter>
+  <div class="flex items-center flex-col">
+    <header class="pt-12">
+      <div class="relative">
+        <img
+          src="/favicon.svg"
+          alt="SaltoUruguayServer"
+          draggable="false"
+          class="h-16 w-auto object-contain aspect-square"
+        />
+        <img
+          src="/favicon.svg"
+          alt="SaltoUruguayServer"
+          draggable="false"
+          class="absolute blur-md transform scale-110 saturate-150 z-[-1] top-0 left-0 h-16 w-auto object-contain aspect-square"
+        />
+      </div>
+    </header>
+
+    <div class="flex mt-20 items-center justify-center flex-col">
+      <div
+        class="bg-black/20 rounded-2xl p-8 flex flex-col items-center border border-white/20 ring-4 ring-black/20 border-dotted mx-4"
+      >
+        <div class="flex items-center mb-4 justify-between gap-4 relative">
+          <img
+            src="/favicon.svg"
+            alt="SaltoUruguayServer"
+            class="h-16 w-auto object-contain aspect-square"
+          />
+          <LucideChevronsLeftRightEllipsis
+            class="h-8 w-auto object-contain aspect-square text-zinc-500 animate-pulse"
+          />
+          <img
+            src="/twitch-icon.png"
+            alt="Twitch"
+            class="h-16 w-auto object-contain aspect-square"
+          />
+        </div>
+
+        <p class="text-base flex-col mt-2 flex items-center gap-2">
+          <svg
+            class="animate-rotate-360 animate-iteration-count-infinite h-4 w-4 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          Conectando con Twitch...
+        </p>
+        <p
+          class="text-white/75 text-sm text-balance text-center mt-4 max-w-[48ch]"
+        >
+          Con tu cuenta de Twitch podrás acceder a todas las secciones del sitio
+          y disfrutar de contenido exclusivo.
+        </p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const { signIn } = await import("auth-astro/client");
+  // @ts-expect-error - TS doesn't know about signIn
+  signIn("twitch", { callbackUrl: "/auth/twitch/callback" });
+</script>

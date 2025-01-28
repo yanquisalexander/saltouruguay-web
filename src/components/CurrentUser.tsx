@@ -35,12 +35,16 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     };
 
     const handleSignIn = async () => {
-        const $signInDialog = $("#login-modal") as HTMLDialogElement;
+        const width = 600
+        const height = 700
+        const left = window.innerWidth / 2 - width / 2
+        const top = window.innerHeight / 2 - height / 2
 
-        if ($signInDialog) {
-            $signInDialog.showModal();
-            return;
-        }
+        window.open(
+            "/auth/twitch",
+            "Twitch Login",
+            `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
+        )
     };
 
     const linkDiscord = async () => {
