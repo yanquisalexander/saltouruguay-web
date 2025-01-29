@@ -74,23 +74,20 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
                 </h2>
             </header>
             <div class="flex w-full h-full">
-                <div class="flex flex-col w-max h-full">
-                    <h3 class="text-xl font-bold py-4">Chat de participantes</h3>
-                    <div class="max-h-[400px] overflow-y-scroll px-2"
+                <div class="flex flex-col w-max h-full border border-lime-500 border-dashed rounded-md px-4 py-3">
+                    <h3 class="text-xl font-bold py-2">Chat de participantes</h3>
+                    <div class="h-[320px] overflow-y-scroll px-2"
                         ref={messagesContainer}
                         style="scrollbar-width: thin; scrollbar-color: #4B5563 #E5E7EB; 
                     --scrollbar-track-color: #E5E7EB; --scrollbar-thumb-color: #4B5563;
                     --scrollbar-thumb-hover-color: #4B5563;"
                         onScroll={(e) => {
                             const target = e.currentTarget;
-                            if (target.scrollHeight - target.scrollTop === target.clientHeight) {
-                                setManuallyScrolled(false);
-                            } else {
-                                setManuallyScrolled(true);
-                            }
+                            setManuallyScrolled(target.scrollHeight - target.scrollTop === target.clientHeight);
+
                         }}
                     >
-                        <div class="flex flex-col gap-y-2 mt-4 max-w-md">
+                        <div class="flex flex-col gap-y-2 mt-4 max-w-md min-h-full h-full grow">
                             {messages.map(({ message, user }) => (
                                 <div class="flex gap-x-2 w-full">
                                     <span class="font-bold w-max">{user}</span>
