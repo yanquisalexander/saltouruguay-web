@@ -119,7 +119,7 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
                 </div>
             </div>
             <div class="col-span-3 flex flex-col items-center justify-center border border-lime-500 border-dashed rounded-md p-4">
-                <h2 class="text-2xl flex flex-col font-anton justify-center items-center -rotate-6 gap-y-4 animate-pulse duration-500">
+                <h2 class="text-2xl flex flex-col font-anton justify-center items-center -rotate-6 gap-y-6 animate-pulse duration-500">
                     Esperando por el próximo juego <ThreeDotsAnimation />
 
                 </h2>
