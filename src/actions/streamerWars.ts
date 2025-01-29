@@ -27,7 +27,7 @@ export const streamerWars = {
     }),
     sendMessage: defineAction({
         input: z.object({
-            message: z.string().min(1).max(500),
+            message: z.string().min(1).max(200),
         }),
         handler: async ({ message }, { request }) => {
             const session = await getSession(request);
