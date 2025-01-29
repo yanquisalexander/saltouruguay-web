@@ -26,7 +26,6 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
     const [manuallyScrolled, setManuallyScrolled] = useState<boolean>(false);
 
     useEffect(() => {
-
         const messages = actions.streamerWars.getAllMessages();
         messages.then(({ error, data }) => {
             if (error) {
@@ -65,7 +64,7 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
             setSending(true);
             const { error, data } = await actions.streamerWars.sendMessage({ message });
             if (error) {
-                toast.error("Error al enviar mensaje");
+                toast.error(error.message || "Error al enviar mensaje");
                 setSending(false);
                 return
             }
