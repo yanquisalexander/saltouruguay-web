@@ -67,13 +67,8 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
     }
 
     return (
-        <div class="flex h-full flex-col gap-y-4 p-4">
-            <header class="flex w-full justify-between">
-                <h2 class="text-xl font-rubik">
-                    Esperando por el próximo juego
-                </h2>
-            </header>
-            <div class="flex w-full h-full">
+        <div class="grid gap-y-4 p-4 grid-cols-3">
+            <div class="flex w-full h-full col-span-1">
                 <div class="flex flex-col w-max h-full border border-lime-500 border-dashed rounded-md px-4 py-3">
                     <h3 class="text-xl font-bold py-2">Chat de participantes</h3>
                     <div class="h-[320px] overflow-y-scroll px-2"
@@ -115,6 +110,12 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
                     </footer>
                 </div>
             </div>
+            <div class="col-span-2 flex flex-col items-center justify-center">
+                <h2 class="text-2xl font-anton">
+                    Esperando por el próximo juego
+                </h2>
+            </div>
+
         </div>
     );
 }
