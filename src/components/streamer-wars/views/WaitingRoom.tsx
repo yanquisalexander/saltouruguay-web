@@ -5,6 +5,14 @@ import { LucideSend } from "lucide-preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
+export const ThreeDotsAnimation = ({ ...props }: any) => (
+    <div className={`flex gap-x-2 ${props.className}`}>
+        <div className="w-3 h-3 bg-white rounded-full animate-bouncing animate-iteration-count-infinite"></div>
+        <div className="w-3 h-3 animate-delay-150 bg-white rounded-full animate-bouncing animate-iteration-count-infinite"></div>
+        <div className="w-3 h-3 animate-delay-300 bg-white rounded-full animate-bouncing animate-iteration-count-infinite"></div>
+    </div>
+);
+
 
 export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pusher }) => {
     /* 
@@ -67,7 +75,7 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
     }
 
     return (
-        <div class="grid gap-y-4 p-4 grid-cols-3">
+        <div class="grid p-4 gap-x-4 grid-cols-4">
             <div class="flex w-full h-full col-span-1">
                 <div class="flex flex-col w-max h-full border border-lime-500 border-dashed rounded-md px-4 py-3">
                     <h3 class="text-xl font-bold py-2">Chat de participantes</h3>
@@ -110,9 +118,10 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
                     </footer>
                 </div>
             </div>
-            <div class="col-span-2 flex flex-col items-center justify-center">
-                <h2 class="text-2xl font-anton">
-                    Esperando por el próximo juego
+            <div class="col-span-3 flex flex-col items-center justify-center border border-lime-500 border-dashed rounded-md p-4">
+                <h2 class="text-2xl flex flex-col font-anton justify-center items-center -rotate-6 gap-y-4 animate-pulse duration-500">
+                    Esperando por el próximo juego <ThreeDotsAnimation />
+
                 </h2>
             </div>
 
