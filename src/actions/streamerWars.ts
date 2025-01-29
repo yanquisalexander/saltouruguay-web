@@ -39,6 +39,14 @@ export const streamerWars = {
                 })
             }
 
+            const hasLinks = /https?:\/\/\S+\.\S+/;
+            if (hasLinks.test(message)) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: "No puedes enviar mensajes con links"
+                })
+            }
+
             try {
                 await client
                     .insert(StreamerWarsChatMessagesTable)
