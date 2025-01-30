@@ -1,6 +1,8 @@
+import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { actions } from "astro:actions";
 import { useEffect, useState } from "preact/hooks";
 import type Pusher from "pusher-js";
+import { toast } from "sonner";
 
 export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
     const [players, setPlayers] = useState<
@@ -84,6 +86,10 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                     player.playerNumber === playerNumber ? { ...player, eliminated: true } : player
                 )
             );
+            toast.success(`Jugador #${playerNumber?.toString().padStart(3, "0")} eliminado`, {
+                className: "bg-red-500",
+            })
+            playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.08 });
         }
     };
 
@@ -107,7 +113,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                         <p class="text-2xl text-lime-400 mt-2 font-atomic">#{player.playerNumber?.toString().padStart(3, "0")}</p>
                         <span class="text-md text-white">{player.displayName}</span>
                         {
-                            player.eliminated && <div class="absolute inset-0 bg-black/50 flex items-center justify-center text-red-500 font-bold">
+                            player.eliminated && <div class="absolute animate-fade-in inset-0 bg-black/50 flex items-center justify-center text-red-500 font-bold">
                                 <span class="font-atomic text-2xl -rotate-45">
                                     ELIMINADO
                                 </span>
