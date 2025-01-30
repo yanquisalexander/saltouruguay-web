@@ -83,8 +83,8 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
     }
 
     return (
-        <div class="grid p-4 gap-x-4 grid-cols-4">
-            <div class="flex w-full h-full col-span-1 max-w-[320px] bg-neutral-950">
+        <div class="grid p-4 gap-x-4 grid-cols-12">
+            <div class="flex w-full h-full col-span-4  bg-neutral-950">
                 <div class="flex flex-col w-max h-full border border-lime-500 border-dashed rounded-md px-4 py-3">
                     <h3 class="text-xl font-bold py-2">Chat de participantes</h3>
                     <div class="h-[320px] overflow-y-scroll px-2"
@@ -98,7 +98,7 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
 
                         }}
                     >
-                        <div class="flex flex-col gap-y-2 mt-4 max-w-md min-h-full h-full grow">
+                        <div class="flex flex-col gap-y-2 mt-4  w-full min-h-full h-full grow">
                             {messages.map(({ message, user, isAnnouncement }) => (
                                 isAnnouncement ? <div class="bg-blue-500/30 text-white p-2 border border-dashed border-blue-500">
                                     <LucideMegaphone size={24} />
@@ -132,7 +132,7 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
                     </footer>
                 </div>
             </div>
-            <div class="col-span-3 flex flex-col items-center justify-center border border-lime-500 border-dashed rounded-md p-4">
+            <div class="col-span-8 flex flex-col items-center justify-center border border-lime-500 border-dashed rounded-md p-4">
                 <h2 class="text-2xl flex flex-col font-anton justify-center items-center -rotate-6 gap-y-6 animate-pulse duration-500">
                     Esperando por el próximo juego <ThreeDotsAnimation />
                 </h2>
