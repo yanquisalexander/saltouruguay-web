@@ -101,12 +101,14 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     }).current;
 
     const globalChannel = useRef<Channel | null>(null);
+    const presenceChannel = useRef<Channel | null>(null);
 
     useEffect(() => {
         PRELOAD_SOUNDS();
+        let pusherInstance: Pusher;
 
         if (session) {
-            const pusherInstance = new Pusher(PUSHER_KEY, {
+            pusherInstance = new Pusher(PUSHER_KEY, {
                 wsHost: 'soketi.saltouruguayserver.com',
                 cluster: "us2",
                 enabledTransports: ['ws', 'wss'],
@@ -115,43 +117,54 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
             setPusher(pusherInstance);
 
+            // Configurar todos los canales una sola vez
             globalChannel.current = pusherInstance.subscribe("streamer-wars");
+            presenceChannel.current = pusherInstance.subscribe("presence-streamer-wars");
 
-            globalChannel.current.bind("player-eliminated", ({ playerNumber, audioBase64 }: { playerNumber: number, audioBase64: string }) => {
+            // Eventos globales
+            globalChannel.current.bind("player-eliminated", ({ playerNumber, audioBase64 }: { playerNumber: number; audioBase64: string }) => {
                 playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.2 }).then(async () => {
                     setRecentlyEliminatedPlayer(playerNumber);
                     await new Promise((resolve) => setTimeout(resolve, 1000));
-                    const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
-                    audio.play();
+                    new Audio(`data:audio/mp3;base64,${audioBase64}`).play();
                 });
             });
 
             globalChannel.current.bind("send-to-waiting-room", () => {
                 setGameState(null);
-                toast("Todos los jugadores han sido enviados a la sala de espera");
+                toast("Jugadores en sala de espera");
             });
 
-            globalChannel.current.bind("launch-game", ({ game, props }: { game: string, props: any }) => {
+            globalChannel.current.bind("launch-game", ({ game, props }: { game: string; props: any }) => {
                 const newKey = `${game}-${Date.now()}`;
-                playSound({ sound: STREAMER_WARS_SOUNDS.QUE_COMIENCE_EL_JUEGO });
-
                 setGameState({
                     key: newKey,
                     component: game,
-                    props: {
-                        session,
-                        pusher: pusherInstance,
-                        ...props
-                    }
+                    props: { session, pusher: pusherInstance, ...props }
                 });
             });
 
-            return () => {
-                globalChannel.current?.unbind_all();
-                globalChannel.current?.unsubscribe();
-                pusherInstance.disconnect();
-            };
+            // Eventos de presencia
+            presenceChannel.current.bind("pusher:subscription_succeeded", (members: any) => {
+                console.log("Miembros conectados:", members);
+            });
+
+            presenceChannel.current.bind("pusher:member_added", (member: any) => {
+                console.log("Nuevo miembro:", member);
+            });
+
+            presenceChannel.current.bind("pusher:member_removed", (member: any) => {
+                console.log("Miembro eliminado:", member);
+            });
         }
+
+        return () => {
+            // Limpieza completa
+            globalChannel.current?.unbind_all().unsubscribe();
+            presenceChannel.current?.unbind_all().unsubscribe();
+            pusherInstance?.disconnect();
+            setPusher(null);
+        };
     }, [session]);
 
     useEffect(() => {
