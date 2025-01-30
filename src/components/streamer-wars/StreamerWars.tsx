@@ -136,7 +136,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
         const GameComponent = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
 
-        return <GameComponent key={gameState.key} {...gameState.props} />;
+        return <GameComponent {...gameState.props} />;
     };
 
     return (

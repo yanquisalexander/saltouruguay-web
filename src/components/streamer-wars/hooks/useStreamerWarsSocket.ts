@@ -7,7 +7,7 @@ import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
 export const useStreamerWarsSocket = (session: Session) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
-    const [gameState, setGameState] = useState<{ key: string; component: string; props: any } | null>(null);
+    const [gameState, setGameState] = useState<{ component: string; props: any } | null>(null);
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
     const globalChannel = useRef<Channel | null>(null);
     const presenceChannel = useRef<Channel | null>(null);
@@ -41,7 +41,6 @@ export const useStreamerWarsSocket = (session: Session) => {
 
         globalChannel.current.bind("launch-game", ({ game, props }: { game: string, props: any }) => {
             setGameState({
-                key: `${game}-${Date.now()}`,
                 component: game,
                 props: { session, pusher: pusherInstance, ...props },
             });
