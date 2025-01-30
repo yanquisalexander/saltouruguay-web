@@ -153,6 +153,7 @@ export const StreamerWarsChatMessagesTable = pgTable('streamer_wars_chat_message
     id: serial('id').primaryKey(),
     userId: integer('user_id').references(() => UsersTable.id),
     message: text('message').notNull(),
+    isAnnouncement: boolean('is_announcement').notNull().default(false),
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
 })

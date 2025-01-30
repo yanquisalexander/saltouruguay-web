@@ -77,6 +77,7 @@ export const streamerWars = {
             const messages = await client.query.StreamerWarsChatMessagesTable.findMany({
                 columns: {
                     message: true,
+                    isAnnouncement: true,
                 },
                 with: {
                     user: {
@@ -85,9 +86,45 @@ export const streamerWars = {
                         }
                     }
                 }
-            }).execute().then((data) => data.map(({ user, message }) => ({ user: user?.username as string, message })))
+            }).execute().then((data) => data.map(({ user, message, isAnnouncement }) => ({
+                user: user?.username,
+                message,
+                isAnnouncement
+            })))
+
 
             return { messages }
+        }
+    }),
+    sendAnnouncement: defineAction({
+        input: z.object({
+            message: z.string().min(1).max(200),
+        }),
+        handler: async ({ message }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para enviar anuncios"
+                })
+            }
+
+
+            try {
+                await client
+                    .insert(StreamerWarsChatMessagesTable)
+                    .values({ userId: session.user.id, message, isAnnouncement: true })
+                    .execute();
+
+                await pusher.trigger("streamer-wars", "new-message", { message, type: "announcement" });
+            } catch (error) {
+                throw new ActionError({
+                    code: "INTERNAL_SERVER_ERROR",
+                    message: "Error al enviar anuncio"
+                })
+            }
+            return { success: true }
         }
     }),
     joinTeam: defineAction({

@@ -1,0 +1,1 @@
+ALTER TABLE "streamer_wars_chat_messages" ADD COLUMN "is_announcement" boolean DEFAULT false NOT NULL;

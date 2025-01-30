@@ -1,7 +1,7 @@
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
-import { LucideSend } from "lucide-preact";
+import { LucideMegaphone, LucideSend } from "lucide-preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
@@ -19,7 +19,7 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
         Sala de chat/ espera de streamer wars
     */
 
-    const [messages, setMessages] = useState<{ user: string; message: string }[]>([]);
+    const [messages, setMessages] = useState<{ user?: string; message: string, isAnnouncement?: boolean }[]>([]);
     const [message, setMessage] = useState<string>("");
     const [sending, setSending] = useState<boolean>(false);
     const messagesContainer = useRef<HTMLDivElement>(null);
@@ -42,8 +42,8 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
         })
 
         const channel = pusher.subscribe("streamer-wars");
-        channel.bind("new-message", ({ user, message }: { user: string; message: string }) => {
-            setMessages((prev) => [...prev, { user, message }]);
+        channel.bind("new-message", ({ user, message, type }: { user: string; message: string, type?: string }) => {
+            setMessages((prev) => [...prev, { user, message, isAnnouncement: type === "announcement" }]);
             playSound({ sound: STREAMER_WARS_SOUNDS.NUEVO_MENSAJE, volume: 0.2 });
             if (!manuallyScrolled) {
                 const container = messagesContainer.current;
@@ -58,6 +58,11 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
             pusher.unsubscribe("streamer-wars");
         };
     }, []);
+
+    const parseLinks = (text: string) => {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" class="text-lime-500 hover:underline">${url}</a>`);
+    }
 
     const sendMessage = async () => {
         if (message) {
@@ -90,11 +95,16 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
                         }}
                     >
                         <div class="flex flex-col gap-y-2 mt-4 max-w-md min-h-full h-full grow">
-                            {messages.map(({ message, user }) => (
-                                <div class="flex gap-x-2 w-full">
-                                    <span class="font-bold w-max">{user}</span>
-                                    <span class="w-full break-words text-wrap overflow-hidden">{message}</span>
-                                </div>
+                            {messages.map(({ message, user, isAnnouncement }) => (
+                                isAnnouncement ? <div class="bg-blue-500/30 text-white p-2 border border-dashed border-blue-500">
+                                    <LucideMegaphone size={24} />
+                                    <span class="w-full break-words text-wrap overflow-hidden" dangerouslySetInnerHTML={{ __html: parseLinks(message) }}>
+                                    </span>
+                                </div> :
+                                    <div class="flex gap-x-2 w-full">
+                                        <span class="font-bold w-max">{user}</span>
+                                        <span class="w-full break-words text-wrap overflow-hidden">{message}</span>
+                                    </div>
                             ))}
                         </div>
                     </div>
