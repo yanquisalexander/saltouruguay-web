@@ -28,6 +28,10 @@ export const StreamerWarsAdmin = () => {
         };
     }, []);
 
+    const announceTechDifficulties = async () => {
+        await actions.streamerWars.techDifficulties();
+    }
+
     return (
         <div class="flex flex-col items-center">
             <h1 class="text-3xl font-bold text-center mb-4">Admin Streamer Wars</h1>
@@ -54,6 +58,13 @@ export const StreamerWarsAdmin = () => {
                             Enviar anuncio
                         </button>
                     </div>
+
+                    <button
+                        class="mt-8 bg-red-500 transition hover:bg-red-600 text-black font-bold py-2 px-4 rounded-lg"
+                        onClick={announceTechDifficulties}
+                    >
+                        Anunciar dificultades técnicas
+                    </button>
                 </div>
             )}
         </div>

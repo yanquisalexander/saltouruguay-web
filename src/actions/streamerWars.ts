@@ -416,4 +416,26 @@ export const streamerWars = {
             return { success: true }
         }
     }),
+    techDifficulties: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para enviar mensajes de dificultades técnicas"
+                });
+            }
+            const message = "¡Dificultades técnicas! Estamos trabajando para solucionar el problema";
+            await client
+                .insert(StreamerWarsChatMessagesTable)
+                .values({ userId: session.user.id, message, isAnnouncement: true })
+                .execute();
+
+            await pusher.trigger("streamer-wars", "tech-difficulties", null);
+            await pusher.trigger("streamer-wars", "new-message", { message, type: "announcement", suppressAudio: true });
+
+            return { success: true }
+        }
+    }),
 }
