@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { MemoryGame } from "./games/MemoryGame";
 import { DaySelector } from "./views/DaySelector";
 import { PlayersGrid } from "./PlayersGrid";
-import Pusher from "pusher-js";
+import Pusher, { Channel } from "pusher-js";
 import { PUSHER_KEY } from "@/config";
 import { ConnectedPlayers } from "./ConnectedPlayers";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
@@ -95,7 +95,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
 
     const [gameState, setGameState] = useState<{
-        key: string;  // Identificador único para cada instancia
+        key: string;
         component: string;
         props: any;
     } | null>(null);
@@ -106,43 +106,41 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         // Añadir nuevos juegos aquí
     }).current;
 
+    const globalChannel = useRef<Channel | null>(null);
+
+
 
     useEffect(() => {
         PRELOAD_SOUNDS();
 
         if (session) {
-            const host = /* import.meta.env.DEV ? 'localhost' :  */`soketi.saltouruguayserver.com`;
-
             const pusherInstance = new Pusher(PUSHER_KEY, {
-                wsHost: host,
+                wsHost: 'soketi.saltouruguayserver.com',
                 cluster: "us2",
                 enabledTransports: ['ws', 'wss'],
                 forceTLS: true
             });
 
             setPusher(pusherInstance);
-        }
-    }, [session]);
 
-    useEffect(() => {
-        if (pusher) {
-            const globalChannel = pusher.subscribe("streamer-wars");
-            const presenceChannel = pusher.subscribe("presence-streamer-wars");
+            // Configurar canal global una sola vez
+            globalChannel.current = pusherInstance.subscribe("streamer-wars");
 
-            globalChannel.bind("player-eliminated", function ({ playerNumber, audioBase64 }: { playerNumber: number, audioBase64: string }) {
+            // Configurar listeners globales
+            globalChannel.current.bind("player-eliminated", ({ playerNumber, audioBase64 }: { playerNumber: number, audioBase64: string }) => {
                 playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.2 }).then(async () => {
                     setRecentlyEliminatedPlayer(playerNumber);
                     await new Promise((resolve) => setTimeout(resolve, 1000));
                     const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
                     audio.play();
-                })
-            })
+                });
+            });
 
-            globalChannel.bind("send-to-waiting-room", function () {
+            globalChannel.current.bind("send-to-waiting-room", () => {
                 setGameState(null);
             });
 
-            globalChannel.bind("launch-game", ({ game, props }: { game: string; props: any }) => {
+            globalChannel.current.bind("launch-game", ({ game, props }: { game: string, props: any }) => {
                 console.log("Launching game: ", game, props);
                 const newKey = `${game}-${Date.now()}`;
 
@@ -151,11 +149,24 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                     component: game,
                     props: {
                         session,
-                        pusher,
+                        pusher: pusherInstance, // Usar la instancia directa
                         ...props
                     }
                 });
             });
+
+            return () => {
+                // Limpiar al desmontar
+                globalChannel.current?.unbind_all();
+                globalChannel.current?.unsubscribe();
+                pusherInstance.disconnect();
+            };
+        }
+    }, [session]);
+
+    useEffect(() => {
+        if (pusher) {
+            const presenceChannel = pusher.subscribe("presence-streamer-wars");
 
 
             presenceChannel.bind("pusher:subscription_succeeded", function (members: any) {

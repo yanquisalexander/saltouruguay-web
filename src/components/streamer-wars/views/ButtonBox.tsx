@@ -1,5 +1,5 @@
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
-import { TEAMS } from "@/consts/Teams";
+import { getTranslation, TEAMS } from "@/consts/Teams";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
 import { LucideDot } from "lucide-preact";
@@ -86,9 +86,9 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
                                 handleSelectTeam(team)
                             }}
                         >
-                            <span class="sr-only">{`Unirse al equipo ${team}`}</span>
+                            <span class="sr-only">{`Unirse al equipo ${getTranslation(team)}`}</span>
                         </button>
-                        <span class="mt-2 text-white text-sm font-semibold">{team}</span>
+                        <span class="mt-2 text-white text-sm font-semibold">{getTranslation(team)}</span>
                     </div>
                 ))}
             </div>
@@ -100,7 +100,7 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
                     {Object.keys(playersTeams).map((team) => (
                         <div key={team} class="flex flex-col items-center justify-center">
                             <span class="text-white text-lg font-bold">
-                                Equipo {team} (x{playersTeams[team].length} / {playersPerTeam})
+                                Equipo {getTranslation(team)} (x{playersTeams[team].length} / {playersPerTeam})
                                 <LucideDot class="inline-block align-middle" size={56} color={COLORS.find(({ team: t }) => t === team)?.color} />
                             </span>
                             <div class="space-y-2 mt-2">
