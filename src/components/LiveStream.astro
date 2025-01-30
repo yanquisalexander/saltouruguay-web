@@ -2,7 +2,7 @@
 import { SALTO_BROADCASTER_ID } from "@/config";
 import { getLiveStream } from "@/utils/twitch-runtime";
 import TwitchEmbed from "./TwitchEmbed.astro";
-
+import TwitchIcon from "@/icons/Twitch.astro";
 const stream = await getLiveStream(SALTO_BROADCASTER_ID);
 
 const PREVIEW = stream?.getThumbnailUrl(1280, 720);
@@ -18,12 +18,168 @@ const PREVIEW = stream?.getThumbnailUrl(1280, 720);
         Mirá la transmisión en vivo de{" "}
         <span class="font-bold text-yellow-500">SaltoUruguayServer</span>
       </p>
-      <TwitchEmbed
-        channelId={SALTO_BROADCASTER_ID}
-        username={stream.userName}
-        placeholder={PREVIEW || ""}
-        data-title={stream.title}
-      />
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <TwitchEmbed
+          channelId={SALTO_BROADCASTER_ID}
+          username={stream.userName}
+          placeholder={PREVIEW || ""}
+          data-title={stream.title}
+          extraClasses="col-span-full md:col-span-2"
+        />
+
+        <div class="col-span-full md:col-span-1">
+          <div class="bg-neutral-950 border border-white/20 border-dashed py-4 px-3 rounded-lg">
+            <h2 class="font-rubik text-lg text-white mb-4">Chat en vivo</h2>
+            <div class="overflow-y-auto h-96 aspect-[9/16] chat-box">
+            </div>
+            <footer class="flex justify-center mt-4">
+              <a
+                href={`https://www.twitch.tv/${stream.userName}/chat`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-rubik text-blue-400 hover:underline"
+              >
+                <TwitchIcon class="size-6 mr-2 inline" />
+                Ir al chat de Twitch
+              </a>
+            </footer>
+          </div>
+        </div>
+      </div>
     </section>
+
+    <template id="chat-message">
+      <div class="flex space-x-2 mb-2">
+        <img
+          src="/favicon.svg"
+          alt="Avatar"
+          class="size-8 rounded-md border"
+        />
+        <div class="flex flex-col">
+          <p class="font-rubik text-blue-400 username">Username</p>
+          <p class="font-rubik text-sm text-white message">Message</p>
+        </div>
+      </div>
+    </template>
   )
 }
+
+<script>
+  /* 
+    Connect to LiveStream Chat using websockets
+  */
+
+import { $ } from "@/lib/dom-selector";
+
+  const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+
+  const SALTO_USERNAME = "SaltoUruguayServer";
+  const LIMIT_MESSAGES = 15;
+  const LOADED_AVATARS = new Set();
+  const DECAPI_AVATAR_PREFIX = "https://decapi.me/twitch/avatar/";
+
+  const $messageTemplate = $("#chat-message") as HTMLTemplateElement;
+
+  const $chat = $(".chat-box") as HTMLElement;
+
+  const getAvatar = async (username: string) => {
+  if (LOADED_AVATARS.has(username)) {
+    return `${DECAPI_AVATAR_PREFIX}${username}`;
+  }
+
+  try {
+    const response = await fetch(`${DECAPI_AVATAR_PREFIX}${username}`);
+    if (!response.ok) throw new Error("Error al obtener avatar");
+    
+    const avatarUrl = await response.text();
+    LOADED_AVATARS.add(username); // Evita futuras peticiones innecesarias
+
+    return avatarUrl;
+  } catch (error) {
+    console.error("Fallo al cargar avatar de", username, error);
+    return ""; // Retorna un avatar vacío si hay error
+  }
+};
+
+
+  const handleNewMessage = (message: { avatar: string; username: string; message: string }) => {
+    const $message = $messageTemplate.content.cloneNode(true) as HTMLElement;
+    const $avatar = $message.querySelector("img") as HTMLImageElement;
+    const $username = $message.querySelector(".username") as HTMLElement;
+    const $messageText = $message.querySelector(".message") as HTMLElement;
+
+    getAvatar(message.username).then(avatarUrl => {
+      $avatar.src = avatarUrl || "https://static-cdn.jtvnw.net/jtv_user_pictures/default-profile_image.png";
+    });
+    $username.textContent = message.username;
+    $messageText.textContent = message.message;
+
+    $chat.appendChild($message);
+
+    if ($chat.children.length > LIMIT_MESSAGES) {
+      $chat.removeChild($chat.children[0]);
+    }
+  };
+
+  const parseTmiMessage = (message: string) => {
+  if (message.startsWith("PING")) {
+    ws.send("PONG :tmi.twitch.tv"); // Responder para evitar desconexión
+    return;
+  }
+
+  const tagMatch = message.match(/^@(.*?) /);
+  const messageParts = message.split("PRIVMSG");
+
+  if (!tagMatch || messageParts.length < 2) {
+    return;
+  }
+
+  const tags = tagMatch[1];
+  const messageText = messageParts[1].split(" :")[1]?.trim(); // Tomar solo el texto del mensaje
+
+  if (!messageText) return;
+
+  const tagMap: Record<string, string> = Object.fromEntries(
+    tags.split(";").map(tag => tag.split("=").map(decodeURIComponent))
+  );
+
+  return {
+    username: tagMap["display-name"] || "Desconocido",
+    avatar: tagMap["user-id"]
+      ? `https://static-cdn.jtvnw.net/jtv_user_pictures/${tagMap["user-id"]}-profile_image-70x70.png`
+      : "",
+    message: messageText
+  };
+};
+
+
+
+  ws.onopen = function () {
+    ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
+    ws.send("PASS SCHMOOPIIE");
+    ws.send("NICK justinfan12345");
+    ws.send(`JOIN #${SALTO_USERNAME}`);
+  };
+
+  ws.onmessage = function (event) {
+  const data = event.data.trim();
+  console.log({ data });
+  
+  const messages = data.split("\r\n"); // Twitch puede enviar múltiples mensajes juntos
+
+  messages.forEach((line: string) => {
+    const message = parseTmiMessage(line);
+    if (message) {
+      handleNewMessage(message);
+    }
+  });
+};
+
+  ws.onerror = function (error) {
+    console.log("WebSocket error: ", error);
+  };
+
+  ws.onclose = function () {
+    console.log("WebSocket is closed now.");
+  };
+</script>

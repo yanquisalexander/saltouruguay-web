@@ -4,7 +4,7 @@ import { LucidePlayCircle } from "lucide-preact";
 interface Props {
   channelId: string;
   autoLoad?: boolean;
-  class?: string;
+  extraClasses?: string;
   placeholder?: string;
   username: string;
 }
@@ -12,7 +12,7 @@ interface Props {
 const {
   channelId,
   autoLoad = false,
-  class: classNames,
+  extraClasses,
   username,
   placeholder,
 } = Astro.props;
@@ -23,7 +23,7 @@ let title = `Twitch Stream - ${channelId}`;
 ---
 
 <twitch-embed
-  class={`relative w-full flex max-w-3xl rounded-md overflow-hidden cursor-pointer bg-center bg-cover transition-transform duration-500 ${classNames} bg-black`}
+  class={`relative w-full flex max-w-3xl rounded-md overflow-hidden cursor-pointer bg-center bg-cover transition-transform duration-500 ${extraClasses} bg-black`}
   channelid={channelId}
   thumbnailurl={thumbnailUrl}
   username={username}
