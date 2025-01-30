@@ -118,7 +118,7 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
                                 }
                             }}
                             maxlength={200}
-                            type="text" class="w-full transform min-h-12 bg-black/20 rounded-md border border-dashed mr-2" value={message} onInput={(e) => setMessage(e.currentTarget.value)} />
+                            type="text" class="w-full transform min-h-12 bg-black/20 rounded-md border mr-2" value={message} onInput={(e) => setMessage(e.currentTarget.value)} />
                         <button
                             disabled={sending || !message.trim()}
                             class="bg-lime-500 px-4 py-2 transition hover:bg-lime-600 rounded-md disabled:bg-white/20 disabled:text-white/40 text-black disabled:cursor-not-allowed"
