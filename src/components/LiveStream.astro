@@ -78,8 +78,8 @@ import { $ } from "@/lib/dom-selector";
 
   const SALTO_USERNAME = "SaltoUruguayServer";
   const LIMIT_MESSAGES = 15;
-  const LOADED_AVATARS = new Set();
-  const DECAPI_AVATAR_PREFIX = "https://decapi.me/twitch/avatar/";
+  const LOADED_AVATARS = new Map<string, string>();
+    const DECAPI_AVATAR_PREFIX = "https://decapi.me/twitch/avatar/";
 
   const $messageTemplate = $("#chat-message") as HTMLTemplateElement;
 
@@ -112,19 +112,17 @@ import { $ } from "@/lib/dom-selector";
 };
   
 
-  const getAvatar = async (username: string) => {
+const getAvatar = async (username: string) => {
   if (LOADED_AVATARS.has(username)) {
-    return `${DECAPI_AVATAR_PREFIX}${username}`;
+    return LOADED_AVATARS.get(username)!;
   }
-
-
 
   try {
     const response = await fetch(`${DECAPI_AVATAR_PREFIX}${username}`);
     if (!response.ok) throw new Error("Error al obtener avatar");
-    
+
     const avatarUrl = await response.text();
-    LOADED_AVATARS.add(username); // Evita futuras peticiones innecesarias
+    LOADED_AVATARS.set(username, avatarUrl); // Almacena el avatar en caché
 
     return avatarUrl;
   } catch (error) {
@@ -132,7 +130,6 @@ import { $ } from "@/lib/dom-selector";
     return ""; // Retorna un avatar vacío si hay error
   }
 };
-
 
 const handleNewMessage = (message: { avatar: string; username: string; message: string }) => {
   const $message = $messageTemplate.content.cloneNode(true) as HTMLElement;
