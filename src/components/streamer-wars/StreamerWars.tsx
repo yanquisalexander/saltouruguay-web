@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { MemoryGame } from "./games/MemoryGame";
 import { DaySelector } from "./views/DaySelector";
 import { PlayersGrid } from "./PlayersGrid";
-import Pusher, { Channel } from "pusher-js";
+import Pusher, { type Channel } from "pusher-js";
 import { PUSHER_KEY } from "@/config";
 import { ConnectedPlayers } from "./ConnectedPlayers";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
