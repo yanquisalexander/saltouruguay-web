@@ -74,6 +74,11 @@ const PREVIEW = stream?.getThumbnailUrl(1280, 720);
 
 import { $ } from "@/lib/dom-selector";
 
+let isChatInitialized = false;
+
+const initChat = () => {
+  if (isChatInitialized) return;
+
   const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
 
   const SALTO_USERNAME = "SaltoUruguayServer";
@@ -215,4 +220,10 @@ const handleNewMessage = (message: { avatar: string; username: string; message: 
   ws.onclose = function () {
     console.log("WebSocket is closed now.");
   };
+
+};
+
+document.addEventListener("astro:page-load", initChat);
+
+initChat();
 </script>
