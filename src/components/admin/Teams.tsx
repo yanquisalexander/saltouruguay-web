@@ -2,7 +2,7 @@ import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { getTranslation, TEAMS } from "@/consts/Teams";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
-import { LucideCrown, LucideDot } from "lucide-preact";
+import { LucideCrown, LucideDot, LucideX } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
 import { toast } from "sonner";
@@ -21,6 +21,16 @@ export const Teams = ({ channel }: { channel: Channel }) => {
         toast.success("Capitán asignado correctamente");
     };
 
+    const removeCaptain = async (team: string) => {
+        const { error } = await actions.streamerWars.removeTeamCaptain({ team });
+
+        if (error) {
+            toast.error(error.message);
+            return;
+        }
+
+        toast.success("Capitán removido correctamente");
+    };
     useEffect(() => {
         const fetchTeams = async () => {
             const { error, data } = await actions.streamerWars.getPlayersTeams();
@@ -30,12 +40,12 @@ export const Teams = ({ channel }: { channel: Channel }) => {
 
         fetchTeams();
 
-        channel.bind("player-joined", fetchTeams);
-        channel.bind("captain-assigned", fetchTeams);
+        channel?.bind("player-joined", fetchTeams);
+        channel?.bind("captain-assigned", fetchTeams);
 
         return () => {
-            channel.unbind("player-joined", fetchTeams);
-            channel.unbind("captain-assigned", fetchTeams);
+            channel?.unbind("player-joined", fetchTeams);
+            channel?.unbind("captain-assigned", fetchTeams);
         };
     }, []);
 
@@ -55,9 +65,8 @@ export const Teams = ({ channel }: { channel: Channel }) => {
                 </h2>
             </header>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-                {Object.keys(playersTeams).map((team) => (
+                {Object.values(TEAMS).map((team) => (
                     <div
-                        key={team}
                         className="bg-gray-900/50 rounded-xl p-4 backdrop-blur-sm 
                         border border-gray-800 transition-all duration-300 hover:border-gray-700"
                     >
@@ -72,46 +81,59 @@ export const Teams = ({ channel }: { channel: Channel }) => {
                             </div>
                         </div>
                         <div className="space-y-3">
-                            {playersTeams[team].map(({ avatar, displayName, playerNumber, isCaptain }) => (
-                                <div
-                                    key={displayName}
-                                    className="flex items-center gap-3 p-2 rounded-lg 
+                            {playersTeams[team]?.map(({ playerNumber, avatar, displayName, isCaptain }) => {
+                                return (
+                                    <div
+                                        key={displayName}
+                                        className="flex items-center gap-3 p-2 rounded-lg 
                                     bg-gray-800/50 transition-all duration-300 hover:bg-gray-800/70"
-                                >
-                                    <img
-                                        src={avatar || "/placeholder.svg"}
-                                        alt={`${displayName}'s avatar`}
-                                        className="w-8 h-8 rounded-full ring-2 ring-white/20"
-                                    />
+                                    >
+                                        <img
+                                            src={avatar || "/placeholder.svg"}
+                                            alt={`${displayName}'s avatar`}
+                                            className="w-8 h-8 rounded-full ring-2 ring-white/20"
+                                        />
 
-                                    <span className="text-white text-sm font-medium truncate">{displayName}</span>
+                                        <span className="text-white text-sm font-medium truncate">{displayName}</span>
 
-                                    {isCaptain ? (
-                                        <span
-                                            title={`Capitán del equipo ${getTranslation(team)}`}
-                                            className="bg-lime-500 text-black font-bold text-xs px-1 rounded-tr-lg rounded-bl-lg">
-                                            <LucideCrown size={16} />
-                                        </span>
-                                    ) : (
-                                        <button
-                                            onClick={() => handleAssignCaptain(playerNumber, team)}
-                                            className="ml-auto px-2 py-1 bg-gray-700 rounded-md text-xs
+                                        {isCaptain ? (
+                                            <div className="flex items-center gap-1 ml-auto">
+                                                <span
+                                                    title={`Capitán del equipo ${getTranslation(team)}`}
+                                                    className="bg-lime-500 text-black font-bold text-xs px-1 rounded-tr-lg rounded-bl-lg">
+                                                    <LucideCrown size={16} />
+                                                </span>
+                                                <button
+                                                    onClick={() => removeCaptain(team)}
+                                                    className="px-2 py-1 bg-red-500 rounded-md text-xs
+                                            hover:bg-red-600 transition-colors"
+                                                    title="Remover capitán"
+                                                >
+                                                    <LucideX size={16} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleAssignCaptain(playerNumber, team)}
+                                                className="ml-auto px-2 py-1 bg-gray-700 rounded-md text-xs
                                             hover:bg-gray-600 transition-colors"
-                                            title="Asignar como capitán"
-                                        >
-                                            ⭐
-                                        </button>
-                                    )}
+                                                title="Asignar como capitán"
+                                            >
+                                                ⭐
+                                            </button>
+                                        )}
 
-                                    <span className="font-atomic text-lime-500 text-2xl">
-                                        #{playerNumber.toString().padStart(3, "0")}
-                                    </span>
-                                </div>
-                            ))}
+                                        <span className="font-atomic text-lime-500 text-2xl">
+                                            #{playerNumber.toString().padStart(3, "0")}
+                                        </span>
+                                    </div>
+                                )
+                            }
+                            )}
                         </div>
                     </div>
                 ))}
             </div>
         </div>
     );
-};
+}

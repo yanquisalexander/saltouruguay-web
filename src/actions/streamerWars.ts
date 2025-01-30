@@ -346,7 +346,74 @@ export const streamerWars = {
                 ));
 
             await pusher.trigger("streamer-wars", "player-joined", null);
+            await pusher.trigger("streamer-wars", "captain-assigned", { playerNumber, team });
             return { success: true }
         }
-    })
+    }),
+    removeTeamCaptain: defineAction({
+        input: z.object({
+            team: z.string(),
+        }),
+        handler: async ({ team }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para remover capitanes"
+                });
+            }
+
+            const teamId = await client.query.StreamerWarsTeamsTable.findFirst({
+                where: eq(StreamerWarsTeamsTable.color, team)
+            }).then((data) => data?.id!);
+
+            // Verificar si el equipo ya tiene un capitán
+            const existingCaptain = await client.query.StreamerWarsTeamPlayersTable.findFirst({
+                where: and(
+                    eq(StreamerWarsTeamPlayersTable.teamId, teamId),
+                    eq(StreamerWarsTeamPlayersTable.isCaptain, true)
+                )
+            });
+
+            if (!existingCaptain) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: "El equipo no tiene capitán"
+                });
+            }
+
+            // Remover el capitán
+            await client.update(StreamerWarsTeamPlayersTable)
+                .set({ isCaptain: false })
+                .where(eq(StreamerWarsTeamPlayersTable.id, existingCaptain.id));
+
+            await pusher.trigger("streamer-wars", "player-joined", null);
+            return { success: true }
+        }
+    }),
+    resetTeams: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para reiniciar los equipos"
+                });
+            }
+
+            /* 
+                Resetear los equipos implica:
+                - Eliminar todos los jugadores de los equipos
+                - Eliminar los roles en Discord
+            */
+
+            await client.delete(StreamerWarsTeamPlayersTable).execute();
+
+
+
+            return { success: true }
+        }
+    }),
 }

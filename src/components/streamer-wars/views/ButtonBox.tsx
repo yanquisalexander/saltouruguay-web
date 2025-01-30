@@ -56,6 +56,14 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
             })
         })
 
+        channel.bind("captain-assigned", ({ team, playerNumber }: { team: string, playerNumber: number }) => {
+            console.log(team, playerNumber);
+            if (session.user.streamerWarsPlayerNumber === playerNumber) {
+                playSound({ sound: STREAMER_WARS_SOUNDS.BUTTON_CLICK });
+                toast.success(`Has sido nombrado capitán del equipo ${getTranslation(team)}`);
+            }
+        })
+
     }, []);
 
     const COLORS = [

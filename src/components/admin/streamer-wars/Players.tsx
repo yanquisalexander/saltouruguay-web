@@ -10,6 +10,8 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         { id?: number; playerNumber: number; displayName: string; avatar: string; admin: boolean; online: boolean; eliminated: boolean }[]
     >([]);
 
+    const globalChannel = pusher.subscribe("streamer-wars");
+
     useEffect(() => {
         if (!pusher) return;
 
@@ -124,7 +126,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                 ))}
             </div>
 
-            <Teams channel={pusher.channel("streamer-wars")} />
+            <Teams channel={globalChannel} />
         </div>
     );
 };
