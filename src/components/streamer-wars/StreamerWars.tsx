@@ -138,11 +138,15 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
             globalChannel.current.bind("send-to-waiting-room", () => {
                 setGameState(null);
+
+                toast("Todos los jugadores han sido enviados a la sala de espera");
             });
 
             globalChannel.current.bind("launch-game", ({ game, props }: { game: string, props: any }) => {
                 console.log("Launching game: ", game, props);
                 const newKey = `${game}-${Date.now()}`;
+
+                playSound({ sound: STREAMER_WARS_SOUNDS.QUE_COMIENCE_EL_JUEGO });
 
                 setGameState({
                     key: newKey,
@@ -153,6 +157,10 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                         ...props
                     }
                 });
+
+
+
+
             });
 
             return () => {
@@ -185,7 +193,10 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     }, [pusher]);
 
     const renderGame = () => {
-        if (!gameState) return null;
+        if (!gameState) {
+            toast.error("No se ha configurado el estado del juego");
+            return null;
+        }
 
         const GameComponent = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
 
