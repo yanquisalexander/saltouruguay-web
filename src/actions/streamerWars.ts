@@ -1,10 +1,11 @@
 import { client } from "@/db/client";
-import { StreamerWarsChatMessagesTable } from "@/db/schema";
+import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable } from "@/db/schema";
 import { pusher } from "@/utils/pusher";
 import { eliminatePlayer, joinTeam } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
+import { and, eq } from "drizzle-orm";
 
 export const streamerWars = {
     eliminatePlayer: defineAction({
@@ -211,10 +212,14 @@ export const streamerWars = {
             }
 
             const playersTeams = await client.query.StreamerWarsTeamPlayersTable.findMany({
+                columns: {
+                    isCaptain: true
+                },
                 with: {
                     player: {
                         columns: {
                             playerNumber: true,
+
                         },
                         with: {
                             user: {
@@ -231,7 +236,7 @@ export const streamerWars = {
                         }
                     }
                 }
-            }).execute().then((data) => data.reduce((acc, { player, team }) => {
+            }).execute().then((data) => data.reduce((acc, { isCaptain, player, team }) => {
                 if (team && !acc[team.color]) {
                     acc[team.color] = [];
                 }
@@ -239,11 +244,12 @@ export const streamerWars = {
                     acc[team.color].push({
                         playerNumber: player?.playerNumber as number,
                         avatar: player?.user?.avatar as string,
-                        displayName: player?.user?.displayName as string
+                        displayName: player?.user?.displayName as string,
+                        isCaptain
                     });
                 }
                 return acc;
-            }, {} as { [team: string]: { playerNumber: number; avatar: string; displayName: string }[] }))
+            }, {} as { [team: string]: { isCaptain: boolean, playerNumber: number; avatar: string; displayName: string }[] }))
 
             return { playersTeams }
         }
@@ -294,6 +300,52 @@ export const streamerWars = {
             }
 
             await client.delete(StreamerWarsChatMessagesTable).execute();
+            return { success: true }
+        }
+    }),
+    setTeamCaptain: defineAction({
+        input: z.object({
+            playerNumber: z.number(),
+            team: z.string(),
+        }),
+        handler: async ({ playerNumber, team }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para asignar capitanes"
+                });
+            }
+
+            const teamId = await client.query.StreamerWarsTeamsTable.findFirst({
+                where: eq(StreamerWarsTeamsTable.color, team)
+            }).then((data) => data?.id!);
+
+            // Verificar si el equipo ya tiene un capitán
+            const existingCaptain = await client.query.StreamerWarsTeamPlayersTable.findFirst({
+                where: and(
+                    eq(StreamerWarsTeamPlayersTable.teamId, teamId),
+                    eq(StreamerWarsTeamPlayersTable.isCaptain, true)
+                )
+            });
+
+            // Si hay un capitán, lo actualizamos para que ya no sea capitán
+            if (existingCaptain) {
+                await client.update(StreamerWarsTeamPlayersTable)
+                    .set({ isCaptain: false })
+                    .where(eq(StreamerWarsTeamPlayersTable.id, existingCaptain.id))
+            }
+
+            // Asignar el nuevo capitán
+            await client.update(StreamerWarsTeamPlayersTable)
+                .set({ isCaptain: true })
+                .where(and(
+                    eq(StreamerWarsTeamPlayersTable.playerNumber, playerNumber),
+                    eq(StreamerWarsTeamPlayersTable.teamId, teamId)
+                ));
+
+            await pusher.trigger("streamer-wars", "player-joined", null);
             return { success: true }
         }
     })
