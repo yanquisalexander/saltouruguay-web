@@ -159,6 +159,42 @@ export const streamerWars = {
             return { success: true }
         }
     }),
+    getPlayers: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para ver los jugadores"
+                })
+            }
+
+            const players = await client.query.StreamerWarsPlayersTable.findMany({
+                columns: {
+                    playerNumber: true,
+                },
+                with: {
+                    user: {
+                        columns: {
+                            id: true,
+                            admin: true,
+                            avatar: true,
+                            displayName: true
+                        }
+                    }
+                }
+            }).execute().then((data) => data.map(({ playerNumber, user }) => ({
+                playerNumber,
+                avatar: user?.avatar,
+                displayName: user?.displayName,
+                admin: user?.admin,
+                id: user?.id
+            })))
+
+            return { players }
+        }
+    }),
     getPlayersTeams: defineAction({
         handler: async (_, { request }) => {
             const session = await getSession(request);
