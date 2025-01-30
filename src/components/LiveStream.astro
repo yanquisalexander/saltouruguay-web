@@ -79,6 +79,8 @@ let isChatInitialized = false;
 const initChat = () => {
   if (isChatInitialized) return;
 
+  isChatInitialized = true;
+
   const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
 
   const SALTO_USERNAME = "SaltoUruguayServer";
