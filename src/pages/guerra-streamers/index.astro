@@ -5,7 +5,7 @@ import { getSession } from "auth-astro/server";
 
 const session = await getSession(Astro.request);
 
-if (!session || !session.user.isAdmin) {
+if (!session || !session.user.streamerWarsPlayerNumber) {
   return new Response(null, { status: 404 });
 }
 ---
