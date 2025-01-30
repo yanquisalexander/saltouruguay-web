@@ -1,6 +1,6 @@
 import { SALTO_BROADCASTER_ID } from "@/config";
 import { client } from "@/db/client";
-import { MemberCards, UserAchievementsTable } from "@/db/schema";
+import { MemberCards, UserAchievementsTable, UsersTable } from "@/db/schema";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { createUserApiClient, createStaticAuthProvider } from "@/lib/Twitch";
 import { count, eq } from "drizzle-orm";
@@ -137,4 +137,12 @@ export const getUsers = async ({ page = 1, search = "", limit = 15 }) => {
     const totalPages = Math.ceil(users.length / limit);
 
     return { users, totalPages };
+}
+
+export const unlinkDiscord = async (userId: number) => {
+    await client
+        .update(UsersTable)
+        .set({ discordId: null })
+        .where(eq(UsersTable.id, userId))
+        .execute();
 }
