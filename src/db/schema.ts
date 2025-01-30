@@ -167,6 +167,7 @@ export const StreamerWarsTeamPlayersTable = pgTable('streamer_wars_team_players'
     id: serial('id').primaryKey(),
     teamId: integer('team_id').references(() => StreamerWarsTeamsTable.id),
     playerNumber: integer('player_number').references(() => StreamerWarsPlayersTable.playerNumber),
+    isCaptain: boolean('is_captain').notNull().default(false),
 })
 
 export const streamerWarsChatMessagesRelations = relations(StreamerWarsChatMessagesTable, ({ one }) => ({
