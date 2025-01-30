@@ -242,4 +242,19 @@ export const streamerWars = {
             return { success: true }
         }
     }),
+    clearChat: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para limpiar el chat"
+                })
+            }
+
+            await client.delete(StreamerWarsChatMessagesTable).execute();
+            return { success: true }
+        }
+    })
 }
