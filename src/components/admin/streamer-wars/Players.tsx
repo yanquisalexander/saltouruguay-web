@@ -4,7 +4,7 @@ import type Pusher from "pusher-js";
 
 export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
     const [players, setPlayers] = useState<
-        { id?: number; playerNumber: number; displayName: string; avatar: string; admin: boolean; online: boolean }[]
+        { id?: number; playerNumber: number; displayName: string; avatar: string; admin: boolean; online: boolean; eliminated: boolean }[]
     >([]);
 
     useEffect(() => {
@@ -19,14 +19,12 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                 online: true,
             }));
 
-            setPlayers((prev) => {
-                const mergedPlayers = prev.map((player) => ({
+            setPlayers((prev) =>
+                prev.map((player) => ({
                     ...player,
                     online: onlinePlayers.some((p) => p.id === player.id),
-                }));
-
-                return [...mergedPlayers, ...onlinePlayers.filter((p) => !mergedPlayers.some((mp) => mp.id === p.id))];
-            });
+                }))
+            );
         });
 
         presenceChannel.bind("pusher:member_added", (member: any) => {
@@ -65,6 +63,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                             avatar: player.avatar || '',
                             admin: player.admin || false,
                             online: false,
+                            eliminated: player.eliminated || false,
                         });
                     }
                 });
@@ -76,29 +75,44 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
 
     const eliminatePlayer = async (playerNumber: number) => {
         if (!confirm(`¿Estás seguro de eliminar al jugador #${playerNumber?.toString().padStart(3, "0")}?`)) return;
-        return await actions.streamerWars.eliminatePlayer({ playerNumber });
+
+        const response = await actions.streamerWars.eliminatePlayer({ playerNumber });
+
+        if (!response.error) {
+            setPlayers((prev) =>
+                prev.map((player) =>
+                    player.playerNumber === playerNumber ? { ...player, eliminated: true } : player
+                )
+            );
+        }
     };
 
     return (
         <div class="flex flex-col items-center">
             <h1 class="text-2xl font-bold mb-4">Jugadores</h1>
-            <div class="grid grid-cols-3 gap-16">
+            <div class="grid grid-cols-5 gap-16">
                 {players.map((player) => (
                     <button
                         onClick={() => eliminatePlayer(player.playerNumber)}
-                        class="flex flex-col items-center aspect-square hover:scale-105 hover:bg-lime-500/20 transition rounded-lg p-4"
+                        class={`flex flex-col relative overflow-hidden items-center  hover:scale-105 hover:bg-lime-500/20 transition rounded-lg p-4 ${player.eliminated ? "pointer-events-none" : ""
+                            }`}
                         key={player.id}
                     >
-                        <div class={`relative size-16 rounded-full`}>
+                        <div class="relative size-16 rounded-full">
                             <img src={player.avatar} alt={player.displayName} class="w-full h-full rounded-full" />
-                            {
-                                player.online ? (
-                                    <div class="absolute bottom-0 right-0 w-4 h-4 bg-lime-500 rounded-full ring-2 ring-black"></div>
-                                ) : null
-                            }
+                            {player.online && (
+                                <div class="absolute bottom-0 right-0 w-4 h-4 bg-lime-500 rounded-full ring-2 ring-black"></div>
+                            )}
                         </div>
                         <p class="text-2xl text-lime-400 mt-2 font-atomic">#{player.playerNumber?.toString().padStart(3, "0")}</p>
                         <span class="text-md text-white">{player.displayName}</span>
+                        {
+                            player.eliminated && <div class="absolute inset-0 bg-black/50 flex items-center justify-center text-red-500 font-bold">
+                                <span class="font-atomic text-2xl -rotate-45">
+                                    ELIMINADO
+                                </span>
+                            </div>
+                        }
                     </button>
                 ))}
             </div>
