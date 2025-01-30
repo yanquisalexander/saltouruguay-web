@@ -1,6 +1,37 @@
 ---
-return new Response(null, {
-  status: 404,
-  statusText: "Not Found",
-});
+import Layout from "@/layouts/Layout.astro";
 ---
+
+<Layout
+  title="Eventos"
+  description="¡Participa en nuestros eventos y gana premios increíbles!"
+>
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <header class="relative z-10 flex flex-col justify-center mb-12">
+      <div class="flex items-center gap-x-4">
+        <div class="flex flex-col justify-center gap-y-1">
+          <h1
+            class="flex w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-black mix-blend-screen bg-lime-500 !skew-x-[-20deg]"
+          >
+            <span class="flex !skew-x-[20deg] transform"> Eventos </span>
+          </h1>
+        </div>
+      </div>
+    </header>
+    <div class="flex flex-col w-full justify-center items-center gap-4">
+      <h3
+        class="with-glyph flex relative w-max text-3xl transform px-2 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen !skew-x-[-20deg] -rotate-6"
+      >
+        <span class="flex !skew-x-[20deg] transform">
+          Guerra de Streamers
+        </span>
+      </h3>
+
+      <h3
+        class="text-base font-rubik italic text-white text-center mt-4 max-w-md mx-auto"
+      >
+        Los participantes se darán a conocer en breve
+      </h3>
+    </div>
+  </div>
+</Layout>
