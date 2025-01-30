@@ -88,7 +88,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
     const [players, setPlayers] = useState<any[]>([]);
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
-
     const [gameState, setGameState] = useState<{
         key: string;
         component: string;
@@ -105,10 +104,9 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
     useEffect(() => {
         PRELOAD_SOUNDS();
-        let pusherInstance: Pusher;
 
-        if (session) {
-            pusherInstance = new Pusher(PUSHER_KEY, {
+        const initializePusher = () => {
+            const pusherInstance = new Pusher(PUSHER_KEY, {
                 wsHost: 'soketi.saltouruguayserver.com',
                 cluster: "us2",
                 enabledTransports: ['ws', 'wss'],
@@ -117,73 +115,63 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
             setPusher(pusherInstance);
 
-            // Configurar todos los canales una sola vez
             globalChannel.current = pusherInstance.subscribe("streamer-wars");
             presenceChannel.current = pusherInstance.subscribe("presence-streamer-wars");
 
-            // Eventos globales
-            globalChannel.current.bind("player-eliminated", ({ playerNumber, audioBase64 }: { playerNumber: number; audioBase64: string }) => {
+            globalChannel.current.bind("player-eliminated", ({ playerNumber, audioBase64 }: { playerNumber: number, audioBase64: string }) => {
                 playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.2 }).then(async () => {
                     setRecentlyEliminatedPlayer(playerNumber);
                     await new Promise((resolve) => setTimeout(resolve, 1000));
-                    new Audio(`data:audio/mp3;base64,${audioBase64}`).play();
+                    const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
+                    audio.play();
                 });
             });
 
             globalChannel.current.bind("send-to-waiting-room", () => {
                 setGameState(null);
-                toast("Jugadores en sala de espera");
+                toast("Todos los jugadores han sido enviados a la sala de espera");
             });
 
-            globalChannel.current.bind("launch-game", ({ game, props }: { game: string; props: any }) => {
+            globalChannel.current.bind("launch-game", ({ game, props }: { game: string, props: any }) => {
                 const newKey = `${game}-${Date.now()}`;
+                playSound({ sound: STREAMER_WARS_SOUNDS.QUE_COMIENCE_EL_JUEGO });
+
                 setGameState({
                     key: newKey,
                     component: game,
-                    props: { session, pusher: pusherInstance, ...props }
+                    props: {
+                        session,
+                        pusher: pusherInstance,
+                        ...props
+                    }
                 });
             });
 
-            // Eventos de presencia
-            presenceChannel.current.bind("pusher:subscription_succeeded", (members: any) => {
-                console.log("Miembros conectados:", members);
-            });
-
-            presenceChannel.current.bind("pusher:member_added", (member: any) => {
-                console.log("Nuevo miembro:", member);
-            });
-
-            presenceChannel.current.bind("pusher:member_removed", (member: any) => {
-                console.log("Miembro eliminado:", member);
-            });
-        }
-
-        return () => {
-            // Limpieza completa
-            globalChannel.current?.unbind_all().unsubscribe();
-            presenceChannel.current?.unbind_all().unsubscribe();
-            pusherInstance?.disconnect();
-            setPusher(null);
-        };
-    }, [session]);
-
-    useEffect(() => {
-        if (pusher) {
-            const presenceChannel = pusher.subscribe("presence-streamer-wars");
-
-            presenceChannel.bind("pusher:subscription_succeeded", function (members: any) {
+            presenceChannel.current.bind("pusher:subscription_succeeded", function (members: any) {
                 console.log("Members: ", members);
             });
 
-            presenceChannel.bind("pusher:member_added", function (member: any) {
+            presenceChannel.current.bind("pusher:member_added", function (member: any) {
                 console.log("Member added: ", member);
             });
 
-            presenceChannel.bind("pusher:member_removed", function (member: any) {
+            presenceChannel.current.bind("pusher:member_removed", function (member: any) {
                 console.log("Member removed: ", member);
             });
-        }
-    }, [pusher]);
+
+            return pusherInstance;
+        };
+
+        const pusherInstance = initializePusher();
+
+        return () => {
+            globalChannel.current?.unbind_all();
+            globalChannel.current?.unsubscribe();
+            presenceChannel.current?.unbind_all();
+            presenceChannel.current?.unsubscribe();
+            pusherInstance.disconnect();
+        };
+    }, [session]);
 
     const renderGame = () => {
         if (!gameState) {
