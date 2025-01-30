@@ -31,7 +31,7 @@ const PREVIEW = stream?.getThumbnailUrl(1280, 720);
         <div class="col-span-full md:col-span-1">
           <div class="bg-neutral-950 border border-white/20 border-dashed py-4 px-3 rounded-lg">
             <h2 class="font-rubik text-lg text-white mb-4">Chat en vivo</h2>
-            <div class="overflow-y-auto overflow-x-hidden h-96 aspect-[9/16] chat-box w-full"
+            <div class="overflow-y-auto overflow-x-hidden h-96 aspect-[9/16] chat-box w-full scroll-smooth"
             style="scrollbar-width: thin; scrollbar-color: #4B5563 #1F2937;">
 
             </div>
@@ -145,7 +145,7 @@ const handleNewMessage = (message: { avatar: string; username: string; message: 
   $messageText.innerHTML = message.message; // Usar innerHTML para renderizar los emotes
 
   const $el = $chat.appendChild($message);
-  $el.scrollIntoView({ behavior: "smooth" });
+  $chat.scrollTop = $chat.scrollHeight; // Hacer scroll al último mensaje
 
   if ($chat.children.length > LIMIT_MESSAGES) {
     $chat.removeChild($chat.children[0]);
