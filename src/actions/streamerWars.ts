@@ -219,7 +219,7 @@ export const streamerWars = {
                 })
             }
 
-            await pusher.trigger("streamer-wars", "send-to-waiting-room", {});
+            await pusher.trigger("streamer-wars", "send-to-waiting-room", null);
             return { success: true }
         }
     }),
