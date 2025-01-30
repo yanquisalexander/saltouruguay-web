@@ -3,6 +3,7 @@ import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
 import { LucideMegaphone, LucideSend } from "lucide-preact";
 import { useEffect, useRef, useState } from "preact/hooks";
+import type { Channel } from "pusher-js";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
 export const ThreeDotsAnimation = ({ ...props }: any) => (
@@ -14,7 +15,7 @@ export const ThreeDotsAnimation = ({ ...props }: any) => (
 );
 
 
-export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pusher }) => {
+export const WaitingRoom = ({ session, channel }: { session: Session; channel: Channel }) => {
     /* 
         Sala de chat/ espera de streamer wars
     */
@@ -41,7 +42,6 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
             }
         })
 
-        const channel = pusher.subscribe("streamer-wars");
         channel.bind("new-message", ({ user, message, type }: { user: string; message: string, type?: string }) => {
             setMessages((prev) => [...prev, { user, message, isAnnouncement: type === "announcement" }]);
             if (type === "announcement") {
@@ -59,7 +59,6 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
 
         return () => {
             channel.unbind("new-message");
-            pusher.unsubscribe("streamer-wars");
         };
     }, []);
 
