@@ -117,8 +117,7 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
                                 <span className="text-white font-bold">{getTranslation(team)}</span>
                                 <div className="flex items-center gap-2">
                                     <LucideDot
-                                        className="animate-pulse"
-                                        size={24}
+                                        className="animate-pulse size-12"
                                         color={COLORS.find(({ team: t }) => t === team)?.color}
                                     />
                                     <span className="text-gray-400 text-sm">
