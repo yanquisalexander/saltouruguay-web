@@ -19,6 +19,22 @@ const NEWS = [
         },
     },
     {
+        title: "SaltoCraft III",
+        description: `
+        ¡Se acerca la tercera edición de SaltoCraft! ¿Estás listo para la aventura?
+    `,
+        tags: ["Minecraft"],
+        background: {
+            img: "/images/ads/saltocraft.webp",
+        },
+        navImage: "/images/ads/saltocraft.webp",
+        ctaLink: {
+            text: "Próximamente",
+            url: "#",
+            newTab: false,
+        }
+    },
+    {
         title: "Bienvenido a la nueva web",
         description: `
         ¡SaltoUruguayServer tiene una nueva web! 🎉
