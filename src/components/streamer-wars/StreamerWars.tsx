@@ -53,6 +53,7 @@ const SplashScreen = () => {
 
         return () => {
             clearTimeout(timer);
+            // @ts-expect-error Type 'number' is not assignable to type 'NodeJS.Timeout'.
             clearInterval(progressInterval); // Limpiar los intervalos si el componente se desmonta
         };
     }, [progress, alertedBetterExperience]);
@@ -60,7 +61,7 @@ const SplashScreen = () => {
     if (loading) {
         return (
             <div
-                class={`flex flex-col fixed justify-center items-center inset-0 bg-black z-[9999] transition-opacity duration-500 ${fadingOut ? "opacity-0" : "opacity-100"
+                class={`flex flex-col fixed justify-center items-center inset-0 bg-black z-[8000] transition-opacity duration-500 ${fadingOut ? "opacity-0" : "opacity-100"
                     }`}
             >
                 <header class="flex w-full justify-center">
@@ -159,6 +160,11 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
     return (
         <>
+            <div class="flex w-full flex-col gap-y-2 fixed inset-0 min-h-dvh md:hidden justify-center items-center bg-black z-[9000]">
+                <span class="text-white text-lg font-rubik">Este juego no está disponible en dispositivos móviles</span>
+                <a href="/" class="bg-lime-500 text-black px-4 py-2">Volver al inicio</a>
+            </div>
+
             <SplashScreen />
             <div class="flex w-full animate-fade-in">
                 <header class="flex w-full justify-between">
