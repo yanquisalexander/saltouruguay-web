@@ -80,7 +80,7 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
 
     return (
         <div class="grid p-4 gap-x-4 grid-cols-4">
-            <div class="flex w-full h-full col-span-1 max-w-[320px]">
+            <div class="flex w-full h-full col-span-1 max-w-[320px] bg-neutral-950">
                 <div class="flex flex-col w-max h-full border border-lime-500 border-dashed rounded-md px-4 py-3">
                     <h3 class="text-xl font-bold py-2">Chat de participantes</h3>
                     <div class="h-[320px] overflow-y-scroll px-2"
