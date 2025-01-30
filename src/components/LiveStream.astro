@@ -3,6 +3,7 @@ import { SALTO_BROADCASTER_ID } from "@/config";
 import { getLiveStream } from "@/utils/twitch-runtime";
 import TwitchEmbed from "./TwitchEmbed.astro";
 import TwitchIcon from "@/icons/Twitch.astro";
+import { LucideExternalLink } from "lucide-preact";
 const stream = await getLiveStream(SALTO_BROADCASTER_ID);
 
 const PREVIEW = stream?.getThumbnailUrl(1280, 720);
@@ -37,10 +38,10 @@ const PREVIEW = stream?.getThumbnailUrl(1280, 720);
                 href={`https://www.twitch.tv/${stream.userName}/chat`}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="font-rubik text-blue-400 hover:underline"
+                class="font-rubik text-yellow-500 hover:underline transition-transform hover:scale-105"
               >
-                <TwitchIcon class="size-6 mr-2 inline" />
-                Ir al chat de Twitch
+                <LucideExternalLink class="size-6 mr-2 inline" />
+                Participar en el chat
               </a>
             </footer>
           </div>
