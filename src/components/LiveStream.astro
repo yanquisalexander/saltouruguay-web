@@ -144,7 +144,8 @@ const handleNewMessage = (message: { avatar: string; username: string; message: 
   $username.textContent = message.username;
   $messageText.innerHTML = message.message; // Usar innerHTML para renderizar los emotes
 
-  $chat.appendChild($message);
+  const $el = $chat.appendChild($message);
+  $el.scrollIntoView({ behavior: "smooth" });
 
   if ($chat.children.length > LIMIT_MESSAGES) {
     $chat.removeChild($chat.children[0]);
