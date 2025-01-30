@@ -1,0 +1,1 @@
+ALTER TABLE "streamer_wars_team_players" ADD COLUMN "is_captain" boolean DEFAULT false NOT NULL;

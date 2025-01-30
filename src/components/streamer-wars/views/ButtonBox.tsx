@@ -9,11 +9,8 @@ import { toast } from "sonner";
 
 export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { session: Session; pusher: Pusher; teamsQuantity: number; playersPerTeam: number }) => {
     const [selectedTeam, setSelectedTeam] = useState<typeof TEAMS[keyof typeof TEAMS] | null>(null);
-    const [playersTeams, setPlayersTeams] = useState<{ [team: string]: { playerNumber: number; avatar: string; displayName: string }[] }>({});
+    const [playersTeams, setPlayersTeams] = useState<{ [team: string]: { playerNumber: number; avatar: string; displayName: string, isCaptain: boolean }[] }>({});
 
-    const handleSelectTeam = (team: typeof TEAMS[keyof typeof TEAMS]) => {
-        setSelectedTeam(team);
-    }
 
     useEffect(() => {
         if (!selectedTeam) return;
@@ -130,7 +127,7 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                {playersTeams[team].map(({ avatar, displayName, playerNumber }) => (
+                                {playersTeams[team].map(({ avatar, displayName, playerNumber, isCaptain }) => (
                                     <div
                                         key={displayName}
                                         className="flex items-center gap-3 p-2 rounded-lg 
