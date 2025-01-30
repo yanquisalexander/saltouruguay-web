@@ -196,7 +196,6 @@ const handleNewMessage = (message: { avatar: string; username: string; message: 
 
   ws.onmessage = function (event) {
   const data = event.data.trim();
-  console.log({ data });
   
   const messages = data.split("\r\n"); // Twitch puede enviar múltiples mensajes juntos
 
