@@ -85,10 +85,39 @@ import { $ } from "@/lib/dom-selector";
 
   const $chat = $(".chat-box") as HTMLElement;
 
+  const parseEmotes = (message: string, emotesTag: string) => {
+  if (!emotesTag) return message; // Si no hay emotes, devolver el mensaje sin cambios
+
+  const emotes = emotesTag.split("/").map(emote => {
+    const [emoteId, positions] = emote.split(":");
+    return positions.split(",").map(position => ({
+      id: emoteId,
+      start: parseInt(position.split("-")[0]),
+      end: parseInt(position.split("-")[1]),
+    }));
+  }).flat();
+
+  // Reemplazar emotes en el mensaje con imágenes
+  let parsedMessage = "";
+  let lastIndex = 0;
+
+  emotes.sort((a, b) => a.start - b.start).forEach(({ id, start, end }) => {
+    parsedMessage += message.slice(lastIndex, start); // Agregar el texto antes del emote
+    parsedMessage += `<img src="https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/1.0" class="inline size-5" alt="Emote">`;
+    lastIndex = end + 1;
+  });
+
+  parsedMessage += message.slice(lastIndex); // Agregar el texto restante
+  return parsedMessage;
+};
+  
+
   const getAvatar = async (username: string) => {
   if (LOADED_AVATARS.has(username)) {
     return `${DECAPI_AVATAR_PREFIX}${username}`;
   }
+
+
 
   try {
     const response = await fetch(`${DECAPI_AVATAR_PREFIX}${username}`);
@@ -105,28 +134,30 @@ import { $ } from "@/lib/dom-selector";
 };
 
 
-  const handleNewMessage = (message: { avatar: string; username: string; message: string }) => {
-    const $message = $messageTemplate.content.cloneNode(true) as HTMLElement;
-    const $avatar = $message.querySelector("img") as HTMLImageElement;
-    const $username = $message.querySelector(".username") as HTMLElement;
-    const $messageText = $message.querySelector(".message") as HTMLElement;
+const handleNewMessage = (message: { avatar: string; username: string; message: string }) => {
+  const $message = $messageTemplate.content.cloneNode(true) as HTMLElement;
+  const $avatar = $message.querySelector("img") as HTMLImageElement;
+  const $username = $message.querySelector(".username") as HTMLElement;
+  const $messageText = $message.querySelector(".message") as HTMLElement;
 
-    getAvatar(message.username).then(avatarUrl => {
-      $avatar.src = avatarUrl || "https://static-cdn.jtvnw.net/jtv_user_pictures/default-profile_image.png";
-    });
-    $username.textContent = message.username;
-    $messageText.textContent = message.message;
+  getAvatar(message.username).then(avatarUrl => {
+    $avatar.src = avatarUrl || "https://static-cdn.jtvnw.net/jtv_user_pictures/default-profile_image.png";
+  });
 
-    $chat.appendChild($message);
+  $username.textContent = message.username;
+  $messageText.innerHTML = message.message; // Usar innerHTML para renderizar los emotes
 
-    if ($chat.children.length > LIMIT_MESSAGES) {
-      $chat.removeChild($chat.children[0]);
-    }
-  };
+  $chat.appendChild($message);
+
+  if ($chat.children.length > LIMIT_MESSAGES) {
+    $chat.removeChild($chat.children[0]);
+  }
+};
+
 
   const parseTmiMessage = (message: string) => {
   if (message.startsWith("PING")) {
-    ws.send("PONG :tmi.twitch.tv"); // Responder para evitar desconexión
+    ws.send("PONG :tmi.twitch.tv");
     return;
   }
 
@@ -138,22 +169,24 @@ import { $ } from "@/lib/dom-selector";
   }
 
   const tags = tagMatch[1];
-  const messageText = messageParts[1].split(" :")[1]?.trim(); // Tomar solo el texto del mensaje
-
+  const messageText = messageParts[1].split(" :")[1]?.trim();
   if (!messageText) return;
 
   const tagMap: Record<string, string> = Object.fromEntries(
     tags.split(";").map(tag => tag.split("=").map(decodeURIComponent))
   );
 
+  const parsedMessage = parseEmotes(messageText, tagMap["emotes"]);
+
   return {
     username: tagMap["display-name"] || "Desconocido",
     avatar: tagMap["user-id"]
       ? `https://static-cdn.jtvnw.net/jtv_user_pictures/${tagMap["user-id"]}-profile_image-70x70.png`
       : "",
-    message: messageText
+    message: parsedMessage,
   };
 };
+
 
 
 
