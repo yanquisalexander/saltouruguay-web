@@ -44,7 +44,11 @@ export const WaitingRoom = ({ session, pusher }: { session: Session; pusher: Pus
         const channel = pusher.subscribe("streamer-wars");
         channel.bind("new-message", ({ user, message, type }: { user: string; message: string, type?: string }) => {
             setMessages((prev) => [...prev, { user, message, isAnnouncement: type === "announcement" }]);
-            playSound({ sound: STREAMER_WARS_SOUNDS.NUEVO_MENSAJE, volume: 0.2 });
+            if (type === "announcement") {
+                playSound({ sound: STREAMER_WARS_SOUNDS.ATENCION_JUGADORES, volume: 1 });
+            } else {
+                playSound({ sound: STREAMER_WARS_SOUNDS.NUEVO_MENSAJE, volume: 0.2 });
+            }
             if (!manuallyScrolled) {
                 const container = messagesContainer.current;
                 if (container) {
