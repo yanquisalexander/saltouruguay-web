@@ -53,7 +53,7 @@ const GameConfigurator = ({
                             propName,
                             parseInt(e.currentTarget.value)
                         )}
-                        class="border rounded p-1 w-16 text-center"
+                        class="border bg-neutral-950 rounded p-1 w-16 text-center"
                     />
                 </div>
             ))}
