@@ -173,6 +173,10 @@ export const streamerWars = {
             const players = await client.query.StreamerWarsPlayersTable.findMany({
                 columns: {
                     playerNumber: true,
+                    eliminated: true,
+                },
+                orderBy(fields, operators) {
+                    return operators.asc(fields.playerNumber)
                 },
                 with: {
                     user: {
