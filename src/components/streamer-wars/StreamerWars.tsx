@@ -167,7 +167,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                     }
                 }}
                 class="flex w-full flex-col gap-y-2 fixed inset-0 hide-scroll-page min-h-dvh md:hidden justify-center items-center bg-black z-[9000]">
-                <span class="text-white text-lg font-rubik">Este juego no está disponible en dispositivos móviles</span>
+                <span class="text-white text-center text-lg font-rubik">Este juego no está disponible en dispositivos móviles</span>
                 <a href="/" class="bg-lime-500 text-black px-4 py-2">Volver al inicio</a>
             </div>
 
