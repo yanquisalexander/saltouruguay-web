@@ -130,7 +130,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             const presenceChannel = pusher.subscribe("presence-streamer-wars");
 
             globalChannel.bind("player-eliminated", function ({ playerNumber, audioBase64 }: { playerNumber: number, audioBase64: string }) {
-                playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.5 }).then(async () => {
+                playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.2 }).then(async () => {
                     setRecentlyEliminatedPlayer(playerNumber);
                     await new Promise((resolve) => setTimeout(resolve, 1000));
                     const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
