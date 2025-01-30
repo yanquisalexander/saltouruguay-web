@@ -93,19 +93,19 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
     const [players, setPlayers] = useState<any[]>([]);
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
-    const [selectedGame, setSelectedGame] = useState<string | null>(null);
-    const GAMES = [
-        {
-            id: "ButtonBox",
-            component: ButtonBox,
-            props: { session, pusher, teamsQuantity: 4, playersPerTeam: 5 }
-        },
-        {
-            id: "MemoryGame",
-            component: MemoryGame,
-            props: { session, pusher }
-        }
-    ]
+
+    const [gameState, setGameState] = useState<{
+        key: string;  // Identificador único para cada instancia
+        component: string;
+        props: any;
+    } | null>(null);
+
+    const GAME_CONFIG = useRef({
+        ButtonBox: ButtonBox,
+        MemoryGame: MemoryGame,
+        // Añadir nuevos juegos aquí
+    }).current;
+
 
     useEffect(() => {
         PRELOAD_SOUNDS();
@@ -139,8 +139,24 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             })
 
             globalChannel.bind("send-to-waiting-room", function () {
-                setSelectedGame(null);
+                setGameState(null);
             });
+
+            globalChannel.bind("launch-game", ({ game, props }: { game: string; props: any }) => {
+                console.log("Launching game: ", game, props);
+                const newKey = `${game}-${Date.now()}`;
+
+                setGameState({
+                    key: newKey,
+                    component: game,
+                    props: {
+                        session,
+                        pusher,
+                        ...props
+                    }
+                });
+            });
+
 
             presenceChannel.bind("pusher:subscription_succeeded", function (members: any) {
                 console.log("Members: ", members);
@@ -157,6 +173,13 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         }
     }, [pusher]);
 
+    const renderGame = () => {
+        if (!gameState) return null;
+
+        const GameComponent = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
+
+        return <GameComponent key={gameState.key} {...gameState.props} />;
+    };
 
 
 
@@ -188,16 +211,10 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                 pusher && (
                     <>
                         {
-                            !selectedGame ? (
+                            !gameState ? (
                                 <WaitingRoom session={session} pusher={pusher} />
                             ) : (
-                                GAMES.map((game) => {
-                                    if (game.id === selectedGame) {
-                                        const Component = game.component;
-                                        return <Component {...{ ...game.props, pusher: pusher! }} />
-                                    }
-                                }
-                                )
+                                renderGame()
                             )
                         }
 
