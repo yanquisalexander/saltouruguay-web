@@ -2,7 +2,7 @@ import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { getTranslation, TEAMS } from "@/consts/Teams";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
-import { LucideDot } from "lucide-preact";
+import { LucideCrown, LucideDot } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
@@ -106,7 +106,7 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
                         Jugadores por equipo
                     </h2>
                 </header>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
                     {Object.keys(playersTeams).map((team) => (
                         <div
                             key={team}
@@ -138,7 +138,15 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
                                             alt={`${displayName}'s avatar`}
                                             className="w-8 h-8 rounded-full ring-2 ring-white/20"
                                         />
+
                                         <span className="text-white text-sm font-medium truncate">{displayName}</span>
+                                        {isCaptain && (
+                                            <span
+                                                title={`#${playerNumber.toString().padStart(3, "0")} - Capitán del equipo ${getTranslation(team)}`}
+                                                className=" bg-lime-500 text-black font-bold text-xs px-1 rounded-tr-lg rounded-bl-lg">
+                                                <LucideCrown size={16} />
+                                            </span>
+                                        )}
                                         <span class="font-atomic text-lime-500 text-2xl ml-auto">
                                             #{playerNumber.toString().padStart(3, "0")}
                                         </span>
