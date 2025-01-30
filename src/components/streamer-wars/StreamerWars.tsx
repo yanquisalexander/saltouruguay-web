@@ -11,6 +11,7 @@ import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { PlayerEliminated } from "./PlayerEliminated";
 import { WaitingRoom } from "./views/WaitingRoom";
 import { ButtonBox } from "./views/ButtonBox";
+import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 
 const PRELOAD_SOUNDS = () => {
     const CDN_PREFIX = "https://cdn.saltouruguayserver.com/sounds/";
@@ -85,91 +86,45 @@ const SplashScreen = () => {
 
 
 export const StreamerWars = ({ session }: { session: Session }) => {
-    const [pusher, setPusher] = useState<Pusher | null>(null);
     const [players, setPlayers] = useState<any[]>([]);
-    const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
-    const [gameState, setGameState] = useState<{
-        key: string;
-        component: string;
-        props: any;
-    } | null>(null);
+    const { pusher, gameState, setGameState, recentlyEliminatedPlayer } = useStreamerWarsSocket(session);
+
 
     const GAME_CONFIG = useRef({
         ButtonBox: ButtonBox,
         MemoryGame: MemoryGame,
     }).current;
 
-    const globalChannel = useRef<Channel | null>(null);
     const presenceChannel = useRef<Channel | null>(null);
 
     useEffect(() => {
         PRELOAD_SOUNDS();
 
-        const initializePusher = () => {
-            const pusherInstance = new Pusher(PUSHER_KEY, {
-                wsHost: 'soketi.saltouruguayserver.com',
-                cluster: "us2",
-                enabledTransports: ['ws', 'wss'],
-                forceTLS: true
-            });
 
-            setPusher(pusherInstance);
 
-            globalChannel.current = pusherInstance.subscribe("streamer-wars");
-            presenceChannel.current = pusherInstance.subscribe("presence-streamer-wars");
 
-            globalChannel.current.bind("player-eliminated", ({ playerNumber, audioBase64 }: { playerNumber: number, audioBase64: string }) => {
-                playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.2 }).then(async () => {
-                    setRecentlyEliminatedPlayer(playerNumber);
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
-                    const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
-                    audio.play();
-                });
-            });
+        presenceChannel.current = pusher?.subscribe("presence-streamer-wars")!;
 
-            globalChannel.current.bind("send-to-waiting-room", () => {
-                setGameState(null);
-                toast("Todos los jugadores han sido enviados a la sala de espera");
-            });
 
-            globalChannel.current.bind("launch-game", ({ game, props }: { game: string, props: any }) => {
-                const newKey = `${game}-${Date.now()}`;
-                playSound({ sound: STREAMER_WARS_SOUNDS.QUE_COMIENCE_EL_JUEGO });
 
-                setGameState({
-                    key: newKey,
-                    component: game,
-                    props: {
-                        session,
-                        pusher: pusherInstance,
-                        ...props
-                    }
-                });
-            });
+        presenceChannel.current?.bind("pusher:subscription_succeeded", function (members: any) {
+            console.log("Members: ", members);
+        });
 
-            presenceChannel.current.bind("pusher:subscription_succeeded", function (members: any) {
-                console.log("Members: ", members);
-            });
+        presenceChannel.current?.bind("pusher:member_added", function (member: any) {
+            console.log("Member added: ", member);
+        });
 
-            presenceChannel.current.bind("pusher:member_added", function (member: any) {
-                console.log("Member added: ", member);
-            });
+        presenceChannel.current?.bind("pusher:member_removed", function (member: any) {
+            console.log("Member removed: ", member);
+        });
 
-            presenceChannel.current.bind("pusher:member_removed", function (member: any) {
-                console.log("Member removed: ", member);
-            });
 
-            return pusherInstance;
-        };
 
-        const pusherInstance = initializePusher();
 
         return () => {
-            globalChannel.current?.unbind_all();
-            globalChannel.current?.unsubscribe();
             presenceChannel.current?.unbind_all();
             presenceChannel.current?.unsubscribe();
-            pusherInstance.disconnect();
         };
     }, [session]);
 
@@ -211,7 +166,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             {pusher && (
                 <>
                     {!gameState ? (
-                        <WaitingRoom session={session} pusher={pusher} />
+                        <WaitingRoom session={session} channel={pusher.channel("streamer-wars")} />
                     ) : (
                         renderGame()
                     )}
