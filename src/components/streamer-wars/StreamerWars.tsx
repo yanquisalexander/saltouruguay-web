@@ -136,8 +136,11 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                     const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
                     audio.play();
                 })
-
             })
+
+            globalChannel.bind("send-to-waiting-room", function () {
+                setSelectedGame(null);
+            });
 
             presenceChannel.bind("pusher:subscription_succeeded", function (members: any) {
                 console.log("Members: ", members);

@@ -207,5 +207,39 @@ export const streamerWars = {
 
             return { playersTeams }
         }
-    })
+    }),
+    sendToWaitingRoom: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para enviar a la sala de espera"
+                })
+            }
+
+            await pusher.trigger("streamer-wars", "send-to-waiting-room", {});
+            return { success: true }
+        }
+    }),
+    launchGame: defineAction({
+        input: z.object({
+            game: z.string(),
+            props: z.record(z.any()),
+        }),
+        handler: async ({ game, props }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para lanzar juegos"
+                })
+            }
+
+            await pusher.trigger("streamer-wars", "launch-game", { game, props });
+            return { success: true }
+        }
+    }),
 }
