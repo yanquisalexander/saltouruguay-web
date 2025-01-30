@@ -3,6 +3,7 @@ import { actions } from "astro:actions";
 import { useEffect, useState } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
+import { Teams } from "../Teams";
 
 export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
     const [players, setPlayers] = useState<
@@ -122,6 +123,8 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                     </button>
                 ))}
             </div>
+
+            <Teams channel={pusher.channel("streamer-wars")} />
         </div>
     );
 };

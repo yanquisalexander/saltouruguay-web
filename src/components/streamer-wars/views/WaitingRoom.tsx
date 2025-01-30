@@ -83,8 +83,8 @@ export const WaitingRoom = ({ session, channel }: { session: Session; channel: C
 
     return (
         <div class="grid p-4 gap-x-4 grid-cols-12">
-            <div class="flex w-full h-full col-span-4  bg-neutral-950">
-                <div class="flex flex-col w-max h-full border border-lime-500 border-dashed rounded-md px-4 py-3">
+            <div class="flex w-full h-full col-span-4 ">
+                <div class="flex flex-col w-max h-full bg-neutral-950 border border-lime-500 border-dashed rounded-md px-4 py-3">
                     <h3 class="text-xl font-bold py-2">Chat de participantes</h3>
                     <div class="h-[320px] overflow-y-scroll px-2"
                         ref={messagesContainer}

@@ -35,6 +35,7 @@ export const StreamerWarsAdmin = () => {
                 <div class="flex flex-col items-center">
                     <StreamerWarsPlayers pusher={pusher} />
 
+
                     <div class="w-full mt-8">
                         <label class="block text-lg font-bold mb-2" for="announcement">Anuncio</label>
                         <textarea
