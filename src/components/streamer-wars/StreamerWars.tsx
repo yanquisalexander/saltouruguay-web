@@ -33,8 +33,6 @@ const SplashScreen = () => {
     const [alertedBetterExperience, setAlertedBetterExperience] = useState(false);
 
     useEffect(() => {
-        // Precargar los sonidos
-        // Simular progreso de la barra de carga
         const progressInterval = setInterval(() => {
             setProgress((prev) => (prev < 100 ? prev + 1 : 100));
             if (progress > 50) {
@@ -43,18 +41,17 @@ const SplashScreen = () => {
                     setAlertedBetterExperience(true);
                 }
             }
-        }, 50); // Incrementa el progreso cada 50ms
+        }, 50);
 
-        // Gestionar el fade-out
         const timer = setTimeout(() => {
             setFadingOut(true);
-            setTimeout(() => setLoading(false), 500); // Duración del fade-out
-        }, 6000); // Tiempo total de la pantalla de carga
+            setTimeout(() => setLoading(false), 500);
+        }, 6000);
 
         return () => {
             clearTimeout(timer);
-            // @ts-expect-error Type 'number' is not assignable to type 'NodeJS.Timeout'.
-            clearInterval(progressInterval); // Limpiar los intervalos si el componente se desmonta
+            // @ts-ignore
+            clearInterval(progressInterval);
         };
     }, [progress, alertedBetterExperience]);
 
@@ -73,9 +70,7 @@ const SplashScreen = () => {
                         class="h-24 select-none animate-fade-in"
                     />
                 </header>
-                {/* Barra de carga */}
-                <div class="w-56 mt-8 h-2 bg-gray-700 rounded-full overflow-hidden animate-fade-in"
-                >
+                <div class="w-56 mt-8 h-2 bg-gray-700 rounded-full overflow-hidden animate-fade-in">
                     <div
                         class="h-full bg-[#b4cd02] transition-all"
                         style={{ width: `${progress}%` }}
@@ -103,12 +98,9 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const GAME_CONFIG = useRef({
         ButtonBox: ButtonBox,
         MemoryGame: MemoryGame,
-        // Añadir nuevos juegos aquí
     }).current;
 
     const globalChannel = useRef<Channel | null>(null);
-
-
 
     useEffect(() => {
         PRELOAD_SOUNDS();
@@ -123,10 +115,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
             setPusher(pusherInstance);
 
-            // Configurar canal global una sola vez
             globalChannel.current = pusherInstance.subscribe("streamer-wars");
 
-            // Configurar listeners globales
             globalChannel.current.bind("player-eliminated", ({ playerNumber, audioBase64 }: { playerNumber: number, audioBase64: string }) => {
                 playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.2 }).then(async () => {
                     setRecentlyEliminatedPlayer(playerNumber);
@@ -138,14 +128,11 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
             globalChannel.current.bind("send-to-waiting-room", () => {
                 setGameState(null);
-
                 toast("Todos los jugadores han sido enviados a la sala de espera");
             });
 
             globalChannel.current.bind("launch-game", ({ game, props }: { game: string, props: any }) => {
-                console.log("Launching game: ", game, props);
                 const newKey = `${game}-${Date.now()}`;
-
                 playSound({ sound: STREAMER_WARS_SOUNDS.QUE_COMIENCE_EL_JUEGO });
 
                 setGameState({
@@ -153,18 +140,13 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                     component: game,
                     props: {
                         session,
-                        pusher: pusherInstance, // Usar la instancia directa
+                        pusher: pusherInstance,
                         ...props
                     }
                 });
-
-
-
-
             });
 
             return () => {
-                // Limpiar al desmontar
                 globalChannel.current?.unbind_all();
                 globalChannel.current?.unsubscribe();
                 pusherInstance.disconnect();
@@ -175,7 +157,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     useEffect(() => {
         if (pusher) {
             const presenceChannel = pusher.subscribe("presence-streamer-wars");
-
 
             presenceChannel.bind("pusher:subscription_succeeded", function (members: any) {
                 console.log("Members: ", members);
@@ -188,7 +169,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             presenceChannel.bind("pusher:member_removed", function (member: any) {
                 console.log("Member removed: ", member);
             });
-
         }
     }, [pusher]);
 
@@ -202,8 +182,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
         return <GameComponent key={gameState.key} {...gameState.props} />;
     };
-
-
 
     return (
         <>
@@ -229,25 +207,18 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
             </div>
 
-
-            {
-                pusher && (
-                    <>
-                        {
-                            !gameState ? (
-                                <WaitingRoom session={session} pusher={pusher} />
-                            ) : (
-                                renderGame()
-                            )
-                        }
-
-                    </>
-                )
-            }
+            {pusher && (
+                <>
+                    {!gameState ? (
+                        <WaitingRoom session={session} pusher={pusher} />
+                    ) : (
+                        renderGame()
+                    )}
+                </>
+            )}
 
             <ConnectedPlayers players={[]} />
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
-
         </>
     );
-}
+};
