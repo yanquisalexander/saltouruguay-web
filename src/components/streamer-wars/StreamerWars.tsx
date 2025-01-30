@@ -1,5 +1,5 @@
 import type { Session } from "@auth/core/types";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 import { MemoryGame } from "./games/MemoryGame";
 import { DaySelector } from "./views/DaySelector";
@@ -94,7 +94,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [players, setPlayers] = useState<any[]>([]);
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
     const [selectedGame, setSelectedGame] = useState<string | null>(null);
-
     const GAMES = [
         {
             id: "ButtonBox",
@@ -161,12 +160,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     return (
         <>
             <div
-                ref={(el) => {
-                    if (el && el.clientWidth > 768) {
-                        el.classList.remove("hide-scroll-page");
-                    }
-                }}
-                class="flex w-full flex-col gap-y-2 fixed inset-0 hide-scroll-page min-h-dvh md:hidden justify-center items-center bg-black z-[9000]">
+                class="flex w-full flex-col gap-y-2 fixed inset-0 min-h-dvh md:hidden justify-center items-center bg-black z-[9000]">
                 <span class="text-white text-center text-lg font-rubik">Este juego no está disponible en dispositivos móviles</span>
                 <a href="/" class="bg-lime-500 text-black px-4 py-2">Volver al inicio</a>
             </div>
