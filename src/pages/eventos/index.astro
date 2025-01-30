@@ -11,7 +11,7 @@ import Layout from "@/layouts/Layout.astro";
       <div class="flex items-center gap-x-4">
         <div class="flex flex-col justify-center gap-y-1">
           <h1
-            class="flex w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-black mix-blend-screen bg-lime-500 !skew-x-[-20deg]"
+            class="flex w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-black mix-blend-screen bg-blue-400 !skew-x-[-20deg]"
           >
             <span class="flex !skew-x-[20deg] transform"> Eventos </span>
           </h1>
@@ -32,6 +32,30 @@ import Layout from "@/layouts/Layout.astro";
       >
         Los participantes se darán a conocer en breve
       </h3>
+
+      <div
+        class="flex flex-col justify-center items-center mt-4 gap-2 mask bg-[#b4cd02] w-full"
+      >
+        <p class="text-center max-w-[56ch] px-8 pt-4 pb-8 text-black">
+          ¿Estás listo para la batalla?<br />¡Participa en nuestra <strong
+            >Guerra de Streamers</strong
+          > y demuestra tus habilidades en el campo de batalla!
+        </p>
+      </div>
     </div>
   </div>
 </Layout>
+
+<style>
+  .mask {
+    -webkit-mask-composite: source-in;
+    mask-image: url(/images/mask.webp);
+    mask-position: 50%;
+    mask-size: cover;
+    mask-repeat: no-repeat;
+    mask-clip: content-box;
+    mask-origin: content-box;
+    mask-composite: source-in;
+    mask-mode: alpha;
+  }
+</style>
