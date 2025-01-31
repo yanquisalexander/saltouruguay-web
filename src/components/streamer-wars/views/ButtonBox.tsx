@@ -116,7 +116,7 @@ export const ButtonBox = ({ session, channel, teamsQuantity, playersPerTeam }: {
                     </h2>
                 </header>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-                    {Object.values(TEAMS).map((team) => (
+                    {Object.values(TEAMS).slice(0, teamsQuantity).map((team) => (
                         <div
                             key={team}
                             className="bg-gray-900/50 rounded-xl p-4 backdrop-blur-sm 
@@ -130,12 +130,12 @@ export const ButtonBox = ({ session, channel, teamsQuantity, playersPerTeam }: {
                                         color={COLORS.find(({ team: t }) => t === team)?.color}
                                     />
                                     <span className="text-gray-400 text-sm">
-                                        {playersTeams[team].length}/{playersPerTeam}
+                                        {playersTeams[team]?.length || 0} / {playersPerTeam}
                                     </span>
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                {playersTeams[team].map(({ avatar, displayName, playerNumber, isCaptain }) => (
+                                {playersTeams[team]?.map(({ playerNumber, avatar, displayName, isCaptain }) => (
                                     <div
                                         key={displayName}
                                         className="flex items-center gap-3 p-2 rounded-lg 
