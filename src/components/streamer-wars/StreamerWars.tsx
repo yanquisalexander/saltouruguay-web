@@ -12,6 +12,7 @@ import { PlayerEliminated } from "./PlayerEliminated";
 import { WaitingRoom } from "./views/WaitingRoom";
 import { ButtonBox } from "./views/ButtonBox";
 import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
+import { actions } from "astro:actions";
 
 const PRELOAD_SOUNDS = () => {
     const CDN_PREFIX = "https://cdn.saltouruguayserver.com/sounds/";
@@ -87,7 +88,7 @@ const SplashScreen = () => {
 
 export const StreamerWars = ({ session }: { session: Session }) => {
     const [players, setPlayers] = useState<any[]>([]);
-    const { pusher, gameState, setGameState, recentlyEliminatedPlayer } = useStreamerWarsSocket(session);
+    const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel } = useStreamerWarsSocket(session);
 
 
     const GAME_CONFIG = useRef({
@@ -97,10 +98,32 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
     const presenceChannel = useRef<Channel | null>(null);
 
+    const restoreGameStateFromCache = async () => {
+        const { data, error } = await actions.streamerWars.getGameState();
+
+        if (error) {
+            return;
+        }
+
+        if (data && data.gameState) {
+            if (data && data.gameState.game && data.gameState.props) {
+                const { game, props } = data.gameState;
+
+                setGameState({ component: game, props: { session, pusher, channel: globalChannel.current, ...props } });
+
+            }
+        }
+    }
+
+    useEffect(() => {
+        // Restore game (from cache) when pusher is available on first render
+        if (pusher) {
+            restoreGameStateFromCache();
+        }
+    }, [pusher]);
+
     useEffect(() => {
         PRELOAD_SOUNDS();
-
-
 
 
         presenceChannel.current = pusher?.subscribe("presence-streamer-wars")!;
@@ -119,6 +142,10 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             console.log("Member removed: ", member);
         });
 
+        restoreGameStateFromCache().then(data => {
+            console.log("Restored game state from cache", data);
+        });
+
 
 
 
@@ -127,6 +154,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             presenceChannel.current?.unsubscribe();
         };
     }, [session]);
+
+
 
     const renderGame = () => {
         if (!gameState) {
@@ -163,10 +192,10 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
             </div>
 
-            {pusher && (
+            {pusher && globalChannel.current && (
                 <>
                     {!gameState ? (
-                        <WaitingRoom session={session} channel={pusher.channel("streamer-wars")} />
+                        <WaitingRoom session={session} channel={globalChannel.current} />
                     ) : (
                         renderGame()
                     )}

@@ -1,5 +1,6 @@
 import { client } from "@/db/client";
 import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable } from "@/db/schema";
+import Cache from "@/lib/Cache";
 import { pusher } from "@/utils/pusher";
 import { eliminatePlayer, joinTeam } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
@@ -254,6 +255,24 @@ export const streamerWars = {
             return { playersTeams }
         }
     }),
+    getGameState: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para ver el estado del juego"
+                })
+            }
+
+            const cache = new Cache();
+            const gameState = await cache.get("streamer-wars-gamestate") as any
+            console.log({ gameState });
+
+            return { gameState }
+        }
+    }),
     sendToWaitingRoom: defineAction({
         handler: async (_, { request }) => {
             const session = await getSession(request);
@@ -264,6 +283,9 @@ export const streamerWars = {
                     message: "No tienes permisos para enviar a la sala de espera"
                 })
             }
+
+            const cache = new Cache();
+            await cache.set("streamer-wars-gamestate", null);
 
             await pusher.trigger("streamer-wars", "send-to-waiting-room", null);
             return { success: true }
@@ -283,6 +305,9 @@ export const streamerWars = {
                     message: "No tienes permisos para lanzar juegos"
                 })
             }
+
+            const cache = new Cache();
+            await cache.set("streamer-wars-gamestate", { game, props });
 
             await pusher.trigger("streamer-wars", "launch-game", { game, props });
             return { success: true }

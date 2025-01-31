@@ -56,5 +56,5 @@ export const useStreamerWarsSocket = (session: Session) => {
         };
     }, [session]);
 
-    return { pusher, gameState, setGameState, recentlyEliminatedPlayer };
+    return { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel };
 };

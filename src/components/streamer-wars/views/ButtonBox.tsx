@@ -4,10 +4,11 @@ import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
 import { LucideCrown, LucideDot } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
+import type { Channel } from "pusher-js";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
 
-export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { session: Session; pusher: Pusher; teamsQuantity: number; playersPerTeam: number }) => {
+export const ButtonBox = ({ session, channel, teamsQuantity, playersPerTeam }: { session: Session; channel: Channel; teamsQuantity: number; playersPerTeam: number }) => {
     const [selectedTeam, setSelectedTeam] = useState<typeof TEAMS[keyof typeof TEAMS] | null>(null);
     const [playersTeams, setPlayersTeams] = useState<{ [team: string]: { playerNumber: number; avatar: string; displayName: string, isCaptain: boolean }[] }>({});
 
@@ -45,7 +46,7 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
             setPlayersTeams(data.playersTeams);
         })
 
-        const channel = pusher.subscribe("streamer-wars");
+
         channel.bind("player-joined", () => {
             actions.streamerWars.getPlayersTeams().then(({ error, data }) => {
                 if (error) {
@@ -56,7 +57,7 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
             })
         })
 
-        channel.bind("captain-assigned", ({ team, playerNumber }: { team: string, playerNumber: number }) => {
+        channel?.bind("captain-assigned", ({ team, playerNumber }: { team: string, playerNumber: number }) => {
             console.log(team, playerNumber);
             if (session.user.streamerWarsPlayerNumber === playerNumber) {
                 playSound({ sound: STREAMER_WARS_SOUNDS.BUTTON_CLICK });
@@ -115,7 +116,7 @@ export const ButtonBox = ({ session, pusher, teamsQuantity, playersPerTeam }: { 
                     </h2>
                 </header>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-                    {Object.keys(playersTeams).map((team) => (
+                    {Object.values(TEAMS).map((team) => (
                         <div
                             key={team}
                             className="bg-gray-900/50 rounded-xl p-4 backdrop-blur-sm 
