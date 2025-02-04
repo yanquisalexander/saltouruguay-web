@@ -7,7 +7,7 @@ import { PlayersGrid } from "./PlayersGrid";
 import Pusher, { type Channel } from "pusher-js";
 import { PUSHER_KEY } from "@/config";
 import { ConnectedPlayers } from "./ConnectedPlayers";
-import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { CDN_PREFIX, playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { PlayerEliminated } from "./PlayerEliminated";
 import { WaitingRoom } from "./views/WaitingRoom";
 import { ButtonBox } from "./views/ButtonBox";
@@ -15,7 +15,6 @@ import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 import { actions } from "astro:actions";
 
 const PRELOAD_SOUNDS = () => {
-    const CDN_PREFIX = "https://cdn.saltouruguayserver.com/sounds/";
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
         const audio = new Audio(`${CDN_PREFIX}${sound}.mp3`);
         audio.preload = "auto";
@@ -130,11 +129,17 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         PRELOAD_SOUNDS();
 
         globalChannel.current?.bind("day-available", () => {
-            setDayAvailable(true);
+            document.addEventListener('cinematic-ended', () => {
+                console.log("Cinematic ended");
+                setDayAvailable(true);
+            }, { once: true });
         });
 
         globalChannel.current?.bind("day-finished", () => {
-            setDayAvailable(false);
+            document.addEventListener('cinematic-ended', () => {
+                console.log("Cinematic ended");
+                setDayAvailable(false);
+            }, { once: true });
         });
 
         presenceChannel.current?.bind("pusher:subscription_succeeded", function ({ members }: { members: any }) {

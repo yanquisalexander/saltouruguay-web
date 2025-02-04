@@ -1,3 +1,4 @@
+import { CINEMATICS_CDN_PREFIX } from "@/config";
 import { client } from "@/db/client";
 import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable } from "@/db/schema";
 import Cache from "@/lib/Cache";
@@ -289,9 +290,8 @@ export const streamerWars = {
             await cache.set("streamer-wars-day-available", true);
             await pusher.trigger("cinematic-player", "new-event", {
                 targetUsers: await getUserIdsOfPlayers(),
-                videoUrl: 'url',
+                videoUrl: `${CINEMATICS_CDN_PREFIX}/cinematica-jornada-guerra.mp4`
             })
-            await new Promise((resolve) => setTimeout(resolve, 2000));
 
             await pusher.trigger("streamer-wars", "day-available", null);
             return { success: true }
@@ -320,7 +320,6 @@ export const streamerWars = {
                 videoUrl: 'url',
             });
 
-            await new Promise((resolve) => setTimeout(resolve, 2000));
             await pusher.trigger("streamer-wars", "day-finished", null);
             return { success: true }
         }
