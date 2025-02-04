@@ -1,18 +1,38 @@
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
-import { LucideMegaphone, LucideSend } from "lucide-preact";
+import { LucideMegaphone, LucidePartyPopper, LucideSend, LucideVenetianMask } from "lucide-preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
 export const ThreeDotsAnimation = ({ ...props }: any) => (
     <div className={`flex gap-x-2 ${props.className}`}>
-        <div className="w-3 h-3 bg-white rounded-full animate-bouncing animate-iteration-count-infinite"></div>
-        <div className="w-3 h-3 animate-delay-150 bg-white rounded-full animate-bouncing animate-iteration-count-infinite"></div>
-        <div className="w-3 h-3 animate-delay-300 bg-white rounded-full animate-bouncing animate-iteration-count-infinite"></div>
+        <div className="size-2 bg-white rounded-full animate-bouncing animate-iteration-count-infinite"></div>
+        <div className="size-2 animate-delay-150 bg-white rounded-full animate-bouncing animate-iteration-count-infinite"></div>
+        <div className="size-2 animate-delay-300 bg-white rounded-full animate-bouncing animate-iteration-count-infinite"></div>
     </div>
 );
+
+const HINTS = [
+    {
+        title: "No intentes hacer trampa",
+        icon: LucideVenetianMask,
+        description: "Nuestros soldados detectan cualquier trampa. ¡No lo intentes!",
+    },
+
+    {
+        title: "Sigue las instrucciones",
+        icon: LucideSend,
+        description: "Te daremos instrucciones. ¡Eliminado si no las sigues!",
+    },
+    {
+        title: "¡Diviértete!",
+        icon: LucidePartyPopper,
+        description: "¡Disfruta de la experiencia! ¡Diviértete!",
+    }
+]
+
 
 
 export const WaitingRoom = ({ session, channel }: { session: Session; channel: Channel }) => {
@@ -138,10 +158,26 @@ export const WaitingRoom = ({ session, channel }: { session: Session; channel: C
                     </footer>
                 </div>
             </div>
-            <div class="col-span-8 flex flex-col items-center justify-center border border-lime-500 border-dashed rounded-md p-4">
-                <h2 class="text-2xl flex flex-col font-anton justify-center items-center -rotate-6 gap-y-6 animate-pulse duration-500">
+            <div class="col-span-8 relative flex flex-col items-center justify-center border border-lime-500 border-dashed rounded-md p-4">
+                <h2 class="text-2xl flex flex-col font-teko justify-center items-center gap-y-3 animate-pulse duration-500">
                     Esperando por el próximo juego <ThreeDotsAnimation />
                 </h2>
+
+                <footer class="grid grid-cols-3 absolute bottom-0 w-full gap-x-2 p-4 bg-black/20">
+                    {
+                        HINTS.map(({ title, icon: Icon, description }) => (
+                            <div class="flex text-center px-2 flex-col items-center gap-y-2 opacity-75 border-r border-white/20 last:border-none hover:opacity-100 transition">
+                                <Icon size={28} />
+                                <span class="text-white text-sm font-bold">{title}</span>
+                                <p class="text-white text-xs">{description}</p>
+                            </div>
+                        ))
+                    }
+
+
+
+                </footer>
+
             </div>
 
         </div>
