@@ -58,11 +58,12 @@ export const SimonSays = ({
                     ))}
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-8">
-                    {colors.map((color) => (
+                    {colors.map((color, index) => (
                         <div
                             key={color}
-                            className={`size-48 skew-x-6 flex font-teko text-xl uppercase italic font-medium animate-duration-400 justify-center items-center border-2 bg-opacity-20 rounded-lg shadow-md cursor-pointer transition-transform 
+                            className={`size-48 flex font-teko text-xl uppercase italic font-medium animate-duration-400 justify-center items-center border-2 bg-opacity-20 rounded-lg shadow-md cursor-pointer transition-transform 
                                 hover:scale-105 active:scale-95
+                                ${index % 2 === 0 ? "skew-x-[6deg]" : "skew-x-[deg]"}
                                 ${color === "red"
                                     ? "bg-red-500 border-red-500"
                                     : color === "blue"

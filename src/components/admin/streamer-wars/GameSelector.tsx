@@ -20,6 +20,10 @@ export const GAMES = [
             }
         }
     },
+    {
+        id: "SimonSays",
+        props: {}
+    }
     // Más juegos pueden añadirse con sus propias props
 ];
 
