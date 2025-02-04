@@ -1,7 +1,7 @@
 import { client } from "@/db/client";
 import { StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable, UsersTable } from "@/db/schema";
 import cacheService from "@/services/cache";
-import { and, asc, eq, or } from "drizzle-orm";
+import { and, asc, eq, not, or } from "drizzle-orm";
 import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
 import { addRoleToUser, DISCORD_ROLES, removeRoleFromUser, ROLE_GUERRA_STREAMERS } from "@/services/discord";
@@ -303,4 +303,13 @@ export const getPlayersTeams = async () => {
         console.error("Error en getPlayersTeams:", error);
         return { playersTeams: {} };
     }
+}
+
+export const getUserIdsOfPlayers = async (): Promise<number[]> => {
+    return await client.query.StreamerWarsPlayersTable.findMany({
+        columns: {
+            userId: true
+        },
+        where: not(eq(StreamerWarsPlayersTable.eliminated, true))
+    }).then(res => res.map(({ userId }) => userId).filter((userId): userId is number => userId !== null)).catch(() => []);
 }

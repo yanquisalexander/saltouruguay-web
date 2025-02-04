@@ -1,10 +1,8 @@
-import { useState } from "preact/hooks";
-import type Pusher from "pusher-js";
 
 export const ConnectedPlayers = ({ players }: { players: any[] }) => {
 
     return (
-        <div class="flex flex-col gap-2">
+        <div class="flex gap-2">
             {players.map((player) => (
                 <div class="flex items-center gap-2">
                     <img

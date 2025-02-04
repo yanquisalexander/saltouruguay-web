@@ -2,7 +2,7 @@ import { client } from "@/db/client";
 import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable } from "@/db/schema";
 import Cache from "@/lib/Cache";
 import { pusher } from "@/utils/pusher";
-import { eliminatePlayer, joinTeam } from "@/utils/streamer-wars";
+import { eliminatePlayer, getUserIdsOfPlayers, joinTeam } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -268,9 +268,51 @@ export const streamerWars = {
 
             const cache = new Cache();
             const gameState = await cache.get("streamer-wars-gamestate") as any
-            console.log({ gameState });
+            const dayAvailable = await cache.get("streamer-wars-day-available") as boolean;
 
-            return { gameState }
+            return { gameState, dayAvailable }
+        }
+    }),
+    setDayAsAvailable: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para marcar el día como disponible"
+                })
+            }
+
+            const cache = new Cache();
+            await cache.set("streamer-wars-day-available", true);
+
+            await pusher.trigger("streamer-wars", "day-available", null);
+            return { success: true }
+        }
+    }),
+    finishDay: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para finalizar el día"
+                })
+            }
+
+            const cache = new Cache();
+            await cache.set("streamer-wars-day-available", false);
+
+            const userIds = await getUserIdsOfPlayers();
+
+            await pusher.trigger("streamer-wars", "day-finished", null);
+            await pusher.trigger('cinematic-player', 'new-event', {
+                targetUsers: userIds,
+                videoUrl: 'url',
+            });
+            return { success: true }
         }
     }),
     sendToWaitingRoom: defineAction({

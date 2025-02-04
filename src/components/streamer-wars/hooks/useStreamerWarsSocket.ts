@@ -54,7 +54,7 @@ export const useStreamerWarsSocket = (session: Session) => {
             presenceChannel.current?.unsubscribe();
             pusherInstance.disconnect();
         };
-    }, [session]);
+    }, []);
 
     return { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel };
 };

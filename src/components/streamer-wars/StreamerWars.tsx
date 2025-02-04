@@ -87,8 +87,9 @@ const SplashScreen = () => {
 
 
 export const StreamerWars = ({ session }: { session: Session }) => {
-    const [players, setPlayers] = useState<any[]>([]);
-    const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel } = useStreamerWarsSocket(session);
+    const [players, setPlayers] = useState<{ playerNumber: number; avatar: string; name: string }[]>([]);
+    const [dayAvailable, setDayAvailable] = useState(false);
+    const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel } = useStreamerWarsSocket(session);
 
 
     const GAME_CONFIG = useRef({
@@ -96,13 +97,16 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         MemoryGame: MemoryGame,
     }).current;
 
-    const presenceChannel = useRef<Channel | null>(null);
 
     const restoreGameStateFromCache = async () => {
         const { data, error } = await actions.streamerWars.getGameState();
 
         if (error) {
             return;
+        }
+
+        if (data.dayAvailable) {
+            setDayAvailable(data.dayAvailable);
         }
 
         if (data && data.gameState) {
@@ -126,20 +130,18 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         PRELOAD_SOUNDS();
 
 
-        presenceChannel.current = pusher?.subscribe("presence-streamer-wars")!;
 
-
-
-        presenceChannel.current?.bind("pusher:subscription_succeeded", function (members: any) {
-            console.log("Members: ", members);
+        presenceChannel.current?.bind("pusher:subscription_succeeded", function ({ members }: { members: any }) {
+            const connectedPlayers = Object.keys(members).map((key) => members[key]);
+            setPlayers(connectedPlayers);
         });
 
         presenceChannel.current?.bind("pusher:member_added", function (member: any) {
-            console.log("Member added: ", member);
+            setPlayers((prev) => [...prev, member.info]);
         });
 
         presenceChannel.current?.bind("pusher:member_removed", function (member: any) {
-            console.log("Member removed: ", member);
+            setPlayers((prev) => prev.filter((player) => player.playerNumber !== member.info.playerNumber));
         });
 
         restoreGameStateFromCache().then(data => {
@@ -153,7 +155,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             presenceChannel.current?.unbind_all();
             presenceChannel.current?.unsubscribe();
         };
-    }, [session]);
+    }, []);
 
 
 
@@ -196,14 +198,13 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                 <>
                     {!gameState ? (
                         /*                         <WaitingRoom session={session} channel={globalChannel.current} /> */
-                        <WaitForDayOpen session={session} />
+                        <WaitForDayOpen session={session} players={players} />
                     ) : (
                         renderGame()
                     )}
                 </>
             )}
 
-            <ConnectedPlayers players={[]} />
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
         </>
     );
