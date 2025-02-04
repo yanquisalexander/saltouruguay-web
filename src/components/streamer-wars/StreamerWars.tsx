@@ -2,7 +2,7 @@ import type { Session } from "@auth/core/types";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 import { MemoryGame } from "./games/MemoryGame";
-import { DaySelector } from "./views/DaySelector";
+import { WaitForDayOpen } from "./views/WaitForDayOpen";
 import { PlayersGrid } from "./PlayersGrid";
 import Pusher, { type Channel } from "pusher-js";
 import { PUSHER_KEY } from "@/config";
@@ -195,7 +195,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             {pusher && globalChannel.current && (
                 <>
                     {!gameState ? (
-                        <WaitingRoom session={session} channel={globalChannel.current} />
+                        /*                         <WaitingRoom session={session} channel={globalChannel.current} /> */
+                        <WaitForDayOpen session={session} />
                     ) : (
                         renderGame()
                     )}

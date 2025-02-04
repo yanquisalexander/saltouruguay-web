@@ -78,6 +78,14 @@ export const CinematicPlayer = ({ userId, pusher }: CinematicPlayerProps) => {
 
         setTimeout(() => setVideoUrl(null), 500);
         $('body')?.classList.remove('overflow-hidden');
+
+        /* 
+            Emit a custom event (DOM)
+        */
+
+        const event = new CustomEvent('cinematic-ended');
+        document.dispatchEvent(event);
+
     };
 
     return (
