@@ -190,12 +190,13 @@ export const streamerWars = {
                         }
                     }
                 }
-            }).execute().then((data) => data.map(({ playerNumber, user }) => ({
+            }).execute().then((data) => data.map(({ playerNumber, user, eliminated }) => ({
                 playerNumber,
                 avatar: user?.avatar,
                 displayName: user?.displayName,
                 admin: user?.admin,
-                id: user?.id
+                id: user?.id,
+                eliminated
             })))
 
             return { players }

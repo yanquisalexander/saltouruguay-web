@@ -49,6 +49,9 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                 className: "bg-red-500",
             })
             playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.08 });
+            setPlayers((prev) =>
+                prev.map((player) => (player.playerNumber === playerNumber ? { ...player, eliminated: true } : player))
+            );
         });
 
         return () => {
