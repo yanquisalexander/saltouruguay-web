@@ -6,17 +6,3 @@ export const TEAMS = {
     WHITE: "white",
 } as const;
 
-export const getTranslation = (team: string) => {
-    switch (team) {
-        case TEAMS.BLUE:
-            return "Azul";
-        case TEAMS.RED:
-            return "Rojo";
-        case TEAMS.YELLOW:
-            return "Amarillo";
-        case TEAMS.PURPLE:
-            return "Morado";
-        case TEAMS.WHITE:
-            return "Blanco";
-    }
-};

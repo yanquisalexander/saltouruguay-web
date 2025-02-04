@@ -1,5 +1,6 @@
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
-import { getTranslation, TEAMS } from "@/consts/Teams";
+import { TEAMS } from "@/consts/Teams";
+import { getTranslation } from "@/utils/translate";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
 import { LucideCrown, LucideDot } from "lucide-preact";
