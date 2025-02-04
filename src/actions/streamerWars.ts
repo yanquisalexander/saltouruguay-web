@@ -2,6 +2,7 @@ import { CINEMATICS_CDN_PREFIX } from "@/config";
 import { client } from "@/db/client";
 import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable } from "@/db/schema";
 import Cache from "@/lib/Cache";
+import cacheService from "@/services/cache";
 import { pusher } from "@/utils/pusher";
 import { eliminatePlayer, getUserIdsOfPlayers, joinTeam } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
@@ -268,7 +269,7 @@ export const streamerWars = {
                 })
             }
 
-            const cache = new Cache();
+            const cache = cacheService.create({ ttl: 60 * 60 * 24 });
             const gameState = await cache.get("streamer-wars-gamestate") as any
             const dayAvailable = await cache.get("streamer-wars-day-available") as boolean;
 
@@ -286,7 +287,7 @@ export const streamerWars = {
                 })
             }
 
-            const cache = new Cache();
+            const cache = cacheService.create({ ttl: 60 * 60 * 24 });
             await cache.set("streamer-wars-day-available", true);
             await pusher.trigger("cinematic-player", "new-event", {
                 targetUsers: await getUserIdsOfPlayers(),
@@ -308,7 +309,7 @@ export const streamerWars = {
                 })
             }
 
-            const cache = new Cache();
+            const cache = cacheService.create({ ttl: 60 * 60 * 24 });
             await cache.set("streamer-wars-day-available", false);
 
             const userIds = await getUserIdsOfPlayers();
@@ -335,7 +336,7 @@ export const streamerWars = {
                 })
             }
 
-            const cache = new Cache();
+            const cache = cacheService.create({ ttl: 60 * 60 * 24 });
             await cache.set("streamer-wars-gamestate", null);
 
             await pusher.trigger("streamer-wars", "send-to-waiting-room", null);
@@ -357,7 +358,7 @@ export const streamerWars = {
                 })
             }
 
-            const cache = new Cache();
+            const cache = cacheService.create({ ttl: 60 * 60 * 24 });
             await cache.set("streamer-wars-gamestate", { game, props });
 
             await pusher.trigger("streamer-wars", "launch-game", { game, props });

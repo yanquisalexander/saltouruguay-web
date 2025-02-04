@@ -1,7 +1,7 @@
 import type { Session } from "@auth/core/types";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
-import { MemoryGame } from "./games/MemoryGame";
+import { SimonSays } from "./games/SimonSays";
 import { WaitForDayOpen } from "./views/WaitForDayOpen";
 import { PlayersGrid } from "./PlayersGrid";
 import Pusher, { type Channel } from "pusher-js";
@@ -93,7 +93,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
     const GAME_CONFIG = useRef({
         ButtonBox: ButtonBox,
-        MemoryGame: MemoryGame,
+        SimonSays: SimonSays,
     }).current;
 
 
