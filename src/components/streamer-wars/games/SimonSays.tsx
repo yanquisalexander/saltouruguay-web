@@ -6,11 +6,9 @@ import { toast } from "sonner";
 
 export const SimonSays = ({
     session,
-    onMissedPattern,
     initialGameState,
 }: {
     session: Session;
-    onMissedPattern: () => void;
     initialGameState?: SimonSaysGameState;
 }) => {
     const colors = ["red", "blue", "green", "yellow"] as const;
@@ -24,6 +22,10 @@ export const SimonSays = ({
     const [playerPattern, setPlayerPattern] = useState<typeof colors[number][]>([]);
     const [activeButton, setActiveButton] = useState<typeof colors[number] | null>(null);
     const [waitingForPattern, setWaitingForPattern] = useState(false);
+
+    const onMissedPattern = () => {
+        console.log("Missed pattern");
+    }
 
     const handlePlayerInput = async (color: typeof colors[number]) => {
         if (waitingForPattern) return;
