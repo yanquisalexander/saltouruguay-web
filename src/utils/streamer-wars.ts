@@ -1,11 +1,12 @@
 import { client } from "@/db/client";
 import { StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable, UsersTable } from "@/db/schema";
 import cacheService from "@/services/cache";
-import { and, asc, eq, not, or } from "drizzle-orm";
+import { and, asc, count, eq, not, or } from "drizzle-orm";
 import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
 import { addRoleToUser, DISCORD_ROLES, removeRoleFromUser, ROLE_GUERRA_STREAMERS } from "@/services/discord";
 import { SALTO_DISCORD_GUILD_ID } from "@/config";
+import Cache from "@/lib/Cache";
 
 
 
@@ -241,6 +242,38 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
             };
         }
 
+        const cache = new Cache();
+        const gameState = await cache.get("streamer-wars-gamestate") as any
+
+        /* 
+            Check limit of players per team
+
+            {
+  "game": "ButtonBox",
+  "props": {
+    "teamsQuantity": 2,
+    "playersPerTeam": 4
+  }
+}
+        */
+
+        const playersPerTeam = gameState.props.playersPerTeam as number;
+
+        const [{ playersCount }] = await client
+            .select({ playersCount: count() })
+            .from(StreamerWarsTeamPlayersTable)
+            .where(eq(StreamerWarsTeamPlayersTable.teamId, team.id))
+            .execute();
+
+        if (playersCount >= playersPerTeam) {
+            return {
+                success: false,
+                error: "El equipo ya está lleno",
+            };
+        }
+
+
+
         // Insertar al jugador en el equipo
         await client
             .insert(StreamerWarsTeamPlayersTable)
@@ -289,6 +322,71 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
     }
 };
 
+export const removePlayerFromTeam = async (playerNumber: number) => {
+    try {
+        // Obtener el equipo al que pertenece el jugador
+        const playerTeam = await client
+            .select()
+            .from(StreamerWarsTeamPlayersTable)
+            .where(eq(StreamerWarsTeamPlayersTable.playerNumber, playerNumber))
+            .execute()
+            .then((res) => res[0]);
+
+        if (!playerTeam) {
+            return {
+                success: false,
+                error: "El jugador no pertenece a ningún equipo",
+            };
+        }
+
+        // Eliminar al jugador del equipo
+        await client
+            .delete(StreamerWarsTeamPlayersTable)
+            .where(eq(StreamerWarsTeamPlayersTable.playerNumber, playerNumber))
+            .execute();
+
+        // Obtener el discordId del jugador desde una relación con playerNumber
+        const user = await client
+            .select({
+                discordId: UsersTable.discordId,
+            })
+            .from(UsersTable)
+            .innerJoin(
+                StreamerWarsPlayersTable, // Tabla que contiene playerNumber
+                eq(StreamerWarsPlayersTable.userId, UsersTable.id) // Relación entre tablas
+            )
+            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+            .execute()
+            .then((res) => res[0]);
+
+        if (!user || !user.discordId) {
+            return {
+                success: false,
+                error: "No se encontró el usuario asociado al jugador",
+            };
+        }
+
+        // Remover rol del usuario en Discord
+        await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId, DISCORD_ROLES.EQUIPO_AZUL);
+        await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId, DISCORD_ROLES.EQUIPO_ROJO);
+        await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId, DISCORD_ROLES.EQUIPO_AMARILLO);
+        await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId, DISCORD_ROLES.EQUIPO_MORADO);
+        await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId, DISCORD_ROLES.EQUIPO_BLANCO);
+
+        // Notificar al canal mediante Pusher
+        await pusher.trigger("streamer-wars", "player-removed", null)
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        console.error("Error en removePlayerFromTeam:", error);
+        return {
+            success: false,
+            error: "Ocurrió un error al intentar remover al jugador del equipo",
+        };
+    }
+}
 
 export const getPlayersTeams = async () => {
     try {

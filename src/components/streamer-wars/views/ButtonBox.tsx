@@ -12,6 +12,15 @@ export const ButtonBox = ({ session, channel, teamsQuantity, playersPerTeam }: {
     const [selectedTeam, setSelectedTeam] = useState<typeof TEAMS[keyof typeof TEAMS] | null>(null);
     const [playersTeams, setPlayersTeams] = useState<{ [team: string]: { playerNumber: number; avatar: string; displayName: string, isCaptain: boolean }[] }>({});
 
+    const refreshPlayersTeams = () => {
+        actions.streamerWars.getPlayersTeams().then(({ error, data }) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            setPlayersTeams(data.playersTeams);
+        })
+    }
 
     useEffect(() => {
         if (!selectedTeam) return;
@@ -37,24 +46,15 @@ export const ButtonBox = ({ session, channel, teamsQuantity, playersPerTeam }: {
     }, [selectedTeam]);
 
     useEffect(() => {
-        actions.streamerWars.getPlayersTeams().then(({ error, data }) => {
-            if (error) {
-                console.error(error);
-                return;
-            }
-            console.log(data);
-            setPlayersTeams(data.playersTeams);
-        })
+        refreshPlayersTeams()
 
 
         channel.bind("player-joined", () => {
-            actions.streamerWars.getPlayersTeams().then(({ error, data }) => {
-                if (error) {
-                    console.error(error);
-                    return;
-                }
-                setPlayersTeams(data.playersTeams);
-            })
+            refreshPlayersTeams();
+        })
+
+        channel.bind("player-removed", () => {
+            refreshPlayersTeams();
         })
 
         channel?.bind("captain-assigned", ({ team, playerNumber }: { team: string, playerNumber: number }) => {
