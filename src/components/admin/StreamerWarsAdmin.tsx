@@ -43,7 +43,31 @@ const GENERAL_ACTIONS = [
                 error: "Error al finalizar jornada",
             });
         }
-    }
+    },
+    {
+        name: "Iniciar Simón Dice",
+        classes: "bg-yellow-500 hover:bg-yellow-600 !text-black",
+        icon: LucideFlag,
+        execute: async () => {
+            toast.promise(actions.games.simonSays.startGame(), {
+                loading: "Iniciando Simón Dice...",
+                success: "Simón Dice iniciado",
+                error: "Error al iniciar Simón Dice",
+            });
+        }
+    },
+    {
+        name: "Siguiente ronda Simón Dice",
+        classes: "bg-yellow-500 hover:bg-yellow-600 !text-black",
+        icon: LucideFlag,
+        execute: async () => {
+            toast.promise(actions.games.simonSays.nextRound(), {
+                loading: "Avanzando ronda...",
+                success: "Ronda avanzada",
+                error: "Error al avanzar ronda",
+            });
+        }
+    },
 ];
 
 export const StreamerWarsAdmin = () => {

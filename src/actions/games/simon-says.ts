@@ -1,4 +1,4 @@
-import { games } from "@/utils/streamer-wars";
+import { games, getPlayersTeams } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -11,10 +11,7 @@ export const simonSays = {
         },
     }),
     startGame: defineAction({
-        input: z.object({
-            teams: z.record(z.object({ players: z.array(z.number()) })),
-        }),
-        async handler({ teams }, { request }) {
+        async handler(_, { request }) {
             const session = await getSession(request);
 
             if (!session?.user.isAdmin) {
@@ -24,7 +21,20 @@ export const simonSays = {
                 });
             }
 
-            const gameState = await games.simonSays.startGame(teams);
+            const teams = await getPlayersTeams();
+
+            console.log(teams); // Verifica qué datos devuelve getPlayersTeams()
+
+            const mappedTeams = Object.keys(teams.playersTeams).reduce((acc, team) => {
+                // Si playersTeams[team] es un array de jugadores, extraemos solo los playerNumber
+                acc[team] = {
+                    players: teams.playersTeams[team].map(player => player.playerNumber) // Extrae playerNumber
+                };
+                return acc;
+            }, {} as Record<string, { players: number[] }>);
+
+
+            const gameState = await games.simonSays.startGame(mappedTeams);
             return { gameState };
         },
     }),

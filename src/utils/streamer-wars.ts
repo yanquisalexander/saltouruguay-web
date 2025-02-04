@@ -22,7 +22,7 @@ export interface SimonSaysGameState {
 export const games = {
     simonSays: {
         getGameState: async () => {
-            const cacheKey = "streamer-wars:simon-says:game-state";
+            const cacheKey = "streamer-wars.simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
             return (await cache.get<SimonSaysGameState>(cacheKey)) ?? {
                 teams: {},
@@ -34,7 +34,7 @@ export const games = {
             };
         },
         generateNextPattern: async () => {
-            const cacheKey = "streamer-wars:simon-says:game-state";
+            const cacheKey = "streamer-wars.simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
             const gameState = await games.simonSays.getGameState();
 
@@ -49,10 +49,12 @@ export const games = {
             };
 
             await cache.set(cacheKey, newGameState);
+            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
+
             return newGameState.pattern;
         },
         startGame: async (teams: Record<string, { players: number[] }>) => {
-            const cacheKey = "streamer-wars:simon-says:game-state";
+            const cacheKey = "streamer-wars.simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
 
             const currentPlayers = Object.fromEntries(
@@ -61,6 +63,10 @@ export const games = {
                     data.players[Math.floor(Math.random() * data.players.length)]
                 ])
             );
+
+            console.log({ teams });
+
+            const patternFirstColor = ["red", "blue", "green", "yellow"][Math.floor(Math.random() * 4)];
 
             const newGameState = {
                 teams: Object.fromEntries(
@@ -71,16 +77,17 @@ export const games = {
                 ),
                 currentRound: 1,
                 currentPlayers,
-                pattern: [],
+                pattern: [patternFirstColor],
                 failedPlayers: [],
                 status: "playing"
             };
 
             await cache.set(cacheKey, newGameState);
+            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
             return newGameState;
         },
         completePattern: async (playerNumber: number) => {
-            const cacheKey = "streamer-wars:simon-says:game-state";
+            const cacheKey = "streamer-wars.simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
             const gameState = await games.simonSays.getGameState();
 
@@ -94,11 +101,23 @@ export const games = {
                 )
             };
 
+            /* 
+                All players have played on this round?
+            */
+
+            const allPlayed = Object.values(newGameState.teams).every(team => team.played.length >= 1);
+
+            if (allPlayed) {
+                newGameState.status = "waiting";
+            }
+
             await cache.set(cacheKey, newGameState);
+            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
+
             return newGameState;
         },
         patternFailed: async (playerNumber: number) => {
-            const cacheKey = "streamer-wars:simon-says:game-state";
+            const cacheKey = "streamer-wars.simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
             const gameState = await games.simonSays.getGameState();
 
@@ -113,24 +132,20 @@ export const games = {
                 )
             };
 
+            /* 
+                Set status to waiting
+            */
+
+            newGameState.status = "waiting";
+
             await cache.set(cacheKey, newGameState);
-            await pusher.trigger("streamer-wars:simon-says", "pattern-failed", { playerNumber });
+            await pusher.trigger("streamer-wars.simon-says", "pattern-failed", { playerNumber });
 
             return newGameState;
         },
-        checkIfRoundCompleted: async () => {
-            const gameState = await games.simonSays.getGameState();
-            const allPlayed = Object.values(gameState.teams).every(team => team.played.length >= 1);
-            if (allPlayed) {
-                const cacheKey = "streamer-wars:simon-says:game-state";
-                const cache = cacheService.create({ ttl: 60 * 60 * 48 });
-                gameState.status = "waiting";
-                await cache.set(cacheKey, gameState);
-            }
-            return gameState;
-        },
+
         nextRound: async () => {
-            const cacheKey = "streamer-wars:simon-says:game-state";
+            const cacheKey = "streamer-wars.simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
             const gameState = await games.simonSays.getGameState();
 
@@ -153,6 +168,7 @@ export const games = {
             };
 
             await cache.set(cacheKey, newGameState);
+            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
             return newGameState;
         }
     }

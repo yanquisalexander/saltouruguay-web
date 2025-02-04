@@ -38,14 +38,23 @@ export const SimonSays = ({
     const [waitingForPattern, setWaitingForPattern] = useState(false);
     const [showingPattern, setShowingPattern] = useState(false);
 
-    const simonSaysChannel = pusher?.subscribe("streamer-wars:simon-says");
+    const simonSaysChannel = pusher?.subscribe("streamer-wars.simon-says");
 
-    simonSaysChannel.bind("game-state", (newGameState: SimonSaysGameState) => {
-        setGameState(newGameState);
-        setPlayerPattern([]);
-        setWaitingForPattern(true);
-        showPattern(newGameState.pattern);
-    });
+    useEffect(() => {
+
+        simonSaysChannel?.bind("game-state", (newGameState: SimonSaysGameState) => {
+            setGameState(newGameState);
+            console.log({ newGameState });
+            setPlayerPattern([]);
+            setWaitingForPattern(true);
+            showPattern(newGameState.pattern);
+        });
+
+        simonSaysChannel?.bind("pattern-failed", ({ playerNumber }: { playerNumber: number }) => {
+            toast.error(`Jugador #${playerNumber} ha sido eliminado`);
+        });
+
+    }, [simonSaysChannel]);
 
     const showPattern = async (pattern: string[]) => {
         setShowingPattern(true);
@@ -87,15 +96,6 @@ export const SimonSays = ({
         }
     };
 
-    const handleNextRound = async () => {
-        if (!session?.user.isAdmin) {
-            toast.error("Solo los administradores pueden iniciar la siguiente ronda");
-            return;
-        }
-
-        toast.info("Avanzando a la siguiente ronda...");
-        await actions.games.simonSays.nextRound();
-    };
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]   
@@ -133,14 +133,9 @@ export const SimonSays = ({
                 ))}
             </div>
 
-            {session?.user.isAdmin && (
-                <button
-                    className="mt-8 px-6 py-3 bg-blue-500 text-white font-bold rounded-lg shadow-lg hover:bg-blue-600 transition"
-                    onClick={handleNextRound}
-                >
-                    Iniciar siguiente ronda
-                </button>
-            )}
+            <div className="mt-4 text-2xl font-bold font-atomic">
+                {gameState.status === 'waiting' ? "Esperando jugadores" : "Jugando"}
+            </div>
         </div>
     );
 };
