@@ -129,7 +129,13 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     useEffect(() => {
         PRELOAD_SOUNDS();
 
+        globalChannel.current?.bind("day-available", () => {
+            setDayAvailable(true);
+        });
 
+        globalChannel.current?.bind("day-finished", () => {
+            setDayAvailable(false);
+        });
 
         presenceChannel.current?.bind("pusher:subscription_succeeded", function ({ members }: { members: any }) {
             const connectedPlayers = Object.keys(members).map((key) => members[key]);

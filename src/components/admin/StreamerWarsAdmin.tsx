@@ -4,6 +4,35 @@ import { useEffect, useState } from "preact/hooks";
 import Pusher from "pusher-js";
 import { StreamerWarsPlayers } from "./streamer-wars/Players";
 import { actions } from "astro:actions";
+import { toast } from "sonner";
+import { LucideBellRing, LucideLockKeyholeOpen } from "lucide-preact";
+
+const GENERAL_ACTIONS = [
+    {
+        name: "Anunciar dificultades técnicas",
+        classes: "bg-red-500 hover:bg-red-600 !text-black",
+        icon: LucideBellRing,
+        execute: async () => {
+            toast.promise(actions.streamerWars.techDifficulties(), {
+                loading: "Enviando anuncio...",
+                success: "Anuncio enviado",
+                error: "Error al enviar anuncio",
+            });
+        }
+    },
+    {
+        name: "Desbloquear jornada",
+        classes: "bg-green-500 hover:bg-green-600 !text-black",
+        icon: LucideLockKeyholeOpen,
+        execute: async () => {
+            toast.promise(actions.streamerWars.setDayAsAvailable(), {
+                loading: "Desbloqueando jornada...",
+                success: "Jornada desbloqueada",
+                error: "Error al desbloquear jornada",
+            });
+        }
+    }
+];
 
 export const StreamerWarsAdmin = () => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
@@ -28,9 +57,6 @@ export const StreamerWarsAdmin = () => {
         };
     }, []);
 
-    const announceTechDifficulties = async () => {
-        await actions.streamerWars.techDifficulties();
-    }
 
     return (
         <div class="flex flex-col items-center">
@@ -59,12 +85,25 @@ export const StreamerWarsAdmin = () => {
                         </button>
                     </div>
 
-                    <button
-                        class="mt-8 bg-red-500 transition hover:bg-red-600 text-black font-bold py-2 px-4 rounded-lg"
-                        onClick={announceTechDifficulties}
-                    >
-                        Anunciar dificultades técnicas
-                    </button>
+
+
+                    <div class="actions mt-8">
+                        <h2 class="text-2xl font-bold mb-4">Acciones generales</h2>
+                        <div class="grid grid-cols-2 gap-4">
+                            {GENERAL_ACTIONS.map(({ name, classes, icon: Icon, execute }) => (
+                                <button
+                                    class={`p-4 rounded-lg transition text-white font-bold ${classes}`}
+                                    onClick={execute}
+                                >
+                                    {
+                                        Icon && <Icon class="size-5 inline-block mr-2 align-middle" />
+                                    }
+                                    <span>{name}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                    </div>
                 </div>
             )}
         </div>
