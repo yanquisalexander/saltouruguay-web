@@ -49,7 +49,8 @@ export const SimonSays = ({
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
+        <div className="flex flex-col items-center justify-center min-h-screen  bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]   
+                    from-lime-600 via-transparent to-transparent text-white p-4">
             <div className="flex gap-2 mt-4">
                 {gameState.pattern.map((color, index) => (
                     <LucideCircleDotDashed
@@ -60,6 +61,10 @@ export const SimonSays = ({
                     />
                 ))}
             </div>
+
+            <h2 className="text-2xl text-[#b4cd02] font-bold mt-4 font-atomic">
+                Simón dice
+            </h2>
 
             <div className="grid grid-cols-2 gap-4 mt-8">
                 {colors.map(({ name, gradient }, index) => (

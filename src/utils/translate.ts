@@ -4,6 +4,7 @@ export const TRANSLATIONS: Record<string, string> = {
     yellow: "Amarillo",
     purple: "Morado",
     white: "Blanco",
+    green: "Verde",
 };
 
 export const getTranslation = (key: string) => TRANSLATIONS[key] ?? `Missing translation for key: "${key}"`;
