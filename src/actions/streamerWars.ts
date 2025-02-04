@@ -286,6 +286,11 @@ export const streamerWars = {
 
             const cache = new Cache();
             await cache.set("streamer-wars-day-available", true);
+            await pusher.trigger("cinematic-player", "new-event", {
+                targetUsers: await getUserIdsOfPlayers(),
+                videoUrl: 'url',
+            })
+            await new Promise((resolve) => setTimeout(resolve, 2000));
 
             await pusher.trigger("streamer-wars", "day-available", null);
             return { success: true }
@@ -307,11 +312,15 @@ export const streamerWars = {
 
             const userIds = await getUserIdsOfPlayers();
 
-            await pusher.trigger("streamer-wars", "day-finished", null);
+            console.log({ userIds });
+
             await pusher.trigger('cinematic-player', 'new-event', {
                 targetUsers: userIds,
                 videoUrl: 'url',
             });
+
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await pusher.trigger("streamer-wars", "day-finished", null);
             return { success: true }
         }
     }),

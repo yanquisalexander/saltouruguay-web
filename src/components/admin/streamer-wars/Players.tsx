@@ -44,6 +44,13 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             );
         });
 
+        pusher?.channel('streamer-wars').bind('player-eliminated', ({ playerNumber }: { playerNumber: number }) => {
+            toast.success(`Jugador #${playerNumber?.toString().padStart(3, "0")} eliminado`, {
+                className: "bg-red-500",
+            })
+            playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.08 });
+        });
+
         return () => {
             presenceChannel.unbind_all();
             presenceChannel.unsubscribe();
@@ -83,16 +90,10 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
 
         const response = await actions.streamerWars.eliminatePlayer({ playerNumber });
 
-        if (!response.error) {
-            setPlayers((prev) =>
-                prev.map((player) =>
-                    player.playerNumber === playerNumber ? { ...player, eliminated: true } : player
-                )
-            );
-            toast.success(`Jugador #${playerNumber?.toString().padStart(3, "0")} eliminado`, {
-                className: "bg-red-500",
-            })
-            playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.08 });
+        if (response.error) {
+            console.error(response.error);
+            toast.error(response.error.message);
+            return;
         }
     };
 

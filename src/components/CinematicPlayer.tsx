@@ -21,6 +21,7 @@ export const CinematicPlayer = ({ userId, pusher }: CinematicPlayerProps) => {
         const channel = pusher.subscribe('cinematic-player');
 
         channel.bind('new-event', (data: { targetUsers: string[] | 'everyone'; videoUrl: string }) => {
+            console.log({ data, userId });
             if (data.targetUsers === 'everyone' || data.targetUsers.includes(userId)) {
                 setVideoUrl(data.videoUrl);
                 setIsVisible(true);

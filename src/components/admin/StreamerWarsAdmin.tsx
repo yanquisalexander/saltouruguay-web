@@ -5,7 +5,7 @@ import Pusher from "pusher-js";
 import { StreamerWarsPlayers } from "./streamer-wars/Players";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
-import { LucideBellRing, LucideLockKeyholeOpen } from "lucide-preact";
+import { LucideBellRing, LucideFlag, LucideLockKeyholeOpen } from "lucide-preact";
 
 const GENERAL_ACTIONS = [
     {
@@ -31,6 +31,18 @@ const GENERAL_ACTIONS = [
                 error: "Error al desbloquear jornada",
             });
         }
+    },
+    {
+        name: "Finalizar jornada",
+        classes: "bg-blue-500 hover:bg-blue-600 !text-black",
+        icon: LucideFlag,
+        execute: async () => {
+            toast.promise(actions.streamerWars.finishDay(), {
+                loading: "Finalizando jornada...",
+                success: "Jornada finalizada",
+                error: "Error al finalizar jornada",
+            });
+        }
     }
 ];
 
@@ -50,6 +62,8 @@ export const StreamerWarsAdmin = () => {
         });
 
         setPusher(pusherInstance);
+
+
 
         return () => {
             // Limpia la instancia de Pusher al desmontar el componente
