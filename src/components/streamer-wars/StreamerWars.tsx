@@ -203,12 +203,16 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             {pusher && globalChannel.current && (
                 <>
                     {!gameState ? (
-                        /*                         <WaitingRoom session={session} channel={globalChannel.current} /> */
-                        <WaitForDayOpen session={session} players={players} />
+                        dayAvailable ? (
+                            <WaitingRoom session={session} channel={globalChannel.current} />
+                        ) : (
+                            <WaitForDayOpen session={session} players={players} />
+                        )
                     ) : (
                         renderGame()
                     )}
                 </>
+
             )}
 
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
