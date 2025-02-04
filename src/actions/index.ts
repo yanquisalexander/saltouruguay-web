@@ -13,6 +13,7 @@ import { getSession } from "auth-astro/server";
 import { eq } from "drizzle-orm";
 import { users } from "./admin/users";
 import { streamerWars } from "./streamerWars";
+import { games } from "./games";
 
 export const server = {
     sendVotes: defineAction({
@@ -309,4 +310,5 @@ export const server = {
 
     },
     streamerWars,
+    games
 }

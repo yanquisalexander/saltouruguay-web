@@ -18,35 +18,32 @@ const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
         const audio = new Audio(`${CDN_PREFIX}${sound}.mp3`);
         audio.preload = "auto";
-        console.log(`Preloading sound: ${sound}`);
-    })
-}
+    });
+};
 
-const FOR_BETTER_EXPERIENCE = () => {
-    playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION });
-    toast.success("Para una mejor experiencia, te recomendamos utiliza pantalla completa (F11) y activar el sonido 🔊");
-}
-
-const SplashScreen = () => {
+const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
     const [loading, setLoading] = useState(true);
-    const [fadingOut, setFadingOut] = useState(false);
     const [progress, setProgress] = useState(0);
     const [alertedBetterExperience, setAlertedBetterExperience] = useState(false);
+    const [fadingOut, setFadingOut] = useState(false);
 
     useEffect(() => {
         const progressInterval = setInterval(() => {
             setProgress((prev) => (prev < 100 ? prev + 1 : 100));
-            if (progress > 50) {
-                if (!alertedBetterExperience) {
-                    FOR_BETTER_EXPERIENCE();
-                    setAlertedBetterExperience(true);
-                }
+            if (progress > 50 && !alertedBetterExperience) {
+                toast.success("Para una mejor experiencia, usa pantalla completa (F11) y activa el sonido 🔊");
+                setAlertedBetterExperience(true);
+                playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION, volume: 0.2 });
             }
         }, 50);
 
         const timer = setTimeout(() => {
+            document.dispatchEvent(new CustomEvent('splash-screen-ended'));
             setFadingOut(true);
-            setTimeout(() => setLoading(false), 500);
+            setTimeout(() => {
+                setLoading(false);
+                onEnd();
+            }, 500); // Tiempo de fade out
         }, 6000);
 
         return () => {
@@ -54,48 +51,31 @@ const SplashScreen = () => {
             // @ts-ignore
             clearInterval(progressInterval);
         };
-    }, [progress, alertedBetterExperience]);
+    }, [progress, alertedBetterExperience, onEnd]);
 
-    if (loading) {
-        return (
-            <div
-                class={`flex flex-col fixed justify-center items-center inset-0 bg-black z-[8000] transition-opacity duration-500 ${fadingOut ? "opacity-0" : "opacity-100"
-                    }`}
-            >
-                <header class="flex w-full justify-center">
-                    <img
-                        src="/images/guerra-streamers-logo.webp"
-                        draggable={false}
-                        style={{ animationDuration: "3.5s" }}
-                        alt="Guerra de Streamers"
-                        class="h-24 select-none animate-fade-in"
-                    />
-                </header>
-                <div class="w-56 mt-8 h-2 bg-gray-700 rounded-full overflow-hidden animate-fade-in">
-                    <div
-                        class="h-full bg-[#b4cd02] transition-all"
-                        style={{ width: `${progress}%` }}
-                    ></div>
-                </div>
+    if (!loading) return null;
+
+    return (
+        <div className={`fixed inset-0 bg-black flex flex-col justify-center items-center z-[8000] transition-opacity duration-500 ${fadingOut ? 'opacity-0' : 'opacity-100'}`}>
+            <img src="/images/guerra-streamers-logo.webp" alt="Guerra de Streamers" className="h-24" />
+            <div className="w-56 mt-8 h-2 bg-gray-700 rounded-full">
+                <div className="h-full bg-[#b4cd02] rounded-xl" style={{ width: `${progress}%` }}></div>
             </div>
-        );
-    }
-
-    return null;
+        </div>
+    );
 };
 
 
 export const StreamerWars = ({ session }: { session: Session }) => {
-    const [players, setPlayers] = useState<{ playerNumber: number; avatar: string; name: string }[]>([]);
+    const [players, setPlayers] = useState<any[]>([]);
     const [dayAvailable, setDayAvailable] = useState(false);
     const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel } = useStreamerWarsSocket(session);
+    const [pusherLoaded, setPusherLoaded] = useState(false);
+    const GAME_CONFIG = useRef({ ButtonBox, SimonSays }).current;
 
-
-    const GAME_CONFIG = useRef({
-        ButtonBox: ButtonBox,
-        SimonSays: SimonSays,
-    }).current;
-
+    useEffect(() => {
+        document.addEventListener("splash-screen-ended", () => setPusherLoaded(true), { once: true });
+    }, []);
 
     const restoreGameStateFromCache = async () => {
         const { data, error } = await actions.streamerWars.getGameState();
@@ -119,93 +99,57 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     }
 
     useEffect(() => {
-        // Restore game (from cache) when pusher is available on first render
-        if (pusher) {
-            restoreGameStateFromCache();
-        }
-    }, [pusher]);
+        restoreGameStateFromCache();
+    }, []);
 
     useEffect(() => {
+        if (!pusherLoaded) return;
+
         PRELOAD_SOUNDS();
 
         globalChannel.current?.bind("day-available", () => {
-            document.addEventListener('cinematic-ended', () => {
-                console.log("Cinematic ended");
-                setDayAvailable(true);
-            }, { once: true });
+            document.addEventListener("cinematic-ended", () => setDayAvailable(true), { once: true });
         });
 
         globalChannel.current?.bind("day-finished", () => {
-            document.addEventListener('cinematic-ended', () => {
-                console.log("Cinematic ended");
-                setDayAvailable(false);
-            }, { once: true });
+            document.addEventListener("cinematic-ended", () => setDayAvailable(false), { once: true });
         });
 
-        presenceChannel.current?.bind("pusher:subscription_succeeded", function ({ members }: { members: any }) {
-            const connectedPlayers = Object.keys(members).map((key) => members[key]);
-            setPlayers(connectedPlayers);
+        presenceChannel.current?.bind("pusher:subscription_succeeded", ({ members }: { members: any }) => {
+            setPlayers(Object.values(members));
         });
 
-        presenceChannel.current?.bind("pusher:member_added", function (member: any) {
+        presenceChannel.current?.bind("pusher:member_added", (member: any) => {
             setPlayers((prev) => [...prev, member.info]);
         });
 
-        presenceChannel.current?.bind("pusher:member_removed", function (member: any) {
+        presenceChannel.current?.bind("pusher:member_removed", (member: any) => {
             setPlayers((prev) => prev.filter((player) => player.playerNumber !== member.info.playerNumber));
         });
 
-        restoreGameStateFromCache().then(data => {
-            console.log("Restored game state from cache", data);
+        actions.streamerWars.getGameState().then(({ data, error }) => {
+            if (!error && data?.gameState) {
+                setGameState({ component: data.gameState.game, props: { session, pusher, channel: globalChannel.current, ...data.gameState.props } });
+            }
         });
-
-
-
 
         return () => {
             presenceChannel.current?.unbind_all();
             presenceChannel.current?.unsubscribe();
         };
-    }, []);
-
-
+    }, [pusherLoaded]);
 
     const renderGame = () => {
-        if (!gameState) {
-            toast.error("No se ha configurado el estado del juego");
-            return null;
-        }
-
+        if (!gameState) return null;
         const GameComponent = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
-
         return <GameComponent {...gameState.props} />;
     };
 
     return (
         <>
-            <div
-                class="flex w-full flex-col gap-y-2 fixed inset-0 min-h-dvh md:hidden justify-center items-center bg-black z-[9000]">
-                <span class="text-white text-center text-lg font-rubik">Este juego no está disponible en dispositivos móviles</span>
-                <a href="/" class="bg-lime-500 text-black px-4 py-2">Volver al inicio</a>
-            </div>
-
-            <SplashScreen />
-            <div class="flex w-full animate-fade-in">
-                <header class="flex w-full justify-between">
-                    <img src="/images/guerra-streamers-logo.webp"
-                        draggable={false}
-                        alt="Guerra de Streamers" class="h-24 select-none" />
-
-                    <div class="border-2 flex self-start hover:border-white cursor-pointer transition items-center gap-x-2 border-dashed border-gray-700 rounded-lg p-2">
-                        <span class="text-white text-sm font-medium font-rubik">{session.user.name}</span>
-                        <img src={session.user.image as string} alt="Avatar" class="w-8 h-8 rounded-full" />
-                    </div>
-
-                </header>
-
-            </div>
-
-            {pusher && globalChannel.current && (
+            <SplashScreen onEnd={() => setPusherLoaded(true)} />
+            <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
+            {pusherLoaded && globalChannel.current && presenceChannel.current && (
                 <>
                     {!gameState ? (
                         dayAvailable ? (
@@ -217,10 +161,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                         renderGame()
                     )}
                 </>
-
             )}
-
-            <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
         </>
     );
 };

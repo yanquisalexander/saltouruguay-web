@@ -8,6 +8,9 @@ export const STREAMER_WARS_SOUNDS = {
     BUTTON_CLICK: "button-click",
     QUE_COMIENCE_EL_JUEGO: "que_comience_el_juego",
     PROBLEMAS_TECNICOS: "problemas_tecnicos",
+    CLICK_SIMON_SAYS: "click-simon-says",
+    SIMON_SAYS_CORRECT: "simon-says-correct",
+    SIMON_SAYS_ERROR: "simon-says-error",
 }
 
 

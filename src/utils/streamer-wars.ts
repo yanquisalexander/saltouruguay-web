@@ -10,54 +10,35 @@ import Cache from "@/lib/Cache";
 
 
 
-
 export interface SimonSaysGameState {
     teams: Record<string, { players: number[]; played: number[] }>;
     currentRound: number;
     currentPlayers: Record<string, number>;
     pattern: string[];
     failedPlayers: number[];
+    status: "playing" | "waiting";
 }
-
-export const getCurrentInscriptions = async () => {
-    return await client.query.StreamerWarsInscriptionsTable.findMany({
-        with: {
-            user: {
-                columns: {
-                    displayName: true,
-                    avatar: true,
-                    discordId: true,
-                }
-            }
-        }
-    })
-}
-
-
 
 export const games = {
     simonSays: {
         getGameState: async () => {
             const cacheKey = "streamer-wars:simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
-            const cachedGameState = await cache.get<SimonSaysGameState>(cacheKey);
-
-            if (cachedGameState) {
-                return cachedGameState;
-            }
-
-            return {
+            return (await cache.get<SimonSaysGameState>(cacheKey)) ?? {
                 teams: {},
                 currentRound: 0,
                 currentPlayers: {},
                 pattern: [],
-                failedPlayers: []
+                failedPlayers: [],
+                status: "waiting"
             };
         },
         generateNextPattern: async () => {
             const cacheKey = "streamer-wars:simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
             const gameState = await games.simonSays.getGameState();
+
+            if (gameState.status !== "playing") return gameState.pattern;
 
             const colors = ["red", "blue", "green", "yellow"] as const;
             const nextColor = colors[Math.floor(Math.random() * colors.length)];
@@ -91,13 +72,14 @@ export const games = {
                 currentRound: 1,
                 currentPlayers,
                 pattern: [],
-                failedPlayers: []
+                failedPlayers: [],
+                status: "playing"
             };
 
             await cache.set(cacheKey, newGameState);
             return newGameState;
         },
-        completePattern: async (userId: number) => {
+        completePattern: async (playerNumber: number) => {
             const cacheKey = "streamer-wars:simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
             const gameState = await games.simonSays.getGameState();
@@ -107,10 +89,7 @@ export const games = {
                 teams: Object.fromEntries(
                     Object.entries(gameState.teams).map(([team, data]) => [
                         team,
-                        {
-                            ...data,
-                            played: [...data.played, userId]
-                        }
+                        { ...data, played: [...data.played, playerNumber] }
                     ])
                 )
             };
@@ -118,34 +97,67 @@ export const games = {
             await cache.set(cacheKey, newGameState);
             return newGameState;
         },
-        patternFailed: async (userId: number) => {
+        patternFailed: async (playerNumber: number) => {
             const cacheKey = "streamer-wars:simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
             const gameState = await games.simonSays.getGameState();
 
             const newGameState = {
                 ...gameState,
-                failedPlayers: [...gameState.failedPlayers, userId],
+                failedPlayers: [...gameState.failedPlayers, playerNumber],
                 teams: Object.fromEntries(
                     Object.entries(gameState.teams).map(([team, data]) => [
                         team,
-                        {
-                            ...data,
-                            played: [...data.played, userId]
-                        }
+                        { ...data, played: [...data.played, playerNumber] }
                     ])
                 )
             };
 
             await cache.set(cacheKey, newGameState);
-            await pusher.trigger("streamer-wars:simon-says", "pattern-failed", {
-                userId
-            });
+            await pusher.trigger("streamer-wars:simon-says", "pattern-failed", { playerNumber });
 
+            return newGameState;
+        },
+        checkIfRoundCompleted: async () => {
+            const gameState = await games.simonSays.getGameState();
+            const allPlayed = Object.values(gameState.teams).every(team => team.played.length >= 1);
+            if (allPlayed) {
+                const cacheKey = "streamer-wars:simon-says:game-state";
+                const cache = cacheService.create({ ttl: 60 * 60 * 48 });
+                gameState.status = "waiting";
+                await cache.set(cacheKey, gameState);
+            }
+            return gameState;
+        },
+        nextRound: async () => {
+            const cacheKey = "streamer-wars:simon-says:game-state";
+            const cache = cacheService.create({ ttl: 60 * 60 * 48 });
+            const gameState = await games.simonSays.getGameState();
+
+            if (gameState.status !== "waiting") return gameState;
+
+            const newCurrentPlayers = Object.fromEntries(
+                Object.entries(gameState.teams).map(([team, data]) => [
+                    team,
+                    data.players.find(player => !data.played.includes(player)) ?? null
+                ])
+            );
+
+            const newGameState = {
+                ...gameState,
+                currentRound: gameState.currentRound + 1,
+                pattern: [],
+                failedPlayers: [],
+                currentPlayers: newCurrentPlayers,
+                status: "playing"
+            };
+
+            await cache.set(cacheKey, newGameState);
             return newGameState;
         }
     }
 };
+
 
 
 export const eliminatePlayer = async (playerNumber: number) => {
