@@ -53,8 +53,12 @@ export const ButtonBox = ({ session, channel, teamsQuantity, playersPerTeam }: {
             refreshPlayersTeams();
         })
 
-        channel.bind("player-removed", () => {
+        channel.bind("player-removed", ({ playerNumber }: { playerNumber: number }) => {
             refreshPlayersTeams();
+            if (session.user.streamerWarsPlayerNumber === playerNumber) {
+                setSelectedTeam(null)
+                toast.success("Un administrador te ha removido del equipo");
+            }
         })
 
         channel?.bind("captain-assigned", ({ team, playerNumber }: { team: string, playerNumber: number }) => {

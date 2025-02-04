@@ -374,7 +374,7 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
         await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId, DISCORD_ROLES.EQUIPO_BLANCO);
 
         // Notificar al canal mediante Pusher
-        await pusher.trigger("streamer-wars", "player-removed", null)
+        await pusher.trigger("streamer-wars", "player-removed", { playerNumber });
 
         return {
             success: true,
