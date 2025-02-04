@@ -88,6 +88,8 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         });
     }, []);
 
+
+
     const eliminatePlayer = async (playerNumber: number) => {
         if (!confirm(`¿Estás seguro de eliminar al jugador #${playerNumber?.toString().padStart(3, "0")}?`)) return;
 

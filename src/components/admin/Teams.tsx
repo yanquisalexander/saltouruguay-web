@@ -31,6 +31,18 @@ export const Teams = ({ channel }: { channel: Channel }) => {
 
         toast.success("Capitán removido correctamente");
     };
+
+    const removePlayer = async (playerNumber: number) => {
+        const { error } = await actions.streamerWars.removePlayerFromTeam({ playerNumber });
+
+        if (error) {
+            toast.error(error.message);
+            return;
+        }
+
+        toast.success("Jugador removido correctamente");
+    }
+
     useEffect(() => {
         const fetchTeams = async () => {
             const { error, data } = await actions.streamerWars.getPlayersTeams();
@@ -41,6 +53,7 @@ export const Teams = ({ channel }: { channel: Channel }) => {
         fetchTeams();
 
         channel?.bind("player-joined", fetchTeams);
+        channel?.bind("player-removed", fetchTeams);
         channel?.bind("captain-assigned", fetchTeams);
 
         return () => {
@@ -64,7 +77,7 @@ export const Teams = ({ channel }: { channel: Channel }) => {
                     Jugadores por equipo
                 </h2>
             </header>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
                 {Object.values(TEAMS).map((team) => (
                     <div
                         className="bg-gray-900/50 rounded-xl p-4 backdrop-blur-sm 
@@ -126,6 +139,15 @@ export const Teams = ({ channel }: { channel: Channel }) => {
                                         <span className="font-atomic text-lime-500 text-2xl">
                                             #{playerNumber.toString().padStart(3, "0")}
                                         </span>
+
+                                        <button
+                                            onClick={() => removePlayer(playerNumber)}
+                                            className="px-2 py-1 bg-red-500 rounded-md text-xs
+                                            hover:bg-red-600 transition-colors"
+                                            title="Remover jugador"
+                                        >
+                                            <LucideX size={16} />
+                                        </button>
                                     </div>
                                 )
                             }

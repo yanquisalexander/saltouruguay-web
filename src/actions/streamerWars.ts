@@ -4,7 +4,7 @@ import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWa
 import Cache from "@/lib/Cache";
 import cacheService from "@/services/cache";
 import { pusher } from "@/utils/pusher";
-import { eliminatePlayer, getUserIdsOfPlayers, joinTeam } from "@/utils/streamer-wars";
+import { eliminatePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -511,6 +511,31 @@ export const streamerWars = {
 
             await pusher.trigger("streamer-wars", "tech-difficulties", null);
             await pusher.trigger("streamer-wars", "new-message", { message, type: "announcement", suppressAudio: true });
+
+            return { success: true }
+        }
+    }),
+    removePlayerFromTeam: defineAction({
+        input: z.object({
+            playerNumber: z.number(),
+        }),
+        handler: async ({ playerNumber }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para remover jugadores de equipos"
+                });
+            }
+
+            const { success, error } = await removePlayerFromTeam(playerNumber);
+            if (!success) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: error
+                });
+            }
 
             return { success: true }
         }
