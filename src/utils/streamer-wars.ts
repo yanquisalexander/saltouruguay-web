@@ -9,13 +9,13 @@ import { SALTO_DISCORD_GUILD_ID } from "@/config";
 
 
 
-const MEMORY_GAME_INITIAL_TIME = 120; // 2 minutes
-const MEMORY_GAME_MIN_ROUND_TIME = 30; // 30 seconds
-export interface MemoryGameGameState {
-    actualPattern?: string;
-    startedAt?: Date;
-    currentRoundTimer?: number;
-    completedPatternPlayersIds: number[];
+
+export interface SimonSaysGameState {
+    teams: Record<string, { players: number[]; played: number[] }>;
+    currentRound: number;
+    currentPlayers: Record<string, number>;
+    pattern: string[];
+    failedPlayers: number[];
 }
 
 export const getCurrentInscriptions = async () => {
@@ -35,84 +35,116 @@ export const getCurrentInscriptions = async () => {
 
 
 export const games = {
-    memory: {
+    simonSays: {
         getGameState: async () => {
-            const cacheKey = "streamer-wars:memory:game-state";
+            const cacheKey = "streamer-wars:simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
-            const cachedGameState = await cache.get<MemoryGameGameState>(cacheKey);
+            const cachedGameState = await cache.get<SimonSaysGameState>(cacheKey);
 
             if (cachedGameState) {
                 return cachedGameState;
             }
 
             return {
-                actualPattern: undefined,
-                startedAt: undefined,
-                currentRoundTimer: undefined,
-                completedPatternPlayersIds: []
-            }
+                teams: {},
+                currentRound: 0,
+                currentPlayers: {},
+                pattern: [],
+                failedPlayers: []
+            };
         },
         generateNextPattern: async () => {
-            const cacheKey = "streamer-wars:memory:game-state";
+            const cacheKey = "streamer-wars:simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
-            const gameState = await games.memory.getGameState();
+            const gameState = await games.simonSays.getGameState();
 
             const colors = ["red", "blue", "green", "yellow"] as const;
             const nextColor = colors[Math.floor(Math.random() * colors.length)];
 
-            /* Por cada ronda (color), ir retirando 10 segundos, si es menor a 30, setearlo a 30 */
-            const newRoundTimer = Math.max((gameState.currentRoundTimer ?? MEMORY_GAME_INITIAL_TIME) - 10, MEMORY_GAME_MIN_ROUND_TIME);
-
             const newGameState = {
                 ...gameState,
-                actualPattern: [...(gameState.actualPattern ?? []), nextColor],
-                startedAt: new Date(),
-                currentRoundTimer: newRoundTimer,
-                completedPatternPlayersIds: []
-            }
+                pattern: [...gameState.pattern, nextColor]
+            };
 
             await cache.set(cacheKey, newGameState);
-            return newGameState.actualPattern;
+            return newGameState.pattern;
         },
-        startGame: async () => {
-
-            const cacheKey = "streamer-wars:memory:game-state";
+        startGame: async (teams: Record<string, { players: number[] }>) => {
+            const cacheKey = "streamer-wars:simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
-            const gameState = await games.memory.getGameState();
+
+            const currentPlayers = Object.fromEntries(
+                Object.entries(teams).map(([team, data]) => [
+                    team,
+                    data.players[Math.floor(Math.random() * data.players.length)]
+                ])
+            );
 
             const newGameState = {
-                ...gameState,
-                actualPattern: [],
-                startedAt: new Date(),
-                currentRoundTimer: MEMORY_GAME_INITIAL_TIME,
-                completedPatternPlayersIds: []
-            }
+                teams: Object.fromEntries(
+                    Object.entries(teams).map(([team, data]) => [
+                        team,
+                        { ...data, played: [] }
+                    ])
+                ),
+                currentRound: 1,
+                currentPlayers,
+                pattern: [],
+                failedPlayers: []
+            };
+
             await cache.set(cacheKey, newGameState);
             return newGameState;
         },
         completePattern: async (userId: number) => {
-            const cacheKey = "streamer-wars:memory:game-state";
+            const cacheKey = "streamer-wars:simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
-            const gameState = await games.memory.getGameState();
+            const gameState = await games.simonSays.getGameState();
 
             const newGameState = {
                 ...gameState,
-                completedPatternPlayersIds: [...gameState.completedPatternPlayersIds, userId]
-            }
+                teams: Object.fromEntries(
+                    Object.entries(gameState.teams).map(([team, data]) => [
+                        team,
+                        {
+                            ...data,
+                            played: [...data.played, userId]
+                        }
+                    ])
+                )
+            };
 
             await cache.set(cacheKey, newGameState);
             return newGameState;
         },
         patternFailed: async (userId: number) => {
-            /* 
-                TODO: Eliminar al jugador en la base de datos (columna)
-            */
-            await pusher.trigger("streamer-wars:memory", "pattern-failed", {
+            const cacheKey = "streamer-wars:simon-says:game-state";
+            const cache = cacheService.create({ ttl: 60 * 60 * 48 });
+            const gameState = await games.simonSays.getGameState();
+
+            const newGameState = {
+                ...gameState,
+                failedPlayers: [...gameState.failedPlayers, userId],
+                teams: Object.fromEntries(
+                    Object.entries(gameState.teams).map(([team, data]) => [
+                        team,
+                        {
+                            ...data,
+                            played: [...data.played, userId]
+                        }
+                    ])
+                )
+            };
+
+            await cache.set(cacheKey, newGameState);
+            await pusher.trigger("streamer-wars:simon-says", "pattern-failed", {
                 userId
             });
+
+            return newGameState;
         }
     }
-}
+};
 
 
 export const eliminatePlayer = async (playerNumber: number) => {
