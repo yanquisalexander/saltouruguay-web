@@ -114,7 +114,11 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                         key={player.id}
                     >
                         <div class="relative size-16 rounded-full">
-                            <img src={player.avatar} alt={player.displayName} class="w-full h-full rounded-full" />
+                            <img src={`/images/streamer-wars/players/${player.playerNumber.toString().padStart(3, "0")}.webp`}
+                                onError={(e) => {
+                                    e.currentTarget.src = player.avatar
+                                }}
+                                alt={player.displayName} class="w-full h-full rounded-full" />
                             {player.online && (
                                 <div class="absolute bottom-0 right-0 w-4 h-4 bg-lime-500 rounded-full ring-2 ring-black"></div>
                             )}
