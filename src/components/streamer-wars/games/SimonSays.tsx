@@ -42,7 +42,7 @@ export const SimonSays = ({
 
     // Variables derivadas
     const playerNumber = session.user.streamerWarsPlayerNumber;
-    const isEliminated = playerNumber !== undefined && gameState.eliminatedPlayers.includes(playerNumber);
+    const isEliminated = playerNumber !== undefined && gameState.eliminatedPlayers?.includes(playerNumber);
     const isCompleted = playerNumber !== undefined && gameState.completedPlayers.includes(playerNumber);
     const isCurrentPlayerPlaying = session.user.streamerWarsPlayerNumber !== undefined
         ? Object.values(gameState.currentPlayers).includes(session.user.streamerWarsPlayerNumber)
