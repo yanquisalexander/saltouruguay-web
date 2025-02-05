@@ -41,7 +41,7 @@ export const Instructions = ({ duration = 10000, children }: InstructionsProps) 
                 </div>
                 <div className=" p-8 rounded-xl backdrop-blur-sm text-white text-center">
                     <header>
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text">
+                        <h1 className="text-3xl font-mono font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text">
                             Instrucciones
                         </h1>
                     </header>
@@ -49,7 +49,11 @@ export const Instructions = ({ duration = 10000, children }: InstructionsProps) 
                         {children}
                     </div>
 
+
                 </div>
+                <h2 class="text-2xl fixed bottom-16 font-atomic text-neutral-500 select-none -skew-y-6">
+                    <span class="tracking-wider">Guerra de Streamers</span>
+                </h2>
             </div>
         </>
     ) : null;
