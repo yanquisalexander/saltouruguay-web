@@ -22,7 +22,7 @@ export const WaitForDayOpen = ({ session, players }: { session: Session, players
     return (
         <div class="flex flex-col justify-center space-x-4 mt-8">
             <header class="text-center mb-12">
-                <h2 class="text-4xl  font-atomic text-zinc-100 -skew-y-6">
+                <h2 class="text-4xl  font-atomic text-zinc-100 -skew-y-6 mt-8">
                     Bienvenido, <span class="text-lime-400 tracking-wider">{session.user.name}</span>
                 </h2>
                 <p class="text-lg text-zinc-500 animate-pulse mt-8 font-anton"
