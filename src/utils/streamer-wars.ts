@@ -176,6 +176,7 @@ export const games = {
             };
 
             await cache.set(CACHE_KEY, newGameState);
+            await new Promise((resolve) => setTimeout(resolve, 2000));
             await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
             return newGameState;
         },
