@@ -105,7 +105,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
     return (
         <div class="flex flex-col items-center">
             <h1 class="text-2xl font-bold mb-4">Jugadores</h1>
-            <div class="grid grid-cols-5 gap-16">
+            <div class="grid gap-16 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 {players.map((player) => (
                     <button
                         onClick={() => eliminatePlayer(player.playerNumber)}
