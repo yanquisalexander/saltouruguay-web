@@ -5,7 +5,7 @@ import Pusher from "pusher-js";
 import { StreamerWarsPlayers } from "./streamer-wars/Players";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
-import { LucideBellRing, LucideFlag, LucideLockKeyholeOpen } from "lucide-preact";
+import { LucideBellRing, LucideCoffee, LucideFlag, LucideLockKeyholeOpen } from "lucide-preact";
 
 const GENERAL_ACTIONS = [
     {
@@ -68,6 +68,18 @@ const GENERAL_ACTIONS = [
             });
         }
     },
+    {
+        name: "Enviar Jugadores a Sala de Espera",
+        classes: "bg-purple-500 hover:bg-purple-600 !text-black",
+        icon: LucideCoffee,
+        execute: async () => {
+            toast.promise(actions.streamerWars.sendToWaitingRoom(), {
+                loading: "Enviando jugadores a sala de espera...",
+                success: "Jugadores enviados a sala de espera",
+                error: "Error al enviar jugadores a sala de espera",
+            });
+        }
+    }
 ];
 
 export const StreamerWarsAdmin = () => {

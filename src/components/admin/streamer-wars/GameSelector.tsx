@@ -109,17 +109,7 @@ export const GameSelector = () => {
         }
     };
 
-    const sendToWaitingRoom = async () => {
-        const { error, data } = await actions.streamerWars.sendToWaitingRoom();
 
-        if (error) {
-            toast.warning("Error al enviar a la sala de espera: " + error);
-        }
-
-        if (data) {
-            toast.success("Todos enviados a la sala de espera");
-        }
-    };
 
     return (
         <div class="flex flex-col items-center">
@@ -153,12 +143,7 @@ export const GameSelector = () => {
                         </button>
                     </div>
                 )}
-                <button
-                    onClick={sendToWaitingRoom}
-                    class="bg-red-600 text-white rounded-lg px-4 py-2 mt-4"
-                >
-                    Enviar a todos a sala de espera
-                </button>
+
             </div>
         </div>
     );
