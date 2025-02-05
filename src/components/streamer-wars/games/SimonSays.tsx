@@ -10,11 +10,9 @@ import { toast } from "sonner";
 
 export const SimonSays = ({
     session,
-    initialGameState,
     pusher
 }: {
     session: Session;
-    initialGameState?: SimonSaysGameState;
     pusher: Pusher;
 }) => {
     const colors = [
@@ -24,14 +22,25 @@ export const SimonSays = ({
         { name: "yellow", gradient: "from-yellow-400 to-yellow-600" },
     ] as const;
 
-    const [gameState, setGameState] = useState<SimonSaysGameState>(initialGameState || {
+    const [gameState, setGameState] = useState<SimonSaysGameState>({
         teams: {},
         currentRound: 0,
         currentPlayers: {},
         pattern: [],
-        failedPlayers: [],
-        status: 'waiting'
+        eliminatedPlayers: [],
+        status: 'waiting',
+        completedPlayers: []
     });
+
+    useEffect(() => {
+        actions.games.simonSays.getGameState().then(({ error, data }) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            setGameState(data.gameState);
+        });
+    }, []);
 
     const [playerPattern, setPlayerPattern] = useState<string[]>([]);
     const [activeButton, setActiveButton] = useState<string | null>(null);
@@ -41,19 +50,17 @@ export const SimonSays = ({
     const simonSaysChannel = pusher?.subscribe("streamer-wars.simon-says");
 
     useEffect(() => {
-
         simonSaysChannel?.bind("game-state", (newGameState: SimonSaysGameState) => {
             setGameState(newGameState);
-            console.log({ newGameState });
             setPlayerPattern([]);
             setWaitingForPattern(true);
             showPattern(newGameState.pattern);
+            console.log(newGameState);
         });
 
         simonSaysChannel?.bind("pattern-failed", ({ playerNumber }: { playerNumber: number }) => {
             toast.error(`Jugador #${playerNumber} ha sido eliminado`);
         });
-
     }, [simonSaysChannel]);
 
     const showPattern = async (pattern: string[]) => {
@@ -96,6 +103,24 @@ export const SimonSays = ({
         }
     };
 
+    // Determinamos el mensaje que se debe mostrar basado en el estado del juego
+    const getStatusMessage = () => {
+        if (gameState.status === 'waiting') {
+            return "Esperando que el administrador comience el juego";
+        }
+
+        if (waitingForPattern) {
+            return "Esperando a los demás jugadores";
+        }
+
+        return "Tu turno";
+    };
+
+    useEffect(() => {
+        if (gameState.status === 'playing') {
+            showPattern(gameState.pattern);
+        }
+    }, [gameState.pattern]);
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]   
@@ -116,22 +141,24 @@ export const SimonSays = ({
             </h2>
 
             <div className="mt-4 text-3xl font-medium font-teko italic">
-                {waitingForPattern || showingPattern ? "Observa el patrón" : "Tu turno"}
+                {getStatusMessage()}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-8">
-                {colors.map(({ name, gradient }) => (
-                    <div
-                        key={name}
-                        className={`size-48 flex justify-center items-center text-xl font-teko uppercase italic font-medium cursor-pointer transition-transform 
+            {gameState.status === 'playing' && (
+                <div className="grid grid-cols-2 gap-4 mt-8">
+                    {colors.map(({ name, gradient }) => (
+                        <div
+                            key={name}
+                            className={`size-48 flex justify-center items-center text-xl font-teko uppercase italic font-medium cursor-pointer transition-transform 
                             hover:scale-105 active:scale-95 rounded-3xl bg-gradient-to-b ${gradient}
                             ${activeButton === name ? "scale-125" : ""} transition-all duration-300`}
-                        onClick={() => handlePlayerInput(name)}
-                    >
-                        {getTranslation(name)}
-                    </div>
-                ))}
-            </div>
+                            onClick={() => handlePlayerInput(name)}
+                        >
+                            {getTranslation(name)}
+                        </div>
+                    ))}
+                </div>
+            )}
 
             <div className="mt-4 text-2xl font-bold font-atomic">
                 {gameState.status === 'waiting' ? "Esperando jugadores" : "Jugando"}

@@ -9,13 +9,13 @@ import { SALTO_DISCORD_GUILD_ID } from "@/config";
 import Cache from "@/lib/Cache";
 
 
-
 export interface SimonSaysGameState {
     teams: Record<string, { players: number[]; played: number[] }>;
     currentRound: number;
-    currentPlayers: Record<string, number>;
+    currentPlayers: Record<string, number | null>; // Cambié a `null` si no hay jugador,
+    completedPlayers: number[]; // Jugadores que han completado el patrón actual
     pattern: string[];
-    failedPlayers: number[];
+    eliminatedPlayers: number[]; // Jugadores eliminados
     status: "playing" | "waiting";
 }
 
@@ -29,42 +29,35 @@ export const games = {
                 currentRound: 0,
                 currentPlayers: {},
                 pattern: [],
-                failedPlayers: [],
-                status: "waiting"
+                eliminatedPlayers: [],
+                status: "waiting",
+                completedPlayers: []
             };
         },
+
         generateNextPattern: async () => {
-            const cacheKey = "streamer-wars.simon-says:game-state";
-            const cache = cacheService.create({ ttl: 60 * 60 * 48 });
             const gameState = await games.simonSays.getGameState();
 
-            if (gameState.status !== "playing") return gameState.pattern;
 
             const colors = ["red", "blue", "green", "yellow"] as const;
             const nextColor = colors[Math.floor(Math.random() * colors.length)];
 
-            const newGameState = {
-                ...gameState,
-                pattern: [...gameState.pattern, nextColor]
-            };
+            const newPattern = [...gameState.pattern, nextColor];
 
-            await cache.set(cacheKey, newGameState);
-            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
-
-            return newGameState.pattern;
+            return newPattern;
         },
+
         startGame: async (teams: Record<string, { players: number[] }>) => {
             const cacheKey = "streamer-wars.simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
 
+            // Inicializar a los jugadores en cada equipo (escoge uno aleatoriamente)
             const currentPlayers = Object.fromEntries(
                 Object.entries(teams).map(([team, data]) => [
                     team,
-                    data.players[Math.floor(Math.random() * data.players.length)]
+                    data.players[Math.floor(Math.random() * data.players.length)] || null,
                 ])
             );
-
-            console.log({ teams });
 
             const patternFirstColor = ["red", "blue", "green", "yellow"][Math.floor(Math.random() * 4)];
 
@@ -72,20 +65,22 @@ export const games = {
                 teams: Object.fromEntries(
                     Object.entries(teams).map(([team, data]) => [
                         team,
-                        { ...data, played: [] }
+                        { ...data, played: [] },
                     ])
                 ),
                 currentRound: 1,
                 currentPlayers,
                 pattern: [patternFirstColor],
-                failedPlayers: [],
-                status: "playing"
+                eliminatedPlayers: [], // Inicialmente no hay jugadores eliminados
+                status: "playing",
+                completedPlayers: [], // Inicialmente nadie ha completado el patrón
             };
 
             await cache.set(cacheKey, newGameState);
             await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
             return newGameState;
         },
+
         completePattern: async (playerNumber: number) => {
             const cacheKey = "streamer-wars.simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
@@ -93,54 +88,49 @@ export const games = {
 
             const newGameState = {
                 ...gameState,
+                completedPlayers: [...gameState.completedPlayers, playerNumber],
                 teams: Object.fromEntries(
                     Object.entries(gameState.teams).map(([team, data]) => [
                         team,
-                        { ...data, played: [...data.played, playerNumber] }
+                        { ...data, played: [...data.played, playerNumber] },
                     ])
-                )
+                ),
             };
 
-            /* 
-                All players have played on this round?
-            */
+            await cache.set(cacheKey, newGameState);
 
-            const allPlayed = Object.values(newGameState.teams).every(team => team.played.length >= 1);
+            // Verificar si todos los jugadores han completado el patrón
+            const allCompleted = Object.values(newGameState.teams).every(
+                (team) => team.players.every((player) => newGameState.completedPlayers.includes(player))
+            );
 
-            if (allPlayed) {
-                newGameState.status = "waiting";
+            if (allCompleted) {
+                await games.simonSays.nextRound();
             }
 
-            await cache.set(cacheKey, newGameState);
-            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
-
-            return newGameState;
         },
+
         patternFailed: async (playerNumber: number) => {
             const cacheKey = "streamer-wars.simon-says:game-state";
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
             const gameState = await games.simonSays.getGameState();
 
+            // Marcar al jugador como eliminado
             const newGameState = {
                 ...gameState,
-                failedPlayers: [...gameState.failedPlayers, playerNumber],
+                status: "waiting",
+                eliminatedPlayers: [...gameState.eliminatedPlayers, playerNumber], // Jugador eliminado
                 teams: Object.fromEntries(
                     Object.entries(gameState.teams).map(([team, data]) => [
                         team,
-                        { ...data, played: [...data.played, playerNumber] }
+                        { ...data, played: [...data.played, ...data.players] }, // Marca todos los jugadores del equipo como jugados
                     ])
-                )
+                ),
             };
-
-            /* 
-                Set status to waiting
-            */
-
-            newGameState.status = "waiting";
 
             await cache.set(cacheKey, newGameState);
             await pusher.trigger("streamer-wars.simon-says", "pattern-failed", { playerNumber });
-
+            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
             return newGameState;
         },
 
@@ -149,30 +139,37 @@ export const games = {
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
             const gameState = await games.simonSays.getGameState();
 
-            if (gameState.status !== "waiting") return gameState;
+            if (gameState.status !== "playing") return gameState; // Aseguramos que solo se pase a la siguiente ronda si el juego está en "jugando"
 
-            const newCurrentPlayers = Object.fromEntries(
+            // Excluir jugadores eliminados y jugadores que ya han jugado
+            const currentPlayers = Object.fromEntries(
                 Object.entries(gameState.teams).map(([team, data]) => [
                     team,
-                    data.players.find(player => !data.played.includes(player)) ?? null
+                    data.players.find(
+                        (player) =>
+                            !gameState.eliminatedPlayers.includes(player) && !data.played.includes(player)
+                    ) ?? null, // Si no hay jugadores disponibles, se asigna null
                 ])
             );
+
+            const pattern = await games.simonSays.generateNextPattern();
 
             const newGameState = {
                 ...gameState,
                 currentRound: gameState.currentRound + 1,
-                pattern: [],
-                failedPlayers: [],
-                currentPlayers: newCurrentPlayers,
-                status: "playing"
+                pattern,
+                completedPlayers: [], // Se limpia el array de jugadores que completaron el patrón
+                currentPlayers,
+                status: "playing",
             };
 
             await cache.set(cacheKey, newGameState);
             await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
             return newGameState;
-        }
-    }
+        },
+    },
 };
+
 
 
 
