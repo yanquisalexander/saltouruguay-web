@@ -184,7 +184,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                                         <WaitForDayOpen session={session} players={players} />
                                     ) : (
                                         gameState ? (
-                                            <GameComponent gameState={gameState} players={players} pusher={pusher} session={session} />
+                                            <GameComponent gameState={gameState} players={players} pusher={pusher} session={session} channel={globalChannel.current} />
                                         ) : (
                                             <WaitingRoom session={session} channel={globalChannel.current} />
                                         )
@@ -198,7 +198,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     );
 }
 
-const GameComponent = ({ gameState, players, pusher, session }: { gameState: any; players: any[]; pusher: Pusher; session: Session }) => {
+const GameComponent = ({ gameState, players, pusher, session, channel }: { gameState: any; players: any[]; pusher: Pusher; session: Session; channel: Channel }) => {
     const GAME_CONFIG = useRef({ TeamSelector, SimonSays }).current;
 
     const Component = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];

@@ -52,11 +52,11 @@ export const TeamSelector = ({ session, channel, teamsQuantity, playersPerTeam }
         refreshPlayersTeams()
 
 
-        channel?.bind("player-joined", () => {
+        channel.bind("player-joined", () => {
             refreshPlayersTeams();
         })
 
-        channel?.bind("player-removed", ({ playerNumber }: { playerNumber: number }) => {
+        channel.bind("player-removed", ({ playerNumber }: { playerNumber: number }) => {
             refreshPlayersTeams();
             if (session.user.streamerWarsPlayerNumber === playerNumber) {
                 setSelectedTeam(null)
@@ -64,7 +64,7 @@ export const TeamSelector = ({ session, channel, teamsQuantity, playersPerTeam }
             }
         })
 
-        channel?.bind("captain-assigned", ({ team, playerNumber }: { team: string, playerNumber: number }) => {
+        channel.bind("captain-assigned", ({ team, playerNumber }: { team: string, playerNumber: number }) => {
             console.log(team, playerNumber);
             if (session.user.streamerWarsPlayerNumber === playerNumber) {
                 playSound({ sound: STREAMER_WARS_SOUNDS.BUTTON_CLICK });
