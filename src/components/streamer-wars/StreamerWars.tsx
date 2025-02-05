@@ -64,24 +64,6 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
         </div>
     );
 };
-
-const GameComponent = ({ gameState, players, pusher }: { gameState: any; players: any[]; pusher: Pusher }) => {
-    const GAME_CONFIG = useRef({ ButtonBox, SimonSays }).current;
-    const [componentProps, setComponentProps] = useState(gameState.props);
-
-    const Component = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
-    useEffect(() => {
-        // Asegura que se actualice cuando cambie el `gameState.props`
-        setComponentProps(gameState.props);
-    }, [gameState.props]);
-
-    // Aquí puedes manejar el comportamiento de tu componente
-    return (
-        <Component {...componentProps} players={players} pusher={pusher} />
-    );
-};
-
-
 export const StreamerWars = ({ session }: { session: Session }) => {
     const [players, setPlayers] = useState<any[]>([]);
     const [dayAvailable, setDayAvailable] = useState(false);
@@ -116,7 +98,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     }, []);
 
     useEffect(() => {
-        if (!pusherLoaded) return;
+        if (!pusherLoaded || !session) return; // Asegúrate de que `session` esté disponible
 
         PRELOAD_SOUNDS();
 
@@ -150,15 +132,17 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             presenceChannel.current?.unbind_all();
             presenceChannel.current?.unsubscribe();
         };
-    }, [pusherLoaded]);
+    }, [pusherLoaded, session]); // Asegúrate de que `session` esté en las dependencias
 
-
+    if (!session) {
+        return <div>Loading session...</div>; // Maneja el caso en que `session` no esté disponible
+    }
 
     return (
         <>
             <SplashScreen onEnd={() => setPusherLoaded(true)} />
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
-            {pusherLoaded && pusher && globalChannel.current && presenceChannel.current && (
+            {pusherLoaded && pusher && globalChannel.current && presenceChannel.current && session && (
                 <>
                     {!gameState ? (
                         dayAvailable ? (
@@ -167,10 +151,19 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                             <WaitForDayOpen session={session} players={players} />
                         )
                     ) : (
-                        <GameComponent gameState={gameState} players={players} pusher={pusher} />
+                        <GameComponent gameState={gameState} players={players} pusher={pusher} session={session} />
                     )}
                 </>
             )}
         </>
     );
 };
+
+const GameComponent = ({ gameState, players, pusher, session }: { gameState: any; players: any[]; pusher: Pusher; session: Session }) => {
+    const GAME_CONFIG = useRef({ ButtonBox, SimonSays }).current;
+
+    const Component = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
+    const props = { ...gameState.props, players, pusher, session };
+
+    return <Component {...props} />;
+}
