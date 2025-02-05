@@ -91,9 +91,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         if (data && data.gameState) {
             if (data && data.gameState.game && data.gameState.props) {
                 const { game, props } = data.gameState;
-
-                setGameState({ component: game, props: { session, pusher, channel: globalChannel.current, ...props } });
-
+                setGameState({ component: game, props: { session, channel: globalChannel.current, players, pusher, ...props } });
             }
         }
     }
@@ -129,7 +127,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
         actions.streamerWars.getGameState().then(({ data, error }) => {
             if (!error && data?.gameState) {
-                setGameState({ component: data.gameState.game, props: { session, pusher, channel: globalChannel.current, ...data.gameState.props } });
+                setGameState({ component: data.gameState.game, props: { session, channel: globalChannel.current, players, pusher, ...data.gameState.props } });
             }
         });
 
@@ -142,7 +140,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const renderGame = () => {
         if (!gameState) return null;
         const GameComponent = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
-        return <GameComponent {...gameState.props} />;
+        return <GameComponent {...gameState.props} players={players} pusher={pusher} />;
     };
 
     return (

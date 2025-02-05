@@ -139,18 +139,7 @@ export const games = {
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
             const gameState = await games.simonSays.getGameState();
 
-            if (gameState.status !== "playing") return gameState; // Aseguramos que solo se pase a la siguiente ronda si el juego está en "jugando"
 
-            // Excluir jugadores eliminados y jugadores que ya han jugado
-            const currentPlayers = Object.fromEntries(
-                Object.entries(gameState.teams).map(([team, data]) => [
-                    team,
-                    data.players.find(
-                        (player) =>
-                            !gameState.eliminatedPlayers.includes(player) && !data.played.includes(player)
-                    ) ?? null, // Si no hay jugadores disponibles, se asigna null
-                ])
-            );
 
             const pattern = await games.simonSays.generateNextPattern();
 
@@ -158,8 +147,7 @@ export const games = {
                 ...gameState,
                 currentRound: gameState.currentRound + 1,
                 pattern,
-                completedPlayers: [], // Se limpia el array de jugadores que completaron el patrón
-                currentPlayers,
+                completedPlayers: [],
                 status: "playing",
             };
 
