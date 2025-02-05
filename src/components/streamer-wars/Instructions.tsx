@@ -14,8 +14,16 @@ export const Instructions = ({ duration = 10000, children }: InstructionsProps) 
     useEffect(() => {
         const timer = setTimeout(() => setShow(false), duration);
         const interval = setInterval(() => {
-            setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-            playSound({ sound: STREAMER_WARS_SOUNDS.TICK, volume: 1 });
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    // @ts-ignore
+                    clearInterval(interval);
+                    return 0;
+                }
+
+                playSound({ sound: STREAMER_WARS_SOUNDS.TICK, volume: 1 });
+                return prev - 1;
+            });
         }, 1000);
 
         return () => {
@@ -31,7 +39,7 @@ export const Instructions = ({ duration = 10000, children }: InstructionsProps) 
                 <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300">
                     00:{timeLeft.toString().padStart(2, "0")}
                 </div>
-                <div className="bg-gray-900/50 p-8 rounded-xl backdrop-blur-sm text-white text-center">
+                <div className=" p-8 rounded-xl backdrop-blur-sm text-white text-center">
                     <header>
                         <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text">
                             Instrucciones

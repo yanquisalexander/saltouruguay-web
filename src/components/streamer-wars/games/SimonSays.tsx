@@ -7,6 +7,7 @@ import { LucideCircleDotDashed } from "lucide-preact";
 import { useState, useEffect, useCallback } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
+import { Instructions } from "../Instructions";
 
 
 export const SimonSays = ({
@@ -125,117 +126,124 @@ export const SimonSays = ({
     }, [gameState.pattern]);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]   
+        <>
+            <Instructions duration={15000}>
+                <p class="font-mono max-w-2xl text-left">
+
+                </p>
+            </Instructions>
+            <div className="flex flex-col items-center justify-center min-h-screen bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]   
                       from-lime-600 via-transparent to-transparent text-white p-4">
 
-            {!gameIsWaiting && (
-                <div className="flex gap-2 mt-4">
-                    {playerPattern.map((color, index) => (
-                        <div key={index}
-                            className={`size-4 rounded-full bg-gradient-to-b ${colors.find(c => c.name === color)?.gradient
-                                }`}
-                        />
-                    ))}
-                </div>
-            )}
+                {!gameIsWaiting && (
+                    <div className="flex gap-2 mt-4">
+                        {playerPattern.map((color, index) => (
+                            <div key={index}
+                                className={`size-4 rounded-full bg-gradient-to-b ${colors.find(c => c.name === color)?.gradient
+                                    }`}
+                            />
+                        ))}
+                    </div>
+                )}
 
-            <h2 className="text-2xl text-[#b4cd02] font-bold mt-4 font-atomic">
-                Simón dice
-            </h2>
+                <h2 className="text-2xl text-[#b4cd02] font-bold mt-4 font-atomic">
+                    Simón dice
+                </h2>
 
-            {gameIsPlaying && isCurrentPlayerPlaying && (
+                {gameIsPlaying && isCurrentPlayerPlaying && (
 
-                <div class="flex items-center gap-x-4">
-                    <div class="relative">
-                        <img
-                            src={players.find(p => p?.playerNumber === playerNumber)?.avatar}
-                            alt="Tu avatar"
-                            class="size-10 rounded-full ring-2 ring-white/20"
-                        />
+                    <div class="flex items-center gap-x-4">
+                        <div class="relative">
+                            <img
+                                src={players.find(p => p?.playerNumber === playerNumber)?.avatar}
+                                alt="Tu avatar"
+                                class="size-10 rounded-full ring-2 ring-white/20"
+                            />
+
+                        </div>
+                        <span class="font-atomic">
+                            VS.
+                        </span>
+
+                        {gameRivals.map(rival => (
+                            <div class="relative">
+                                <img
+                                    src={players?.find(p => p?.id === rival)?.avatar}
+                                    alt={`Avatar de jugador #${rival}`}
+                                    class="size-10 rounded-full ring-2 ring-white/20"
+                                />
+                                <span class="absolute -bottom-4 inset-x-0 bg-white font-atomic text-black text-md rounded-full px-1">
+                                    #{rival?.toString().padStart(3, "0")}
+                                </span>
+                            </div>
+                        ))}
 
                     </div>
-                    <span class="font-atomic">
-                        VS.
-                    </span>
+                )}
 
-                    {gameRivals.map(rival => (
-                        <div class="relative">
-                            <img
-                                src={players?.find(p => p?.id === rival)?.avatar}
-                                alt={`Avatar de jugador #${rival}`}
-                                class="size-10 rounded-full ring-2 ring-white/20"
-                            />
-                            <span class="absolute -bottom-4 inset-x-0 bg-white font-atomic text-black text-md rounded-full px-1">
-                                #{rival?.toString().padStart(3, "0")}
-                            </span>
-                        </div>
-                    ))}
-
-                </div>
-            )}
-
-            {gameIsPlaying && !isCurrentPlayerPlaying && (
-                <div class="flex items-center gap-x-4">
-                    {gameRivals.map(rival => (
-                        <div class="relative">
-                            <img
-                                src={players.find(p => p.id === rival)?.avatar}
-                                alt={`Avatar de jugador #${rival}`}
-                                class="size-10 rounded-full ring-2 ring-white/20"
-                            />
-                            <span class="absolute -bottom-4 inset-x-0 bg-white font-atomic text-black text-md rounded-full px-1">
-                                #{rival?.toString().padStart(3, "0")}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            <div className="mt-4 text-3xl font-medium font-teko italic">
-                {getStatusMessage()}
-            </div>
-
-            {gameIsPlaying && (
-                <>
-                    {isEliminated ? (
-                        <div className="text-center mt-4">
-                            <p className="text-lg font-bold font-atomic">
-                                ¡Has sido eliminado del juego!
-                            </p>
-                        </div>
-                    ) : isCurrentPlayerPlaying ? (
-                        !isCompleted ? (
-                            <div className="grid grid-cols-2 gap-4 mt-8">
-                                {colors.map(({ name, gradient }) => (
-                                    <div
-                                        key={name}
-                                        className={`size-48 flex justify-center items-center text-xl font-teko uppercase italic font-medium cursor-pointer transition-transform 
-                                        hover:scale-105 active:scale-95 rounded-3xl bg-gradient-to-b ${gradient}
-                                        ${activeButton === name ? "scale-125" : ""} transition-all duration-300`}
-                                        onClick={() => handlePlayerInput(name)}
-                                    >
-                                        {getTranslation(name)}
-                                    </div>
-                                ))}
+                {gameIsPlaying && !isCurrentPlayerPlaying && (
+                    <div class="flex items-center gap-x-4">
+                        {gameRivals.map(rival => (
+                            <div class="relative">
+                                <img
+                                    src={players.find(p => p.id === rival)?.avatar}
+                                    alt={`Avatar de jugador #${rival}`}
+                                    class="size-10 rounded-full ring-2 ring-white/20"
+                                />
+                                <span class="absolute -bottom-4 inset-x-0 bg-white font-atomic text-black text-md rounded-full px-1">
+                                    #{rival?.toString().padStart(3, "0")}
+                                </span>
                             </div>
-                        ) : (
+                        ))}
+                    </div>
+                )}
+
+                <div className="mt-4 text-3xl font-medium font-teko italic">
+                    {getStatusMessage()}
+                </div>
+
+                {gameIsPlaying && (
+                    <>
+                        {isEliminated ? (
                             <div className="text-center mt-4">
                                 <p className="text-lg font-bold font-atomic">
-                                    ¡Felicidades!<br />
-                                    Continúas en el desafío
+                                    ¡Has sido eliminado del juego!
                                 </p>
                             </div>
-                        )
-                    ) : !isEliminated && (
-                        <div className="text-center mt-4">
-                            <p className="text-lg font-bold font-atomic">
-                                ¡Espera tu turno!<br />
-                                Pronto será tu oportunidad
-                            </p>
-                        </div>
-                    )}
-                </>
-            )}
-        </div>
+                        ) : isCurrentPlayerPlaying ? (
+                            !isCompleted ? (
+                                <div className="grid grid-cols-2 gap-4 mt-8">
+                                    {colors.map(({ name, gradient }) => (
+                                        <div
+                                            key={name}
+                                            className={`size-48 flex justify-center items-center text-xl font-teko uppercase italic font-medium cursor-pointer transition-transform 
+                                        hover:scale-105 active:scale-95 rounded-3xl bg-gradient-to-b ${gradient}
+                                        ${activeButton === name ? "scale-125" : ""} transition-all duration-300`}
+                                            onClick={() => handlePlayerInput(name)}
+                                        >
+                                            {getTranslation(name)}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center mt-4">
+                                    <p className="text-lg font-bold font-atomic">
+                                        ¡Felicidades!<br />
+                                        Continúas en el desafío
+                                    </p>
+                                </div>
+                            )
+                        ) : !isEliminated && (
+                            <div className="text-center mt-4">
+                                <p className="text-lg font-bold font-atomic">
+                                    ¡Espera tu turno!<br />
+                                    Pronto será tu oportunidad
+                                </p>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+        </>
     );
 };

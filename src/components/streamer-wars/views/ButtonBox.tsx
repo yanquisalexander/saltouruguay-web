@@ -85,8 +85,11 @@ export const ButtonBox = ({ session, channel, teamsQuantity, playersPerTeam }: {
     return (
         <div class="flex flex-col items-center justify-center w-full space-y-6 mt-8">
             <Instructions duration={10000}>
-                <p>
-                    Para unirte a un equipo, selecciona uno de los botones de abajo.
+                <p class="font-mono max-w-2xl text-left">
+                    Para unirte a un equipo, debes seleccionar uno de los botones de abajo. Una vez que te unas, no podrás cambiar de equipo.
+                </p>
+                <p class="font-mono max-w-2xl text-left">
+                    Cada equipo tiene un máximo de {playersPerTeam} jugadores. Si un equipo ya está lleno, deberás unirte a otro.
                 </p>
             </Instructions>
             {/* Botonera de Equipos */}
