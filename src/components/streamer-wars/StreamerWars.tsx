@@ -75,6 +75,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
     const restoreGameStateFromCache = async () => {
         const { data, error } = await actions.streamerWars.getGameState();
+        console.log({ data, error });
 
         if (error) {
             return;
@@ -147,15 +148,18 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
             {pusher && globalChannel.current && presenceChannel.current && session && (
                 <>
-                    {!gameState ? (
-                        dayAvailable ? (
-                            <WaitingRoom session={session} channel={globalChannel.current} />
-                        ) : (
+                    {
+                        !dayAvailable ? (
                             <WaitForDayOpen session={session} players={players} />
+                        ) : (
+                            gameState ? (
+                                <GameComponent gameState={gameState} players={players} pusher={pusher} session={session} />
+                            ) : (
+                                <WaitingRoom session={session} channel={globalChannel.current} />
+                            )
                         )
-                    ) : (
-                        <GameComponent gameState={gameState} players={players} pusher={pusher} session={session} />
-                    )}
+                    }
+
                 </>
             )}
         </>
