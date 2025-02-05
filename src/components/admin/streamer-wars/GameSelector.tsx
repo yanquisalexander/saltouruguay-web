@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 export const GAMES = [
     {
-        id: "ButtonBox",
+        id: "TeamSelector",
         props: {
             teamsQuantity: {
                 type: Number,

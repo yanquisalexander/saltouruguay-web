@@ -10,7 +10,7 @@ import { ConnectedPlayers } from "./ConnectedPlayers";
 import { CDN_PREFIX, playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { PlayerEliminated } from "./PlayerEliminated";
 import { WaitingRoom } from "./views/WaitingRoom";
-import { ButtonBox } from "./views/ButtonBox";
+import { TeamSelector } from "./views/TeamSelector";
 import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 import { actions } from "astro:actions";
 
@@ -190,7 +190,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 }
 
 const GameComponent = ({ gameState, players, pusher, session }: { gameState: any; players: any[]; pusher: Pusher; session: Session }) => {
-    const GAME_CONFIG = useRef({ ButtonBox, SimonSays }).current;
+    const GAME_CONFIG = useRef({ TeamSelector, SimonSays }).current;
 
     const Component = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
     const props = { ...gameState.props, players, pusher, session };
