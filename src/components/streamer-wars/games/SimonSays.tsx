@@ -129,7 +129,12 @@ export const SimonSays = ({
         <>
             <Instructions duration={15000}>
                 <p class="font-mono max-w-2xl text-left">
-
+                    "Simon dice" es un juego de memoria en el que se muestra un patrón de colores que los jugadores deben repetir en el mismo orden.
+                    <br />
+                    Si un jugador se equivoca, será eliminado del juego.
+                </p>
+                <p class="font-mono max-w-2xl text-left">
+                    Los jugadores irán rotando a medida que avanza el juego. Cuando sea tu turno, haz clic en los colores para repetir el patrón.
                 </p>
             </Instructions>
             <div className="flex flex-col items-center justify-center min-h-screen bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]   
