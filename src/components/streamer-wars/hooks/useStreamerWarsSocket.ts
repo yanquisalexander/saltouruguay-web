@@ -44,7 +44,15 @@ export const useStreamerWarsSocket = (session: Session) => {
                 component: game,
                 props: { session, pusher: pusherInstance, ...props },
             });
-            playSound({ sound: STREAMER_WARS_SOUNDS.QUE_COMIENCE_EL_JUEGO });
+
+            const START_GAME_SOUNDS = [
+                STREAMER_WARS_SOUNDS.ES_HORA_DE_JUGAR,
+                STREAMER_WARS_SOUNDS.QUE_COMIENCE_EL_JUEGO,
+            ]
+
+            const randomSound = START_GAME_SOUNDS[Math.floor(Math.random() * START_GAME_SOUNDS.length)];
+
+            playSound({ sound: randomSound });
         });
 
         return () => {
