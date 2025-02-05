@@ -65,13 +65,28 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
     );
 };
 
+const GameComponent = ({ gameState, players, pusher }: { gameState: any; players: any[]; pusher: Pusher }) => {
+    const GAME_CONFIG = useRef({ ButtonBox, SimonSays }).current;
+    const [componentProps, setComponentProps] = useState(gameState.props);
+
+    const Component = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
+    useEffect(() => {
+        // Asegura que se actualice cuando cambie el `gameState.props`
+        setComponentProps(gameState.props);
+    }, [gameState.props]);
+
+    // Aquí puedes manejar el comportamiento de tu componente
+    return (
+        <Component {...componentProps} players={players} pusher={pusher} />
+    );
+};
+
 
 export const StreamerWars = ({ session }: { session: Session }) => {
     const [players, setPlayers] = useState<any[]>([]);
     const [dayAvailable, setDayAvailable] = useState(false);
     const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel } = useStreamerWarsSocket(session);
     const [pusherLoaded, setPusherLoaded] = useState(false);
-    const GAME_CONFIG = useRef({ ButtonBox, SimonSays }).current;
 
     useEffect(() => {
         document.addEventListener("splash-screen-ended", () => setPusherLoaded(true), { once: true });
@@ -137,17 +152,13 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         };
     }, [pusherLoaded]);
 
-    const renderGame = () => {
-        if (!gameState) return null;
-        const GameComponent = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
-        return <GameComponent {...gameState.props} players={players} pusher={pusher} />;
-    };
+
 
     return (
         <>
             <SplashScreen onEnd={() => setPusherLoaded(true)} />
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
-            {pusherLoaded && globalChannel.current && presenceChannel.current && (
+            {pusherLoaded && pusher && globalChannel.current && presenceChannel.current && (
                 <>
                     {!gameState ? (
                         dayAvailable ? (
@@ -156,7 +167,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                             <WaitForDayOpen session={session} players={players} />
                         )
                     ) : (
-                        renderGame()
+                        <GameComponent gameState={gameState} players={players} pusher={pusher} />
                     )}
                 </>
             )}
