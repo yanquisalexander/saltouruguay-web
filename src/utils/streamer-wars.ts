@@ -255,7 +255,7 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
             };
         }
 
-        const cache = new Cache();
+        const cache = cacheService.create({ ttl: 60 * 60 * 48 });
         const gameState = await cache.get("streamer-wars-gamestate") as any
 
         /* 
