@@ -202,7 +202,7 @@ const GameComponent = ({ gameState, players, pusher, session, channel }: { gameS
     const GAME_CONFIG = useRef({ TeamSelector, SimonSays }).current;
 
     const Component = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
-    const props = { ...gameState.props, players, pusher, session };
+    const props = { ...gameState.props, players, pusher, session, channel };
 
     if (!Component) return (
         <div class="flex flex-col items-center">
