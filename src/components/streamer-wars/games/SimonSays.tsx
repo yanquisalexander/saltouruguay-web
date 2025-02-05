@@ -44,7 +44,7 @@ export const SimonSays = ({
 
     const [playerPattern, setPlayerPattern] = useState<string[]>([]);
     const [activeButton, setActiveButton] = useState<string | null>(null);
-    const [waitingForPattern, setWaitingForPattern] = useState(false);
+    const [waitingNextRound, setWaitingNextRound] = useState(false);
     const [showingPattern, setShowingPattern] = useState(false);
 
     const simonSaysChannel = pusher?.subscribe("streamer-wars.simon-says");
@@ -53,8 +53,11 @@ export const SimonSays = ({
         simonSaysChannel?.bind("game-state", (newGameState: SimonSaysGameState) => {
             setGameState(newGameState);
             setPlayerPattern([]);
-            setWaitingForPattern(true);
-            showPattern(newGameState.pattern);
+            setWaitingNextRound(false);
+
+            if (newGameState.status === 'playing') {
+                showPattern(newGameState.pattern);
+            }
             console.log(newGameState);
         });
 
@@ -73,11 +76,11 @@ export const SimonSays = ({
             await new Promise(resolve => setTimeout(resolve, 300));
         }
         setShowingPattern(false);
-        setWaitingForPattern(false);
+        setWaitingNextRound(false);
     };
 
     const handlePlayerInput = async (color: string) => {
-        if (waitingForPattern || showingPattern) return;
+        if (waitingNextRound || showingPattern) return;
 
         playSound({ sound: STREAMER_WARS_SOUNDS.CLICK_SIMON_SAYS });
 
@@ -89,8 +92,7 @@ export const SimonSays = ({
                 toast.success("Correcto! Sigues en juego");
                 setPlayerPattern([]);
                 playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT });
-                setWaitingForPattern(true);
-
+                setWaitingNextRound(true);
                 await actions.games.simonSays.completePattern({ playerNumber: session.user.id });
                 return;
             }
@@ -109,8 +111,12 @@ export const SimonSays = ({
             return "Esperando que el administrador comience el juego";
         }
 
-        if (waitingForPattern) {
-            return "Esperando a los demás jugadores";
+        if (waitingNextRound) {
+            return "Esperando al siguiente patrón";
+        }
+
+        if (showingPattern) {
+            return "Simon dice...";
         }
 
         return "Tu turno";
@@ -125,16 +131,18 @@ export const SimonSays = ({
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]   
                     from-lime-600 via-transparent to-transparent text-white p-4">
-            <div className="flex gap-2 mt-4">
-                {gameState.pattern.map((color, index) => (
-                    <LucideCircleDotDashed
-                        key={index}
-                        size={24}
-                        class={`text-[var(--color)] ${playerPattern[index] === color ? "scale-125" : "scale-100"} transition-transform duration-300`}
-                        style={{ "--color": playerPattern[index] === color ? color : "white" }}
-                    />
-                ))}
-            </div>
+            {
+                gameState.status !== 'waiting' && (
+
+                    <div className="flex gap-2 mt-4">
+                        {playerPattern.map((color, index) => (
+                            <div className={`size-4 rounded-full bg-gradient-to-b ${colors.find(c => c.name === color)?.gradient}`}
+                                key={index}
+                            />
+                        ))}
+                    </div>
+                )
+            }
 
             <h2 className="text-2xl text-[#b4cd02] font-bold mt-4 font-atomic">
                 Simón dice
@@ -160,9 +168,7 @@ export const SimonSays = ({
                 </div>
             )}
 
-            <div className="mt-4 text-2xl font-bold font-atomic">
-                {gameState.status === 'waiting' ? "Esperando jugadores" : "Jugando"}
-            </div>
+
         </div>
     );
 };
