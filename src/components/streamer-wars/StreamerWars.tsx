@@ -195,5 +195,13 @@ const GameComponent = ({ gameState, players, pusher, session }: { gameState: any
     const Component = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
     const props = { ...gameState.props, players, pusher, session };
 
+    if (!Component) return (
+        <div class="flex flex-col items-center">
+            <h1 class="text-2xl font-bold mb-4">Juego no encontrado</h1>
+            <p class="text-white text-center">El juego seleccionado no está disponible.</p>
+        </div>
+
+    )
+
     return <Component {...props} />;
 }
