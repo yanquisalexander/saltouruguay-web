@@ -56,9 +56,12 @@ export const SimonSays = ({
 
 
     useEffect(() => {
-        actions.games.simonSays.getGameState().then(({ error, data }) => {
-            if (!error && data) setGameState(data.gameState);
-        });
+        document.addEventListener('instructions-ended', () => {
+            actions.games.simonSays.getGameState().then(({ error, data }) => {
+                if (!error && data) setGameState(data.gameState);
+            });
+
+        }, { once: true });
     }, []);
 
     const simonSaysChannel = pusher?.subscribe("streamer-wars.simon-says");
@@ -222,8 +225,10 @@ export const SimonSays = ({
                                         <div
                                             key={name}
                                             className={`size-48 flex justify-center items-center text-xl font-teko uppercase italic font-medium cursor-pointer transition-transform 
-                                        hover:scale-105 active:scale-95 rounded-3xl bg-gradient-to-b ${gradient}
-                                        ${activeButton === name ? "scale-125" : ""} transition-all duration-300`}
+                                         rounded-3xl bg-gradient-to-b ${gradient}
+                                        ${activeButton === name ? "scale-125" : ""} transition-all duration-300
+                                        ${showingPattern ? "pointer-events-none" : "hover:scale-105 active:scale-95"}
+                                        `}
                                             onClick={() => handlePlayerInput(name)}
                                         >
                                             {getTranslation(name)}

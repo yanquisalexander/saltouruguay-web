@@ -78,7 +78,8 @@ export const simonSays = {
             return { gameState };
         },
     }),
-    nextRound: defineAction({
+
+    advanceToNextRoundForCurrentPlayers: defineAction({
         async handler(_, { request }) {
             const session = await getSession(request);
 
@@ -89,7 +90,22 @@ export const simonSays = {
                 });
             }
 
-            const gameState = await games.simonSays.nextRound();
+            const gameState = await games.simonSays.advanceToNextRoundForCurrentPlayers();
+            return { gameState };
+        },
+    }),
+    nextRoundWithOtherPlayers: defineAction({
+        async handler(_, { request }) {
+            const session = await getSession(request);
+
+            if (!session?.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Solo un administrador puede pasar a la siguiente ronda",
+                });
+            }
+
+            const gameState = await games.simonSays.nextRoundWithOtherPlayers();
             return { gameState };
         },
     }),

@@ -61,10 +61,22 @@ const GENERAL_ACTIONS = [
         classes: "bg-yellow-500 hover:bg-yellow-600 !text-black",
         icon: LucideFlag,
         execute: async () => {
-            toast.promise(actions.games.simonSays.nextRound(), {
+            toast.promise(actions.games.simonSays.advanceToNextRoundForCurrentPlayers(), {
                 loading: "Avanzando ronda...",
                 success: "Ronda avanzada",
                 error: "Error al avanzar ronda",
+            });
+        }
+    },
+    {
+        name: "Simón Dice: Siguiente ronda con otros jugadores",
+        classes: "bg-sky-500 hover:bg-sky-600 !text-black",
+        icon: LucideFlag,
+        execute: async () => {
+            toast.promise(actions.games.simonSays.nextRoundWithOtherPlayers(), {
+                loading: "Cambiando jugadores...",
+                success: "Jugadores cambiados",
+                error: "Error al cambiar jugadores",
             });
         }
     },
