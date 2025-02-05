@@ -54,6 +54,14 @@ export const Instructions = ({ duration = 10000, children }: InstructionsProps) 
                 <h2 class="text-2xl fixed bottom-16 font-atomic text-neutral-500 select-none -skew-y-6">
                     <span class="tracking-wider">Guerra de Streamers</span>
                 </h2>
+
+                <span class="fixed bottom-32 text-5xl opacity-30 rotate-[32deg] select-none right-16 font-atomic-extras">
+                    &#x0055;
+                </span>
+
+                <span class="fixed bottom-48 text-5xl opacity-30 rotate-[-16deg] select-none left-16 font-atomic-extras">
+                    &#x0050;
+                </span>
             </div>
         </>
     ) : null;
