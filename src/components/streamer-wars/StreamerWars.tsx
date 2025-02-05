@@ -112,17 +112,9 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         });
 
 
-        presenceChannel.current?.bind("pusher:member_added", (member: any) => {
-            setPlayers((prev) =>
-                prev.some((player) => player.id === member.id)
-                    ? prev
-                    : [
-                        ...prev,
-                        {
-                            ...member,
-                        },
-                    ]
-            );
+        presenceChannel.current?.bind("pusher:member_added", (data: any) => {
+            console.log("New player", data);
+            setPlayers((prev) => [...prev, { ...data }]);
         });
 
         presenceChannel.current?.bind("pusher:member_removed", (data: any) => {
@@ -130,6 +122,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         });
 
         presenceChannel.current?.bind("pusher:subscription_succeeded", (members: any) => {
+            console.log("Members", members);
             const players = Object.values(members.members).map((member: any) => ({
                 ...member,
             }));
@@ -147,7 +140,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             presenceChannel.current?.unbind_all();
             presenceChannel.current?.unsubscribe();
         };
-    }, [session]);
+    }, []);
 
 
 
