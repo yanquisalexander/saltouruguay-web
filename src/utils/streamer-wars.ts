@@ -6,7 +6,6 @@ import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
 import { addRoleToUser, DISCORD_ROLES, removeRoleFromUser, ROLE_GUERRA_STREAMERS } from "@/services/discord";
 import { SALTO_DISCORD_GUILD_ID } from "@/config";
-import Cache from "@/lib/Cache";
 
 
 export interface SimonSaysGameState {
