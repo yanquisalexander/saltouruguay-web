@@ -112,9 +112,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         });
 
 
-        presenceChannel.current?.bind("pusher:member_added", (data: any) => {
-            console.log("New player", data);
-            setPlayers((prev) => [...prev, { ...data }]);
+        presenceChannel.current?.bind("pusher:member_added", ({ id, info }: { id: number, info: any }) => {
+            setPlayers((prev) => [...prev, { id, ...info }]);
         });
 
         presenceChannel.current?.bind("pusher:member_removed", (data: any) => {
