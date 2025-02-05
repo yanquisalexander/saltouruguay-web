@@ -456,3 +456,18 @@ export const getUserIdsOfPlayers = async (): Promise<number[]> => {
         where: not(eq(StreamerWarsPlayersTable.eliminated, true))
     }).then(res => res.map(({ userId }) => userId).filter((userId): userId is number => userId !== null)).catch(() => []);
 }
+
+export const getCurrentInscriptions = async () => {
+    return await client.query.StreamerWarsInscriptionsTable.findMany({
+        with: {
+            user: {
+                columns: {
+                    id: true,
+                    displayName: true,
+                    avatar: true,
+                    discordId: true
+                }
+            }
+        }
+    }).execute();
+}
