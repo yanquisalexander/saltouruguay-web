@@ -16,7 +16,7 @@ export const SimonSays = ({
 }: {
     session: Session;
     pusher: Pusher;
-    players: { id: number; displayName: string; avatar: string }[];
+    players: { id: number; name: string; avatar: string, playerNumber: number }[];
 }) => {
     const colors = [
         { name: "red", gradient: "from-red-400 to-red-600" },
@@ -48,13 +48,11 @@ export const SimonSays = ({
         ? Object.values(gameState.currentPlayers).includes(session.user.streamerWarsPlayerNumber)
         : false;
 
-    console.log(Object.values(gameState.currentPlayers))
 
     const gameIsWaiting = gameState.status === 'waiting';
     const gameIsPlaying = gameState.status === 'playing';
     const gameRivals = Object.values(gameState.currentPlayers).filter(p => p !== playerNumber);
 
-    console.log({ playerNumber, isEliminated, isCompleted, isCurrentPlayerPlaying, gameIsWaiting, gameIsPlaying });
 
     useEffect(() => {
         actions.games.simonSays.getGameState().then(({ error, data }) => {
@@ -146,11 +144,11 @@ export const SimonSays = ({
             </h2>
 
             {gameIsPlaying && isCurrentPlayerPlaying && (
+
                 <div class="flex items-center gap-x-4">
                     <div class="relative">
-                        {console.log(players)}
                         <img
-                            src={players.find(p => p.id === playerNumber)?.avatar}
+                            src={players.find(p => p?.playerNumber === playerNumber)?.avatar}
                             alt="Tu avatar"
                             class="size-10 rounded-full ring-2 ring-white/20"
                         />
@@ -163,7 +161,7 @@ export const SimonSays = ({
                     {gameRivals.map(rival => (
                         <div class="relative">
                             <img
-                                src={players.find(p => p.id === rival)?.avatar}
+                                src={players?.find(p => p?.id === rival)?.avatar}
                                 alt={`Avatar de jugador #${rival}`}
                                 class="size-10 rounded-full ring-2 ring-white/20"
                             />

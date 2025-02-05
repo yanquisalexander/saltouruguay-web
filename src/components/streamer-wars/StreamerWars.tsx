@@ -68,10 +68,9 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [players, setPlayers] = useState<any[]>([]);
     const [dayAvailable, setDayAvailable] = useState(false);
     const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel } = useStreamerWarsSocket(session);
-    const [pusherLoaded, setPusherLoaded] = useState(false);
 
     useEffect(() => {
-        document.addEventListener("splash-screen-ended", () => setPusherLoaded(true), { once: true });
+        document.addEventListener("splash-screen-ended", () => { })
     }, []);
 
     const restoreGameStateFromCache = async () => {
@@ -98,7 +97,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     }, []);
 
     useEffect(() => {
-        if (!pusherLoaded || !session) return; // Asegúrate de que `session` esté disponible
 
         PRELOAD_SOUNDS();
 
@@ -110,16 +108,21 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             document.addEventListener("cinematic-ended", () => setDayAvailable(false), { once: true });
         });
 
-        presenceChannel.current?.bind("pusher:subscription_succeeded", ({ members }: { members: any }) => {
-            setPlayers(Object.values(members));
+
+        presenceChannel.current?.bind("pusher:member_added", (data: any) => {
+            setPlayers((prev) => [...prev, { ...data }]);
         });
 
-        presenceChannel.current?.bind("pusher:member_added", (member: any) => {
-            setPlayers((prev) => [...prev, member.info]);
+        presenceChannel.current?.bind("pusher:member_removed", (data: any) => {
+            setPlayers((prev) => prev.filter((player) => player.id !== data.id));
         });
 
-        presenceChannel.current?.bind("pusher:member_removed", (member: any) => {
-            setPlayers((prev) => prev.filter((player) => player.playerNumber !== member.info.playerNumber));
+        presenceChannel.current?.bind("pusher:subscription_succeeded", (members: any) => {
+            const players = Object.values(members.members).map((member: any) => ({
+                ...member,
+            }));
+
+            setPlayers(players);
         });
 
         actions.streamerWars.getGameState().then(({ data, error }) => {
@@ -132,7 +135,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             presenceChannel.current?.unbind_all();
             presenceChannel.current?.unsubscribe();
         };
-    }, [pusherLoaded, session]); // Asegúrate de que `session` esté en las dependencias
+    }, [session]); // Asegúrate de que `session` esté en las dependencias
 
     if (!session) {
         return <div>Loading session...</div>; // Maneja el caso en que `session` no esté disponible
@@ -140,9 +143,9 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
     return (
         <>
-            <SplashScreen onEnd={() => setPusherLoaded(true)} />
+            <SplashScreen onEnd={() => { }} />
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
-            {pusherLoaded && pusher && globalChannel.current && presenceChannel.current && session && (
+            {pusher && globalChannel.current && presenceChannel.current && session && (
                 <>
                     {!gameState ? (
                         dayAvailable ? (
