@@ -32,8 +32,6 @@ En caso de cualquier consulta o duda, favor de comunicarse con el equipo de orga
 
 const session = await getSession(Astro.request);
 
-console.log({ session });
-
 const HAS_DISCORD_LINKED = !!session?.user.discordId;
 
 const discordInfo = await getDiscordUser(

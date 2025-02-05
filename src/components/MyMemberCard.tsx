@@ -25,8 +25,6 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
     const [generating, setGenerating] = useState(false)
     const [skin, setSkin] = useState(initialSkin)
 
-    console.log({ session, stickers, tier, selectedStickers })
-
     const shareMyCard = () => {
         const message = `¡Hola! Soy Miembro Saltano, ¡conoce más sobre mí! 🚀🇺🇾
 
