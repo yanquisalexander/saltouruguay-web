@@ -8,6 +8,8 @@ import { useEffect, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
+import { Instructions } from "../Instructions";
+
 
 export const ButtonBox = ({ session, channel, teamsQuantity, playersPerTeam }: { session: Session; channel: Channel; teamsQuantity: number; playersPerTeam: number }) => {
     const [selectedTeam, setSelectedTeam] = useState<typeof TEAMS[keyof typeof TEAMS] | null>(null);
@@ -82,6 +84,11 @@ export const ButtonBox = ({ session, channel, teamsQuantity, playersPerTeam }: {
 
     return (
         <div class="flex flex-col items-center justify-center w-full space-y-6 mt-8">
+            <Instructions duration={10000}>
+                <p>
+                    Para unirte a un equipo, selecciona uno de los botones de abajo.
+                </p>
+            </Instructions>
             {/* Botonera de Equipos */}
             <header className="text-center">
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text">

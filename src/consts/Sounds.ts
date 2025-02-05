@@ -12,6 +12,7 @@ export const STREAMER_WARS_SOUNDS = {
     CLICK_SIMON_SAYS: "click-simon-says",
     SIMON_SAYS_CORRECT: "simon-says-correct",
     SIMON_SAYS_ERROR: "simon-says-error",
+    TICK: "effect_tick",
 }
 
 
