@@ -113,10 +113,7 @@ export const StreamerWarsAdmin = () => {
             <h1 class="text-3xl font-bold text-center mb-4">Admin Streamer Wars</h1>
             {pusher && (
                 <div class="flex flex-col items-center">
-                    <StreamerWarsPlayers pusher={pusher} />
-
-
-                    <div class="w-full mt-8">
+                    <div class="w-full max-w-2xl mt-8">
                         <label class="block text-lg font-bold mb-2" for="announcement">Anuncio</label>
                         <textarea
                             id="announcement"
@@ -137,7 +134,7 @@ export const StreamerWarsAdmin = () => {
 
 
 
-                    <div class="actions mt-8">
+                    <div class="actions mt-8 mb-8">
                         <h2 class="text-2xl font-bold mb-4">Acciones generales</h2>
                         <div class="grid grid-cols-2 gap-4">
                             {GENERAL_ACTIONS.map(({ name, classes, icon: Icon, execute }) => (
@@ -154,6 +151,10 @@ export const StreamerWarsAdmin = () => {
                         </div>
 
                     </div>
+                    <StreamerWarsPlayers pusher={pusher} />
+
+
+
                 </div>
             )}
         </div>
