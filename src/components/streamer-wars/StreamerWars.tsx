@@ -136,16 +136,20 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             presenceChannel.current?.unbind_all();
             presenceChannel.current?.unsubscribe();
         };
-    }, [session]); // Asegúrate de que `session` esté en las dependencias
+    }, [session]);
 
-    if (!session) {
-        return <div>Loading session...</div>; // Maneja el caso en que `session` no esté disponible
-    }
+
 
     return (
         <>
             <SplashScreen onEnd={() => { }} />
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
+            <header class="flex justify-between items-center">
+                <h2 class="text-xl  font-atomic text-[#b4cd02] -skew-y-6">
+                    <span class="tracking-wider">Guerra de Streamers</span>
+                </h2>
+
+            </header>
             {pusher && globalChannel.current && presenceChannel.current && session && (
                 <>
                     {
