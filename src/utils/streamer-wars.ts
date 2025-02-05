@@ -131,6 +131,8 @@ export const games = {
             await cache.set(cacheKey, newGameState);
             await pusher.trigger("streamer-wars.simon-says", "pattern-failed", { playerNumber });
             await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
+
+            await eliminatePlayer(playerNumber);
             return newGameState;
         },
 
@@ -470,4 +472,13 @@ export const getCurrentInscriptions = async () => {
             }
         }
     }).execute();
+}
+
+export const isPlayerEliminated = async (playerNumber: number) => {
+    return await client.query.StreamerWarsPlayersTable.findFirst({
+        columns: {
+            eliminated: true
+        },
+        where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber)
+    }).then(res => res?.eliminated ?? false).catch(() => false);
 }

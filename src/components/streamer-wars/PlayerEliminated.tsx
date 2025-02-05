@@ -1,4 +1,5 @@
 import type { Session } from "@auth/core/types";
+import { navigate } from "astro:transitions/client";
 import { useEffect, useState } from "preact/hooks";
 
 export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: number | null, session: Session }) => {
@@ -12,6 +13,10 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
     useEffect(() => {
         if (playerNumber) {
             setShowing(true);
+
+            if (playerNumber === session.user.streamerWarsPlayerNumber) {
+                setTimeout(() => navigate('/guerra-streamers'), 2000);
+            }
             setTimeout(() => setShowing(false), 5000);
         }
     }, [playerNumber]);
