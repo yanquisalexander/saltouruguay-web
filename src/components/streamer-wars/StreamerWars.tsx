@@ -145,9 +145,22 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             <SplashScreen onEnd={() => { }} />
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
             <header class="flex justify-between items-center">
-                <h2 class="text-xl  font-atomic text-[#b4cd02] -skew-y-6">
+                <h2 class="text-xl  font-atomic text-[#b4cd02] hover:saturate-200 hover:scale-110 hover:rotate-3 transition-transform -skew-y-6">
                     <span class="tracking-wider">Guerra de Streamers</span>
                 </h2>
+
+                <button class="flex gap-x-2 hover:scale-110 hover:saturate-150 hover:rotate-2 border-dashed border-2 border-white/20 hover:border-white transition-all rounded-md px-4 cursor-pointer py-1 items-center">
+                    <span class="text-[#b4cd02] font-atomic text-2xl">#{session.user.streamerWarsPlayerNumber?.toString().padStart(3, "0")}</span>
+                    <img src={`/images/streamer-wars/players/${session.user.streamerWarsPlayerNumber?.toString().padStart(3, "0")}.webp`}
+                        onError={(e) => {
+                            e.currentTarget.src = session.user.image!;
+                        }}
+                        alt={session.user.name!}
+                        class="size-12 rounded-full"
+                    />
+
+
+                </button>
 
             </header>
             {pusher && globalChannel.current && presenceChannel.current && session && (
