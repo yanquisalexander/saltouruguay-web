@@ -18,6 +18,13 @@ export const Instructions = ({ duration = 10000, children }: InstructionsProps) 
                 if (prev <= 1) {
                     // @ts-ignore
                     clearInterval(interval);
+                    /* 
+                        Emit instructions-ended event
+                    */
+
+                    const event = new CustomEvent('instructions-ended');
+                    document.dispatchEvent(event);
+
                     return 0;
                 }
 
