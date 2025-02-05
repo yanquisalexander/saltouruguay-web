@@ -45,14 +45,16 @@ export const useStreamerWarsSocket = (session: Session) => {
                 props: { session, pusher: pusherInstance, ...props },
             });
 
-            const START_GAME_SOUNDS = [
-                STREAMER_WARS_SOUNDS.ES_HORA_DE_JUGAR,
-                STREAMER_WARS_SOUNDS.QUE_COMIENCE_EL_JUEGO,
-            ]
+            document.addEventListener('instructions-ended', () => {
+                const START_GAME_SOUNDS = [
+                    STREAMER_WARS_SOUNDS.ES_HORA_DE_JUGAR,
+                    STREAMER_WARS_SOUNDS.QUE_COMIENCE_EL_JUEGO,
+                ]
 
-            const randomSound = START_GAME_SOUNDS[Math.floor(Math.random() * START_GAME_SOUNDS.length)];
+                const randomSound = START_GAME_SOUNDS[Math.floor(Math.random() * START_GAME_SOUNDS.length)];
 
-            playSound({ sound: randomSound });
+                playSound({ sound: randomSound });
+            }, { once: true });
         });
 
         return () => {
