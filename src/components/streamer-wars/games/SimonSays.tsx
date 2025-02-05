@@ -152,7 +152,7 @@ export const SimonSays = ({
                 {getStatusMessage()}
             </div>
 
-            {gameState.status === 'playing' && (
+            {gameState.status === 'playing' && session.user.streamerWarsPlayerNumber !== undefined && gameState.currentPlayers[session.user.streamerWarsPlayerNumber] && (
                 <div className="grid grid-cols-2 gap-4 mt-8">
                     {colors.map(({ name, gradient }) => (
                         <div
@@ -167,6 +167,42 @@ export const SimonSays = ({
                     ))}
                 </div>
             )}
+
+            {
+                /* 
+                    El jugador actual ya ha jugado?
+                */
+
+                session.user.streamerWarsPlayerNumber !== undefined && gameState.completedPlayers.includes(session.user.streamerWarsPlayerNumber) && (
+                    <div className="text-center mt-4">
+                        <LucideCircleDotDashed className="size-16 text-[#b4cd02]" />
+                        <p className="text-lg font-bold font-atomic">
+                            ¡Felicidades!<br />
+                            Continúas en el desafío
+                        </p>
+                    </div>
+                )
+            }
+
+            {
+                /* 
+                    Aún no ha jugado el jugador actual y el juego está en curso sin el jugador actual?
+                */
+
+                session.user.streamerWarsPlayerNumber !== undefined && !gameState.completedPlayers.includes(session.user.streamerWarsPlayerNumber) && gameState.status === 'playing' && !gameState.currentPlayers[session.user.streamerWarsPlayerNumber] && (
+                    <div className="text-center mt-4">
+                        <LucideCircleDotDashed className="size-16 text-[#b4cd02]" />
+                        <p className="text-lg font-bold font-atomic">
+                            ¡Espera tu turno!<br />
+                            Pronto será tu oportunidad
+                        </p>
+                    </div>
+                )
+
+
+            }
+
+
 
 
         </div>
