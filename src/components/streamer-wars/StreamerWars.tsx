@@ -115,13 +115,13 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         globalChannel.current?.bind('tech-difficulties', () => {
             playSound({ sound: STREAMER_WARS_SOUNDS.PROBLEMAS_TECNICOS, volume: 1 });
 
-            toast(`Estamos experimentando problemas técnicos. Por favor, espera unos momentos.`, {
+            toast(`Estamos experimentando dificultades técnicas. Por favor, espera unos momentos.`, {
                 icon: <LucideBug />,
                 duration: 8000,
                 position: 'top-right',
                 richColors: true,
                 classNames: {
-                    toast: 'bg-white text-black  bg-radial-[at_25%_25%] from-white to-zinc-900 to-[75%]',
+                    toast: 'bg-neutral-900 text-white border border-neutral-600',
                     icon: 'text-yellow-600 flex flex-col justify-center items-center p-5 rounded-full',
                     title: 'font-rubik uppercase font-medium',
                 }

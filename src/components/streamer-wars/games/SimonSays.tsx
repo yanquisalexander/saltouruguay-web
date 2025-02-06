@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
 import { Instructions } from "../Instructions";
+import { SimonSaysButtons, colors } from "./SimonSaysButtons"; // Asegúrate de ajustar la ruta según tu estructura
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -19,12 +20,7 @@ export const SimonSays = ({
     pusher: Pusher;
     players: { id: number; name: string; avatar: string; playerNumber: number }[];
 }) => {
-    const colors = [
-        { name: "red", gradient: "from-red-400 to-red-600" },
-        { name: "blue", gradient: "from-blue-400 to-blue-600" },
-        { name: "green", gradient: "from-green-400 to-green-600" },
-        { name: "yellow", gradient: "from-yellow-400 to-yellow-600" }
-    ] as const;
+
 
     const [gameState, setGameState] = useState<SimonSaysGameState>({
         teams: {},
@@ -98,6 +94,10 @@ export const SimonSays = ({
             );
         });
 
+        simonSaysChannel?.bind("client-player-input", ({ playerNumber, color }: { playerNumber: number; color: string }) => {
+            console.log(`Jugador #${playerNumber} ha seleccionado el color ${color}`);
+        });
+
         // Cleanup: desuscribir eventos al desmontar
         return () => {
             simonSaysChannel?.unbind_all();
@@ -123,6 +123,11 @@ export const SimonSays = ({
         playSound({ sound: STREAMER_WARS_SOUNDS.CLICK_SIMON_SAYS });
         const updatedPattern = [...playerPattern, color];
         setPlayerPattern(updatedPattern);
+
+        simonSaysChannel?.trigger("client-player-input", {
+            playerNumber: session.user.id,
+            color
+        });
 
         if (color !== gameState.pattern[updatedPattern.length - 1]) {
             toast.error("¡Incorrecto! Has sido eliminado");
@@ -169,15 +174,14 @@ export const SimonSays = ({
             </Instructions>
             <div
                 className="flex flex-col items-center justify-center min-h-screen bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]   
-                  from-lime-600 via-transparent to-transparent text-white p-4"
+          from-lime-600 via-transparent to-transparent text-white p-4"
             >
                 {!gameIsWaiting && (
                     <div className="flex gap-2 mt-4">
                         {playerPattern.map((color, index) => (
                             <div
                                 key={index}
-                                className={`size-4 rounded-full bg-gradient-to-b ${colors.find(c => c.name === color)?.gradient
-                                    }`}
+                                className={`size-4 rounded-full bg-gradient-to-b ${colors.find(c => c.name === color)?.gradient}`}
                             />
                         ))}
                     </div>
@@ -187,7 +191,7 @@ export const SimonSays = ({
                     Simón dice
                 </h2>
 
-                {/* Muestra los avatares de los jugadores */}
+                {/* Mostrar avatares de jugadores */}
                 {gameIsPlaying && (
                     <div class="flex items-center gap-x-4 mt-4">
                         {isCurrentPlayerPlaying && (
@@ -223,7 +227,7 @@ export const SimonSays = ({
                     </div>
                 )}
 
-                {/* Si no es tu turno, muestra un mensaje indicando que tus compañeros están jugando */}
+                {/* Mensaje para jugadores que no están en turno */}
                 {gameIsPlaying && !isCurrentPlayerPlaying && (
                     <div className="text-center mt-4">
                         <p className="text-2xl font-teko">
@@ -248,21 +252,11 @@ export const SimonSays = ({
                             </div>
                         ) : isCurrentPlayerPlaying ? (
                             !isCompleted ? (
-                                <div className="grid grid-cols-2 gap-4 mt-8">
-                                    {colors.map(({ name, gradient }) => (
-                                        <div
-                                            key={name}
-                                            className={`size-48 flex justify-center items-center text-xl font-teko uppercase italic font-medium cursor-pointer transition-transform 
-                        rounded-3xl bg-gradient-to-b ${gradient}
-                        ${activeButton === name ? "scale-125" : ""} transition-all duration-300
-                        ${showingPattern ? "pointer-events-none" : "hover:scale-105 active:scale-95"}
-                      `}
-                                            onClick={() => handlePlayerInput(name)}
-                                        >
-                                            {getTranslation(name)}
-                                        </div>
-                                    ))}
-                                </div>
+                                <SimonSaysButtons
+                                    activeButton={activeButton}
+                                    showingPattern={showingPattern}
+                                    onClick={handlePlayerInput}
+                                />
                             ) : (
                                 <div className="text-center mt-4">
                                     <p className="text-lg font-bold font-atomic">

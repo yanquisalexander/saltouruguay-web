@@ -316,10 +316,10 @@ export const streamerWars = {
 
             console.log({ userIds });
 
-            await pusher.trigger('cinematic-player', 'new-event', {
-                targetUsers: userIds,
-                videoUrl: 'url',
-            });
+            /*  await pusher.trigger('cinematic-player', 'new-event', {
+                 targetUsers: userIds,
+                 videoUrl: 'url',
+             }); */
 
             await pusher.trigger("streamer-wars", "day-finished", null);
             return { success: true }
@@ -503,7 +503,7 @@ export const streamerWars = {
                     message: "No tienes permisos para enviar mensajes de dificultades técnicas"
                 });
             }
-            const message = "¡Dificultades técnicas! Estamos trabajando para solucionar el problema";
+            const message = "En este momento estamos experimentando dificultades técnicas. Por favor, esperen"
             await client
                 .insert(StreamerWarsChatMessagesTable)
                 .values({ userId: session.user.id, message, isAnnouncement: true })
