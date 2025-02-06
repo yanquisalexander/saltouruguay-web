@@ -79,7 +79,7 @@ export const SimonSays = ({
         });
 
         simonSaysChannel?.bind("pattern-failed", ({ playerNumber }: { playerNumber: number }) => {
-            toast.error(`Jugador #${playerNumber} ha sido eliminado`, {
+            toast.error(`Jugador #${playerNumber.toString().padStart(3, '0')} ha sido eliminado`, {
                 position: "bottom-center"
             });
         });
@@ -87,7 +87,7 @@ export const SimonSays = ({
 
         simonSaysChannel?.bind("completed-pattern", ({ playerNumber }: { playerNumber: number }) => {
             if (playerNumber === session.user.streamerWarsPlayerNumber!) return;
-            toast.success(`Jugador #${playerNumber} ha completado el patrón`, {
+            toast.success(`Jugador #${playerNumber.toString().padStart(3, '0')} ha completado el patrón`, {
                 position: "bottom-center"
             });
         });
