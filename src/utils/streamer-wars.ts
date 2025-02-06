@@ -120,12 +120,19 @@ export const games = {
             const cache = createCache();
             const gameState = await games.simonSays.getGameState();
 
-            // Agrega el jugador fallido tanto a eliminados como a la lista de quienes ya han jugado
+            // Agrega el jugador a la lista de eliminados
+
             const newEliminatedPlayers = Array.from(
                 new Set([...gameState.eliminatedPlayers, playerNumber])
             );
+
+            // Agrega a todos los jugadores asignados a la lista de jugadores que ya jugaron
+
             const newPlayerWhoAlreadyPlayed = Array.from(
-                new Set([...gameState.playerWhoAlreadyPlayed, playerNumber])
+                new Set([
+                    ...gameState.playerWhoAlreadyPlayed,
+                    ...Object.values(gameState.currentPlayers).filter((player) => player !== null),
+                ])
             );
 
             const newGameState: SimonSaysGameState = {
