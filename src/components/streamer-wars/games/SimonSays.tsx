@@ -79,8 +79,19 @@ export const SimonSays = ({
         });
 
         simonSaysChannel?.bind("pattern-failed", ({ playerNumber }: { playerNumber: number }) => {
-            toast.error(`Jugador #${playerNumber} ha sido eliminado`);
+            toast.error(`Jugador #${playerNumber} ha sido eliminado`, {
+                position: "bottom-center"
+            });
         });
+
+
+        simonSaysChannel?.bind("completed-pattern", ({ playerNumber }: { playerNumber: number }) => {
+            if (playerNumber === session.user.streamerWarsPlayerNumber!) return;
+            toast.success(`Jugador #${playerNumber} ha completado el patrón`, {
+                position: "bottom-center"
+            });
+        });
+
     }, [simonSaysChannel]);
 
     const showPattern = async (pattern: string[]) => {
@@ -110,7 +121,9 @@ export const SimonSays = ({
         }
 
         if (updatedPattern.length === gameState.pattern.length) {
-            toast.success("Correcto! Sigues en juego");
+            toast.success("Correcto! Sigues en juego", {
+                position: "bottom-center"
+            });
             playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT });
             setWaitingNextRound(true);
             await actions.games.simonSays.completePattern({ playerNumber: session.user.id });

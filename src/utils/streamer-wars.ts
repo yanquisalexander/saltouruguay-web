@@ -103,12 +103,17 @@ export const games = {
                 completedPlayers: newCompletedPlayers,
             };
 
-            await cache.set(CACHE_KEY, newGameState);
 
             // Si todos los jugadores de cada equipo han completado el patrón, se avanza a la siguiente ronda
             const allCompleted = Object.values(gameState.currentPlayers).every(
                 (player) => player === null || newCompletedPlayers.includes(player)
             );
+
+            await cache.set(CACHE_KEY, newGameState);
+
+            await pusher.trigger("streamer-wars.simon-says", "completed-pattern", {
+                playerNumber,
+            });
 
             if (allCompleted) {
                 await games.simonSays.advanceToNextRoundForCurrentPlayers();
