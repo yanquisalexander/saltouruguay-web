@@ -13,6 +13,7 @@ import { WaitingRoom } from "./views/WaitingRoom";
 import { TeamSelector } from "./views/TeamSelector";
 import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 import { actions } from "astro:actions";
+import { LucideBug } from "lucide-preact";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -110,6 +111,22 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         globalChannel.current?.bind("day-finished", () => {
             document.addEventListener("cinematic-ended", () => setDayAvailable(false), { once: true });
         });
+
+        globalChannel.current?.bind('tech-difficulties', () => {
+            playSound({ sound: STREAMER_WARS_SOUNDS.PROBLEMAS_TECNICOS, volume: 1 });
+
+            toast(`Estamos experimentando problemas técnicos. Por favor, espera unos momentos.`, {
+                icon: <LucideBug />,
+                duration: 8000,
+                position: 'top-right',
+                richColors: true,
+                classNames: {
+                    toast: 'bg-white text-black  bg-radial-[at_25%_25%] from-white to-zinc-900 to-[75%]',
+                    icon: 'text-yellow-600 flex flex-col justify-center items-center p-5 rounded-full',
+                    title: 'font-rubik uppercase font-medium',
+                }
+            })
+        })
 
 
         presenceChannel.current?.bind("pusher:member_added", ({ id, info }: { id: number, info: any }) => {

@@ -62,9 +62,6 @@ export const WaitingRoom = ({ session, channel }: { session: Session; channel: C
             }
         })
 
-        channel.bind('tech-difficulties', () => {
-            playSound({ sound: STREAMER_WARS_SOUNDS.PROBLEMAS_TECNICOS, volume: 1 });
-        })
 
         channel.bind("new-message", ({ user, message, type, suppressAudio }: { user: string; message: string, type?: string, suppressAudio?: boolean }) => {
             setMessages((prev) => [...prev, { user, message, isAnnouncement: type === "announcement" }]);
