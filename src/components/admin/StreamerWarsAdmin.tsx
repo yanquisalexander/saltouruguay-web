@@ -5,7 +5,7 @@ import Pusher from "pusher-js";
 import { StreamerWarsPlayers } from "./streamer-wars/Players";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
-import { LucideBellRing, LucideCoffee, LucideFlag, LucideLockKeyholeOpen } from "lucide-preact";
+import { LucideBellRing, LucideCoffee, LucideFlag, LucideLockKeyholeOpen, LucideTrash2 } from "lucide-preact";
 
 const GENERAL_ACTIONS = [
     {
@@ -89,6 +89,18 @@ const GENERAL_ACTIONS = [
                 loading: "Enviando jugadores a sala de espera...",
                 success: "Jugadores enviados a sala de espera",
                 error: "Error al enviar jugadores a sala de espera",
+            });
+        }
+    },
+    {
+        name: "Limpiar el chat",
+        classes: "bg-gray-500 hover:bg-gray-600 !text-black",
+        icon: LucideTrash2,
+        execute: async () => {
+            toast.promise(actions.streamerWars.clearChat(), {
+                loading: "Limpiando chat...",
+                success: "Chat limpiado",
+                error: "Error al limpiar chat",
             });
         }
     }
