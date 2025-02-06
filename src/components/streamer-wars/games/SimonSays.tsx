@@ -33,7 +33,8 @@ export const SimonSays = ({
         pattern: [],
         eliminatedPlayers: [],
         status: 'waiting',
-        completedPlayers: []
+        completedPlayers: [],
+        playerWhoAlreadyPlayed: []
     });
 
     const [playerPattern, setPlayerPattern] = useState<string[]>([]);
