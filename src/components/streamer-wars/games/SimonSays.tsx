@@ -3,7 +3,6 @@ import type { SimonSaysGameState } from "@/utils/streamer-wars";
 import { getTranslation } from "@/utils/translate";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
-import { LucideCircleDotDashed } from "lucide-preact";
 import { useState, useEffect, useCallback } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
