@@ -308,7 +308,7 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
         if (!user || !user.discordId) {
             return {
                 success: false,
-                error: "No se encontró el usuario asociado al jugador",
+                error: "Parece que tu usuario no está asociado a Discord. Por favor, contacta a un moderador",
             };
         }
 
@@ -432,7 +432,7 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
         if (!user || !user.discordId) {
             return {
                 success: false,
-                error: "Parece que tu usuario no está asociado a Discord. Por favor, contacta a un moderador",
+                error: "Parece que el usuario no está asociado a Discord. No se pudo remover el rol",
             };
         }
 
