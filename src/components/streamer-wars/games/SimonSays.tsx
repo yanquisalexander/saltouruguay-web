@@ -57,11 +57,13 @@ export const SimonSays = ({
 
     useEffect(() => {
         document.addEventListener('instructions-ended', () => {
-            actions.games.simonSays.getGameState().then(({ error, data }) => {
-                if (!error && data) setGameState(data.gameState);
-            });
-
+            setTimeout(() => {
+                actions.games.simonSays.getGameState().then(({ error, data }) => {
+                    if (!error && data) setGameState(data.gameState);
+                });
+            }, 2000);
         }, { once: true });
+
     }, []);
 
     const simonSaysChannel = pusher?.subscribe("streamer-wars.simon-says");

@@ -96,27 +96,18 @@ export const games = {
                 new Set([...gameState.completedPlayers, playerNumber])
             );
 
-            const newTeams = Object.fromEntries(
-                Object.entries(gameState.teams).map(([team, data]) => [
-                    team,
-                    {
-                        ...data,
-                        played: Array.from(new Set([...data.played, playerNumber])),
-                    },
-                ])
-            );
+
 
             const newGameState: SimonSaysGameState = {
                 ...gameState,
                 completedPlayers: newCompletedPlayers,
-                teams: newTeams,
             };
 
             await cache.set(CACHE_KEY, newGameState);
 
             // Si todos los jugadores de cada equipo han completado el patrón, se avanza a la siguiente ronda
-            const allCompleted = Object.values(newGameState.teams).every((team) =>
-                team.players.every((player) => newGameState.completedPlayers.includes(player))
+            const allCompleted = Object.values(gameState.currentPlayers).every(
+                (player) => player === null || newCompletedPlayers.includes(player)
             );
 
             if (allCompleted) {
