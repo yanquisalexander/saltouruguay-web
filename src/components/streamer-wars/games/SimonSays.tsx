@@ -208,9 +208,14 @@ export const SimonSays = ({
                     </div>
                 )}
 
-                <div className="mt-4 text-3xl font-medium font-teko italic">
-                    {getStatusMessage()}
-                </div>
+                {
+                    isCurrentPlayerPlaying && (
+
+                        <div className="mt-4 text-3xl font-medium font-teko italic">
+                            {getStatusMessage()}
+                        </div>
+                    )
+                }
 
                 {gameIsPlaying && (
                     <>
