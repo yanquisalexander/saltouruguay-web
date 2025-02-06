@@ -5,9 +5,11 @@ import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 interface InstructionsProps {
     duration?: number;
     children: ComponentChildren;
+    customTitle?: string;
+    executeOnMount?: () => void;
 }
 
-export const Instructions = ({ duration = 10000, children }: InstructionsProps) => {
+export const Instructions = ({ duration = 10000, children, customTitle, executeOnMount }: InstructionsProps) => {
     const [show, setShow] = useState(true);
     const [timeLeft, setTimeLeft] = useState(duration / 1000);
 
@@ -40,6 +42,12 @@ export const Instructions = ({ duration = 10000, children }: InstructionsProps) 
         };
     }, [duration]);
 
+    useEffect(() => {
+        if (executeOnMount) {
+            executeOnMount();
+        }
+    }, []);
+
     return show ? (
         <>
             <div className={`fixed inset-0 bg-black flex flex-col justify-center items-center z-[8000] transition-opacity duration-500 ${show ? 'opacity-100 animate-fade-in' : 'opacity-0 animate-fade-out'}`}>
@@ -49,7 +57,7 @@ export const Instructions = ({ duration = 10000, children }: InstructionsProps) 
                 <div className=" p-8 rounded-xl backdrop-blur-sm text-white text-center">
                     <header>
                         <h1 className="text-3xl font-mono font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text">
-                            Instrucciones
+                            {customTitle ?? "Instrucciones"}
                         </h1>
                     </header>
                     <div className="mt-6 space-y-4">
