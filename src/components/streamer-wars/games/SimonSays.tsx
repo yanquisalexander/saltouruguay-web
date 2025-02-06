@@ -247,7 +247,7 @@ export const SimonSays = ({
                             )
                         ) : !isEliminated && (
                             <div className="text-center mt-4">
-                                <p className="text-lg font-bold font-atomic">
+                                <p className="text-2xl font-teko">
                                     ¡Espera tu turno!<br />
                                     Pronto será tu oportunidad
                                 </p>
