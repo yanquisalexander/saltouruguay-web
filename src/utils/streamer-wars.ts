@@ -432,16 +432,17 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
         if (!user || !user.discordId) {
             return {
                 success: false,
-                error: "No se encontró el usuario asociado al jugador",
+                error: "Parece que tu usuario no está asociado a Discord. Por favor, contacta a un moderador",
             };
         }
 
-        // Remover rol del usuario en Discord
-        await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId, DISCORD_ROLES.EQUIPO_AZUL);
-        await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId, DISCORD_ROLES.EQUIPO_ROJO);
-        await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId, DISCORD_ROLES.EQUIPO_AMARILLO);
-        await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId, DISCORD_ROLES.EQUIPO_MORADO);
-        await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId, DISCORD_ROLES.EQUIPO_BLANCO);
+        await Promise.all(
+            [DISCORD_ROLES.EQUIPO_AZUL, DISCORD_ROLES.EQUIPO_ROJO, DISCORD_ROLES.EQUIPO_AMARILLO, DISCORD_ROLES.EQUIPO_MORADO, DISCORD_ROLES.EQUIPO_BLANCO].map(roleId =>
+                removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId!, roleId)
+            )
+        );
+
+
 
         // Notificar al canal mediante Pusher
         await pusher.trigger("streamer-wars", "player-removed", { playerNumber });
