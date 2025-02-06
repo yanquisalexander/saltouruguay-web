@@ -4,7 +4,7 @@ import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWa
 import Cache from "@/lib/Cache";
 import cacheService from "@/services/cache";
 import { pusher } from "@/utils/pusher";
-import { eliminatePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam } from "@/utils/streamer-wars";
+import { eliminatePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -540,4 +540,26 @@ export const streamerWars = {
             return { success: true }
         }
     }),
+    resetRoles: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para reiniciar los roles"
+                });
+            }
+
+            await resetRoles();
+
+            /* 
+                Resetear los roles implica:
+                - Eliminar todos los roles en Discord
+            */
+
+            return { success: true }
+        }
+    }),
+
 }

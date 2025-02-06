@@ -5,7 +5,7 @@ import Pusher from "pusher-js";
 import { StreamerWarsPlayers } from "./streamer-wars/Players";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
-import { LucideBellRing, LucideCoffee, LucideFlag, LucideLockKeyholeOpen, LucideTrash2 } from "lucide-preact";
+import { LucideBellRing, LucideCoffee, LucideFlag, LucideLockKeyholeOpen, LucideRefreshCw, LucideTrash2 } from "lucide-preact";
 
 const GENERAL_ACTIONS = [
     {
@@ -101,6 +101,17 @@ const GENERAL_ACTIONS = [
                 loading: "Limpiando chat...",
                 success: "Chat limpiado",
                 error: "Error al limpiar chat",
+            });
+        }
+    },
+    {
+        name: "Reiniciar Roles",
+        classes: "bg-gray-500 hover:bg-gray-600 !text-black",
+        icon: LucideRefreshCw,
+        execute: async () => {
+            toast.promise(actions.streamerWars.resetRoles(), {
+                loading: "Reiniciando roles...",
+                error: "Error al reiniciar roles",
             });
         }
     }

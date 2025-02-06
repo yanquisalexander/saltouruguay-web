@@ -4,7 +4,7 @@ import cacheService from "@/services/cache";
 import { and, asc, count, eq, not, or } from "drizzle-orm";
 import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
-import { addRoleToUser, DISCORD_ROLES, removeRoleFromUser, ROLE_GUERRA_STREAMERS } from "@/services/discord";
+import { addRoleToUser, DISCORD_ROLES, getDiscordUser, getGuildMember, removeRoleFromUser, ROLE_GUERRA_STREAMERS } from "@/services/discord";
 import { SALTO_DISCORD_GUILD_ID } from "@/config";
 
 
@@ -536,4 +536,21 @@ export const isPlayerEliminated = async (playerNumber: number) => {
         },
         where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber)
     }).then(res => res?.eliminated ?? false).catch(() => false);
+}
+
+export const resetRoles = async () => {
+    const players = await getPlayers();
+    for (const player of players) {
+        const guildMember = await getGuildMember(SALTO_DISCORD_GUILD_ID, player.user?.discordId!)
+
+        const { roles } = guildMember as { roles: string[] };
+
+        for (const roleId of roles) {
+            if (roleId === DISCORD_ROLES.EQUIPO_AZUL || roleId === DISCORD_ROLES.EQUIPO_ROJO || roleId === DISCORD_ROLES.EQUIPO_AMARILLO || roleId === DISCORD_ROLES.EQUIPO_MORADO || roleId === DISCORD_ROLES.EQUIPO_BLANCO) {
+                await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, player.user?.discordId!, roleId);
+            }
+        }
+
+
+    }
 }

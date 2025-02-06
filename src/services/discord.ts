@@ -82,6 +82,10 @@ export const getDiscordUser = async (userId: string) => {
     return discord.get(Routes.user(userId)) as Promise<RESTGetAPIUserResult>;
 }
 
+export const getGuildMember = async (guildId: Snowflake, userId: Snowflake) => {
+    return discord.get(Routes.guildMember(guildId, userId))
+}
+
 export const addRoleToUser = async (guildId: Snowflake, userId: Snowflake, roleId: Snowflake) => {
     try {
         return discord.put(Routes.guildMemberRole(guildId, userId, roleId))
