@@ -540,8 +540,9 @@ export const isPlayerEliminated = async (playerNumber: number) => {
 
 export const resetRoles = async () => {
     const players = await getPlayers();
-    for (const player of players) {
-        const guildMember = await getGuildMember(SALTO_DISCORD_GUILD_ID, player.user?.discordId!)
+    for (const player of players.filter(player => !player.eliminated)) {
+        if (!player.user?.discordId) continue;
+        const guildMember = await getGuildMember(SALTO_DISCORD_GUILD_ID, player.user.discordId)
 
         const { roles } = guildMember as { roles: string[] };
 
