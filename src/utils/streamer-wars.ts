@@ -58,7 +58,6 @@ export const games = {
         startGame: async (teams: Record<string, { players: number[] }>) => {
             const cache = createCache();
 
-            // Selecciona aleatoriamente un jugador actual por cada equipo
             const currentPlayers = Object.fromEntries(
                 Object.entries(teams).map(([team, data]) => {
                     const chosenPlayer =
@@ -93,14 +92,11 @@ export const games = {
             const newCompletedPlayers = Array.from(
                 new Set([...gameState.completedPlayers, playerNumber])
             );
-            const newPlayerWhoAlreadyPlayed = Array.from(
-                new Set([...gameState.playerWhoAlreadyPlayed, playerNumber])
-            );
+
 
             const newGameState: SimonSaysGameState = {
                 ...gameState,
                 completedPlayers: newCompletedPlayers,
-                playerWhoAlreadyPlayed: newPlayerWhoAlreadyPlayed,
             };
 
             // Verifica si todos los jugadores asignados (en currentPlayers) han completado el patrón.
