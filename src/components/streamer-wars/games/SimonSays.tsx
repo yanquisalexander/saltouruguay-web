@@ -191,7 +191,7 @@ export const SimonSays = ({
                         {gameRivals.map(rival => (
                             <div class="relative">
                                 <img
-                                    src={players?.find(p => p?.id === rival)?.avatar}
+                                    src={players?.find(p => p.playerNumber === rival)?.avatar}
                                     alt={`Avatar de jugador #${rival}`}
                                     class="size-10 rounded-full ring-2 ring-white/20"
                                 />
