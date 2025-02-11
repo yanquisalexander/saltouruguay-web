@@ -7,6 +7,8 @@ import type { Channel } from "pusher-js";
 import { getTranslation } from "@/utils/translate";
 import { LucideCrown } from "lucide-preact";
 import { toast } from "sonner";
+import confetti from "canvas-confetti";
+import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
 interface Props {
     session: Session;
@@ -46,10 +48,11 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
     }, []);
 
     const currentUserTeam = Object.values(playersTeams).find(team => team.some(player => player.playerNumber === session.user.streamerWarsPlayerNumber)) || [];
-
+    const currentUserTeamName = Object.keys(playersTeams).find(team => playersTeams[team] === currentUserTeam) || "";
     const currentUserIsCaptain = currentUserTeam.find(player => player.isCaptain && player.playerNumber === session.user.streamerWarsPlayerNumber);
 
-    const isMyCaptainAcceptedBribe = briberyAccepted?.team === Object.keys(playersTeams).find(key => playersTeams[key] === currentUserTeam);
+    const isMyCaptainAcceptedBribe = briberyAccepted?.team === currentUserTeamName;
+
     const handleAcceptBribe = async () => {
         const { error, data } = await actions.streamerWars.acceptBribe();
         if (error) {
@@ -63,7 +66,18 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
     useEffect(() => {
         channel.bind("bribe-accepted", ({ team }: { team: string }) => {
             setBriberyAccepted({ team });
-            toast.warning(`El capitán del equipo "${getTranslation(team)}" ha aceptado el soborno.`);
+            if (!isMyCaptainAcceptedBribe) {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+                playSound({ sound: STREAMER_WARS_SOUNDS.WIN_BRIBE, volume: 0.5 });
+                toast.success(`El capitán del equipo "${getTranslation(team)}" ha aceptado el soborno. ¡Tu equipo está a salvo!`);
+                return
+            }
+            toast.warning("Tu capitán ha aceptado el soborno. Tu equipo ha sido eliminado del juego.");
+            playSound({ sound: STREAMER_WARS_SOUNDS.LOSED_BRIBE, volume: 0.5 });
         });
     }
         , []);
@@ -101,7 +115,8 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
                                             `El capitán de tu equipo ha aceptado el soborno. Tu equipo ha sido eliminado del juego.`
                                         )
                                     ) : (
-                                        `El capitán del equipo ${getTranslation(briberyAccepted.team)} ha aceptado el soborno.`
+                                        <p>El capitán del equipo {getTranslation(Object.keys(playersTeams).find(key => playersTeams[key] === currentUserTeam) || "")} ha aceptado el soborno. Tu equipo está a salvo 🎉... por ahora!</p>
+
                                     )
                                 }
                             </p>

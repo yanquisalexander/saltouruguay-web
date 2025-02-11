@@ -20,6 +20,8 @@ export const STREAMER_WARS_SOUNDS = {
     EMOJI_CONFUNDIDO: 'reactions/emoji-confundido',
     EMOJI_SIGUE_ASI: 'reactions/emoji-sigue-asi',
     EMOJI_RISA: 'reactions/emoji-risa',
+    LOSED_BRIBE: 'losed-bribe',
+    WIN_BRIBE: 'win-bribe',
 }
 
 
