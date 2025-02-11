@@ -32,7 +32,12 @@ export const playSoundWithReverb = async ({
     volume = 1,
     reverbAmount = 0.5,
     isBase64 = false,
-}: { sound: string; volume?: number; reverbAmount?: number; isBase64?: boolean }): Promise<void> => {
+}: {
+    sound: string;
+    volume?: number;
+    reverbAmount?: number;
+    isBase64?: boolean;
+}): Promise<void> => {
     return new Promise(async (resolve, reject) => {
         try {
             const audioContext = new AudioContext();
@@ -40,14 +45,13 @@ export const playSoundWithReverb = async ({
 
             if (isBase64) {
                 let base64Data: string;
-                // Si el string contiene una coma, asumimos que viene en formato "data:audio/mp3;base64,....."
+                // Si el string contiene coma, se asume formato "data:audio/mp3;base64,..."
                 if (sound.includes(',')) {
                     base64Data = sound.split(',')[1];
                 } else {
-                    // Si no viene el prefijo "data:", usamos el string completo
+                    // Si no se incluye el prefijo, se toma el string completo
                     base64Data = sound;
                 }
-
                 const binaryString = atob(base64Data);
                 const len = binaryString.length;
                 const uint8Array = new Uint8Array(len);
@@ -60,33 +64,54 @@ export const playSoundWithReverb = async ({
                 arrayBuffer = await response.arrayBuffer();
             }
 
-
-
             const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
             const source = audioContext.createBufferSource();
             source.buffer = audioBuffer;
 
-            const gainNode = audioContext.createGain();
-            gainNode.gain.value = volume;
+            // Nodo de ganancia general (opcional, si deseas controlar el volumen global)
+            // const globalGainNode = audioContext.createGain();
+            // globalGainNode.gain.value = volume;
+            // globalGainNode.connect(audioContext.destination);
 
+            // Creamos dos nodos de ganancia para cada rama: dry y wet
+            const dryGainNode = audioContext.createGain();
+            // Puedes ajustar el nivel del sonido original (dry) aquí
+            dryGainNode.gain.value = volume;
+
+            const wetGainNode = audioContext.createGain();
+            // Aquí puedes ajustar el nivel de la señal con reverb (wet)
+            // Por ejemplo, podrías hacer algo como volume * reverbAmount, o asignarle un valor fijo
+            wetGainNode.gain.value = volume * reverbAmount;
+
+            // Creamos el nodo convolver y asignamos el buffer de reverb
             const convolver = audioContext.createConvolver();
+            // Se asume que createReverbBuffer devuelve un AudioBuffer configurado según reverbAmount
             convolver.buffer = await createReverbBuffer(audioContext, reverbAmount);
 
-            source.connect(convolver);
-            convolver.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+            // Conexión de la rama dry: fuente -> ganancia dry -> destino
+            source.connect(dryGainNode);
+            dryGainNode.connect(audioContext.destination);
 
+            // Conexión de la rama wet: fuente -> convolver -> ganancia wet -> destino
+            source.connect(convolver);
+            convolver.connect(wetGainNode);
+            wetGainNode.connect(audioContext.destination);
+
+            // Inicia la reproducción
             source.start();
+
+            // Cuando termine la reproducción, cerramos el audioContext
             source.onended = async () => {
                 await audioContext.close();
                 resolve();
             };
         } catch (error) {
-            console.error("Error reproduciendo el sonido:", error);
+            console.error("Error al reproducir el sonido:", error);
             reject(error);
         }
     });
 };
+
 
 
 // Función auxiliar para crear un buffer de reverb

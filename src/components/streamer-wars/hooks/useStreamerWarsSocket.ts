@@ -29,10 +29,8 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             await playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.2 });
             setRecentlyEliminatedPlayer(playerNumber);
             setTimeout(() => {
-                const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
-                audio.volume = 0.5;
-                audio.play();
-                playSoundWithReverb({ sound: `data:audio/mp3;base64,${audioBase64}`, volume: 0.5, isBase64: true, reverbAmount: 0.5 });
+
+                playSoundWithReverb({ sound: `data:audio/mp3;base64,${audioBase64}`, volume: 0.5, isBase64: true, reverbAmount: 0.7 });
                 /*  const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
                  audio.play(); */
             }, 1000);
