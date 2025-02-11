@@ -5,6 +5,9 @@ import { toast } from "sonner";
 export const GAMES = [
     {
         id: "TeamSelector",
+        name: "Selector de equipos",
+        icon: "🔢",
+        classNames: "bg-gradient-to-r from-blue-500 to-blue-700",
         props: {
             teamsQuantity: {
                 type: Number,
@@ -22,6 +25,16 @@ export const GAMES = [
     },
     {
         id: "SimonSays",
+        name: "Simón dice",
+        icon: "🔴",
+        classNames: "bg-gradient-to-r from-red-500 to-red-700",
+        props: {}
+    },
+    {
+        id: "CaptainBribery",
+        name: "Soborno al capitán",
+        icon: "💰",
+        classNames: "bg-gradient-to-r from-yellow-500 to-yellow-700",
         props: {}
     }
     // Más juegos pueden añadirse con sus propias props
@@ -79,15 +92,15 @@ export const GameSelector = () => {
     // Inicializar configuración cuando cambia el juego
     useEffect(() => {
         if (selectedGame) {
-            const game = GAMES.find(g => g.id === selectedGame);
-            if (!game) return;
-            const initialConfig = Object.fromEntries(
-                Object.entries(game.props).map(([key, cfg]) => [
-                    key,
-                    cfg.default || cfg.min
-                ])
-            );
-            setConfig(initialConfig);
+            const game = GAMES.find((g) => g.id === selectedGame);
+            if (game) {
+                const initialConfig = Object.entries(game.props).reduce((acc, [propName, propConfig]) => {
+                    acc[propName] = propConfig.default;
+                    return acc;
+                }, {} as Record<string, number>);
+
+                setConfig(initialConfig);
+            }
         }
     }, [selectedGame]);
 
@@ -115,13 +128,13 @@ export const GameSelector = () => {
         <div class="flex flex-col items-center">
             <h1 class="text-3xl font-bold text-center mb-4">Selecciona el juego</h1>
             <div class="flex flex-wrap justify-center">
-                {GAMES.map(({ id }) => (
+                {GAMES.map(({ id, name, icon, classNames }) => (
                     <button
                         key={id}
-                        class={`bg-gray-800 text-white rounded-lg px-4 py-2 m-2 ${selectedGame === id ? "bg-green-500" : ""}`}
+                        class={`flex items-center justify-center bg-white text-black rounded-lg p-4 m-2 border-2 ${classNames} ${selectedGame === id ? " border-white" : "border-transparent"}`}
                         onClick={() => setSelectedGame(id)}
                     >
-                        {id}
+                        {icon} <span class="ml-2">{name}</span>
                     </button>
                 ))}
             </div>

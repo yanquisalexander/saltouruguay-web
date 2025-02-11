@@ -12,6 +12,7 @@ import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 import { actions } from "astro:actions";
 import { LucideBug } from "lucide-preact";
 import { JourneyTransition } from "./JourneyTransition";
+import { CaptainBribery } from "./games/CaptainBribery";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -236,9 +237,9 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 }
 
 const GameComponent = ({ gameState, players, pusher, session, channel }: { gameState: any; players: any[]; pusher: Pusher; session: Session; channel: Channel }) => {
-    const GAME_CONFIG = useRef({ TeamSelector, SimonSays }).current;
+    const GAME_CONFIG = useRef({ TeamSelector, SimonSays, CaptainBribery });
 
-    const Component = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
+    const Component = GAME_CONFIG.current[gameState.component as keyof typeof GAME_CONFIG.current];
     const props = { ...gameState.props, players, pusher, session, channel };
 
     if (!Component) return (
