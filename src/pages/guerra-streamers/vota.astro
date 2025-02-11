@@ -47,8 +47,7 @@ const userHasVoted = session?.user?.id
         playersList.map((player) => (
           <div class="flex flex-col items-center gap-4">
             <img
-              src={`/images/streamer-wars/playes/${player.playerNumber.toString().padStart(3, "0")}.webp`}
-              onerror={`this.src='${player.user?.avatar}'`}
+              src={player.user?.avatar}
               alt={player.user?.displayName}
               class="h-48 w-32 object-contain rounded-full mask"
               draggable="false"
