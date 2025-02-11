@@ -104,7 +104,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
             setMessages(data.messages);
             const container = messagesContainer.current;
             if (container) {
-                container.scrollTop = container.scrollHeight;
+                container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
             }
         });
 
