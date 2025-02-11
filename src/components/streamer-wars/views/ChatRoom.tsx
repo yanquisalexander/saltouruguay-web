@@ -174,8 +174,6 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
 
 
     const onEmoteSelect = (emote: keyof typeof EMOTES) => {
-
-
         setMessage((prev) => `${prev}:${emote}:`);
     }
 
