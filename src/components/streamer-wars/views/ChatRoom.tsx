@@ -96,16 +96,16 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
 
     useEffect(() => {
         // Obtener los mensajes existentes
-        actions.streamerWars.getAllMessages().then(({ error, data }) => {
-            if (error) {
-                toast.error("Error al cargar mensajes");
-                return;
+        actions.streamerWars.getAllMessages().then(({ data }) => {
+            if (data?.messages) {
+                setMessages(data.messages);
             }
-            setMessages(data.messages);
-            const container = messagesContainer.current;
-            if (container) {
-                container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
-            }
+            // Forzar scroll al fondo después de cargar
+            setTimeout(() => {
+                messagesContainer.current?.scrollTo({
+                    top: messagesContainer.current.scrollHeight
+                });
+            }, 100);
         });
 
         channel.bind("clear-chat", () => {
@@ -161,22 +161,24 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
 
     const handleScroll = () => {
         if (messagesContainer.current) {
-            const isAtBottom = messagesContainer.current.scrollHeight - messagesContainer.current.scrollTop === messagesContainer.current.clientHeight;
-            if (isAtBottom) {
-                setManuallyScrolled(false);
-            } else {
-                setManuallyScrolled(true);
-            }
+            const { scrollTop, scrollHeight, clientHeight } = messagesContainer.current;
+            const isAtBottom = scrollHeight - (scrollTop + clientHeight) < 50;
+            setManuallyScrolled(!isAtBottom);
         }
-    }
+    };
 
     useEffect(() => {
-        if (messagesContainer.current) {
-            if (manuallyScrolled) {
-                messagesContainer.current.scrollTo({ top: messagesContainer.current.scrollHeight, behavior: "smooth" });
-            }
+        const container = messagesContainer.current;
+        if (container && !manuallyScrolled) {
+            // Usar requestAnimationFrame para esperar al renderizado
+            requestAnimationFrame(() => {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: "smooth"
+                });
+            });
         }
-    }, [messages, messagesContainer]);
+    }, [messages, manuallyScrolled]);
 
     const parseLinks = (text: string) => {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -222,12 +224,13 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
         <div class="flex flex-col w-full h-full bg-neutral-950 border border-lime-500 border-dashed relative rounded-md px-4 py-3">
             <h3 class="text-xl font-bold py-2">Chat de participantes</h3>
             <div
-                class="h-[320px] w-full overflow-y-scroll px-2 "
+                class="h-[320px] w-full overflow-y-auto flex flex-col gap-2 p-2 relative"
                 ref={messagesContainer}
                 style="scrollbar-width: thin; scrollbar-color: #4B5563 #E5E7EB; 
                --scrollbar-track-color: #E5E7EB; --scrollbar-thumb-color: #4B5563;
                --scrollbar-thumb-hover-color: #4B5563;"
                 onScroll={handleScroll}
+
             >
 
                 <div class="flex flex-col flex-1 overflow-y-auto gap-y-2 w-full h-full scroll-smooth">
@@ -250,23 +253,20 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                             <ChatMessage key={index} user={user} message={message} />
                         );
                     })}
-                    {(() => {
-                        if (manuallyScrolled && messagesContainer.current) {
-                            return (
-                                <button
-                                    class="z-10 absolute mx-auto inset-x-0 w-[80%] top-16 bg-lime-500/50 hover:bg-lime-500 transition text-white p-2 rounded-md text-center"
-                                    onClick={() => {
-                                        if (messagesContainer.current) {
-                                            messagesContainer.current.scrollTo({ top: messagesContainer.current.scrollHeight, behavior: "smooth" });
-                                            setManuallyScrolled(false);
-                                        }
-                                    }}
-                                >
-                                    Ver mensajes nuevos
-                                </button>
-                            );
-                        }
-                    })()}
+                    {manuallyScrolled && (
+                        <button
+                            className="z-10 sticky mx-auto bottom-4 bg-lime-500/80 hover:bg-lime-500 text-white p-2 rounded-md text-center shadow-lg"
+                            onClick={() => {
+                                messagesContainer.current?.scrollTo({
+                                    top: messagesContainer.current.scrollHeight,
+                                    behavior: "smooth"
+                                });
+                                setManuallyScrolled(false);
+                            }}
+                        >
+                            Ver mensajes nuevos ↓
+                        </button>
+                    )}
                 </div>
             </div>
             {
