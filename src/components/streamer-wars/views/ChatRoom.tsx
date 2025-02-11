@@ -80,6 +80,8 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
 
     const [usersTyping, setUsersTyping] = useState<Set<string>>(new Set());
 
+    let typingTimeout: NodeJS.Timeout | null = null;
+
     const usersTypingMessage = () => {
         const typingArray = Array.from(usersTyping); // Convertimos el Set a un Array
 
@@ -90,7 +92,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
         } else if (typingArray.length > 2) {
             return `${typingArray.slice(0, 2).join(", ")} y otros están escribiendo...`;
         }
-        return "";
+        return "&nbsp;";
     };
 
 
@@ -116,7 +118,10 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
         channel.bind("client-typing", ({ user }: { user: string }) => {
             console.log(`${user} está escribiendo...`);
             setUsersTyping((prev) => new Set([...prev, user]));
-            setTimeout(() => {
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+            }
+            typingTimeout = setTimeout(() => {
                 setUsersTyping((prev) => {
                     const newSet = new Set(prev);
                     newSet.delete(user);
@@ -211,7 +216,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
         }
 
         if (message.trim().length > 0) {
-            channel?.emit("client-typing", { user: session.user?.name });
+            channel.trigger("client-typing", { user: session.user?.name });
         }
     }, [message]);
 
@@ -269,13 +274,10 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                     )}
                 </div>
             </div>
-            {
-                usersTyping.size > 0 && (
-                    <div class="text-white text-xs opacity-50">
-                        {usersTypingMessage()}
-                    </div>
-                )
-            }
+
+            <div class="text-white text-xs opacity-50" dangerouslySetInnerHTML={{ __html: usersTypingMessage() }}>
+            </div>
+
             <footer class="flex w-full mt-4">
                 <textarea
                     onKeyPress={(e) => {
