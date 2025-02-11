@@ -60,10 +60,18 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
 
     return (
         <div className={`fixed inset-0 bg-black flex flex-col justify-center items-center z-[8000] transition-opacity duration-500 ${fadingOut ? 'opacity-0' : 'opacity-100'}`}>
-            <img src="/images/guerra-streamers-logo.webp" alt="Guerra de Streamers" className="h-24" />
+            <h3 class="with-glyph flex relative w-max text-3xl transform px-2 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen !skew-x-[-20deg] -rotate-6" data-astro-cid-3jqi3h3c=""> <span class="flex !skew-x-[20deg] transform" data-astro-cid-3jqi3h3c="">
+                Guerra de Streamers
+            </span> </h3>
             <div className="w-56 mt-8 h-2 bg-gray-700 rounded-full">
                 <div className="h-full bg-[#b4cd02] rounded-xl" style={{ width: `${progress}%` }}></div>
             </div>
+            <span className="fixed bottom-32 text-5xl opacity-30 rotate-[32deg] select-none right-16 font-atomic-extras">
+                &#x0055;
+            </span>
+            <span className="fixed bottom-48 text-5xl opacity-30 rotate-[-16deg] select-none left-16 font-atomic-extras">
+                &#x0050;
+            </span>
         </div>
     );
 };
