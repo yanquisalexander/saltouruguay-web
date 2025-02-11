@@ -75,9 +75,9 @@ export const JourneyTransition = ({ phase, executeOnMount }: JourneyTransitionPr
             if (index >= script.length) {
                 // Cuando se terminan los ítems: inicia el fade out y despacha el evento
                 setFadeClass("animate-fade-out opacity-0");
+                document.dispatchEvent(new CustomEvent("journey-transition-ended"));
                 timeoutId = window.setTimeout(() => {
                     setIsVisible(false);
-                    document.dispatchEvent(new CustomEvent("journey-transition-ended"));
                 }, 500); // 500 ms para que se vea la animación de fade out
                 return;
             }
