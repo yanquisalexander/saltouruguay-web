@@ -78,6 +78,19 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
     const [manuallyScrolled, setManuallyScrolled] = useState<boolean>(false);
     const [emotePickerOpen, setEmotePickerOpen] = useState<boolean>(false);
 
+    const [usersTyping, setUsersTyping] = useState<string[]>([]);
+
+    const usersTypingMessage = () => {
+        if (usersTyping.length === 1) {
+            return `${usersTyping[0]} está escribiendo...`;
+        } else if (usersTyping.length > 1) {
+            return `${usersTyping.slice(0, 2).join(", ")} están escribiendo...`;
+        } else if (usersTyping.length > 3) {
+            return "Varios usuarios están escribiendo...";
+        }
+        return "";
+    }
+
     useEffect(() => {
         // Obtener los mensajes existentes
         actions.streamerWars.getAllMessages().then(({ error, data }) => {
@@ -91,6 +104,20 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                 container.scrollTop = container.scrollHeight;
             }
         });
+
+        channel.bind("clear-chat", () => {
+            setMessages([]);
+            toast.info("Un moderador ha limpiado el chat");
+        });
+
+        channel.bind("client-typing", ({ user }: { user: string }) => {
+            setUsersTyping((prev) => [...prev, user]);
+            setTimeout(() => {
+                setUsersTyping((prev) => prev.filter((u) => u !== user));
+            }, 2000);
+        });
+
+
 
         // Escuchar nuevos mensajes vía Pusher
         channel.bind("new-message", ({ user, message, type, suppressAudio }: { user: string; message: string; type: string; suppressAudio?: boolean }) => {
@@ -170,6 +197,10 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
             sendMessage();
             return
         }
+
+        if (message.trim()) {
+            channel.trigger("client-typing", { user: session.user?.name });
+        }
     }, [message]);
 
 
@@ -227,6 +258,13 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                         }
                     })()}
                 </div>
+                {
+                    usersTyping.length > 0 && (
+                        <div class="text-white text-xs opacity-50">
+                            {usersTypingMessage()}
+                        </div>
+                    )
+                }
             </div>
             <footer class="flex w-full mt-4">
                 <textarea

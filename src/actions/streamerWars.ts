@@ -394,6 +394,8 @@ export const streamerWars = {
                 })
             }
 
+            await pusher.trigger("streamer-wars", "clear-chat", null);
+
             await client.delete(StreamerWarsChatMessagesTable).execute();
             return { success: true }
         }
