@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 import Pusher, { type Channel } from "pusher-js";
 import { PUSHER_KEY } from "@/config";
-import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { playSound, playSoundWithReverb, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
 export const useStreamerWarsSocket = (session: Session | null) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
@@ -30,7 +30,11 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             setRecentlyEliminatedPlayer(playerNumber);
             setTimeout(() => {
                 const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
+                audio.volume = 0.5;
                 audio.play();
+                playSoundWithReverb({ sound: `data:audio/mp3;base64,${audioBase64}`, volume: 0.5, isBase64: true, reverbAmount: 0.5 });
+                /*  const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
+                 audio.play(); */
             }, 1000);
         });
 
