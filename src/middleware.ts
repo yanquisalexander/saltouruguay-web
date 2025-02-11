@@ -4,8 +4,11 @@ const middleware: MiddlewareHandler = async (context, next) => {
     const MAINTENANCE_MODE = true;
 
     if (MAINTENANCE_MODE && context.request.url.endsWith('/500') === false) {
+        const nextValue = await next();
         context.locals.isMaintenanceMode = true;
-        return context.rewrite('/500');
+        // Set 503 Not Available
+        const page500 = await context.rewrite('/500');
+        return new Response(page500.body, { ...page500, status: 503 });
     }
 
     return next();
