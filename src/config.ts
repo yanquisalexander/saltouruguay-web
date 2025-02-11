@@ -17,6 +17,8 @@ export const SALTO_DISCORD_GUILD_ID = '700185692826763264'
 
 export const CINEMATICS_CDN_PREFIX = 'https://cdn.saltouruguayserver.com/cinematics'
 
+export const GLOBAL_CDN_PREFIX = 'https://cdn.saltouruguayserver.com'
+
 
 export const nowInUruguay = () => DateTime.now().setZone('America/Montevideo').toMillis();
 

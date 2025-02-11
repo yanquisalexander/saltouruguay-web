@@ -13,6 +13,13 @@ export const STREAMER_WARS_SOUNDS = {
     SIMON_SAYS_CORRECT: "simon-says-correct",
     SIMON_SAYS_ERROR: "simon-says-error",
     TICK: "effect_tick",
+    EMOJI_ENOJO: 'reactions/emoji-enojo',
+    EMOJI_FELIZ: 'reactions/emoji-feliz',
+    EMOJI_RISA_MALVADA: 'reactions/emoji-risa-malvada',
+    EMOJI_LLORITO: 'reactions/emoji-llorito',
+    EMOJI_CONFUNDIDO: 'reactions/emoji-confundido',
+    EMOJI_SIGUE_ASI: 'reactions/emoji-sigue-asi',
+    EMOJI_RISA: 'reactions/emoji-risa',
 }
 
 
