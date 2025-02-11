@@ -78,18 +78,21 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
     const [manuallyScrolled, setManuallyScrolled] = useState<boolean>(false);
     const [emotePickerOpen, setEmotePickerOpen] = useState<boolean>(false);
 
-    const [usersTyping, setUsersTyping] = useState<string[]>([]);
+    const [usersTyping, setUsersTyping] = useState<Set<string>>(new Set());
 
     const usersTypingMessage = () => {
-        if (usersTyping.length === 1) {
-            return `${usersTyping[0]} está escribiendo...`;
-        } else if (usersTyping.length > 1) {
-            return `${usersTyping.slice(0, 2).join(", ")} están escribiendo...`;
-        } else if (usersTyping.length > 3) {
-            return "Varios usuarios están escribiendo...";
+        const typingArray = Array.from(usersTyping); // Convertimos el Set a un Array
+
+        if (typingArray.length === 1) {
+            return `${typingArray[0]} está escribiendo...`;
+        } else if (typingArray.length === 2) {
+            return `${typingArray.join(" y ")} están escribiendo...`;
+        } else if (typingArray.length > 2) {
+            return `${typingArray.slice(0, 2).join(", ")} y otros están escribiendo...`;
         }
         return "";
-    }
+    };
+
 
     useEffect(() => {
         // Obtener los mensajes existentes
@@ -112,9 +115,13 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
 
         channel.bind("client-typing", ({ user }: { user: string }) => {
             console.log(`${user} está escribiendo...`);
-            setUsersTyping((prev) => [...prev, user]);
+            setUsersTyping((prev) => new Set([...prev, user]));
             setTimeout(() => {
-                setUsersTyping((prev) => prev.filter((u) => u !== user));
+                setUsersTyping((prev) => {
+                    const newSet = new Set(prev);
+                    newSet.delete(user);
+                    return newSet;
+                });
             }, 2000);
         });
 
@@ -199,7 +206,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
             return
         }
 
-        if (message.trim()) {
+        if (message.trim().length > 0) {
             channel?.emit("client-typing", { user: session.user?.name });
         }
     }, [message]);
@@ -259,14 +266,14 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                         }
                     })()}
                 </div>
-                {
-                    usersTyping.length > 0 && (
-                        <div class="text-white text-xs opacity-50">
-                            {usersTypingMessage()}
-                        </div>
-                    )
-                }
             </div>
+            {
+                usersTyping.size > 0 && (
+                    <div class="text-white text-xs opacity-50">
+                        {usersTypingMessage()}
+                    </div>
+                )
+            }
             <footer class="flex w-full mt-4">
                 <textarea
                     onKeyPress={(e) => {
