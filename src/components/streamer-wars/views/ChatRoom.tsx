@@ -111,6 +111,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
         });
 
         channel.bind("client-typing", ({ user }: { user: string }) => {
+            console.log(`${user} está escribiendo...`);
             setUsersTyping((prev) => [...prev, user]);
             setTimeout(() => {
                 setUsersTyping((prev) => prev.filter((u) => u !== user));
@@ -199,7 +200,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
         }
 
         if (message.trim()) {
-            channel.trigger("client-typing", { user: session.user?.name });
+            channel?.emit("client-typing", { user: session.user?.name });
         }
     }, [message]);
 
