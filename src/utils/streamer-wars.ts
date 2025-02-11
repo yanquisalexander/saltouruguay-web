@@ -252,6 +252,24 @@ export const eliminatePlayer = async (playerNumber: number) => {
     }
 };
 
+export const revivePlayer = async (playerNumber: number) => {
+    try {
+        // Actualiza el estado del jugador en la base de datos.
+        await client
+            .update(StreamerWarsPlayersTable)
+            .set({ eliminated: false })
+            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+            .execute();
+
+        // Envía el evento a Pusher con los datos actualizados.
+        await pusher.trigger("streamer-wars", "player-revived", {
+            playerNumber,
+        });
+    } catch (error) {
+        console.error("Error en revivePlayer:", error);
+    }
+}
+
 export const getPlayers = async () => {
     return await client.query.StreamerWarsPlayersTable.findMany({
         orderBy: [asc(StreamerWarsPlayersTable.playerNumber)],

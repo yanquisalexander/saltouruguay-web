@@ -4,7 +4,7 @@ import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWa
 import Cache from "@/lib/Cache";
 import cacheService from "@/services/cache";
 import { pusher } from "@/utils/pusher";
-import { eliminatePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles } from "@/utils/streamer-wars";
+import { eliminatePlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -26,6 +26,24 @@ export const streamerWars = {
             }
 
             await eliminatePlayer(playerNumber);
+            return { success: true }
+        }
+    }),
+    revivePlayer: defineAction({
+        input: z.object({
+            playerNumber: z.number(),
+        }),
+        handler: async ({ playerNumber }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para revivir jugadores"
+                })
+            }
+
+            await revivePlayer(playerNumber);
             return { success: true }
         }
     }),
@@ -289,10 +307,10 @@ export const streamerWars = {
 
             const cache = cacheService.create({ ttl: 60 * 60 * 24 });
             await cache.set("streamer-wars-day-available", true);
-            await pusher.trigger("cinematic-player", "new-event", {
+            /* await pusher.trigger("cinematic-player", "new-event", {
                 targetUsers: await getUserIdsOfPlayers(),
                 videoUrl: `${CINEMATICS_CDN_PREFIX}/cinematica-jornada-guerra.mp4`
-            })
+            }) */
 
             await pusher.trigger("streamer-wars", "day-available", null);
             return { success: true }

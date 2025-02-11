@@ -3,10 +3,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 import { SimonSays } from "./games/SimonSays";
 import { WaitForDayOpen } from "./views/WaitForDayOpen";
-import { PlayersGrid } from "./PlayersGrid";
 import Pusher, { type Channel } from "pusher-js";
-import { PUSHER_KEY } from "@/config";
-import { ConnectedPlayers } from "./ConnectedPlayers";
 import { CDN_PREFIX, playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { PlayerEliminated } from "./PlayerEliminated";
 import { WaitingRoom } from "./views/WaitingRoom";
@@ -14,6 +11,7 @@ import { TeamSelector } from "./views/TeamSelector";
 import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 import { actions } from "astro:actions";
 import { LucideBug } from "lucide-preact";
+import { JourneyTransition } from "./JourneyTransition";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -32,7 +30,10 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
         const progressInterval = setInterval(() => {
             setProgress((prev) => (prev < 100 ? prev + 1 : 100));
             if (progress > 50 && !alertedBetterExperience) {
-                toast.success("Para una mejor experiencia, usa pantalla completa (F11) y activa el sonido 🔊");
+                toast.success("Para una mejor experiencia, usa pantalla completa (F11) y activa el sonido 🔊", {
+                    position: 'top-right',
+                    richColors: true,
+                })
                 setAlertedBetterExperience(true);
                 playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION, volume: 0.2 });
             }
@@ -70,11 +71,14 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [dayAvailable, setDayAvailable] = useState(false);
     const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel } = useStreamerWarsSocket(session);
     const [splashEnded, setSplashEnded] = useState(false);
+    const [showingJourneyTransition, setShowingJourneyTransition] = useState(false);
     useEffect(() => {
         document.addEventListener("splash-screen-ended", () => {
             setSplashEnded(true);
         })
     }, []);
+
+    const [journeyTransitionProps, setJourneyTransitionProps] = useState({ phase: "start", key: Math.random() });
 
     const restoreGameStateFromCache = async () => {
         const { data, error } = await actions.streamerWars.getGameState();
@@ -105,11 +109,24 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         PRELOAD_SOUNDS();
 
         globalChannel.current?.bind("day-available", () => {
-            document.addEventListener("cinematic-ended", () => setDayAvailable(true), { once: true });
+            setShowingJourneyTransition(true);
+            // Actualizamos el key para forzar la remount
+            setJourneyTransitionProps({ phase: "start", key: Math.random() });
+            document.addEventListener("journey-transition-ended", () => {
+                setDayAvailable(true);
+                setShowingJourneyTransition(false);
+            }, { once: true });
         });
 
+
         globalChannel.current?.bind("day-finished", () => {
-            document.addEventListener("cinematic-ended", () => setDayAvailable(false), { once: true });
+            setShowingJourneyTransition(true);
+            // Actualizamos el key para forzar la remount
+            setJourneyTransitionProps({ phase: "finish", key: Math.random() });
+            document.addEventListener("journey-transition-ended", () => {
+                setDayAvailable(false);
+                setShowingJourneyTransition(false);
+            }, { once: true });
         });
 
         globalChannel.current?.bind('tech-difficulties', () => {
@@ -186,6 +203,13 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                             </button>
 
                         </header>
+                        {
+                            showingJourneyTransition && (
+                                // @ts-ignore
+                                <JourneyTransition key={journeyTransitionProps.key} {...journeyTransitionProps} />
+
+                            )
+                        }
                         {pusher && globalChannel.current && presenceChannel.current && session && (
                             <>
                                 {
