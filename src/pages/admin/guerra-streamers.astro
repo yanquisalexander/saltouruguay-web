@@ -7,6 +7,15 @@ import { GameSelector } from "@/components/admin/streamer-wars/GameSelector";
 import { StreamerWarsPlayers } from "@/components/admin/streamer-wars/Players";
 import { StreamerWarsAdmin } from "@/components/admin/StreamerWarsAdmin";
 
+const PRELOAD = [
+  {
+    href: "/fonts/set-sail-studios-atomic-marker-regular.woff2",
+    as: "font",
+    type: "font/woff2",
+    crossorigin: "anonymous",
+  },
+];
+
 const session = await getSession(Astro.request);
 
 // Si la función `checkAdmin` retorna un `Response`, deberías manejarlo explícitamente:
@@ -17,7 +26,7 @@ if (checkResult) {
 }
 ---
 
-<Layout title="Admin Guerra Streamers">
+<Layout title="Admin Guerra Streamers" preload={PRELOAD}>
   <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
     <header class="relative z-10 flex flex-col justify-center h-full">
       <div class="flex items-center gap-x-4">
