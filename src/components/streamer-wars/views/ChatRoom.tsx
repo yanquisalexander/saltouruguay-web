@@ -171,8 +171,10 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
     }
 
     useEffect(() => {
-        if (messagesContainer && messagesContainer.current && !manuallyScrolled) {
-            messagesContainer.current.scrollTop = messagesContainer.current.scrollHeight;
+        if (messagesContainer.current) {
+            if (manuallyScrolled) {
+                messagesContainer.current.scrollTo({ top: messagesContainer.current.scrollHeight, behavior: "smooth" });
+            }
         }
     }, [messages, messagesContainer]);
 
