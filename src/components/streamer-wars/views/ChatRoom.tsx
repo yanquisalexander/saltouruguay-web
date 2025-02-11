@@ -198,11 +198,10 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                         );
                     })}
                     {(() => {
-                        const hasMessagesOutsideView = messages.length > 10;
-                        if (hasMessagesOutsideView && manuallyScrolled && messagesContainer.current && messagesContainer.current.scrollHeight > 0) {
+                        if (manuallyScrolled && messagesContainer.current) {
                             return (
                                 <button
-                                    class="z-10 absolute mx-auto inset-x-0  w-[80%] top-16 bg-lime-500/50 hover:bg-lime-500 transition text-white p-2 rounded-md text-center"
+                                    class="z-10 absolute mx-auto inset-x-0 w-[80%] top-16 bg-lime-500/50 hover:bg-lime-500 transition text-white p-2 rounded-md text-center"
                                     onClick={() => {
                                         if (messagesContainer.current) {
                                             messagesContainer.current.scrollTo({ top: messagesContainer.current.scrollHeight, behavior: "smooth" });
