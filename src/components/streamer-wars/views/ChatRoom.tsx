@@ -220,7 +220,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
         <div class="flex flex-col w-full h-full bg-neutral-950 border border-lime-500 border-dashed relative rounded-md px-4 py-3">
             <h3 class="text-xl font-bold py-2">Chat de participantes</h3>
             <div
-                class="h-[320px] overflow-y-scroll px-2 "
+                class="h-[320px] w-full overflow-y-scroll px-2 "
                 ref={messagesContainer}
                 style="scrollbar-width: thin; scrollbar-color: #4B5563 #E5E7EB; 
                --scrollbar-track-color: #E5E7EB; --scrollbar-thumb-color: #4B5563;
