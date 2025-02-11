@@ -99,10 +99,10 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                 { user, message, isAnnouncement: type === "announcement" },
             ]);
 
-            const container = messagesContainer.current;
-            const lastMessage = container?.lastElementChild;
-            if (lastMessage && !manuallyScrolled) {
-                lastMessage.scrollIntoView({ behavior: "smooth" });
+            if (!manuallyScrolled) {
+                if (messagesContainer.current) {
+                    messagesContainer.current.scrollTop = messagesContainer.current.scrollHeight;
+                }
             }
 
             const emoteOnlyMatch = message.match(/^:([a-zA-Z0-9_]+):$/);
@@ -124,12 +124,22 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
         };
     }, []);
 
-    const handleScroll = (e: Event) => {
-        const target = e.currentTarget;
-        if (!target) return;
-        const isAtBottom = (target as HTMLDivElement).scrollHeight - (target as HTMLDivElement).scrollTop === (target as HTMLDivElement).clientHeight;
-        setManuallyScrolled(!isAtBottom);
-    };
+    const handleScroll = () => {
+        if (messagesContainer.current) {
+            const isAtBottom = messagesContainer.current.scrollHeight - messagesContainer.current.scrollTop === messagesContainer.current.clientHeight;
+            if (isAtBottom) {
+                setManuallyScrolled(false);
+            } else {
+                setManuallyScrolled(true);
+            }
+        }
+    }
+
+    useEffect(() => {
+        if (messagesContainer && messagesContainer.current && !manuallyScrolled) {
+            messagesContainer.current.scrollTop = messagesContainer.current.scrollHeight;
+        }
+    }, [messages, messagesContainer]);
 
     const parseLinks = (text: string) => {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -156,18 +166,19 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
     }
 
     return (
-        <div class="flex flex-col w-full h-full bg-neutral-950 border border-lime-500 border-dashed rounded-md px-4 py-3">
+        <div class="flex flex-col w-full h-full bg-neutral-950 border border-lime-500 border-dashed relative rounded-md px-4 py-3">
             <h3 class="text-xl font-bold py-2">Chat de participantes</h3>
             <div
-                class="h-[320px] overflow-y-scroll px-2"
-
+                class="h-[320px] overflow-y-scroll px-2 "
                 ref={messagesContainer}
                 style="scrollbar-width: thin; scrollbar-color: #4B5563 #E5E7EB; 
                --scrollbar-track-color: #E5E7EB; --scrollbar-thumb-color: #4B5563;
                --scrollbar-thumb-hover-color: #4B5563;"
                 onScroll={handleScroll}
             >
-                <div class="flex flex-col gap-y-2 mt-4 w-full min-h-full h-full grow">
+
+                <div class="flex flex-col flex-1 overflow-y-auto gap-y-2 w-full h-full scroll-smooth">
+
                     {messages.map(({ message, user, isAnnouncement }, index) => {
                         const emoteOnlyMatch = message.match(/^:([a-zA-Z0-9_]+):$/);
                         const isEmoteOnly = emoteOnlyMatch && EMOTES[emoteOnlyMatch[1] as keyof typeof EMOTES];
@@ -186,7 +197,24 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                             <ChatMessage key={index} user={user} message={message} />
                         );
                     })}
-
+                    {(() => {
+                        const hasMessagesOutsideView = messages.length > 10;
+                        if (hasMessagesOutsideView && manuallyScrolled && messagesContainer.current && messagesContainer.current.scrollHeight > 0) {
+                            return (
+                                <button
+                                    class="z-10 absolute mx-auto inset-x-0  w-[80%] top-16 bg-lime-500/50 hover:bg-lime-500 transition text-white p-2 rounded-md text-center"
+                                    onClick={() => {
+                                        if (messagesContainer.current) {
+                                            messagesContainer.current.scrollTo({ top: messagesContainer.current.scrollHeight, behavior: "smooth" });
+                                            setManuallyScrolled(false);
+                                        }
+                                    }}
+                                >
+                                    Ver mensajes nuevos
+                                </button>
+                            );
+                        }
+                    })()}
                 </div>
             </div>
             <footer class="flex w-full mt-4">
