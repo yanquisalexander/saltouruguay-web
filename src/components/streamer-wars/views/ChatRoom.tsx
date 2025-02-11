@@ -161,7 +161,21 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
         }
     };
 
+    useEffect(() => {
+        /* 
+            Si el mensaje solo contiene un emote, enviarlo como reacción
+        */
+        const emoteOnlyMatch = message.match(/^:([a-zA-Z0-9_]+):$/);
+        if (emoteOnlyMatch && EMOTES[emoteOnlyMatch[1] as keyof typeof EMOTES]) {
+            sendMessage();
+            return
+        }
+    }, [message]);
+
+
     const onEmoteSelect = (emote: keyof typeof EMOTES) => {
+
+
         setMessage((prev) => `${prev}:${emote}:`);
     }
 
