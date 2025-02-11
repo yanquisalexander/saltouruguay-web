@@ -114,7 +114,9 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             setJourneyTransitionProps({ phase: "start", key: Math.random() });
             document.addEventListener("journey-transition-ended", () => {
                 setDayAvailable(true);
-                setShowingJourneyTransition(false);
+                setTimeout(() => {
+                    setShowingJourneyTransition(false);
+                }, 500);
             }, { once: true });
         });
 
@@ -125,7 +127,9 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             setJourneyTransitionProps({ phase: "finish", key: Math.random() });
             document.addEventListener("journey-transition-ended", () => {
                 setDayAvailable(false);
-                setShowingJourneyTransition(false);
+                setTimeout(() => {
+                    setShowingJourneyTransition(false);
+                }, 500);
             }, { once: true });
         });
 
