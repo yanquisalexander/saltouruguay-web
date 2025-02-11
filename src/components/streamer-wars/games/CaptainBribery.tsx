@@ -1,5 +1,5 @@
 import { actions } from "astro:actions";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useState, useRef } from "preact/hooks";
 import { Instructions } from "../Instructions";
 import type { Session } from "@auth/core/types";
 import type Pusher from "pusher-js";
@@ -26,61 +26,73 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
             isCaptain: boolean;
         }[]
     }>({});
-
     const [briberyAccepted, setBriberyAccepted] = useState<{ team: string } | null>(null);
-
 
     useEffect(() => {
         const getPlayersTeams = async () => {
             try {
                 const { error, data } = await actions.streamerWars.getPlayersTeams();
-                if (error) {
-                    console.error(error);
-                    return;
-                }
+                if (error) throw error;
                 setPlayersTeams(data.playersTeams);
             } catch (err) {
                 console.error("Error fetching player teams:", err);
+                toast.error("Error al cargar los equipos");
             }
         };
-
         getPlayersTeams();
     }, []);
 
-    const currentUserTeam = Object.values(playersTeams).find(team => team.some(player => player.playerNumber === session.user.streamerWarsPlayerNumber)) || [];
-    const currentUserTeamName = Object.keys(playersTeams).find(team => playersTeams[team] === currentUserTeam) || "";
-    const currentUserIsCaptain = currentUserTeam.find(player => player.isCaptain && player.playerNumber === session.user.streamerWarsPlayerNumber);
+    // Obtener equipo actual del usuario con optional chaining
+    const currentUserTeam = Object.values(playersTeams).find(team =>
+        team.some(player => player.playerNumber === session?.user?.streamerWarsPlayerNumber)
+    ) || [];
 
-    const isMyCaptainAcceptedBribe = briberyAccepted?.team === currentUserTeamName;
+    const currentUserTeamName = Object.entries(playersTeams).find(
+        ([_, players]) => players.some(player =>
+            player.playerNumber === session?.user?.streamerWarsPlayerNumber
+        )
+    )?.[0] || "?";
+
+    // Usar some en lugar de find para boolean
+    const currentUserIsCaptain = currentUserTeam.some(player =>
+        player.isCaptain && player.playerNumber === session?.user?.streamerWarsPlayerNumber
+    );
 
     const handleAcceptBribe = async () => {
-        const { error, data } = await actions.streamerWars.acceptBribe();
-        if (error) {
-            console.error(error.message);
-            return;
+        try {
+            const { error } = await actions.streamerWars.acceptBribe();
+            if (error) throw error;
+        } catch (err) {
+            console.error(err);
+            toast.error("Error al aceptar el soborno");
         }
+    };
 
-        console.log(data);
-    }
+    // Usar ref para latest team name en event handlers
+    const currentTeamRef = useRef(currentUserTeamName);
+    currentTeamRef.current = currentUserTeamName;
 
     useEffect(() => {
-        channel.bind("bribe-accepted", ({ team }: { team: string }) => {
+        const handler = ({ team }: { team: string }) => {
+            const isMyTeamLost = team === currentTeamRef.current;
+
             setBriberyAccepted({ team });
-            if (!isMyCaptainAcceptedBribe) {
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 }
-                });
+
+            if (!isMyTeamLost) {
                 playSound({ sound: STREAMER_WARS_SOUNDS.WIN_BRIBE, volume: 0.5 });
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 toast.success(`El capitán del equipo "${getTranslation(team)}" ha aceptado el soborno. ¡Tu equipo está a salvo!`);
-                return
+                return;
             }
-            toast.warning("Tu capitán ha aceptado el soborno. Tu equipo ha sido eliminado del juego.");
+
             playSound({ sound: STREAMER_WARS_SOUNDS.LOSED_BRIBE, volume: 0.5 });
-        });
-    }
-        , []);
+            toast.warning("Tu capitán ha aceptado el soborno. Tu equipo ha sido eliminado del juego.");
+        };
+
+        channel.bind("bribe-accepted", handler);
+        return () => channel.unbind("bribe-accepted", handler);
+    }, [channel]);
+
     return (
         <>
             <Instructions duration={15000}>
@@ -99,60 +111,50 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
                 </div>
             ) : (
                 <div class="flex flex-col items-center mt-16">
-                    <h2 class="text-xl font-anton mb-4">
-                        Soborno al capitán
-                    </h2>
+                    <h2 class="text-xl font-anton mb-4">Soborno al capitán</h2>
 
-                    {
-                        briberyAccepted ? (
+                    {briberyAccepted ? (
+                        <p class="text-center max-w-[65ch]">
+                            {currentUserTeamName === briberyAccepted.team ? (
+                                currentUserIsCaptain ? (
+                                    <span>Has aceptado el soborno.<br />Recibirás la cantidad ofrecida, pero tu equipo será eliminado.</span>
+                                ) : (
+                                    "Tu capitán aceptó el soborno. Equipo eliminado."
+                                )
+                            ) : (
+                                <span>El capitán del equipo "{getTranslation(briberyAccepted.team)}" aceptó el soborno.<br />Tu equipo está a salvo 🎉... por ahora</span>
+                            )}
+                        </p>
+                    ) : (
+                        <>
+                            {currentUserIsCaptain && (
+                                <div class="flex flex-col items-center gap-4">
+                                    <p>Eres el capitán del equipo {getTranslation(currentUserTeamName)}</p>
+                                    <button
+                                        class="size-48 font-rubik rounded-full bg-lime-500 hover:bg-lime-600 hover:scale-110 transition font-medium text-black text-lg px-4 py-2 mt-8"
+                                        onClick={handleAcceptBribe}
+                                    >
+                                        Aceptar soborno
+                                    </button>
+                                </div>
+                            )}
 
-                            <p class="text-center max-w-[60ch]">
-                                {
-                                    isMyCaptainAcceptedBribe ? (
-                                        currentUserIsCaptain ? (
-                                            <p>Has aceptado el soborno. <br />Recibirás la cantidad de dinero que se te ofreció, pero tú y tu equipo serán eliminados del juego.</p>
-                                        ) : (
-                                            `El capitán de tu equipo ha aceptado el soborno. Tu equipo ha sido eliminado del juego.`
-                                        )
-                                    ) : (
-                                        <p>El capitán del equipo {getTranslation(Object.keys(playersTeams).find(key => playersTeams[key] === currentUserTeam) || "")} ha aceptado el soborno. Tu equipo está a salvo 🎉... por ahora!</p>
+                            {!currentUserIsCaptain && (
+                                <p>Esperando decisión de tu capitán...</p>
+                            )}
 
-                                    )
-                                }
-                            </p>
-
-                        ) : (
-                            <>
-                                {currentUserIsCaptain && (
-                                    <div class="flex flex-col items-center gap-4">
-                                        <p>Eres el capitán del equipo {getTranslation(Object.keys(playersTeams).find(key => playersTeams[key] === currentUserTeam) || "")}</p>
-
-                                        <button class="size-48 font-rubik rounded-full bg-lime-500 hover:bg-lime-600 hover:scale-110 transition font-medium text-black text-lg px-4 py-2 mt-8"
-                                            onClick={handleAcceptBribe}
-                                        >
-                                            Aceptar soborno
-                                        </button>
-                                    </div>
-                                )}
-
-
-                                {
-                                    !currentUserIsCaptain && (
-                                        <p >
-                                            Esperando a que tu capitán tome una decisión...
-                                        </p>
-                                    )
-                                }
-
-                                <div class="flex flex-wrap justify-center mt-8">
-                                    {Object.keys(playersTeams).map(team => (
+                            <div class="flex flex-wrap justify-center mt-8">
+                                {Object.keys(playersTeams).map(team => (
+                                    team !== currentUserTeamName ? null :
                                         <div
                                             key={team}
                                             className="bg-gray-900/50 rounded-xl p-4 backdrop-blur-sm 
                 border border-gray-800 transition-all duration-300 hover:border-gray-700"
                                         >
                                             <div className="flex items-center justify-between mb-4">
-                                                <span className="text-white font-rubik font-medium text-sm">{getTranslation(team)}</span>
+                                                <span className="text-white font-rubik font-medium text-sm">
+                                                    Tu equipo: {getTranslation(team)}
+                                                </span>
                                                 <div className="flex items-center gap-2">
 
 
@@ -186,14 +188,12 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
                                                 ))}
                                             </div>
                                         </div>
-                                    ))}
-
-                                </div>
-                            </>
-                        )}
-
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </>
     );
-}
+};
