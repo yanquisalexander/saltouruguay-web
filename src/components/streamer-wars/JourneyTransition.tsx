@@ -85,7 +85,7 @@ export const JourneyTransition = ({ phase, executeOnMount }: JourneyTransitionPr
             // Si es el primer sonido, esperar el retraso definido antes de comenzar
             if (index === 0) {
                 const bgAudioFile = phase === "start" ? "start-bg" : "finish-bg";
-                playSound({ sound: `scripts/${bgAudioFile}`, volume: 0.2 });
+                playSound({ sound: `scripts/${bgAudioFile}`, volume: 0.4 });
                 const firstDelay =
                     phase === "start" ? START_SCRIPT_FIRST_AUDIO_DELAY : FINISH_SCRIPT_FIRST_AUDIO_DELAY;
                 timeoutId = window.setTimeout(() => {
@@ -93,7 +93,7 @@ export const JourneyTransition = ({ phase, executeOnMount }: JourneyTransitionPr
                     setCurrentIndex(index);
                     const item = script[index];
                     if (item.audioPath) {
-                        playSoundWithReverb({ sound: `scripts/${item.audioPath}`, volume: 0.5 });
+                        playSoundWithReverb({ sound: `scripts/${item.audioPath}`, volume: 1 });
                     }
                     // Después de la duración indicada, pasa al siguiente ítem
                     timeoutId = window.setTimeout(() => {
