@@ -63,7 +63,7 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
     useEffect(() => {
         channel.bind("bribe-accepted", ({ team }: { team: string }) => {
             setBriberyAccepted({ team });
-            toast.warning(`El capitán del equipo ${team} ha aceptado el soborno`);
+            toast.warning(`El capitán del equipo "${getTranslation(team)}" ha aceptado el soborno.`);
         });
     }
         , []);
