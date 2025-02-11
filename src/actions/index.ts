@@ -3,14 +3,14 @@ import { NOMINEES } from "@/awards/Nominees";
 import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
 import type { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { client } from "@/db/client";
-import { DebateAnonymousMessagesTable, StreamerWarsInscriptionsTable } from "@/db/schema";
+import { DebateAnonymousMessagesTable, NegativeVotesStreamersTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable } from "@/db/schema";
 import { submitVotes } from "@/utils/awards-vote-system";
 import { pusher } from "@/utils/pusher";
 import { updateCardSkin, updateStickers } from "@/utils/user";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
-import { eq } from "drizzle-orm";
+import { count, eq, sql } from "drizzle-orm";
 import { users } from "./admin/users";
 import { streamerWars } from "./streamerWars";
 import { games } from "./games";
@@ -310,5 +310,61 @@ export const server = {
 
     },
     streamerWars,
-    games
+    games,
+    voteToExpulsePlayer: defineAction({
+        input: z.object({
+            playerNumber: z.number(),
+        }),
+        handler: async ({ playerNumber }, { request }) => {
+            const session = await getSession(request);
+
+            // Verificar si el usuario está autenticado
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para votar por un jugador a expulsar",
+                });
+            }
+
+            // Verificar si el usuario ya votó a alguien
+            const hasVoted = await client
+                .select()
+                .from(NegativeVotesStreamersTable)
+                .where(eq(NegativeVotesStreamersTable.userId, session.user.id))
+                .execute();
+
+            if (hasVoted.length > 0) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: "Ya has votado por un jugador a expulsar",
+                });
+            }
+
+            // Verificar si el jugador existe
+            const player = await client
+                .select()
+                .from(StreamerWarsPlayersTable)
+                .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+                .execute();
+
+            if (player.length === 0) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: "El jugador no existe",
+                });
+            }
+
+            // Votar por el jugador
+            await client
+                .insert(NegativeVotesStreamersTable)
+                .values({
+                    userId: session.user.id,
+                    playerNumber,
+                })
+                .execute();
+
+
+            return { success: true };
+        },
+    })
 }

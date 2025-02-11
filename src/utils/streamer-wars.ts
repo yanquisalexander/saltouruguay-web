@@ -1,5 +1,5 @@
 import { client } from "@/db/client";
-import { StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable, UsersTable } from "@/db/schema";
+import { NegativeVotesStreamersTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable, UsersTable } from "@/db/schema";
 import cacheService from "@/services/cache";
 import { and, asc, count, eq, not, or } from "drizzle-orm";
 import { pusher } from "./pusher";
@@ -562,4 +562,26 @@ export const resetRoles = async () => {
 
 
     }
+}
+
+export const getExpulsionVotes = async () => {
+    const votes = await client
+        .select({
+            playerNumber: NegativeVotesStreamersTable.playerNumber,
+            votes: count(),
+        })
+        .from(NegativeVotesStreamersTable)
+        .groupBy(NegativeVotesStreamersTable.playerNumber)
+        .execute();
+
+    return { votes };
+}
+
+export const currentUserHasVoted = async (userId: number) => {
+    return await client
+        .select()
+        .from(NegativeVotesStreamersTable)
+        .where(eq(NegativeVotesStreamersTable.userId, userId))
+        .execute()
+        .then((res) => res.length > 0);
 }

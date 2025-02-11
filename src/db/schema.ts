@@ -191,3 +191,13 @@ export const streamerWarsTeamPlayersRelations = relations(StreamerWarsTeamPlayer
         references: [StreamerWarsPlayersTable.playerNumber],
     })
 }))
+
+export const NegativeVotesStreamersTable = pgTable('negative_votes_streamers', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => UsersTable.id),
+    playerNumber: integer('player_number').references(() => StreamerWarsPlayersTable.playerNumber),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueUserIdPlayerNumber: unique().on(t.userId, t.playerNumber)
+}))

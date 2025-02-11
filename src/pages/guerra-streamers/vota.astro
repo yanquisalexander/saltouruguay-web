@@ -1,0 +1,133 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import {
+  currentUserHasVoted,
+  getExpulsionVotes,
+  getPlayers,
+} from "@/utils/streamer-wars";
+import { getSession } from "auth-astro/server";
+const session = await getSession(Astro.request);
+const players = await getPlayers();
+
+const playersList = players.slice(0, 51);
+
+const userHasVoted = session?.user?.id
+  ? await currentUserHasVoted(session.user.id)
+  : false;
+---
+
+<Layout
+  title="Votación | Guerra de Streamers"
+  description="¡Vota por el streamer que NO quieres que participe en la Guerra de Streamers!"
+>
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <header class="relative z-10 flex flex-col justify-center mb-12">
+      <div class="flex items-center gap-x-4">
+        <div class="flex flex-col justify-center gap-y-1"></div>
+      </div>
+    </header>
+    <div class="flex flex-col w-full justify-center items-center gap-4">
+      <h1
+        class="with-glyph flex relative w-max text-3xl transform px-2 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen !skew-x-[-20deg] -rotate-6"
+      >
+        <span class="flex !skew-x-[20deg] transform"> Votación </span>
+      </h1>
+      <div class="flex flex-col w-full mt-8 max-w-[50ch] gap-4">
+        <p class="text-center font-teko text-3xl text-white">
+          ¡Vota por el streamer que NO quieres que participe en la Guerra de
+          Streamers!
+        </p>
+      </div>
+    </div>
+
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8"
+    >
+      {
+        playersList.map((player) => (
+          <div class="flex flex-col items-center gap-4">
+            <img
+              src={`/images/streamer-wars/playes/${player.playerNumber.toString().padStart(3, "0")}.webp`}
+              onerror={`this.src='${player.user?.avatar}'`}
+              alt={player.user?.displayName}
+              class="h-48 w-32 object-contain rounded-full mask"
+              draggable="false"
+            />
+            <h2 class="text-center font-bold text-xl text-lime-500 font-atomic tracking-wider">
+              Jugador #{player.playerNumber.toString().padStart(3, "0")}{" "}
+            </h2>
+
+            {!userHasVoted ? (
+              <button
+                data-player-id={player.playerNumber}
+                class="vote-btn bg-[#b4cd02]  text-black font-bold py-2 px-8 -skew-x-[20deg]  hover:bg-[#86b700] transition-colors"
+              >
+                <span class="inline-block !skew-x-[20deg] "> Votar </span>
+              </button>
+            ) : (
+              <button
+                disabled
+                class="bg-neutral-500 text-white cursor-not-allowed font-bold py-2 px-8 -skew-x-[20deg]  hover:bg-neutral-600 transition-colors"
+              >
+                <span class="inline-block !skew-x-[20deg] "> Ya votaste </span>
+              </button>
+            )}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</Layout>
+
+<style>
+  h1.with-glyph:after {
+    content: "a";
+    @apply !font-atomic-extras text-[80px] mt-8 absolute inset-x-0 text-center;
+    z-index: -1;
+  }
+
+  .mask {
+    -webkit-mask-composite: source-in;
+    mask-image: url(/images/mask-wars-votacion.webp);
+    mask-position: 50%;
+    mask-size: cover;
+    mask-repeat: no-repeat;
+    mask-clip: content-box;
+    mask-origin: content-box;
+    mask-composite: source-in;
+    mask-mode: alpha;
+  }
+</style>
+
+<script>
+  import { $$ } from "@/lib/dom-selector";
+  import { actions } from "astro:actions";
+  import { navigate } from "astro:transitions/client";
+  import { toast } from "sonner";
+
+  document.addEventListener("astro:page-load", () => {
+    const $voteButtons = $$(
+      "button.vote-btn"
+    ) as unknown as HTMLButtonElement[];
+
+    $voteButtons.forEach(($button) => {
+      $button.addEventListener("click", async (e) => {
+        if (!confirm("¿Estás seguro de votar por este jugador?")) {
+          return;
+        }
+        const playerId = $button.dataset.playerId;
+        const { error, data } = await actions.voteToExpulsePlayer({
+          playerNumber: Number(playerId),
+        });
+
+        if (error) {
+          toast(error.message);
+          return;
+        }
+
+        toast(`Votaste por expulsar al jugador #${playerId}`);
+        navigate("/guerra-streamers/vota");
+      });
+    });
+  });
+</script>
