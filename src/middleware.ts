@@ -1,4 +1,4 @@
-import type { MiddlewareHandler } from "astro";
+/* import type { MiddlewareHandler } from "astro";
 
 const middleware: MiddlewareHandler = async (context, next) => {
     const MAINTENANCE_MODE = false
@@ -15,3 +15,4 @@ const middleware: MiddlewareHandler = async (context, next) => {
 
 // Export onRequest. This should NOT be a default export
 export const onRequest = middleware;
+ */
