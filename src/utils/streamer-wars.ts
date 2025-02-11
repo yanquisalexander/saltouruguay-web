@@ -606,3 +606,55 @@ export const currentUserHasVoted = async (userId: number) => {
         .execute()
         .then((res) => res.length > 0);
 }
+
+export const acceptBribe = async (playerNumber: number) => {
+    const player = await client
+        .select()
+        .from(StreamerWarsPlayersTable)
+        .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+        .execute()
+        .then((res) => res[0]);
+
+    if (!player) {
+        return {
+            success: false,
+            error: "El jugador no existe",
+        };
+    }
+
+    try {
+        const teamColor = await client
+            .select({
+                color: StreamerWarsTeamsTable.color,
+            })
+            .from(StreamerWarsTeamsTable)
+            .innerJoin(
+                StreamerWarsTeamPlayersTable,
+                and(
+                    eq(StreamerWarsTeamPlayersTable.teamId, StreamerWarsTeamsTable.id),
+                    eq(StreamerWarsTeamPlayersTable.playerNumber, playerNumber)
+                )
+            )
+            .execute()
+            .then((res) => res[0]?.color);
+
+        if (!teamColor) {
+            return {
+                success: false,
+                error: "El jugador no pertenece a ningún equipo",
+            };
+        }
+
+        await pusher.trigger("streamer-wars", "bribe-accepted", { team: teamColor });
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        console.error("Error en acceptBribe:", error);
+        return {
+            success: false,
+            error: "Ocurrió un error al aceptar el soborno",
+        };
+    }
+}
