@@ -5,7 +5,7 @@ import Pusher, { type Channel } from "pusher-js";
 import { PUSHER_KEY } from "@/config";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
-export const useStreamerWarsSocket = (session: Session) => {
+export const useStreamerWarsSocket = (session: Session | null) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
     const [gameState, setGameState] = useState<{ component: string; props: any } | null>(null);
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);

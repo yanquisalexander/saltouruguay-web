@@ -101,7 +101,7 @@ export const GameSelector = () => {
         });
 
         if (error) {
-            toast.warning(error);
+            toast.warning(error.message);
         }
 
         if (data) {
