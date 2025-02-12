@@ -220,6 +220,21 @@ export const games = {
             // Se espera un momento antes de enviar el nuevo estado
             await new Promise((resolve) => setTimeout(resolve, 2000));
             await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
+
+            try {
+                await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                    content: null,
+                    embeds: [
+                        {
+                            title: "Siguiente ronda",
+                            description: `Se ha avanzado a la ronda ${newGameState.currentRound} de Simón Dice.`,
+                            color: 15267327,
+                        },
+                    ],
+                });
+            } catch (error) {
+
+            }
             return newGameState;
         },
 
