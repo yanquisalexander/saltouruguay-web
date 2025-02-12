@@ -16,6 +16,13 @@ export const useStreamerWarsSocket = (session: Session | null) => {
 
     const isOnWaitingRoom = !gameState || !gameState.component
 
+    console.log("isOnWaitingRoom", isOnWaitingRoom);
+
+    useEffect(() => {
+        bgAudio.current = new Audio(`${CDN_PREFIX}${STREAMER_WARS_SOUNDS.WAITING_ROOM_LOOP}.mp3`);
+        bgAudio.current.loop = true;
+    }, []);
+
     useEffect(() => {
         if (bgAudio.current) {
             bgAudio.current.volume = bgVolume;
@@ -41,9 +48,6 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         });
 
         setPusher(pusherInstance);
-
-        bgAudio.current = new Audio(`${CDN_PREFIX}${STREAMER_WARS_SOUNDS.WAITING_ROOM_LOOP}.mp3`);
-        bgAudio.current.loop = true;
 
         globalChannel.current = pusherInstance.subscribe("streamer-wars");
         presenceChannel.current = pusherInstance.subscribe("presence-streamer-wars");
