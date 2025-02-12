@@ -34,7 +34,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
                     description: "Procura estar atento a Discord y a las notificaciones del juego.",
                     richColors: true,
                     duration: 10000,
-                    position: "top-center",
+                    position: "bottom-center",
                     dismissible: true,
 
                 });
