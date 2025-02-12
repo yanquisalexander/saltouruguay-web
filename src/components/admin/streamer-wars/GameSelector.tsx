@@ -36,6 +36,13 @@ export const GAMES = [
         icon: "💰",
         classNames: "bg-gradient-to-r from-yellow-500 to-yellow-700",
         props: {}
+    },
+    {
+        id: "AutoElimination",
+        name: "Autoeliminación",
+        icon: "🚫",
+        classNames: "bg-gradient-to-r from-gray-500 to-gray-700",
+        props: {}
     }
     // Más juegos pueden añadirse con sus propias props
 ];
