@@ -4,8 +4,9 @@ import cacheService from "@/services/cache";
 import { and, asc, count, eq, not, or } from "drizzle-orm";
 import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
-import { addRoleToUser, DISCORD_ROLES, getDiscordUser, getGuildMember, removeRoleFromUser, ROLE_GUERRA_STREAMERS } from "@/services/discord";
+import { addRoleToUser, DISCORD_ROLES, getDiscordUser, getGuildMember, LOGS_CHANNEL_WEBHOOK_ID, removeRoleFromUser, ROLE_GUERRA_STREAMERS, sendDiscordEmbed, sendWebhookMessage } from "@/services/discord";
 import { SALTO_DISCORD_GUILD_ID } from "@/config";
+import { DISCORD_LOGS_WEBHOOK_TOKEN } from "astro:env/server";
 
 
 export interface SimonSaysGameState {
@@ -114,6 +115,39 @@ export const games = {
             if (allCompleted) {
                 await games.simonSays.advanceToNextRoundForCurrentPlayers();
             }
+
+            try {
+                await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                    content: null,
+                    embeds: [
+                        {
+                            title: "Patrón completado",
+                            description: `El jugador **#${playerNumber}** ha completado el patrón de Simon Says.`,
+                            color: 0x00ff00,
+                            fields: [
+                                {
+                                    name: "Equipo",
+                                    value: Object.entries(gameState.currentPlayers).find(([team, player]) => player === playerNumber)?.[0] ?? "Sin equipo",
+                                    inline: true,
+                                },
+                                {
+                                    name: "Ronda",
+                                    value: gameState.currentRound.toString(),
+                                    inline: true,
+                                },
+                                {
+                                    name: "Completaron",
+                                    value: `${newCompletedPlayers.length} de ${Object.values(gameState.currentPlayers).filter(player => player !== null).length}`,
+                                    inline: true,
+                                }
+                            ],
+                        },
+
+                    ],
+                });
+            } catch (error) {
+
+            }
         },
 
         patternFailed: async (playerNumber: number) => {
@@ -147,6 +181,21 @@ export const games = {
                 playerNumber,
             });
             await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
+
+            try {
+                await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                    content: null,
+                    embeds: [
+                        {
+                            title: "Patrón fallado",
+                            description: `El jugador ${playerNumber} ha fallado el patrón de Simon Says y ha sido eliminado.`,
+                            color: 0xff0000,
+                        },
+                    ],
+                });
+            } catch (error) {
+
+            }
 
             await eliminatePlayer(playerNumber);
             return newGameState;
