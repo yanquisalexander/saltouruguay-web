@@ -75,7 +75,7 @@ export const streamerWars = {
                     .values({ userId: session.user.id, message })
                     .execute();
 
-                await pusher.trigger("streamer-wars", "new-message", { message, user: session.user.username, admin: session.user.isAdmin });
+                await pusher.trigger("streamer-wars", "new-message", { message, user: session.user.name, admin: session.user.isAdmin });
             } catch (error) {
                 throw new ActionError({
                     code: "INTERNAL_SERVER_ERROR",
