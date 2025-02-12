@@ -83,11 +83,22 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel } = useStreamerWarsSocket(session);
     const [splashEnded, setSplashEnded] = useState(false);
     const [showingJourneyTransition, setShowingJourneyTransition] = useState(false);
+    const [bgVolume, setBgVolume] = useState(0.5);
+    const bgAudio = useRef<HTMLAudioElement | null>(null);
     useEffect(() => {
         document.addEventListener("splash-screen-ended", () => {
             setSplashEnded(true);
+
+            bgAudio.current = new Audio(`${CDN_PREFIX}${STREAMER_WARS_SOUNDS.WAITING_ROOM_LOOP}.mp3`);
+            bgAudio.current.loop = true;
         })
     }, []);
+
+    useEffect(() => {
+        if (bgAudio.current) {
+            bgAudio.current.volume = bgVolume;
+        }
+    }, [bgVolume]);
 
 
 
@@ -143,6 +154,14 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         });
     }, []);
 
+    useEffect(() => {
+        // Every time the game state changes and has a game component, we pause the bg audio
+        // of waiting room
+        if (gameState?.component) {
+            bgAudio.current?.pause();
+        }
+    }, [gameState?.component]);
+
 
 
     useEffect(() => {
@@ -154,6 +173,9 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             // Actualizamos el key para forzar la remount
             setJourneyTransitionProps({ phase: "start", key: Math.random() });
             document.addEventListener("journey-transition-ended", () => {
+                if (bgAudio.current) {
+                    bgAudio.current.play();
+                }
                 setDayAvailable(true);
                 setTimeout(() => {
                     setShowingJourneyTransition(false);
@@ -163,6 +185,9 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
 
         globalChannel.current?.bind("day-finished", () => {
+            if (bgAudio.current) {
+                bgAudio.current.pause();
+            }
             setShowingJourneyTransition(true);
             // Actualizamos el key para forzar la remount
             setJourneyTransitionProps({ phase: "finish", key: Math.random() });
@@ -275,7 +300,13 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                                         gameState ? (
                                             <GameComponent gameState={gameState} players={players} pusher={pusher} session={session} channel={globalChannel.current} />
                                         ) : (
-                                            <WaitingRoom session={session} channel={globalChannel.current} />
+                                            <WaitingRoom
+                                                session={session}
+                                                channel={globalChannel.current}
+                                                bgVolume={bgVolume}
+                                                setBgVolume={setBgVolume}
+                                                bgAudio={bgAudio.current!}
+                                            />
                                         )
                                     )
                                 }

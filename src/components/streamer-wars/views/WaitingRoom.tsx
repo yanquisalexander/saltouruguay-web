@@ -1,7 +1,7 @@
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
-import { LucideMegaphone, LucidePartyPopper, LucideSend, LucideVenetianMask } from "lucide-preact";
+import { LucideMegaphone, LucidePartyPopper, LucideSend, LucideVenetianMask, LucideVolume2, LucideVolumeOff } from "lucide-preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
 import { toast } from "sonner";
@@ -35,7 +35,7 @@ const HINTS = [
 
 
 
-export const WaitingRoom = ({ session, channel }: { session: Session; channel: Channel }) => {
+export const WaitingRoom = ({ session, channel, bgVolume, setBgVolume, bgAudio }: { session: Session; channel: Channel, bgVolume: number, setBgVolume: (volume: number) => void, bgAudio: HTMLAudioElement }) => {
     /* 
         Sala de chat/ espera de streamer wars
     */
@@ -52,6 +52,26 @@ export const WaitingRoom = ({ session, channel }: { session: Session; channel: C
                 <ChatRoom session={session} channel={channel} />
             </div>
             <div class="col-span-full md:col-span-8 w-full relative flex flex-col items-center justify-center border border-lime-500 border-dashed rounded-md p-4">
+                <div id="bg-music-controls" class="absolute top-0 right-0 p-2 flex gap-x-2">
+                    {/* 
+                    Slider
+                    */}
+                    <div class="flex gap-x-2 items-center">
+                        <button onClick={() => {
+                            if (bgVolume === 0) {
+                                bgAudio.play();
+                                setBgVolume(1);
+                            } else {
+                                setBgVolume(0);
+                            }
+                        }} class="bg-black/50 p-2 rounded-full">
+
+                            {bgVolume === 0 ? <LucideVolumeOff size={24} /> : <LucideVolume2 size={24} />}
+                        </button>
+                        <input type="range" min={0} max={1} step={0.01} value={bgVolume} onInput={(e) => setBgVolume(parseFloat(e.currentTarget.value))} />
+                    </div>
+                </div>
+
                 <h2 class="text-2xl flex flex-col font-teko justify-center items-center gap-y-3 animate-pulse duration-500">
                     Esperando por el próximo juego <ThreeDotsAnimation />
                 </h2>

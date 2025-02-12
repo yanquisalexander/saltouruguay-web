@@ -23,6 +23,7 @@ export const STREAMER_WARS_SOUNDS = {
     LOSED_BRIBE: 'losed-bribe',
     WIN_BRIBE: 'win-bribe',
     CUTE_NOTIFICATION: 'cute-notification',
+    WAITING_ROOM_LOOP: 'waiting-room-loop',
 }
 
 
