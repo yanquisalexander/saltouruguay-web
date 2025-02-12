@@ -85,6 +85,25 @@ export const streamerWars = {
             return { success: true }
         }
     }),
+    deleteMessage: defineAction({
+        input: z.object({
+            messageId: z.number(),
+        }),
+        handler: async ({ messageId }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para eliminar mensajes"
+                })
+            }
+
+            await client.delete(StreamerWarsChatMessagesTable).where(eq(StreamerWarsChatMessagesTable.id, messageId)).execute();
+            await pusher.trigger("streamer-wars", "message-deleted", { messageId });
+            return { success: true }
+        }
+    }),
     getAllMessages: defineAction({
         handler: async (_, { request }) => {
             const session = await getSession(request);
@@ -98,6 +117,7 @@ export const streamerWars = {
 
             const messages = await client.query.StreamerWarsChatMessagesTable.findMany({
                 columns: {
+                    id: true,
                     message: true,
                     isAnnouncement: true,
                 },
@@ -110,7 +130,8 @@ export const streamerWars = {
                         }
                     }
                 }
-            }).execute().then((data) => data.map(({ user, message, isAnnouncement }) => ({
+            }).execute().then((data) => data.map(({ id, user, message, isAnnouncement }) => ({
+                id,
                 user: user?.displayName || user?.username,
                 message,
                 isAnnouncement,
