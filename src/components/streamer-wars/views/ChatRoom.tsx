@@ -274,7 +274,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                         ) : isEmoteOnly ? (
                             <ReactionEmoteMessage key={index} user={user!} emote={emoteOnlyMatch![1] as keyof typeof EMOTES} admin={admin} />
                         ) : (
-                            <ChatMessage key={index} user={user} message={message} />
+                            <ChatMessage key={index} user={user} message={message} admin={admin} />
                         );
                     })}
                     {manuallyScrolled && (
