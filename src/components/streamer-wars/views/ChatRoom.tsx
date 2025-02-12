@@ -411,7 +411,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                                     user={user}
                                     message={message}
                                     admin={admin}
-                                    showModeration={userIsAdmin}
+                                    showModeration={userIsAdmin && !admin}
                                     removeMessage={() => handleRemoveMessage(id)}
                                 />
                             );
