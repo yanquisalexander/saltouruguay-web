@@ -1,0 +1,33 @@
+---
+import { getSession } from "auth-astro/server";
+import { LucideChevronRight } from "lucide-preact";
+
+const session = await getSession(Astro.request);
+---
+
+{
+  session?.user.streamerWarsPlayerNumber && (
+    <section id="streamer-wars" class="max-w-5xl mx-auto px-6 sm:px-10 pb-16">
+      <div class="flex flex-col justify-center items-center space-x-4 mt-8">
+        <header class="text-center mb-12">
+          <p class="text-xl font-atomic text-lime-500 select-none -skew-y-6">
+            <span class="tracking-wider">Guerra de Streamers</span>
+          </p>
+          <h2 class="text-4xl  font-atomic hover:scale-110 transition-all hover:saturate-200 text-zinc-100 -skew-y-6 mt-8">
+            ¿Listo para competir,
+            <span class="text-lime-400 tracking-wider">
+              {session.user.name}?
+            </span>
+          </h2>
+        </header>
+        <a
+          href="/guerra-streamers"
+          class="w-max flex items-center justify-center bg-[#b4cd02] text-black uppercase font-teko text-2xl py-2 px-8 rounded-lg hover:scale-105 transition-all hover:saturate-200"
+        >
+          Únete ahora
+          <LucideChevronRight class="w-6 h-6 ml-2" />
+        </a>
+      </div>
+    </section>
+  )
+}

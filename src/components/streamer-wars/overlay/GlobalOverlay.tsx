@@ -3,6 +3,7 @@ import { useStreamerWarsSocket } from "../hooks/useStreamerWarsSocket";
 import { actions } from "astro:actions";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { SimonSaysOverlay } from "./SimonSaysOverlay";
+import type { Players } from "@/components/admin/streamer-wars/Players";
 
 const OverlayRenderer = ({ gameState, setGameState, players, pusher, globalChannel, presenceChannel }: any) => {
     const components = useRef<any>({
@@ -20,9 +21,36 @@ const OverlayRenderer = ({ gameState, setGameState, players, pusher, globalChann
 
 
 export const GlobalOverlay = () => {
-    const [players, setPlayers] = useState<any[]>([]);
+    const [players, setPlayers] = useState<Players[]>([]);
     const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel } = useStreamerWarsSocket(null);
 
+    useEffect(() => {
+        actions.streamerWars.getPlayers().then(({ error, data }) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            setPlayers((prev) => {
+                const mergedPlayers = [...prev];
+
+                data.players.forEach((player: any) => {
+                    if (!mergedPlayers.some((p) => p.id === player.id)) {
+                        mergedPlayers.push({
+                            ...player,
+                            displayName: player.displayName || player.name || '',
+                            avatar: player.avatar || '',
+                            admin: player.admin || false,
+                            online: false,
+                            eliminated: player.eliminated || false,
+                        });
+                    }
+                });
+
+                return mergedPlayers;
+            });
+        });
+    }, []);
 
 
     useEffect(() => {

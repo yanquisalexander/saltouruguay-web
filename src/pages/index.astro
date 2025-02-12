@@ -9,6 +9,7 @@ import NewsOnPage from "@/sections/NewsOnPage.astro";
 import UpcomingCompetitions from "@/sections/UpcomingCompetitions.astro";
 import { FeaturedNews } from "@/components/FeaturedNews";
 import Advantages from "@/sections/Advantages.astro";
+import StreamerWars from "@/sections/StreamerWars.astro";
 
 const IS_PROD = import.meta.env.PROD;
 
@@ -48,6 +49,7 @@ export const prerender = true;
       </h1>
     </header>
   </div>
+  <StreamerWars server:defer />
   <LiveStream server:defer />
 
   <FeaturedNews client:idle />

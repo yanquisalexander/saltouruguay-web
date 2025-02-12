@@ -5,7 +5,7 @@ import type Pusher from "pusher-js";
 import { toast } from "sonner";
 import { Teams } from "../Teams";
 
-interface Players {
+export interface Players {
     id?: number;
     playerNumber: number;
     displayName: string;
