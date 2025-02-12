@@ -13,6 +13,7 @@ import { actions } from "astro:actions";
 import { LucideBug } from "lucide-preact";
 import { JourneyTransition } from "./JourneyTransition";
 import { CaptainBribery } from "./games/CaptainBribery";
+import { type Players } from "../admin/streamer-wars/Players";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -76,7 +77,7 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
     );
 };
 export const StreamerWars = ({ session }: { session: Session }) => {
-    const [players, setPlayers] = useState<any[]>([]);
+    const [players, setPlayers] = useState<Players[]>([]);
     const [dayAvailable, setDayAvailable] = useState(false);
     const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel } = useStreamerWarsSocket(session);
     const [splashEnded, setSplashEnded] = useState(false);
@@ -86,6 +87,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             setSplashEnded(true);
         })
     }, []);
+
+
 
     const [journeyTransitionProps, setJourneyTransitionProps] = useState({ phase: "start", key: Math.random() });
 
@@ -111,7 +114,35 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
     useEffect(() => {
         restoreGameStateFromCache();
+
+        actions.streamerWars.getPlayers().then(({ error, data }) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+
+            setPlayers((prev) => {
+                const existingIds = new Set(prev.map((p) => p.id));
+
+                const newPlayers = data.players
+                    .filter((p: any) => !existingIds.has(p.id))
+                    .map((p: any) => ({
+                        id: p.id,
+                        playerNumber: p.playerNumber,
+                        displayName: p.displayName || p.name || '',
+                        avatar: p.avatar || '',
+                        admin: p.admin || false,
+                        online: false,
+                        eliminated: p.eliminated || false,
+                    }));
+
+                return [...prev, ...newPlayers];
+            });
+        });
     }, []);
+
+
 
     useEffect(() => {
 
@@ -159,22 +190,33 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         })
 
 
-        presenceChannel.current?.bind("pusher:member_added", ({ id, info }: { id: number, info: any }) => {
-            setPlayers((prev) => [...prev, { id, ...info }]);
-        });
-
-        presenceChannel.current?.bind("pusher:member_removed", (data: any) => {
-            setPlayers((prev) => prev.filter((player) => player.id !== data.id));
-        });
-
         presenceChannel.current?.bind("pusher:subscription_succeeded", (members: any) => {
-            console.log("Members", members);
-            const players = Object.values(members.members).map((member: any) => ({
+            const onlinePlayers = Object.values(members.members).map((member: any) => ({
                 ...member,
+                displayName: member.name,
+                online: true,
             }));
 
-            setPlayers(players);
+            setPlayers((prev) =>
+                prev.map((player) => ({
+                    ...player,
+                    online: onlinePlayers.some((p) => p.id === player.id),
+                }))
+            );
         });
+
+        presenceChannel.current?.bind("pusher:member_added", (member: any) => {
+            setPlayers((prev) =>
+                prev.map((player) => (player.id === member.info.id ? { ...player, online: true } : player))
+            );
+        });
+
+        presenceChannel.current?.bind("pusher:member_removed", (member: any) => {
+            setPlayers((prev) =>
+                prev.map((player) => (player.id === member.info.id ? { ...player, online: false } : player))
+            );
+        });
+
 
         actions.streamerWars.getGameState().then(({ data, error }) => {
             if (!error && data?.gameState) {

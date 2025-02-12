@@ -1,6 +1,7 @@
 import { useState } from "preact/hooks";
+import type { Players } from "../admin/streamer-wars/Players";
 
-export const ConnectedPlayers = ({ players }: { players: any[] }) => {
+export const ConnectedPlayers = ({ players }: { players: Players[] }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     if (players.length === 0) {
@@ -17,10 +18,10 @@ export const ConnectedPlayers = ({ players }: { players: any[] }) => {
                 <div class="flex group">
                     {
                         isExpanded ? (
-                            players.map((player, index) => (
+                            players.filter((player) => !player.eliminated && player.online).map((player, index) => (
                                 <div
                                     key={index}
-                                    title={`Jugador #${player.playerNumber} - ${player.name}`}
+                                    title={`Jugador #${player.playerNumber} - ${player.displayName}`}
                                     class={`flex flex-col relative overflow-hidden items-center  hover:scale-105 hover:bg-lime-500/20 transition rounded-lg p-4 ${player.eliminated ? "pointer-events-none" : ""
                                         }`}                                >
                                     <div class="relative size-16 rounded-full">
@@ -34,19 +35,21 @@ export const ConnectedPlayers = ({ players }: { players: any[] }) => {
                                 </div>
                             ))
                         ) : (
-                            players.slice(0, 5).map((player, index) => (
-                                <div
-                                    key={index}
-                                    class={`relative transition-all duration-300 ${index !== 0 ? "-ml-4" : ""
-                                        }`}
-                                >
-                                    <img
-                                        src={player.avatar}
-                                        alt={player.name}
-                                        class="w-8 h-8 rounded-full border border-dashed"
-                                    />
-                                </div>
-                            ))
+                            players
+                                .filter((player) => !player.eliminated && player.online)
+                                .slice(0, 5).map((player, index) => (
+                                    <div
+                                        key={index}
+                                        class={`relative transition-all duration-300 ${index !== 0 ? "-ml-4" : ""
+                                            }`}
+                                    >
+                                        <img
+                                            src={player.avatar}
+                                            alt={player.displayName}
+                                            class="w-8 h-8 rounded-full border border-dashed"
+                                        />
+                                    </div>
+                                ))
                         )
                     }
 
