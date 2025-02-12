@@ -124,7 +124,7 @@ export const SimonSays = ({
         const updatedPattern = [...playerPattern, color];
         setPlayerPattern(updatedPattern);
 
-        simonSaysChannel?.emit("client-player-input", {
+        simonSaysChannel?.trigger("client-player-input", {
             playerNumber: session.user.id,
             color
         });

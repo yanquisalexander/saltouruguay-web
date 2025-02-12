@@ -1,99 +1,79 @@
-import type { Session } from "@auth/core/types";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { useStreamerWarsSocket } from "../hooks/useStreamerWarsSocket";
 import { actions } from "astro:actions";
-import { useEffect, useRef, useState } from "preact/hooks";
-import { SimonSaysOverlay } from "./SimonSaysOverlay";
 import type { Players } from "@/components/admin/streamer-wars/Players";
+import { SimonSaysOverlay } from "./SimonSaysOverlay";
+import type Pusher from "pusher-js";
 
-const OverlayRenderer = ({ gameState, setGameState, players, pusher, globalChannel, presenceChannel }: any) => {
-    const components = useRef<any>({
+const OverlayRenderer = ({ gameState, players, pusher }: { gameState: any; players: Players[], pusher: Pusher }) => {
+    const components = useRef({
         SimonSays: SimonSaysOverlay
     });
 
-    if (!pusher || !gameState) return null;
+    if (!gameState) return null;
 
+    // @ts-ignore
     const Component = components.current[gameState.component];
-
     if (!Component) return null;
 
-    return <Component initialGameState={gameState} {...gameState.props} />;
-}
-
+    return <Component initialGameState={gameState} pusher={pusher} players={players} {...gameState.props} />;
+};
 
 export const GlobalOverlay = () => {
     const [players, setPlayers] = useState<Players[]>([]);
-    const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel } = useStreamerWarsSocket(null);
+    const { pusher, gameState, setGameState, globalChannel, presenceChannel } = useStreamerWarsSocket(null);
 
+    // Cargar jugadores una vez al inicio
     useEffect(() => {
+
         actions.streamerWars.getPlayers().then(({ error, data }) => {
             if (error) {
                 console.error(error);
                 return;
             }
 
-            setPlayers((prev) => {
-                const mergedPlayers = [...prev];
+            setPlayers(data?.players.map((player: any) => ({ ...player, online: false })) || []);
 
-                data.players.forEach((player: any) => {
-                    if (!mergedPlayers.some((p) => p.id === player.id)) {
-                        mergedPlayers.push({
-                            ...player,
-                            displayName: player.displayName || player.name || '',
-                            avatar: player.avatar || '',
-                            admin: player.admin || false,
-                            online: false,
-                            eliminated: player.eliminated || false,
-                        });
-                    }
-                });
-
-                return mergedPlayers;
-            });
         });
+
     }, []);
 
 
+    // Restaurar estado del juego y manejar eventos de Pusher
     useEffect(() => {
-        if (!pusher) return; // Espera hasta que pusher esté definido
+        if (!pusher) return;
 
         const restoreGameStateFromCache = async () => {
             const { data, error } = await actions.streamerWars.getGameState();
-            console.log({ data, error });
 
             if (error || !data?.gameState) return;
 
             const { game, props } = data.gameState;
             if (game && props) {
-                setGameState({ component: game, props: { channel: globalChannel.current, players, pusher, ...props } });
+                setGameState((prev) => {
+                    return {
+                        ...prev,
+                        component: game,
+                        props
+                    };
+                });
             }
         };
 
-        presenceChannel.current?.bind("pusher:member_added", ({ id, info }: { id: number, info: any }) => {
-            setPlayers((prev) => [...prev, { id, ...info }]);
-        });
-
-        presenceChannel.current?.bind("pusher:member_removed", (data: any) => {
-            setPlayers((prev) => prev.filter((player) => player.id !== data.id));
-        });
-
-        presenceChannel.current?.bind("pusher:subscription_succeeded", (members: any) => {
-            console.log("Members", members);
-            const players = Object.values(members.members).map((member: any) => ({
-                ...member,
-            }));
-
-            setPlayers(players);
-        });
 
 
         restoreGameStateFromCache();
-    }, [pusher]); // Solo se ejecuta cuando pusher cambia
 
-    if (!pusher) return null; // No renderiza nada hasta que pusher esté listo
+        return () => {
+            pusher.disconnect();
+        };
+    }, [pusher]);
+
+    if (!pusher) return null;
 
     return (
         <div>
-            <OverlayRenderer gameState={gameState} setGameState={setGameState} players={players} pusher={pusher} globalChannel={globalChannel} presenceChannel={presenceChannel} />
+            <OverlayRenderer gameState={gameState} players={players} pusher={pusher} />
         </div>
     );
 };
