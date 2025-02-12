@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { actions } from "astro:actions";
-import { LucideMegaphone, LucideSend, LucideSmilePlus } from "lucide-preact";
+import { LucideMegaphone, LucideMessageCircle, LucideSend, LucideSmilePlus, LucideVerified } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 import type { Channel } from "pusher-js";
 import { EMOTES } from "@/consts/Emotes";
 import { GLOBAL_CDN_PREFIX } from "@/config";
 import { Popover } from "@/components/Popover";
+import { Tooltip } from "@/components/Tooltip";
 
 
 
@@ -31,6 +32,7 @@ const EmotePicker = ({ onSelect, setSendAsReaction, isOpen }: { onSelect: (emote
 
 interface ChatMessage {
     user?: string;
+    admin?: boolean;
     message: string;
     isAnnouncement?: boolean;
 }
@@ -42,8 +44,12 @@ interface ChatProps {
 
 const ReactionEmoteMessage = ({ user, emote }: { user: string; emote: keyof typeof EMOTES }) => {
     return (
-        <div class="flex gap-x-2 w-full">
-            <span class="font-bold w-max">{user}</span>
+        <div class="flex gap-x-2 w-full bg-white/5 p-2 items-start">
+            <span class="font-bold w-max flex items-center gap-x-2">
+                <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
+                    <LucideVerified size={16} class="text-lime-500" />
+                </Tooltip>
+                {user}</span>
             <span class="w-full break-words text-wrap overflow-hidden">
                 <img src={`${GLOBAL_CDN_PREFIX}${EMOTES[emote]}`} alt={emote} class="object-scale-down size-20 inline-block" />
             </span>
@@ -63,8 +69,12 @@ const ChatMessage = ({ user, message, isAnnouncement }: ChatMessage) => {
     }
     const parsedMessage = parseEmotes(message);
     return (
-        <div class="flex gap-x-2 w-full">
-            <span class="font-bold w-max">{user}</span>
+        <div class="flex gap-x-2 w-full bg-white/5 p-2 items-start">
+            <span class="font-bold w-max flex items-center gap-x-2">
+                <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
+                    <LucideVerified size={16} class="text-lime-500" />
+                </Tooltip>
+                {user}</span>
             <span class="w-full break-words text-wrap overflow-hidden" dangerouslySetInnerHTML={{ __html: parsedMessage }} />
         </div>
     );
@@ -133,10 +143,10 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
 
 
         // Escuchar nuevos mensajes vía Pusher
-        channel.bind("new-message", ({ user, message, type, suppressAudio }: { user: string; message: string; type: string; suppressAudio?: boolean }) => {
+        channel.bind("new-message", ({ user, message, type, suppressAudio, admin }: { user: string; message: string; type: string; suppressAudio?: boolean, admin?: boolean }) => {
             setMessages((prev) => [
                 ...prev,
-                { user, message, isAnnouncement: type === "announcement" },
+                { user, message, isAnnouncement: type === "announcement", admin }
             ]);
 
             if (!manuallyScrolled) {
@@ -227,7 +237,9 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
 
     return (
         <div class="flex flex-col w-full h-full bg-neutral-950 border border-lime-500 border-dashed relative rounded-md px-4 py-3">
-            <h3 class="text-xl font-bold py-2">Chat de participantes</h3>
+            <h3 class="text-2xl  font-teko py-2">
+                <LucideMessageCircle size={24} class="inline-block mr-2" />
+                Chat de participantes</h3>
             <div
                 class="h-[320px] w-full overflow-y-auto flex flex-col gap-2 p-2 relative"
                 ref={messagesContainer}
