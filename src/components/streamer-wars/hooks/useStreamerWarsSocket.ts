@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 import Pusher, { type Channel } from "pusher-js";
 import { PUSHER_KEY } from "@/config";
-import { playSound, playSoundWithReverb, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { CDN_PREFIX, playSound, playSoundWithReverb, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
 export const useStreamerWarsSocket = (session: Session | null) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
@@ -11,6 +11,26 @@ export const useStreamerWarsSocket = (session: Session | null) => {
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
     const globalChannel = useRef<Channel | null>(null);
     const presenceChannel = useRef<Channel | null>(null);
+    const [bgVolume, setBgVolume] = useState(0.5);
+    const bgAudio = useRef<HTMLAudioElement | null>(null);
+
+    const isOnWaitingRoom = !gameState || !gameState.component
+
+    useEffect(() => {
+        if (bgAudio.current) {
+            bgAudio.current.volume = bgVolume;
+        }
+    }, [bgVolume]);
+
+    useEffect(() => {
+        if (isOnWaitingRoom && bgAudio.current) {
+            bgAudio.current.play();
+        } else if (bgAudio.current) {
+            bgAudio.current.pause();
+        }
+    }, [isOnWaitingRoom]);
+
+
 
     useEffect(() => {
         const pusherInstance = new Pusher(PUSHER_KEY, {
@@ -21,6 +41,9 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         });
 
         setPusher(pusherInstance);
+
+        bgAudio.current = new Audio(`${CDN_PREFIX}${STREAMER_WARS_SOUNDS.WAITING_ROOM_LOOP}.mp3`);
+        bgAudio.current.loop = true;
 
         globalChannel.current = pusherInstance.subscribe("streamer-wars");
         presenceChannel.current = pusherInstance.subscribe("presence-streamer-wars");
@@ -37,11 +60,20 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         });
 
         globalChannel.current.bind("send-to-waiting-room", () => {
+            if (bgAudio.current) {
+                bgAudio.current.play();
+            }
             setGameState(null);
             toast("Todos los jugadores han sido enviados a la sala de espera");
         });
 
+
+
         globalChannel.current.bind("launch-game", ({ game, props }: { game: string, props: any }) => {
+            if (bgAudio.current) {
+                bgAudio.current.pause();
+            }
+
             setGameState({
                 component: game,
                 props: { session, pusher: pusherInstance, ...props },
@@ -68,5 +100,9 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         };
     }, []);
 
-    return { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel };
+    return {
+        pusher,
+        gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel,
+        bgVolume, setBgVolume, bgAudio
+    };
 };
