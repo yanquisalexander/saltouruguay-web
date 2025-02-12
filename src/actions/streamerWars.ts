@@ -105,13 +105,16 @@ export const streamerWars = {
                     user: {
                         columns: {
                             username: true,
+                            admin: true,
+                            displayName: true
                         }
                     }
                 }
             }).execute().then((data) => data.map(({ user, message, isAnnouncement }) => ({
-                user: user?.username,
+                user: user?.displayName || user?.username,
                 message,
-                isAnnouncement
+                isAnnouncement,
+                admin: user?.admin
             })))
 
 

@@ -42,13 +42,16 @@ interface ChatProps {
     channel: Channel;
 }
 
-const ReactionEmoteMessage = ({ user, emote }: { user: string; emote: keyof typeof EMOTES }) => {
+const ReactionEmoteMessage = ({ user, emote, admin }: { user: string; emote: keyof typeof EMOTES, admin?: boolean }) => {
     return (
         <div class="flex gap-x-2 w-full bg-white/5 p-2 items-start">
             <span class="font-bold w-max flex items-center gap-x-2">
-                <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
-                    <LucideVerified size={16} class="text-lime-500" />
-                </Tooltip>
+                {
+                    admin && (
+                        <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
+                            <LucideVerified size={16} class="text-lime-500" />
+                        </Tooltip>
+                    )}
                 {user}</span>
             <span class="w-full break-words text-wrap overflow-hidden">
                 <img src={`${GLOBAL_CDN_PREFIX}${EMOTES[emote]}`} alt={emote} class="object-scale-down size-20 inline-block" />
@@ -57,7 +60,7 @@ const ReactionEmoteMessage = ({ user, emote }: { user: string; emote: keyof type
     );
 }
 
-const ChatMessage = ({ user, message, isAnnouncement }: ChatMessage) => {
+const ChatMessage = ({ user, message, isAnnouncement, admin }: ChatMessage) => {
     const parseEmotes = (message: string) => {
         const emoteRegex = /:([a-zA-Z0-9_]+):/g;
         return message.replace(emoteRegex, (match, emote) => {
@@ -71,9 +74,13 @@ const ChatMessage = ({ user, message, isAnnouncement }: ChatMessage) => {
     return (
         <div class="flex gap-x-2 w-full bg-white/5 p-2 items-start">
             <span class="font-bold w-max flex items-center gap-x-2">
-                <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
-                    <LucideVerified size={16} class="text-lime-500" />
-                </Tooltip>
+                {
+                    admin && (
+                        <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
+                            <LucideVerified size={16} class="text-lime-500" />
+                        </Tooltip>
+                    )}
+
                 {user}</span>
             <span class="w-full break-words text-wrap overflow-hidden" dangerouslySetInnerHTML={{ __html: parsedMessage }} />
         </div>
@@ -252,7 +259,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
 
                 <div class="flex flex-col flex-1 overflow-y-auto gap-y-2 w-full h-full scroll-smooth">
 
-                    {messages.map(({ message, user, isAnnouncement }, index) => {
+                    {messages.map(({ message, user, isAnnouncement, admin }, index) => {
                         const emoteOnlyMatch = message.match(/^:([a-zA-Z0-9_]+):$/);
                         const isEmoteOnly = emoteOnlyMatch && EMOTES[emoteOnlyMatch[1] as keyof typeof EMOTES];
 
@@ -265,7 +272,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                                 />
                             </div>
                         ) : isEmoteOnly ? (
-                            <ReactionEmoteMessage key={index} user={user!} emote={emoteOnlyMatch![1] as keyof typeof EMOTES} />
+                            <ReactionEmoteMessage key={index} user={user!} emote={emoteOnlyMatch![1] as keyof typeof EMOTES} admin={admin} />
                         ) : (
                             <ChatMessage key={index} user={user} message={message} />
                         );
