@@ -22,6 +22,7 @@ export const STREAMER_WARS_SOUNDS = {
     EMOJI_RISA: 'reactions/emoji-risa',
     LOSED_BRIBE: 'losed-bribe',
     WIN_BRIBE: 'win-bribe',
+    CUTE_NOTIFICATION: 'cute-notification',
 }
 
 

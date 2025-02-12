@@ -37,7 +37,7 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
                     richColors: true,
                 })
                 setAlertedBetterExperience(true);
-                playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION, volume: 0.2 });
+                playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION, volume: 0.2 });
             }
         }, 50);
 
