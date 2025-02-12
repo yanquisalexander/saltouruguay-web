@@ -47,16 +47,16 @@ export const WaitingRoom = ({ session, channel }: { session: Session; channel: C
 
 
     return (
-        <div class="grid p-4 gap-x-4 grid-cols-12">
+        <div class="grid p-4 gap-y-6 md:gap-y-0 md:gap-x-4 grid-cols-full md:grid-cols-12">
             <div class="flex w-full h-full col-span-4 ">
                 <ChatRoom session={session} channel={channel} />
             </div>
-            <div class="col-span-8 relative flex flex-col items-center justify-center border border-lime-500 border-dashed rounded-md p-4">
+            <div class="col-span-full md:col-span-8 w-full relative flex flex-col items-center justify-center border border-lime-500 border-dashed rounded-md p-4">
                 <h2 class="text-2xl flex flex-col font-teko justify-center items-center gap-y-3 animate-pulse duration-500">
                     Esperando por el próximo juego <ThreeDotsAnimation />
                 </h2>
 
-                <footer class="grid grid-cols-3 absolute bottom-0 w-full gap-x-2 p-4 bg-black/20">
+                <footer class=" grid-cols-3 absolute bottom-0 w-full gap-x-2 p-4 hidden md:grid bg-black/20">
                     {
                         HINTS.map(({ title, icon: Icon, description }) => (
                             <div class="flex text-center px-2 flex-col items-center gap-y-2 opacity-75 border-r border-white/20 last:border-none hover:opacity-100 transition">

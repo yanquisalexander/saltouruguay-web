@@ -401,7 +401,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                                     user={user!}
                                     emote={emoteOnlyMatch![1] as keyof typeof EMOTES}
                                     admin={admin}
-                                    showModeration={userIsAdmin}
+                                    showModeration={userIsAdmin && !admin}
                                     removeMessage={() => handleRemoveMessage(id)}
                                 />
                             ) : (
