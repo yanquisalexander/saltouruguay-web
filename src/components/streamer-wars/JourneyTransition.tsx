@@ -1,12 +1,14 @@
-import { playSound, playSoundWithReverb } from "@/consts/Sounds";
+import { playSound, playSoundWithReverb, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
+import { toast } from "sonner";
 
 interface ScriptItem {
     text: string;
     audioPath: string;
     duration: number;
     component?: JSX.Element;
+    execute?: () => void;
 }
 
 interface JourneyTransitionProps {
@@ -24,7 +26,20 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
     { text: "Cuentas vacías, deudas acumuladas, promesas rotas...", audioPath: "start-6", duration: 5000 },
     { text: "Pero hoy, tienen una oportunidad.", audioPath: "start-7", duration: 3200 },
     { text: "Solo los más astutos, rápidos y despiadados llegarán al final.", audioPath: "start-8", duration: 6300 },
-    { text: "La pregunta es... ¿serás uno de ellos?", audioPath: "start-9", duration: 6000 },
+    {
+        text: "La pregunta es... ¿serás uno de ellos?", audioPath: "start-9", duration: 6000, execute: () => {
+            setTimeout(() => {
+                playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION, volume: 0.5 });
+                toast.warning("¡Comienza la Guerra de Streamers!", {
+                    description: "Procura estar atento a Discord y a las notificaciones del juego.",
+                    richColors: true,
+                    duration: 10000,
+                    position: "top-right",
+                });
+
+            }, 6000);
+        }
+    }
 ];
 
 
