@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { actions } from "astro:actions";
-import { LucideChevronDown, LucideMegaphone, LucideMessageCircle, LucideSend, LucideSmilePlus, LucideVerified } from "lucide-preact";
+import { LucideChevronDown, LucideMegaphone, LucideMessageCircle, LucideSend, LucideSmilePlus, LucideSwords, LucideVerified } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 import type { Channel } from "pusher-js";
 import { EMOTES } from "@/consts/Emotes";
@@ -65,7 +65,7 @@ const ReactionEmoteMessage = ({
             <span class="font-bold w-max flex items-center gap-x-2">
                 {admin && (
                     <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
-                        <LucideVerified size={16} class="text-lime-500" />
+                        <LucideSwords size={16} class="text-sky-500" />
                     </Tooltip>
                 )}
                 {user}
@@ -102,7 +102,7 @@ const ChatMessageComponent = ({
             <span class="font-bold w-max flex items-center gap-x-2">
                 {admin && (
                     <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
-                        <LucideVerified size={16} class="text-lime-500" />
+                        <LucideSwords size={16} class="text-sky-500" />
                     </Tooltip>
                 )}
                 {user}
