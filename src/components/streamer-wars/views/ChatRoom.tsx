@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { actions } from "astro:actions";
-import { LucideMegaphone, LucideMessageCircle, LucideSend, LucideSmilePlus, LucideVerified } from "lucide-preact";
+import { LucideChevronDown, LucideMegaphone, LucideMessageCircle, LucideSend, LucideSmilePlus, LucideVerified } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 import type { Channel } from "pusher-js";
 import { EMOTES } from "@/consts/Emotes";
@@ -330,7 +330,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                     {/* Se muestra el botón solo si el usuario NO está en el fondo */}
                     {!isUserAtBottom && (
                         <button
-                            class="z-[999] sticky mx-auto bottom-4 bg-lime-500/80 hover:bg-lime-500 text-white p-2 rounded-md text-center shadow-lg"
+                            class="z-[999] sticky mx-auto bottom-4 bg-neutral-700 transition hover:bg-neutral-800 text-white p-2 rounded-md text-center shadow-lg"
                             onClick={() => {
                                 messagesContainer.current?.scrollTo({
                                     top: messagesContainer.current.scrollHeight,
@@ -339,7 +339,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                                 setIsUserAtBottom(true);
                             }}
                         >
-                            Ver mensajes nuevos ↓
+                            Ver mensajes nuevos <LucideChevronDown size={24} class="inline-block" />
                         </button>
                     )}
                 </div>
