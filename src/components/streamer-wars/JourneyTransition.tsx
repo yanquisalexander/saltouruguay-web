@@ -22,7 +22,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
     { text: "Cuentas vacías, deudas acumuladas, promesas rotas...", audioPath: "start-6", duration: 5000 },
     { text: "Pero hoy, tienen una oportunidad.", audioPath: "start-7", duration: 3200 },
     { text: "Solo los más astutos, rápidos y despiadados llegarán al final.", audioPath: "start-8", duration: 6300 },
-    { text: "La pregunta es... ¿serás uno de ellos?", audioPath: "start-9", duration: 5500 },
+    { text: "La pregunta es... ¿serás uno de ellos?", audioPath: "start-9", duration: 6000 },
 ];
 
 
