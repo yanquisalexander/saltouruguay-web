@@ -72,7 +72,7 @@ export const GlobalOverlay = () => {
     if (!pusher) return null;
 
     return (
-        <div>
+        <div class="min-h-screen">
             <OverlayRenderer gameState={gameState} players={players} pusher={pusher} />
         </div>
     );

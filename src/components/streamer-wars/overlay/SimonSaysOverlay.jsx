@@ -2,20 +2,36 @@ import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { useEffect, useState, useCallback, useMemo } from "preact/hooks";
 import { SimonSaysButtons } from "../games/SimonSaysButtons";
 
+// Componente para mostrar el progreso de los jugadores
 const PlayersProgress = ({ players, currentPlayers, patternsProgress }) => {
     return (
-        <div class="flex flex-col justify-center items-center gap-4">
+        <div class="flex flex-col h-full w-full bg-black/40 justify-center items-center gap-4">
             {players
                 .filter((player) => currentPlayers.includes(player.playerNumber))
                 .map((player) => {
+                    // Accedemos directamente al progreso del jugador mediante su número
                     const playerProgress = patternsProgress[player.playerNumber] || [];
                     return (
-                        <div key={player.playerNumber} class="flex flex-col justify-center items-center">
-                            <img src={player.avatar} alt={player.displayName} class="w-16 h-16 rounded-full" />
-                            <div class="text-lg font-semibold">{player.displayName} ({player.playerNumber})</div>
+                        <div
+                            key={player.playerNumber}
+                            class="flex border-blue-600 gap-x-4 w-[80%] border bg-blue-500/20 p-2 rounded-md items-center"
+                        >
+                            <div class="flex gap-2 items-center">
+                                <img
+                                    src={player.avatar}
+                                    alt={player.displayName}
+                                    class="size-8 rounded-md"
+                                />
+                                <div class="font-atomic text-lg text-lime-200">
+                                    #{player.playerNumber.toString().padStart(3, "0")}
+                                </div>
+                            </div>
                             <div class="flex gap-1 mt-2">
                                 {playerProgress.map((color, index) => (
-                                    <div key={index} class={`w-8 h-8 rounded-full ${getColorClass(color)}`}></div>
+                                    <div
+                                        key={index}
+                                        class={`size-5 rounded-full ${getColorClass(color)}`}
+                                    ></div>
                                 ))}
                             </div>
                         </div>
@@ -36,7 +52,6 @@ const getColorClass = (color) => {
     return colors[color] || "bg-gray-500"; // Color de respaldo si no se encuentra
 };
 
-
 export const SimonSaysOverlay = ({ initialGameState, channel, players, pusher }) => {
     const [gameState, setGameState] = useState({
         teams: {},
@@ -50,12 +65,20 @@ export const SimonSaysOverlay = ({ initialGameState, channel, players, pusher })
         ...initialGameState,
     });
 
-    const [playersProgress, setPlayersProgress] = useState({});
+    
+
+    const [playersProgress, setPlayersProgress] = useState([]);
     const [activeButton, setActiveButton] = useState(null);
     const [showingPattern, setShowingPattern] = useState(false);
 
-    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    useEffect(() => {
+        console.log({playersProgress})
 
+    }, [playersProgress])
+
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    // Muestra el patrón con animación y sonidos
     const showPattern = useCallback(async (pattern) => {
         setShowingPattern(true);
         for (const color of pattern) {
@@ -71,7 +94,7 @@ export const SimonSaysOverlay = ({ initialGameState, channel, players, pusher })
     useEffect(() => {
         if (!pusher) return;
         console.log("Simon Says Overlay", pusher);
-        const simonSaysChannel = pusher?.subscribe("streamer-wars.simon-says");
+        const simonSaysChannel = pusher.subscribe("streamer-wars.simon-says");
 
         simonSaysChannel.bind("game-state", (newGameState) => {
             setGameState((prevState) => {
@@ -84,10 +107,24 @@ export const SimonSaysOverlay = ({ initialGameState, channel, players, pusher })
 
         simonSaysChannel.bind("client-player-input", ({ playerNumber, color }) => {
             console.log("client-player-input", { playerNumber, color });
-            setPlayersProgress((prev) => ({
-                ...prev,
-                [playerNumber]: [...(prev[playerNumber] || []), color],
-            }));
+
+            // Actualizamos el progreso del jugador sin mutar el estado anterior
+            setPlayersProgress((prevProgress) => {
+                const newProgress = { ...prevProgress };
+
+                // Verifica si el jugador forma parte de los jugadores activos
+                if (
+                    gameState.currentPlayers.blue === playerNumber ||
+                    gameState.currentPlayers.red === playerNumber
+                ) {
+                    newProgress[playerNumber] = [
+                        ...(newProgress[playerNumber] || []),
+                        color,
+                    ];
+                }
+
+                return newProgress;
+            });
         });
 
         return () => {
@@ -95,7 +132,7 @@ export const SimonSaysOverlay = ({ initialGameState, channel, players, pusher })
             simonSaysChannel.unbind("client-player-input");
             pusher.unsubscribe("streamer-wars.simon-says");
         };
-    }, [pusher]);
+    }, [pusher, gameState.currentPlayers]);
 
     useEffect(() => {
         if (gameState.pattern.length > 0) {
@@ -103,16 +140,29 @@ export const SimonSaysOverlay = ({ initialGameState, channel, players, pusher })
         }
     }, [gameState.pattern, showPattern]);
 
-    const currentPlayers = useMemo(() => Object.values(gameState.currentPlayers), [gameState.currentPlayers]);
+    // Calculamos los jugadores actuales a partir de gameState.currentPlayers
+    const currentPlayers = useMemo(
+        () => Object.values(gameState.currentPlayers),
+        [gameState.currentPlayers]
+    );
 
     console.log({ gameState, players, currentPlayers, playersProgress });
+
     return (
-        <div class="grid grid-cols-12 gap-2 text-white">
+        <div class="grid grid-cols-12 h-screen gap-2 text-white">
             <div class="col-span-4 flex flex-col justify-center items-center">
-                <PlayersProgress players={players} currentPlayers={currentPlayers} patternsProgress={playersProgress} />
+                <PlayersProgress
+                    players={players}
+                    currentPlayers={currentPlayers}
+                    patternsProgress={playersProgress}
+                />
             </div>
             <div class="col-span-8 flex flex-col justify-center items-center">
-                <SimonSaysButtons activeButton={activeButton} showingPattern={showingPattern} onClick={() => {}} />
+                <SimonSaysButtons
+                    activeButton={activeButton}
+                    showingPattern={showingPattern}
+                    onClick={() => {}}
+                />
             </div>
         </div>
     );
