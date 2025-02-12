@@ -1,10 +1,12 @@
 import { playSound, playSoundWithReverb } from "@/consts/Sounds";
+import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
 
 interface ScriptItem {
     text: string;
     audioPath: string;
     duration: number;
+    component?: JSX.Element;
 }
 
 interface JourneyTransitionProps {
@@ -14,7 +16,7 @@ interface JourneyTransitionProps {
 
 // Ejemplos de definición (ajusta texto, audioPath y duration según necesites)
 export const JOURNEY_START_SCRIPT: ScriptItem[] = [
-    { text: "Bienvenidos.", audioPath: "start-1", duration: 2000 },
+    { text: "Bienvenidos.", audioPath: "start-1", duration: 2500, component: <div class="animate-fade-in font-atomic text-lime-500 tracking-widest">¡Comienza la Guerra de Streamers!</div> },
     { text: "Ustedes... 50 jugadores.", audioPath: "start-2", duration: 3000 },
     { text: "Los hemos estado observando.", audioPath: "start-3", duration: 2500 },
     { text: "Horas frente a la pantalla, sumergidos en este mundo.", audioPath: "start-4", duration: 4000 },
@@ -144,6 +146,9 @@ export const JourneyTransition = ({ phase, executeOnMount }: JourneyTransitionPr
                         {phase === "start" ? `Día #0${CURRENT_DAY}` : `Día #0${CURRENT_DAY} finalizado`}
                     </h1>
                 </header>
+                {script[currentIndex]?.component && (
+                    script[currentIndex].component
+                )}
             </div>
             <div className="absolute bottom-56 w-max px-4 font-mono text-center bg-neutral-900 text-white text-lg">
                 {script[currentIndex]?.text}
