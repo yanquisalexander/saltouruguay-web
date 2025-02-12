@@ -121,9 +121,7 @@ export const JourneyTransition = ({ phase, executeOnMount }: JourneyTransitionPr
                         playSoundWithReverb({ sound: `scripts/${item.audioPath}`, volume: 1, reverbAmount: phase === "start" ? 0.2 : 0.5 });
                     }
 
-                    if (item.execute) {
-                        item.execute();
-                    }
+
                     // Después de la duración indicada, pasa al siguiente ítem
                     timeoutId = window.setTimeout(() => {
                         playItem(index + 1);
@@ -138,6 +136,11 @@ export const JourneyTransition = ({ phase, executeOnMount }: JourneyTransitionPr
             if (item.audioPath) {
                 playSoundWithReverb({ sound: `scripts/${item.audioPath}`, volume: 0.5 });
             }
+
+            if (item.execute) {
+                item.execute();
+            }
+
             timeoutId = window.setTimeout(() => {
                 playItem(index + 1);
             }, item.duration);
