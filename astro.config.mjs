@@ -43,6 +43,7 @@ export default defineConfig({
       PUSHER_APP_SECRET: envField.string({ context: 'server', access: 'secret' }),
       PUSHER_APP_CLUSTER: envField.string({ context: 'client', access: 'public' }),
       CRON_SECRET: envField.string({ context: 'server', access: 'public' }),
+      DISCORD_LOGS_WEBHOOK_TOKEN: envField.string({ context: 'server', access: 'public' }),
     },
   },
   security: {

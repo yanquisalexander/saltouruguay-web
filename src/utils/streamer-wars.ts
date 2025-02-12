@@ -464,11 +464,19 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
             };
         }
 
-        await Promise.all(
-            [DISCORD_ROLES.EQUIPO_AZUL, DISCORD_ROLES.EQUIPO_ROJO, DISCORD_ROLES.EQUIPO_AMARILLO, DISCORD_ROLES.EQUIPO_MORADO, DISCORD_ROLES.EQUIPO_BLANCO].map(roleId =>
-                removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId!, roleId)
-            )
-        );
+
+
+
+        const guildMember = await getGuildMember(SALTO_DISCORD_GUILD_ID, user.discordId);
+
+        const { roles } = guildMember as { roles: string[] };
+
+        for (const roleId of roles) {
+            if (roleId === DISCORD_ROLES.EQUIPO_AZUL || roleId === DISCORD_ROLES.EQUIPO_ROJO || roleId === DISCORD_ROLES.EQUIPO_AMARILLO || roleId === DISCORD_ROLES.EQUIPO_MORADO || roleId === DISCORD_ROLES.EQUIPO_BLANCO) {
+                await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId!, roleId);
+            }
+        }
+
 
 
 

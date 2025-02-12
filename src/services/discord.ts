@@ -1,5 +1,6 @@
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v10';
+import { DISCORD_LOGS_WEBHOOK_TOKEN } from "astro:env/server"
 import type { RESTGetAPIUserResult, Snowflake } from 'discord-api-types/v10'
 
 export const discord = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN ?? '');
@@ -7,6 +8,8 @@ export const discord = new REST({ version: '10' }).setToken(process.env.DISCORD_
 export const MODERATOR_ROLE = "772061051004256277";
 
 export const WEB_NOTIFICATIONS_CHANNEL = "1334693116254355581";
+
+export const LOGS_CHANNEL_WEBHOOK_ID = "1339263469320671253";
 
 export const DISCORD_ROLES = {
     EQUIPO_AZUL: "1329803075778515017",
@@ -20,7 +23,11 @@ export const DISCORD_ROLES = {
 export const ROLE_GUERRA_STREAMERS = "1326980362127020072"
 
 export const sendDiscordEmbed = async (channelId: Snowflake, data: any) => {
-    return discord.post(Routes.channelMessages(channelId), data);
+    return discord.post(Routes.channelMessages(channelId), { body: data });
+}
+
+export const sendWebhookMessage = async (webhookId: Snowflake, webhookToken: string, data: any) => {
+    return discord.post(Routes.webhook(webhookId, webhookToken), { body: data });
 }
 
 export const sendErrorToAddRole = async (channelId: Snowflake, userId: Snowflake, roleId: Snowflake) => {
@@ -88,6 +95,34 @@ export const getGuildMember = async (guildId: Snowflake, userId: Snowflake) => {
 
 export const addRoleToUser = async (guildId: Snowflake, userId: Snowflake, roleId: Snowflake) => {
     try {
+        try {
+            await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                "content": null,
+                "embeds": [
+                    {
+                        "title": "El jugador se ha unido a un equipo",
+                        "color": 5814783,
+                        "fields": [
+                            {
+                                "name": "Jugador",
+                                "value": `<@${userId}>`,
+                                "inline": true
+                            },
+                            {
+                                "name": "Equipo",
+                                "value": `<@&${roleId}>`,
+                                "inline": true
+                            }
+                        ]
+                    }
+                ],
+                "attachments": []
+
+
+            });
+        } catch (error) {
+            console.error("Error al enviar mensaje de logs", error);
+        }
         return discord.put(Routes.guildMemberRole(guildId, userId, roleId))
     } catch (error) {
 
@@ -99,6 +134,32 @@ export const addRoleToUser = async (guildId: Snowflake, userId: Snowflake, roleI
 
 export const removeRoleFromUser = async (guildId: Snowflake, userId: Snowflake, roleId: Snowflake) => {
     try {
+        try {
+            await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                "content": null,
+                "embeds": [
+                    {
+                        "title": "El jugador ha sido removido de un equipo",
+                        "color": 5814783,
+                        "fields": [
+                            {
+                                "name": "Jugador",
+                                "value": `<@${userId}>`,
+                                "inline": true
+                            },
+                            {
+                                "name": "Equipo",
+                                "value": `<@&${roleId}>`,
+                                "inline": true
+                            }
+                        ]
+                    }
+                ],
+                "attachments": []
+            });
+        } catch (error) {
+            console.error("Error al enviar mensaje de logs", error);
+        }
         return discord.delete(Routes.guildMemberRole(guildId, userId, roleId))
     } catch (error) {
         await sendErrorToRemoveRole(WEB_NOTIFICATIONS_CHANNEL, userId, roleId);
