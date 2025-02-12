@@ -10,6 +10,13 @@ const session = await getSession(Astro.request);
 
 {
   session !== null && (
-    <script>window.close(); window.opener.location.reload()</script>
+    <script>
+      if(window.opener) {
+      window.close(); 
+      window.opener.location.reload()
+      } else {
+      location.href = "/";
+      }
+      </script>
   )
 }
