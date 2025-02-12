@@ -39,7 +39,7 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
                 setAlertedBetterExperience(true);
                 playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION, volume: 0.3 });
             }
-        }, 50);
+        }, 30);
 
         const timer = setTimeout(() => {
             document.dispatchEvent(new CustomEvent('splash-screen-ended'));
@@ -48,7 +48,7 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
                 setLoading(false);
                 onEnd();
             }, 500); // Tiempo de fade out
-        }, 6000);
+        }, 2500);
 
         return () => {
             clearTimeout(timer);
@@ -67,6 +67,7 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
             <div className="w-56 mt-8 h-2 bg-gray-700 rounded-full">
                 <div className="h-full bg-[#b4cd02] rounded-xl" style={{ width: `${progress}%` }}></div>
             </div>
+
             <span className="fixed bottom-32 text-5xl opacity-30 rotate-[32deg] select-none right-16 font-atomic-extras">
                 &#x0055;
             </span>
