@@ -311,6 +311,16 @@ export const eliminatePlayer = async (playerNumber: number) => {
             audioBase64,
         });
 
+        try {
+            await sendWebhookMessage(SALTO_DISCORD_GUILD_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                title: "Jugador eliminado",
+                description: `El jugador ${playerNumber} ha sido eliminado de Streamer Wars.`,
+                color: 16739693,
+            });
+        } catch (error) {
+
+        }
+
         //await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, playerNumber, ROLE_GUERRA_STREAMERS);
     } catch (error) {
         console.error("Error en eliminatePlayer:", error);
