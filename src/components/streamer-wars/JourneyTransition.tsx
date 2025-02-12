@@ -14,9 +14,17 @@ interface JourneyTransitionProps {
 
 // Ejemplos de definición (ajusta texto, audioPath y duration según necesites)
 export const JOURNEY_START_SCRIPT: ScriptItem[] = [
-    { text: "Bienvenidos a la jornada", audioPath: "start-1", duration: 3000 },
-    { text: "Prepárense para lo que viene", audioPath: "start-2", duration: 3000 },
+    { text: "Bienvenidos.", audioPath: "start-1", duration: 2000 },
+    { text: "Ustedes... 50 jugadores.", audioPath: "start-2", duration: 3000 },
+    { text: "Los hemos estado observando.", audioPath: "start-3", duration: 2500 },
+    { text: "Horas frente a la pantalla, sumergidos en este mundo.", audioPath: "start-4", duration: 4000 },
+    { text: "Algunos por diversión... otros, porque no tienen nada más.", audioPath: "start-5", duration: 5500 },
+    { text: "Cuentas vacías, deudas acumuladas, promesas rotas...", audioPath: "start-6", duration: 5000 },
+    { text: "Pero hoy, tienen una oportunidad.", audioPath: "start-7", duration: 3200 },
+    { text: "Solo los más astutos, rápidos y despiadados llegarán al final.", audioPath: "start-8", duration: 6300 },
+    { text: "La pregunta es... ¿serás uno de ellos?", audioPath: "start-9", duration: 5500 },
 ];
+
 
 export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
     { text: "Gracias por haber participado de esta jornada", audioPath: "finish-1", duration: 3200 },
@@ -85,7 +93,7 @@ export const JourneyTransition = ({ phase, executeOnMount }: JourneyTransitionPr
             // Si es el primer sonido, esperar el retraso definido antes de comenzar
             if (index === 0) {
                 const bgAudioFile = phase === "start" ? "start-bg" : "finish-bg";
-                playSound({ sound: `scripts/${bgAudioFile}`, volume: 0.4 });
+                playSound({ sound: `scripts/${bgAudioFile}`, volume: phase === "start" ? 0.1 : 0.4 });
                 const firstDelay =
                     phase === "start" ? START_SCRIPT_FIRST_AUDIO_DELAY : FINISH_SCRIPT_FIRST_AUDIO_DELAY;
                 timeoutId = window.setTimeout(() => {
@@ -93,7 +101,7 @@ export const JourneyTransition = ({ phase, executeOnMount }: JourneyTransitionPr
                     setCurrentIndex(index);
                     const item = script[index];
                     if (item.audioPath) {
-                        playSoundWithReverb({ sound: `scripts/${item.audioPath}`, volume: 1 });
+                        playSoundWithReverb({ sound: `scripts/${item.audioPath}`, volume: 1, reverbAmount: phase === "start" ? 0.2 : 0.5 });
                     }
                     // Después de la duración indicada, pasa al siguiente ítem
                     timeoutId = window.setTimeout(() => {
