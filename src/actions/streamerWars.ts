@@ -70,12 +70,14 @@ export const streamerWars = {
             }
 
             try {
-                await client
+                const [{ id }] = await client
                     .insert(StreamerWarsChatMessagesTable)
                     .values({ userId: session.user.id, message })
-                    .execute();
+                    .returning({ id: StreamerWarsChatMessagesTable.id })
+                    .execute()
 
-                await pusher.trigger("streamer-wars", "new-message", { message, user: session.user.name, admin: session.user.isAdmin });
+
+                await pusher.trigger("streamer-wars", "new-message", { id, message, user: session.user.name, admin: session.user.isAdmin });
             } catch (error) {
                 throw new ActionError({
                     code: "INTERNAL_SERVER_ERROR",
