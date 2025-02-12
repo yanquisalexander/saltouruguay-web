@@ -7,6 +7,7 @@ import { tts } from "@/services/tts";
 import { addRoleToUser, DISCORD_ROLES, getDiscordUser, getGuildMember, LOGS_CHANNEL_WEBHOOK_ID, removeRoleFromUser, ROLE_GUERRA_STREAMERS, sendDiscordEmbed, sendWebhookMessage } from "@/services/discord";
 import { SALTO_DISCORD_GUILD_ID } from "@/config";
 import { DISCORD_LOGS_WEBHOOK_TOKEN } from "astro:env/server";
+import { getTranslation } from "./translate";
 
 
 export interface SimonSaysGameState {
@@ -127,7 +128,7 @@ export const games = {
                             fields: [
                                 {
                                     name: "Equipo",
-                                    value: Object.entries(gameState.currentPlayers).find(([team, player]) => player === playerNumber)?.[0] ?? "Sin equipo",
+                                    value: getTranslation(Object.entries(gameState.currentPlayers).find(([team, player]) => player === playerNumber)?.[0]!) ?? "Sin equipo",
                                     inline: true,
                                 },
                                 {
