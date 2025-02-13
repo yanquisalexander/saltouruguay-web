@@ -67,7 +67,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             playerNumber: number;
             audioBase64: string;
         }) => {
-            await playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.2 });
+            await playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.05 });
             setRecentlyEliminatedPlayer(playerNumber);
             const timeoutId = setTimeout(() => {
                 playSoundWithReverb({
