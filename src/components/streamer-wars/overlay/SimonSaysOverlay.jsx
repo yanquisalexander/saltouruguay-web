@@ -7,7 +7,7 @@ import { toast } from "sonner";
 // Componente para mostrar el progreso de los jugadores
 const PlayersProgress = ({ players, currentPlayers, patternsProgress }) => {
     return (
-        <div class="flex flex-col h-full w-full justify-center items-center gap-4">
+        <div class="flex flex-col h-full w-full mt-8 items-center gap-4">
             {players
                 .filter((player) => currentPlayers.includes(player.playerNumber))
                 .map((player) => {
@@ -24,7 +24,7 @@ const PlayersProgress = ({ players, currentPlayers, patternsProgress }) => {
                                     alt={player.displayName}
                                     class="size-8 rounded-md"
                                 />
-                                <div class="font-atomic text-lg text-lime-200">
+                                <div class="font-atomic text-lg text-lime-400">
                                     #{player.playerNumber.toString().padStart(3, "0")}
                                 </div>
                             </div>
@@ -174,7 +174,7 @@ export const SimonSaysOverlay = ({ channel, players, pusher }) => {
     return (
         <div class="grid grid-cols-12 h-screen gap-2 text-white animate-fade-in">
             <div class="col-span-4 flex flex-col justify-center items-center bg-gradient-to-r from-black/80 via-black/40 to-transparent">
-                <h2 class="text-2xl font-rubik font-bold text-lime-200">
+                <h2 class="text-2xl font-atomic mt-8 text-lime-500">
                     Simón dice
                 </h2>
 
