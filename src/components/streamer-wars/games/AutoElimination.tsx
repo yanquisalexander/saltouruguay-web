@@ -3,6 +3,7 @@ import Pusher, { type Channel } from "pusher-js";
 import type { Session } from "@auth/core/types";
 import { toast } from "sonner";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { actions } from "astro:actions";
 
 interface AutoEliminationProps {
     pusher: Pusher;
@@ -18,8 +19,13 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
         channelRef.current = pusher.subscribe("auto-elimination");
 
         const handlePlayerAutoEliminated = (data: { playerNumber: number }) => {
-            toast.info(`El jugador #${data.playerNumber.toString().padStart(3, '0')} se ha autoeliminado`);
             setAutoEliminatedPlayer((prev) => [...prev, data.playerNumber]);
+            if (data.playerNumber === session?.user?.streamerWarsPlayerNumber) {
+                playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION });
+                toast.info(`¡Te has autoeliminado!`);
+                return
+            }
+            toast.info(`El jugador #${data.playerNumber.toString().padStart(3, '0')} se ha autoeliminado`);
         };
 
         channelRef.current.bind("player-autoeliminated", handlePlayerAutoEliminated);
@@ -34,27 +40,12 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
     // Función que se ejecuta al hacer click en el botón
     const handleClick = async () => {
         playSound({ sound: STREAMER_WARS_SOUNDS.BUTTON_CLICK });
-        /* 
-          For test, add a random player number to the list of autoeliminated players
-        */
 
-        const playerNumber = Math.floor(Math.random() * 1000) + 1;
-        setAutoEliminatedPlayer((prev) => [...prev, playerNumber]);
-        return
-        try {
-            const response = await fetch("/api/auto-elimination", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    userId: session?.user?.id,
-                }),
-            });
-            if (!response.ok) {
-                throw new Error("Error al enviar la acción de autoeliminación");
-            }
-            console.log("Acción de autoeliminación enviada");
-        } catch (error) {
-            console.error("Error al enviar la acción de autoeliminación", error);
+        const { error } = await actions.streamerWars.selfEliminate();
+        if (error) {
+            console.error(error);
+            toast.error(error.message);
+            return;
         }
     };
 

@@ -3,7 +3,7 @@ import { navigate } from "astro:transitions/client";
 import { useEffect, useState } from "preact/hooks";
 
 export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: number | null, session: Session }) => {
-    const [showing, setShowing] = useState(true);
+    const [showing, setShowing] = useState(false);
 
     /* 
         Cuando playerNumber sea diferente de null, mostrar un mensaje de eliminación

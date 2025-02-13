@@ -741,3 +741,48 @@ export const acceptBribe = async (playerNumber: number) => {
         };
     }
 }
+
+export const selfEliminate = async (playerNumber: number) => {
+    const player = await client
+        .select()
+        .from(StreamerWarsPlayersTable)
+        .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+        .execute()
+        .then((res) => res[0]);
+
+    if (!player) {
+        return {
+            success: false,
+            error: "El jugador no existe",
+        };
+    }
+
+    try {
+        await pusher.trigger("auto-elimination", "player-autoeliminated", { playerNumber });
+        try {
+            await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                content: null,
+                embeds: [
+                    {
+                        title: "Autoeliminación",
+                        description: `El jugador #${playerNumber.toString().padStart(3, '0')} se ha autoeliminado de Guerra de Streamers.`,
+                        color: 0xff0000,
+                    },
+                ],
+            });
+        } catch (error) {
+
+        }
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await eliminatePlayer(playerNumber);
+        return {
+            success: true,
+        };
+    } catch (error) {
+        console.error("Error en selfEliminate:", error);
+        return {
+            success: false,
+            error: "Ocurrió un error al autoeliminarse",
+        };
+    }
+}
