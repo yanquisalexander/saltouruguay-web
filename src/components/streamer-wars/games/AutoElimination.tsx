@@ -11,7 +11,7 @@ interface AutoEliminationProps {
 }
 
 export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
-    const [autoEliminatedPlayer, setAutoEliminatedPlayer] = useState<number[]>([]);
+    const [autoEliminatedPlayers, setAutoEliminatedPlayers] = useState<number[]>([]);
     const channelRef = useRef<Channel | null>(null);
 
     useEffect(() => {
@@ -19,23 +19,29 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
         channelRef.current = pusher.subscribe("auto-elimination");
 
         const handlePlayerAutoEliminated = (data: { playerNumber: number }) => {
-            setAutoEliminatedPlayer((prev) => [...prev, data.playerNumber]);
+            setAutoEliminatedPlayers((prev) => {
+                if (!prev.includes(data.playerNumber)) {
+                    return [...prev, data.playerNumber];
+                }
+                return prev;
+            });
             if (data.playerNumber === session?.user?.streamerWarsPlayerNumber) {
                 playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION });
-                toast.info(`¡Te has autoeliminado!`);
-                return
+                toast.info("¡Te has autoeliminado!");
+            } else {
+                toast.info(
+                    `El jugador #${data.playerNumber.toString().padStart(3, "0")} se ha autoeliminado`
+                );
             }
-            toast.info(`El jugador #${data.playerNumber.toString().padStart(3, '0')} se ha autoeliminado`);
         };
 
         channelRef.current.bind("player-autoeliminated", handlePlayerAutoEliminated);
 
         return () => {
-            // Limpieza: desbind y desuscribirse del canal
             channelRef.current?.unbind("player-autoeliminated", handlePlayerAutoEliminated);
             channelRef.current?.unsubscribe();
         };
-    }, [pusher]);
+    }, [pusher, session]);
 
     // Función que se ejecuta al hacer click en el botón
     const handleClick = async () => {
@@ -49,50 +55,65 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
         }
     };
 
-    useEffect(() => {
+    // Determinamos el número de jugador del usuario actual y los estados derivados
+    const currentPlayerNumber = session?.user?.streamerWarsPlayerNumber;
+    const hasAutoEliminated =
+        currentPlayerNumber !== undefined &&
+        autoEliminatedPlayers.includes(currentPlayerNumber);
+    const canAutoEliminate = !hasAutoEliminated && autoEliminatedPlayers.length < 3;
 
-        if (autoEliminatedPlayer.length === 3) {
+    useEffect(() => {
+        if (autoEliminatedPlayers.length === 3) {
             playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION });
-            toast.info(`¡Los jugadores ${new Intl.ListFormat().format(autoEliminatedPlayer.map((playerNumber) => `#${playerNumber.toString().padStart(3, '0')}`))}
-            han aceptado la oferta de autoeliminación!`, {
-                richColors: true,
-            });
+            const formattedPlayers = new Intl.ListFormat(undefined, {
+                style: "long",
+                type: "conjunction",
+            }).format(
+                autoEliminatedPlayers.map((playerNumber) =>
+                    `#${playerNumber.toString().padStart(3, "0")}`
+                )
+            );
+            toast.info(
+                `¡Los jugadores ${formattedPlayers} han aceptado la oferta de autoeliminación!`,
+                { richColors: true }
+            );
         }
-    }, [autoEliminatedPlayer]);
+    }, [autoEliminatedPlayers]);
 
     return (
         <div class="flex flex-col items-center gap-y-2 mt-16">
             <header class="flex items-center gap-x-2">
-                <h2 class="text-xl font-anton">
-                    Autoeliminación
-                </h2>
-
+                <h2 class="text-xl font-anton">Autoeliminación</h2>
             </header>
-            <span class="mb-8 text-sm text-gray-400">({autoEliminatedPlayer.length}/3)</span>
+            <span class="mb-8 text-sm text-gray-400">
+                ({autoEliminatedPlayers.length}/3)
+            </span>
 
-            {
-                autoEliminatedPlayer.length < 3 || (session?.user?.streamerWarsPlayerNumber !== undefined && autoEliminatedPlayer.includes(session.user.streamerWarsPlayerNumber)) ? (
-                    <button class="font-rubik uppercase bg-gradient-to-br from-red-400 to-red-600 hover:scale-110 hover:saturate-200 transition-all text-white size-48 rounded-full" onClick={handleClick}>
-                        Autoeliminarse
-                    </button>
-                ) : (
-                    <span class="text-red-500">
-                        {
-                            (session?.user?.streamerWarsPlayerNumber !== undefined && autoEliminatedPlayer.includes(session.user.streamerWarsPlayerNumber)) ? "¡Te has autoeliminado!" : "Ya no puedes autoeliminarte"
-                        }
-                    </span>
-                )
-            }
+            {hasAutoEliminated ? (
+                <span class="text-red-500">¡Te has autoeliminado!</span>
+            ) : canAutoEliminate ? (
+                <button
+                    class="font-rubik uppercase bg-gradient-to-br from-red-400 to-red-600 hover:scale-110 hover:saturate-200 transition-all text-white size-48 rounded-full"
+                    onClick={handleClick}
+                >
+                    Autoeliminarse
+                </button>
+            ) : (
+                <span class="text-red-500">Ya no puedes autoeliminarte</span>
+            )}
 
             <aside class="flex flex-col gap-y-2 mt-8">
                 <header class="text-lg font-bold">Jugadores autoeliminados</header>
                 <ul class="flex flex-col gap-y-2">
-                    {autoEliminatedPlayer.map((playerNumber) => (
-                        <li class="flex items-center gap-x-2 bg-blue-500/20 border border-blue-500 p-2 rounded-lg">
+                    {autoEliminatedPlayers.map((playerNumber) => (
+                        <li
+                            key={playerNumber}
+                            class="flex items-center gap-x-2 bg-blue-500/20 border border-blue-500 p-2 rounded-lg"
+                        >
                             <span class="text-neutral-400 font-rubik flex items-center gap-x-2">
-                                Jugador <span class="text-lime-500 text-2xl font-atomic">
-
-                                    #{playerNumber.toString().padStart(3, '0')}
+                                Jugador{" "}
+                                <span class="text-lime-500 text-2xl font-atomic">
+                                    #{playerNumber.toString().padStart(3, "0")}
                                 </span>
                             </span>
                             <span class="text-gray-400">- Autoeliminado</span>
@@ -100,9 +121,6 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
                     ))}
                 </ul>
             </aside>
-
-
         </div>
-
     );
 };

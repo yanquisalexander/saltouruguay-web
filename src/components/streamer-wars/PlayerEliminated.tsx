@@ -34,7 +34,7 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
                     </span>
                 </span>
                 <p class="text-2xl font-rubik pt-16 text-center">
-                    {playerNumber === session.user.streamerWarsPlayerNumber ? "¡Has sido eliminado!" : `El jugador #${playerNumber} ha sido eliminado`}
+                    {playerNumber === session.user.streamerWarsPlayerNumber ? "¡Has sido eliminado!" : `El jugador #${playerNumber?.toString().padStart(3, '0')} ha sido eliminado`}
                 </p>
 
             </div>
