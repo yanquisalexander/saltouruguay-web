@@ -791,3 +791,112 @@ export const selfEliminate = async (playerNumber: number) => {
         };
     }
 }
+
+export const removePlayer = async (playerNumber: number) => {
+    const player = await client
+        .select()
+        .from(StreamerWarsPlayersTable)
+        .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+        .execute()
+        .then((res) => res[0]);
+
+    if (!player) {
+        return {
+            success: false,
+            error: "El jugador no existe",
+        };
+    }
+
+    try {
+        await client.delete(StreamerWarsPlayersTable)
+            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+            .execute();
+
+        try {
+            await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                content: null,
+                embeds: [
+                    {
+                        title: "Eliminación (Admin)",
+                        description: `El jugador #${playerNumber.toString().padStart(3, '0')} ha sido eliminado de Guerra de Streamers.`,
+                        color: 0xff0000,
+                    },
+                ],
+            });
+        } catch (error) {
+
+        }
+        return {
+            success: true,
+        };
+    } catch (error) {
+        console.error("Error en removePlayer:", error);
+        return {
+            success: false,
+            error: "Ocurrió un error al eliminar al jugador",
+        };
+    }
+}
+
+export const addPlayer = async ({ playerNumber, twitchUsername }: { playerNumber: number; twitchUsername: string }) => {
+    try {
+        const user = await client.query.UsersTable.findFirst({
+            where: eq(UsersTable.username, twitchUsername)
+        }).execute().then(res => res?.id);
+
+        if (!user) {
+            return {
+                success: false,
+                error: "No se encontró el usuario en la base de datos",
+            };
+        }
+
+        const playerWithNumber = await client.query.StreamerWarsPlayersTable.findFirst({
+            where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber)
+        }).execute();
+
+        if (playerWithNumber) {
+            return {
+                success: false,
+                error: "Ya existe un jugador con ese número",
+            };
+        }
+
+        try {
+            await client.insert(StreamerWarsPlayersTable).values({
+                playerNumber,
+                userId: user
+            }).execute()
+            await sendDiscordEmbed(SALTO_DISCORD_GUILD_ID, {
+                title: "Nuevo jugador",
+                description: `Se ha agregado un nuevo jugador a Guerra de Streamers.`,
+                fields: [
+                    {
+                        name: "Número",
+                        value: playerNumber.toString().padStart(3, '0'),
+                        inline: true
+                    },
+                    {
+                        name: "Usuario",
+                        value: twitchUsername,
+                        inline: true
+                    }
+                ],
+                color: 0x00ff00
+            })
+        } catch (error) {
+
+        }
+
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        console.error("Error en addPlayer:", error);
+        return {
+            success: false,
+            error: "Ocurrió un error al agregar al jugador",
+        };
+    }
+}

@@ -128,7 +128,7 @@ export const streamerWarsRelations = relations(StreamerWarsInscriptionsTable, ({
 
 export const StreamerWarsPlayersTable = pgTable('streamer_wars_players', {
     id: serial('id').primaryKey(),
-    userId: integer('user_id').references(() => UsersTable.id),
+    userId: integer('user_id').references(() => UsersTable.id, { onDelete: 'cascade' }),
     playerNumber: integer('player_number').notNull().unique(),
     eliminated: boolean('eliminated').notNull().default(false),
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
@@ -151,7 +151,7 @@ export const streamerWarsPlayersRelations = relations(StreamerWarsPlayersTable, 
 
 export const StreamerWarsChatMessagesTable = pgTable('streamer_wars_chat_messages', {
     id: serial('id').primaryKey(),
-    userId: integer('user_id').references(() => UsersTable.id),
+    userId: integer('user_id').references(() => UsersTable.id, { onDelete: 'cascade' }),
     message: text('message').notNull(),
     isAnnouncement: boolean('is_announcement').notNull().default(false),
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
@@ -166,7 +166,7 @@ export const StreamerWarsTeamsTable = pgTable('streamer_wars_teams', {
 export const StreamerWarsTeamPlayersTable = pgTable('streamer_wars_team_players', {
     id: serial('id').primaryKey(),
     teamId: integer('team_id').references(() => StreamerWarsTeamsTable.id),
-    playerNumber: integer('player_number').references(() => StreamerWarsPlayersTable.playerNumber),
+    playerNumber: integer('player_number').references(() => StreamerWarsPlayersTable.playerNumber, { onDelete: 'cascade' }),
     isCaptain: boolean('is_captain').notNull().default(false),
 })
 
@@ -194,8 +194,8 @@ export const streamerWarsTeamPlayersRelations = relations(StreamerWarsTeamPlayer
 
 export const NegativeVotesStreamersTable = pgTable('negative_votes_streamers', {
     id: serial('id').primaryKey(),
-    userId: integer('user_id').references(() => UsersTable.id),
-    playerNumber: integer('player_number').references(() => StreamerWarsPlayersTable.playerNumber),
+    userId: integer('user_id').references(() => UsersTable.id, { onDelete: 'cascade' }),
+    playerNumber: integer('player_number').references(() => StreamerWarsPlayersTable.playerNumber, { onDelete: 'cascade' }),
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
 }, (t) => ({

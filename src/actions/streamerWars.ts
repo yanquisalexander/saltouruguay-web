@@ -4,7 +4,7 @@ import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWa
 import Cache from "@/lib/Cache";
 import cacheService from "@/services/cache";
 import { pusher } from "@/utils/pusher";
-import { eliminatePlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles, acceptBribe, selfEliminate } from "@/utils/streamer-wars";
+import { eliminatePlayer, removePlayer, addPlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles, acceptBribe, selfEliminate } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -649,5 +649,55 @@ export const streamerWars = {
             return { success: true }
         }
     }),
+    addPlayer: defineAction({
+        input: z.object({
+            playerNumber: z.number(),
+            twitchUsername: z.string(),
+        }),
+        handler: async ({ playerNumber, twitchUsername }, { request }) => {
+            const session = await getSession(request);
 
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para añadir jugadores"
+                });
+            }
+
+            const { success, error } = await addPlayer({ playerNumber, twitchUsername });
+            if (!success) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: error
+                });
+            }
+
+            return { success: true }
+        }
+    }),
+    removePlayer: defineAction({
+        input: z.object({
+            playerNumber: z.number(),
+        }),
+        handler: async ({ playerNumber }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para eliminar jugadores"
+                });
+            }
+
+            const { success, error } = await removePlayer(playerNumber);
+            if (!success) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: error
+                });
+            }
+
+            return { success: true }
+        }
+    }),
 }

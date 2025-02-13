@@ -66,6 +66,12 @@ const Morgue = ({ players, onClick }: { players: Players[], onClick: (playerNumb
 
 export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
     const [players, setPlayers] = useState<Players[]>([]);
+    const [addNewPlayer, setAddNewPlayer] = useState({
+        dialogOpen: false,
+        loading: false,
+        username: "",
+        playerNumber: 0,
+    });
 
     const globalChannel = pusher.subscribe("streamer-wars");
 
@@ -123,7 +129,9 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         };
     }, [pusher]);
 
-    useEffect(() => {
+
+
+    const reloadPlayers = () => {
         actions.streamerWars.getPlayers().then(({ error, data }) => {
             if (error) {
                 console.error(error);
@@ -149,11 +157,59 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                 return mergedPlayers;
             });
         });
+    }
+
+    const handleAddNewPlayer = async () => {
+        const { playerNumber, username } = addNewPlayer;
+
+        if (!playerNumber || !username) {
+            toast.error("Por favor, rellena todos los campos");
+            return;
+        }
+
+        const { error } = await actions.streamerWars.addPlayer({ playerNumber, twitchUsername: username });
+
+        if (error) {
+            toast.error(error.message);
+            return;
+        }
+
+        toast.success(`Jugador #${playerNumber?.toString().padStart(3, "0")} añadido`);
+
+        setAddNewPlayer((prev) => ({ ...prev, dialogOpen: false, loading: false }));
+        reloadPlayers();
+    };
+
+    useEffect(() => {
+        reloadPlayers();
     }, []);
 
 
 
-    const eliminatePlayer = async (playerNumber: number) => {
+    const eliminatePlayer = async (playerNumber: number, event: MouseEvent) => {
+        /* 
+            Is shift + click pressed? If so, it should remove PERMANENTLY the player from the game.
+        */
+
+        if (event.shiftKey) {
+            if (!confirm(`ATENCION: ¿Estás seguro de eliminar PERMANENTEMENTE al jugador #${playerNumber?.toString().padStart(3, "0")}? Esto lo eliminará de la base de datos y no podrá ser recuperado.`)) return
+            const response = await actions.streamerWars.removePlayer({ playerNumber });
+
+            if (response.error) {
+                console.error(response.error);
+                toast.error(response.error.message);
+                return
+            }
+
+            setPlayers((prev) => prev.filter((player) => player.playerNumber !== playerNumber));
+
+            reloadPlayers();
+
+            return
+
+
+        }
+
         if (!confirm(`¿Estás seguro de eliminar al jugador #${playerNumber?.toString().padStart(3, "0")}?`)) return;
 
         const response = await actions.streamerWars.eliminatePlayer({ playerNumber });
@@ -183,7 +239,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             <div class="grid gap-16 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 {players.map((player) => (
                     <button
-                        onClick={() => eliminatePlayer(player.playerNumber)}
+                        onClick={(e) => eliminatePlayer(player.playerNumber, e)}
                         class={`flex flex-col relative overflow-hidden items-center  hover:scale-105 hover:bg-lime-500/20 transition rounded-lg p-4 ${player.eliminated ? "pointer-events-none" : ""
                             }`}
                         key={player.id}
@@ -220,6 +276,59 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
 
 
             <Teams channel={globalChannel} />
+
+            <dialog
+                class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+
+                open={addNewPlayer.dialogOpen}
+            >
+                <div class="rounded-lg">
+                    <h1 class="text-2xl font-bold mb-4">Añadir nuevo jugador</h1>
+                    <div class="flex flex-col gap-y-4 items-center justify-center">
+                        <input
+                            type="number"
+                            class="bg-gray-800/50 rounded-lg p-4 w-full"
+                            placeholder="Número de jugador"
+                            value={addNewPlayer.playerNumber}
+                            onInput={(e) => setAddNewPlayer((prev) => ({ ...prev, playerNumber: parseInt(e.currentTarget.value) }))}
+                        />
+                        <input
+                            type="text"
+                            class="bg-gray-800/50 rounded-lg p-4 w-full"
+                            placeholder="Nombre de usuario de Twitch"
+                            value={addNewPlayer.username}
+                            onInput={(e) => setAddNewPlayer((prev) => ({ ...prev, username: e.currentTarget.value }))}
+                        />
+                    </div>
+                    <footer class="flex justify-between mt-8">
+                        <button
+                            class="bg-red-500 text-white px-4 py-2 rounded-lg"
+                            onClick={() => setAddNewPlayer((prev) => ({ ...prev, dialogOpen: false }))}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            class="bg-blue-500 text-white px-4 py-2 rounded-lg"
+                            onClick={handleAddNewPlayer}
+                        >
+                            {addNewPlayer.loading ? "Cargando..." : "Añadir"}
+                        </button>
+                    </footer>
+
+                </div>
+            </dialog>
+
+            <div
+                class="dialog-background inset-0 w-dvw h-dvh backdrop-blur-sm bg-white/5 z-[9999999] animate-blurred-fade-in"
+            >
+            </div>
+
+            <button
+                class="bg-blue-500 text-white px-4 py-2 rounded-lg mt-8"
+                onClick={() => setAddNewPlayer((prev) => ({ ...prev, dialogOpen: true }))}
+            >
+                Añadir nuevo jugador
+            </button>
 
             <div class="cinematics-launcher mt-8">
                 <h2 class="text-2xl font-bold mb-4">Animaciones de juego</h2>
