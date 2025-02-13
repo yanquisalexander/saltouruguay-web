@@ -17,7 +17,7 @@ type Player = {
     isCaptain: boolean;
 };
 
-const REFRESH_AFTER_EVENT_TIMEOUT = 2000;
+const REFRESH_AFTER_EVENT_TIMEOUT = 3000;
 
 export const TeamSelector = ({ session, channel, teamsQuantity, playersPerTeam }: { session: Session; channel: Channel; teamsQuantity: number; playersPerTeam: number }) => {
     const [selectedTeam, setSelectedTeam] = useState<typeof TEAMS[keyof typeof TEAMS] | null>(null);
