@@ -61,11 +61,12 @@ export const games = {
             const cache = createCache();
 
             const currentPlayers = Object.fromEntries(
-                Object.entries(teams).map(([team, data]) => {
-                    const chosenPlayer =
-                        data.players.length > 0 ? getRandomItem(data.players) : null;
-                    return [team, chosenPlayer];
-                })
+                Object.entries(teams)
+                    .map(([team, data]) => {
+                        const chosenPlayer = data.players.length > 0 ? getRandomItem(data.players) : null;
+                        return [team, chosenPlayer];
+                    })
+                    .filter(([, chosenPlayer]) => chosenPlayer !== null)
             );
 
             const patternFirstColor = getRandomItem(COLORS);
@@ -73,7 +74,7 @@ export const games = {
             const newGameState: SimonSaysGameState = {
                 teams,
                 currentRound: 1,
-                currentPlayers,
+                currentPlayers, // Aquí ya solo estarán los equipos con jugador asignado
                 pattern: [patternFirstColor],
                 eliminatedPlayers: [],
                 status: "playing",
@@ -251,19 +252,20 @@ export const games = {
             const cache = createCache();
             const gameState = await games.simonSays.getGameState();
 
-            // Para cada equipo, filtra a los jugadores que no hayan jugado y que no estén eliminados.
-            const newCurrentPlayers: Record<string, number | null> = {};
-
-            for (const [team, data] of Object.entries(gameState.teams)) {
-                const availablePlayers = data.players.filter(
-                    (player) =>
-                        !gameState.playerWhoAlreadyPlayed.includes(player) &&
-                        !gameState.eliminatedPlayers.includes(player)
-                );
-
-                newCurrentPlayers[team] =
-                    availablePlayers.length > 0 ? getRandomItem(availablePlayers) : null;
-            }
+            // Para cada equipo, filtra a los jugadores que no hayan jugado y que no estén eliminados,
+            // y solo asigna un jugador si hay alguno disponible.
+            const newCurrentPlayers = Object.fromEntries(
+                Object.entries(gameState.teams)
+                    .map(([team, data]) => {
+                        const availablePlayers = data.players.filter(
+                            (player) =>
+                                !gameState.playerWhoAlreadyPlayed.includes(player) &&
+                                !gameState.eliminatedPlayers.includes(player)
+                        );
+                        return availablePlayers.length > 0 ? [team, getRandomItem(availablePlayers)] : null;
+                    })
+                    .filter((entry): entry is [string, number] => entry !== null) // Elimina las entradas nulas
+            ) as Record<string, number>;
 
             // Se define un nuevo patrón iniciando con un color aleatorio
             const newPattern = [getRandomItem(COLORS)];
@@ -272,19 +274,18 @@ export const games = {
             const newGameState: SimonSaysGameState = {
                 ...gameState,
                 currentRound: 1,
-                currentPlayers: newCurrentPlayers,
+                currentPlayers: newCurrentPlayers, // Solo equipos con jugador asignado
                 pattern: newPattern,
                 completedPlayers: [],
                 status: "playing",
                 // Se mantiene playerWhoAlreadyPlayed y eliminatedPlayers para no reutilizar jugadores ya usados o eliminados
-                // teams permanece igual
-                playerWhoAlreadyPlayed: gameState.playerWhoAlreadyPlayed,
             };
 
             await cache.set(CACHE_KEY, newGameState);
             await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
             return newGameState;
         },
+
     },
 };
 
