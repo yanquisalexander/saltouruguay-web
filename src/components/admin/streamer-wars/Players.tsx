@@ -4,6 +4,7 @@ import { useEffect, useState } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
 import { Teams } from "../Teams";
+import { CINEMATICS_CDN_PREFIX } from "@/config";
 
 export interface Players {
     id?: number;
@@ -14,6 +15,12 @@ export interface Players {
     online: boolean;
     eliminated: boolean;
 }
+
+
+const CINEMATICS_LIST = Array.from({ length: 10 }, (_, i) => ({
+    id: `animacion-juego-${i + 1}`,
+    name: `Animación de juego ${i + 1}`,
+}));
 
 const Morgue = ({ players, onClick }: { players: Players[], onClick: (playerNumber: number) => void }) => {
     /* 
@@ -213,6 +220,30 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
 
 
             <Teams channel={globalChannel} />
+
+            <div class="cinematics-launcher mt-8">
+                <h2 class="text-2xl font-bold mb-4">Animaciones de juego</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    {CINEMATICS_LIST.map(({ id, name }) => (
+                        <button
+                            class="p-4 rounded-lg bg-gray-800 text-white font-bold"
+                            onClick={() => {
+                                toast.promise(
+                                    actions.admin.launchCinematic({
+                                        url: `${CINEMATICS_CDN_PREFIX}/${id}.mp4`,
+                                        targetUsers: players.map((player) => player.id).filter((id): id is number => id !== undefined),
+                                    }), {
+                                    loading: 'Cargando...',
+                                    success: 'Animación lanzada',
+                                    error: 'Error al lanzar la animación'
+                                });
+                            }}
+                        >
+                            {name}
+                        </button>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 };

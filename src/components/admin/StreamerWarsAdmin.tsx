@@ -7,6 +7,7 @@ import { actions } from "astro:actions";
 import { toast } from "sonner";
 import { LucideBellRing, LucideCoffee, LucideFlag, LucideLockKeyholeOpen, LucideRefreshCw, LucideTrash2 } from "lucide-preact";
 
+
 const GENERAL_ACTIONS = [
     {
         name: "Anunciar dificultades técnicas",
