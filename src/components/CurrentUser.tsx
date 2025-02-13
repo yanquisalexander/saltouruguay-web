@@ -1,7 +1,7 @@
 import { $ } from "@/lib/dom-selector";
 import type { Session } from "@auth/core/types";
 import { signIn, signOut } from "auth-astro/client";
-import { LucideLoader2, LucideLogIn, LucideX } from "lucide-preact";
+import { LucideChevronRight, LucideLoader2, LucideLogIn, LucideX } from "lucide-preact";
 import { useState, useEffect, useRef } from "preact/hooks";
 import { toast } from "sonner";
 import { AchievementsNotifier } from "./AchievementsNotifier";
@@ -148,7 +148,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                             <span className="hidden md:flex">{user?.name}</span>
                         </button>
                         {dropdownOpen && (
-                            <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                            <div className="absolute right-0 mt-2 max-w-60 w-auto rounded-md shadow-lg bg-[#0b1422] ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
                                 <div className="py-1" role="menu">
                                     {
                                         !user.discordId && (
@@ -160,23 +160,37 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                                             </button>
                                         )
                                     }
+
+                                    {
+                                        user.streamerWarsPlayerNumber && (
+                                            <a
+                                                href="/guerra-streamers"
+                                                className="block w-full text-left px-4 text-nowrap py-2 text-sm bg-lime-600 text-white font-rubik uppercase hover:bg-lime-700 transition"
+                                            >
+                                                Guerra de Streamers
+                                                <LucideChevronRight size={20} className="inline-block ml-2" />
+                                            </a>
+                                        )
+                                    }
                                     <a
                                         href="/usuario"
-                                        className="w-full items-center justify-between  gap-1 px-4 py-2 flex text-sm text-gray-700 hover:bg-gray-100"
+                                        className="w-full items-center justify-between  gap-1 px-4 py-2 flex text-sm text-neutral-200 transition hover:bg-neutral-200/5"
                                     >
                                         Mi cuenta
                                         <span class="px-2 py-0.5 text-xs text-white group-hover:opacity-100 transition bg-[#09f] rounded-lg">Nuevo</span>
                                     </a>
+
+
                                     {user.isAdmin && (
                                         <a
                                             href="/admin"
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            className="w-full items-center justify-between  gap-1 px-4 py-2 flex text-sm text-neutral-200 transition hover:bg-neutral-200/5"
                                         >
                                             Administración
                                         </a>
                                     )}
 
-                                    
+
                                     <a
                                         href="/api/auth/signout"
                                         onClick={(e) => {
@@ -184,7 +198,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                                             // @ts-ignore
                                             signOut({ callbackUrl: '/' });
                                         }}
-                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                        className="w-full items-center justify-between  gap-1 px-4 py-2 flex text-sm text-neutral-200 transition hover:bg-neutral-200/5"
                                     >
                                         Cerrar sesión
                                     </a>
