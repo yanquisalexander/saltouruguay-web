@@ -1,6 +1,6 @@
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { useEffect, useState, useCallback, useMemo } from "preact/hooks";
-import { SimonSaysButtons } from "../games/SimonSaysButtons";
+import { SimonSaysButtons, colors } from "../games/SimonSaysButtons";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
 
@@ -29,12 +29,17 @@ const PlayersProgress = ({ players, currentPlayers, patternsProgress }) => {
                                 </div>
                             </div>
                             <div class="grid grid-cols-4 gap-1 mt-2">
-                                {playerProgress.map((color, index) => (
-                                    <div
-                                        key={index}
-                                        class={`size-5 rounded-full col-span-1 ${getColorClass(color)}`}
-                                    ></div>
-                                ))}
+                                {playerProgress.map((color, index) => {
+                                    const colorClass = colors.find(c => c.name === color)?.gradient;
+                                    console.log({ colorClass });
+                                    return (
+                                        <div
+                                            key={index}
+                                            class={`size-5 rounded-full col-span-1 bg-gradient-to-br ${colorClass}`}
+                                        ></div>
+                                    );
+                                })}
+                                {playerProgress.map((color) => console.log({ color }))}
                             </div>
                         </div>
                     );
@@ -43,16 +48,7 @@ const PlayersProgress = ({ players, currentPlayers, patternsProgress }) => {
     );
 };
 
-// Función auxiliar para manejar clases de colores en Tailwind
-const getColorClass = (color) => {
-    const colors = {
-        red: "bg-red-500",
-        blue: "bg-blue-500",
-        green: "bg-green-500",
-        yellow: "bg-yellow-500",
-    };
-    return colors[color] || "bg-gray-500"; // Color de respaldo si no se encuentra
-};
+
 
 export const SimonSaysOverlay = ({ channel, players, pusher }) => {
     const [gameState, setGameState] = useState({
@@ -177,7 +173,7 @@ export const SimonSaysOverlay = ({ channel, players, pusher }) => {
 
     return (
         <div class="grid grid-cols-12 h-screen gap-2 text-white animate-fade-in">
-            <div class="col-span-4 flex flex-col justify-center items-center bg-black/40">
+            <div class="col-span-4 flex flex-col justify-center items-center bg-gradient-to-r from-black/80 via-black/40 to-transparent">
                 <h2 class="text-2xl font-rubik font-bold text-lime-200">
                     Simón dice
                 </h2>
