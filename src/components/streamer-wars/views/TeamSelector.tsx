@@ -4,31 +4,46 @@ import { getTranslation } from "@/utils/translate";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
 import { LucideCrown, LucideDot } from "lucide-preact";
-import { useEffect, useState } from "preact/hooks";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 
+type Player = {
+    playerNumber: number;
+    avatar: string;
+    displayName: string;
+    isCaptain: boolean;
+};
+
+const REFRESH_AFTER_EVENT_TIMEOUT = 2000;
 
 export const TeamSelector = ({ session, channel, teamsQuantity, playersPerTeam }: { session: Session; channel: Channel; teamsQuantity: number; playersPerTeam: number }) => {
     const [selectedTeam, setSelectedTeam] = useState<typeof TEAMS[keyof typeof TEAMS] | null>(null);
-    const [playersTeams, setPlayersTeams] = useState<{ [team: string]: { playerNumber: number; avatar: string; displayName: string, isCaptain: boolean }[] }>({});
+    const [playersTeams, setPlayersTeams] = useState<Record<string, Player[]>>({});
+    const refreshPlayersTimeout = useRef<NodeJS.Timeout | null>(null);
 
-    const refreshPlayersTeams = () => {
+    const refreshPlayersTeams = useCallback(() => {
         actions.streamerWars.getPlayersTeams().then(({ error, data }) => {
-            if (error) {
-                console.error(error);
-                return;
-            }
+            if (error) return console.error(error);
             setPlayersTeams(data.playersTeams);
-        })
-    }
+        });
+    }, []);
+
+    const scheduleRefresh = useCallback(() => {
+        if (refreshPlayersTimeout.current) clearTimeout(refreshPlayersTimeout.current);
+        refreshPlayersTimeout.current = setTimeout(refreshPlayersTeams, REFRESH_AFTER_EVENT_TIMEOUT);
+    }, [refreshPlayersTeams]);
 
     useEffect(() => {
         if (!selectedTeam) return;
 
-        if (Object.keys(playersTeams).some((team) => playersTeams[team].some(({ playerNumber }) => playerNumber === session.user.streamerWarsPlayerNumber))) {
+        const isAlreadyInTeam = Object.values(playersTeams).some(team =>
+            team.some(({ playerNumber }) => playerNumber === session.user.streamerWarsPlayerNumber)
+        );
+
+        if (isAlreadyInTeam) {
             toast.error("Ya estás unido a un equipo");
             return;
         }
@@ -38,41 +53,92 @@ export const TeamSelector = ({ session, channel, teamsQuantity, playersPerTeam }
             return;
         }
 
-        actions.streamerWars.joinTeam({ team: selectedTeam }).then(({ error, data }) => {
+        // Agregar jugador localmente antes de confirmar con el backend
+        setPlayersTeams(prev => ({
+            ...prev,
+            [selectedTeam]: [
+                ...(prev[selectedTeam] || []),
+                {
+                    playerNumber: session.user.streamerWarsPlayerNumber!,
+                    avatar: session.user.image || '',
+                    displayName: session.user.name || '',
+                    isCaptain: false
+                }
+            ]
+        }));
+
+        actions.streamerWars.joinTeam({ team: selectedTeam }).then(({ error }) => {
             if (error) {
                 console.error(error);
-                toast.warning(error.message)
+                toast.warning(error.message);
+                setPlayersTeams(prev => ({
+                    ...prev,
+                    [selectedTeam]: (prev[selectedTeam] || []).filter(
+                        player => player.playerNumber !== session.user.streamerWarsPlayerNumber
+                    )
+                }));
                 return;
             }
             toast.success("Te has unido al equipo correctamente");
-        })
-    }, [selectedTeam]);
+        });
+    }, [selectedTeam, playersTeams]);
 
     useEffect(() => {
-        refreshPlayersTeams()
+        refreshPlayersTeams();
 
+        const handlePlayerJoined = (player: Player & { team: string }) => {
+            setPlayersTeams(prev => ({
+                ...prev,
+                [player.team]: [
+                    ...(prev[player.team] || []).filter(p => p.playerNumber !== player.playerNumber),
+                    { ...player, isCaptain: player.isCaptain ?? false }
+                ]
+            }));
+            scheduleRefresh();
+        };
 
-        channel.bind("player-joined", () => {
-            refreshPlayersTeams();
-        })
+        const handlePlayerRemoved = ({ playerNumber }: { playerNumber: number }) => {
+            setPlayersTeams(prev => {
+                const team = Object.keys(prev).find(team => prev[team].some(p => p.playerNumber === playerNumber));
+                if (!team) return prev;
 
-        channel.bind("player-removed", ({ playerNumber }: { playerNumber: number }) => {
-            refreshPlayersTeams();
+                return { ...prev, [team]: prev[team].filter(p => p.playerNumber !== playerNumber) };
+            });
+
             if (session.user.streamerWarsPlayerNumber === playerNumber) {
-                setSelectedTeam(null)
+                setSelectedTeam(null);
                 toast.success("Un administrador te ha removido del equipo");
             }
-        })
+            scheduleRefresh();
+        };
 
-        channel.bind("captain-assigned", ({ team, playerNumber }: { team: string, playerNumber: number }) => {
-            console.log(team, playerNumber);
+        const handleCaptainAssigned = ({ team, playerNumber }: { team: string; playerNumber: number }) => {
+            setPlayersTeams(prev => ({
+                ...prev,
+                [team]: prev[team]?.map(player => ({
+                    ...player,
+                    isCaptain: player.playerNumber === playerNumber
+                })) ?? []
+            }));
+
             if (session.user.streamerWarsPlayerNumber === playerNumber) {
                 playSound({ sound: STREAMER_WARS_SOUNDS.BUTTON_CLICK });
                 toast.success(`Has sido nombrado capitán del equipo ${getTranslation(team)}`);
             }
-        })
+            scheduleRefresh();
+        };
 
-    }, []);
+        channel.bind("player-joined", handlePlayerJoined);
+        channel.bind("player-removed", handlePlayerRemoved);
+        channel.bind("captain-assigned", handleCaptainAssigned);
+
+        return () => {
+            channel.unbind("player-joined", handlePlayerJoined);
+            channel.unbind("player-removed", handlePlayerRemoved);
+            channel.unbind("captain-assigned", handleCaptainAssigned);
+        };
+    }, [refreshPlayersTeams, scheduleRefresh]);
+
 
     const COLORS = [
         { team: TEAMS.BLUE, color: "#3498db", gradient: "from-blue-400 to-blue-600" },

@@ -396,7 +396,11 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
         // Obtener el discordId del jugador desde una relación con playerNumber
         const user = await client
             .select({
+                id: UsersTable.id,
                 discordId: UsersTable.discordId,
+                avatar: UsersTable.avatar,
+                displayName: UsersTable.displayName,
+
             })
             .from(UsersTable)
             .innerJoin(
@@ -482,7 +486,7 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
         }
 
         // Notificar al canal mediante Pusher
-        await pusher.trigger("streamer-wars", "player-joined", null);
+        await pusher.trigger("streamer-wars", "player-joined", { playerNumber, avatar: user.avatar, displayName: user.displayName, team: teamToJoin });
 
         return {
             success: true,

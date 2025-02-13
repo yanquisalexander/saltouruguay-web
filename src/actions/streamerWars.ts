@@ -468,7 +468,7 @@ export const streamerWars = {
                     eq(StreamerWarsTeamPlayersTable.teamId, teamId)
                 ));
 
-            await pusher.trigger("streamer-wars", "player-joined", null);
+            await pusher.trigger("streamer-wars", "player-joined", { playerNumber, avatar: session.user.image!, displayName: session.user.name, team, isCaptain: true });
             await pusher.trigger("streamer-wars", "captain-assigned", { playerNumber, team });
             return { success: true }
         }
@@ -511,7 +511,7 @@ export const streamerWars = {
                 .set({ isCaptain: false })
                 .where(eq(StreamerWarsTeamPlayersTable.id, existingCaptain.id));
 
-            await pusher.trigger("streamer-wars", "player-joined", null);
+            await pusher.trigger("streamer-wars", "player-joined", { playerNumber: existingCaptain.playerNumber, avatar: session.user.image!, displayName: session.user.name, team, isCaptain: false });
             return { success: true }
         }
     }),
