@@ -4,6 +4,7 @@ import type { Session } from "@auth/core/types";
 import { toast } from "sonner";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { actions } from "astro:actions";
+import { Instructions } from "../Instructions";
 
 interface AutoEliminationProps {
     pusher: Pusher;
@@ -81,46 +82,58 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
     }, [autoEliminatedPlayers]);
 
     return (
-        <div class="flex flex-col items-center gap-y-2 mt-16">
-            <header class="flex items-center gap-x-2">
-                <h2 class="text-xl font-anton">Autoeliminación</h2>
-            </header>
-            <span class="mb-8 text-sm text-gray-400">
-                ({autoEliminatedPlayers.length}/3)
-            </span>
+        <>
+            <Instructions duration={10000}>
+                <p className="font-mono max-w-2xl text-left">
+                    Durante el juego recibirás ofertas económicas. <br />
+                    Recuerda que, al aceptarlas, quedarás eliminado del juego.
+                </p>
+                <p className="font-mono max-w-2xl text-left">
+                    <strong>Nota:</strong> Solo tres jugadores podrán optar por la autoeliminación; una vez alcanzado este límite, ya no podrás autoeliminarte.
+                </p>
 
-            {hasAutoEliminated ? (
-                <span class="text-red-500">¡Te has autoeliminado!</span>
-            ) : canAutoEliminate ? (
-                <button
-                    class="font-rubik uppercase bg-gradient-to-br from-red-400 to-red-600 hover:scale-110 hover:saturate-200 transition-all text-white size-48 rounded-full"
-                    onClick={handleClick}
-                >
-                    Autoeliminarse
-                </button>
-            ) : (
-                <span class="text-red-500">Ya no puedes autoeliminarte</span>
-            )}
+            </Instructions>
+            <div class="flex flex-col items-center gap-y-2 mt-16">
+                <header class="flex items-center gap-x-2">
+                    <h2 class="text-xl font-anton">Autoeliminación</h2>
+                </header>
+                <span class="mb-8 text-sm text-gray-400">
+                    ({autoEliminatedPlayers.length}/3)
+                </span>
 
-            <aside class="flex flex-col gap-y-2 mt-8">
-                <header class="text-lg font-bold">Jugadores autoeliminados</header>
-                <ul class="flex flex-col gap-y-2">
-                    {autoEliminatedPlayers.map((playerNumber) => (
-                        <li
-                            key={playerNumber}
-                            class="flex items-center gap-x-2 bg-blue-500/20 border border-blue-500 p-2 rounded-lg"
-                        >
-                            <span class="text-neutral-400 font-rubik flex items-center gap-x-2">
-                                Jugador{" "}
-                                <span class="text-lime-500 text-2xl font-atomic">
-                                    #{playerNumber.toString().padStart(3, "0")}
+                {hasAutoEliminated ? (
+                    <span class="text-red-500">¡Te has autoeliminado!</span>
+                ) : canAutoEliminate ? (
+                    <button
+                        class="font-rubik uppercase bg-gradient-to-br from-red-400 to-red-600 hover:scale-110 hover:saturate-200 transition-all text-white size-48 rounded-full"
+                        onClick={handleClick}
+                    >
+                        Autoeliminarse
+                    </button>
+                ) : (
+                    <span class="text-red-500">Ya no puedes autoeliminarte</span>
+                )}
+
+                <aside class="flex flex-col gap-y-2 mt-8">
+                    <header class="text-lg font-bold">Jugadores autoeliminados</header>
+                    <ul class="flex flex-col gap-y-2">
+                        {autoEliminatedPlayers.map((playerNumber) => (
+                            <li
+                                key={playerNumber}
+                                class="flex items-center gap-x-2 bg-blue-500/20 border border-blue-500 p-2 rounded-lg"
+                            >
+                                <span class="text-neutral-400 font-rubik flex items-center gap-x-2">
+                                    Jugador{" "}
+                                    <span class="text-lime-500 text-2xl font-atomic">
+                                        #{playerNumber.toString().padStart(3, "0")}
+                                    </span>
                                 </span>
-                            </span>
-                            <span class="text-gray-400">- Autoeliminado</span>
-                        </li>
-                    ))}
-                </ul>
-            </aside>
-        </div>
+                                <span class="text-gray-400">- Autoeliminado</span>
+                            </li>
+                        ))}
+                    </ul>
+                </aside>
+            </div>
+        </>
     );
 };

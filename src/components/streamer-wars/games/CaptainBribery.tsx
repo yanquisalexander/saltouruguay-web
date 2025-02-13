@@ -97,7 +97,7 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
         <>
             <Instructions duration={15000}>
                 <p className="font-mono max-w-2xl text-left">
-                    <strong>Capitán:</strong> Recibirás varias ofertas de soborno por parte de los auspiciadores.
+                    <strong>Capitán:</strong> Recibirás varias ofertas de soborno por parte de los auspiciantes.
                     Si aceptas una oferta, recibirás la cantidad de dinero que se te ofrece, pero <strong>tú y tu equipo serán eliminados del juego</strong>.
                 </p>
                 <p className="font-mono max-w-2xl text-left">
