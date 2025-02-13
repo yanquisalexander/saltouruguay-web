@@ -79,8 +79,7 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
 };
 export const StreamerWars = ({ session }: { session: Session }) => {
     const [players, setPlayers] = useState<Players[]>([]);
-    const [dayAvailable, setDayAvailable] = useState(false);
-    const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel, bgAudio, bgVolume, setBgVolume } = useStreamerWarsSocket(session);
+    const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel, bgAudio, bgVolume, setBgVolume, setDayAvailable, dayAvailable } = useStreamerWarsSocket(session);
     const [splashEnded, setSplashEnded] = useState(false);
     const [showingJourneyTransition, setShowingJourneyTransition] = useState(false);
 

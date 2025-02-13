@@ -16,11 +16,13 @@ export const useStreamerWarsSocket = (session: Session | null) => {
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
     const globalChannel = useRef<Channel | null>(null);
     const presenceChannel = useRef<Channel | null>(null);
-    const [bgVolume, setBgVolume] = useState(0.5);
+    const [dayAvailable, setDayAvailable] = useState(false);
+
+    const [bgVolume, setBgVolume] = useState(0.2);
     const bgAudio = useRef<HTMLAudioElement | null>(null);
 
     // Se asume que si no hay gameState o no tiene componente, estamos en sala de espera
-    const isOnWaitingRoom = !gameState || !gameState.component;
+    const isOnWaitingRoom = (!gameState || !gameState.component) && dayAvailable;
 
     // Inicializa el audio de fondo (sala de espera)
     useEffect(() => {
@@ -138,5 +140,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         bgVolume,
         setBgVolume,
         bgAudio,
+        dayAvailable,
+        setDayAvailable,
     };
 };
