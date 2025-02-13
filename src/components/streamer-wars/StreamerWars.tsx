@@ -14,6 +14,7 @@ import { LucideBug } from "lucide-preact";
 import { JourneyTransition } from "./JourneyTransition";
 import { CaptainBribery } from "./games/CaptainBribery";
 import { type Players } from "../admin/streamer-wars/Players";
+import { AutoElimination } from "./games/AutoElimination";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -299,7 +300,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 }
 
 const GameComponent = ({ gameState, players, pusher, session, channel }: { gameState: any; players: any[]; pusher: Pusher; session: Session; channel: Channel }) => {
-    const GAME_CONFIG = useRef({ TeamSelector, SimonSays, CaptainBribery });
+    const GAME_CONFIG = useRef({ TeamSelector, SimonSays, CaptainBribery, AutoElimination });
 
     const Component = GAME_CONFIG.current[gameState.component as keyof typeof GAME_CONFIG.current];
     const props = { ...gameState.props, players, pusher, session, channel };
