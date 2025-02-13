@@ -230,7 +230,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                             onClick={() => {
                                 toast.promise(
                                     actions.admin.launchCinematic({
-                                        url: `${CINEMATICS_CDN_PREFIX}/${id}.mp4`,
+                                        url: `${CINEMATICS_CDN_PREFIX}/${id}.webm`,
                                         targetUsers: players.map((player) => player.id).filter((id): id is number => id !== undefined),
                                     }), {
                                     loading: 'Cargando...',
