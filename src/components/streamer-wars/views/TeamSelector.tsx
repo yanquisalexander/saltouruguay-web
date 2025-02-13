@@ -81,7 +81,7 @@ export const TeamSelector = ({ session, channel, teamsQuantity, playersPerTeam }
             }
             toast.success("Te has unido al equipo correctamente");
         });
-    }, [selectedTeam, playersTeams]);
+    }, [selectedTeam]);
 
     useEffect(() => {
         refreshPlayersTeams();
