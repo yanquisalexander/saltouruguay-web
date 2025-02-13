@@ -18,7 +18,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
     const presenceChannel = useRef<Channel | null>(null);
     const [dayAvailable, setDayAvailable] = useState(false);
 
-    const [bgVolume, setBgVolume] = useState(0.2);
+    const [bgVolume, setBgVolume] = useState(0);
     const bgAudio = useRef<HTMLAudioElement | null>(null);
 
     // Se asume que si no hay gameState o no tiene componente, estamos en sala de espera
