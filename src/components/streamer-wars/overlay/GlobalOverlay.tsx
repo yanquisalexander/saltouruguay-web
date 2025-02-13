@@ -1,79 +1,93 @@
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import { useStreamerWarsSocket } from "../hooks/useStreamerWarsSocket";
 import { actions } from "astro:actions";
 import type { Players } from "@/components/admin/streamer-wars/Players";
 import { SimonSaysOverlay } from "./SimonSaysOverlay";
 import type Pusher from "pusher-js";
+import { PlayerEliminated } from "../PlayerEliminated";
 
-const OverlayRenderer = ({ gameState, players, pusher }: { gameState: any; players: Players[], pusher: Pusher }) => {
+const OverlayRenderer = ({
+    gameState,
+    players,
+    pusher,
+}: {
+    gameState: any;
+    players: Players[];
+    pusher: Pusher;
+}) => {
     const components = useRef({
-        SimonSays: SimonSaysOverlay
+        SimonSays: SimonSaysOverlay,
     });
 
     if (!gameState) return null;
 
+    // Seleccionamos el componente basado en la propiedad "component" de gameState
     // @ts-ignore
     const Component = components.current[gameState.component];
     if (!Component) return null;
 
-    return <Component initialGameState={gameState} pusher={pusher} players={players} {...gameState.props} />;
+    // Pasamos players directamente desde el prop, sin mezclarlo con gameState.props
+    return (
+        <Component
+            gameState={gameState}
+            initialGameState={gameState}
+            pusher={pusher}
+            players={players}
+            {...gameState.props}
+        />
+    );
 };
 
 export const GlobalOverlay = () => {
     const [players, setPlayers] = useState<Players[]>([]);
-    const { pusher, gameState, setGameState, globalChannel, presenceChannel } = useStreamerWarsSocket(null);
+    const { pusher, gameState, setGameState, globalChannel, recentlyEliminatedPlayer } =
+        useStreamerWarsSocket(null);
 
-    // Cargar jugadores una vez al inicio
+    // Cargar jugadores al iniciar
     useEffect(() => {
-
         actions.streamerWars.getPlayers().then(({ error, data }) => {
             if (error) {
                 console.error(error);
                 return;
             }
 
-            setPlayers(data?.players.map((player: any) => ({ ...player, online: false })) || []);
-
+            setPlayers(
+                data?.players.map((player: any) => ({ ...player, online: false })) || []
+            );
+            console.log("Players loaded", data?.players);
         });
-
     }, []);
 
+    // Restaurar el estado del juego sin incluir players en gameState.props
+    const restoreGameStateFromCache = useCallback(async () => {
+        const { data, error } = await actions.streamerWars.getGameState();
+        console.log({ data, error });
 
-    // Restaurar estado del juego y manejar eventos de Pusher
-    useEffect(() => {
-        if (!pusher) return;
+        if (error) return;
 
-        const restoreGameStateFromCache = async () => {
-            const { data, error } = await actions.streamerWars.getGameState();
-
-            if (error || !data?.gameState) return;
-
+        if (data?.gameState && data.gameState.game && data.gameState.props) {
             const { game, props } = data.gameState;
-            if (game && props) {
-                setGameState((prev) => {
-                    return {
-                        ...prev,
-                        component: game,
-                        props
-                    };
-                });
-            }
-        };
+            setGameState({
+                component: game,
+                // No incluimos players aquí; se pasará directamente desde GlobalOverlay
+                props: { channel: globalChannel.current, pusher, ...props },
+            });
+        }
+    }, [globalChannel, pusher, setGameState]);
 
-
-
+    // Ejecutar restauración al iniciar
+    useEffect(() => {
         restoreGameStateFromCache();
-
-        return () => {
-            pusher.disconnect();
-        };
-    }, [pusher]);
+    }, [restoreGameStateFromCache]);
 
     if (!pusher) return null;
 
     return (
         <div class="min-h-screen">
             <OverlayRenderer gameState={gameState} players={players} pusher={pusher} />
+            {
+                recentlyEliminatedPlayer && <PlayerEliminated playerNumber={recentlyEliminatedPlayer} session={null} />
+            }
         </div>
     );
 };

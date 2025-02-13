@@ -2,7 +2,7 @@ import type { Session } from "@auth/core/types";
 import { navigate } from "astro:transitions/client";
 import { useEffect, useState } from "preact/hooks";
 
-export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: number | null, session: Session }) => {
+export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: number | null, session: Session | null }) => {
     const [showing, setShowing] = useState(false);
 
     /* 
@@ -14,7 +14,7 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
         if (playerNumber) {
             setShowing(true);
 
-            if (playerNumber === session.user.streamerWarsPlayerNumber) {
+            if (playerNumber === session?.user.streamerWarsPlayerNumber) {
                 setTimeout(() => navigate('/guerra-streamers'), 2000);
             }
             setTimeout(() => setShowing(false), 5000);
@@ -34,7 +34,7 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
                     </span>
                 </span>
                 <p class="text-2xl font-rubik pt-16 text-center">
-                    {playerNumber === session.user.streamerWarsPlayerNumber ? "¡Has sido eliminado!" : `El jugador #${playerNumber?.toString().padStart(3, '0')} ha sido eliminado`}
+                    {playerNumber === session?.user.streamerWarsPlayerNumber ? "¡Has sido eliminado!" : `El jugador #${playerNumber?.toString().padStart(3, '0')} ha sido eliminado`}
                 </p>
 
             </div>

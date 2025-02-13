@@ -1,11 +1,13 @@
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { useEffect, useState, useCallback, useMemo } from "preact/hooks";
 import { SimonSaysButtons } from "../games/SimonSaysButtons";
+import { actions } from "astro:actions";
+import { toast } from "sonner";
 
 // Componente para mostrar el progreso de los jugadores
 const PlayersProgress = ({ players, currentPlayers, patternsProgress }) => {
     return (
-        <div class="flex flex-col h-full w-full bg-black/40 justify-center items-center gap-4">
+        <div class="flex flex-col h-full w-full justify-center items-center gap-4">
             {players
                 .filter((player) => currentPlayers.includes(player.playerNumber))
                 .map((player) => {
@@ -16,7 +18,7 @@ const PlayersProgress = ({ players, currentPlayers, patternsProgress }) => {
                             key={player.playerNumber}
                             class="flex border-blue-600 gap-x-4 w-[80%] border bg-blue-500/20 p-2 rounded-md items-center"
                         >
-                            <div class="flex gap-2 items-center">
+                            <div class="flex gap-2 items-center mr-auto">
                                 <img
                                     src={player.avatar}
                                     alt={player.displayName}
@@ -26,11 +28,11 @@ const PlayersProgress = ({ players, currentPlayers, patternsProgress }) => {
                                     #{player.playerNumber.toString().padStart(3, "0")}
                                 </div>
                             </div>
-                            <div class="flex gap-1 mt-2">
+                            <div class="grid grid-cols-4 gap-1 mt-2">
                                 {playerProgress.map((color, index) => (
                                     <div
                                         key={index}
-                                        class={`size-5 rounded-full ${getColorClass(color)}`}
+                                        class={`size-5 rounded-full col-span-1 ${getColorClass(color)}`}
                                     ></div>
                                 ))}
                             </div>
@@ -52,7 +54,7 @@ const getColorClass = (color) => {
     return colors[color] || "bg-gray-500"; // Color de respaldo si no se encuentra
 };
 
-export const SimonSaysOverlay = ({ initialGameState, channel, players, pusher }) => {
+export const SimonSaysOverlay = ({ channel, players, pusher }) => {
     const [gameState, setGameState] = useState({
         teams: {},
         currentRound: 0,
@@ -62,8 +64,8 @@ export const SimonSaysOverlay = ({ initialGameState, channel, players, pusher })
         status: "waiting",
         completedPlayers: [],
         playerWhoAlreadyPlayed: [],
-        ...initialGameState,
     });
+
 
     
 
@@ -92,17 +94,28 @@ export const SimonSaysOverlay = ({ initialGameState, channel, players, pusher })
     }, []);
 
     useEffect(() => {
+        const restoreGameState = async () => {
+            const { error, data } = await actions.games.simonSays.getGameState();
+            console.log({ error, data });
+                        if (!error && data) {
+                            setGameState(data.gameState);
+                        }
+        }
+
+        restoreGameState();
+
+    }, [])
+
+    useEffect(() => {
         if (!pusher) return;
-        console.log("Simon Says Overlay", pusher);
+
         const simonSaysChannel = pusher.subscribe("streamer-wars.simon-says");
 
         simonSaysChannel.bind("game-state", (newGameState) => {
-            setGameState((prevState) => {
-                if (newGameState.currentRound !== prevState.currentRound) {
-                    setPlayersProgress({});
-                }
-                return newGameState;
-            });
+            if (newGameState.currentRound !== gameState.currentRound) {
+                setPlayersProgress({});
+            }
+            setGameState(newGameState);
         });
 
         simonSaysChannel.bind("client-player-input", ({ playerNumber, color }) => {
@@ -110,22 +123,36 @@ export const SimonSaysOverlay = ({ initialGameState, channel, players, pusher })
 
             // Actualizamos el progreso del jugador sin mutar el estado anterior
             setPlayersProgress((prevProgress) => {
-                const newProgress = { ...prevProgress };
-
-                // Verifica si el jugador forma parte de los jugadores activos
-                if (
-                    gameState.currentPlayers.blue === playerNumber ||
-                    gameState.currentPlayers.red === playerNumber
-                ) {
-                    newProgress[playerNumber] = [
-                        ...(newProgress[playerNumber] || []),
-                        color,
-                    ];
-                }
-
-                return newProgress;
+                const playerProgress = prevProgress[playerNumber] || [];
+                return {
+                    ...prevProgress,
+                    [playerNumber]: [...playerProgress, color],
+                };
             });
         });
+
+        simonSaysChannel?.bind("completed-pattern", ({ playerNumber }) => {
+            toast.success(
+                `Jugador #${playerNumber.toString().padStart(3, "0")} ha completado el patrón`,
+                { position: "bottom-center", richColors: true }
+            );
+        });
+
+        simonSaysChannel?.bind("pattern-failed", ({ playerNumber }) => {
+            toast.error(
+                `Jugador #${playerNumber.toString().padStart(3, "0")} ha fallado el patrón`,
+                { position: "bottom-center", richColors: true }
+            );
+
+            // Eliminamos al jugador del progreso
+            setPlayersProgress((prevProgress) => {
+                const { [playerNumber]: _, ...rest } = prevProgress;
+                return rest;
+            });
+            
+        });
+
+        
 
         return () => {
             simonSaysChannel.unbind("game-state");
@@ -135,7 +162,7 @@ export const SimonSaysOverlay = ({ initialGameState, channel, players, pusher })
     }, [pusher, gameState.currentPlayers]);
 
     useEffect(() => {
-        if (gameState.pattern.length > 0) {
+        if (gameState.pattern.length > 0 && gameState.status === "playing") {
             showPattern(gameState.pattern);
         }
     }, [gameState.pattern, showPattern]);
@@ -149,8 +176,12 @@ export const SimonSaysOverlay = ({ initialGameState, channel, players, pusher })
     console.log({ gameState, players, currentPlayers, playersProgress });
 
     return (
-        <div class="grid grid-cols-12 h-screen gap-2 text-white">
-            <div class="col-span-4 flex flex-col justify-center items-center">
+        <div class="grid grid-cols-12 h-screen gap-2 text-white animate-fade-in">
+            <div class="col-span-4 flex flex-col justify-center items-center bg-black/40">
+                <h2 class="text-2xl font-rubik font-bold text-lime-200">
+                    Simón dice
+                </h2>
+
                 <PlayersProgress
                     players={players}
                     currentPlayers={currentPlayers}
