@@ -17,7 +17,7 @@ export interface Players {
 }
 
 
-const CINEMATICS_LIST = Array.from({ length: 10 }, (_, i) => ({
+const CINEMATICS_LIST = Array.from({ length: 11 }, (_, i) => ({
     id: `animacion-juego-${i + 1}`,
     name: `Animación de juego ${i + 1}`,
 }));
