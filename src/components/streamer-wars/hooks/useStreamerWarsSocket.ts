@@ -32,7 +32,6 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             }
         };
         console.log("bgAudio.current", bgAudio.current);
-        console.log(isOnWaitingRoom)
     }, [isOnWaitingRoom]);
 
     // Actualiza el volumen y controla play/pause según el estado de la sala de espera
