@@ -192,40 +192,65 @@ export const SimonSays = ({
                 </h2>
 
                 {/* Mostrar avatares de jugadores */}
-                {gameIsPlaying && (
-                    <div class="flex items-center gap-x-4 mt-4">
-                        {isCurrentPlayerPlaying && (
-                            <>
+                {gameIsPlaying && (() => {
+                    // Obtener el jugador actual (solo si el usuario está jugando)
+                    const currentPlayer = isCurrentPlayerPlaying
+                        ? players.find(p => p?.playerNumber === playerNumber)
+                        : null;
+
+                    // Obtener los rivales válidos: se filtran aquellos que se encuentren y tengan avatar definido
+                    const validRivals = gameRivals
+                        .map(rival =>
+                            players.find(p =>
+                                isCurrentPlayerPlaying ? p.playerNumber === rival : p.id === rival
+                            )
+                        )
+                        .filter(player => player && player.avatar);
+
+                    // Si no hay nada que mostrar, retorna null
+                    if (!currentPlayer && validRivals.length === 0) return null;
+
+                    return (
+                        <div class="flex items-center gap-x-4 mt-4">
+                            {isCurrentPlayerPlaying && currentPlayer && currentPlayer.avatar && (
                                 <div class="relative">
                                     <img
-                                        src={players.find(p => p?.playerNumber === playerNumber)?.avatar}
+                                        src={currentPlayer.avatar}
                                         alt="Tu avatar"
-                                        class="size-10 rounded-full ring-2 ring-white/20"
+                                        class="w-10 h-10 rounded-full ring-2 ring-white/20"
+                                        onError={(e) => {
+                                            e.currentTarget.src = "/fallback.png"; // Ajusta el fallback según tu caso
+                                        }}
                                     />
                                 </div>
-                                <span class="font-atomic">VS.</span>
-                            </>
-                        )}
-
-                        {gameRivals.map(rival => {
-                            const rivalPlayer = players.find(p =>
-                                isCurrentPlayerPlaying ? p.playerNumber === rival : p.id === rival
-                            );
-                            return (
-                                <div key={rival} class="relative">
+                            )}
+                            {isCurrentPlayerPlaying &&
+                                currentPlayer &&
+                                currentPlayer.avatar &&
+                                validRivals.length > 0 && (
+                                    <span class="font-atomic">VS.</span>
+                                )}
+                            {validRivals.map((rivalPlayer) => (
+                                <div key={rivalPlayer?.id || rivalPlayer?.playerNumber} class="relative">
                                     <img
                                         src={rivalPlayer?.avatar}
-                                        alt={`Avatar de jugador #${rival}`}
-                                        class="size-10 rounded-full ring-2 ring-white/20"
+                                        alt={`Avatar de jugador #${rivalPlayer?.playerNumber || rivalPlayer?.id}`}
+                                        class="w-10 h-10 rounded-full ring-2 ring-white/20"
+                                        onError={(e) => {
+                                            e.currentTarget.src = "/fallback.png";
+                                        }}
                                     />
                                     <span class="absolute -bottom-4 inset-x-0 bg-white font-atomic text-black text-md rounded-full px-1">
-                                        #{rival?.toString().padStart(3, "0")}
+                                        #{(rivalPlayer?.playerNumber ?? rivalPlayer?.id ?? "")
+                                            .toString()
+                                            .padStart(3, "0")}
                                     </span>
                                 </div>
-                            );
-                        })}
-                    </div>
-                )}
+                            ))}
+                        </div>
+                    );
+                })()}
+
 
                 {/* Mensaje para jugadores que no están en turno */}
                 {gameIsPlaying && !isCurrentPlayerPlaying && (
