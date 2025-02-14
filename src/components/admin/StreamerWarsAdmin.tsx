@@ -6,9 +6,10 @@ import { StreamerWarsPlayers } from "./streamer-wars/Players";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
 import { LucideBellRing, LucideCoffee, LucideFlag, LucideLockKeyholeOpen, LucideRefreshCw, LucideTrash2 } from "lucide-preact";
+import type { Session } from "@auth/core/types";
 
 
-const GENERAL_ACTIONS = [
+let GENERAL_ACTIONS = [
     {
         name: "Anunciar dificultades técnicas",
         classes: "bg-red-500 hover:bg-red-600 !text-black",
@@ -116,12 +117,32 @@ const GENERAL_ACTIONS = [
             });
         }
     }
-];
+]
 
-export const StreamerWarsAdmin = () => {
+
+export const StreamerWarsAdmin = ({ session }: { session: Session }) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
 
     const [announcementText, setAnnouncementText] = useState<string>("");
+
+    if (session?.user?.name!.toLowerCase() === "alexitoo_uy") {
+        GENERAL_ACTIONS = [
+            ...GENERAL_ACTIONS,
+            {
+                name: "Notificar nueva versión",
+                classes: "bg-purple-500 hover:bg-purple-600 !text-black",
+                icon: LucideFlag,
+                execute: async () => {
+                    toast.promise(actions.streamerWars.notifyNewVersion(), {
+                        loading: "Notificando nueva versión...",
+                        success: "Nueva versión notificada",
+                        error: "Error al notificar nueva versión",
+                    });
+                }
+            }
+        ];
+    }
+
 
     useEffect(() => {
         const host = 'soketi.saltouruguayserver.com';
@@ -173,17 +194,20 @@ export const StreamerWarsAdmin = () => {
                     <div class="actions mt-8 mb-8">
                         <h2 class="text-2xl font-bold mb-4">Acciones generales</h2>
                         <div class="grid grid-cols-2 gap-4">
-                            {GENERAL_ACTIONS.map(({ name, classes, icon: Icon, execute }) => (
+
+
+
+                            {GENERAL_ACTIONS.map(({ name, classes, icon: Icon, execute }, index) => (
                                 <button
+                                    key={index} // Se necesita una key única
                                     class={`p-4 rounded-lg transition text-white font-bold ${classes}`}
                                     onClick={execute}
                                 >
-                                    {
-                                        Icon && <Icon class="size-5 inline-block mr-2 align-middle" />
-                                    }
+                                    {Icon && <Icon class="size-5 inline-block mr-2 align-middle" />}
                                     <span>{name}</span>
                                 </button>
                             ))}
+
                         </div>
 
                     </div>

@@ -180,6 +180,22 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             }, { once: true });
         });
 
+        globalChannel.current?.bind('new-version', () => {
+            playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION, volume: 1 });
+            toast.warning(`¡Nueva versión disponible!`, {
+                description: "Recarga la página para disfrutar de las últimas mejoras.",
+                duration: 8000,
+                position: 'top-right',
+                richColors: true,
+                action: {
+                    text: 'Recargar',
+                    onClick: () => {
+                        location.reload();
+                    }
+                },
+            })
+        })
+
         globalChannel.current?.bind('tech-difficulties', () => {
             playSound({ sound: STREAMER_WARS_SOUNDS.PROBLEMAS_TECNICOS, volume: 1 });
 

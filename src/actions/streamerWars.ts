@@ -700,4 +700,19 @@ export const streamerWars = {
             return { success: true }
         }
     }),
+    notifyNewVersion: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || session.user.name!.toLowerCase() !== "alexitoo_uy") {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para notificar nueva versión"
+                });
+            }
+
+            await pusher.trigger("streamer-wars", "new-version", null);
+            return { success: true }
+        }
+    }),
 }
