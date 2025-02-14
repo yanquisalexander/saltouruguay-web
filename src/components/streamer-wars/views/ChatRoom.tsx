@@ -96,18 +96,20 @@ const ChatMessageComponent = ({
                     <LucideX size={16} />
                 </button>
             )}
-            <span class="font-bold w-max flex items-center gap-x-2">
-                {admin && (
-                    <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
-                        <LucideSwords size={16} class="text-sky-500" />
-                    </Tooltip>
-                )}
-                {user}
-            </span>
-            <span
-                class="w-full break-words text-wrap overflow-hidden"
-                dangerouslySetInnerHTML={{ __html: parsedMessage }}
-            />
+            <div class="flex flex-col  gap-y-2">
+                <span class="font-bold w-max flex items-center gap-x-2">
+                    {admin && (
+                        <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
+                            <LucideSwords size={16} class="text-sky-500" />
+                        </Tooltip>
+                    )}
+                    {user}
+                </span>
+                <span
+                    class="w-full break-words text-wrap overflow-hidden"
+                    dangerouslySetInnerHTML={{ __html: parsedMessage }}
+                />
+            </div>
         </div>
     );
 };
