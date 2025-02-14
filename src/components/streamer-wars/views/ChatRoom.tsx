@@ -236,25 +236,36 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
     // Se utiliza un ref para almacenar el timeout del "typing"
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const SCROLL_THRESHOLD = 50;
+    const caretAfterEmoteRef = useRef<boolean>(false);
 
     useEffect(() => {
         if (!editableRef.current) return;
 
-        // Guarda el offset actual del caret
+        // Guarda el offset actual del caret (si no se insertó un emote, se usará este valor)
         const caretOffset = getCaretCharacterOffsetWithin(editableRef.current);
-
-        // Parsea el mensaje: reemplaza :emote: por imágenes y los saltos de línea por <br>
         const parsed = parseEmotesToHTML(message);
 
-        // Actualiza el innerHTML solo si es distinto para evitar reinicios innecesarios
         if (editableRef.current.innerHTML !== parsed) {
             editableRef.current.innerHTML = parsed;
         }
 
         setShowPlaceholder(message === '');
 
-        // Restaura el caret en el mismo offset
-        setCaretPosition(editableRef.current, caretOffset);
+        if (caretAfterEmoteRef.current) {
+            // Si se acaba de insertar un emote, forzamos el caret al final
+            const range = document.createRange();
+            range.selectNodeContents(editableRef.current);
+            range.collapse(false);
+            const sel = window.getSelection();
+            if (sel) {
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+            caretAfterEmoteRef.current = false;
+        } else {
+            // Si no, se restaura la posición original
+            setCaretPosition(editableRef.current, caretOffset);
+        }
     }, [message]);
 
     // Función para hacer scroll hasta el fondo del contenedor
@@ -415,21 +426,21 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
     }, [message]);
 
     const onEmoteSelect = (emote: keyof typeof EMOTES) => {
+        if (!editableRef.current) return;
+
         const emoteCode = `:${emote}:`;
-        const newMessage = message + emoteCode;
-        setMessage(newMessage);
-        setEmotePickerOpen(false);
 
-        // Espera al próximo ciclo para que se renderice el nuevo contenido
-        setTimeout(() => {
-            if (editableRef.current) {
-                editableRef.current.focus();
-                // Posiciona el caret al final, es decir, justo después del emote insertado
-                setCaretPosition(editableRef.current, newMessage.length);
-            }
-        }, 0);
+        /* 
+            Inserta el emote al final del contenido
+            y marca el flag para forzar el caret al final
+        */
+
+        editableRef.current.innerHTML += parseEmotesToHTML(emoteCode);
+        caretAfterEmoteRef.current = true;
+        setMessage(`${message}${emoteCode}`);
+        editableRef.current.focus();
+
     };
-
 
 
 
