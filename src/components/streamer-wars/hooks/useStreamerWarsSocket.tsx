@@ -122,6 +122,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         globalChannel.current.bind("new-announcement", ({ message }: { message: string }) => {
             playSound({ sound: STREAMER_WARS_SOUNDS.ATENCION_JUGADORES, volume: 1 });
             toast.warning("Nuevo anuncio", {
+                icon: <LucideSiren />,
                 description: message,
                 richColors: true,
                 duration: 8000,
