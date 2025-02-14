@@ -2,22 +2,6 @@ import { navigate } from "astro:transitions/client";
 import { useEffect, useRef, useState } from "preact/hooks";
 
 const NEWS = [
-    /* {
-        title: "Guerra de Streamers",
-        description: `
-        Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
-    `,
-        tags: ["Comunidad"],
-        background: {
-            img: "/images/ads/stream-wars.webp",
-        },
-        navImage: "/images/ads/stream-wars.webp",
-        ctaLink: {
-            text: "🎮 ¡Inscríbete ya!",
-            url: "/guerra-streamers/inscripcion",
-            newTab: false,
-        },
-    }, */
     {
         title: "SaltoCraft III",
         description: `
@@ -33,6 +17,22 @@ const NEWS = [
             url: "#",
             newTab: false,
         }
+    },
+{
+        title: "Guerra de Streamers",
+        description: `
+        Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
+    `,
+        tags: ["Comunidad"],
+        background: {
+            img: "/images/ads/stream-wars.webp",
+        },
+        navImage: "/images/ads/stream-wars.webp",
+        ctaLink: {
+            text: "🎮 ¡Inscríbete ya!",
+            url: "/guerra-streamers/inscripcion",
+            newTab: false,
+        },
     },
     {
         title: "Bienvenido a la nueva web",
