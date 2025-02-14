@@ -125,23 +125,25 @@ export const StreamerWarsAdmin = ({ session }: { session: Session }) => {
 
     const [announcementText, setAnnouncementText] = useState<string>("");
 
-    if (session?.user?.name!.toLowerCase() === "alexitoo_uy") {
-        GENERAL_ACTIONS = [
-            ...GENERAL_ACTIONS,
-            {
-                name: "Notificar nueva versión",
-                classes: "bg-purple-500 hover:bg-purple-600 !text-black",
-                icon: LucideFlag,
-                execute: async () => {
-                    toast.promise(actions.streamerWars.notifyNewVersion(), {
-                        loading: "Notificando nueva versión...",
-                        success: "Nueva versión notificada",
-                        error: "Error al notificar nueva versión",
-                    });
+    useEffect(() => {
+        if (session?.user?.name!.toLowerCase() === "alexitoo_uy") {
+            GENERAL_ACTIONS = [
+                ...GENERAL_ACTIONS,
+                {
+                    name: "Notificar nueva versión",
+                    classes: "bg-purple-500 hover:bg-purple-600 !text-black",
+                    icon: LucideFlag,
+                    execute: async () => {
+                        toast.promise(actions.streamerWars.notifyNewVersion(), {
+                            loading: "Notificando nueva versión...",
+                            success: "Nueva versión notificada",
+                            error: "Error al notificar nueva versión",
+                        });
+                    }
                 }
-            }
-        ];
-    }
+            ];
+        }
+    }, []);
 
 
     useEffect(() => {
