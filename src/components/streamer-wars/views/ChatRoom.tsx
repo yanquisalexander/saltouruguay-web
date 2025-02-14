@@ -96,7 +96,7 @@ const ChatMessageComponent = ({
                     <LucideX size={16} />
                 </button>
             )}
-            <div class="flex flex-col  gap-y-2">
+            <div class="flex flex-col w-full gap-y-2 break-words grow flex-1">
                 <span class="font-bold w-max flex items-center gap-x-2">
                     {admin && (
                         <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
@@ -525,14 +525,14 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                 dangerouslySetInnerHTML={{ __html: usersTypingMessage }}
             />
 
-            <footer class="flex w-full mt-4">
-                <div class="relative w-full min-h-12 bg-black/20 rounded-md border mr-2 resize-none">
+            <footer class="grid mt-4 grid-cols-8 gap-x-2">
+                <div class="relative col-span-5 w-full flex min-h-12 bg-black/20 rounded-md border mr-2 resize-none">
                     <div
                         ref={editableRef}
                         contentEditable="true"
                         onInput={handleInput}
                         onKeyDown={handleKeyDown}
-                        class="p-2 text-white whitespace-pre-wrap outline-none empty:before:content-[attr(placeholder)] empty:before:text-gray-400"
+                        class="p-2 text-white overflow-hidden whitespace-pre-wrap outline-none empty:before:content-[attr(placeholder)] empty:before:text-gray-400"
                         placeholder="Escribe un mensaje..."
                     />
                     {showPlaceholder && (
@@ -541,7 +541,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                         </div>
                     )}
                 </div>
-                <div class="flex gap-x-2">
+                <div class="flex gap-x-2 col-span-3 items-start justify-end">
                     <Popover
                         className="bg-neutral-500 rounded-md p-4"
                         activator={
