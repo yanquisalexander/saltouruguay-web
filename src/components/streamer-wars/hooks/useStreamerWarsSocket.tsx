@@ -127,6 +127,9 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                 richColors: true,
                 duration: 8000,
                 position: "top-center",
+                classNames: {
+                    icon: 'flex flex-col justify-center items-center p-5 rounded-full',
+                }
             });
         });
         return () => {
