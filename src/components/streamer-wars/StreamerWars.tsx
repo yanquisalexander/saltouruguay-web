@@ -188,7 +188,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                 position: 'top-right',
                 richColors: true,
                 action: {
-                    text: 'Recargar',
+                    label: 'Recargar',
                     onClick: () => {
                         location.reload();
                     }
