@@ -372,9 +372,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                     emoteOnlyMatch && EMOTES[emoteOnlyMatch[1] as keyof typeof EMOTES];
 
                 if (!suppressAudio) {
-                    if (type === "announcement") {
-                        playSound({ sound: STREAMER_WARS_SOUNDS.ATENCION_JUGADORES, volume: 1 });
-                    } else {
+                    if (type !== "announcement") {
                         playSound({ sound: STREAMER_WARS_SOUNDS.NUEVO_MENSAJE, volume: 0.12 });
                     }
                 }
