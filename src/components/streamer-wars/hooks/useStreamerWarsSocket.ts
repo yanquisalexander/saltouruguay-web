@@ -118,7 +118,14 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         globalChannel.current.bind("player-eliminated", handlePlayerEliminated);
         globalChannel.current.bind("send-to-waiting-room", handleSendToWaitingRoom);
         globalChannel.current.bind("launch-game", handleLaunchGame);
-
+        globalChannel.current.bind("new-announcement", ({ message }: { message: string }) => {
+            playSound({ sound: STREAMER_WARS_SOUNDS.ATENCION_JUGADORES, volume: 1 });
+            toast.warning("Nuevo anuncio", {
+                description: message,
+                richColors: true,
+                duration: 8000,
+            });
+        });
         return () => {
             // Limpieza: cancelamos timeouts, desbindamos eventos y desconectamos Pusher
             timeouts.forEach(clearTimeout);

@@ -165,6 +165,7 @@ export const streamerWars = {
                     .values({ userId: session.user.id, message, isAnnouncement: true })
                     .execute();
 
+                await pusher.trigger("streamer-wars", "new-announcement", { message });
                 await pusher.trigger("streamer-wars", "new-message", { message, type: "announcement" });
             } catch (error) {
                 throw new ActionError({
