@@ -184,7 +184,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION, volume: 1 });
             toast.warning(`¡Nueva versión disponible!`, {
                 description: "Recarga la página para disfrutar de las últimas mejoras.",
-                duration: 8000,
+                duration: 15000,
                 position: 'top-right',
                 richColors: true,
                 action: {
