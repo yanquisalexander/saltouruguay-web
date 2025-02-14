@@ -9,6 +9,7 @@ import {
     playSoundWithReverb,
     STREAMER_WARS_SOUNDS,
 } from "@/consts/Sounds";
+import { LucideSiren } from "lucide-preact";
 
 export const useStreamerWarsSocket = (session: Session | null) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
@@ -120,10 +121,11 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         globalChannel.current.bind("launch-game", handleLaunchGame);
         globalChannel.current.bind("new-announcement", ({ message }: { message: string }) => {
             playSound({ sound: STREAMER_WARS_SOUNDS.ATENCION_JUGADORES, volume: 1 });
-            toast.warning("Nuevo anuncio", {
+            toast("Nuevo anuncio", {
                 description: message,
                 richColors: true,
                 duration: 8000,
+                position: "top-center",
             });
         });
         return () => {
