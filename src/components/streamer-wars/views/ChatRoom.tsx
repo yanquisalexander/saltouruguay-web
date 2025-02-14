@@ -64,48 +64,15 @@ interface ChatProps {
     channel: Channel;
 }
 
-const ReactionEmoteMessage = ({
-    id,
-    user,
-    emote,
-    admin,
-    showModeration,
-    removeMessage,
-}: {
-    id: number;
-    user: string;
-    emote: keyof typeof EMOTES;
-    admin?: boolean;
-    showModeration?: boolean;
-    removeMessage?: () => void;
-}) => {
-    return (
-        <div class="flex gap-x-2 w-full bg-white/5 p-2 items-start relative">
-            {showModeration && (
-                <button
-                    class="absolute right-2 top-2 text-white bg-red-500 p-1 rounded-md hover:bg-red-600 transition"
-                    onClick={removeMessage}
-                >
-                    <LucideX size={16} />
-                </button>
-            )}
-            <span class="font-bold w-max flex items-center gap-x-2">
-                {admin && (
-                    <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
-                        <LucideSwords size={16} class="text-sky-500" />
-                    </Tooltip>
-                )}
-                {user}
-            </span>
-            <span class="w-full break-words text-wrap overflow-hidden">
-                <img
-                    src={`${GLOBAL_CDN_PREFIX}${EMOTES[emote]}`}
-                    alt={emote}
-                    class="object-scale-down size-20 inline-block"
-                />
-            </span>
-        </div>
-    );
+const parseEmotesToHTML = (text: string) => {
+    return text
+        .replace(/\n/g, '<br>')
+        .replace(/:([a-zA-Z0-9_]+):/g, (match, emote) => {
+            const src = EMOTES[emote as keyof typeof EMOTES];
+            return src
+                ? `<img src="${GLOBAL_CDN_PREFIX}${src}" alt="${emote}" class="inline-block w-6 h-6" />`
+                : match;
+        });
 };
 
 const ChatMessageComponent = ({
@@ -118,17 +85,7 @@ const ChatMessageComponent = ({
     removeMessage,
 }: ChatMessage) => {
     // Función para transformar cadenas tipo ":emote:" en imágenes
-    const parseEmotes = (msg: string) => {
-        const emoteRegex = /:([a-zA-Z0-9_]+):/g;
-        return msg.replace(emoteRegex, (match, emote) => {
-            if (EMOTES[emote as keyof typeof EMOTES]) {
-                return `<img src="${GLOBAL_CDN_PREFIX}${EMOTES[emote as keyof typeof EMOTES]
-                    }" alt="${emote}" class="size-6 inline-block" />`;
-            }
-            return match;
-        });
-    };
-    const parsedMessage = parseEmotes(message);
+    const parsedMessage = parseEmotesToHTML(message);
     return (
         <div class="flex gap-x-2 w-full bg-white/5 p-2 items-start relative">
             {showModeration && (
@@ -155,6 +112,88 @@ const ChatMessageComponent = ({
     );
 };
 
+const getCaretCharacterOffsetWithin = (element: Node): number => {
+    let caretOffset = 0;
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        caretOffset = preCaretRange.toString().length;
+    }
+    return caretOffset;
+};
+
+
+const placeCaretAtEnd = (element: HTMLElement) => {
+    const range = document.createRange();
+    const sel = window.getSelection()!;
+    range.selectNodeContents(element);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+};
+
+
+
+const setCaretPosition = (element: Node, offset: number) => {
+    const range = document.createRange();
+    let currentOffset = offset;
+    let nodeStack: Node[] = [element];
+    let found = false;
+
+    while (nodeStack.length && !found) {
+        const node = nodeStack.shift()!;
+        if (node.nodeType === Node.TEXT_NODE) {
+            const textLength = node.textContent?.length || 0;
+            if (currentOffset > textLength) {
+                currentOffset -= textLength;
+            } else {
+                range.setStart(node, currentOffset);
+                range.collapse(true);
+                found = true;
+                break;
+            }
+        } else {
+            nodeStack = [...node.childNodes, ...nodeStack];
+        }
+    }
+
+    if (!found) {
+        // Si no se encontró, ubica el caret al final
+        range.selectNodeContents(element);
+        range.collapse(false);
+    }
+
+    const sel = window.getSelection();
+    if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+};
+
+// Función que obtiene el contenido "plano" del editor, convirtiendo imágenes en su código de emote
+const getEditableContent = (element: HTMLElement): string => {
+    let result = "";
+    element.childNodes.forEach((node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            result += node.textContent;
+        } else if (node.nodeName === "BR") {
+            result += "\n";
+        } else if (node.nodeName === "IMG") {
+            // Suponemos que el alt contiene el nombre del emote
+            const img = node as HTMLImageElement;
+            result += `:${img.alt}:`;
+        } else if (node instanceof HTMLElement) {
+            result += getEditableContent(node);
+        }
+    });
+    return result;
+};
+
+
+
 export const ChatRoom = ({ session, channel }: ChatProps) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [message, setMessage] = useState<string>("");
@@ -165,11 +204,58 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
     const [emotePickerOpen, setEmotePickerOpen] = useState<boolean>(false);
     const [usersTyping, setUsersTyping] = useState<Set<string>>(new Set());
 
+    const editableRef = useRef<HTMLDivElement>(null);
+    const [showPlaceholder, setShowPlaceholder] = useState(true);
+
+    const handleInput = (e: Event) => {
+        const target = e.currentTarget as HTMLElement;
+        let rawText = getEditableContent(target);
+
+        // Validar longitud máxima
+        if (rawText.length > 200) {
+            rawText = rawText.substring(0, 200);
+            // Actualizamos manualmente el contenido si se excede la longitud
+            target.innerHTML = parseEmotesToHTML(rawText);
+            placeCaretAtEnd(target);
+        }
+
+        setMessage(rawText);
+        setShowPlaceholder(rawText === '');
+    };
+
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    };
+
     const userIsAdmin = session.user?.isAdmin;
 
     // Se utiliza un ref para almacenar el timeout del "typing"
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const SCROLL_THRESHOLD = 50;
+
+    useEffect(() => {
+        if (!editableRef.current) return;
+
+        // Guarda el offset actual del caret
+        const caretOffset = getCaretCharacterOffsetWithin(editableRef.current);
+
+        // Parsea el mensaje: reemplaza :emote: por imágenes y los saltos de línea por <br>
+        const parsed = parseEmotesToHTML(message);
+
+        // Actualiza el innerHTML solo si es distinto para evitar reinicios innecesarios
+        if (editableRef.current.innerHTML !== parsed) {
+            editableRef.current.innerHTML = parsed;
+        }
+
+        setShowPlaceholder(message === '');
+
+        // Restaura el caret en el mismo offset
+        setCaretPosition(editableRef.current, caretOffset);
+    }, [message]);
 
     // Función para hacer scroll hasta el fondo del contenedor
     const scrollToBottom = () => {
@@ -275,15 +361,8 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                 if (!suppressAudio) {
                     if (type === "announcement") {
                         playSound({ sound: STREAMER_WARS_SOUNDS.ATENCION_JUGADORES, volume: 1 });
-                    } else if (isReaction) {
-                        playSound({
-                            sound: STREAMER_WARS_SOUNDS[
-                                emoteOnlyMatch![1] as keyof typeof STREAMER_WARS_SOUNDS
-                            ],
-                            volume: 0.2,
-                        });
                     } else {
-                        playSound({ sound: STREAMER_WARS_SOUNDS.NUEVO_MENSAJE, volume: 0.2 });
+                        playSound({ sound: STREAMER_WARS_SOUNDS.NUEVO_MENSAJE, volume: 0.12 });
                     }
                 }
             }
@@ -330,20 +409,30 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
     };
 
     useEffect(() => {
-        // Si el mensaje contiene solo un emote se envía automáticamente
-        const emoteOnlyMatch = message.match(/^:([a-zA-Z0-9_]+):$/);
-        if (emoteOnlyMatch && EMOTES[emoteOnlyMatch[1] as keyof typeof EMOTES]) {
-            sendMessage();
-            return;
-        }
         if (message.trim().length > 0) {
             channel.trigger("client-typing", { user: session.user?.name });
         }
-    }, [message, channel, session.user?.name]);
+    }, [message]);
 
     const onEmoteSelect = (emote: keyof typeof EMOTES) => {
-        setMessage((prev) => `${prev}:${emote}:`);
+        const emoteCode = `:${emote}:`;
+        const newMessage = message + emoteCode;
+        setMessage(newMessage);
+        setEmotePickerOpen(false);
+
+        // Espera al próximo ciclo para que se renderice el nuevo contenido
+        setTimeout(() => {
+            if (editableRef.current) {
+                editableRef.current.focus();
+                // Posiciona el caret al final, es decir, justo después del emote insertado
+                setCaretPosition(editableRef.current, newMessage.length);
+            }
+        }, 0);
     };
+
+
+
+
 
     return (
         <div class="flex flex-col w-full h-full bg-neutral-950 border border-lime-500 border-dashed relative rounded-md px-4 py-3">
@@ -364,10 +453,6 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                     class="flex flex-col flex-1 overflow-y-auto gap-y-2 w-full h-full scroll-smooth"
                 >
                     {messages.map(({ id, message, user, isAnnouncement, admin, deleted }, index) => {
-                        const emoteOnlyMatch = message.match(/^:([a-zA-Z0-9_]+):$/);
-                        const isEmoteOnly =
-                            emoteOnlyMatch &&
-                            EMOTES[emoteOnlyMatch[1] as keyof typeof EMOTES];
 
                         return deleted ? (
                             <div
@@ -394,16 +479,6 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                                         dangerouslySetInnerHTML={{ __html: parseLinks(message) }}
                                     />
                                 </div>
-                            ) : isEmoteOnly ? (
-                                <ReactionEmoteMessage
-                                    key={index}
-                                    id={id}
-                                    user={user!}
-                                    emote={emoteOnlyMatch![1] as keyof typeof EMOTES}
-                                    admin={admin}
-                                    showModeration={userIsAdmin && !admin}
-                                    removeMessage={() => handleRemoveMessage(id)}
-                                />
                             ) : (
                                 <ChatMessageComponent
                                     key={index}
@@ -438,19 +513,21 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
             />
 
             <footer class="flex w-full mt-4">
-                <textarea
-                    // Se utiliza onKeyDown para capturar "Enter" sin saltos de línea
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            sendMessage();
-                        }
-                    }}
-                    maxlength={200}
-                    class="w-full min-h-12 bg-black/20 rounded-md border mr-2 resize-none"
-                    value={message}
-                    onInput={(e) => setMessage(e.currentTarget.value)}
-                />
+                <div class="relative w-full min-h-12 bg-black/20 rounded-md border mr-2 resize-none">
+                    <div
+                        ref={editableRef}
+                        contentEditable="true"
+                        onInput={handleInput}
+                        onKeyDown={handleKeyDown}
+                        class="p-2 text-white whitespace-pre-wrap outline-none empty:before:content-[attr(placeholder)] empty:before:text-gray-400"
+                        placeholder="Escribe un mensaje..."
+                    />
+                    {showPlaceholder && (
+                        <div class="absolute top-2 left-2 text-gray-400 pointer-events-none">
+                            Escribe un mensaje...
+                        </div>
+                    )}
+                </div>
                 <div class="flex gap-x-2">
                     <Popover
                         className="bg-neutral-500 rounded-md p-4"
