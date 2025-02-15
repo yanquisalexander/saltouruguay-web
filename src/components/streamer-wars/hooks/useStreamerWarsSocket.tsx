@@ -157,7 +157,9 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         })
 
         globalChannel.current?.bind("players-aislated", ({ playerNumbers }: { playerNumbers: number[] }) => {
-            if (playerNumbers.includes(session?.user.streamerWarsPlayerNumber!)) {
+            if (!session?.user.streamerWarsPlayerNumber) return;
+            if (playerNumbers.includes(session?.user.streamerWarsPlayerNumber)) {
+
                 setDayAvailable(false);
                 playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
                 toast.error("¡Has sido aislado!", {
