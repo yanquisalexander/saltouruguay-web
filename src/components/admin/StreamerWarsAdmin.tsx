@@ -124,7 +124,6 @@ let GENERAL_ACTIONS = [
         execute: async () => {
             toast.promise(actions.streamerWars.unaislateAllPlayers(), {
                 loading: "Quitando aislamiento...",
-                success: "Jugadores desaislados",
                 error: "Error al desaislar jugadores",
             });
         }
