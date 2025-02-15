@@ -884,7 +884,7 @@ export const addPlayer = async ({ playerNumber, twitchUsername }: { playerNumber
                         inline: true
                     }
                 ],
-                color: 0x00ff00
+                color: 2685440
             })
         } catch (error) {
 
