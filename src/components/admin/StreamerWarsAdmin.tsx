@@ -5,7 +5,7 @@ import Pusher from "pusher-js";
 import { StreamerWarsPlayers } from "./streamer-wars/Players";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
-import { LucideBellRing, LucideCoffee, LucideFlag, LucideLockKeyholeOpen, LucideRefreshCw, LucideTrash2 } from "lucide-preact";
+import { LucideBellRing, LucideCoffee, LucideFlag, LucideGavel, LucideLockKeyholeOpen, LucideRefreshCw, LucideTrash2 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 
 
@@ -114,6 +114,18 @@ let GENERAL_ACTIONS = [
             toast.promise(actions.streamerWars.resetRoles(), {
                 loading: "Reiniciando roles...",
                 error: "Error al reiniciar roles",
+            });
+        }
+    },
+    {
+        name: "Quitar aislamiento de jugadores",
+        classes: "bg-gray-500 hover:bg-gray-600 !text-black",
+        icon: LucideGavel,
+        execute: async () => {
+            toast.promise(actions.streamerWars.unaislateAllPlayers(), {
+                loading: "Quitando aislamiento...",
+                success: "Jugadores desaislados",
+                error: "Error al desaislar jugadores",
             });
         }
     }
