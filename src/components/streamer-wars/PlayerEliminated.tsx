@@ -4,6 +4,7 @@ import { useEffect, useState } from "preact/hooks";
 
 export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: number | null, session: Session | null }) => {
     const [showing, setShowing] = useState(false);
+    const [key, setKey] = useState(0);
 
     /* 
         Cuando playerNumber sea diferente de null, mostrar un mensaje de eliminación
@@ -13,6 +14,7 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
     useEffect(() => {
         if (playerNumber) {
             setShowing(true);
+            setKey(Math.random());
 
             if (playerNumber === session?.user.streamerWarsPlayerNumber) {
                 setTimeout(() => navigate('/guerra-streamers'), 2000);
@@ -23,9 +25,12 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
 
 
     return (
-        <div class={`z-[6500] fixed inset-0 bottom-0 left-0 right-0 min-h-screen w-full bg-black p-4 flex items-center justify-center transition animate-duration-[2500ms] ${showing ? "animate-fade-in" : "animate-fade-out pointer-events-none"}`}>
+        <div
+            key={key}
+            class={`z-[6500] fixed inset-0 bottom-0 left-0 right-0 min-h-screen w-full bg-black p-4 flex items-center justify-center transition animate-duration-[2500ms] ${showing ? "animate-fade-in" : "animate-fade-out pointer-events-none"}`}>
             <div class=" text-white p-4 rounded-lg">
-                <span class={`relative flex flex-col justify-center text-center animate-duration-[4000ms] ${showing && "animate-scale"}`}>
+                <span
+                    class="relative flex flex-col justify-center text-center animate-duration-[4000ms] animate-scale">
                     <span class="font-squids  text-lg text-center mb-8 font-bold text-neutral-400">
                         Gracias por participar
                     </span>
