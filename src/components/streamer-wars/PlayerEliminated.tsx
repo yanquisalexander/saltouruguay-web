@@ -25,20 +25,22 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
     return (
         <div class={`z-[6500] fixed inset-0 bottom-0 left-0 right-0 min-h-screen w-full bg-black p-4 flex items-center justify-center transition animate-duration-[2500ms] ${showing ? "animate-fade-in" : "animate-fade-out pointer-events-none"}`}>
             <div class=" text-white p-4 rounded-lg">
-                <span class={`relative flex flex-col justify-center gap-y-8 text-center animate-duration-[4000ms] ${showing && "animate-scale"}`}>
-                    <span class="font-squids  text-lg text-center font-bold text-neutral-400">
+                <span class={`relative flex flex-col justify-center text-center animate-duration-[4000ms] ${showing && "animate-scale"}`}>
+                    <span class="font-squids  text-lg text-center mb-8 font-bold text-neutral-400">
                         Gracias por participar
                     </span>
-                    <h2 class="text-6xl font-bold font-atomic text-red-500 -rotate-6 skew-x-12">
-                        Eliminado
-                    </h2>
-                    <span class="absolute -bottom-14 text-red-500 inset-x-0 text-7xl font-bold font-atomic-extras -rotate-6 skew-x-12">
-                        a
-                    </span>
+                    <div class="relative">
+                        <h2 class="text-6xl font-bold font-atomic text-red-500 -rotate-6 skew-x-12">
+                            Eliminado
+                        </h2>
+                        <span class="absolute -bottom-14 text-red-500 inset-x-0 text-7xl font-bold font-atomic-extras -rotate-6 skew-x-12">
+                            a
+                        </span>
+                    </div>
+                    <p class="text-3xl font-teko pt-16 text-center">
+                        {playerNumber === session?.user.streamerWarsPlayerNumber ? "¡Has sido eliminado!" : `El jugador #${playerNumber?.toString().padStart(3, '0')} ha sido eliminado`}
+                    </p>
                 </span>
-                <p class="text-3xl font-teko pt-16 text-center">
-                    {playerNumber === session?.user.streamerWarsPlayerNumber ? "¡Has sido eliminado!" : `El jugador #${playerNumber?.toString().padStart(3, '0')} ha sido eliminado`}
-                </p>
 
             </div>
             <h2 className="text-2xl fixed bottom-16 font-atomic text-neutral-500 select-none -skew-y-6">
