@@ -1005,3 +1005,24 @@ export const beforeLaunchGame = async () => {
     }
 
 }
+
+export const unaislateAllPlayers = async () => {
+    try {
+        await client
+            .update(StreamerWarsPlayersTable)
+            .set({ aislated: false })
+            .execute();
+
+        await pusher.trigger("streamer-wars", "players-unaislated", {});
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        console.error("Error en unaislateAllPlayers:", error);
+        return {
+            success: false,
+            error: "Ocurrió un error al desaislar a los jugadores",
+        };
+    }
+}

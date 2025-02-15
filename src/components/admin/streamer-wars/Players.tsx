@@ -165,6 +165,19 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             );
         });
 
+        pusher.channel("streamer-wars").bind(
+            "players-unaislated", () => {
+                toast.success(
+                    `Los jugadores han sido quitados del aislamiento`
+                );
+                setPlayers((prev) =>
+                    prev.map((player) =>
+                        ({ ...player, aislated: false })
+                    )
+                );
+            }
+        );
+
         pusher?.channel("streamer-wars").bind(
             "player-eliminated",
             ({ playerNumber }: { playerNumber: number }) => {

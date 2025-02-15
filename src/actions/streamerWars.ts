@@ -4,7 +4,7 @@ import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWa
 import Cache from "@/lib/Cache";
 import cacheService from "@/services/cache";
 import { pusher } from "@/utils/pusher";
-import { eliminatePlayer, removePlayer, addPlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles, acceptBribe, selfEliminate, aislatePlayer, unaislatePlayer, beforeLaunchGame } from "@/utils/streamer-wars";
+import { eliminatePlayer, removePlayer, addPlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles, acceptBribe, selfEliminate, aislatePlayer, unaislatePlayer, beforeLaunchGame, unaislateAllPlayers } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -764,6 +764,28 @@ export const streamerWars = {
             }
 
             const { success, error } = await unaislatePlayer(playerNumber);
+            if (!success) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: error
+                });
+            }
+
+            return { success: true }
+        }
+    }),
+    unaislateAllPlayers: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para aislar jugadores"
+                });
+            }
+
+            const { success, error } = await unaislateAllPlayers();
             if (!success) {
                 throw new ActionError({
                     code: "BAD_REQUEST",
