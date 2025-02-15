@@ -9,6 +9,8 @@ import { SALTO_DISCORD_GUILD_ID } from "@/config";
 import { DISCORD_LOGS_WEBHOOK_TOKEN } from "astro:env/server";
 import { getTranslation } from "./translate";
 
+const PRESENCE_CHANNEL = "presence-streamer-wars";
+
 
 export interface SimonSaysGameState {
     teams: Record<
@@ -974,4 +976,32 @@ export const aislateMultiplePlayers = async (playerNumbers: number[]) => {
             error: "Ocurrió un error al aislar a los jugadores",
         };
     }
+}
+
+export const beforeLaunchGame = async () => {
+    /* 
+        Obtiene los jugadores que no han sido eliminados y que no están aislados.
+        Consulta a Pusher para obtener los jugadores conectados.
+
+        Si hay jugadores que no están conectados, se los aisla.
+    */
+
+    const players = await client.query.StreamerWarsPlayersTable.findMany({
+        where: and(
+            not(eq(StreamerWarsPlayersTable.eliminated, true)),
+            not(eq(StreamerWarsPlayersTable.aislated, true))
+        )
+    }).execute();
+
+    const res = await pusher.get({ path: "/channels/presence-streamer-wars/users" });
+    /* { users: [ { id: 1 } ] } */
+    const userIds: number[] = await res.json().then(({ users }) => users.map(({ id }: { id: number }) => id));
+
+    const playersNotConnected = players.filter(player => !userIds.includes(player.userId!)).map(player => player.playerNumber);
+
+
+    if (playersNotConnected.length > 0) {
+        await aislateMultiplePlayers(playersNotConnected);
+    }
+
 }
