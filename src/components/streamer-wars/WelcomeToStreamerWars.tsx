@@ -44,7 +44,7 @@ export const WelcomeToStreamerWars = ({ session, bgAudio, isOpen, setIsOpen }: {
             <dialog
                 open={isOpen}
                 class={`max-w-4xl w-full fixed inset-0 z-[99999999] bg-black border border-white/40 shadow-2xl text-white 
-                        ${closing ? "animate-slide-out-bottom animate-duration-400" : "animate-zoom-in"}`}
+                        ${closing ? "animate-fade-out-down animate-duration-400" : "animate-fade-in-up"}`}
             >
                 <div class="welcome-inner relative p-8">
                     <header class="flex mb-8 justify-between items-center">
