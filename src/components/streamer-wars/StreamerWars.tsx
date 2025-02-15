@@ -15,6 +15,7 @@ import { JourneyTransition } from "./JourneyTransition";
 import { CaptainBribery } from "./games/CaptainBribery";
 import { type Players } from "../admin/streamer-wars/Players";
 import { AutoElimination } from "./games/AutoElimination";
+import { WelcomeToStreamerWars } from "./WelcomeToStreamerWars";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -83,6 +84,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel, bgAudio, bgVolume, setBgVolume, setDayAvailable, dayAvailable } = useStreamerWarsSocket(session);
     const [splashEnded, setSplashEnded] = useState(false);
     const [showingJourneyTransition, setShowingJourneyTransition] = useState(false);
+    const [showedWelcomeDialog, setShowedWelcomeDialog] = useState(false);
+    const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
 
     useEffect(() => {
         document.addEventListener("splash-screen-ended", () => {
@@ -154,12 +157,15 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             // Actualizamos el key para forzar la remount
             setJourneyTransitionProps({ phase: "start", key: Math.random() });
             document.addEventListener("journey-transition-ended", () => {
-                if (bgAudio.current) {
-                    bgAudio.current.play();
-                }
+
                 setDayAvailable(true);
                 setTimeout(() => {
                     setShowingJourneyTransition(false);
+                    if (!showedWelcomeDialog) {
+                        setShowWelcomeDialog(true);
+                        setShowedWelcomeDialog(true);
+                    }
+
                 }, 500);
             }, { once: true });
         });
@@ -288,6 +294,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
                             )
                         }
+                        <WelcomeToStreamerWars session={session} bgAudio={bgAudio.current!} isOpen={showWelcomeDialog} setIsOpen={setShowWelcomeDialog} />
                         {pusher && globalChannel.current && presenceChannel.current && session && (
                             <>
                                 {

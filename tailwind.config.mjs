@@ -28,6 +28,7 @@ export default {
 				teko: ['Teko Variable', 'Teko', 'sans-serif'],
 				atomic: ["Atomic Marker", "cursive"],
 				"atomic-extras": ["Atomic Marker Extras", "cursive"],
+				squids: ["Game of Squids", "cursive"],
 			}
 		},
 	},
