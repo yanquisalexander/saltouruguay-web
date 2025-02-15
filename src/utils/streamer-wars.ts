@@ -1,7 +1,7 @@
 import { client } from "@/db/client";
 import { NegativeVotesStreamersTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable, UsersTable } from "@/db/schema";
 import cacheService from "@/services/cache";
-import { and, asc, count, eq, not, or } from "drizzle-orm";
+import { and, asc, count, eq, inArray, not, or } from "drizzle-orm";
 import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
 import { addRoleToUser, DISCORD_ROLES, getDiscordUser, getGuildMember, LOGS_CHANNEL_WEBHOOK_ID, removeRoleFromUser, ROLE_GUERRA_STREAMERS, sendDiscordEmbed, sendWebhookMessage } from "@/services/discord";
@@ -952,4 +952,26 @@ export const isPlayerAislated = async (playerNumber: number) => {
         },
         where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber)
     }).then(res => res?.aislated ?? false);
+}
+
+export const aislateMultiplePlayers = async (playerNumbers: number[]) => {
+    try {
+        await client
+            .update(StreamerWarsPlayersTable)
+            .set({ aislated: true })
+            .where(inArray(StreamerWarsPlayersTable.playerNumber, playerNumbers))
+            .execute();
+
+        await pusher.trigger("streamer-wars", "players-aislated", { playerNumbers });
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        console.error("Error en aislateMultiplePlayers:", error);
+        return {
+            success: false,
+            error: "Ocurrió un error al aislar a los jugadores",
+        };
+    }
 }
