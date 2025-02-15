@@ -18,19 +18,19 @@ const NEWS = [
             newTab: false,
         }
     },
-{
+    {
         title: "Guerra de Streamers",
         description: `
-        Se viene la Edición Extrema de la Guerra de Streamers. ¡Prepárate para la batalla!
+        Vota ahora por quién NO quieres que participe en la Guerra de Streamers.
     `,
-        tags: ["Comunidad"],
+        tags: ["Comunidad", "Votación"],
         background: {
             img: "/images/ads/stream-wars.webp",
         },
         navImage: "/images/ads/stream-wars.webp",
         ctaLink: {
-            text: "🎮 ¡Inscríbete ya!",
-            url: "/guerra-streamers/inscripcion",
+            text: "Votar",
+            url: "/guerra-streamers/vota",
             newTab: false,
         },
     },
