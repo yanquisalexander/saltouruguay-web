@@ -136,24 +136,26 @@ export const useStreamerWarsSocket = (session: Session | null) => {
 
         });
 
-        globalChannel.current?.bind("player-aislated", () => {
-            setDayAvailable(false);
-            playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
-            toast.error("¡Has sido aislado!", {
-                icon: <LucideSiren />,
-                description: "Un moderador analizará tu caso y te informará si puedes volver a jugar.",
-                richColors: true,
-                duration: 10000,
-                position: "bottom-center",
-                dismissible: true,
-                classNames: {
-                    icon: 'flex flex-col justify-center items-center p-5 rounded-full',
-                }
-            });
+        globalChannel.current?.bind("player-aislated", ({ playerNumber }: { playerNumber: number }) => {
+            if (playerNumber === session?.user.streamerWarsPlayerNumber) {
+                setDayAvailable(false);
+                playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
+                toast.error("¡Has sido aislado!", {
+                    icon: <LucideSiren />,
+                    description: "Un moderador analizará tu caso y te informará si puedes volver a jugar.",
+                    richColors: true,
+                    duration: 10000,
+                    position: "bottom-center",
+                    dismissible: true,
+                    classNames: {
+                        icon: 'flex flex-col justify-center items-center p-5 rounded-full',
+                    }
+                });
 
-            setTimeout(() => {
-                navigate('/guerra-streamers');
-            }, 5000);
+                setTimeout(() => {
+                    navigate('/guerra-streamers');
+                }, 5000);
+            }
         })
 
         globalChannel.current?.bind("players-aislated", ({ playerNumbers }: { playerNumbers: number[] }) => {
