@@ -199,6 +199,20 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         );
 
         pusher.channel("streamer-wars").bind(
+            "players-aislated", ({ playerNumbers }: { playerNumbers: number[] }) => {
+                toast.success(
+                    `Los jugadores ${new Intl.ListFormat("es-ES").format(playerNumbers.map((playerNumber) => `#${playerNumber?.toString().padStart(3, "0")}`))} han sido aislados`
+                );
+                setPlayers((prev) =>
+                    prev.map((player) =>
+                        playerNumbers.includes(player.playerNumber)
+                            ? { ...player, aislated: true }
+                            : player
+                    )
+                );
+            }
+        );
+        pusher.channel("streamer-wars").bind(
             "player-unaislated",
             ({ playerNumber }: { playerNumber: number }) => {
                 toast.success(
