@@ -900,3 +900,56 @@ export const addPlayer = async ({ playerNumber, twitchUsername }: { playerNumber
         };
     }
 }
+
+export const aislatePlayer = async (playerNumber: number) => {
+    try {
+        await client
+            .update(StreamerWarsPlayersTable)
+            .set({ aislated: true })
+            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+            .execute();
+
+        await pusher.trigger("streamer-wars", "player-aislated", { playerNumber });
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        console.error("Error en aislatePlayer:", error);
+        return {
+            success: false,
+            error: "Ocurrió un error al aislar al jugador",
+        };
+    }
+}
+
+export const unaislatePlayer = async (playerNumber: number) => {
+    try {
+        await client
+            .update(StreamerWarsPlayersTable)
+            .set({ aislated: false })
+            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+            .execute();
+
+        await pusher.trigger("streamer-wars", "player-unaislated", { playerNumber });
+
+        return {
+            success: true,
+        };
+    } catch (error) {
+        console.error("Error en unaislatePlayer:", error);
+        return {
+            success: false,
+            error: "Ocurrió un error al desaislar al jugador",
+        };
+    }
+}
+
+export const isPlayerAislated = async (playerNumber: number) => {
+    return await client.query.StreamerWarsPlayersTable.findFirst({
+        columns: {
+            aislated: true
+        },
+        where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber)
+    }).then(res => res?.aislated ?? false);
+}

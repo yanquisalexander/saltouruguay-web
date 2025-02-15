@@ -1,0 +1,1 @@
+ALTER TABLE "streamer_wars_players" ADD COLUMN "aislated" boolean DEFAULT false NOT NULL;

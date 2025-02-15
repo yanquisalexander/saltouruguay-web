@@ -4,7 +4,7 @@ import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWa
 import Cache from "@/lib/Cache";
 import cacheService from "@/services/cache";
 import { pusher } from "@/utils/pusher";
-import { eliminatePlayer, removePlayer, addPlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles, acceptBribe, selfEliminate } from "@/utils/streamer-wars";
+import { eliminatePlayer, removePlayer, addPlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles, acceptBribe, selfEliminate, aislatePlayer, unaislatePlayer } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -223,6 +223,7 @@ export const streamerWars = {
                 columns: {
                     playerNumber: true,
                     eliminated: true,
+                    aislated: true
                 },
                 orderBy(fields, operators) {
                     return operators.asc(fields.playerNumber)
@@ -237,13 +238,14 @@ export const streamerWars = {
                         }
                     }
                 }
-            }).execute().then((data) => data.map(({ playerNumber, user, eliminated }) => ({
+            }).execute().then((data) => data.map(({ playerNumber, user, eliminated, aislated }) => ({
                 playerNumber,
                 avatar: user?.avatar,
                 displayName: user?.displayName,
                 admin: user?.admin,
                 id: user?.id,
-                eliminated
+                eliminated,
+                aislated,
             })))
 
             return { players }
@@ -713,6 +715,56 @@ export const streamerWars = {
             }
 
             await pusher.trigger("streamer-wars", "new-version", null);
+            return { success: true }
+        }
+    }),
+    aislatePlayer: defineAction({
+        input: z.object({
+            playerNumber: z.number(),
+        }),
+        handler: async ({ playerNumber }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para aislar jugadores"
+                });
+            }
+
+            const { success, error } = await aislatePlayer(playerNumber);
+            if (!success) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: error
+                });
+            }
+
+            return { success: true }
+        }
+    }),
+    unaislatePlayer: defineAction({
+        input: z.object({
+            playerNumber: z.number(),
+        }),
+        handler: async ({ playerNumber }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para aislar jugadores"
+                });
+            }
+
+            const { success, error } = await unaislatePlayer(playerNumber);
+            if (!success) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: error
+                });
+            }
+
             return { success: true }
         }
     }),

@@ -10,6 +10,7 @@ import {
     STREAMER_WARS_SOUNDS,
 } from "@/consts/Sounds";
 import { LucideSiren } from "lucide-preact";
+import { navigate } from "astro/virtual-modules/transitions-router.js";
 
 export const useStreamerWarsSocket = (session: Session | null) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
@@ -131,7 +132,30 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                     icon: 'flex flex-col justify-center items-center p-5 rounded-full',
                 }
             });
+
+
         });
+
+        globalChannel.current?.bind("player-aislated", () => {
+            setDayAvailable(false);
+            playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
+            toast.error("¡Has sido aislado!", {
+                icon: <LucideSiren />,
+                description: "Un moderador analizará tu caso y te informará si puedes volver a jugar.",
+                richColors: true,
+                duration: 10000,
+                position: "bottom-center",
+                dismissible: true,
+                classNames: {
+                    icon: 'flex flex-col justify-center items-center p-5 rounded-full',
+                }
+            });
+
+            setTimeout(() => {
+                navigate('/guerra-streamers');
+            }, 5000);
+        })
+
         return () => {
             // Limpieza: cancelamos timeouts, desbindamos eventos y desconectamos Pusher
             timeouts.forEach(clearTimeout);

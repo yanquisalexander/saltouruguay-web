@@ -131,6 +131,7 @@ export const StreamerWarsPlayersTable = pgTable('streamer_wars_players', {
     userId: integer('user_id').references(() => UsersTable.id, { onDelete: 'cascade' }),
     playerNumber: integer('player_number').notNull().unique(),
     eliminated: boolean('eliminated').notNull().default(false),
+    aislated: boolean('aislated').notNull().default(false),
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
 }, (t) => ({
