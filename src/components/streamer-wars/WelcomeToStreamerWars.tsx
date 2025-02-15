@@ -44,7 +44,7 @@ export const WelcomeToStreamerWars = ({ session, bgAudio, isOpen, setIsOpen }: {
             <dialog
                 open={isOpen}
                 class={`max-w-4xl w-full fixed inset-0 z-[99999999] bg-black border border-white/40 shadow-2xl text-white 
-                        ${closing ? "slide-out-bottom animate-duration-400" : "animate-zoom-in"}`}
+                        ${closing ? "animate-slide-out-bottom animate-duration-400" : "animate-zoom-in"}`}
             >
                 <div class="welcome-inner relative p-8">
                     <header class="flex mb-8 justify-between items-center">
@@ -53,7 +53,7 @@ export const WelcomeToStreamerWars = ({ session, bgAudio, isOpen, setIsOpen }: {
                         </h1>
                     </header>
                     <p class="font-mono max-w-2xl text-left">
-                        ¡Hola, {session.user?.name}! ¿Estás listo para la batalla?
+                        ¡Hola, <strong>{session.user?.name}</strong>! ¿Estás listo para la batalla?
                     </p>
                     <p class="font-mono max-w-2xl text-left mt-4">
                         En esta guerra, lucharás contra otros streamers en una serie de minijuegos. ¡Demuestra tus habilidades y gana premios!
