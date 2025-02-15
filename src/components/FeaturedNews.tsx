@@ -3,22 +3,6 @@ import { useEffect, useRef, useState } from "preact/hooks";
 
 const NEWS = [
     {
-        title: "SaltoCraft III",
-        description: `
-        ¡Se acerca la tercera edición de SaltoCraft! ¿Estás listo para la aventura?
-    `,
-        tags: ["Minecraft"],
-        background: {
-            img: "/images/ads/saltocraft.webp",
-        },
-        navImage: "/images/ads/saltocraft.webp",
-        ctaLink: {
-            text: "Próximamente",
-            url: "#",
-            newTab: false,
-        }
-    },
-    {
         title: "Guerra de Streamers",
         description: `
         Vota ahora por quién NO quieres que participe en la Guerra de Streamers.
@@ -33,6 +17,22 @@ const NEWS = [
             url: "/guerra-streamers/vota",
             newTab: false,
         },
+    },
+    {
+        title: "SaltoCraft III",
+        description: `
+        ¡Se acerca la tercera edición de SaltoCraft! ¿Estás listo para la aventura?
+    `,
+        tags: ["Minecraft"],
+        background: {
+            img: "/images/ads/saltocraft.webp",
+        },
+        navImage: "/images/ads/saltocraft.webp",
+        ctaLink: {
+            text: "Próximamente",
+            url: "#",
+            newTab: false,
+        }
     },
     {
         title: "Bienvenido a la nueva web",
