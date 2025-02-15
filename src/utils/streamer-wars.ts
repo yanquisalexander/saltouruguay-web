@@ -913,6 +913,21 @@ export const aislatePlayer = async (playerNumber: number) => {
 
         await pusher.trigger("streamer-wars", "player-aislated", { playerNumber });
 
+        try {
+            await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                content: null,
+                embeds: [
+                    {
+                        title: "Aislamiento",
+                        description: `El jugador #${playerNumber.toString().padStart(3, '0')} ha sido aislado.`,
+                        color: 16435200,
+                    },
+                ],
+            });
+        } catch (error) {
+
+        }
+
         return {
             success: true,
         };
@@ -934,6 +949,21 @@ export const unaislatePlayer = async (playerNumber: number) => {
             .execute();
 
         await pusher.trigger("streamer-wars", "player-unaislated", { playerNumber });
+
+        try {
+            await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                content: null,
+                embeds: [
+                    {
+                        title: "Desaislamiento",
+                        description: `El jugador #${playerNumber.toString().padStart(3, '0')} ha sido quitado del aislamiento.`,
+                        color: 16435200,
+                    },
+                ],
+            });
+        } catch (error) {
+
+        }
 
         return {
             success: true,
@@ -965,6 +995,23 @@ export const aislateMultiplePlayers = async (playerNumbers: number[]) => {
             .execute();
 
         await pusher.trigger("streamer-wars", "players-aislated", { playerNumbers });
+
+        for (const playerNumber of playerNumbers) {
+            try {
+                await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                    content: null,
+                    embeds: [
+                        {
+                            title: "Aislamiento",
+                            description: `El jugador #${playerNumber.toString().padStart(3, '0')} ha sido aislado.`,
+                            color: 16435200,
+                        },
+                    ],
+                });
+            } catch (error) {
+
+            }
+        }
 
         return {
             success: true,
@@ -1008,12 +1055,30 @@ export const beforeLaunchGame = async () => {
 
 export const unaislateAllPlayers = async () => {
     try {
-        await client
+        const players = await client
             .update(StreamerWarsPlayersTable)
             .set({ aislated: false })
+            .returning({ playerNumber: StreamerWarsPlayersTable.playerNumber })
             .execute();
 
         await pusher.trigger("streamer-wars", "players-unaislated", {});
+
+        for (const player of players) {
+            try {
+                await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                    content: null,
+                    embeds: [
+                        {
+                            title: "Desaislamiento",
+                            description: `El jugador #${player.playerNumber.toString().padStart(3, '0')} ha sido quitado del aislamiento.`,
+                            color: 16435200,
+                        },
+                    ],
+                });
+            } catch (error) {
+
+            }
+        }
 
         return {
             success: true,
