@@ -176,7 +176,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                 bgAudio.current.pause();
             }
             setShowingJourneyTransition(true);
-            // Actualizamos el key para forzar la remount
             setJourneyTransitionProps({ phase: "finish", key: Math.random() });
             document.addEventListener("journey-transition-ended", () => {
                 setDayAvailable(false);
