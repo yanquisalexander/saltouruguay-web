@@ -11,7 +11,7 @@ import { TeamSelector } from "./views/TeamSelector";
 import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 import { actions } from "astro:actions";
 import { LucideBug } from "lucide-preact";
-import { JourneyTransition } from "./JourneyTransition";
+import { CURRENT_DAY, JourneyTransition } from "./JourneyTransition";
 import { CaptainBribery } from "./games/CaptainBribery";
 import { type Players } from "../admin/streamer-wars/Players";
 import { AutoElimination } from "./games/AutoElimination";
@@ -180,6 +180,10 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             setJourneyTransitionProps({ phase: "finish", key: Math.random() });
             document.addEventListener("journey-transition-ended", () => {
                 setDayAvailable(false);
+                toast(`Día #0${CURRENT_DAY} finalizado`, {
+                    duration: 5000,
+                    richColors: true,
+                });
                 setTimeout(() => {
                     setShowingJourneyTransition(false);
                 }, 500);
