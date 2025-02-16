@@ -180,8 +180,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             setJourneyTransitionProps({ phase: "finish", key: Math.random() });
             document.addEventListener("journey-transition-ended", () => {
                 setDayAvailable(false);
-                toast(`Día #0${CURRENT_DAY} finalizado`, {
-                    duration: 5000,
+                toast.success(`Día #0${CURRENT_DAY} finalizado`, {
+                    duration: 8000,
                     richColors: true,
                 });
                 setTimeout(() => {
