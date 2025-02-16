@@ -5,7 +5,7 @@ import type { Session } from "@auth/core/types";
 import type Pusher from "pusher-js";
 import type { Channel } from "pusher-js";
 import { getTranslation } from "@/utils/translate";
-import { LucideCrown } from "lucide-preact";
+import { LucideCrown, LucideLoader } from "lucide-preact";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
@@ -106,8 +106,12 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
             </Instructions>
 
             {Object.keys(playersTeams).length === 0 ? (
-                <div className="text-center">
-                    <p>Cargando...</p>
+                <div className="text-center mx-auto max-w-[50ch]">
+                    <LucideLoader size={28} class="mx-auto my-6 animate-spin-clockwise animate-duration-[2000ms] animate-iteration-count-infinite" />
+                    <p>Cargando equipos...</p>
+                    <p>
+                        ¿Mucho rato esperando? Verifica que antes los jugadores hayan sido <span class="font-bold text-lime-500">asignados a equipos</span>.
+                    </p>
                 </div>
             ) : (
                 <div class="flex flex-col items-center mt-16">
