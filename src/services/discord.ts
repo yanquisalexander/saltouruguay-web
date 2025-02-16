@@ -27,6 +27,7 @@ export const sendDiscordEmbed = async (channelId: Snowflake, data: any) => {
 }
 
 export const sendWebhookMessage = async (webhookId: Snowflake, webhookToken: string, data: any) => {
+    if (!import.meta.env.PROD) return;
     return discord.post(Routes.webhook(webhookId, webhookToken), { body: data });
 }
 

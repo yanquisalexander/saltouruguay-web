@@ -5,6 +5,7 @@ import type { Players } from "@/components/admin/streamer-wars/Players";
 import { SimonSaysOverlay } from "./SimonSaysOverlay";
 import type Pusher from "pusher-js";
 import { PlayerEliminated } from "../PlayerEliminated";
+import { TeamSelectorOverlay } from "./TeamSelectorOverlay";
 
 const OverlayRenderer = ({
     gameState,
@@ -17,13 +18,16 @@ const OverlayRenderer = ({
 }) => {
     const components = useRef({
         SimonSays: SimonSaysOverlay,
+        TeamSelector: TeamSelectorOverlay,
     });
 
     if (!gameState) return null;
 
+
     // Seleccionamos el componente basado en la propiedad "component" de gameState
     // @ts-ignore
     const Component = components.current[gameState.component];
+    console.log("Component", Component);
     if (!Component) return null;
 
     // Pasamos players directamente desde el prop, sin mezclarlo con gameState.props
@@ -33,6 +37,7 @@ const OverlayRenderer = ({
             initialGameState={gameState}
             pusher={pusher}
             players={players}
+            teamsQuantity={gameState.props?.teamsQuantity}
             {...gameState.props}
         />
     );
