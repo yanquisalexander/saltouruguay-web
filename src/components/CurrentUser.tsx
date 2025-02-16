@@ -130,7 +130,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                 <>
                     <div className="relative" ref={dropdownRef}>
                         <button
-                            className="py-2 px-3 justify-center rounded-[10px] font-bold border border-transparent hover:bg-brand-gray/5 hover:border-brand-gray/10 flex items-center gap-x-2.5 leading-none hover:scale-105 transition-transform duration-300 text-white"
+                            className="py-2 px-3 justify-center rounded-2xl font-bold border border-transparent hover:bg-brand-gray/5 hover:border-brand-gray/10 flex items-center gap-x-2.5 leading-none hover:scale-105 transition-transform duration-300 text-white"
                             onClick={toggleDropdown}
                         >
                             <div class="relative">
@@ -139,7 +139,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                                     src={user?.image || undefined}
                                     alt={user?.name || "User"}
                                     // gradient border
-                                    className="rounded-full size-9 p-0.5 border-2 border-dotted border-l-lime-400 border-t-lime-500 border-r-lime-600 border-b-lime-700 border-tl-transparent border-tr-transparent border-bl-transparent border-br-transparent transition-all duration-300"
+                                    class={`rounded-full size-9 p-0.5 border-2 ${user.streamerWarsPlayerNumber ? "border-dotted border-l-lime-400 border-t-lime-500 border-r-lime-600 border-b-lime-700 " : "border-transparent"} transition-all duration-300`}
 
                                 />
 

@@ -73,7 +73,7 @@ const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
           <ul class="flex flex-col items-center overflow-x-hidden overflow-y-hidden md:flex-row gap-x-2">
             {links.map((link) =>
               link.soon ? (
-                <li class="flex font-teko opacity-70 tracking-wide items-center md:w-auto md:text-xl justify-center gap-2 md:px-4 md:py-2 md:rounded-2xl border border-transparent  px-5 py-4 text-xl duration-300 w-full relative h-full pointer-events-none text-brand-gray">
+                <li class="flex font-teko opacity-70 tracking-wide items-center md:w-auto md:text-xl justify-center gap-2 md:px-4 md:py-2 rounded-2xl border border-transparent  px-5 py-4 text-xl duration-300 w-full relative h-full pointer-events-none text-brand-gray">
                   {link.label}
 
                   <span class="text-[10px] font-rubik text-center w-max md:absolute left-1/2 md:-translate-x-1/2 bottom-[6px] md:translate-y-1/2 md:opacity-80">
@@ -85,7 +85,7 @@ const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
                   <a
                     href={link.url}
                     class:list={currentPath === link.url ? activeClasses : ""}
-                    class="flex items-center font-teko tracking-wide md:w-auto justify-center gap-2 md:px-4 md:py-2 hover:bg-brand-gray/5 md:rounded-md border border-transparent hover:border-brand-gray/10 transition-all min-h-[50px] md:text-xl px-5 py-4 text-xl duration-300 w-full relative h-full"
+                    class="flex items-center font-teko tracking-wide md:w-auto justify-center gap-2 md:px-4 md:py-2 hover:bg-brand-gray/5 rounded-md border border-transparent hover:border-brand-gray/10 transition-all min-h-[50px] md:text-xl px-5 py-4 text-xl duration-300 w-full relative h-full"
                   >
                     {link.label}
 

@@ -68,7 +68,7 @@ export const Notifications = () => {
     return (
         <section ref={ref} className="md:relative flex items-center">
             <button
-                className="relative p-2 hover:bg-brand-gray/5 md:rounded-2xl border border-transparent hover:border-brand-gray/10 transition-all"
+                className="relative p-2 hover:bg-brand-gray/5 rounded-2xl border border-transparent hover:border-brand-gray/10 transition-all"
                 onClick={handleToggle}
             >
                 <svg
