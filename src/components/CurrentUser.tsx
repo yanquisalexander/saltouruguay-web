@@ -1,7 +1,7 @@
 import { $ } from "@/lib/dom-selector";
 import type { Session } from "@auth/core/types";
 import { signIn, signOut } from "auth-astro/client";
-import { LucideChevronRight, LucideLoader2, LucideLogIn, LucideX } from "lucide-preact";
+import { LucideChevronRight, LucideLoader2, LucideLogIn, LucideX, Twitch } from "lucide-preact";
 import { useState, useEffect, useRef } from "preact/hooks";
 import { toast } from "sonner";
 import { AchievementsNotifier } from "./AchievementsNotifier";
@@ -148,8 +148,17 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                             <span className="hidden md:flex">{user?.name}</span>
                         </button>
                         {dropdownOpen && (
-                            <div className="absolute right-0 mt-2 max-w-60 w-auto rounded-md shadow-lg bg-[#0b1422] ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                                <div className="py-1" role="menu">
+                            <div className="z-10 overflow-hidden mt-2 bg-[#0B1422] rounded-2xl border border-line backdrop-blur w-max animate-fade-in animate-duration-100 absolute right-0 min-w-56">
+                                <div class="flex flex-col relative gap-1.5 py-3 px-4 border-b border-line before:w-1/3 before:aspect-square before:top-0 before:left-1/2 before:translate-x-16 before:-translate-y-1/2 before:rounded-full before:bg-blue-500/50 before:absolute before:blur-2xl">
+                                    <span class="font-bold flex items-center gap-2">
+                                        <Twitch size={20} />
+                                        {user.name}
+                                    </span>
+                                    <span class="text-sm text-brand-gray">
+                                        {user.email}
+                                    </span>
+                                </div>
+                                <div className="py-1.5 border-b border-line" role="menu">
                                     {
                                         !user.discordId && (
                                             <button
