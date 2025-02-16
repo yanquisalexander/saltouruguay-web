@@ -172,9 +172,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
 
         globalChannel.current?.bind("day-finished", () => {
-            if (bgAudio.current) {
-                bgAudio.current.pause();
-            }
             setShowingJourneyTransition(true);
             setJourneyTransitionProps({ phase: "finish", key: Math.random() });
             document.addEventListener("journey-transition-ended", () => {

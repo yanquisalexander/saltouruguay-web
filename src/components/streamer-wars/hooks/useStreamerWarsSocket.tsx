@@ -30,19 +30,12 @@ export const useStreamerWarsSocket = (session: Session | null) => {
     useEffect(() => {
         bgAudio.current = new Audio(`${CDN_PREFIX}${STREAMER_WARS_SOUNDS.WAITING_ROOM_LOOP}.mp3`);
         bgAudio.current.loop = true;
-        bgAudio.current.oncanplaythrough = () => {
-            if (isOnWaitingRoom) {
-                bgAudio.current?.play();
-            }
-        };
-        console.log("bgAudio.current", bgAudio.current);
     }, [isOnWaitingRoom]);
 
     // Actualiza el volumen y controla play/pause según el estado de la sala de espera
     useEffect(() => {
         if (!bgAudio.current) return;
         bgAudio.current.volume = bgVolume;
-        isOnWaitingRoom ? bgAudio.current.play() : bgAudio.current.pause();
     }, [bgVolume, isOnWaitingRoom]);
 
     // Configuración y eventos de Pusher
@@ -84,7 +77,6 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         };
 
         const handleSendToWaitingRoom = () => {
-            bgAudio.current?.play();
             setGameState(null);
             toast("Todos los jugadores han sido enviados a la sala de espera");
         };
@@ -116,6 +108,10 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             );
         };
 
+        document.addEventListener("welcome-dialog-closed", () => {
+            // destroy audio
+            bgAudio.current = null
+        }, { once: true });
         // Bind de eventos a Pusher
         globalChannel.current.bind("player-eliminated", handlePlayerEliminated);
         globalChannel.current.bind("send-to-waiting-room", handleSendToWaitingRoom);

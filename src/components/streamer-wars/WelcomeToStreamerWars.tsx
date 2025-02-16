@@ -20,6 +20,9 @@ export const WelcomeToStreamerWars = ({ session, bgAudio, isOpen, setIsOpen }: {
                     bgAudio.volume = Math.max(bgAudio.volume - 0.1, 0);
                 } else {
                     bgAudio.pause();
+
+                    document.dispatchEvent(new CustomEvent("welcome-dialog-closed"));
+
                     // @ts-ignore
                     clearInterval(fadeOut);
                 }
