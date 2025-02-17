@@ -161,7 +161,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                 setDayAvailable(true);
                 setTimeout(() => {
                     setShowingJourneyTransition(false);
-                    if (!showedWelcomeDialog) {
+                    if (!showedWelcomeDialog && session.user.username.toLowerCase() !== 'saltouruguayserver') {
                         setShowWelcomeDialog(true);
                         setShowedWelcomeDialog(true);
                     }
