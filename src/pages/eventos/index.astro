@@ -31,12 +31,18 @@ const players = await getPlayers().then((res) => res.slice(0, 51));
         </span>
       </h3>
 
+      <p
+        class="text-center text-xl max-w-[56ch] px-8 font-squids pt-16 text-white"
+      >
+        Lista de Jugadores
+      </p>
+
       <div
         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8"
       >
         {
           players.map((player) => (
-            <div class="flex flex-col items-center gap-2">
+            <div class="flex flex-col items-center gap-2 relative">
               <img
                 src={player.user?.avatar}
                 alt={player.user?.displayName}
@@ -52,15 +58,23 @@ const players = await getPlayers().then((res) => res.slice(0, 51));
                 title={`Ver el canal de ${player.user?.displayName} en Twitch`}
               >
                 {player.user?.displayName.trim()}
-                <LucideArrowUpRight
-                  size="24"
-                  class="inline-block group-hover:translate-x-1 group-hover:-translate-y-2 transition"
-                />
+                {!player.eliminated && (
+                  <LucideArrowUpRight
+                    size="24"
+                    class="inline-block group-hover:translate-x-1 group-hover:-translate-y-2 transition"
+                  />
+                )}
               </a>
 
               <h3 class="text-center font-bold text-xl text-lime-400 font-atomic tracking-wider">
                 #{player.playerNumber.toString().padStart(3, "0")}{" "}
               </h3>
+
+              {player.eliminated && (
+                <div class="absolute inset-0 bg-black/50 flex items-center justify-center text-red-500 font-bold">
+                  <span class="font-atomic text-2xl -rotate-45">ELIMINADO</span>
+                </div>
+              )}
             </div>
           ))
         }
