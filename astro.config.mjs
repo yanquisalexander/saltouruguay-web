@@ -12,6 +12,7 @@ import migrateDatabaseIntegration from "./src/hooks/migrateDatabase";
 
 import sitemap from '@astrojs/sitemap';
 import { SITEMAP_EXCLUDED_PATHS } from "./src/config";
+import notifyNewVersion from "./src/hooks/notifyNewVersion";
 
 // https://astro.build/config
 export default defineConfig({
@@ -24,6 +25,7 @@ export default defineConfig({
     }),
     auth(),
     migrateDatabaseIntegration(),
+    notifyNewVersion(),
     sitemap({
       //filter: (page) => !SITEMAP_EXCLUDED_PATHS.includes(`${this.site ?? ''}${page}`)
     })
