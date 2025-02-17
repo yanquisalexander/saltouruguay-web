@@ -40,12 +40,12 @@ const players = await getPlayers().then((res) => res.slice(0, 51));
               <img
                 src={player.user?.avatar}
                 alt={player.user?.displayName}
-                class="size-48 object-cover mask2"
+                class="size-32 object-cover mask2"
                 draggable="false"
               />
 
               <a
-                class="text-center group font-bold text-2xl hover:text-pink-500 transition text-white font-squids tracking-wide"
+                class="text-center group font-bold text-xl hover:text-pink-500 transition text-white font-squids tracking-wide"
                 href={`https://www.twitch.tv/${player.user?.displayName!}`}
                 target="_blank"
                 rel="noopener noreferrer"
