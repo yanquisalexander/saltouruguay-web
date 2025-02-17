@@ -51,19 +51,19 @@ export const TeamSelectorOverlay = ({
     }, [channel]);
 
     return (
-        <div className="mx-auto w-full max-w-6xl pt-16">
+        <div className="mx-auto w-full max-w-7xl pt-6">
             <header className="text-center">
                 <h2 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text">
                     Jugadores por equipo
                 </h2>
             </header>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                 {Object.values(TEAMS).slice(0, teamsQuantity).map((team) => (
                     <div
                         key={team}
-                        className="bg-gray-900/50 rounded-xl p-4 backdrop-blur-sm border border-gray-800"
+                        className="bg-gray-900/50 rounded-xl p-2 backdrop-blur-sm border border-gray-800"
                     >
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between ">
                             <span className="text-white font-bold">
                                 {getTranslation(team)}
                             </span>
@@ -72,7 +72,7 @@ export const TeamSelectorOverlay = ({
                                 color={COLORS.find(({ team: t }) => t === team)?.color}
                             />
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-5 gap-2">
                             {playersTeams[team]?.map(
                                 ({ playerNumber, avatar, displayName, isCaptain }) => (
                                     <div
