@@ -1,5 +1,9 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { getPlayers } from "@/utils/streamer-wars";
+import { LucideArrowUpRight } from "lucide-preact";
+
+const players = await getPlayers().then((res) => res.slice(0, 51));
 ---
 
 <Layout
@@ -27,11 +31,40 @@ import Layout from "@/layouts/Layout.astro";
         </span>
       </h3>
 
-      <h3
-        class="text-base font-rubik italic text-white text-center mt-4 max-w-md mx-auto"
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8"
       >
-        Los participantes se darán a conocer en breve
-      </h3>
+        {
+          players.map((player) => (
+            <div class="flex flex-col items-center gap-2">
+              <img
+                src={player.user?.avatar}
+                alt={player.user?.displayName}
+                class="size-48 object-cover mask2"
+                draggable="false"
+              />
+
+              <a
+                class="text-center group font-bold text-2xl hover:text-pink-500 transition text-white font-squids tracking-wide"
+                href={`https://www.twitch.tv/${player.user?.displayName!}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`Ver el canal de ${player.user?.displayName} en Twitch`}
+              >
+                {player.user?.displayName.trim()}
+                <LucideArrowUpRight
+                  size="24"
+                  class="inline-block group-hover:translate-x-1 group-hover:-translate-y-2 transition"
+                />
+              </a>
+
+              <h3 class="text-center font-bold text-xl text-lime-400 font-atomic tracking-wider">
+                #{player.playerNumber.toString().padStart(3, "0")}{" "}
+              </h3>
+            </div>
+          ))
+        }
+      </div>
 
       <div
         class="flex flex-col justify-center items-center mt-4 gap-2 mask bg-[#b4cd02] w-full"
@@ -47,9 +80,37 @@ import Layout from "@/layouts/Layout.astro";
 </Layout>
 
 <style>
+  h3.with-glyph:after {
+    content: "a";
+    @apply !font-atomic-extras text-[80px] mt-8 absolute inset-x-0 text-center;
+    z-index: -1;
+  }
+
+  @font-face {
+    font-family: "Game Of Squids";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src:
+      url("/fonts/game-of-squids.woff2") format("woff2"),
+      format("woff2");
+  }
+
   .mask {
     -webkit-mask-composite: source-in;
     mask-image: url(/images/mask.webp);
+    mask-position: 50%;
+    mask-size: cover;
+    mask-repeat: no-repeat;
+    mask-clip: content-box;
+    mask-origin: content-box;
+    mask-composite: source-in;
+    mask-mode: alpha;
+  }
+
+  .mask2 {
+    -webkit-mask-composite: source-in;
+    mask-image: url(/images/mask-wars-votacion.webp);
     mask-position: 50%;
     mask-size: cover;
     mask-repeat: no-repeat;
