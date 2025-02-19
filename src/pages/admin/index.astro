@@ -137,7 +137,9 @@ const chartOptions: Partial<ChartOptions> = {
                         class="bg-lime-500 h-4 text-xs flex relative items-center justify-center text-white font-bold transition-all"
                         style={{ width: `${percentage}%` }}
                       >
-                        <span class="absolute">{percentage.toFixed(1)}%</span>
+                        <span class="absolute inset-0 flex items-center justify-center">
+                          {percentage}%
+                        </span>
                       </div>
                     </div>
                   </td>
