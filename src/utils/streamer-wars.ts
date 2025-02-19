@@ -1091,3 +1091,31 @@ export const unaislateAllPlayers = async () => {
         };
     }
 }
+
+
+export const getNegativeVotes = async () => {
+    return await client
+        .select({
+            playerNumber: NegativeVotesStreamersTable.playerNumber,
+            votes: count(),
+            displayName: UsersTable.displayName,
+            avatar: UsersTable.avatar
+        })
+        .from(NegativeVotesStreamersTable)
+        /* 
+            Join avatar y displayName de UsersTable
+        */
+        .innerJoin(UsersTable, eq(UsersTable.id, NegativeVotesStreamersTable.userId))
+
+        .groupBy(NegativeVotesStreamersTable.playerNumber)
+        .orderBy(asc(NegativeVotesStreamersTable.playerNumber))
+        .execute()
+        /* 
+            Exclude 0
+        */
+        .then(res => {
+            console.log(res);
+            return res.filter(({ votes }) => votes > 0);
+        })
+        .catch(() => []);
+}
