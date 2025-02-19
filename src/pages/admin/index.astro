@@ -88,24 +88,29 @@ const chartOptions: Partial<ChartOptions> = {
       </h2>
     </header>
 
-    <a class="relative rounded-lg mt-8 mb-8" href="/admin/guerra-streamers">
-      <img
-        src="/images/ads/stream-wars.webp"
-        class="absolute inset-0 w-full h-full object-cover object-left-bottom -z-10 rounded-lg"
-        alt="Stream Wars"
-      />
-      <div
-        class="group bg-gradient-to-t flex items-center from-black/60 to-black/20 rounded-lg p-8"
+    <div class="grid grid-cols-1 md:grid-cols-2">
+      <a
+        class="relative group rounded-lg overflow-hidden mt-8 mb-8"
+        href="/admin/guerra-streamers"
       >
-        <h3
-          class="text-2xl text-white font-teko group-hover:underline duration-300 ease-in-out group-hover:translate-x-5 transition-all"
+        <img
+          src="/images/ads/stream-wars.webp"
+          class="absolute inset-0 w-full h-full transition-all duration-700 ease-in-out group-hover:opacity-20 group-hover:scale-125 object-cover object-right-top -z-10 rounded-lg"
+          alt="Stream Wars"
+        />
+        <div
+          class="group bg-gradient-to-t flex items-center from-black/60 to-black/20 rounded-lg p-8"
         >
-          <LucideArrowRight class="inline-block align-middle w-6 h-6 mr-2" />
-          Moderar Guerra de Streamers
-        </h3>
-        <p class="text-white/70 mb-4"></p>
-      </div>
-    </a>
+          <h3
+            class="text-2xl md:ml-16 text-white font-teko group-hover:underline duration-700 ease-in-out group-hover:translate-x-5 transition-all"
+          >
+            <LucideArrowRight class="inline-block align-middle w-6 h-6 mr-2" />
+            Moderar Guerra de Streamers
+          </h3>
+          <p class="text-white/70 mb-4"></p>
+        </div>
+      </a>
+    </div>
 
     {
       negativeVotes && negativeVotes.length > 0 && (
