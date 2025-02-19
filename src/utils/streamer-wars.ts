@@ -1131,7 +1131,7 @@ export const getNegativeVotes = async (): Promise<
             // Filtramos posibles resultados inválidos
             const validResults = res.filter(
                 ({ playerNumber, avatar }) => playerNumber !== null && avatar !== null
-            );
+            ).filter(({ votes }) => votes > 1);
 
             // Aunque la query ya ordena, volvemos a ordenar en caso de ser necesario
             const ordered = validResults.sort((a, b) => b.votes - a.votes);
