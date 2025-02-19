@@ -1114,7 +1114,6 @@ export const getNegativeVotes = async (): Promise<
         )
         .execute()
         .then(res => {
-            console.log(res);
             // Filtrar entradas inválidas antes de calcular totalVotes
             const validResults = res.filter(({ playerNumber, avatar }) => playerNumber !== null && avatar !== null);
             // Calcular el total de votos a partir de los datos filtrados
