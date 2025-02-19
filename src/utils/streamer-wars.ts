@@ -1101,44 +1101,55 @@ export const getNegativeVotes = async (): Promise<
     return await client
         .select({
             playerNumber: NegativeVotesStreamersTable.playerNumber,
-            // Contamos las filas por cada playerNumber
             votes: count(NegativeVotesStreamersTable.id),
-            // Usamos min() para obtener un valor representativo de displayName y avatar
-            displayName: min(UsersTable.displayName),
-            avatar: min(UsersTable.avatar)
+            displayName: UsersTable.displayName,
+            avatar: UsersTable.avatar,
         })
         .from(NegativeVotesStreamersTable)
-        .innerJoin(UsersTable, eq(UsersTable.id, NegativeVotesStreamersTable.userId))
-        // Agrupamos solo por playerNumber para combinar todos los votos de un mismo jugador
-        .groupBy(NegativeVotesStreamersTable.playerNumber)
-        // Ordenamos de mayor a menor cantidad de votos
+        // Primero se une con StreamerWarsPlayersTable usando playerNumber
+        .innerJoin(
+            StreamerWarsPlayersTable,
+            eq(
+                StreamerWarsPlayersTable.playerNumber,
+                NegativeVotesStreamersTable.playerNumber
+            )
+        )
+        // Luego se une con UsersTable usando userId de StreamerWarsPlayersTable
+        .innerJoin(UsersTable, eq(UsersTable.id, StreamerWarsPlayersTable.userId))
+        // Agrupamos por playerNumber y los datos del streamer
+        .groupBy(
+            NegativeVotesStreamersTable.playerNumber,
+            UsersTable.displayName,
+            UsersTable.avatar
+        )
+        // Ordenamos por votos descendente (usa desc sobre la función count)
         .orderBy(desc(count(NegativeVotesStreamersTable.id)))
         .execute()
         .then(res => {
             console.log('Resultado raw:', res);
 
-            // Filtrar entradas inválidas (en caso de existir)
-            const validResults = res.filter(({ playerNumber, avatar }) => playerNumber !== null && avatar !== null);
+            // Filtramos posibles resultados inválidos
+            const validResults = res.filter(
+                ({ playerNumber, avatar }) => playerNumber !== null && avatar !== null
+            );
 
-            // Ordenamos (aunque ya esté ordenado desde la query) y calculamos el total de votos
+            // Aunque la query ya ordena, volvemos a ordenar en caso de ser necesario
             const ordered = validResults.sort((a, b) => b.votes - a.votes);
             const totalVotes = ordered.reduce((acc, { votes }) => acc + votes, 0);
 
             return ordered.map(({ playerNumber, displayName, avatar, votes }) => ({
                 playerNumber: playerNumber!,
-                displayName: displayName ?? "Unknown",
+                displayName,
                 avatar: avatar!,
                 votes,
-                // Calculamos el porcentaje sobre el total de votos
-                percentage: totalVotes > 0 ? (votes / totalVotes) * 100 : 0
+                percentage: totalVotes > 0 ? (votes / totalVotes) * 100 : 0,
             }));
         })
-        .catch((e) => {
+        .catch(e => {
             console.error(e);
             return [];
         });
 };
-
 
 
 export const getPlayersLiveOnTwitch = async () => {
