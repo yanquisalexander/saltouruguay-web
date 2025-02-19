@@ -134,10 +134,12 @@ const chartOptions: Partial<ChartOptions> = {
                   <td class="p-2">
                     <div class="relative w-full bg-gray-700 h-4 overflow-hidden rounded">
                       <div
-                        class="bg-lime-500 h-4 text-xs flex items-center justify-center text-white font-bold transition-all"
+                        class="bg-lime-500 h-4 text-xs  text-white font-bold transition-all"
                         style={{ width: `${percentage}%` }}
                       >
-                        {percentage.toFixed(1)}%
+                        <span class="absolute inset-0 flex items-center justify-center">
+                          {percentage.toFixed(1)}%
+                        </span>
                       </div>
                     </div>
                   </td>
