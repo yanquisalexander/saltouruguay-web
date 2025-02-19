@@ -1102,20 +1102,20 @@ export const getNegativeVotes = async () => {
             avatar: UsersTable.avatar
         })
         .from(NegativeVotesStreamersTable)
-        /* 
-            Join avatar y displayName de UsersTable
-        */
         .innerJoin(UsersTable, eq(UsersTable.id, NegativeVotesStreamersTable.userId))
-
-        .groupBy(NegativeVotesStreamersTable.playerNumber)
+        .groupBy(
+            NegativeVotesStreamersTable.playerNumber,
+            UsersTable.displayName,
+            UsersTable.avatar
+        )
         .orderBy(asc(NegativeVotesStreamersTable.playerNumber))
         .execute()
-        /* 
-            Exclude 0
-        */
         .then(res => {
             console.log(res);
             return res.filter(({ votes }) => votes > 0);
         })
-        .catch(() => []);
-}
+        .catch((e) => {
+            console.log(e);
+            return [];
+        });
+};
