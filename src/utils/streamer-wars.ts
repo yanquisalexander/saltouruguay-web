@@ -1112,25 +1112,23 @@ export const getNegativeVotes = async (): Promise<
             UsersTable.displayName,
             UsersTable.avatar
         )
-        .orderBy(asc(NegativeVotesStreamersTable.playerNumber))
         .execute()
         .then(res => {
-            // Filtrar votos mayores a 0
-            const filteredVotes = res.filter(({ votes }) => votes > 0);
+            console.log(res)
 
-            // Calcular el total de votos
-            const totalVotes = filteredVotes.reduce((acc, { votes }) => acc + votes, 0);
+            const ordered = res.sort((a, b) => b.votes - a.votes);
+            const totalVotes = ordered.reduce((acc, { votes }) => acc + votes, 0);
 
-            // Agregar el porcentaje a cada elemento
-            return filteredVotes
-                .filter(({ playerNumber, avatar }) => playerNumber !== null && avatar !== null)
-                .map(({ playerNumber, displayName, avatar, votes }) => ({
-                    playerNumber: playerNumber!,
-                    displayName,
-                    avatar: avatar!,
-                    votes,
-                    percentage: totalVotes ? (votes / totalVotes) * 100 : 0
-                }));
+
+            return ordered.map(({ playerNumber, displayName, avatar, votes }) => ({
+                playerNumber,
+                displayName,
+                avatar,
+                votes,
+                percentage: (votes / totalVotes) * 100
+            }));
+
+
         })
         .catch((e) => {
             console.log(e);
