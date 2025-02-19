@@ -1,7 +1,7 @@
 import { client } from "@/db/client";
 import { NegativeVotesStreamersTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable, UsersTable } from "@/db/schema";
 import cacheService from "@/services/cache";
-import { and, asc, count, eq, inArray, min, not, or } from "drizzle-orm";
+import { and, asc, count, eq, inArray, min, not, desc } from "drizzle-orm";
 import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
 import { addRoleToUser, DISCORD_ROLES, getDiscordUser, getGuildMember, LOGS_CHANNEL_WEBHOOK_ID, removeRoleFromUser, ROLE_GUERRA_STREAMERS, sendDiscordEmbed, sendWebhookMessage } from "@/services/discord";
@@ -1094,45 +1094,51 @@ export const unaislateAllPlayers = async () => {
 }
 
 
+
 export const getNegativeVotes = async (): Promise<
     { playerNumber: number; displayName: string; avatar: string; votes: number; percentage: number }[]
 > => {
     return await client
         .select({
             playerNumber: NegativeVotesStreamersTable.playerNumber,
-            // Especificamos la columna para contar
+            // Contamos las filas por cada playerNumber
             votes: count(NegativeVotesStreamersTable.id),
+            // Usamos min() para obtener un valor representativo de displayName y avatar
             displayName: min(UsersTable.displayName),
-            avatar: min(UsersTable.avatar),
+            avatar: min(UsersTable.avatar)
         })
         .from(NegativeVotesStreamersTable)
         .innerJoin(UsersTable, eq(UsersTable.id, NegativeVotesStreamersTable.userId))
-        .groupBy(
-            NegativeVotesStreamersTable.playerNumber,
-            UsersTable.displayName,
-            UsersTable.avatar
-        )
+        // Agrupamos solo por playerNumber para combinar todos los votos de un mismo jugador
+        .groupBy(NegativeVotesStreamersTable.playerNumber)
+        // Ordenamos de mayor a menor cantidad de votos
+        .orderBy(desc(count(NegativeVotesStreamersTable.id)))
         .execute()
         .then(res => {
-            // Filtrar entradas inválidas antes de calcular totalVotes
+            console.log('Resultado raw:', res);
+
+            // Filtrar entradas inválidas (en caso de existir)
             const validResults = res.filter(({ playerNumber, avatar }) => playerNumber !== null && avatar !== null);
-            // Calcular el total de votos a partir de los datos filtrados
-            const totalVotes = validResults.reduce((acc, { votes }) => acc + votes, 0);
-            return validResults
-                .sort((a, b) => b.votes - a.votes)
-                .map(({ playerNumber, displayName, avatar, votes }) => ({
-                    playerNumber: playerNumber!,
-                    displayName: displayName ?? "Unknown",
-                    avatar: avatar!,
-                    votes,
-                    percentage: totalVotes > 0 ? (votes / totalVotes) * 100 : 0
-                }));
+
+            // Ordenamos (aunque ya esté ordenado desde la query) y calculamos el total de votos
+            const ordered = validResults.sort((a, b) => b.votes - a.votes);
+            const totalVotes = ordered.reduce((acc, { votes }) => acc + votes, 0);
+
+            return ordered.map(({ playerNumber, displayName, avatar, votes }) => ({
+                playerNumber: playerNumber!,
+                displayName: displayName ?? "Unknown",
+                avatar: avatar!,
+                votes,
+                // Calculamos el porcentaje sobre el total de votos
+                percentage: totalVotes > 0 ? (votes / totalVotes) * 100 : 0
+            }));
         })
         .catch((e) => {
-            console.log(e);
+            console.error(e);
             return [];
         });
 };
+
 
 
 export const getPlayersLiveOnTwitch = async () => {
