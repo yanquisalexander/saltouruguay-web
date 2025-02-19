@@ -14,6 +14,8 @@ const playersList = players.slice(0, 51);
 const userHasVoted = session?.user?.id
   ? await currentUserHasVoted(session.user.id)
   : false;
+
+return new Response(null, { status: 404 })
 ---
 
 <Layout
