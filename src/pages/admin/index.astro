@@ -120,7 +120,7 @@ const chartOptions: Partial<ChartOptions> = {
           <tbody>
             {negativeVotes.map(
               ({ avatar, displayName, playerNumber, votes, percentage }) => (
-                <tr key={playerNumber}>
+                <tr>
                   <td class="text-white flex items-center p-2">
                     <img
                       src={avatar}

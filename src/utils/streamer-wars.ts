@@ -1097,11 +1097,11 @@ export const unaislateAllPlayers = async () => {
 export const getNegativeVotes = async (): Promise<
     { playerNumber: number; displayName: string; avatar: string; votes: number; percentage: number }[]
 > => {
-
     return await client
         .select({
             playerNumber: NegativeVotesStreamersTable.playerNumber,
-            votes: count(),
+            // Especificamos la columna para contar
+            votes: count(NegativeVotesStreamersTable.id),
             displayName: UsersTable.displayName,
             avatar: UsersTable.avatar
         })
@@ -1114,23 +1114,20 @@ export const getNegativeVotes = async (): Promise<
         )
         .execute()
         .then(res => {
-            console.log(res)
-
-            const ordered = res.sort((a, b) => b.votes - a.votes);
-            const totalVotes = ordered.reduce((acc, { votes }) => acc + votes, 0);
-
-
-            return ordered
-                .filter(({ playerNumber, avatar }) => playerNumber !== null && avatar !== null)
+            console.log(res);
+            // Filtrar entradas inválidas antes de calcular totalVotes
+            const validResults = res.filter(({ playerNumber, avatar }) => playerNumber !== null && avatar !== null);
+            // Calcular el total de votos a partir de los datos filtrados
+            const totalVotes = validResults.reduce((acc, { votes }) => acc + votes, 0);
+            return validResults
+                .sort((a, b) => b.votes - a.votes)
                 .map(({ playerNumber, displayName, avatar, votes }) => ({
                     playerNumber: playerNumber!,
                     displayName,
                     avatar: avatar!,
                     votes,
-                    percentage: (votes / totalVotes) * 100
+                    percentage: totalVotes > 0 ? (votes / totalVotes) * 100 : 0
                 }));
-
-
         })
         .catch((e) => {
             console.log(e);
