@@ -1120,13 +1120,15 @@ export const getNegativeVotes = async (): Promise<
             const totalVotes = ordered.reduce((acc, { votes }) => acc + votes, 0);
 
 
-            return ordered.map(({ playerNumber, displayName, avatar, votes }) => ({
-                playerNumber,
-                displayName,
-                avatar,
-                votes,
-                percentage: (votes / totalVotes) * 100
-            }));
+            return ordered
+                .filter(({ playerNumber, avatar }) => playerNumber !== null && avatar !== null)
+                .map(({ playerNumber, displayName, avatar, votes }) => ({
+                    playerNumber: playerNumber!,
+                    displayName,
+                    avatar: avatar!,
+                    votes,
+                    percentage: (votes / totalVotes) * 100
+                }));
 
 
         })
