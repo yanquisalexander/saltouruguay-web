@@ -1,7 +1,7 @@
 import { client } from "@/db/client";
 import { NegativeVotesStreamersTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable, UsersTable } from "@/db/schema";
 import cacheService from "@/services/cache";
-import { and, asc, count, eq, inArray, not, or } from "drizzle-orm";
+import { and, asc, count, eq, inArray, min, not, or } from "drizzle-orm";
 import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
 import { addRoleToUser, DISCORD_ROLES, getDiscordUser, getGuildMember, LOGS_CHANNEL_WEBHOOK_ID, removeRoleFromUser, ROLE_GUERRA_STREAMERS, sendDiscordEmbed, sendWebhookMessage } from "@/services/discord";
@@ -1102,8 +1102,8 @@ export const getNegativeVotes = async (): Promise<
             playerNumber: NegativeVotesStreamersTable.playerNumber,
             // Especificamos la columna para contar
             votes: count(NegativeVotesStreamersTable.id),
-            displayName: UsersTable.displayName,
-            avatar: UsersTable.avatar
+            displayName: min(UsersTable.displayName),
+            avatar: min(UsersTable.avatar),
         })
         .from(NegativeVotesStreamersTable)
         .innerJoin(UsersTable, eq(UsersTable.id, NegativeVotesStreamersTable.userId))
@@ -1122,7 +1122,7 @@ export const getNegativeVotes = async (): Promise<
                 .sort((a, b) => b.votes - a.votes)
                 .map(({ playerNumber, displayName, avatar, votes }) => ({
                     playerNumber: playerNumber!,
-                    displayName,
+                    displayName: displayName ?? "Unknown",
                     avatar: avatar!,
                     votes,
                     percentage: totalVotes > 0 ? (votes / totalVotes) * 100 : 0
