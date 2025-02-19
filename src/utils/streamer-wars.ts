@@ -8,6 +8,7 @@ import { addRoleToUser, DISCORD_ROLES, getDiscordUser, getGuildMember, LOGS_CHAN
 import { SALTO_DISCORD_GUILD_ID } from "@/config";
 import { DISCORD_LOGS_WEBHOOK_TOKEN } from "astro:env/server";
 import { getTranslation } from "./translate";
+import { getLiveStreams } from "./twitch-runtime";
 
 const PRESENCE_CHANNEL = "presence-streamer-wars";
 
@@ -1093,7 +1094,10 @@ export const unaislateAllPlayers = async () => {
 }
 
 
-export const getNegativeVotes = async () => {
+export const getNegativeVotes = async (): Promise<
+    { playerNumber: number; displayName: string; avatar: string; votes: number; percentage: number }[]
+> => {
+
     return await client
         .select({
             playerNumber: NegativeVotesStreamersTable.playerNumber,
@@ -1111,11 +1115,52 @@ export const getNegativeVotes = async () => {
         .orderBy(asc(NegativeVotesStreamersTable.playerNumber))
         .execute()
         .then(res => {
-            console.log(res);
-            return res.filter(({ votes }) => votes > 0);
+            // Filtrar votos mayores a 0
+            const filteredVotes = res.filter(({ votes }) => votes > 0);
+
+            // Calcular el total de votos
+            const totalVotes = filteredVotes.reduce((acc, { votes }) => acc + votes, 0);
+
+            // Agregar el porcentaje a cada elemento
+            return filteredVotes
+                .filter(({ playerNumber, avatar }) => playerNumber !== null && avatar !== null)
+                .map(({ playerNumber, displayName, avatar, votes }) => ({
+                    playerNumber: playerNumber!,
+                    displayName,
+                    avatar: avatar!,
+                    votes,
+                    percentage: totalVotes ? (votes / totalVotes) * 100 : 0
+                }));
         })
         .catch((e) => {
             console.log(e);
             return [];
         });
 };
+
+
+export const getPlayersLiveOnTwitch = async () => {
+    /* 
+        Get username of all players
+    */
+
+    const players = await client.query.StreamerWarsPlayersTable.findMany({
+        with: {
+            user: {
+                columns: {
+                    username: true
+                }
+            }
+        }
+    }).execute().then(res => res.map(({ user }) => user?.username).filter((username): username is string => username !== null));
+
+    /* 
+        Get live streams
+    */
+
+    const { data: liveNow } = await getLiveStreams(
+        players
+    );
+
+    return liveNow;
+}
