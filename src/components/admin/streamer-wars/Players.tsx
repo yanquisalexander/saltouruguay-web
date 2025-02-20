@@ -279,6 +279,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         }
 
         setPlayersLiveOnTwitch(data.players.map((player) => player.userName));
+        console.log({ playersLiveOnTwitch });
     }
 
     useEffect(() => {
