@@ -278,7 +278,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             return;
         }
 
-        setPlayersLiveOnTwitch(data.players.map((player) => player.userName));
+        setPlayersLiveOnTwitch(data)
         console.log({ playersLiveOnTwitch });
     }
 
