@@ -137,7 +137,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                 ...member,
                 displayName: member.name,
                 online: true,
-                isLiveOnTwitch: playersLiveOnTwitch.includes(member.info.displayName.toLowerCase())
+                isLiveOnTwitch: playersLiveOnTwitch.includes(member.info?.displayName.toLowerCase())
             }));
 
             setPlayers((prev) =>
