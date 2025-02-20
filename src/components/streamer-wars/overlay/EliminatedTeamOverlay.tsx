@@ -24,7 +24,7 @@ export const EliminatedTeamOverlay = ({
     pusher: Pusher;
 }) => {
     const [eliminatedTeam, setEliminatedTeam] = useState<string | null>(null);
-    const [showing, setShowing] = useState<boolean>(true);
+    const [showing, setShowing] = useState<boolean>(false);
     const [playersTeams, setPlayersTeams] = useState<Teams>({});
 
     // Se obtienen los equipos y jugadores al montar el componente
@@ -144,7 +144,7 @@ export const EliminatedTeamOverlay = ({
             {/* Overlay del mensaje con efecto fade in/out (solo se activa al aceptar el soborno) */}
             {eliminatedTeam && (
                 <div
-                    className={`fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 transition-all animate-duration-[2500ms] ${showing ? "animate-fade-in" : "animate-fade-out pointer-events-none"}`}
+                    className={`fixed inset-0 bg-black bg-opacity-100 flex flex-col items-center justify-center z-50 transition-all animate-duration-[2500ms] ${showing ? "animate-fade-in" : "animate-fade-out pointer-events-none"}`}
                 >
                     <span
                         class="relative flex flex-col justify-center text-center animate-duration-[4000ms] animate-scale">
@@ -164,27 +164,28 @@ export const EliminatedTeamOverlay = ({
                         </p>
                     </span>
 
-                    {
-                        /* Muestra todos los jugadores del equipo en una fila */
+                    <div class="flex gap-x-6">
+                        {
+                            /* Muestra todos los jugadores del equipo en una fila */
 
-                        playersTeams[eliminatedTeam]?.map((player) => (
-                            <div class="flex items-center gap-4 mt-8">
-                                <img
-                                    src={player.avatar || "/placeholder.svg"}
-                                    alt={`${player.displayName}'s avatar`}
-                                    class="w-12 h-12 rounded-full ring-2 ring-white/20"
-                                />
-                                <div>
-                                    <p class="text-white
-                                    font-bold">{player.displayName}</p>
-                                    <p class="text-lime-500 font-atomic text-xl">
-                                        #{player.playerNumber.toString().padStart(3, "0")}
-                                    </p>
+                            playersTeams[eliminatedTeam]?.map((player) => (
+                                <div class="flex flex-col items-center gap-4 mt-8">
+                                    <img
+                                        src={player.avatar || "/placeholder.svg"}
+                                        alt={`${player.displayName}'s avatar`}
+                                        class="w-12 h-12 rounded-full ring-2 ring-white/20"
+                                    />
+                                    <div>
+
+                                        <p class="text-lime-500 font-atomic text-xl">
+                                            #{player.playerNumber.toString().padStart(3, "0")}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            ))
 
-                    }
+                        }
+                    </div>
                 </div>
             )}
         </>
