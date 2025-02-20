@@ -66,7 +66,7 @@ export const EliminatedTeamOverlay = ({
             </div>
 
             {/* Panel persistente: muestra siempre la lista de equipos */}
-            <div className="p-4 pt-16">
+            <div className="p-4 pt-48">
                 {/* Encabezado con mensaje de espera o nombre del equipo eliminado */}
                 <h2 className="text-2xl font-medium text-center text-white animate-pulse animate-iteration-count-infinite animate-duration-[3000ms] mb-4">
                     {eliminatedTeam
