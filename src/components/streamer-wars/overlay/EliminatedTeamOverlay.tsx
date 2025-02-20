@@ -24,7 +24,7 @@ export const EliminatedTeamOverlay = ({
     pusher: Pusher;
 }) => {
     const [eliminatedTeam, setEliminatedTeam] = useState<string | null>(null);
-    const [showing, setShowing] = useState<boolean>(false);
+    const [showing, setShowing] = useState<boolean>(true);
     const [playersTeams, setPlayersTeams] = useState<Teams>({});
 
     // Se obtienen los equipos y jugadores al montar el componente
@@ -61,7 +61,7 @@ export const EliminatedTeamOverlay = ({
     return (
         <>
             {/* Banner superior siempre visible */}
-            <div class="fixed font-squids bg-gradient-to-r from-pink-500 to-pink-400 text-white text-2xl text-center w-full py-2">
+            <div class="fixed font-squids bg-gradient-to-r from-lime-500 to-lime-400 text-black text-2xl text-center w-full py-2">
                 Soborno al capitan
             </div>
 
@@ -144,16 +144,47 @@ export const EliminatedTeamOverlay = ({
             {/* Overlay del mensaje con efecto fade in/out (solo se activa al aceptar el soborno) */}
             {eliminatedTeam && (
                 <div
-                    className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 transition-all animate-duration-[2500ms] ${showing ? "animate-fade-in" : "animate-fade-out pointer-events-none"}`}
+                    className={`fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 transition-all animate-duration-[2500ms] ${showing ? "animate-fade-in" : "animate-fade-out pointer-events-none"}`}
                 >
-                    <div className="text-center">
-                        <h1 className="text-6xl font-bold text-white mb-4">
-                            Equipo Eliminado
-                        </h1>
-                        <p className="text-4xl text-white">
-                            {getTranslation(eliminatedTeam)}
+                    <span
+                        class="relative flex flex-col justify-center text-center animate-duration-[4000ms] animate-scale">
+                        <span class="font-squids  text-lg text-center mb-8 font-bold text-neutral-400">
+                            Gracias por participar
+                        </span>
+                        <div class="relative">
+                            <h2 class="text-6xl font-bold font-atomic text-red-500 -rotate-6 skew-x-12">
+                                Equipo eliminado
+                            </h2>
+                            <span class="absolute -bottom-14 text-red-500 inset-x-0 text-7xl font-bold font-atomic-extras -rotate-6 skew-x-12">
+                                a
+                            </span>
+                        </div>
+                        <p class="text-3xl font-teko pt-16 text-center text-white">
+                            El equipo <span class="font-bold">{getTranslation(eliminatedTeam)}</span> ha sido eliminado
                         </p>
-                    </div>
+                    </span>
+
+                    {
+                        /* Muestra todos los jugadores del equipo en una fila */
+
+                        playersTeams[eliminatedTeam]?.map((player) => (
+                            <div class="flex items-center gap-4 mt-8">
+                                <img
+                                    src={player.avatar || "/placeholder.svg"}
+                                    alt={`${player.displayName}'s avatar`}
+                                    class="w-12 h-12 rounded-full ring-2 ring-white/20"
+                                />
+                                <div>
+                                    <p class="text-white
+                                    font-bold">{player.displayName}</p>
+                                    <p class="text-lime-500 font-atomic text-xl">
+                                        #{player.playerNumber.toString().padStart(3, "0")}
+                                    </p>
+                                </div>
+                            </div>
+                        ))
+
+                    }
                 </div>
             )}
         </>
