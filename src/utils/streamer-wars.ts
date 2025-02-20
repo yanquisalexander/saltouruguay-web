@@ -345,8 +345,8 @@ export const massEliminatePlayers = async (playerNumbers: number[]) => {
 
         // Genera el audio.
         const audioBase64 = await tts(
-            `Los jugadores: ${new Intl.ListFormat("es-ES").format(
-                playerNumbers.map((n) => `#${n.toString().padStart(3, "0")}`)
+            `Los jugadores, ${new Intl.ListFormat("es-ES").format(
+                playerNumbers.map((n) => n.toString())
             )} han sido eliminados`
         );
 
