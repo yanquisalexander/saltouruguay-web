@@ -78,6 +78,7 @@ const Morgue = ({
 
 export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
     const [players, setPlayers] = useState<Players[]>([]);
+    const [playersLiveOnTwitch, setPlayersLiveOnTwitch] = useState<string[]>([]);
     const [addNewPlayer, setAddNewPlayer] = useState({
         dialogOpen: false,
         loading: false,
@@ -127,9 +128,6 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
     ];
 
     useEffect(() => {
-        console.log({ contextMenu });
-    }, [contextMenu]);
-    useEffect(() => {
         if (!pusher) return;
 
         const presenceChannel = pusher.subscribe("presence-streamer-wars");
@@ -139,12 +137,14 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                 ...member,
                 displayName: member.name,
                 online: true,
+                isLiveOnTwitch: playersLiveOnTwitch.includes(member.info.displayName.toLowerCase())
             }));
 
             setPlayers((prev) =>
                 prev.map((player) => ({
                     ...player,
                     online: onlinePlayers.some((p) => p.id === player.id),
+                    isLiveOnTwitch: playersLiveOnTwitch.includes(player.displayName.toLowerCase())
                 }))
             );
         });
@@ -152,7 +152,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         presenceChannel.bind("pusher:member_added", (member: any) => {
             setPlayers((prev) =>
                 prev.map((player) =>
-                    player.id === member.info.id ? { ...player, online: true } : player
+                    player.id === member.info.id ? { ...player, online: true, isLiveOnTwitch: playersLiveOnTwitch.includes(player.displayName.toLowerCase()) } : player
                 )
             );
         });
@@ -258,11 +258,39 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             }
         );
 
+        fetchPlayersLiveOnTwitch();
+
+
         return () => {
             presenceChannel.unbind_all();
             presenceChannel.unsubscribe();
         };
     }, [pusher]);
+
+    const fetchPlayersLiveOnTwitch = async () => {
+        const { error, data } = await actions.streamerWars.getPlayersLiveOnTwitch();
+
+        console.log({ error, data });
+
+        if (error) {
+            console.error(error);
+            return;
+        }
+
+        setPlayersLiveOnTwitch(data.players.map((player) => player.userName));
+    }
+
+    useEffect(() => {
+        /* 
+            Every 60 seconds, fetch the players that are live on Twitch
+        */
+
+        fetchPlayersLiveOnTwitch();
+        const intervalId = setInterval(fetchPlayersLiveOnTwitch, 60000);
+
+        // @ts-ignore
+        return () => clearInterval(intervalId);
+    }, []);
 
     const reloadPlayers = () => {
         actions.streamerWars.getPlayers().then(({ error, data }) => {
@@ -284,6 +312,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                             online: false,
                             eliminated: player.eliminated || false,
                             aislated: player.aislated || false,
+                            isLiveOnTwitch: playersLiveOnTwitch.includes(player.displayName.toLowerCase()),
                         });
                     }
                 });
