@@ -70,7 +70,7 @@ export const EliminatedTeamOverlay = ({
                 {/* Encabezado con mensaje de espera o nombre del equipo eliminado */}
                 <h2 className="text-2xl font-medium text-center text-white animate-pulse animate-iteration-count-infinite animate-duration-[3000ms] mb-4">
                     {eliminatedTeam
-                        ? getTranslation(eliminatedTeam)
+                        ? `El equipo ${getTranslation(eliminatedTeam)} ha sido eliminado`
                         : "Esperando que se acepte un soborno..."}
                 </h2>
                 {Object.keys(playersTeams).length === 0 ? (
