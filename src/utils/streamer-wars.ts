@@ -347,7 +347,7 @@ export const massEliminatePlayers = async (playerNumbers: number[]) => {
         const audioBase64 = await tts(
             `Los jugadores, ${new Intl.ListFormat("es-ES").format(
                 playerNumbers.map((n) => n.toString())
-            )} han sido eliminados`
+            )}, han sido eliminados`
         );
 
         // Envía el evento a Pusher con los datos actualizados.

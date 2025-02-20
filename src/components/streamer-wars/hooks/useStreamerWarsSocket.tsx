@@ -114,7 +114,9 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         }, { once: true });
         // Bind de eventos a Pusher
         globalChannel.current.bind("player-eliminated", handlePlayerEliminated);
-        globalChannel.current.bind("players-eliminated", handlePlayerEliminated);
+        globalChannel.current.bind("players-eliminated", ({ playerNumbers, audioBase64 }: { playerNumbers: number | number[], audioBase64: string }) => {
+            handlePlayerEliminated({ playerNumber: playerNumbers, audioBase64 });
+        });
         globalChannel.current.bind("send-to-waiting-room", handleSendToWaitingRoom);
         globalChannel.current.bind("launch-game", handleLaunchGame);
         globalChannel.current.bind("new-announcement", ({ message }: { message: string }) => {
