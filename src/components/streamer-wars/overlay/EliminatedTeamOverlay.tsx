@@ -61,12 +61,12 @@ export const EliminatedTeamOverlay = ({
     return (
         <>
             {/* Banner superior siempre visible */}
-            <div class="fixed font-squids bg-gradient-to-r from-lime-500 to-lime-400 text-black text-2xl text-center w-full py-2">
+            <div class="fixed font-squids bg-gradient-to-r from-lime-500 to-lime-400 text-black text-2xl text-center w-full py-3">
                 Soborno al capitan
             </div>
 
             {/* Panel persistente: muestra siempre la lista de equipos */}
-            <div className="p-4 pt-40">
+            <div className="p-4 pt-36">
                 {/* Encabezado con mensaje de espera o nombre del equipo eliminado */}
                 <h2 className="text-2xl font-medium text-center text-white animate-pulse animate-iteration-count-infinite animate-duration-[3000ms] mb-4">
                     {eliminatedTeam
