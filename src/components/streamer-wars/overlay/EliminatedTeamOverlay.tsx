@@ -4,6 +4,7 @@ import type { Channel } from "pusher-js";
 import type Pusher from "pusher-js";
 import { actions } from "astro:actions";
 import { LucideCrown } from "lucide-preact";
+import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
 interface Player {
     playerNumber: number;
@@ -43,9 +44,9 @@ export const EliminatedTeamOverlay = ({
     // Escucha el evento "bribe-accepted" para activar el overlay
     useEffect(() => {
         const handleBribeAccepted = ({ team }: { team: string }) => {
-            console.log("Bribe accepted", team);
             setEliminatedTeam(team);
             setShowing(true);
+            playSound({ sound: STREAMER_WARS_SOUNDS.EQUIPO_ELIMINADO, volume: 0.5 });
             // Después de 10 segundos, inicia el fade-out del mensaje
             setTimeout(() => {
                 setShowing(false);

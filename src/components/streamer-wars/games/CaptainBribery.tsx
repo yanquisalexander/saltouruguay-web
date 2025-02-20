@@ -77,6 +77,8 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
             const isMyTeamLost = team === currentTeamRef.current;
 
             setBriberyAccepted({ team });
+            playSound({ sound: STREAMER_WARS_SOUNDS.EQUIPO_ELIMINADO, volume: 0.5 });
+
 
             if (!isMyTeamLost) {
                 playSound({ sound: STREAMER_WARS_SOUNDS.WIN_BRIBE, volume: 0.5 });
