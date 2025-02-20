@@ -15,6 +15,7 @@ export interface Players {
     online: boolean;
     eliminated: boolean;
     aislated?: boolean;
+    isLiveOnTwitch?: boolean;
 }
 
 const CINEMATICS_LIST = Array.from({ length: 11 }, (_, i) => ({
@@ -495,6 +496,17 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                                     </span>
                                 </div>
                             )
+                        }
+
+                        {
+                            player.isLiveOnTwitch && (
+                                <div class="absolute top-0 right-0 bg-twitch rounded-bl-lg p-1 bg-electric-violet-500 text-white text-xs font-medium">
+                                    <span class="font-teko">
+                                        EN VIVO
+                                    </span>
+                                </div>
+                            )
+
                         }
                     </button>
                 ))}
