@@ -5,6 +5,7 @@ import type Pusher from "pusher-js";
 import { actions } from "astro:actions";
 import { LucideCrown } from "lucide-preact";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { TEAMS } from "@/consts/Teams";
 
 interface Player {
     playerNumber: number;
@@ -82,7 +83,8 @@ export const EliminatedTeamOverlay = ({
                 ) : (
                     <div class={"grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"}>
                         {
-                            Object.entries(playersTeams).map(([team, teamPlayers]) => {
+                            Object.values(TEAMS).map((team) => {
+                                const teamPlayers = playersTeams[team] || [];
                                 const captain = teamPlayers.find((player) => player.isCaptain);
                                 return (
                                     <div key={team} className="mb-8">

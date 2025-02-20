@@ -115,10 +115,10 @@ export const TeamSelector = ({ session, channel, teamsQuantity, playersPerTeam }
         const handleCaptainAssigned = ({ team, playerNumber }: { team: string; playerNumber: number }) => {
             setPlayersTeams(prev => ({
                 ...prev,
-                [team]: prev[team]?.map(player => ({
+                [team]: prev[team].map(player => ({
                     ...player,
                     isCaptain: player.playerNumber === playerNumber
-                })) ?? []
+                }))
             }));
 
             if (session.user.streamerWarsPlayerNumber === playerNumber) {
