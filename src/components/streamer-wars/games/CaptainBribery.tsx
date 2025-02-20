@@ -77,17 +77,17 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
             const isMyTeamLost = team === currentTeamRef.current;
 
             setBriberyAccepted({ team });
-            playSound({ sound: STREAMER_WARS_SOUNDS.EQUIPO_ELIMINADO, volume: 0.5 });
+            playSound({ sound: STREAMER_WARS_SOUNDS.EQUIPO_ELIMINADO, volume: 0.7 });
 
 
             if (!isMyTeamLost) {
-                playSound({ sound: STREAMER_WARS_SOUNDS.WIN_BRIBE, volume: 0.5 });
+                //playSound({ sound: STREAMER_WARS_SOUNDS.WIN_BRIBE, volume: 0.5 });
                 confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 toast.success(`El capitán del equipo "${getTranslation(team)}" ha aceptado el soborno. ¡Tu equipo está a salvo!`);
                 return;
             }
 
-            playSound({ sound: STREAMER_WARS_SOUNDS.LOSED_BRIBE, volume: 0.5 });
+            //playSound({ sound: STREAMER_WARS_SOUNDS.LOSED_BRIBE, volume: 0.5 });
             toast.warning("Tu capitán ha aceptado el soborno. Tu equipo ha sido eliminado del juego.");
         };
 

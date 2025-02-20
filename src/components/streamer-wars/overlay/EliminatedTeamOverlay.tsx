@@ -72,7 +72,8 @@ export const EliminatedTeamOverlay = ({
                 <h2 className="text-2xl font-medium text-center text-white animate-pulse animate-iteration-count-infinite animate-duration-[3000ms] mb-4">
                     {eliminatedTeam
                         ? `El equipo ${getTranslation(eliminatedTeam)} ha sido eliminado`
-                        : "Esperando que se acepte un soborno..."}
+                        : <span dangerouslySetInnerHTML={{ __html: "&nbsp;" }}></span>
+                    }
                 </h2>
                 {Object.keys(playersTeams).length === 0 ? (
                     <h2 className="text-2xl font-medium text-center text-white animate-pulse animate-iteration-count-infinite animate-duration-1000 mb-4">
