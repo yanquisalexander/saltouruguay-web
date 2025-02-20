@@ -331,6 +331,47 @@ export const eliminatePlayer = async (playerNumber: number) => {
     }
 };
 
+export const massEliminatePlayers = async (playerNumbers: number[]) => {
+    try {
+        if (playerNumbers.length === 0) return; // Si no hay jugadores, no hacer nada
+
+        // Intenta actualizar la base de datos, ignorando jugadores no encontrados
+        await client
+            .update(StreamerWarsPlayersTable)
+            .set({ eliminated: true })
+            .where(inArray(StreamerWarsPlayersTable.playerNumber, playerNumbers))
+            .execute()
+            .catch(() => { }); // Ignorar error si algún jugador no es encontrado
+
+        // Genera el audio.
+        const audioBase64 = await tts(
+            `Los jugadores: ${new Intl.ListFormat("es-ES").format(
+                playerNumbers.map((n) => `#${n.toString().padStart(3, "0")}`)
+            )} han sido eliminados`
+        );
+
+        // Envía el evento a Pusher con los datos actualizados.
+        await pusher.trigger("streamer-wars", "players-eliminated", {
+            playerNumbers,
+            audioBase64,
+        });
+
+        // Envía el log al webhook de Discord.
+        await sendWebhookMessage(SALTO_DISCORD_GUILD_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+            title: "Jugadores eliminados",
+            description: `Los jugadores ${new Intl.ListFormat("es-ES").format(
+                playerNumbers.map((n) => `#${n.toString().padStart(3, "0")}`)
+            )} han sido eliminados de Streamer Wars.`,
+            color: 16739693,
+        }).catch(() => { }); // Ignorar error si falla el webhook
+
+        //await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, playerNumber, ROLE_GUERRA_STREAMERS);
+    } catch (error) {
+        console.error("Error en massEliminatePlayers:", error);
+    }
+};
+
+
 export const revivePlayer = async (playerNumber: number) => {
     try {
         // Actualiza el estado del jugador en la base de datos.

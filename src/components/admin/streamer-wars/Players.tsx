@@ -80,6 +80,13 @@ const Morgue = ({
 export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
     const [players, setPlayers] = useState<Players[]>([]);
     const [playersLiveOnTwitch, setPlayersLiveOnTwitch] = useState<string[]>([]);
+    const [massElimination, setMassElimination] = useState({
+        dialogOpen: false,
+        loading: false,
+        playerNumbers: [] as number[],
+        inputValue: "",
+    });
+
     const [addNewPlayer, setAddNewPlayer] = useState({
         dialogOpen: false,
         loading: false,
@@ -356,6 +363,35 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         }
     };
 
+    const handleMassElimination = async () => {
+        if (
+            !confirm(
+                `¿Estás seguro de eliminar a los jugadores ${massElimination.playerNumbers
+                    .map((n) => `#${n.toString().padStart(3, "0")}`)
+                    .join(", ")}?`
+            )
+        )
+            return;
+
+        setMassElimination((prev) => ({ ...prev, loading: true }));
+
+        const response = await actions.streamerWars.massEliminatePlayers({
+            playerNumbers: massElimination.playerNumbers,
+        });
+
+        if (response.error) {
+            console.error(response.error);
+            toast.error(response.error.message);
+            return;
+        }
+
+        toast.success("Jugadores eliminados");
+        playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.08 });
+
+        setMassElimination((prev) => ({ ...prev, dialogOpen: false, loading: false, playerNumbers: [] }));
+        reloadPlayers();
+    }
+
     // Función para eliminar permanentemente (eliminación definitiva)
     const handlePermanentElimination = async (playerNumber: number) => {
         if (
@@ -625,6 +661,107 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                 }
             >
                 Añadir nuevo jugador
+            </button>
+
+            <dialog
+                class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+                open={massElimination.dialogOpen}
+            >
+                <div class="rounded-lg">
+                    <h1 class="text-2xl font-bold mb-4">Eliminar jugadores</h1>
+                    <div class="flex flex-col gap-y-4 items-center justify-center">
+                        <input
+                            type="text"
+                            class="bg-gray-800/50 rounded-lg p-4 w-full"
+                            placeholder="Números de jugadores separados por comas"
+                            value={massElimination.inputValue || ""}
+                            onInput={(e) =>
+                                setMassElimination((prev) => ({
+                                    ...prev,
+                                    inputValue: e.currentTarget.value, // Guardamos el valor actual del input
+                                }))
+                            }
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === ",") {
+                                    e.preventDefault();
+                                    setMassElimination((prev) => {
+                                        const newNumbers = prev.inputValue
+                                            .split(",")
+                                            .map((n: string) => parseInt(n))
+                                            .filter((n: number) => !isNaN(n))
+                                            .filter((n: number) => !prev.playerNumbers.includes(n));
+
+                                        return {
+                                            ...prev,
+                                            playerNumbers: [...prev.playerNumbers, ...newNumbers],
+                                            inputValue: "", // Vaciar el input
+                                        };
+                                    });
+                                }
+                            }}
+                        />
+
+                    </div>
+
+                    {
+                        massElimination.playerNumbers.length > 0 && (
+                            <div class="bg-gray-800/50 p-4 rounded-lg mt-4">
+                                <p class="text-white font-bold">
+                                    Jugadores a eliminar:
+                                </p>
+                                <ul class="list-disc list-inside">
+                                    {massElimination.playerNumbers.map((n) => (
+                                        <li>
+                                            <span class="text-lime-500 font-atomic">
+                                                #{n.toString().padStart(3, "0")}
+                                            </span>
+                                            <button
+                                                class="ml-2 text-red-500"
+                                                onClick={() =>
+                                                    setMassElimination((prev) => ({
+                                                        ...prev,
+                                                        playerNumbers: prev.playerNumbers.filter(
+                                                            (num) => num !== n
+                                                        ),
+                                                    }))
+                                                }
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </li>
+
+                                    ))}
+                                </ul>
+                            </div>
+                        )
+                    }
+                    <footer class="flex justify-between mt-8">
+                        <button
+                            class="bg-red-500 text-white px-4 py-2 rounded-lg"
+                            onClick={() =>
+                                setMassElimination((prev) => ({ ...prev, dialogOpen: false }))
+                            }
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            class="bg-blue-500 text-white px-4 py-2 rounded-lg"
+                            onClick={handleMassElimination}
+                        >
+                            {massElimination.loading ? "Cargando..." : "Eliminar"}
+                        </button>
+                    </footer>
+                </div>
+            </dialog>
+
+
+            <button
+                class="bg-red-500 text-white px-4 py-2 rounded-lg mt-8"
+                onClick={() =>
+                    setMassElimination((prev) => ({ ...prev, dialogOpen: true }))
+                }
+            >
+                Eliminar jugadores en masa
             </button>
 
             <div class="cinematics-launcher mt-8">

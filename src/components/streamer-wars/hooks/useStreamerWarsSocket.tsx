@@ -15,7 +15,7 @@ import { navigate } from "astro/virtual-modules/transitions-router.js";
 export const useStreamerWarsSocket = (session: Session | null) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
     const [gameState, setGameState] = useState<{ component: string; props: any } | null>(null);
-    const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | null>(null);
+    const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | number[] | null>(null);
     const globalChannel = useRef<Channel | null>(null);
     const presenceChannel = useRef<Channel | null>(null);
     const [dayAvailable, setDayAvailable] = useState(false);
@@ -59,7 +59,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             playerNumber,
             audioBase64,
         }: {
-            playerNumber: number;
+            playerNumber: number | number[];
             audioBase64: string;
         }) => {
             await playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.05 });
@@ -114,6 +114,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         }, { once: true });
         // Bind de eventos a Pusher
         globalChannel.current.bind("player-eliminated", handlePlayerEliminated);
+        globalChannel.current.bind("players-eliminated", handlePlayerEliminated);
         globalChannel.current.bind("send-to-waiting-room", handleSendToWaitingRoom);
         globalChannel.current.bind("launch-game", handleLaunchGame);
         globalChannel.current.bind("new-announcement", ({ message }: { message: string }) => {

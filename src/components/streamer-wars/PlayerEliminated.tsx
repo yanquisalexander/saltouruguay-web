@@ -2,7 +2,7 @@ import type { Session } from "@auth/core/types";
 import { navigate } from "astro:transitions/client";
 import { useEffect, useState } from "preact/hooks";
 
-export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: number | null, session: Session | null }) => {
+export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: number | number[] | null, session: Session | null }) => {
     const [showing, setShowing] = useState(false);
     const [key, setKey] = useState(0);
 
@@ -12,13 +12,19 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
     */
 
     useEffect(() => {
-        if (playerNumber) {
+        if (playerNumber !== null) {
             setShowing(true);
             setKey(Math.random());
 
-            if (playerNumber === session?.user.streamerWarsPlayerNumber) {
+            if (!Array.isArray(playerNumber) && playerNumber === session?.user.streamerWarsPlayerNumber) {
                 setTimeout(() => navigate('/guerra-streamers'), 2000);
+                return
+            } else if (Array.isArray(playerNumber) && playerNumber.includes(session?.user.streamerWarsPlayerNumber!)) {
+                setTimeout(() => navigate('/guerra-streamers'), 2000);
+                return
             }
+
+
             setTimeout(() => setShowing(false), 5000);
         }
     }, [playerNumber]);
@@ -36,14 +42,17 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
                     </span>
                     <div class="relative">
                         <h2 class="text-6xl font-bold font-atomic text-red-500 -rotate-6 skew-x-12">
-                            Eliminado
+                            Eliminado{Array.isArray(playerNumber) ? 's' : ''}
                         </h2>
                         <span class="absolute -bottom-14 text-red-500 inset-x-0 text-7xl font-bold font-atomic-extras -rotate-6 skew-x-12">
                             a
                         </span>
                     </div>
                     <p class="text-3xl font-teko pt-16 text-center">
-                        {playerNumber === session?.user.streamerWarsPlayerNumber ? "¡Has sido eliminado!" : `El jugador #${playerNumber?.toString().padStart(3, '0')} ha sido eliminado`}
+                        {!Array.isArray(playerNumber) ?
+                            playerNumber === session?.user.streamerWarsPlayerNumber ? "¡Has sido eliminado!" : `El jugador #${playerNumber?.toString().padStart(3, '0')} ha sido eliminado` :
+                            playerNumber.includes(session?.user.streamerWarsPlayerNumber!) ? "¡Has sido eliminado!" : `Los jugadores ${new Intl.ListFormat('es-ES').format(playerNumber.map((n: number) => `#${n.toString().padStart(3, '0')}`))} han sido eliminados`
+                        }
                     </p>
                 </span>
 
