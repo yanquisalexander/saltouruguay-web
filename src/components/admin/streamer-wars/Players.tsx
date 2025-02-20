@@ -137,15 +137,13 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             const onlinePlayers = Object.values(members.members).map((member: any) => ({
                 ...member,
                 displayName: member.name,
-                online: true,
-                isLiveOnTwitch: playersLiveOnTwitch.includes(member.info?.displayName.toLowerCase())
+                online: true
             }));
 
             setPlayers((prev) =>
                 prev.map((player) => ({
                     ...player,
-                    online: onlinePlayers.some((p) => p.id === player.id),
-                    isLiveOnTwitch: playersLiveOnTwitch.includes(player.displayName.toLowerCase())
+                    online: onlinePlayers.some((p) => p.id === player.id)
                 }))
             );
         });
@@ -153,7 +151,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         presenceChannel.bind("pusher:member_added", (member: any) => {
             setPlayers((prev) =>
                 prev.map((player) =>
-                    player.id === member.info.id ? { ...player, online: true, isLiveOnTwitch: playersLiveOnTwitch.includes(player.displayName.toLowerCase()) } : player
+                    player.id === member.info.id ? { ...player, online: true } : player
                 )
             );
         });
@@ -271,7 +269,6 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
     const fetchPlayersLiveOnTwitch = async () => {
         const { error, data } = await actions.streamerWars.getPlayersLiveOnTwitch();
 
-        console.log({ error, data });
 
         if (error) {
             console.error(error);
@@ -279,20 +276,35 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         }
 
         setPlayersLiveOnTwitch(data)
-        console.log({ playersLiveOnTwitch });
     }
 
     useEffect(() => {
         /* 
-            Every 60 seconds, fetch the players that are live on Twitch
+            Every 30 seconds, fetch the players that are live on Twitch
         */
 
         fetchPlayersLiveOnTwitch();
-        const intervalId = setInterval(fetchPlayersLiveOnTwitch, 60000);
+        const intervalId = setInterval(fetchPlayersLiveOnTwitch, 30000);
 
         // @ts-ignore
         return () => clearInterval(intervalId);
     }, []);
+
+    useEffect(() => {
+        /* 
+            Cada que se actualicen los que están en vivo en Twitch, actualiza el estado de los jugadores
+        */
+
+        console.log({ playersLiveOnTwitch });
+
+
+        setPlayers((prev) =>
+            prev.map((player) => ({
+                ...player,
+                isLiveOnTwitch: playersLiveOnTwitch.includes(player.displayName.toLowerCase())
+            }))
+        );
+    }, [playersLiveOnTwitch]);
 
     const reloadPlayers = () => {
         actions.streamerWars.getPlayers().then(({ error, data }) => {
