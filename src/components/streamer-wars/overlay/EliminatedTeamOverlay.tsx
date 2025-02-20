@@ -83,8 +83,11 @@ export const EliminatedTeamOverlay = ({
                 ) : (
                     <div class={"grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"}>
                         {
-                            Object.values(TEAMS).map((team) => {
-                                const teamPlayers = playersTeams[team] || [];
+                            /* 
+                                Order by TEAMS constant to ensure the order of the teams
+                            */
+
+                            Object.entries(playersTeams).sort(([teamA], [teamB]) => Object.keys(TEAMS).indexOf(teamA) - Object.keys(TEAMS).indexOf(teamB)).map(([team, teamPlayers]) => {
                                 const captain = teamPlayers.find((player) => player.isCaptain);
                                 return (
                                     <div key={team} className="mb-8">
