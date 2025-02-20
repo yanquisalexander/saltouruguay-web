@@ -2,7 +2,7 @@ import { navigate } from "astro:transitions/client";
 import { useEffect, useRef, useState } from "preact/hooks";
 
 const NEWS = [
-    {
+    /* {
         title: "Guerra de Streamers",
         description: `
         Vota ahora por quién NO quieres que participe en la Guerra de Streamers.
@@ -17,7 +17,7 @@ const NEWS = [
             url: "/guerra-streamers/vota",
             newTab: false,
         },
-    },
+    }, */
     {
         title: "SaltoCraft III",
         description: `
