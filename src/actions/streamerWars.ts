@@ -809,7 +809,12 @@ export const streamerWars = {
 
             const players = await getPlayersLiveOnTwitch();
 
-            return { players }
+            return {
+                players: players.map(({ userName, title }) => ({
+                    userName,
+                    title
+                }))
+            }
         }
     }),
 }
