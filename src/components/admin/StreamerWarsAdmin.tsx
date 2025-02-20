@@ -130,7 +130,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Recargar overlay",
-        classes: "bg-gray-500 hover:bg-gray-600 !text-black",
+        classes: "bg-lime-500 hover:bg-lime-600 !text-black",
         icon: LucideRefreshCw,
         execute: async () => {
             toast.promise(actions.streamerWars.reloadOverlay(), {
