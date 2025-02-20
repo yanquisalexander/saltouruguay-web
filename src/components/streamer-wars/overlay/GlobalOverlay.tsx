@@ -61,6 +61,11 @@ export const GlobalOverlay = () => {
             setPlayers(
                 data?.players.map((player: any) => ({ ...player, online: false })) || []
             );
+
+            globalChannel.current?.bind("reload-overlay", () => {
+                location.reload();
+            });
+
             console.log("Players loaded", data?.players);
         });
     }, []);

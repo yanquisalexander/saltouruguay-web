@@ -127,6 +127,18 @@ let GENERAL_ACTIONS = [
                 error: "Error al desaislar jugadores",
             });
         }
+    },
+    {
+        name: "Recargar overlay",
+        classes: "bg-gray-500 hover:bg-gray-600 !text-black",
+        icon: LucideRefreshCw,
+        execute: async () => {
+            toast.promise(actions.streamerWars.reloadOverlay(), {
+                loading: "Recargando overlay...",
+                success: "Overlay recargado",
+                error: "Error al recargar overlay",
+            });
+        }
     }
 ]
 
