@@ -468,12 +468,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                     >
                         <div class="relative size-16 rounded-full">
                             <img
-                                src={`/images/streamer-wars/players/${player.playerNumber
-                                    .toString()
-                                    .padStart(3, "0")}.webp`}
-                                onError={(e) => {
-                                    e.currentTarget.src = player.avatar;
-                                }}
+                                src={player.avatar}
                                 alt={player.displayName}
                                 class="w-full h-full rounded-full"
                             />
