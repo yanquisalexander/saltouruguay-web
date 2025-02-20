@@ -49,10 +49,17 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
                         </span>
                     </div>
                     <p class="text-3xl font-teko pt-16 text-center">
-                        {!Array.isArray(playerNumber) ?
-                            playerNumber === session?.user.streamerWarsPlayerNumber ? "¡Has sido eliminado!" : `El jugador #${playerNumber?.toString().padStart(3, '0')} ha sido eliminado` :
-                            playerNumber.includes(session?.user.streamerWarsPlayerNumber!) ? "¡Has sido eliminado!" : `Los jugadores ${new Intl.ListFormat('es-ES').format(playerNumber.map((n: number) => `#${n.toString().padStart(3, '0')}`))} han sido eliminados`
+                        {Array.isArray(playerNumber)
+                            ? playerNumber.includes(session?.user.streamerWarsPlayerNumber!)
+                                ? "¡Has sido eliminado!"
+                                : `Los jugadores ${new Intl.ListFormat("es-ES").format(
+                                    playerNumber.map((n: number) => `#${n.toString().padStart(3, "0")}`)
+                                )} han sido eliminados`
+                            : playerNumber === session?.user.streamerWarsPlayerNumber
+                                ? "¡Has sido eliminado!"
+                                : `El jugador #${playerNumber?.toString().padStart(3, "0")} ha sido eliminado`
                         }
+
                     </p>
                 </span>
 
