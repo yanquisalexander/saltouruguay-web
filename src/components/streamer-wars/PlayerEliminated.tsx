@@ -25,7 +25,7 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
             }
 
 
-            setTimeout(() => setShowing(false), 5000);
+            setTimeout(() => setShowing(false), Array.isArray(playerNumber) ? 10000 : 5000);
         }
     }, [playerNumber]);
 
