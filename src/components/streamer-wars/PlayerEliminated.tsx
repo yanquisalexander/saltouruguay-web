@@ -48,7 +48,7 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
                             a
                         </span>
                     </div>
-                    <p class="text-3xl font-teko pt-16 text-center">
+                    <p class="text-3xl font-teko pt-16 text-center max-w-[80%] text-white">
                         {Array.isArray(playerNumber)
                             ? playerNumber.includes(session?.user.streamerWarsPlayerNumber!)
                                 ? "¡Has sido eliminado!"
