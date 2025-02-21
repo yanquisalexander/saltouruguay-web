@@ -58,7 +58,7 @@ export const EliminatedTeamOverlay = ({
         return () => {
             channel?.unbind("bribe-accepted", handleBribeAccepted);
         };
-    }, []);
+    }, [pusher, channel]);
 
     return (
         <>
