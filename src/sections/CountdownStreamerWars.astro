@@ -1,0 +1,84 @@
+---
+import LaunchCountdown from "@/components/LaunchCountdown";
+
+const LAUNCH_TIMESTAMP = 1740438000000;
+---
+
+<section id="streamer-wars-starts" class="pt-12">
+  <h2 class="text-3xl font-teko text-center">
+    Se viene la &nbsp;<span class="text-2xl font-atomic text-lime-500"
+      >Guerra de Streamers</span
+    >
+  </h2>
+  <LaunchCountdown
+    timestamp={LAUNCH_TIMESTAMP}
+    classNames={{
+      timeDisplay: "!text-lime-500",
+    }}
+    client:idle
+  />
+
+  <div
+    class="group mb-4 flex w-full flex-col items-center justify-center px-20 font-medium text-primary pt-16 md:mb-20"
+    aria-label="descripción del evento"
+  >
+    <hr
+      class="h-[2px] min-w-[18rem] max-w-lg border-t-0 bg-transparent bg-gradient-to-r from-transparent via-white to-transparent sm:w-full"
+    />
+    <a
+      href="https://www.twitch.tv/saltouruguayserver"
+      target="_blank"
+      rel="nofollow noopener"
+      class="group/twitch mb-8 mt-0"
+      aria-hidden="true"
+      tabindex="-1"
+      title="Enlace al canal de Twitch de SaltoUruguayServer"
+    >
+      <div
+        class="mx-auto -mt-8 mb-4 w-14 scale-75 duration-200 group-hover/twitch:scale-90 motion-safe:transition md:-mt-8 md:mb-9 md:scale-110 md:group-hover/twitch:scale-125"
+      >
+        <svg
+          style="--color-twitch: #9146ff; --color-twitch-ice: #f0f0ff;"
+          fill="none"
+          viewBox="0 0 78 91"
+          role="img"
+          aria-label="Logotipo de Twitch"
+          data-astro-cid-ox7oa4ar=""
+        >
+          <path
+            class="stroke"
+            fill="var(--color-twitch)"
+            d="M16.6001.600098.600098 16.6001v57.6H19.8001v16l16-16h12.8l28.8-28.8V.600098h-60.8Z"
+            data-astro-cid-ox7oa4ar=""></path>
+          <path
+            class="fill"
+            fill="var(--color-twitch-ice)"
+            d="m58.2003 55 12.8-12.8V7h-51.2v48h12.8v12.8l12.8-12.8h12.8Z"
+            data-astro-cid-ox7oa4ar=""></path>
+          <path
+            class="stroke eyesMotion"
+            fill="var(--color-twitch)"
+            d="M39 19.8h6.4V39H39V19.8Zm22.4 0V39H55V19.8h6.4Z"
+            data-astro-cid-ox7oa4ar=""></path>
+        </svg>
+      </div>
+      <div
+        class="duration-200 group-hover/twitch:scale-110 motion-safe:transition"
+      >
+        <span
+          class="skew-x-10 block -rotate-6 text-center font-atomic text-xl text-white underline-offset-8 transition sm:text-2xl md:text-5xl"
+          >en directo
+        </span>
+        <h2
+          tabindex="0"
+          class="sm:text-lg md:text-xl uppercase text-[#b4cd02] transition group-hover/twitch:text-electric-violet-500 flex justify-center text-lg text-wrap text-center"
+        >
+          twitch.tv/saltouruguayserver
+        </h2>
+      </div>
+    </a>
+    <hr
+      class="my-7 h-[2px] w-full min-w-[18rem] max-w-lg border-t-0 bg-transparent bg-gradient-to-r from-transparent via-white to-transparent md:my-9"
+    />
+  </div>
+</section>
