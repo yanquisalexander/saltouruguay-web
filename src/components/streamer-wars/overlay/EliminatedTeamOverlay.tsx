@@ -167,7 +167,7 @@ export const EliminatedTeamOverlay = ({
                             </span>
                         </div>
                         <p class="text-3xl font-teko pt-16 text-center text-white">
-                            El equipo <span class="font-bold">{getTranslation(eliminatedTeam)}</span> ha sido eliminado
+                            El capitán del equipo <span class="font-bold">{getTranslation(eliminatedTeam)}</span> aceptó el soborno
                         </p>
                     </span>
 
