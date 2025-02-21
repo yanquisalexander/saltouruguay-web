@@ -7,6 +7,7 @@ import type Pusher from "pusher-js";
 import { PlayerEliminated } from "../PlayerEliminated";
 import { TeamSelectorOverlay } from "./TeamSelectorOverlay";
 import { EliminatedTeamOverlay } from "./EliminatedTeamOverlay";
+import { AutoEliminationOverlay } from "./AutoEliminationOverlay";
 
 const OverlayRenderer = ({
     gameState,
@@ -20,7 +21,8 @@ const OverlayRenderer = ({
     const components = useRef({
         SimonSays: SimonSaysOverlay,
         TeamSelector: TeamSelectorOverlay,
-        CaptainBribery: EliminatedTeamOverlay
+        CaptainBribery: EliminatedTeamOverlay,
+        AutoElimination: AutoEliminationOverlay,
     });
 
     if (!gameState) return null;
