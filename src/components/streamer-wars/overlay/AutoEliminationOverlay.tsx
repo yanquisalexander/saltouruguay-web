@@ -79,7 +79,7 @@ export const AutoEliminationOverlay = ({
                                         alt={player.displayName}
                                         className="w-12 h-12 rounded-full"
                                     />
-                                    <div>
+                                    <div className="flex flex-col items-start">
                                         <h2 className="text-xl font-medium text-white font-rubik">
                                             {player.displayName}
                                         </h2>
