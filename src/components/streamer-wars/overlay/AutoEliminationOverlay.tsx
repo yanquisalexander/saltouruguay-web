@@ -58,12 +58,10 @@ export const AutoEliminationOverlay = ({
         <div
             class="mt-16">
             <div className="text-center">
-                <h1 className="text-3xl font-bold text-lime-500 -skew-y-6 font-atomic mb-4">
-                    Desafío #06
+                <h1 className="text-3xl font-bold text-lime-500 -skew-y-6 font-atomic mb-10">
+                    Desafío de la Tentación
                 </h1>
-                <h2 className="text-xl font-medium text-white font-rubik mb-4">
-                    Momento sponsor
-                </h2>
+
                 <div className="flex flex-col gap-4">
                     {eliminatedPlayers.map((playerNumber) => {
                         const player = players.find(
