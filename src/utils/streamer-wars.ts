@@ -814,7 +814,7 @@ export const selfEliminate = async (playerNumber: number) => {
         */
 
         const cache = cacheService.create({ ttl: 60 * 60 * 48 });
-        const gameState = await cache.get("streamer-wars-self-eliminateds") as number[]
+        const gameState = await cache.get("streamer-wars-self-eliminateds") as number[] ?? [];
         if (gameState.includes(playerNumber)) {
             return {
                 success: false,
