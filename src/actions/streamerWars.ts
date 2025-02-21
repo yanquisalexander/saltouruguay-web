@@ -669,7 +669,7 @@ export const streamerWars = {
                 });
             }
 
-            const autoEliminatedPlayers = await getAutoEliminatedPlayers();
+            const autoEliminatedPlayers = await getAutoEliminatedPlayers() ?? [];
 
             return { autoEliminatedPlayers }
         }
