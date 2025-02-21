@@ -103,23 +103,28 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
             </Instructions>
             <div class="flex flex-col items-center gap-y-2 mt-16">
                 <header class="flex items-center gap-x-2">
-                    <h2 class="text-xl font-anton">Autoeliminación</h2>
+                    <h1 className="text-3xl font-bold text-lime-500 -skew-y-6 font-atomic mb-10">
+                        Desafío de la Tentación
+                    </h1>
+
                 </header>
                 <span class="mb-8 text-sm text-gray-400">
                     ({autoEliminatedPlayers.length}/3)
                 </span>
 
                 {hasAutoEliminated ? (
-                    <span class="text-red-500">¡Te has autoeliminado!</span>
+                    <span class="text-red-500">
+                        ¡Has aceptado la oferta de autoeliminación!
+                    </span>
                 ) : canAutoEliminate ? (
                     <button
                         class="font-rubik uppercase bg-gradient-to-br from-red-400 to-red-600 hover:scale-110 hover:saturate-200 transition-all text-white size-48 rounded-full"
                         onClick={handleClick}
                     >
-                        Autoeliminarse
+                        Aceptar oferta
                     </button>
                 ) : (
-                    <span class="text-red-500">Ya no puedes autoeliminarte</span>
+                    <span class="text-red-500">Ya no puedes aceptar</span>
                 )}
 
                 <aside class="flex flex-col gap-y-2 mt-8">
