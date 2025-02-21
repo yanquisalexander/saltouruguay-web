@@ -831,8 +831,9 @@ export const selfEliminate = async (playerNumber: number) => {
 
         gameState.push(playerNumber);
         await cache.set("streamer-wars-self-eliminateds", gameState);
-
         await pusher.trigger("auto-elimination", "player-autoeliminated", { playerNumber });
+
+
         try {
             await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
                 content: null,

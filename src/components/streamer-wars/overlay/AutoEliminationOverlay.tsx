@@ -1,3 +1,4 @@
+import { actions } from "astro:actions";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
 import type Pusher from "pusher-js";
@@ -21,7 +22,7 @@ export const AutoEliminationOverlay = ({
     const [showing, setShowing] = useState<boolean>(false);
     const channelRef = useRef<Channel | null>(null);
 
-    channelRef.current = pusher.subscribe("auto-elimination");
+    channelRef.current = pusher?.subscribe("auto-elimination");
 
 
     // Suscribirse al evento "player-autoeliminated"
@@ -33,12 +34,18 @@ export const AutoEliminationOverlay = ({
                 }
                 return prev;
             });
-            setShowing(true);
-            // Mantener visible el overlay durante 10 segundos y luego iniciar el fade out
-            setTimeout(() => {
-                setShowing(false);
-            }, 10000);
+
         };
+
+        actions.streamerWars.getAutoEliminatedPlayers().then(({ error, data }) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            setEliminatedPlayers(data.autoEliminatedPlayers);
+        });
+
+
 
         channelRef.current?.bind("player-autoeliminated", handlePlayerAutoEliminated);
         return () => {
