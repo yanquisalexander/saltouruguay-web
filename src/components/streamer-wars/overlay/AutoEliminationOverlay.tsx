@@ -62,7 +62,7 @@ export const AutoEliminationOverlay = ({
                     Desafío #06
                 </h1>
                 <h2 className="text-xl font-medium text-white font-rubik mb-4">
-                    Jugadores que aceptaron la oferta
+                    Jugadores que aceptan la oferta
                 </h2>
                 <div className="flex flex-col gap-4">
                     {eliminatedPlayers.map((playerNumber) => {
