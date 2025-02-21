@@ -19,14 +19,12 @@ export const AutoEliminationOverlay = ({
     }[];
 }) => {
     const [eliminatedPlayers, setEliminatedPlayers] = useState<number[]>([]);
-    const [showing, setShowing] = useState<boolean>(false);
     const channelRef = useRef<Channel | null>(null);
 
-    channelRef.current = pusher?.subscribe("auto-elimination");
 
 
-    // Suscribirse al evento "player-autoeliminated"
     useEffect(() => {
+        channelRef.current = pusher?.subscribe("auto-elimination");
         const handlePlayerAutoEliminated = (data: { playerNumber: number }) => {
             setEliminatedPlayers((prev) => {
                 if (!prev.includes(data.playerNumber)) {
@@ -51,7 +49,7 @@ export const AutoEliminationOverlay = ({
         return () => {
             channelRef.current?.unbind("player-autoeliminated", handlePlayerAutoEliminated);
         };
-    }, []);
+    }, [pusher]);
 
 
 
@@ -61,8 +59,11 @@ export const AutoEliminationOverlay = ({
             class="mt-16">
             <div className="text-center">
                 <h1 className="text-3xl font-bold text-lime-500 font-atomic mb-4">
-                    Jugadores Autoeliminados
+                    Desafío #03
                 </h1>
+                <h2 className="text-xl font-medium text-white font-rubik mb-4">
+                    Jugadores que aceptaron la oferta
+                </h2>
                 <div className="flex flex-col gap-4">
                     {eliminatedPlayers.map((playerNumber) => {
                         const player = players.find(
