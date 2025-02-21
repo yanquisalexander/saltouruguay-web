@@ -807,6 +807,31 @@ export const selfEliminate = async (playerNumber: number) => {
     }
 
     try {
+
+
+        /* 
+        add to redis
+        */
+
+        const cache = cacheService.create({ ttl: 60 * 60 * 48 });
+        const gameState = await cache.get("streamer-wars-self-eliminateds") as number[]
+        if (gameState.includes(playerNumber)) {
+            return {
+                success: false,
+                error: "Ya te has autoeliminado",
+            };
+        }
+
+        if (gameState.length >= 3) {
+            return {
+                success: false,
+                error: "Ya hay 3 autoeliminados",
+            };
+        }
+
+        gameState.push(playerNumber);
+        await cache.set("streamer-wars-self-eliminateds", gameState);
+
         await pusher.trigger("auto-elimination", "player-autoeliminated", { playerNumber });
         try {
             await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
@@ -834,6 +859,11 @@ export const selfEliminate = async (playerNumber: number) => {
             error: "Ocurrió un error al autoeliminarse",
         };
     }
+}
+
+export const getAutoEliminatedPlayers = async () => {
+    const cache = cacheService.create({ ttl: 60 * 60 * 48 });
+    return await cache.get("streamer-wars-self-eliminateds") as number[]
 }
 
 export const removePlayer = async (playerNumber: number) => {
