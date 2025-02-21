@@ -58,7 +58,7 @@ export const AutoEliminationOverlay = ({
         <div
             class="mt-16">
             <div className="text-center">
-                <h1 className="text-3xl font-bold text-lime-500 font-atomic mb-4">
+                <h1 className="text-3xl font-bold text-lime-500 -skew-y-6 font-atomic mb-4">
                     Desafío #03
                 </h1>
                 <h2 className="text-xl font-medium text-white font-rubik mb-4">
