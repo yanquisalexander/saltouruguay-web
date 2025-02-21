@@ -36,6 +36,14 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
             }
         };
 
+        actions.streamerWars.getAutoEliminatedPlayers().then(({ error, data }) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            setAutoEliminatedPlayers(data.autoEliminatedPlayers);
+        });
+
         channelRef.current.bind("player-autoeliminated", handlePlayerAutoEliminated);
 
         return () => {
