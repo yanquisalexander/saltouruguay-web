@@ -155,7 +155,7 @@ export const SimonSaysOverlay = ({ channel, players, pusher }) => {
             simonSaysChannel.unbind("client-player-input");
             pusher.unsubscribe("streamer-wars.simon-says");
         };
-    }, [pusher, gameState.currentPlayers]);
+    }, [pusher, gameState.currentRound]);
 
     useEffect(() => {
         if (gameState.pattern.length > 0 && gameState.status === "playing") {
