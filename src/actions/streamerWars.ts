@@ -868,4 +868,22 @@ export const streamerWars = {
             return { success: true }
         }
     }),
+    reloadForUser: defineAction({
+        input: z.object({
+            playerNumber: z.number(),
+        }),
+        handler: async ({ playerNumber }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para recargar el navegador de un jugador"
+                });
+            }
+
+            await pusher.trigger("streamer-wars", "reload-for-user", { playerNumber });
+            return { success: true }
+        }
+    }),
 }

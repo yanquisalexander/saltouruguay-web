@@ -117,6 +117,11 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         globalChannel.current.bind("players-eliminated", ({ playerNumbers, audioBase64 }: { playerNumbers: number | number[], audioBase64: string }) => {
             handlePlayerEliminated({ playerNumber: playerNumbers, audioBase64 });
         });
+        globalChannel.current.bind("reload-for-user", ({ playerNumber }: { playerNumber: number }) => {
+            if (playerNumber === session?.user.streamerWarsPlayerNumber) {
+                location.reload();
+            }
+        });
         globalChannel.current.bind("send-to-waiting-room", handleSendToWaitingRoom);
         globalChannel.current.bind("launch-game", handleLaunchGame);
         globalChannel.current.bind("new-announcement", ({ message }: { message: string }) => {

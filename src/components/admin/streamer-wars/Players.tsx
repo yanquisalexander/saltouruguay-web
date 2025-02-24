@@ -132,7 +132,11 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                     aislatePlayer(playerNumber);
                 }
             }
-        }
+        },
+        {
+            name: "Recargar navegador (F5 remoto)",
+            execute: (playerNumber: number) => reloadPlayerBrowser({ playerNumber }),
+        },
     ];
 
     useEffect(() => {
@@ -272,6 +276,17 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             presenceChannel.unsubscribe();
         };
     }, [pusher]);
+
+    const reloadPlayerBrowser = ({ playerNumber }: { playerNumber: number }) => {
+        toast.promise(
+            actions.streamerWars.reloadForUser({ playerNumber }),
+            {
+                loading: `Recargando el navegador del jugador #${playerNumber}`,
+                success: "Recargado",
+                error: "Error al recargar",
+            }
+        );
+    }
 
     const fetchPlayersLiveOnTwitch = async () => {
         const { error, data } = await actions.streamerWars.getPlayersLiveOnTwitch();
