@@ -5,7 +5,7 @@ const DAYS = [
     {
         number: 1,
         completed: false,
-        pending: true,
+        pending: false,
     },
     {
         number: 2,
@@ -53,12 +53,17 @@ export const WaitForDayOpen = ({ session, players }: { session: Session, players
                         </span>
 
                         {
-                            completed && (
-                                <span class="text-zinc-500 -mt-1 text-xl block">
+                            completed ? (
+                                <span class="text-zinc-500 font-squids -mt-1 text-xl block">
                                     Completado
+                                </span>
+                            ) : (!completed && !pending) && (
+                                <span class="text-zinc-500 font-squids -mt-1 text-xl block">
+                                    ¿Preparado?
                                 </span>
                             )
                         }
+
 
 
                     </button>

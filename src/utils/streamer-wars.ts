@@ -306,6 +306,37 @@ export const eliminatePlayer = async (playerNumber: number) => {
                 .execute();
         }
 
+        /* 
+            ¿Se está jugando Simon Says?
+
+            En ese caso, debemos quitarlo de la partida y establecer el estado de eliminado, y
+            setear el estado de Simon Says a "waiting"
+        */
+
+        const cache = createCache();
+        const gameState = await cache.get(CACHE_KEY) as SimonSaysGameState;
+
+        if (gameState && gameState.status === "playing") {
+            const newCurrentPlayers = { ...gameState.currentPlayers };
+            delete newCurrentPlayers[playerNumber.toString()];
+
+            const newEliminatedPlayers = Array.from(
+                new Set([...gameState.eliminatedPlayers, playerNumber])
+            );
+
+            const newGameState: SimonSaysGameState = {
+                ...gameState,
+                currentPlayers: newCurrentPlayers,
+                eliminatedPlayers: newEliminatedPlayers,
+                status: "waiting",
+            };
+
+            await cache.set(CACHE_KEY, newGameState);
+            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
+        }
+
+
+
         // Genera el audio.
         const audioBase64 = await tts(`Jugador, ${playerNumber}, eliminado`);
 
@@ -1105,6 +1136,14 @@ export const beforeLaunchGame = async () => {
 
         Si hay jugadores que no están conectados, se los aisla.
     */
+
+    /* 
+        Clear Simon Says cache
+    */
+
+    const cache = createCache();
+    await cache.delete(CACHE_KEY);
+
 
     const players = await client.query.StreamerWarsPlayersTable.findMany({
         where: and(
