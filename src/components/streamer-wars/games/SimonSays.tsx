@@ -162,7 +162,7 @@ export const SimonSays = ({
 
     return (
         <>
-            <Instructions duration={8000}>
+            <Instructions duration={10000}>
                 <p class="font-mono max-w-2xl text-left">
                     "Simon dice" es un juego de memoria en el que se muestra un patrón de colores que los jugadores deben repetir en el mismo orden.
                     <br />
@@ -174,7 +174,7 @@ export const SimonSays = ({
             </Instructions>
             <div
                 className="flex flex-col items-center justify-center min-h-screen bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]   
-          from-lime-600 via-transparent to-transparent text-white p-4"
+          from-blue-600/70 via-transparent to-transparent text-white p-4"
             >
                 {!gameIsWaiting && (
                     <div className="flex gap-2 mt-4">

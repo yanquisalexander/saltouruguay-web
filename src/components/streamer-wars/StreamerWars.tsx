@@ -16,6 +16,7 @@ import { CaptainBribery } from "./games/CaptainBribery";
 import { type Players } from "../admin/streamer-wars/Players";
 import { AutoElimination } from "./games/AutoElimination";
 import { WelcomeToStreamerWars } from "./WelcomeToStreamerWars";
+import { navigate } from "astro:transitions/client";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -182,6 +183,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                 });
                 setTimeout(() => {
                     setShowingJourneyTransition(false);
+                    navigate('/guerra-streamers')
+
                 }, 500);
             }, { once: true });
         });
