@@ -15,7 +15,7 @@ export const ConnectedPlayers = ({ players }: { players: Players[] }) => {
                     Jugadores conectados
                 </h3>
 
-                <div class={`${isExpanded ? "grid gap-16 grid-cols-2 md:grid-cols-3 lg:grid-cols-5" : "flex"} group`>
+                <div class={`${isExpanded ? "grid gap-16 grid-cols-2 md:grid-cols-3 lg:grid-cols-5" : "flex"} group`}>
                     {
                         isExpanded ? (
                             players.filter((player) => !player.eliminated && player.online).map((player, index) => (
