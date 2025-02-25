@@ -86,7 +86,7 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
     { text: "(si es que no te eliminan antes)", audioPath: "finish-4", duration: 3200 },
 ];
 
-export const CURRENT_DAY = 1;
+export const CURRENT_DAY = 2;
 
 const START_SCRIPT_FIRST_AUDIO_DELAY = 0;
 const FINISH_SCRIPT_FIRST_AUDIO_DELAY = 1000;
