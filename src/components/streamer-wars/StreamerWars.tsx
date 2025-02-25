@@ -294,7 +294,10 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                             showingJourneyTransition && (
                                 // @ts-ignore
                                 <JourneyTransition key={journeyTransitionProps.key}
-                                    players={players.filter((p) => !p.eliminated)}
+                                    /* 
+                                    Excluye eliminados, y los que cuyo número sea superior a 50
+                                    */
+                                    players={players.filter((p) => !p.eliminated && p.playerNumber <= 50)}
                                     {...journeyTransitionProps} />
 
                             )
