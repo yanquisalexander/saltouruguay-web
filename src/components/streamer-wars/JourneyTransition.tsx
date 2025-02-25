@@ -59,14 +59,9 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
     { text: "¿Quién será el próximo en caer?", audioPath: "day2-start-8", duration: 3000 },
     { text: "Solo el tiempo lo dirá...", audioPath: "day2-start-9", duration: 3200 },
 
-    /* 
-    { text: "Horas frente a la pantalla, sumergidos en este mundo.", audioPath: "start-4", duration: 4000 },
-    { text: "Algunos por diversión... otros, porque no tienen nada más.", audioPath: "start-5", duration: 5500 },
-    { text: "Cuentas vacías, deudas acumuladas, promesas rotas...", audioPath: "start-6", duration: 5000 },
-    { text: "Pero hoy, tienen una oportunidad.", audioPath: "start-7", duration: 3200 },
-    { text: "Solo los más astutos, rápidos y despiadados llegarán al final.", audioPath: "start-8", duration: 6300 }, */
+
     {
-        text: "Atención, jugadores!. Sigan las instrucciones cuidadosamente. Estamos a punto de comenzar. ", audioPath: "day2-start-10", duration: 7300, execute: () => {
+        text: "Atención, jugadores!. Sigan las instrucciones cuidadosamente. Estamos a punto de comenzar. ", audioPath: "day2-start-10", duration: 8000, execute: () => {
             setTimeout(() => {
                 playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION, volume: 0.5 });
                 toast.warning("¡Comienza la Guerra de Streamers!", {
@@ -78,7 +73,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
 
                 });
 
-            }, 7500);
+            }, 8200);
         }
     }
 ];
@@ -243,7 +238,7 @@ export const JourneyTransition = ({ phase, executeOnMount }: JourneyTransitionPr
                     </div>
                 )}
             </div>
-            <div className="absolute bottom-56 w-max px-4 font-mono text-center bg-neutral-900 text-white text-lg">
+            <div className="absolute bottom-56 w-max max-w-full md:max-w-[60ch] px-4 font-mono text-center bg-neutral-900 text-white text-lg">
                 {script[currentIndex]?.text}
             </div>
             <h2 className="text-2xl fixed bottom-16 font-atomic text-neutral-500 select-none -skew-y-6">
