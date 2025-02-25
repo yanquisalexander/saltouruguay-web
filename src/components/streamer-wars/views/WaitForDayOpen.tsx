@@ -4,7 +4,7 @@ import { ConnectedPlayers } from "../ConnectedPlayers"
 const DAYS = [
     {
         number: 1,
-        completed: false,
+        completed: true,
         pending: false,
     },
     {
