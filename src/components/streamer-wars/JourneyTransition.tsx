@@ -68,15 +68,19 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
                 /* 
                     Gradient on laterals from transparent to black
                 */
-                <ul class="flex gap-x-4 flex-wrap justify-center mt-4" style={
+                <ul class="flex w-full max-w-4xl overflow-scroll gap-x-4 flex-wrap justify-center mt-4" style={
                     {
+                        scrollbarWidth: "none",
+                        scrollbarColor: "transparent transparent",
+                        scrollbarTrackColor: "transparent",
+                        scrollSnapType: "x mandatory",
                         background: "linear-gradient(to right, transparent, black), linear-gradient(to left, transparent, black)",
                         padding: "0 1rem",
                         borderRadius: "0.5rem"
                     }}>
                     {players?.map((player: Players) => (
                         <li class="flex flex-col items-center space-y-2">
-                            <img src={player.avatar} alt="" class="grayscale size-5 rounded-md" />
+                            <img src={player.avatar} alt="" class="grayscale size-7 rounded-md" />
                             <span class="font-mono text-neutral-400 text-lg">#{player.playerNumber.toString().padStart(3, "0")}</span>
                         </li>
                     ))}
