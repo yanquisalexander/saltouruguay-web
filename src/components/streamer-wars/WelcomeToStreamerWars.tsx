@@ -12,8 +12,8 @@ export const WelcomeToStreamerWars = ({ session, bgAudio, isOpen, setIsOpen }: {
 
     useEffect(() => {
         if (isOpen) {
-            bgAudio.volume = 0.5;
-            bgAudio.play();
+            bgAudio && (bgAudio.volume = 0.5);
+            bgAudio && bgAudio.play();
         } else {
             let fadeOut = setInterval(() => {
                 if (bgAudio.volume > 0.1) {
