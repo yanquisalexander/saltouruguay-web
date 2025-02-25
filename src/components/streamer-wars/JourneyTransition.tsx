@@ -68,7 +68,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
                 /* 
                     Gradient on laterals from transparent to black
                 */
-                <ul class="flex w-full max-w-4xl mb-8 overflow-scroll gap-x-4 flex-wrap justify-center mt-4" style={
+                <ul class="flex w-full max-w-4xl mb-12 overflow-scroll gap-x-4 flex-wrap justify-center mt-4" style={
                     {
                         scrollbarWidth: "none",
                         scrollbarColor: "transparent transparent",
