@@ -1,14 +1,15 @@
 import { CDN_PREFIX, playSound, playSoundWithReverb, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
-import type { JSX } from "preact";
+import { cloneElement, type JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { toast } from "sonner";
+import type { Players } from "../admin/streamer-wars/Players";
 
 
 interface ScriptItem {
     text: string;
     audioPath?: string;
     duration: number;
-    component?: JSX.Element;
+    component?: JSX.Element | ((props: any) => JSX.Element);
     omitReverb?: boolean;
     execute?: () => void;
 }
@@ -16,6 +17,7 @@ interface ScriptItem {
 interface JourneyTransitionProps {
     phase: "start" | "finish";
     executeOnMount?: () => void;
+    players?: Players[]
 }
 
 const ReverseCountUp = ({ target, initial, duration }: { target: number; initial: number; duration: number }) => {
@@ -56,7 +58,34 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
     { text: "Algunos lo vieron venir... otros, nunca lo esperaron.", audioPath: "day2-start-5", duration: 5000 },
     { text: "Pero la Guerra apenas comienza.", audioPath: "day2-start-6", duration: 3500 },
     { text: "Las alianzas se rompen, las traiciones se revelan.", audioPath: "day2-start-7", duration: 4500 },
-    { text: "¿Quién será el próximo en caer?", audioPath: "day2-start-8", duration: 3000 },
+    {
+        text: "¿Quién será el próximo en caer?", audioPath: "day2-start-8", duration: 3000,
+        /* 
+            List of players
+        */
+        component: ({ players }: { players: Players[] }) => {
+            return (
+                /* 
+                    Gradient on laterals from transparent to black
+                */
+                <ul class="flex gap-x-4 flex-wrap justify-center mt-4" style={
+                    {
+                        background: "linear-gradient(to right, transparent, black), linear-gradient(to left, transparent, black)",
+                        padding: "0 1rem",
+                        borderRadius: "0.5rem"
+                    }}>
+                    {players?.map((player: Players) => (
+                        <li class="flex items-center space-x-2">
+                            <img src={player.avatar} alt="" class="grayscale-[50%] size-5 rounded-md" />
+                            <span class="font-mono text-neutral-400 text-lg">#{player.playerNumber.toString().padStart(3, "0")}</span>
+                        </li>
+                    ))}
+                </ul>
+            );
+        }
+    },
+
+
     { text: "Solo el tiempo lo dirá...", audioPath: "day2-start-9", duration: 3200 },
 
 
@@ -106,7 +135,7 @@ const PRELOAD_SOUNDS = () => {
 
 }
 
-export const JourneyTransition = ({ phase, executeOnMount }: JourneyTransitionProps) => {
+export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTransitionProps) => {
     // Selecciona el script según la fase
     const script: ScriptItem[] = phase === "start" ? JOURNEY_START_SCRIPT : JOURNEY_FINISH_SCRIPT;
 
@@ -234,7 +263,12 @@ export const JourneyTransition = ({ phase, executeOnMount }: JourneyTransitionPr
                 </header>
                 {script[currentIndex]?.component && (
                     <div className="mt-8">
-                        {script[currentIndex].component}
+                        {/* 
+                        Pass props to the component here
+                        */}
+                        {typeof script[currentIndex].component === 'function'
+                            ? script[currentIndex].component({ players })
+                            : cloneElement(script[currentIndex].component!, { players })}
                     </div>
                 )}
             </div>
