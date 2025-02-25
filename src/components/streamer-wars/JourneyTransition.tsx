@@ -75,8 +75,8 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
                         borderRadius: "0.5rem"
                     }}>
                     {players?.map((player: Players) => (
-                        <li class="flex items-center space-x-2">
-                            <img src={player.avatar} alt="" class="grayscale-[50%] size-5 rounded-md" />
+                        <li class="flex flex-col items-center space-y-2">
+                            <img src={player.avatar} alt="" class="grayscale size-5 rounded-md" />
                             <span class="font-mono text-neutral-400 text-lg">#{player.playerNumber.toString().padStart(3, "0")}</span>
                         </li>
                     ))}
