@@ -3,10 +3,11 @@ import { cloneElement, type JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { toast } from "sonner";
 import type { Players } from "../admin/streamer-wars/Players";
+import { actions } from "astro:actions";
 
 
 interface ScriptItem {
-    text: string;
+    text?: string;
     audioPath?: string;
     duration: number;
     component?: JSX.Element | ((props: any) => JSX.Element);
@@ -46,7 +47,7 @@ const ReverseCountUp = ({ target, initial, duration }: { target: number; initial
     return <span class="font-atomic text-lime-500 text-3xl py-2 border-y-4 border-lime-500">{current} Jugadores restantes</span>;
 };
 
-
+let TODAY_ELIMINATEDS: number[] = []
 //component: <div class="animate-fade-in font-atomic text-lime-500 tracking-widest">¡Comienza la Guerra de Streamers!</div>
 
 // Ejemplos de definición (ajusta texto, audioPath y duration según necesites)
@@ -113,7 +114,32 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
 
 
 export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
-    { text: "Gracias por haber participado de esta jornada", audioPath: "finish-1", duration: 3200 },
+    {
+        duration: 3000, execute: () => actions.streamerWars.getTodayEliminatedPlayers().then(({ data }) => {
+            TODAY_ELIMINATEDS = data?.todayEliminatedPlayers || [];
+            console.log("Today eliminated players", TODAY_ELIMINATEDS);
+        })
+    },
+    {
+        text: "Muchos jugadores han caído", audioPath: "finish-1", duration: 6000, component: ({ players }: { players: Players[] }) => (
+            console.log({ players }),
+            /* 
+                Grid with eliminated players (using filter)
+            */
+
+            <ul class="grid grid-cols-3 gap-4 mt-4">
+                {players?.filter(player => TODAY_ELIMINATEDS.includes(player.playerNumber)).map((player: Players) => (
+                    <li class="flex flex-col items-center space-y-2 relative">
+                        <img src={player.avatar} alt="" class="grayscale size-7 rounded-md" />
+                        <span class="font-mono text-neutral-400 text-lg">#{player.playerNumber.toString().padStart(3, "0")}</span>
+                        <span class="absolute inset-0 bg-black bg-opacity-50 font-atomic text-red-400 text-2xl flex items-center justify-center">
+                            X
+                        </span>
+                    </li>
+                ))}
+            </ul>
+        )
+    },
     { text: "Tienes suerte de haber sobrevivido", audioPath: "finish-2", duration: 3000 },
     { text: "¡Nos vemos en la siguiente!", audioPath: "finish-3", duration: 3000 },
     { text: "(si es que no te eliminan antes)", audioPath: "finish-4", duration: 3200 },
@@ -199,11 +225,10 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
             // Si es el primer sonido, esperar el retraso definido antes de comenzar
             if (index === 0) {
                 const bgAudioFile = phase === "start" ? "day2-bg-start" : "day2-bg-finish";
-                playSound({ sound: `scripts/${bgAudioFile}`, volume: phase === "start" ? 0.3 : 0.4 });
+                playSound({ sound: `scripts/${bgAudioFile}`, volume: phase === "start" ? 0.3 : 0.7 });
                 const firstDelay =
                     phase === "start" ? START_SCRIPT_FIRST_AUDIO_DELAY : FINISH_SCRIPT_FIRST_AUDIO_DELAY;
                 timeoutId = window.setTimeout(() => {
-                    // Ahora se procesa el primer ítem
                     setCurrentIndex(index);
                     const item = script[index];
                     if (item.audioPath) {
@@ -213,15 +238,17 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
                             playSoundWithReverb({ sound: `scripts/${item.audioPath}`, volume: 1, reverbAmount: phase === "start" ? 0.2 : 0.5 });
                         }
                     }
-
-
-                    // Después de la duración indicada, pasa al siguiente ítem
+                    // Agregar la ejecución si existe
+                    if (item.execute) {
+                        item.execute();
+                    }
                     timeoutId = window.setTimeout(() => {
                         playItem(index + 1);
                     }, item.duration);
                 }, firstDelay);
                 return;
             }
+
 
             // Para los siguientes ítems (índice > 0), se procede normalmente:
             setCurrentIndex(index);
@@ -270,15 +297,20 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
                         {/* 
                         Pass props to the component here
                         */}
-                        {typeof script[currentIndex].component === 'function'
-                            ? script[currentIndex].component({ players })
-                            : cloneElement(script[currentIndex].component!, { players })}
+                        {typeof script[currentIndex].component === "function"
+                            ? cloneElement(script[currentIndex].component({ players }), { key: currentIndex })
+                            : cloneElement(script[currentIndex].component, { key: currentIndex })}
                     </div>
                 )}
             </div>
-            <div className="absolute bottom-56 w-max max-w-full md:max-w-[60ch] px-4 font-mono text-center bg-neutral-900 text-white text-lg">
-                {script[currentIndex]?.text}
-            </div>
+            {
+                script[currentIndex]?.text && (
+                    <div className="absolute bottom-56 w-max max-w-full md:max-w-[60ch] px-4 font-mono text-center bg-neutral-900 text-white text-lg">
+                        {script[currentIndex]?.text}
+                    </div>
+                )
+            }
+
             <h2 className="text-2xl fixed bottom-16 font-atomic text-neutral-500 select-none -skew-y-6">
                 <span className="tracking-wider">Guerra de Streamers</span>
             </h2>

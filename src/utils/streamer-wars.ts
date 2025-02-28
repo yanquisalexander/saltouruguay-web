@@ -336,6 +336,20 @@ export const eliminatePlayer = async (playerNumber: number) => {
         }
 
 
+        /* 
+            Add to today eliminateds
+        */
+
+        try {
+            const todayEliminateds = await cache.get("streamer-wars-today-eliminateds") as number[] ?? [];
+            await cache.set("streamer-wars-today-eliminateds", Array.from(new Set([...todayEliminateds, playerNumber])))
+
+
+        } catch (error) {
+
+        }
+
+
 
         // Genera el audio.
         const audioBase64 = await tts(`Jugador, ${playerNumber}, eliminado`);
@@ -395,6 +409,24 @@ export const massEliminatePlayers = async (playerNumbers: number[]) => {
             )} han sido eliminados de Streamer Wars.`,
             color: 16739693,
         }).catch(() => { }); // Ignorar error si falla el webhook
+
+        try {
+            /* 
+                Add to redis
+            */
+
+            const cache = cacheService.create({ ttl: 60 * 60 * 48 });
+            const todayEliminateds = await cache.get("streamer-wars-today-eliminateds") as number[] ?? [];
+
+            /* 
+                new Set()
+            */
+
+            await cache.set("streamer-wars-today-eliminateds", Array.from(new Set([...todayEliminateds, ...playerNumbers])))
+
+        } catch (error) {
+
+        }
 
         //await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, playerNumber, ROLE_GUERRA_STREAMERS);
     } catch (error) {
@@ -1287,4 +1319,13 @@ export const getPlayersLiveOnTwitch = async () => {
     );
 
     return liveNow;
+}
+
+export const getTodayEliminatedPlayers = async () => {
+    /* 
+        Redis 
+    */
+
+    const cache = createCache();
+    return await cache.get("streamer-wars-today-eliminateds") as number[] ?? [];
 }

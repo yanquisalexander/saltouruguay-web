@@ -4,7 +4,7 @@ import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWa
 import Cache from "@/lib/Cache";
 import cacheService from "@/services/cache";
 import { pusher } from "@/utils/pusher";
-import { eliminatePlayer, removePlayer, addPlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles, acceptBribe, selfEliminate, aislatePlayer, unaislatePlayer, beforeLaunchGame, unaislateAllPlayers, getPlayersLiveOnTwitch, massEliminatePlayers, getAutoEliminatedPlayers } from "@/utils/streamer-wars";
+import { eliminatePlayer, removePlayer, addPlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles, acceptBribe, selfEliminate, aislatePlayer, unaislatePlayer, beforeLaunchGame, unaislateAllPlayers, getPlayersLiveOnTwitch, massEliminatePlayers, getAutoEliminatedPlayers, getTodayEliminatedPlayers } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -884,6 +884,17 @@ export const streamerWars = {
 
             await pusher.trigger("streamer-wars", "reload-for-user", { playerNumber });
             return { success: true }
+        }
+    }),
+    getTodayEliminatedPlayers: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+
+
+            const todayEliminatedPlayers = await getTodayEliminatedPlayers() ?? [];
+
+            return { todayEliminatedPlayers }
         }
     }),
 }
