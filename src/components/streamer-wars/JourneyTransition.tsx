@@ -241,7 +241,7 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
             // Si es el primer sonido, esperar el retraso definido antes de comenzar
             if (index === 0) {
                 const bgAudioFile = phase === "start" ? "day2-bg-start" : "day2-bg-finish";
-                playSound({ sound: `scripts/${bgAudioFile}`, volume: phase === "start" ? 0.3 : 0.45 });
+                playSound({ sound: `scripts/${bgAudioFile}`, volume: 0.28 });
                 const firstDelay =
                     phase === "start" ? START_SCRIPT_FIRST_AUDIO_DELAY : FINISH_SCRIPT_FIRST_AUDIO_DELAY;
                 timeoutId = window.setTimeout(() => {
