@@ -138,7 +138,7 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
                     >
                         <img src={player.avatar} alt="" class="grayscale size-12" />
                         <span class="font-mono text-neutral-400 text-lg">#{player.playerNumber.toString().padStart(3, "0")}</span>
-                        <span class="absolute inset-0 bg-black bg-opacity-50 font-atomic text-red-400 text-3xl aspect-square flex items-center justify-center">
+                        <span class="absolute inset-0 bg-black bg-opacity-50 font-atomic text-red-500 text-3xl aspect-square flex items-center justify-center">
                             X
                         </span>
                     </li>
@@ -157,7 +157,8 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
     { text: "Serán desconectados en...", audioPath: "day2-finish-8", duration: 3000 },
     { text: "3...", audioPath: "day2-finish-9", duration: 1000 },
     { text: "2...", audioPath: "day2-finish-10", duration: 1000 },
-    { text: "1...", audioPath: "day2-finish-11", duration: 1200 }
+    { text: "1...", audioPath: "day2-finish-11", duration: 1200 },
+    { duration: 1000 },
 ];
 
 export const CURRENT_DAY = 2;
