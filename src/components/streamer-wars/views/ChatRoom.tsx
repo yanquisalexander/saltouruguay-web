@@ -4,6 +4,7 @@ import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { actions } from "astro:actions";
 import {
     LucideChevronDown,
+    LucideLock,
     LucideMegaphone,
     LucideMessageCircle,
     LucideSend,
@@ -208,8 +209,17 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
 
     const editableRef = useRef<HTMLDivElement>(null);
     const [showPlaceholder, setShowPlaceholder] = useState(true);
+    const [chatLocked, setChatLocked] = useState<boolean>(false);
+
+    const fetchLockStatus = async () => {
+        const { data: locked } = await actions.streamerWars.getChatLockStatus();
+        if (locked !== undefined) {
+            setChatLocked(locked);
+        }
+    }
 
     const handleInput = (e: Event) => {
+        if (!editableRef.current || chatLocked) return;
         const target = e.currentTarget as HTMLElement;
         let rawText = getEditableContent(target);
 
@@ -280,6 +290,10 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
         }
     };
 
+    useEffect(() => {
+        fetchLockStatus();
+    }, []);
+
     // Función que muestra quién está escribiendo
     const usersTypingMessage = useMemo(() => {
         const typingArray = Array.from(usersTyping);
@@ -320,6 +334,16 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
             setMessages([]);
             toast.info("Un moderador ha limpiado el chat");
         });
+
+        channel.bind("unlock-chat", () => {
+            setChatLocked(false);
+            toast.success("El chat ha sido desbloqueado");
+        })
+
+        channel.bind("lock-chat", () => {
+            setChatLocked(true);
+            toast.error("El chat ha sido bloqueado por un moderador");
+        })
 
         channel.bind("message-deleted", ({ messageId }: { messageId: number }) => {
             setMessages((prev) =>
@@ -458,6 +482,18 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                     scrollbarColor: "#4B5563 #E5E7EB",
                 }}
             >
+                {
+                    chatLocked && (
+                        <div class="bg-neutral-800 z-10 h-full items-center justify-center absolute bottom-0 text-white flex p-2 border border-dashed border-neutral-500">
+                            <div class="w-full flex-col flex justify-center items-center gap-y-4">
+                                <LucideLock size={24} />
+                                <span class="w-full break-words text-wrap text-center overflow-hidden italic">
+                                    El chat ha sido bloqueado por un moderador
+                                </span>
+                            </div>
+                        </div>
+                    )
+                }
                 <div
                     onScroll={handleScroll}
                     ref={messagesContainer}
@@ -527,10 +563,11 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                 <div class="relative col-span-5 w-full flex min-h-12 bg-black/20 rounded-md border mr-2 resize-none">
                     <div
                         ref={editableRef}
-                        contentEditable="true"
+                        contentEditable={!chatLocked}
                         onInput={handleInput}
                         onKeyDown={handleKeyDown}
-                        class="p-2 text-white overflow-hidden whitespace-pre-wrap outline-none empty:before:content-[attr(placeholder)] empty:before:text-gray-400"
+                        disabled={chatLocked}
+                        class="p-2 text-white overflow-hidden whitespace-pre-wrap outline-none empty:before:content-[attr(placeholder)] empty:before:text-gray-400 disabled:cursor-not-allowed"
                         placeholder="Escribe un mensaje..."
                     />
                     {showPlaceholder && (
@@ -543,7 +580,9 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                     <Popover
                         className="bg-neutral-500 rounded-md p-4"
                         activator={
-                            <button class="bg-neutral-700 px-4 py-2 rounded-md text-white hover:bg-neutral-500 transition">
+                            <button
+                                disabled={chatLocked}
+                                class="bg-neutral-700 px-4 py-2 rounded-md text-white hover:bg-neutral-500 transition disabled:bg-white/20 disabled:text-white/40 disabled:cursor-not-allowed">
                                 <LucideSmilePlus size={24} />
                             </button>
                         }

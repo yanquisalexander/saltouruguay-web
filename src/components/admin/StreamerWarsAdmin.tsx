@@ -5,7 +5,7 @@ import Pusher from "pusher-js";
 import { StreamerWarsPlayers } from "./streamer-wars/Players";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
-import { LucideBellRing, LucideCoffee, LucideFlag, LucideGavel, LucideLockKeyholeOpen, LucideRefreshCw, LucideTrash2 } from "lucide-preact";
+import { LucideBellRing, LucideCoffee, LucideFlag, LucideGavel, LucideLockKeyholeOpen, LucideMessageSquareLock, LucideRefreshCw, LucideTrash2 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 
 
@@ -137,6 +137,30 @@ let GENERAL_ACTIONS = [
                 loading: "Recargando overlay...",
                 success: "Overlay recargado",
                 error: "Error al recargar overlay",
+            });
+        }
+    },
+    {
+        name: "Bloquear chat",
+        classes: "bg-red-500 hover:bg-red-600 !text-black",
+        icon: LucideMessageSquareLock,
+        execute: async () => {
+            toast.promise(actions.streamerWars.lockChat(), {
+                loading: "Bloqueando chat...",
+                success: "Chat bloqueado",
+                error: "Error al bloquear chat",
+            });
+        }
+    },
+    {
+        name: "Desbloquear chat",
+        classes: "bg-green-500 hover:bg-green-600 !text-black",
+        icon: LucideMessageSquareLock,
+        execute: async () => {
+            toast.promise(actions.streamerWars.unlockChat(), {
+                loading: "Desbloqueando chat...",
+                success: "Chat desbloqueado",
+                error: "Error al desbloquear chat",
             });
         }
     }

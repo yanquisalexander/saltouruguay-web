@@ -70,6 +70,18 @@ export const streamerWars = {
             }
 
             try {
+                const isChatLocked = await cacheService.create({ ttl: 60 * 60 * 24 }).get("streamer-wars-chat-locked") as boolean;
+                if (isChatLocked) {
+                    throw new ActionError({
+                        code: "BAD_REQUEST",
+                        message: "El chat está bloqueado"
+                    })
+                }
+            } catch (error) {
+                console.error(`Error getting chat lock status: ${error}`);
+            }
+
+            try {
                 const [{ id }] = await client
                     .insert(StreamerWarsChatMessagesTable)
                     .values({ userId: session.user.id, message })
@@ -895,6 +907,57 @@ export const streamerWars = {
             const todayEliminatedPlayers = await getTodayEliminatedPlayers() ?? [];
 
             return { todayEliminatedPlayers }
+        }
+    }),
+    lockChat: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para bloquear el chat"
+                });
+            }
+
+            const cache = cacheService.create({ ttl: 60 * 60 * 24 });
+            await cache.set("streamer-wars-chat-locked", true);
+            await pusher.trigger("streamer-wars", "lock-chat", null);
+            return { success: true }
+        }
+    }),
+    unlockChat: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para desbloquear el chat"
+                });
+            }
+
+            const cache = cacheService.create({ ttl: 60 * 60 * 24 });
+            await cache.set("streamer-wars-chat-locked", false);
+            await pusher.trigger("streamer-wars", "unlock-chat", null);
+            return { success: true }
+        }
+    }),
+    getChatLockStatus: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para ver el estado del chat"
+                });
+            }
+
+            const cache = cacheService.create({ ttl: 60 * 60 * 24 });
+            const chatLocked = await cache.get("streamer-wars-chat-locked") as boolean;
+
+            return chatLocked
         }
     }),
 }
