@@ -121,8 +121,12 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
         })
     },
     {
-        text: "Muchos jugadores han caído", audioPath: "finish-1", duration: 50000, component: ({ players }: { players: Players[] }) => (
-            console.log({ players }),
+        text: "El destino fue cruel con algunos...",
+        audioPath: "finish-1", duration: 6000,
+    },
+    {
+        text: "Hoy, muchos han caído.",
+        audioPath: "finish-2", duration: 3000, component: ({ players }: { players: Players[] }) => (
             /* 
                 Grid with eliminated players (using filter)
             */
@@ -142,15 +146,18 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
             </ul>
         )
     },
-    { text: "Tienes suerte de haber sobrevivido", audioPath: "finish-2", duration: 3000 },
-    { text: "¡Nos vemos en la siguiente!", audioPath: "finish-3", duration: 3000 },
-    { text: "(si es que no te eliminan antes)", audioPath: "finish-4", duration: 3200 },
+    {
+        text: "Pero la Guerra no ha terminado...",
+        audioPath: "finish-3", duration: 3000
+    },
+    { text: "El último en pie, será el vencedor.", audioPath: "finish-4", duration: 3000 },
+    { text: "(voz de fondo) ¡Es hora de dormir, jugadores!", audioPath: "finish-5", duration: 3000 },
 ];
 
 export const CURRENT_DAY = 2;
 
 const START_SCRIPT_FIRST_AUDIO_DELAY = 0;
-const FINISH_SCRIPT_FIRST_AUDIO_DELAY = 1000;
+const FINISH_SCRIPT_FIRST_AUDIO_DELAY = 0;
 
 const PRELOAD_SOUNDS = () => {
     const allSounds = [...JOURNEY_START_SCRIPT, ...JOURNEY_FINISH_SCRIPT].map((item) => item.audioPath);
