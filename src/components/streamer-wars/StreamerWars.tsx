@@ -297,7 +297,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                                     /* 
                                     Excluye eliminados, y los que cuyo número sea superior a 50
                                     */
-                                    players={players.filter((p) => !p.eliminated && p.playerNumber <= 50)}
+                                    players={players.filter((p) => p.playerNumber <= 50)}
                                     {...journeyTransitionProps} />
 
                             )

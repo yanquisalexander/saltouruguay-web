@@ -79,7 +79,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
                         padding: "0 1rem",
                         borderRadius: "0.5rem"
                     }}>
-                    {players?.map((player: Players) => (
+                    {players?.filter(player => !player.eliminated).map((player: Players) => (
                         <li class="flex flex-col items-center space-y-2">
                             <img src={player.avatar} alt="" class="grayscale size-7 rounded-md" />
                             <span class="font-mono text-neutral-400 text-lg">#{player.playerNumber.toString().padStart(3, "0")}</span>
@@ -121,18 +121,20 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
         })
     },
     {
-        text: "Muchos jugadores han caído", audioPath: "finish-1", duration: 6000, component: ({ players }: { players: Players[] }) => (
+        text: "Muchos jugadores han caído", audioPath: "finish-1", duration: 50000, component: ({ players }: { players: Players[] }) => (
             console.log({ players }),
             /* 
                 Grid with eliminated players (using filter)
             */
 
-            <ul class="grid grid-cols-3 gap-4 mt-4">
-                {players?.filter(player => TODAY_ELIMINATEDS.includes(player.playerNumber)).map((player: Players) => (
-                    <li class="flex flex-col items-center space-y-2 relative">
-                        <img src={player.avatar} alt="" class="grayscale size-7 rounded-md" />
+            <ul class="grid grid-cols-5 gap-4 mt-4">
+                {players?.filter(player => TODAY_ELIMINATEDS.includes(player.playerNumber)).map((player: Players, index) => (
+                    <li class="flex flex-col items-center justify-center relative size-20 animate-fade-in-up duration-500"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                        <img src={player.avatar} alt="" class="grayscale size-8 rounded-md" />
                         <span class="font-mono text-neutral-400 text-lg">#{player.playerNumber.toString().padStart(3, "0")}</span>
-                        <span class="absolute inset-0 bg-black bg-opacity-50 font-atomic text-red-400 text-2xl flex items-center justify-center">
+                        <span class="absolute inset-0 bg-black bg-opacity-50 font-atomic text-red-400 text-3xl aspect-square flex items-center justify-center">
                             X
                         </span>
                     </li>
