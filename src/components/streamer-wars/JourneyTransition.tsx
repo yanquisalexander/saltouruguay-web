@@ -127,12 +127,12 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
                 Grid with eliminated players (using filter)
             */
 
-            <ul class="grid grid-cols-5 gap-4 mt-4">
+            <ul class="grid grid-cols-5 gap-4 mb-32">
                 {players?.filter(player => TODAY_ELIMINATEDS.includes(player.playerNumber)).map((player: Players, index) => (
                     <li class="flex flex-col items-center justify-center relative size-20 animate-fade-in-up duration-500"
                         style={{ animationDelay: `${index * 100}ms` }}
                     >
-                        <img src={player.avatar} alt="" class="grayscale size-8 rounded-md" />
+                        <img src={player.avatar} alt="" class="grayscale size-12" />
                         <span class="font-mono text-neutral-400 text-lg">#{player.playerNumber.toString().padStart(3, "0")}</span>
                         <span class="absolute inset-0 bg-black bg-opacity-50 font-atomic text-red-400 text-3xl aspect-square flex items-center justify-center">
                             X
