@@ -121,12 +121,12 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
         })
     },
     {
-        text: "El destino fue cruel con algunos...",
-        audioPath: "finish-1", duration: 6000,
+        text: "El destino ha sido cruel con algunos...",
+        audioPath: "day2-finish-1", duration: 4500,
     },
     {
         text: "Hoy, muchos han caído.",
-        audioPath: "finish-2", duration: 3000, component: ({ players }: { players: Players[] }) => (
+        audioPath: "day2-finish-2", duration: 4000, component: ({ players }: { players: Players[] }) => (
             /* 
                 Grid with eliminated players (using filter)
             */
@@ -148,10 +148,16 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
     },
     {
         text: "Pero la Guerra no ha terminado...",
-        audioPath: "finish-3", duration: 3000
+        audioPath: "day2-finish-3", duration: 3900
     },
-    { text: "El último en pie, será el vencedor.", audioPath: "finish-4", duration: 3000 },
-    { text: "(voz de fondo) ¡Es hora de dormir, jugadores!", audioPath: "finish-5", duration: 3000 },
+    { text: "El último en pie, será el vencedor.", audioPath: "day2-finish-4", duration: 3200 },
+    { text: "Recuerden: la astucia y la estrategia son sus mejores armas.", audioPath: "day2-finish-5", duration: 6000 },
+    { text: "[Megafonía] ¡Jugadores, es hora de dormir!", audioPath: "day2-finish-6", duration: 3000 },
+    { text: "Descansen, pronto volveremos a la batalla.", audioPath: "day2-finish-7", duration: 4000 },
+    { text: "Serán desconectados en...", audioPath: "day2-finish-8", duration: 3000 },
+    { text: "3...", audioPath: "day2-finish-9", duration: 1000 },
+    { text: "2...", audioPath: "day2-finish-10", duration: 1000 },
+    { text: "1...", audioPath: "day2-finish-11", duration: 1200 }
 ];
 
 export const CURRENT_DAY = 2;
