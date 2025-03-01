@@ -172,6 +172,7 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
                                     user={{
                                         avatar,
                                         username,
+                                        playerNumber: session?.user?.streamerWarsPlayerNumber
                                     }}
                                 />
                             </Container3D>
@@ -187,6 +188,7 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
                             user={{
                                 avatar,
                                 username,
+                                playerNumber: session?.user?.streamerWarsPlayerNumber
                             }}
                         />
                     </Container3D>

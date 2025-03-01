@@ -11,6 +11,7 @@ interface Props {
     user: {
         username: string;
         avatar: string;
+        playerNumber?: number;
     };
     handleRemoveSticker?: (index: number) => void;
     selectedStickers?: {
@@ -56,18 +57,33 @@ export const MemberCard = ({
                                 <img
                                     src={avatar}
                                     crossOrigin="anonymous"
-                                    className="block aspect-square rounded-full size-20 md:size-[70px] object-cover"
+                                    className={`block aspect-square rounded-full size-20 transition-all md:size-[70px] object-cover ${skin === 'guerra-streamers' ? 'border-2 border-dotted border-l-lime-400 border-t-lime-500 border-r-lime-600 p-0.5 border-b-lime-700' : ''}`}
                                     alt={`${username}'s avatar`}
                                     width="78"
                                     height="78"
                                 />
-                                <div>
+                                <div className="flex flex-col items-center md:items-start">
                                     <p className="text-xl font-bold">
                                         {username}
                                     </p>
                                     <span className="block px-3 py-1 mt-1 text-xs font-medium rounded-full w-max text-white/80 bg-black/10">
-                                        Miembro Saltano <span className="inline-block">⭐️</span>
+
+                                        {(skin === 'guerra-streamers' && (user.playerNumber)) ? 'Participante de Guerra de Streamers' : 'Miembro Saltano'}
+                                        <span className="inline-block">
+                                            <span dangerouslySetInnerHTML={{ __html: '&nbsp;' }} />
+                                            ⭐️</span>
                                     </span>
+                                    {
+                                        skin === 'guerra-streamers' && user.playerNumber != null && (
+                                            <div>
+
+
+                                                <span className="block px-3 z-10  py-1 mt-1 text-xl font-atomic font-medium rounded-full w-max text-lime-400 bg-black/10">
+                                                    Jugador #{user.playerNumber.toString().padStart(3, '0')}
+                                                </span>
+                                            </div>
+                                        )
+                                    }
                                 </div>
                             </div>
                         </div>
