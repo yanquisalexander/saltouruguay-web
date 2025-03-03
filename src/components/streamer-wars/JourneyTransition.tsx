@@ -80,7 +80,7 @@ const CreditsRoll = ({ duration, players }: { duration: number, players?: Player
                         players && (
                             <div class="flex flex-col items-center space-y-2">
                                 <h3 class="font-atomic text-neutral-400 text-2xl">Jugadores</h3>
-                                <ul class="flex flex-wrap justify-center gap-x-4">
+                                <ul class="grid grid-cols-2 gap-x-4 gap-y-2">
                                     {players.map((player) => (
                                         <li class="font-mono text-neutral-300 text-xl">{player.displayName}</li>
                                     ))}
@@ -104,6 +104,7 @@ interface ScriptItem {
     duration: number;
     component?: JSX.Element | ((props: any) => JSX.Element);
     omitReverb?: boolean;
+    volume?: number;
     execute?: () => void;
 }
 
@@ -238,7 +239,7 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
         */
 
         component: ({ players }: { players: Players[] }) => {
-            const winner = players.filter(player => !player.eliminated && player.playerNumber < 50)[0];
+            const winner = players.filter(player => !player.eliminated && player.playerNumber < 50 && !TODAY_ELIMINATEDS.includes(player.playerNumber))[0];
             return (
                 <div class="flex flex-col items-center space-y-4 pb-28">
                     <img src={winner?.avatar} alt="" class="size-20 rounded-md" />
@@ -249,7 +250,7 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
         }
     },
 
-    { duration: 25000, omitReverb: true, audioPath: "credit-roll", component: ({ players }: { players: Players[] }) => <CreditsRoll duration={25000} players={players} /> },
+    { duration: 28000, omitReverb: true, audioPath: "credit-roll-2", volume: 0.7, component: ({ players }: { players: Players[] }) => <CreditsRoll duration={28000} players={players} /> },
 
 
     /* component: ({ players }: { players: Players[] }) => (
@@ -361,9 +362,9 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
                     const item = script[index];
                     if (item.audioPath) {
                         if (item.omitReverb) {
-                            playSound({ sound: `scripts/${item.audioPath}`, volume: 1 });
+                            playSound({ sound: `scripts/${item.audioPath}`, volume: item.volume || 1 });
                         } else {
-                            playSoundWithReverb({ sound: `scripts/${item.audioPath}`, volume: 1, reverbAmount: phase === "start" ? 0.2 : 0.5 });
+                            playSoundWithReverb({ sound: `scripts/${item.audioPath}`, volume: item.volume || 1, reverbAmount: phase === "start" ? 0.2 : 0.5 });
                         }
                     }
                     // Agregar la ejecución si existe
@@ -409,7 +410,6 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
     if (!isVisible) return null;
 
 
-    console.log("isCreditsRoll", isCreditsRoll);
 
     return (
         <div
