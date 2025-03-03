@@ -187,7 +187,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
     },
 
 
-    { text: "Mucha suerte, jugadores, la necesitarán.", audioPath: "day3-start-8", duration: 4600 },
+    { text: "Mucha suerte, jugadores, la necesitarán.", audioPath: "day3-start-8", duration: 4800 },
 
 
     {
