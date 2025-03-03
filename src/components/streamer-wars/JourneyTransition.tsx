@@ -6,10 +6,11 @@ import type { Players } from "../admin/streamer-wars/Players";
 import { actions } from "astro:actions";
 
 const CreditsRoll = ({ duration, players }: { duration: number, players?: Players[] }) => {
-    const MODERATORS = ["TitoLeproso", "BradTerra", "xDiegoUY", "tapitabal"];
+    const MODERATORS = ["TitoLeproso", "BradTerra", "xDiegoUY", "tapitabal", "CCharly7"]
     const CONDUCTOR_NAME = "JulianMartinR";
     const PROGRAMMERS = ["Alexitoo_UY"];
-    const DIRECTOR_AND_CREATOR = "SaltoUruguayServer";
+    const DIRECTOR_AND_CREATOR = "Salto Uruguay";
+    const COLLABORATORS = ["Yonivoy", "Big Bros", "HolyHosting", "Alexitoo.DEV", "Crea", "CreativeBox", "TRESDEUY (3DE)"]
 
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -72,8 +73,17 @@ const CreditsRoll = ({ duration, players }: { duration: number, players?: Player
                     </div>
 
                     <div class="flex flex-col items-center space-y-2">
-                        <h3 class="font-atomic text-neutral-400 text-2xl">Director y Creador</h3>
+                        <h3 class="font-atomic text-neutral-400 text-2xl">Director</h3>
                         <span class="font-mono text-neutral-300 text-xl">{DIRECTOR_AND_CREATOR}</span>
+                    </div>
+
+                    <div class="flex flex-col items-center space-y-2">
+                        <h3 class="font-atomic text-neutral-400 text-2xl">Colaboradores</h3>
+                        <ul class="flex flex-wrap justify-center gap-x-4">
+                            {COLLABORATORS.map((collab) => (
+                                <li class="font-mono text-neutral-300 text-xl">{collab}</li>
+                            ))}
+                        </ul>
                     </div>
 
                     {
@@ -250,7 +260,7 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
         }
     },
 
-    { duration: 28000, omitReverb: true, audioPath: "credit-roll-2", volume: 0.4, component: ({ players }: { players: Players[] }) => <CreditsRoll duration={30000} players={players} /> },
+    { duration: 28000, omitReverb: true, audioPath: "credit-roll-2", volume: 0.4, component: ({ players }: { players: Players[] }) => <CreditsRoll duration={28000} players={players} /> },
 
 
     /* component: ({ players }: { players: Players[] }) => (

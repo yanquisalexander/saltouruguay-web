@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from "astro";
 
 const middleware: MiddlewareHandler = async (context, next) => {
-    const MAINTENANCE_MODE = true
+    const MAINTENANCE_MODE = import.meta.env.PROD
 
     if (MAINTENANCE_MODE && context.request.url.endsWith('/500') === false) {
         context.locals.isMaintenanceMode = true;
