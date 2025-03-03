@@ -1,9 +1,101 @@
 import { CDN_PREFIX, playSound, playSoundWithReverb, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { cloneElement, type JSX } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 import type { Players } from "../admin/streamer-wars/Players";
 import { actions } from "astro:actions";
+
+const CreditsRoll = ({ duration, players }: { duration: number, players?: Players[] }) => {
+    const MODERATORS = ["TitoLeproso", "BradTerra", "xDiegoUY", "tapitabal"];
+    const CONDUCTOR_NAME = "JulianMartinR";
+    const PROGRAMMERS = ["Alexitoo_UY"];
+    const DIRECTOR_AND_CREATOR = "SaltoUruguayServer";
+
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (containerRef.current) {
+            const container = containerRef.current;
+            const fullHeight = container.scrollHeight;
+            const viewportHeight = window.innerHeight;
+
+            container.animate(
+                [
+                    { transform: `translateY(${viewportHeight}px)` },
+                    { transform: `translateY(-${fullHeight}px)` }
+                ],
+                {
+                    duration: duration,
+                    easing: "linear",
+                    iterations: 1,
+                    fill: "forwards"
+                }
+            );
+        }
+    }, [duration]);
+
+    return (
+        <div
+            class="absolute inset-0 z-[9999] flex justify-center bg-black pointer-events-none animate-fade-in"
+            style={{ animationDuration: "2000ms" }}
+        >
+            {/* El contenedor visible, que actúa como la ventana */}
+            <div class="relative overflow-hidden w-full max-w-2xl flex justify-center">
+                {/* Contenedor interno que es el que realmente scrollea */}
+                <div
+                    ref={containerRef}
+                    class="flex flex-col items-center space-y-8 text-center text-neutral-300"
+                >
+                    <h2 class="font-atomic text-lime-500 text-4xl mt-12">Créditos</h2>
+
+                    <div class="flex flex-col items-center space-y-2">
+                        <h3 class="font-atomic text-neutral-400 text-2xl">Moderadores</h3>
+                        <ul class="flex flex-wrap justify-center gap-x-4">
+                            {MODERATORS.map((mod) => (
+                                <li class="font-mono text-neutral-300 text-xl">{mod}</li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    <div class="flex flex-col items-center space-y-2">
+                        <h3 class="font-atomic text-neutral-400 text-2xl">Conductor</h3>
+                        <span class="font-mono text-neutral-300 text-xl">{CONDUCTOR_NAME}</span>
+                    </div>
+
+                    <div class="flex flex-col items-center space-y-2">
+                        <h3 class="font-atomic text-neutral-400 text-2xl">Programadores</h3>
+                        <ul class="flex flex-wrap justify-center gap-x-4">
+                            {PROGRAMMERS.map((prog) => (
+                                <li class="font-mono text-neutral-300 text-xl">{prog}</li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    <div class="flex flex-col items-center space-y-2">
+                        <h3 class="font-atomic text-neutral-400 text-2xl">Director y Creador</h3>
+                        <span class="font-mono text-neutral-300 text-xl">{DIRECTOR_AND_CREATOR}</span>
+                    </div>
+
+                    {
+                        players && (
+                            <div class="flex flex-col items-center space-y-2">
+                                <h3 class="font-atomic text-neutral-400 text-2xl">Jugadores</h3>
+                                <ul class="flex flex-wrap justify-center gap-x-4">
+                                    {players.map((player) => (
+                                        <li class="font-mono text-neutral-300 text-xl">{player.displayName}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )
+                    }
+
+                    {/* Espaciador final para terminar el scroll más suavemente */}
+                    <div class="h-64"></div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 
 interface ScriptItem {
@@ -58,7 +150,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
     { text: "Streamers, llenos de deudas, con muchas horas frente a la pantalla, y con sueños de grandeza.", audioPath: "day3-start-3", duration: 7000 },
     {
         text: "Hoy, solo quedan 16 de ustedes.", audioPath: "day3-start-4", duration: 4000,
-        component: <ReverseCountUp target={16} initial={50} duration={3800} />
+        component: <ReverseCountUp target={16} initial={50} duration={3000} />
     },
     { text: "34 jugadores fueron eliminados.", audioPath: "day3-start-5", duration: 4500, component: <span class="font-atomic text-neutral-400 text-3xl py-2 animate-zoom-in animate-duration-800">34 Jugadores eliminados</span> },
     { text: "Vosotros tenéis suerte de haber llegado hasta aquí.", audioPath: "day3-start-6", duration: 4000 },
@@ -94,11 +186,11 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
     },
 
 
-    { text: "Mucha suerte, jugadores, la necesitarán.", audioPath: "day3-start-8", duration: 4200 },
+    { text: "Mucha suerte, jugadores, la necesitarán.", audioPath: "day3-start-8", duration: 4600 },
 
 
     {
-        text: "Atención, jugadores!. Sigan las instrucciones cuidadosamente. Estamos a punto de comenzar. ", audioPath: "day2-start-10", duration: 8000, execute: () => {
+        text: "Atención, jugadores!. Sigan las instrucciones cuidadosamente. Estamos a punto de comenzar. ", audioPath: "day3-start-10", duration: 8000, execute: () => {
             setTimeout(() => {
                 playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION, volume: 0.5 });
                 toast.warning("¡Comienza la Guerra de Streamers!", {
@@ -124,17 +216,46 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
         })
     },
     {
-        text: "El destino ha sido cruel con algunos...",
-        audioPath: "day2-finish-1", duration: 4500,
+        text: "Después de días de batallas, traiciones y estrategias...",
+        audioPath: "day3-finish-1", duration: 5000,
     },
     {
-        text: "Hoy, muchos han caído.",
-        audioPath: "day2-finish-2", duration: 4000, component: ({ players }: { players: Players[] }) => (
-            /* 
-                Grid with eliminated players (using filter)
-            */
+        text: "Hoy, hemos llegado al final de esta guerra.",
+        audioPath: "day3-finish-2", duration: 4000,
+    },
+    {
+        text: "Cincuenta streamers comenzaros este viaje, cada uno con un sueño... y con miedo a perderlo todo.",
+        audioPath: "day3-finish-3", duration: 8200
+    },
+    {
+        text: "Hoy, solo uno de ustedes es coronado como el campeón de la Guerra de Streamers: Edición Extrema.",
+        audioPath: "day3-finish-4", duration: 7000
+    },
+    {
+        text: "¡Felicidades al ganador! ¡Y gracias a todos los participantes por ser parte de esta experiencia!",
+        audioPath: "day3-finish-5", duration: 8000,
+        /* 
+        */
 
-            <ul class="grid grid-cols-5 gap-4 mb-32">
+        component: ({ players }: { players: Players[] }) => {
+            const winner = players.filter(player => !player.eliminated && player.playerNumber < 50)[0];
+            return (
+                <div class="flex flex-col items-center space-y-4 pb-28">
+                    <img src={winner?.avatar} alt="" class="size-20 rounded-md" />
+                    <span class="font-mono text-neutral-400 text-lg">#{winner?.playerNumber.toString().padStart(3, "0")}</span>
+                    <span class="font-atomic text-lime-500 text-3xl">¡{winner?.displayName}!</span>
+                </div>
+            );
+        }
+    },
+
+    { duration: 25000, omitReverb: true, audioPath: "credit-roll", component: ({ players }: { players: Players[] }) => <CreditsRoll duration={25000} players={players} /> },
+
+
+    /* component: ({ players }: { players: Players[] }) => (
+         
+ 
+                <ul class="grid grid-cols-5 gap-4 mb-32">
                 {players?.filter(player => TODAY_ELIMINATEDS.includes(player.playerNumber)).map((player: Players, index) => (
                     <li class="flex flex-col items-center justify-center relative size-20 animate-fade-in-up duration-500"
                         style={{ animationDelay: `${index * 100}ms` }}
@@ -147,21 +268,7 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
                     </li>
                 ))}
             </ul>
-        )
-    },
-    {
-        text: "Pero la Guerra no ha terminado...",
-        audioPath: "day2-finish-3", duration: 3900
-    },
-    { text: "El último en pie, será el vencedor.", audioPath: "day2-finish-4", duration: 3200 },
-    { text: "Recuerden: la astucia y la estrategia son sus mejores armas.", audioPath: "day2-finish-5", duration: 6000 },
-    { text: "[Megafonía] ¡Jugadores, es hora de dormir!", audioPath: "day2-finish-6", duration: 3000 },
-    { text: "Descansen, pronto volveremos a la batalla.", audioPath: "day2-finish-7", duration: 4000 },
-    { text: "Serán desconectados en...", audioPath: "day2-finish-8", duration: 3000 },
-    { text: "3...", audioPath: "day2-finish-9", duration: 1000 },
-    { text: "2...", audioPath: "day2-finish-10", duration: 1000 },
-    { text: "1...", audioPath: "day2-finish-11", duration: 1200 },
-    { duration: 1000 },
+        ) */
 ];
 
 export const CURRENT_DAY = 3;
@@ -178,7 +285,7 @@ const PRELOAD_SOUNDS = () => {
         audio.preload = "auto";
     });
 
-    const bgAudioFile = "day2-bg-start";
+    const bgAudioFile = "day3-bg-start";
     const bgAudio = new Audio(`${CDN_PREFIX}scripts/${bgAudioFile}.mp3`);
     bgAudio.preload = "auto";
 
@@ -203,6 +310,8 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
 
     const totalDuration = script.reduce((acc, item) => acc + item.duration, 0);
     const [remainingTime, setRemainingTime] = useState(totalDuration / 1000);
+
+    const isCreditsRoll = phase === "finish" && currentIndex === script.length - 1;
 
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -243,7 +352,7 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
 
             // Si es el primer sonido, esperar el retraso definido antes de comenzar
             if (index === 0) {
-                const bgAudioFile = phase === "start" ? "day3-bg-start" : "day3s-bg-finish";
+                const bgAudioFile = phase === "start" ? "day3-bg-start" : "day3-bg-finish";
                 playSound({ sound: `scripts/${bgAudioFile}`, volume: 0.28 });
                 const firstDelay =
                     phase === "start" ? START_SCRIPT_FIRST_AUDIO_DELAY : FINISH_SCRIPT_FIRST_AUDIO_DELAY;
@@ -299,9 +408,12 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
 
     if (!isVisible) return null;
 
+
+    console.log("isCreditsRoll", isCreditsRoll);
+
     return (
         <div
-            className={`fixed inset-0 bg-black flex flex-col justify-center items-center z-[9000] transition-opacity duration-500 ${fadeClass}`}
+            className={`fixed inset-0 bg-black ${isCreditsRoll ? "" : "flex"} min-h-screen h-full flex-col justify-center items-center z-[9000] transition-opacity duration-500 ${fadeClass}`}
         > <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300">
                 00:{Math.round(remainingTime).toString().padStart(2, "0")}
             </div>
@@ -311,16 +423,18 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
                         {phase === "start" ? `Día #0${CURRENT_DAY}` : `Día #0${CURRENT_DAY} finalizado`}
                     </h1>
                 </header>
-                {script[currentIndex]?.component && (
-                    <div className="mt-8">
-                        {/* 
-                        Pass props to the component here
-                        */}
-                        {typeof script[currentIndex].component === "function"
-                            ? cloneElement(script[currentIndex].component({ players }), { key: currentIndex })
-                            : cloneElement(script[currentIndex].component, { key: currentIndex })}
-                    </div>
-                )}
+                {script[currentIndex]?.component && (() => {
+                    return (
+                        <div className={`mt-8 ${isCreditsRoll ? "fixed inset-0 z-[9999] h-screen w-full" : ""}`}>
+                            {/* 
+                            Pass props to the component here
+                            */}
+                            {typeof script[currentIndex].component === "function"
+                                ? cloneElement(script[currentIndex].component({ players }), { key: currentIndex })
+                                : cloneElement(script[currentIndex].component as JSX.Element, { key: currentIndex })}
+                        </div>
+                    );
+                })()}
             </div>
             {
                 script[currentIndex]?.text && (
@@ -330,9 +444,15 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
                 )
             }
 
-            <h2 className="text-2xl fixed bottom-16 font-atomic text-neutral-500 select-none -skew-y-6">
-                <span className="tracking-wider">Guerra de Streamers</span>
-            </h2>
+            {
+                !isCreditsRoll && (
+                    <h2 className="z-[9998!important] text-2xl fixed bottom-16 inset-x-0 font-atomic text-center mx-auto text-neutral-500 select-none -skew-y-6">
+                        <span className="tracking-wider">Guerra de Streamers</span>
+                    </h2>
+                )
+            }
+
+
             <span className="fixed bottom-32 text-5xl opacity-30 rotate-[32deg] select-none right-16 font-atomic-extras">
                 &#x0055;
             </span>
