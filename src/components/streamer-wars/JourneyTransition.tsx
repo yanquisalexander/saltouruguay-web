@@ -409,13 +409,17 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
 
     if (!isVisible) return null;
 
+    const minutes = Math.floor(remainingTime / 60);
+    const seconds = Math.floor(remainingTime % 60);
+
+
 
 
     return (
         <div
             className={`fixed inset-0 bg-black ${isCreditsRoll ? "" : "flex"} min-h-screen h-full flex-col justify-center items-center z-[9000] transition-opacity duration-500 ${fadeClass}`}
-        > <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300">
-                00:{Math.round(remainingTime).toString().padStart(2, "0")}
+        > <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300 z-[10001]">
+                {minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}
             </div>
             <div className="p-8 backdrop-blur-sm text-white text-center">
                 <header>
