@@ -51,7 +51,11 @@ export const WaitingRoom = ({ session, channel, bgVolume, setBgVolume, bgAudio }
             <div class="flex w-full h-full col-span-4 ">
                 <ChatRoom session={session} channel={channel} />
             </div>
-            <div class="col-span-full md:col-span-8 w-full relative flex flex-col items-center justify-center border border-lime-500 border-dashed rounded-md p-4">
+            <div class="col-span-full md:col-span-8 w-full relative flex overflow-hidden flex-col items-center justify-center border border-lime-500 border-dashed rounded-md p-4">
+                <span class="bg-lime-500 text-black text-xs font-bold py-1 px-12 select-none absolute rotate-45 top-8 right-[-30px] shadow-md">
+                    Último día
+                </span>
+
                 {/* <div id="bg-music-controls" class="absolute top-0 right-0 p-2 flex gap-x-2">
                     
                     
