@@ -250,7 +250,7 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
         }
     },
 
-    { duration: 28000, omitReverb: true, audioPath: "credit-roll-2", volume: 0.4, component: ({ players }: { players: Players[] }) => <CreditsRoll duration={32000} players={players} /> },
+    { duration: 28000, omitReverb: true, audioPath: "credit-roll-2", volume: 0.4, component: ({ players }: { players: Players[] }) => <CreditsRoll duration={30000} players={players} /> },
 
 
     /* component: ({ players }: { players: Players[] }) => (
