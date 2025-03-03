@@ -278,10 +278,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
                             <button class="flex gap-x-4 hover:scale-110 hover:saturate-150 hover:rotate-2 border-dashed border-2 border-white/20 hover:border-white transition-all rounded-md px-4 cursor-pointer py-1 items-center">
                                 <span class="text-[#b4cd02] font-atomic text-2xl">#{session.user.streamerWarsPlayerNumber?.toString().padStart(3, "0")}</span>
-                                <img src={`/images/streamer-wars/players/${session.user.streamerWarsPlayerNumber?.toString().padStart(3, "0")}.webp`}
-                                    onError={(e) => {
-                                        e.currentTarget.src = session.user.image!;
-                                    }}
+                                <img src={session.user.image!}
+
                                     alt={session.user.name!}
                                     class="size-8 rounded-md"
                                 />
