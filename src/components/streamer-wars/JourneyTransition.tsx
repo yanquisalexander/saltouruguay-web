@@ -6,7 +6,7 @@ import type { Players } from "../admin/streamer-wars/Players";
 import { actions } from "astro:actions";
 
 const CreditsRoll = ({ duration, players }: { duration: number, players?: Players[] }) => {
-    const MODERATORS = ["TitoLeproso", "BradTerra", "xDiegoUY", "tapitabal", "CCharly7"]
+    const MODERATORS = ["TitoLeproso", "BradTerra", "xDiegoUY", "tapitabal", "Charly7"]
     const CONDUCTOR_NAME = "JulianMartinR";
     const PROGRAMMERS = ["Alexitoo_UY"];
     const DIRECTOR_AND_CREATOR = "Salto Uruguay";
@@ -79,7 +79,7 @@ const CreditsRoll = ({ duration, players }: { duration: number, players?: Player
 
                     <div class="flex flex-col items-center space-y-2">
                         <h3 class="font-atomic text-neutral-400 text-2xl">Colaboradores</h3>
-                        <ul class="flex flex-wrap justify-center gap-x-4">
+                        <ul class="grid grid-cols-2 gap-x-4 gap-y-2">
                             {COLLABORATORS.map((collab) => (
                                 <li class="font-mono text-neutral-300 text-xl">{collab}</li>
                             ))}
@@ -260,7 +260,7 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
         }
     },
 
-    { duration: 28000, omitReverb: true, audioPath: "credit-roll-2", volume: 0.4, component: ({ players }: { players: Players[] }) => <CreditsRoll duration={28000} players={players} /> },
+    { duration: 28000, omitReverb: true, audioPath: "credit-roll-2", volume: 0.4, component: ({ players }: { players: Players[] }) => <CreditsRoll duration={29000} players={players} /> },
 
 
     /* component: ({ players }: { players: Players[] }) => (
