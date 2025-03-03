@@ -52,15 +52,18 @@ let TODAY_ELIMINATEDS: number[] = []
 
 // Ejemplos de definición (ajusta texto, audioPath y duration según necesites)
 export const JOURNEY_START_SCRIPT: ScriptItem[] = [
-    { text: "*[Estática]* Los juegos están listos, mi señor", audioPath: "day2-start-1", duration: 3200, omitReverb: true },
-    { text: "50 jugadores comenzaron este juego.", audioPath: "day2-start-2", duration: 3500 },
-    { text: "Ahora, solo quedan 32.", audioPath: "day2-start-3", duration: 3500, component: <ReverseCountUp target={32} initial={50} duration={3000} /> },
-    { text: "Dieciocho fueron eliminados.", audioPath: "day2-start-4", duration: 4500, component: <span class="font-atomic text-neutral-400 text-3xl py-2 animate-zoom-in animate-duration-800">18 Jugadores eliminados</span> },
-    { text: "Algunos lo vieron venir... otros, nunca lo esperaron.", audioPath: "day2-start-5", duration: 5000 },
-    { text: "Pero la Guerra apenas comienza.", audioPath: "day2-start-6", duration: 3500 },
-    { text: "Las alianzas se rompen, las traiciones se revelan.", audioPath: "day2-start-7", duration: 4500 },
+    { duration: 3200, omitReverb: true },
+    { text: "Bienvenidos, jugadores finalistas.", audioPath: "day3-start-1", duration: 4000 },
+    { text: "En el comienzo, ustedes eran 50 jugadores.", audioPath: "day3-start-2", duration: 4000 },
+    { text: "Streamers, llenos de deudas, con muchas horas frente a la pantalla, y con sueños de grandeza.", audioPath: "day3-start-3", duration: 7000 },
     {
-        text: "¿Quién será el próximo en caer?", audioPath: "day2-start-8", duration: 3000,
+        text: "Hoy, solo quedan 16 de ustedes.", audioPath: "day3-start-4", duration: 4000,
+        component: <ReverseCountUp target={16} initial={50} duration={3800} />
+    },
+    { text: "34 jugadores fueron eliminados.", audioPath: "day3-start-5", duration: 4500, component: <span class="font-atomic text-neutral-400 text-3xl py-2 animate-zoom-in animate-duration-800">34 Jugadores eliminados</span> },
+    { text: "Vosotros tenéis suerte de haber llegado hasta aquí.", audioPath: "day3-start-6", duration: 4000 },
+    {
+        text: "Pero solo uno de ustedes será el vencedor.", audioPath: "day3-start-7", duration: 4000,
         /* 
             List of players
         */
@@ -81,7 +84,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
                     }}>
                     {players?.filter(player => !player.eliminated).map((player: Players) => (
                         <li class="flex flex-col items-center space-y-2">
-                            <img src={player.avatar} alt="" class="grayscale size-7 rounded-md" />
+                            <img src={player.avatar} alt="" class="grayscale-[20%] size-7 rounded-md" />
                             <span class="font-mono text-neutral-400 text-lg">#{player.playerNumber.toString().padStart(3, "0")}</span>
                         </li>
                     ))}
@@ -91,7 +94,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
     },
 
 
-    { text: "Solo el tiempo lo dirá...", audioPath: "day2-start-9", duration: 3200 },
+    { text: "Mucha suerte, jugadores, la necesitarán.", audioPath: "day3-start-8", duration: 4000 },
 
 
     {
@@ -161,7 +164,7 @@ export const JOURNEY_FINISH_SCRIPT: ScriptItem[] = [
     { duration: 1000 },
 ];
 
-export const CURRENT_DAY = 2;
+export const CURRENT_DAY = 3;
 
 const START_SCRIPT_FIRST_AUDIO_DELAY = 0;
 const FINISH_SCRIPT_FIRST_AUDIO_DELAY = 0;
@@ -240,7 +243,7 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
 
             // Si es el primer sonido, esperar el retraso definido antes de comenzar
             if (index === 0) {
-                const bgAudioFile = phase === "start" ? "day2-bg-start" : "day2-bg-finish";
+                const bgAudioFile = phase === "start" ? "day3-bg-start" : "day3s-bg-finish";
                 playSound({ sound: `scripts/${bgAudioFile}`, volume: 0.28 });
                 const firstDelay =
                     phase === "start" ? START_SCRIPT_FIRST_AUDIO_DELAY : FINISH_SCRIPT_FIRST_AUDIO_DELAY;

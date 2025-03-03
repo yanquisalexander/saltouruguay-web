@@ -9,13 +9,13 @@ const DAYS = [
     },
     {
         number: 2,
-        completed: false,
+        completed: true,
         pending: false,
     },
     {
         number: 3,
         completed: false,
-        pending: true,
+        pending: false,
     }
 ]
 export const WaitForDayOpen = ({ session, players }: { session: Session, players: any[] }) => {
