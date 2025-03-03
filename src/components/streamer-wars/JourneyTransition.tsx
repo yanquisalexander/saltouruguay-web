@@ -191,7 +191,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
 
 
     {
-        text: "Atención, jugadores!. Sigan las instrucciones cuidadosamente. Estamos a punto de comenzar. ", audioPath: "day3-start-10", duration: 8000, execute: () => {
+        text: "Atención, jugadores!. Sigan las instrucciones cuidadosamente. Estamos a punto de comenzar. ", audioPath: "day2-start-10", duration: 8000, execute: () => {
             setTimeout(() => {
                 playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION, volume: 0.5 });
                 toast.warning("¡Comienza la Guerra de Streamers!", {
