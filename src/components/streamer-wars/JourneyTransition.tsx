@@ -63,7 +63,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
     { text: "34 jugadores fueron eliminados.", audioPath: "day3-start-5", duration: 4500, component: <span class="font-atomic text-neutral-400 text-3xl py-2 animate-zoom-in animate-duration-800">34 Jugadores eliminados</span> },
     { text: "Vosotros tenéis suerte de haber llegado hasta aquí.", audioPath: "day3-start-6", duration: 4000 },
     {
-        text: "Pero solo uno de ustedes será el vencedor.", audioPath: "day3-start-7", duration: 4000,
+        text: "Pero solo uno de ustedes será el vencedor.", audioPath: "day3-start-7", duration: 3800,
         /* 
             List of players
         */
@@ -94,7 +94,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
     },
 
 
-    { text: "Mucha suerte, jugadores, la necesitarán.", audioPath: "day3-start-8", duration: 4000 },
+    { text: "Mucha suerte, jugadores, la necesitarán.", audioPath: "day3-start-8", duration: 4200 },
 
 
     {
