@@ -14,7 +14,7 @@ const DAYS = [
     },
     {
         number: 3,
-        completed: false,
+        completed: true,
         pending: false,
     }
 ]
