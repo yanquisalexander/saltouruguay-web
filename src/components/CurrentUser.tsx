@@ -139,7 +139,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                                     src={user?.image || undefined}
                                     alt={user?.name || "User"}
                                     // gradient border
-                                    class={`rounded-full size-9 p-0.5 border-2 ${user.streamerWarsPlayerNumber ? "border-dotted border-l-lime-400 border-t-lime-500 border-r-lime-600 border-b-lime-700 " : "border-transparent"} transition-all duration-300`}
+                                    class={`rounded-full size-9 p-0.5 border-2 border-dotted border-l-purple-400 border-t-purple-500 border-r-purple-600 border-b-purple-700  transition-all duration-300`}
 
                                 />
 
@@ -170,17 +170,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                                         )
                                     }
 
-                                    {
-                                        user.streamerWarsPlayerNumber && (
-                                            <a
-                                                href="/guerra-streamers"
-                                                className="block w-full text-left px-4 text-nowrap py-2 text-sm bg-lime-600 text-white font-rubik uppercase hover:bg-lime-700 transition"
-                                            >
-                                                Guerra de Streamers
-                                                <LucideChevronRight size={20} className="inline-block ml-2" />
-                                            </a>
-                                        )
-                                    }
+
                                     <a
                                         href="/usuario"
                                         className="w-full items-center justify-between  gap-1 px-4 py-2 flex text-sm text-neutral-200 transition hover:bg-neutral-200/5"
