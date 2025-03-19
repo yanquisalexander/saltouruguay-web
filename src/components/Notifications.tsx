@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from "preact/hooks";
 
 const notifications = [
     {
-        id: "inscripciones-guerra-streamers",
-        title: "¡Inscripciones abiertas para la Guerra de Streamers!",
-        description: "¡Participa en la Guerra de Streamers y gana premios increíbles! ¿Estás listo para la batalla?",
-        imageURL: "/images/ads/stream-wars.webp",
-        link: { title: "Inscríbete", url: "/guerra-streamers/inscripcion" },
+        id: "saltocraft-iii",
+        title: "Se viene SaltoCraft III",
+        description: "¡Prepárate para la nueva temporada de SaltoCraft! ¿Estás listo para la aventura?",
+        imageURL: "/images/ads/saltocraft.webp",
+        link: { title: "Inscríbete", url: "/saltocraft" },
         tags: [{ type: "ads", title: "" }],
     },
     {
