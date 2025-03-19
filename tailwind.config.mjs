@@ -29,6 +29,8 @@ export default {
 				atomic: ["Atomic Marker", "cursive"],
 				"atomic-extras": ["Atomic Marker Extras", "cursive"],
 				squids: ["Game of Squids", "cursive"],
+				minecraft: ["Minecraft", "sans-serif"],
+				minecraftia: ["Minecraftia", "sans-serif"],
 			}
 		},
 	},

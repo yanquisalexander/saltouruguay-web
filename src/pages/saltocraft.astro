@@ -2,6 +2,69 @@
 import Layout from "@/layouts/Layout.astro";
 ---
 
-<Layout title="SaltoCraft III">
-  <h1 class="text-4xl font-bold">SaltoCraft III</h1>
+<Layout
+  title="SaltoCraft III"
+  preload={[
+    {
+      type: "font/woff2",
+      href: "/fonts/minecraft-ten.woff2",
+      as: "font",
+    },
+    {
+      type: "font/woff2",
+      href: "/fonts/Minecraftia.woff2",
+      as: "font",
+    },
+  ]}
+>
+  <div
+    id="backdrop-saltocraft"
+    class="-mt-28 min-h-screen absolute inset-0 -z-10"
+  >
+  </div>
+  <header
+    class="flex items-center flex-col justify-center text-center mt-16 animate-fade-in-up"
+  >
+    <h1 class="text-4xl font-bold font-minecraft text-yellow-400">
+      SaltoCraft III
+    </h1>
+    <p class="text-lg font-minecraftia text-gray-300">
+      ¿Listo para la aventura?
+    </p>
+  </header>
+
+  <section class="container mx-auto px-4 py-8">
+    <h2
+      class="font-teko text-4xl text-center animate-fade-in duration-500 ease-in-out animate-delay-800"
+    >
+      Muy pronto se abrirá el servidor <span class="text-yellow-400"
+        >SaltoCraft III</span
+      >
+    </h2>
+  </section>
 </Layout>
+
+<style>
+  @font-face {
+    font-family: "Minecraft";
+    src: url("/fonts/minecraft-ten.woff2") format("woff2");
+  }
+
+  @font-face {
+    font-family: "Minecraftia";
+    src: url("/fonts/Minecraftia.woff2") format("woff2");
+  }
+
+  #backdrop-saltocraft {
+    background-image: url("/images/ads/saltocraft.webp");
+    @apply saturate-150 opacity-55;
+    mask-image: linear-gradient(
+      black 0%,
+      rgba(0, 0, 0, 0.5) 30%,
+      rgba(0, 0, 0, 0.1) 50%,
+      transparent
+    );
+    background-size: cover;
+    background-position: center;
+  }
+</style>
