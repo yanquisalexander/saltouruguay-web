@@ -1,5 +1,21 @@
 ---
+export const prerender = true;
 import Layout from "@/layouts/Layout.astro";
+import MinecraftSword from "@/icons/MinecraftSword.astro";
+import MinecraftFabric from "@/icons/MinecraftFabric.astro";
+import { LucideCopy } from "lucide-preact";
+import Discord from "@/icons/Discord.astro";
+import { SOCIAL_NETWORKS } from "@/consts/SocialNetworks";
+
+const MODPACK_INFO = {
+  AVAILABLE: import.meta.env.DEV,
+  MINECRAFT_VERSION: "1.20.1",
+  VERSION: "forge arclight/Trials 1.20.1",
+  EDITION: "Java Edition",
+  IP_ADDRESS: "saltocraft.saltouruguayserver.com",
+  PORT: 25594,
+  DOWNLOAD_URL: "https://www.curseforge.com/minecraft/modpacks/saltocraft-iii",
+};
 ---
 
 <Layout
@@ -22,6 +38,8 @@ import Layout from "@/layouts/Layout.astro";
     class="-mt-28 min-h-screen absolute inset-0 -z-10"
   >
   </div>
+  <div data-ip-address-full="{MODPACK_INFO.IP_ADDRESS}:{MODPACK_INFO.PORT}">
+  </div>
   <header
     class="flex items-center flex-col justify-center text-center mt-16 animate-fade-in-up"
   >
@@ -41,8 +59,129 @@ import Layout from "@/layouts/Layout.astro";
         >SaltoCraft III</span
       >
     </h2>
+
+    {
+      MODPACK_INFO.AVAILABLE && (
+        /* 
+        Botón estilo Minecraft para descargar el modpack
+       */
+        <>
+          <div class="flex justify-center mt-8 items-center flex-col">
+            <a
+              href={MODPACK_INFO.DOWNLOAD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex gap-x-2 items-center justify-center bg-yellow-400 text-black font-minecraftia text-2xl py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out hover:bg-green-600 hover:scale-105 hover:rotate-1 transform-gpu"
+            >
+              <MinecraftSword class="size-12 inline-block" />
+              <span class="title text-2xl font-minecraftia text-center">
+                Descargar SaltoCraft III
+              </span>
+            </a>
+
+            <button
+              id="how-to-join"
+              class="flex items-center justify-center gap-x-2 mt-8 bg-gray-800 text-white font-minecraftia text-xs py-1 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out hover:bg-green-600 hover:scale-105 hover:rotate-1 transform-gpu"
+            >
+              <MinecraftFabric class="size-8 inline-block" />
+              <span class="title font-minecraftia text-center">
+                ¿Cómo acceder al servidor?
+              </span>
+            </button>
+
+            {/* 
+                Enlace de soporte a Discord
+            */}
+
+            <a
+              href={
+                Array.from(SOCIAL_NETWORKS).find(
+                  (network) => network.name === "Discord"
+                )?.url
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex gap-x-2 items-center justify-center bg-blue-600 text-white font-minecraftia text-xs py-1 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out hover:bg-green-600 hover:scale-105 hover:rotate-1 transform-gpu mt-4"
+            >
+              <Discord class="size-6 inline-block" />
+              <span class="title font-minecraftia text-center">
+                Soporte en Discord
+              </span>
+            </a>
+
+            <dialog
+              id="copy-ip-dialog"
+              class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+            >
+              <div class="p-4 rounded-lg shadow-lg">
+                <h3 class="text-xl font-bold text-center font-minecraftia">
+                  IP del servidor
+                </h3>
+                <p class="text-center mt-4">
+                  ¡Gracias por querer unirte a{" "}
+                  <span class="text-yellow-400">SaltoCraft III</span>! <br />
+                  Para acceder al servidor, necesitas tener instalado el modpack
+                  en tu cliente de Minecraft. <br />
+                </p>
+
+                <div class="flex gap-x-2 items-center text-center mt-4 font-minecraftia text-lg bg-gray-800 p-2 rounded-lg">
+                  <code class="text-yellow-400 text-sm font-minecraftia w-full">
+                    {MODPACK_INFO.IP_ADDRESS}:{MODPACK_INFO.PORT}
+                  </code>
+                  <button class="bg-green-600 text-white flex items-center justify-center font-minecraftia text-xs size-8 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out hover:bg-gray-800 hover:scale-105 hover:rotate-1 transform-gpu">
+                    <LucideCopy class="size-5" />
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  class="mt-4 bg-zinc-700 text-white font-minecraftia !text-base py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out hover:bg-green-600 transform-gpu"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </dialog>
+            <div class="dialog-background inset-0 w-dvw h-dvh backdrop-blur-sm bg-white/5 z-[9999999] animate-blurred-fade-in" />
+          </div>
+        </>
+      )
+    }
   </section>
 </Layout>
+
+<script>
+  import { $ } from "@/lib/dom-selector";
+  import { toast } from "sonner";
+
+  document.addEventListener("astro:page-load", () => {
+    const $ipDialog = $("#copy-ip-dialog") as HTMLDialogElement;
+    const $fullIp = document.querySelector(
+      "[data-ip-address-full]"
+    ) as HTMLElement;
+    const $howToJoinButton = $("#how-to-join") as HTMLButtonElement;
+    const ipAddress = $fullIp.dataset.ipAddressFull;
+    const $copyButton = $ipDialog.querySelector("button") as HTMLButtonElement;
+    const $closeButton = $ipDialog.querySelector(
+      "button[type=submit]"
+    ) as HTMLButtonElement;
+
+    $howToJoinButton.addEventListener("click", () => {
+      $ipDialog.showModal();
+    });
+
+    $copyButton.addEventListener("click", () => {
+      if (navigator.clipboard && ipAddress) {
+        navigator.clipboard.writeText(ipAddress);
+        toast.success("IP copiada al portapapeles");
+        $ipDialog.close();
+      }
+    });
+
+    $closeButton.addEventListener("click", () => {
+      $ipDialog.close();
+    });
+  });
+</script>
 
 <style>
   @font-face {
