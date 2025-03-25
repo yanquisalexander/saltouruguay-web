@@ -1,4 +1,4 @@
-import { sendNotificationEmail } from "@/utils/email";
+import { broadcastToAudience, sendNotificationEmail } from "@/utils/email";
 import { getAllUserEmails, getUsers } from "@/utils/user";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
@@ -69,6 +69,11 @@ export const users = {
                     code: "BAD_REQUEST",
                     message: "Debes proporcionar al menos un correo electrónico"
                 });
+            }
+
+            if (forAllUsers) {
+                await broadcastToAudience(title, body);
+                return { success: true };
             }
 
             await sendNotificationEmail(emails, title, body);
