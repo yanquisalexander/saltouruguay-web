@@ -45,7 +45,7 @@ if (selectedTemplate) {
 
     <div class="">
       <button id="downloadEmails" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
-        <LucideDownload class="w-6 h-6 mr-2" />
+        <LucideDownload class="w-6 h-6 mr-2 inline-block" />
         Descargar Emails
       </button>
       
@@ -110,23 +110,33 @@ if (selectedTemplate) {
   document.addEventListener("astro:page-load", () => {
 
     const getEmailsAsCSV = async () => {
-      const {data: emails = [] } = await actions.admin.users.getAllUserEmails();
-      const csv = emails.map((email) => email).join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
+  toast.promise(
+    (async () => {
+      const { data: emails = [] } = await actions.admin.users.getAllUserEmails();
+      if (!emails.length) throw new Error("No hay emails para descargar.");
+
+      // Agregar encabezado y formatear CSV
+      const csvContent = ["Email"].concat(emails).join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = "emails.csv";
       a.click();
       URL.revokeObjectURL(url);
-    };
+    })(),
+    {
+      loading: "Generando archivo...",
+      success: "Emails descargados correctamente",
+      error: "No se pudo descargar los emails",
+    }
+  );
+};
+
 
     document.getElementById("downloadEmails")?.addEventListener("click", async () => {
-      toast.promise(getEmailsAsCSV(), {
-        loading: "Descargando emails...",
-        success: "Emails descargados correctamente",
-        error: "Ocurrió un error al descargar los emails",
-      });
+      getEmailsAsCSV();
     });
 
     document.getElementById("sendEmail")?.addEventListener("click", async () => {
