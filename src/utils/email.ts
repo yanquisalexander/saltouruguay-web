@@ -44,6 +44,8 @@ export const broadcastToAudience = async (subject: string, body: string) => {
             html: body
         });
 
+        console.log(data);
+
         if (!data) {
             throw new Error("Error creating broadcast");
         }
