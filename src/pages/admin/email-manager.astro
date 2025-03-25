@@ -1,0 +1,146 @@
+---
+const session = await getSession(Astro.request);
+
+if (!session?.user.isAdmin) {
+  return new Response(null, { status: 404 });
+}
+
+import { getSession } from "auth-astro/server";
+import { experimental_AstroContainer } from "astro/container";
+import Layout from "@/layouts/Layout.astro";
+import SaltoCraft3 from "@/email/SaltoCraft3.astro";
+
+const EmailComponents = {
+  SaltoCraft: (props: { name: string }) => {
+    return {
+      component: SaltoCraft3,
+      props,
+    };
+  },
+};
+
+const templateToRender = Astro.url.searchParams.get(
+  "template"
+) as keyof typeof EmailComponents;
+const selectedTemplate =
+  templateToRender && templateToRender in EmailComponents
+    ? EmailComponents[templateToRender]({ name: "Usuario" }) // Ejecutar función para obtener props
+    : null;
+const container = await experimental_AstroContainer.create();
+
+let bodyOfEmail = "";
+if (selectedTemplate) {
+  try {
+    bodyOfEmail = await container.renderToString(selectedTemplate.component);
+  } catch (error) {
+    console.error(error);
+  }
+}
+---
+
+<Layout title="Email Manager">
+  <div class="flex flex-col items-center justify-center min-h-screen">
+    <h1 class="text-4xl font-bold">Gestor de Emails</h1>
+
+    <ul class="flex flex-col gap-4 mt-4">
+      {Object.keys(EmailComponents).map((template) => (
+        <li>
+          <a href={`?template=${template}`} class="text-blue-500 hover:underline">
+            {template}
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    {selectedTemplate && (
+      <>
+        <div class="mt-6 w-full max-w-5xl p-4">
+          <h2 class="text-xl font-semibold">Enviar Email con {templateToRender}</h2>
+          
+          <!-- Campo para el título -->
+          <input
+            type="text"
+            id="emailTitle"
+            placeholder="Título del email"
+            class="w-full p-2 border rounded mt-2 bg-transparent"
+          />
+
+          <!-- Campo para el email -->
+          <input
+            type="email"
+            id="emailInput"
+            placeholder="Correo del destinatario"
+            class="w-full p-2 border rounded mt-2 bg-transparent"
+          />
+
+          <label class="flex items-center gap-2 mt-2">
+            <input type="checkbox" id="forAllUsers" />
+            Enviar a todos
+          </label>
+
+          <button id="sendEmail" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+            Enviar Email
+          </button>
+
+          <h3 class="text-lg font-medium mt-4">Previsualización:</h3>
+          <div id="email-preview" class="mt-2 p-4 border rounded w-full" set:html={bodyOfEmail} />
+        </div>
+
+        <div id="email-body" data-html-body={bodyOfEmail} />
+      </>
+    )}
+  </div>
+</Layout>
+
+<script>
+  import { actions } from "astro:actions";
+  import { $ } from "@/lib/dom-selector";
+  import { toast } from "sonner";
+  import type { ActionError } from "astro:actions";
+
+  document.addEventListener("astro:page-load", () => {
+    document.getElementById("sendEmail")?.addEventListener("click", async () => {
+      const $title = $("#emailTitle") as HTMLInputElement;
+      const $email = $("#emailInput") as HTMLInputElement;
+      const $forAll = $("#forAllUsers") as HTMLInputElement;
+      const $emailBody = $("#email-body") as HTMLElement;
+
+      if (!$title.value.trim()) {
+        alert("Debes ingresar un título para el email.");
+        return;
+      }
+
+      if (!$email.value && !$forAll.checked) {
+        alert("Debes ingresar un email o seleccionar enviar a todos.");
+        return;
+      }
+
+      if (!$emailBody) {
+        alert("No se ha seleccionado un template.");
+        return;
+      }
+
+      const email = $email.value;
+      const forAll = $forAll.checked;
+
+      toast.promise(
+        actions.admin.users.sendEmails({
+          emails: email ? [email] : [],
+          title: $title.value.trim(),
+          body: $emailBody.dataset.htmlBody,
+          forAllUsers: forAll,
+        }),
+        {
+          loading: "Enviando email...",
+          success: ({ error }: { error: ActionError }) => {
+            if (error) {
+              throw new Error(error.message);
+            }
+            return "Email enviado correctamente";
+          },
+          error: "Ocurrió un error al enviar el email",
+        }
+      );
+    });
+  });
+</script>

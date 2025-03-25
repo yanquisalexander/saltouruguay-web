@@ -146,3 +146,11 @@ export const unlinkDiscord = async (userId: number) => {
         .where(eq(UsersTable.id, userId))
         .execute();
 }
+
+export const getAllUserEmails = async () => {
+    /* 
+        Get all emails from the UsersTable (To send emails to all users)
+    */
+    const result = await client.select({ value: UsersTable.email }).from(UsersTable).execute();
+    return result.map(row => row.value);
+}

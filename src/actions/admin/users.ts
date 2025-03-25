@@ -1,4 +1,5 @@
-import { getUsers } from "@/utils/user";
+import { sendNotificationEmail } from "@/utils/email";
+import { getAllUserEmails, getUsers } from "@/utils/user";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -31,4 +32,40 @@ export const users = {
             return users;
         }
     }),
+    sendEmails: defineAction({
+        input: z.object({
+            emails: z.union([z.string(), z.array(z.string())]),
+            template: z.string().optional(),
+            title: z.string().optional(),
+            body: z.string().optional(),
+            forAllUsers: z.boolean().optional().default(false)
+        }),
+        handler: async ({ emails, template, title, body, forAllUsers }, { request }) => {
+            if (!title || !body) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: "El título y el cuerpo del correo electrónico son obligatorios"
+                });
+            }
+
+            if (forAllUsers) {
+                emails = await getAllUserEmails();
+                if (!emails || emails.length === 0) {
+                    throw new ActionError({
+                        code: "NOT_FOUND",
+                        message: "No se encontraron correos electrónicos"
+                    });
+                }
+            } else if (!emails || emails.length === 0) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: "Debes proporcionar al menos un correo electrónico"
+                });
+            }
+
+            await sendNotificationEmail(emails, title, body);
+            return { success: true };
+        }
+
+    })
 }
