@@ -41,6 +41,14 @@ export const users = {
             forAllUsers: z.boolean().optional().default(false)
         }),
         handler: async ({ emails, template, title, body, forAllUsers }, { request }) => {
+
+            const session = await getSession(request);
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para enviar correos electrónicos"
+                })
+            }
             if (!title || !body) {
                 throw new ActionError({
                     code: "BAD_REQUEST",
@@ -66,6 +74,18 @@ export const users = {
             await sendNotificationEmail(emails, title, body);
             return { success: true };
         }
-
+    }),
+    getAllUserEmails: defineAction({
+        handler: async (__dirname, { request }) => {
+            const session = await getSession(request);
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para ver los correos electrónicos"
+                })
+            }
+            const emails = await getAllUserEmails();
+            return emails;
+        }
     })
 }
