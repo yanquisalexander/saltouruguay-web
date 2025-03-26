@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { ApiClient } from "@twurple/api";
+import { TWITCH_CLIENT_ID } from "astro:env/server";
 
 export class TwitchEvents {
     private readonly secret: string;
@@ -55,6 +56,12 @@ export class TwitchEvents {
             case 'channel.follow':
                 this.log(`New follower: ${bodyJson.event.user_name}`);
                 break;
+            /* 
+                User revoked authorization
+             */
+            case 'user.authorization.revoke':
+                this.log(`User revoked authorization: ${bodyJson.event.user_id}`);
+                break;
             default:
                 this.log(`Unknown event type: ${bodyJson.subscription.type}`);
                 break;
@@ -77,6 +84,17 @@ export class TwitchEvents {
                 method: 'webhook',
                 secret: this.secret,
             });
+
+            this.log(`Subscribed to channel subscription events for broadcaster ID: ${broadcasterId}`);
+
+            await this.client.eventSub.subscribeToUserAuthorizationRevokeEvents(TWITCH_CLIENT_ID, {
+                callback: `https://${this.hostName}${this.callbackPath}`,
+                method: 'webhook',
+                secret: this.secret,
+            });
+
+            this.log(`Subscribed to user authorization revoke events for client ID: ${TWITCH_CLIENT_ID}`);
+
             this.log('Successfully registered EventSub subscription.');
         } catch (error) {
             this.log(`Error subscribing to events: ${error}`);

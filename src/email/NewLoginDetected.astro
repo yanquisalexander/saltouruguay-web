@@ -1,0 +1,249 @@
+---
+interface Props {
+  /** The email address of the user */
+  email: string;
+  /** The date and time of the login */
+  date: Date;
+  /** The location of the login */
+  location: string;
+  /** The device used for the login */
+  device: string;
+  /** The browser used for the login */
+  browser: string;
+}
+
+const {
+  date,
+  location = "Unknown",
+  device = "Unknown",
+  browser = "Unknown",
+} = Astro.props;
+---
+
+<!doctype html>
+<html dir="ltr" lang="en">
+  <head>
+    <link
+      rel="preload"
+      as="image"
+      href="https://saltouruguayserver.com/images/logo_salto.webp"
+    />
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+    <meta name="x-apple-disable-message-reformatting" />
+  </head>
+  <body
+    style='background-color:rgb(17,24,39);font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'
+  >
+    <!--$-->
+    <div
+      style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0"
+    >
+      Alerta de seguridad: Se ha detectado un nuevo inicio de sesión en tu
+      cuenta.
+      <div>
+        ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏﻿ ‌​‍‎‏
+      </div>
+    </div>
+    <table
+      align="center"
+      width="100%"
+      border="0"
+      cellpadding="0"
+      cellspacing="0"
+      role="presentation"
+      style="margin-left:auto;margin-right:auto;padding-top:20px;padding-bottom:20px;padding-left:12px;padding-right:12px;max-width:37.5em"
+    >
+      <tbody>
+        <tr style="width:100%">
+          <td>
+            <table
+              align="center"
+              width="100%"
+              border="0"
+              cellpadding="0"
+              cellspacing="0"
+              role="presentation"
+              style="background-color:rgb(31,41,55);border-radius:8px;padding:24px;box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), 0 1px 2px 0 rgb(0,0,0,0.05)"
+            >
+              <tbody>
+                <tr>
+                  <td>
+                    <table
+                      align="center"
+                      width="100%"
+                      border="0"
+                      cellpadding="0"
+                      cellspacing="0"
+                      role="presentation"
+                      style="text-align:center;margin-bottom:16px"
+                    >
+                      <tbody>
+                        <tr>
+                          <td>
+                            <img
+                              alt="SaltoUruguayServer Logo"
+                              height="80"
+                              src="https://saltouruguayserver.com/images/logo_salto.webp"
+                              style="width:80px;height:auto;object-fit:cover;margin-left:auto;margin-right:auto;border-radius:8px;padding:16px;display:block;outline:none;border:none;text-decoration:none"
+                              width="80"
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <h1
+                      style="font-size:28px;font-weight:700;text-align:center;color:rgb(248,113,113);margin-top:16px;margin-bottom:16px"
+                    >
+                      Nuevo inicio de sesión detectado
+                    </h1>
+                    <p
+                      style="font-size:16px;color:rgb(209,213,219);margin-bottom:16px;line-height:24px;margin-top:16px"
+                    >
+                      Estimado usuario:
+                    </p>
+                    <p
+                      style="font-size:16px;color:rgb(209,213,219);margin-bottom:16px;line-height:24px;margin-top:16px"
+                    >
+                      Hemos detectado un nuevo inicio de sesión en tu cuenta de
+                      SaltoUruguayServer. Si fuiste tú, puedes ignorar este
+                      mensaje. Si no reconoces esta actividad, te recomendamos
+                      tomar medidas inmediatas.
+                    </p>
+                    <table
+                      align="center"
+                      width="100%"
+                      border="0"
+                      cellpadding="0"
+                      cellspacing="0"
+                      role="presentation"
+                      style="background-color:rgb(55,65,81);padding:16px;border-radius:8px;margin-top:24px;margin-bottom:24px"
+                    >
+                      <tbody>
+                        <tr>
+                          <td>
+                            <h1
+                              style="font-size:20px;font-weight:700;color:rgb(147,197,253);margin-bottom:12px"
+                            >
+                              Detalles del inicio de sesión
+                            </h1>
+                            <p
+                              style="font-size:16px;color:rgb(209,213,219);margin-bottom:8px;line-height:24px;margin-top:16px"
+                            >
+                              <strong>Fecha y hora:</strong>
+                              {
+                                new Date(date).toLocaleString("es-ES", {
+                                  year: "numeric",
+                                  month: "2-digit",
+                                  day: "2-digit",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              } UTC
+                            </p>
+                            <p
+                              style="font-size:16px;color:rgb(209,213,219);margin-bottom:8px;line-height:24px;margin-top:16px"
+                            >
+                              <strong>Ubicación:</strong>
+                              {location}
+                            </p>
+                            <p
+                              style="font-size:16px;color:rgb(209,213,219);margin-bottom:8px;line-height:24px;margin-top:16px"
+                            >
+                              <strong>Dispositivo:</strong>
+                              {device}
+                            </p>
+                            <p
+                              style="font-size:16px;color:rgb(209,213,219);line-height:24px;margin-bottom:16px;margin-top:16px"
+                            >
+                              <strong>Navegador:</strong>
+                              {browser}
+                            </p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <p
+                      style="font-size:16px;color:rgb(253,224,71);font-weight:700;margin-bottom:16px;line-height:24px;margin-top:16px"
+                    >
+                      Si no reconoces esta actividad, recomendamos que cambies
+                      tu contraseña de Twitch y revises la seguridad de tu
+                      cuenta inmediatamente.
+                    </p>
+                    <table
+                      align="center"
+                      width="100%"
+                      border="0"
+                      cellpadding="0"
+                      cellspacing="0"
+                      role="presentation"
+                      style="text-align:center;margin-top:32px;margin-bottom:32px"
+                    >
+                      <tbody>
+                        <tr>
+                          <td>
+                            <a
+                              href="http://saltouruguayserver.com/account/security"
+                              style="background-color:rgb(220,38,38);color:rgb(255,255,255);font-weight:700;padding-top:12px;padding-bottom:12px;padding-left:24px;padding-right:24px;border-radius:8px;text-decoration-line:none;font-size:16px;box-sizing:border-box;line-height:100%;text-decoration:none;display:inline-block;max-width:100%;mso-padding-alt:0px;padding:12px 24px 12px 24px"
+                              target="_blank"
+                              ><span
+                                ><!--[if mso]><i style="mso-font-width:400%;mso-text-raise:18" hidden>&#8202;&#8202;&#8202;</i><![endif]--></span
+                              ><span
+                                style="max-width:100%;display:inline-block;line-height:120%;mso-padding-alt:0px;mso-text-raise:9px"
+                                >REVISAR SEGURIDAD DE LA CUENTA</span
+                              ><span
+                                ><!--[if mso]><i style="mso-font-width:400%" hidden>&#8202;&#8202;&#8202;&#8203;</i><![endif]--></span
+                              ></a
+                            >
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <p
+                      style="font-size:16px;color:rgb(209,213,219);margin-bottom:16px;line-height:24px;margin-top:16px"
+                    >
+                      Si necesitas ayuda adicional, no dudes en contactar a
+                      nuestro equipo de soporte.
+                    </p>
+                    <p
+                      style="font-size:16px;font-weight:700;color:rgb(209,213,219);margin-bottom:16px;line-height:24px;margin-top:16px"
+                    >
+                      El equipo de SaltoUruguayServer
+                    </p>
+                    <hr
+                      style="border-color:rgb(75,85,99);margin-top:24px;margin-bottom:24px;width:100%;border:none;border-top:1px solid #eaeaea"
+                    />
+                    <p
+                      style="font-size:12px;color:rgb(107,114,128);text-align:center;margin-bottom:16px;line-height:24px;margin-top:16px"
+                    >
+                      <a
+                        href="https://twitch.tv/saltouruguayserver"
+                        style="color:rgb(96,165,250);text-decoration-line:underline"
+                        target="_blank">Seguinos en Twitch</a
+                      >
+                    </p>
+                    <p
+                      style="font-size:12px;color:rgb(107,114,128);text-align:center;margin-top:8px;line-height:24px;margin-bottom:16px"
+                    >
+                      <a
+                        href="https://saltouruguayserver.com/preferences"
+                        style="color:rgb(96,165,250);text-decoration-line:underline"
+                        target="_blank">Preferencias de correo</a
+                      >
+                      <!-- -->•<!-- -->
+                      <a
+                        href="https://saltouruguayserver.com/unsubscribe"
+                        style="color:rgb(96,165,250);text-decoration-line:underline"
+                        target="_blank">Cancelar suscripción</a
+                      >
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <!--7--><!--/$-->
+  </body>
+</html>

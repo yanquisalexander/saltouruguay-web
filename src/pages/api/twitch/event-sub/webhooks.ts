@@ -12,7 +12,7 @@ export const POST = async ({ request }: APIContext) => {
     }
 };
 
-/* export const GET = async ({ request }: APIContext) => {
+export const GET = async ({ request }: APIContext) => {
     try {
         await setupEventSub();
         return new Response("OK", { status: 200 });
@@ -20,4 +20,4 @@ export const POST = async ({ request }: APIContext) => {
         console.error(e);
         return new Response("Error", { status: 500 });
     }
-} */
+}

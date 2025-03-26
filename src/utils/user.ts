@@ -6,6 +6,9 @@ import { createUserApiClient, createStaticAuthProvider } from "@/lib/Twitch";
 import { count, eq } from "drizzle-orm";
 import { unlockAchievement } from "./achievements";
 import { ACHIEVEMENTS } from "@/consts/Achievements";
+import { experimental_AstroContainer } from "astro/container";
+import NewLoginDetected from "@/email/NewLoginDetected.astro";
+import { sendNotificationEmail } from "./email";
 
 /**
  * Obtiene la suscripción de un usuario en Twitch.
@@ -206,6 +209,38 @@ export const saveSession = async (
                 lastActivity: new Date(),
             })
             .returning();
+
+        try {
+            const container = await experimental_AstroContainer.create()
+            const emailBody = await container.renderToString(NewLoginDetected, {
+                props: {
+                    date: new Date(),
+
+                }
+            });
+
+            const emailSubject = "Nuevo inicio de sesión detectado";
+            const user = await client
+                .query.UsersTable.findFirst({
+                    where: eq(UsersTable.id, userId),
+                    columns: {
+                        email: true,
+                    }
+                });
+
+            const email = user?.email;
+
+            if (email) {
+                await sendNotificationEmail(
+                    email,
+                    emailSubject,
+                    emailBody,
+                )
+            }
+
+        } catch (error) {
+            console.error("Error sending email:", error);
+        }
 
         return newSession;
     } catch (error) {
