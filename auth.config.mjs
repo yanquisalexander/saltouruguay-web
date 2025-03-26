@@ -8,55 +8,45 @@ import { eq, or } from "drizzle-orm";
 
 export default defineConfig({
     providers: [
-        // Proveedor de Twitch
         TwitchProvider({
             clientId: import.meta.env.TWITCH_CLIENT_ID,
             clientSecret: import.meta.env.TWITCH_CLIENT_SECRET,
             authorization: {
                 params: {
-                    scope: TWITCH_SCOPES.join(" "),
+                    scope: TWITCH_SCOPES.join(" "), // Usar scopes extendidos
                     force_verify: true,
                 },
             },
-
         }),
     ],
     callbacks: {
-        signIn: async ({ user, account, profile }) => {
-            console.log("signIn", user, account, profile);
-            if (account.provider === "twitch") {
-                if (!user.email) {
-                    throw new Error("Email is required to sign in");
-                }
+        signIn: async ({ account, profile }) => {
+            if (account?.provider === "twitch" && !profile?.email) {
+                throw new Error("Email is required to sign in");
             }
             return true;
         },
         jwt: async ({ token, user, account, profile }) => {
             if (user && account?.provider === "twitch") {
-                token.user = profile;
                 const email = profile?.email || null;
                 const username = user?.name?.toLowerCase();
-
-
+                const twitchId = profile?.sub ?? "";
 
                 try {
-                    // Buscar si existe un usuario con el email o twitchId
-                    const existingUser = await client
+                    // Buscar usuario existente de manera más eficiente
+                    const [existingUser] = await client
                         .select()
                         .from(UsersTable)
                         .where(or(
-                            eq(UsersTable.twitchId, profile?.sub ?? ""),
+                            eq(UsersTable.twitchId, twitchId),
                             email ? eq(UsersTable.email, email) : undefined
                         ))
                         .limit(1);
 
-                    if (existingUser.length > 0) {
-                        // Si existe un usuario, vincular cuentas si es necesario
-                        const userId = existingUser[0].id;
-                        const twitchId = profile?.sub;
-                        const twitchTier = await getUserSubscription(twitchId, account.access_token);
+                    const twitchTier = await getUserSubscription(twitchId, account.access_token);
 
-                        // Actualizar la cuenta existente con los detalles de Twitch
+                    if (existingUser) {
+                        // Actualizar usuario existente
                         await client
                             .update(UsersTable)
                             .set({
@@ -67,26 +57,36 @@ export default defineConfig({
                                 twitchTier,
                                 updatedAt: new Date(),
                             })
-                            .where(eq(UsersTable.id, userId));
+                            .where(eq(UsersTable.id, existingUser.id));
 
-                        // @ts-ignore
-                        token.user.twitchTier = twitchTier;
-
+                        token.user = {
+                            ...profile,
+                            twitchTier,
+                            id: existingUser.id
+                        };
                     } else {
-                        // Si no existe un usuario, crear uno nuevo
-                        await client
+                        // Crear nuevo usuario
+                        const [newUser] = await client
                             .insert(UsersTable)
                             .values({
                                 email,
                                 displayName: profile?.preferred_username ?? username,
                                 avatar: profile?.picture,
                                 username,
-                                twitchId: profile?.sub,
-                                twitchTier: await getUserSubscription(profile?.sub, account.access_token),
-                            });
+                                twitchId,
+                                twitchTier,
+                            })
+                            .returning({ id: UsersTable.id });
+
+                        token.user = {
+                            ...profile,
+                            twitchTier,
+                            id: newUser.id
+                        };
                     }
                 } catch (error) {
                     console.error("Error managing user:", error);
+                    throw error;
                 }
             }
             return token;
@@ -109,35 +109,48 @@ export default defineConfig({
                             columns: {
                                 playerNumber: true,
                             }
+                        },
+                        suspensions: {
+                            columns: {
+                                startDate: true,
+                                endDate: true,
+                                status: true,
+                            },
                         }
                     }
                 });
 
                 if (userRecord) {
-                    session.user.id = userRecord.id;
-                    session.user.username = userRecord.username;
-                    session.user.isAdmin = userRecord.admin;
-                    session.user.twitchId = userRecord.twitchId;
-                    session.user.tier = userRecord.twitchTier;
-                    session.user.discordId = userRecord.discordId;
-                    session.user.coins = userRecord.coins;
-                    session.user.streamerWarsPlayerNumber = userRecord.streamerWarsPlayer?.playerNumber;
+
+                    console.log(userRecord.suspensions)
+                    const isSuspended = userRecord.suspensions.some(
+                        (suspension) =>
+                            suspension.status === "active" &&
+                            (suspension.endDate === null || new Date(suspension.endDate) > new Date())
+                    );
+                    session.user = {
+                        ...session.user,
+                        id: userRecord.id,
+                        username: userRecord.username,
+                        isAdmin: userRecord.admin,
+                        twitchId: userRecord.twitchId,
+                        tier: userRecord.twitchTier,
+                        discordId: userRecord.discordId,
+                        coins: userRecord.coins,
+                        streamerWarsPlayerNumber: userRecord.streamerWarsPlayer?.playerNumber,
+                        isSuspended,
+                    };
+
                 }
             } catch (error) {
                 console.error("Error fetching user admin status:", error);
             }
 
-            return {
-                ...session,
-                user: {
-                    ...session.user,
-                },
-            };
+            return session;
         },
     },
     pages: {
         error: "/",
         signIn: "/",
-
     },
 });

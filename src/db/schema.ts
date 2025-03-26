@@ -118,6 +118,14 @@ export const userRelations = relations(UsersTable, ({ one, many }) => ({
         fields: [UsersTable.id],
         references: [StreamerWarsPlayersTable.userId],
     }),
+    suspensions: many(UserSuspensionsTable),
+}))
+
+export const suspensionsRelations = relations(UserSuspensionsTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [UserSuspensionsTable.userId],
+        references: [UsersTable.id],
+    }),
 }))
 
 export const StreamerWarsInscriptionsTable = pgTable('streamer_wars_inscriptions', {
