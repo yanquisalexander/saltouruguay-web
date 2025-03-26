@@ -1,6 +1,10 @@
 import crypto from "crypto";
 import { ApiClient } from "@twurple/api";
 import { TWITCH_CLIENT_ID } from "astro:env/server";
+import { client as db } from "@/db/client";
+import { eq } from "drizzle-orm";
+import { UsersTable } from "@/db/schema";
+import { handleTwitchRevoke } from "@/utils/user";
 
 export class TwitchEvents {
     private readonly secret: string;
@@ -61,6 +65,14 @@ export class TwitchEvents {
              */
             case 'user.authorization.revoke':
                 this.log(`User revoked authorization: ${bodyJson.event.user_id}`);
+
+                try {
+                    await handleTwitchRevoke(bodyJson.event.user_id);
+                } catch (error) {
+                    this.log(`Error handling user authorization revoke: ${error}`);
+                }
+
+
                 break;
             default:
                 this.log(`Unknown event type: ${bodyJson.subscription.type}`);

@@ -9,6 +9,7 @@ import { ACHIEVEMENTS } from "@/consts/Achievements";
 import { experimental_AstroContainer } from "astro/container";
 import NewLoginDetected from "@/email/NewLoginDetected.astro";
 import { sendNotificationEmail } from "./email";
+import TwitchAuthorizationRevoked from "@/email/TwitchAuthorizationRevoked.astro";
 
 /**
  * Obtiene la suscripción de un usuario en Twitch.
@@ -302,3 +303,55 @@ export const updateSessionActivity = async (sessionId: string) => {
         throw error;
     }
 };
+
+export const destroyAllSessions = async (userId: number) => {
+    try {
+        const deletedSessions = await client
+            .delete(SessionsTable)
+            .where(eq(SessionsTable.userId, userId))
+            .returning({ deletedSessionId: SessionsTable.sessionId });
+
+        return deletedSessions;
+    } catch (error) {
+        console.error("Error destroying all sessions:", error);
+        throw error;
+    }
+}
+export const handleTwitchRevoke = async (twitchId: string) => {
+    const user = await client.query.UsersTable.findFirst({
+        where: eq(UsersTable.twitchId, twitchId),
+    });
+
+    if (!user) return;
+
+    /* 
+     Revoke all sessions for this user
+    */
+
+    await client
+        .delete(SessionsTable)
+        .where(eq(SessionsTable.userId, user.id))
+        .execute();
+
+
+    // Send an email to the user informing them that their Twitch account has been revoked
+
+    const container = await experimental_AstroContainer.create()
+    const emailBody = await container.renderToString(TwitchAuthorizationRevoked, {
+        props: {
+            username: user.displayName || user.username,
+        }
+    });
+
+    const emailSubject = `Tu cuenta de Twitch "${user.displayName || user.username}" ha sido desvinculada`;
+    const email = user.email;
+
+    if (email) {
+        await sendNotificationEmail(
+            email,
+            emailSubject,
+            emailBody,
+        )
+    }
+
+}
