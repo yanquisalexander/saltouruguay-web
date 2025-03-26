@@ -1,0 +1,1 @@
+ALTER TABLE "user_suspensions" ADD COLUMN "appeal_message" text;

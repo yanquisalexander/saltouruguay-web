@@ -3,7 +3,7 @@ import { NOMINEES } from "@/awards/Nominees";
 import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
 import type { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { client } from "@/db/client";
-import { DebateAnonymousMessagesTable, NegativeVotesStreamersTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable } from "@/db/schema";
+import { DebateAnonymousMessagesTable, NegativeVotesStreamersTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, UserSuspensionsTable } from "@/db/schema";
 import { submitVotes } from "@/utils/awards-vote-system";
 import { pusher } from "@/utils/pusher";
 import { updateCardSkin, updateStickers } from "@/utils/user";
@@ -366,5 +366,37 @@ export const server = {
 
             return { success: true };
         },
+    }),
+    sendAppelation: defineAction({
+        input: z.object({
+            message: z.string().min(1).max(500),
+        }),
+        handler: async ({ message }, { request }) => {
+            const session = await getSession(request);
+            if (!session) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión para enviar tu apelación" });
+
+            try {
+                // Obtener la suspensión del usuario
+                const suspension = await client
+                    .select()
+                    .from(UserSuspensionsTable)
+                    .where(eq(UserSuspensionsTable.userId, session.user.id))
+                    .execute()
+                    .then((suspensions) => suspensions[0]);
+
+                if (!suspension) throw new ActionError({ code: 'NOT_FOUND', message: "Suspensión no encontrada" });
+
+                // Registrar la apelación
+                await client
+                    .update(UserSuspensionsTable)
+                    .set({ appealMessage: message, appealDate: new Date() })
+                    .where(eq(UserSuspensionsTable.id, suspension.id))
+                    .execute();
+
+            } catch (error) {
+                throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Error al enviar la apelación" });
+            }
+        },
     })
+
 }

@@ -1,6 +1,6 @@
 import { SALTO_BROADCASTER_ID } from "@/config";
 import { client } from "@/db/client";
-import { MemberCards, UserAchievementsTable, UsersTable } from "@/db/schema";
+import { MemberCards, UserAchievementsTable, UsersTable, UserSuspensionsTable } from "@/db/schema";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { createUserApiClient, createStaticAuthProvider } from "@/lib/Twitch";
 import { count, eq } from "drizzle-orm";
@@ -153,4 +153,36 @@ export const getAllUserEmails = async () => {
     */
     const result = await client.select({ value: UsersTable.email }).from(UsersTable).execute();
     return result.map(row => row.value);
+}
+
+export const getUserSuspension = async (userId: number) => {
+    const suspension = await client.query.UserSuspensionsTable.findFirst({
+        where: eq(UserSuspensionsTable.userId, userId),
+        with: {
+            user: {
+                columns: {
+                    displayName: true,
+                    avatar: true,
+                }
+            }
+        }
+    });
+
+    return suspension;
+}
+
+export const getUserSuspensions = async (userId: number) => {
+    const suspensions = await client.query.UserSuspensionsTable.findMany({
+        where: eq(UserSuspensionsTable.userId, userId),
+        with: {
+            user: {
+                columns: {
+                    displayName: true,
+                    avatar: true,
+                }
+            }
+        }
+    });
+
+    return suspensions;
 }

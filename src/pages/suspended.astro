@@ -1,0 +1,143 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getUserSuspension } from "@/utils/user";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return new Response(null, {
+    status: 404,
+  });
+}
+
+if (!session.user.isSuspended) {
+  return new Response(null, {
+    status: 404,
+  });
+}
+
+const suspension = await getUserSuspension(session.user.id);
+---
+
+<Layout hideHeader title="Tu cuenta ha sido suspendida">
+  <div
+    class="bg-black/20 rounded-2xl mt-32 p-8 flex flex-col items-center border border-white/20 ring-4 ring-black/20 border-dotted mx-auto max-w-md"
+  >
+    <img src="/favicon.svg" alt="Logo" class="h-16 w-16 mx-auto mb-4" />
+    <h1 class="text-xl mb-4 font-rubik font-medium">
+      Tu cuenta ha sido suspendida
+    </h1>
+    {
+      suspension?.endDate ? (
+        <p class="text-center text-gray-200 mb-4">
+          Tu cuenta estará suspendida hasta el{" "}
+          {new Date(suspension.endDate).toLocaleDateString("es-ES", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          })}
+        </p>
+      ) : (
+        <p class="text-center text-gray-200 mb-4">
+          Tu cuenta ha sido suspendida indefinidamente.
+        </p>
+      )
+    }
+
+    {
+      suspension?.reason ? (
+        <p class="text-center text-gray-200 mb-4">
+          Motivo: {suspension.reason}
+        </p>
+      ) : (
+        <p class="text-center text-gray-200 mb-4">
+          No se ha proporcionado un motivo.
+        </p>
+      )
+    }
+
+    {
+      suspension?.appealDate ? (
+        <p class="text-center text-gray-200 mb-4 bg-green-500/20 p-2 rounded-sm border border-green-500/20">
+          Has enviado una apelación el{" "}
+          {new Date(suspension?.appealDate).toLocaleDateString("es-ES", {
+            year: "numeric",
+            month: "long",
+            day: "2-digit",
+          })}{" "}
+          a las{" "}
+          {new Date(suspension?.appealDate).toLocaleTimeString("es-ES", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </p>
+      ) : (
+        <div class="w-full text-center">
+          <input type="checkbox" id="appeal" class="hidden peer" />
+          <label
+            for="appeal"
+            class="cursor-pointer text-gray-200 mb-4 block bg-blue-500/20 p-2 rounded-sm border border-blue-500/20 hover:bg-blue-500/30 transition"
+          >
+            Apelar
+          </label>
+          <div class="overflow-hidden max-h-0 peer-checked:max-h-96 transition-[max-height] duration-300">
+            <form class="mt-4 flex flex-col gap-2">
+              <textarea
+                id="appeal-textarea"
+                class="w-full p-2 border border-gray-300 rounded-md bg-black/20 text-white"
+                placeholder="Escribe tu apelación aquí..."
+              />
+              <button
+                type="submit"
+                id="appeal-button"
+                class="bg-blue-500 p-2 rounded-md text-white hover:bg-blue-600 transition"
+              >
+                Enviar apelación
+              </button>
+            </form>
+          </div>
+        </div>
+      )
+    }
+
+    <p class="text-center text-gray-200 mt-4">
+      Si crees que esto es un error, contacta con el soporte.
+    </p>
+  </div>
+</Layout>
+
+<script>
+  import { $ } from "@/lib/dom-selector";
+  import { actions } from "astro:actions";
+  import { navigate } from "astro:transitions/client";
+  import { toast } from "sonner";
+
+  document.addEventListener("astro:page-load", () => {
+    const $appealTextarea = $("#appeal-textarea") as HTMLTextAreaElement;
+    const $appealButton = $("#appeal-button") as HTMLButtonElement;
+
+    if (!$appealTextarea || !$appealButton) return;
+
+    $appealButton.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const appealText = $appealTextarea.value.trim(); // Evita espacios vacíos
+
+      if (appealText.length < 10) {
+        return toast.error("La apelación debe tener al menos 10 caracteres.");
+      }
+
+      try {
+        toast.promise(actions.sendAppelation({ message: appealText }), {
+          loading: "Enviando apelación...",
+          success: "Apelación enviada con éxito.",
+          error: (err: Error) => `Error al enviar la apelación: ${err.message}`,
+        });
+
+        navigate("/suspended");
+      } catch (err) {
+        toast.error("Error inesperado al enviar la apelación.");
+      }
+    });
+  });
+</script>

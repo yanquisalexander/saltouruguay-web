@@ -9,6 +9,7 @@ import { CinematicPlayer } from "./CinematicPlayer";
 import Pusher from "pusher-js";
 import { PUSHER_KEY } from "@/config";
 import { PUSHER_APP_CLUSTER } from "astro:env/client";
+import { navigate } from "astro:transitions/client";
 
 
 export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Session['user'] | null, isPrerenderedPath: boolean }) => {
@@ -24,14 +25,24 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
         setLoading(true);
         try {
             const response = await fetch("/api/auth/session");
-            const data = await response?.json();
-            setUser(data?.user || null);
+
+            // If the response is 200, check if the user is suspended
+            if (response.status === 200) {
+                const data = await response.json();
+                setUser(data?.user || null);
+
+                // If user is suspended, redirect to suspended page
+                if (data?.user?.isSuspended) {
+                    navigate("/suspended"); // Redirect to suspended page
+                    return; // Stop further processing
+                }
+            }
         } catch (error) {
             console.error("Error al obtener el usuario", error);
         } finally {
             setLoading(false);
             setFetchingUser(false); // Ya no estamos esperando la respuesta
-        };
+        }
     };
 
     const handleSignIn = async () => {

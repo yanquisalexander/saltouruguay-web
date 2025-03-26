@@ -28,6 +28,7 @@ export const UserSuspensionsTable = pgTable("user_suspensions", {
     startDate: timestamp("start_date").notNull().default(sql`current_timestamp`),
     endDate: timestamp("end_date"),
     appealDate: timestamp("appeal_date"),
+    appealMessage: text("appeal_message"),
     status: text("status").notNull().default("active"),
 }, (t) => ({
     uniqueUserId: unique().on(t.userId)

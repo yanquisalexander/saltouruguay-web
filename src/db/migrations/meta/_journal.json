@@ -183,6 +183,13 @@
       "when": 1743019589025,
       "tag": "0025_acoustic_mattie_franklin",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1743022382892,
+      "tag": "0026_kind_silverclaw",
+      "breakpoints": true
     }
   ]
 }
