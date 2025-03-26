@@ -1,0 +1,42 @@
+---
+const res = await fetch(
+  "https://api.mcsrvstat.us/3/saltocraft.saltouruguayserver.com:25594"
+);
+
+const {
+  online,
+  players: { online: onlinePlayers, max: maxPlayers, list },
+} = await res.json();
+
+console.log(list);
+---
+
+<div class="flex flex-col items-center justify-center">
+  <div class="text-2xl font-bold text-white">
+    {online ? "Online" : "Offline"}
+  </div>
+  <div class="text-lg text-gray-400">
+    Jugadores en línea: {online ? onlinePlayers : 0} / {maxPlayers}
+  </div>
+  <div
+    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4"
+  >
+    {
+      onlinePlayers > 0 &&
+        list.map((player: { name: string; uuid: string }) => (
+          <div class="bg-gradient-to-r border border-t-white/10 border-r-white/10 from-transparent via-neutral-900/50 to-blue-950/40 text-white p-4 rounded-lg shadow-md">
+            <div class="flex items-center">
+              <img
+                src={`https://crafatar.com/renders/head/${player.uuid}?size=64&default=MHF_Steve`}
+                alt={player.name}
+                class="w-16 h-16 rounded-full mr-4"
+              />
+              <div>
+                <h3 class="text-lg font-bold">{player.name}</h3>
+              </div>
+            </div>
+          </div>
+        ))
+    }
+  </div>
+</div>

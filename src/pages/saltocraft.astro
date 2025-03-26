@@ -6,6 +6,7 @@ import MinecraftFabric from "@/icons/MinecraftFabric.astro";
 import { LucideCopy } from "lucide-preact";
 import Discord from "@/icons/Discord.astro";
 import { SOCIAL_NETWORKS } from "@/consts/SocialNetworks";
+import SaltoCraftOnlineUsers from "@/components/SaltoCraftOnlineUsers.astro";
 
 const MODPACK_INFO = {
   AVAILABLE: import.meta.env.DEV,
@@ -147,6 +148,8 @@ const MODPACK_INFO = {
       )
     }
   </section>
+
+  <SaltoCraftOnlineUsers server:defer />
 </Layout>
 
 <script>
