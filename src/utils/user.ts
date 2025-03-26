@@ -339,7 +339,7 @@ export const handleTwitchRevoke = async (twitchId: string) => {
     const container = await experimental_AstroContainer.create()
     const emailBody = await container.renderToString(TwitchAuthorizationRevoked, {
         props: {
-            username: user.displayName || user.username,
+            displayName: user.displayName || user.username,
         }
     });
 
