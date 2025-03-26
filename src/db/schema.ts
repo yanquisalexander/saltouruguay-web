@@ -34,6 +34,21 @@ export const UserSuspensionsTable = pgTable("user_suspensions", {
     uniqueUserId: unique().on(t.userId)
 }))
 
+export const SessionsTable = pgTable("sessions", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id),
+    sessionId: varchar("session_id").notNull().unique(),
+    userAgent: text("user_agent").notNull(),
+    ip: text("ip").notNull(),
+    lastActivity: timestamp("last_activity"),
+    createdAt: timestamp("created_at")
+        .notNull()
+        .default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at")
+        .notNull()
+        .default(sql`current_timestamp`),
+});
+
 export const VotesTable = pgTable("votes", {
     id: serial("id").primaryKey(),
     userId: integer("user_id").notNull().references(() => UsersTable.id),
@@ -120,6 +135,14 @@ export const userRelations = relations(UsersTable, ({ one, many }) => ({
         references: [StreamerWarsPlayersTable.userId],
     }),
     suspensions: many(UserSuspensionsTable),
+    sessions: many(SessionsTable),
+}))
+
+export const sessionsRelations = relations(SessionsTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [SessionsTable.userId],
+        references: [UsersTable.id],
+    }),
 }))
 
 export const suspensionsRelations = relations(UserSuspensionsTable, ({ one }) => ({

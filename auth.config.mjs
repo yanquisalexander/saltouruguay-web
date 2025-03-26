@@ -5,6 +5,7 @@ import { client } from "@/db/client";
 import { UsersTable } from "@/db/schema";
 import { getUserSubscription } from "@/utils/user";
 import { eq, or } from "drizzle-orm";
+import { saveSession, updateSessionActivity, destroySession, getSessionById } from "@/utils/user";
 
 export default defineConfig({
     providers: [
@@ -33,7 +34,6 @@ export default defineConfig({
                 const twitchId = profile?.sub ?? "";
 
                 try {
-                    // Buscar usuario existente de manera más eficiente
                     const [existingUser] = await client
                         .select()
                         .from(UsersTable)
@@ -46,7 +46,6 @@ export default defineConfig({
                     const twitchTier = await getUserSubscription(twitchId, account.access_token);
 
                     if (existingUser) {
-                        // Actualizar usuario existente
                         await client
                             .update(UsersTable)
                             .set({
@@ -65,7 +64,6 @@ export default defineConfig({
                             id: existingUser.id
                         };
                     } else {
-                        // Crear nuevo usuario
                         const [newUser] = await client
                             .insert(UsersTable)
                             .values({
@@ -84,15 +82,41 @@ export default defineConfig({
                             id: newUser.id
                         };
                     }
+
+
+
                 } catch (error) {
                     console.error("Error managing user:", error);
                     throw error;
                 }
+
+                // Generar sessionId y guardar la sesión
+                const sessionId = crypto.randomUUID();
+                token.sessionId = sessionId;
+                await saveSession(token.user.id, sessionId, token.userAgent ?? "Unknown", token.user.ip ?? "Unknown");
             }
             return token;
         },
         session: async ({ session, token }) => {
             try {
+                let existingSession = await getSessionById(token.sessionId);
+
+                if (!existingSession) {
+                    /* 
+                        Assume logged out if session not found (Remotely maybe)
+                        This is useful when the session is destroyed on the server
+                        but the client is still logged in.
+                    */
+                    session.user = null;
+                    return session;
+                }
+
+
+
+                if (token.sessionId) {
+                    await updateSessionActivity(token.sessionId);
+                }
+
                 const userRecord = await client.query.UsersTable.findFirst({
                     where: eq(UsersTable.twitchId, token.user.sub),
                     columns: {
@@ -121,8 +145,6 @@ export default defineConfig({
                 });
 
                 if (userRecord) {
-
-                    console.log(userRecord.suspensions)
                     const isSuspended = userRecord.suspensions.some(
                         (suspension) =>
                             suspension.status === "active" &&
@@ -139,11 +161,12 @@ export default defineConfig({
                         coins: userRecord.coins,
                         streamerWarsPlayerNumber: userRecord.streamerWarsPlayer?.playerNumber,
                         isSuspended,
+                        sessionId: token.sessionId,
                     };
-
                 }
             } catch (error) {
-                console.error("Error fetching user admin status:", error);
+                console.error("Error retrieving user data:", error);
+                throw error;
             }
 
             return session;
@@ -153,4 +176,15 @@ export default defineConfig({
         error: "/",
         signIn: "/",
     },
+    events: {
+        signOut: async ({ token }) => {
+            if (token.sessionId) {
+                try {
+                    await destroySession(token.sessionId);
+                } catch (error) {
+                    console.error("Error destroying session:", error);
+                }
+            }
+        }
+    }
 });

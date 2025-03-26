@@ -1,12 +1,18 @@
 ---
+import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
 
 const session = await getSession(Astro.request);
 ---
-
-<main class="flex min-h-screen items-center justify-center text-center">
-  {session ? "Ingresando..." : "No se ha podido iniciar sesión"}
-</main>
+<Layout
+  hideHeader
+  title={session ? "Iniciando sesión..." : "Error al iniciar sesión"}
+  description="Iniciando sesión en Twitch..."
+  hideFooter>
+  <main class="flex min-h-screen items-center justify-center text-center">
+    {session ? "Ingresando..." : "No se ha podido iniciar sesión"}
+  </main>
+</Layout>
 
 {
   session !== null && (

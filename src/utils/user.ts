@@ -1,6 +1,6 @@
 import { SALTO_BROADCASTER_ID } from "@/config";
 import { client } from "@/db/client";
-import { MemberCards, UserAchievementsTable, UsersTable, UserSuspensionsTable } from "@/db/schema";
+import { MemberCards, SessionsTable, UserAchievementsTable, UsersTable, UserSuspensionsTable } from "@/db/schema";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { createUserApiClient, createStaticAuthProvider } from "@/lib/Twitch";
 import { count, eq } from "drizzle-orm";
@@ -186,3 +186,84 @@ export const getUserSuspensions = async (userId: number) => {
 
     return suspensions;
 }
+
+
+export const saveSession = async (
+    userId: number,
+    sessionId: string,
+    userAgent: string,
+    ip: string
+) => {
+    try {
+        console.log("Saving session for user:", userId, "Session ID:", sessionId);
+        const [newSession] = await client
+            .insert(SessionsTable)
+            .values({
+                userId,
+                sessionId,
+                userAgent,
+                ip,
+                lastActivity: new Date(),
+            })
+            .returning();
+
+        return newSession;
+    } catch (error) {
+        console.error("Error saving session:", error);
+        throw error;
+    }
+};
+
+export const destroySession = async (sessionId: string) => {
+    try {
+        const deletedSession = await client
+            .delete(SessionsTable)
+            .where(eq(SessionsTable.sessionId, sessionId))
+            .returning({ deletedSessionId: SessionsTable.sessionId });
+
+        return deletedSession[0]?.deletedSessionId;
+    } catch (error) {
+        console.error("Error destroying session:", error);
+        throw error;
+    }
+};
+
+export const getSessionById = async (sessionId: string) => {
+    try {
+        const session = await client.query.SessionsTable.findFirst({
+            where: eq(SessionsTable.sessionId, sessionId),
+            with: {
+                user: {
+                    columns: {
+                        id: true,
+                        username: true,
+                        email: true,
+                    }
+                }
+            }
+        });
+
+        return session;
+    } catch (error) {
+        console.error("Error fetching session:", error);
+        throw error;
+    }
+};
+
+export const updateSessionActivity = async (sessionId: string) => {
+    try {
+        const updatedSession = await client
+            .update(SessionsTable)
+            .set({
+                lastActivity: new Date(),
+                updatedAt: new Date()
+            })
+            .where(eq(SessionsTable.sessionId, sessionId))
+            .returning();
+
+        return updatedSession[0];
+    } catch (error) {
+        console.error("Error updating session activity:", error);
+        throw error;
+    }
+};
