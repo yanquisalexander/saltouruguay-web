@@ -176,6 +176,13 @@
       "when": 1739631675194,
       "tag": "0024_slim_old_lace",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1743019589025,
+      "tag": "0025_acoustic_mattie_franklin",
+      "breakpoints": true
     }
   ]
 }

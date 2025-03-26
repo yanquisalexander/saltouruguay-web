@@ -21,6 +21,18 @@ export const UsersTable = pgTable("users", {
         .default(sql`current_timestamp`),
 });
 
+export const UserSuspensionsTable = pgTable("user_suspensions", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id),
+    reason: text("reason").notNull(),
+    startDate: timestamp("start_date").notNull().default(sql`current_timestamp`),
+    endDate: timestamp("end_date"),
+    appealDate: timestamp("appeal_date"),
+    status: text("status").notNull().default("active"),
+}, (t) => ({
+    uniqueUserId: unique().on(t.userId)
+}))
+
 export const VotesTable = pgTable("votes", {
     id: serial("id").primaryKey(),
     userId: integer("user_id").notNull().references(() => UsersTable.id),
