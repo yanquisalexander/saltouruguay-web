@@ -12,6 +12,7 @@ declare module "@auth/core/types" {
             discordId?: string;
             coins?: number;
             streamerWarsPlayerNumber?: number;
+            isSuspended?: boolean;
         } & DefaultSession["user"]; // Extiende las propiedades originales del tipo `user`
     }
 }
