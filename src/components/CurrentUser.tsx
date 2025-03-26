@@ -163,7 +163,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                                         !user.discordId && (
                                             <button
                                                 onClick={linkDiscord}
-                                                className="block w-full text-left px-4 text-nowrap py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                className="w-full items-center justify-between  gap-1 px-4 py-2 flex text-sm text-neutral-200 transition hover:bg-neutral-200/5"
                                             >
                                                 Vincular Discord
                                             </button>
