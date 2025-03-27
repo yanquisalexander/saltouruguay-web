@@ -1,117 +1,294 @@
 import { client as db } from "@/db/client";
-import { SaltoPlayGameTokensTable, SaltoPlayGamesTable, SaltoPlayDevelopersTable } from "@/db/schema";
+import {
+    SaltoPlayGameTokensTable,
+    SaltoPlayGamesTable,
+    SaltoPlayDevelopersTable,
+    SaltoPlayAuthorizationCodesTable
+} from "@/db/schema";
 import { randomUUID } from "crypto";
 import { and, eq } from "drizzle-orm";
 import jwt from 'jsonwebtoken';
+import { LucideIdCard, type LucideIcon } from "lucide-preact";
 import { DateTime } from 'luxon';
 
-class GameCenterOAuth {
-    private static secret = process.env.JWT_SECRET || 'your-secret-key';
-    private static accessTokenExpiration = '15m';  // Expiración para AccessToken
-    private static refreshTokenExpiration = '30d';  // Expiración para RefreshToken
-    private static jwtAlgorithm = 'HS256'; // Algoritmo de firma
-    private static issuer = 'SALTOURUGUAYSERVER-GAMECENTER'; // Emisor del token
 
-    // Generar Access Token (JWT)
-    public static generateAccessToken(userId: number, gameId: string): string {
-        const payload = {
-            userId: userId,
-            gameId: gameId,
-            iat: Math.floor(Date.now() / 1000), // Tiempo de emisión
-            exp: Math.floor(Date.now() / 1000) + 15 * 60 // Expiración de 15 minutos
-        };
+// Existing scopes and beautiful scopes definitions
+export const AVAILABLE_SCOPES = [
+    "openid",
+    "profile",
+    "email",
+    "saltotag:read",
+    "achievements:read",
+    "achievements:write",
+    "friends:read",
+    "friends:update"
+];
 
-        return jwt.sign(payload, this.secret, {
-            issuer: this.issuer,
-            expiresIn: this.accessTokenExpiration
-        });
-    }
+export const BEAUTIFUL_SCOPES: Record<string, { name: string; description: string; icon: LucideIcon } | undefined> = {
+    "openid": {
+        name: "OpenID",
+        description: "OpenID Connect scope",
+        icon: LucideIdCard
+    },
+    "profile": {
+        name: "Profile",
+        description: "Access to basic profile information",
+        icon: LucideIdCard
+    },
+    "email": {
+        name: "Email",
+        description: "Access to email address",
+        icon: LucideIdCard
+    },
+    // Add more beautiful scopes as needed
+};
 
-    // Generar Refresh Token
-    public static generateRefreshToken(userId: number, gameId: string): string {
-        const payload = {
-            userId: userId,
-            gameId: gameId,
-            iat: Math.floor(Date.now() / 1000), // Tiempo de emisión
-            exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60 // Expiración de 30 días
-        };
-
-        const refreshToken = jwt.sign(payload, this.secret, {
-            issuer: this.issuer,
-            expiresIn: this.refreshTokenExpiration
-        });
-        // Guardar el refresh token en la base de datos
-
-        db.insert(SaltoPlayGameTokensTable).values({
-            userId,
-            gameId,
-            refreshToken,
-        }).onConflictDoNothing();
-
-
-    }
-
-    // Verificar un Access Token
-    public static verifyAccessToken(token: string): any {
-        try {
-            const decoded = jwt.verify(token, this.secret);
-            return decoded;
-        } catch (err) {
-            return null;  // Token inválido o expirado
-        }
-    }
-
-    // Validar y obtener el usuario del token
-    public static validateAccessToken(token: string): any {
-        const decoded = this.verifyAccessToken(token);
-        return decoded ? decoded : null;
-    }
-
-    // Refrescar un Access Token usando el Refresh Token
-    public static async refreshAccessToken(refreshToken: string): Promise<string | null> {
-        try {
-            const decoded = jwt.verify(refreshToken, this.secret) as any;
-
-            // Verifica si el refresh token está en la DB
-            const existingToken = await db.select().from(SaltoPlayGameTokensTable)
-                .where(and(
-                    eq(SaltoPlayGameTokensTable.userId, decoded.userId),
-                    eq(SaltoPlayGameTokensTable.gameId, decoded.gameId),
-                    eq(SaltoPlayGameTokensTable.refreshToken, refreshToken)
-                ))
-                .limit(1)
-                .then(result => result[0]);
-            if (!existingToken) return null;  // Refresh token no encontrado en la DB
-
-            // Si es válido, genera un nuevo Access Token
-            return this.generateAccessToken(decoded.userId, decoded.gameId);
-        } catch (err) {
-            return null;  // Error al verificar el refresh token
-        }
-    }
-
-    // Revocar un refresh token (Eliminarlo de la DB)
-    public static async revokeRefreshToken(token: string): Promise<boolean> {
-        try {
-            await db.delete(SaltoPlayGameTokensTable)
-                .where(eq(SaltoPlayGameTokensTable.refreshToken, token));
-            return true;  // Token eliminado correctamente
-        } catch (err) {
-            return false;  // Si hay un error al eliminar el token
-        }
-    }
-
-    // Función para obtener la fecha de expiración de un Access Token (para visualizar)
-    public static getAccessTokenExpiration() {
-        const expirationDate = DateTime.fromMillis(Date.now()).plus({ minutes: 15 }).toISO();
-        return expirationDate;
-    }
-
-    // Función para obtener la fecha de expiración de un Refresh Token (para visualizar)
-    public static getRefreshTokenExpiration() {
-        const expirationDate = DateTime.fromMillis(Date.now()).plus({ days: 30 }).toISO();
-        return expirationDate;
-    }
+export const getBeautifulScopes = (scopes: string[]) => {
+    return scopes
+        .map(scope => BEAUTIFUL_SCOPES[scope])
+        .filter(Boolean) as Array<{ name: string; description: string; icon: LucideIcon }>;
 }
 
-export default GameCenterOAuth;
+// Token lifetimes
+export const AUTHORIZATION_CODE_LIFETIME = 10 * 60; // 10 minutes
+export const ACCESS_TOKEN_LIFETIME = 60 * 60; // 1 hour
+export const REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 30; // 30 days
+
+// Generate an authorization code
+export async function generateAuthorizationCode(
+    gameId: string,
+    userId: number,
+    scopes: string[],
+    redirectUri: string
+): Promise<string> {
+    // Validate scopes
+    const invalidScopes = scopes.filter(scope => !AVAILABLE_SCOPES.includes(scope));
+    if (invalidScopes.length > 0) {
+        throw new Error(`Invalid scopes: ${invalidScopes.join(', ')}`);
+    }
+
+    // Generate unique code
+    const code = randomUUID();
+
+    // Store authorization code
+    await db.insert(SaltoPlayAuthorizationCodesTable).values({
+        gameId,
+        userId,
+        code,
+        scopes: scopes.join(','),
+        redirectUri,
+        expiresAt: DateTime.now().plus({ seconds: AUTHORIZATION_CODE_LIFETIME }).toJSDate()
+    });
+
+    return code;
+}
+
+// Validate and consume authorization code
+export async function validateAuthorizationCode(
+    code: string,
+    gameId: string,
+    redirectUri: string
+): Promise<{ userId: number; scopes: string[] }> {
+    const authCode = await db.query.SaltoPlayAuthorizationCodesTable.findFirst({
+        where: and(
+            eq(SaltoPlayAuthorizationCodesTable.code, code),
+            eq(SaltoPlayAuthorizationCodesTable.gameId, gameId),
+            eq(SaltoPlayAuthorizationCodesTable.redirectUri, redirectUri)
+        )
+    });
+
+    if (!authCode) {
+        throw new Error('Invalid authorization code');
+    }
+
+    // Check expiration
+    if (DateTime.fromJSDate(authCode.expiresAt) < DateTime.now()) {
+        throw new Error('Authorization code expired');
+    }
+
+    // Delete the used code to prevent reuse
+    await db.delete(SaltoPlayAuthorizationCodesTable)
+        .where(eq(SaltoPlayAuthorizationCodesTable.code, code));
+
+    return {
+        userId: authCode.userId,
+        scopes: authCode.scopes.split(',')
+    };
+}
+
+// Generate access and refresh tokens
+export async function generateTokens(
+    gameId: string,
+    userId: number,
+    scopes: string[]
+): Promise<{ accessToken: string; refreshToken: string }> {
+    const game = await db.query.SaltoPlayGamesTable.findFirst({
+        where: eq(SaltoPlayGamesTable.id, gameId)
+    });
+
+    if (!game) {
+        throw new Error('Game not found');
+    }
+
+    // Generate tokens
+    const accessToken = jwt.sign(
+        {
+            sub: userId.toString(),
+            game: gameId,
+            scopes
+        },
+        game.clientSecret,
+        { expiresIn: ACCESS_TOKEN_LIFETIME }
+    );
+
+    const refreshToken = jwt.sign(
+        {
+            sub: userId.toString(),
+            game: gameId
+        },
+        game.clientSecret,
+        { expiresIn: REFRESH_TOKEN_LIFETIME }
+    );
+
+    // Store tokens in database
+    await db.insert(SaltoPlayGameTokensTable).values({
+        gameId,
+        userId,
+        accessToken: await encryptToken(accessToken),
+        refreshToken: await encryptToken(refreshToken),
+        scopes: scopes.join(','),
+        expiresAt: DateTime.now().plus({ seconds: ACCESS_TOKEN_LIFETIME }).toJSDate()
+    });
+
+    return { accessToken, refreshToken };
+}
+
+// Refresh access token
+export async function refreshAccessToken(
+    refreshToken: string,
+    gameId: string
+): Promise<{ accessToken: string; refreshToken: string }> {
+    const game = await db.query.SaltoPlayGamesTable.findFirst({
+        where: eq(SaltoPlayGamesTable.id, gameId)
+    });
+
+    if (!game) {
+        throw new Error('Game not found');
+    }
+
+    // Verify refresh token
+    let decoded: any;
+    try {
+        decoded = jwt.verify(refreshToken, game.clientSecret);
+    } catch (error) {
+        throw new Error('Invalid refresh token');
+    }
+
+    // Find existing token record
+    const existingToken = await db.query.SaltoPlayGameTokensTable.findFirst({
+        where: and(
+            eq(SaltoPlayGameTokensTable.gameId, gameId),
+            eq(SaltoPlayGameTokensTable.userId, parseInt(decoded.sub))
+        )
+    });
+
+    if (!existingToken) {
+        throw new Error('Token not found');
+    }
+
+    // Generate new tokens
+    const newAccessToken = jwt.sign(
+        {
+            sub: decoded.sub,
+            game: gameId,
+            scopes: existingToken.scopes.split(',')
+        },
+        game.clientSecret,
+        { expiresIn: ACCESS_TOKEN_LIFETIME }
+    );
+
+    const newRefreshToken = jwt.sign(
+        {
+            sub: decoded.sub,
+            game: gameId
+        },
+        game.clientSecret,
+        { expiresIn: REFRESH_TOKEN_LIFETIME }
+    );
+
+    // Update tokens in database
+    await db.update(SaltoPlayGameTokensTable)
+        .set({
+            accessToken: await encryptToken(newAccessToken),
+            refreshToken: await encryptToken(newRefreshToken),
+            expiresAt: DateTime.now().plus({ seconds: ACCESS_TOKEN_LIFETIME }).toJSDate()
+        })
+        .where(
+            and(
+                eq(SaltoPlayGameTokensTable.gameId, gameId),
+                eq(SaltoPlayGameTokensTable.userId, parseInt(decoded.sub))
+            )
+        );
+
+    return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken
+    };
+}
+
+// Validate access token
+export async function validateAccessToken(
+    accessToken: string,
+    gameId: string
+): Promise<{ userId: number; scopes: string[] }> {
+    const game = await db.query.SaltoPlayGamesTable.findFirst({
+        where: eq(SaltoPlayGamesTable.id, gameId)
+    });
+
+    if (!game) {
+        throw new Error('Game not found');
+    }
+
+    // Verify token
+    let decoded: any;
+    try {
+        decoded = jwt.verify(accessToken, game.clientSecret);
+    } catch (error) {
+        throw new Error('Invalid access token');
+    }
+
+    // Check token in database
+    const tokenRecord = await db.query.SaltoPlayGameTokensTable.findFirst({
+        where: and(
+            eq(SaltoPlayGameTokensTable.gameId, gameId),
+            eq(SaltoPlayGameTokensTable.userId, parseInt(decoded.sub))
+        )
+    });
+
+    if (!tokenRecord) {
+        throw new Error('Token not found');
+    }
+
+    return {
+        userId: parseInt(decoded.sub),
+        scopes: decoded.scopes || []
+    };
+}
+
+// Helper function to encrypt tokens (replace with your actual encryption method)
+async function encryptToken(token: string): Promise<string> {
+    // Implement proper encryption 
+    // This is a placeholder - use a real encryption method
+    return Buffer.from(token).toString('base64');
+}
+
+// Revoke tokens for a specific game and user
+export async function revokeTokens(gameId: string, userId: number): Promise<void> {
+    await db.delete(SaltoPlayGameTokensTable)
+        .where(
+            and(
+                eq(SaltoPlayGameTokensTable.gameId, gameId),
+                eq(SaltoPlayGameTokensTable.userId, userId)
+            )
+        );
+}

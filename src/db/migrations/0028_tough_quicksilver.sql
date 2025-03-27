@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS "salto_play_achievements" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"game_id" integer,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"game_id" uuid NOT NULL,
 	"name" varchar NOT NULL,
 	"description" text,
 	"icon" varchar,
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS "salto_play_achievements" (
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "salto_play_developers" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" integer NOT NULL,
 	"developer_name" varchar NOT NULL,
 	"developer_url" varchar NOT NULL,
@@ -19,23 +19,40 @@ CREATE TABLE IF NOT EXISTS "salto_play_developers" (
 	CONSTRAINT "salto_play_developers_user_id_unique" UNIQUE("user_id")
 );
 --> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "salto_play_game_tokens" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"game_id" uuid NOT NULL,
+	"user_id" integer NOT NULL,
+	"access_token" varchar NOT NULL,
+	"refresh_token" varchar NOT NULL,
+	"scopes" varchar NOT NULL,
+	"expires_at" timestamp NOT NULL,
+	"created_at" timestamp DEFAULT current_timestamp NOT NULL,
+	"updated_at" timestamp DEFAULT current_timestamp NOT NULL,
+	CONSTRAINT "salto_play_game_tokens_access_token_unique" UNIQUE("access_token"),
+	CONSTRAINT "salto_play_game_tokens_refresh_token_unique" UNIQUE("refresh_token"),
+	CONSTRAINT "game_user_idx" UNIQUE("game_id","user_id")
+);
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "salto_play_games" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar NOT NULL,
 	"description" text,
-	"developer_id" integer,
+	"developer_id" uuid NOT NULL,
 	"icon" varchar,
 	"url" varchar,
 	"status" varchar DEFAULT 'pending' NOT NULL,
+	"client_secret" varchar NOT NULL,
+	"redirect_uri" varchar NOT NULL,
 	"created_at" timestamp DEFAULT current_timestamp NOT NULL,
 	"updated_at" timestamp DEFAULT current_timestamp NOT NULL,
 	CONSTRAINT "salto_play_games_name_unique" UNIQUE("name")
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "salto_tag_achievements" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"salto_tag_id" integer,
-	"achievement_id" integer,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"salto_tag_id" integer NOT NULL,
+	"achievement_id" uuid NOT NULL,
 	"unlocked_at" timestamp DEFAULT current_timestamp NOT NULL
 );
 --> statement-breakpoint
@@ -59,6 +76,18 @@ END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "salto_play_developers" ADD CONSTRAINT "salto_play_developers_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "salto_play_game_tokens" ADD CONSTRAINT "salto_play_game_tokens_game_id_salto_play_games_id_fk" FOREIGN KEY ("game_id") REFERENCES "public"."salto_play_games"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "salto_play_game_tokens" ADD CONSTRAINT "salto_play_game_tokens_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
