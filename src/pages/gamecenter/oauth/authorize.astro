@@ -1,6 +1,10 @@
 ---
-import Layout from "@/layouts/Layout.astro";
 import SaltoPlayLayout from "@/layouts/SaltoPlayLayout.astro";
+import {
+  getOauthClient,
+  AVAILABLE_SCOPES,
+  BEAUTIFUL_SCOPES,
+} from "@/lib/saltoplay/oauth";
 import { getSession } from "auth-astro/server";
 import {
   LucideAward,
@@ -14,6 +18,74 @@ import {
 const title = "Saltanos dicen...";
 
 const session = await getSession(Astro.request);
+
+if (!session) {
+  const originalUrl = new URL(Astro.request.url);
+  return Astro.redirect(
+    `/?login=true&redirect=${encodeURIComponent(originalUrl.pathname)}`,
+    302
+  );
+}
+
+const prevalidateOauth = async () => {
+  // Obtener los parámetros de búsqueda de la URL
+  const clientId = Astro.url.searchParams.get("client_id");
+  const redirectUri = Astro.url.searchParams.get("redirect_uri");
+  const responseType = Astro.url.searchParams.get("response_type");
+  const scope = Astro.url.searchParams.get("scope");
+
+  // Verificación básica de los parámetros
+  if (!clientId || !redirectUri || !responseType || !scope) {
+    return Astro.redirect("/gamecenter/oauth/error?error=invalid_request");
+  }
+
+  // Mapeo de parámetros a camelCase si es necesario
+  const params = {
+    clientId,
+    redirectUri,
+    responseType,
+    scope,
+  };
+
+  // Obtener el cliente de OAuth
+  const client = await getOauthClient(params.clientId);
+
+  // Verificación de cliente
+  if (!client) {
+    return Astro.redirect("/gamecenter/oauth/error?error=invalid_client");
+  }
+
+  // Verificación de URI de redirección
+  if (client.redirectUri !== params.redirectUri) {
+    return Astro.redirect(
+      "/gamecenter/oauth/error?error=mismatch_redirect_uri"
+    );
+  }
+
+  // Verificación de tipo de respuesta
+  if (params.responseType !== "code") {
+    return Astro.redirect(
+      "/gamecenter/oauth/error?error=unsupported_response_type"
+    );
+  }
+
+  // Procesamiento del scope
+  const scopes = params.scope.split(" ");
+
+  const invalidScopes = scopes.filter((s) => !AVAILABLE_SCOPES.includes(s));
+  if (invalidScopes.length > 0) {
+    return Astro.redirect(
+      `/gamecenter/oauth/error?error=invalid_scope&scope=${encodeURIComponent(
+        invalidScopes.join(" ")
+      )}`
+    );
+  }
+};
+
+const prevalidated = await prevalidateOauth();
+if (prevalidated) {
+  return prevalidated;
+}
 ---
 
 <SaltoPlayLayout

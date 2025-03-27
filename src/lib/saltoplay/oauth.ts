@@ -53,7 +53,7 @@ export const AUTHORIZATION_CODE_LIFETIME = 10 * 60; // 10 minutes
 export const ACCESS_TOKEN_LIFETIME = 60 * 60; // 1 hour
 export const REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 30; // 30 days
 
-export const getClient = async (clientId: string) => {
+export const getOauthClient = async (clientId: string) => {
     const client = await db.query.SaltoPlayGamesTable.findFirst({
         where: eq(SaltoPlayGamesTable.id, clientId)
     });

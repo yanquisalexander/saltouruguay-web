@@ -1,0 +1,78 @@
+---
+import SaltoPlayLayout from "@/layouts/SaltoPlayLayout.astro";
+import { LucideCircleX } from "lucide-preact";
+
+const title = "Saltanos dicen...";
+const error = Astro.url.searchParams.get("error") || "";
+
+const errorMessages = {
+  invalid_request: "La solicitud no es válida.\nFaltan parámetros requeridos.",
+  invalid_client: "Cliente inválido. No se pudo encontrar el cliente de OAuth.",
+  mismatch_redirect_uri: "La URI de redirección no coincide con la registrada.",
+  unsupported_response_type:
+    "Tipo de respuesta no soportado. Asegúrate de usar 'code'.",
+  invalid_scope: "Algunos scopes solicitados no son válidos.",
+};
+
+const errorMessage =
+  error in errorMessages
+    ? errorMessages[error as keyof typeof errorMessages]
+    : "Ha ocurrido un error desconocido.";
+---
+
+<SaltoPlayLayout
+  title={`Error de autorización en "${title}"`}
+  description={`Error al intentar autorizar "${title}" para acceder a tu cuenta de SaltoUruguayServer`}
+>
+  <img
+    src="/images/oauth_wallpaper.webp"
+    alt="SaltoUruguayServer"
+    class="absolute inset-0 object-cover w-full h-full opacity-30 blur-sm -z-10"
+  />
+  <div
+    role="main"
+    class="mx-auto flex justify-center items-center min-h-screen h-full"
+  >
+    <article
+      class="border border-dashed border-neutral-500 rounded-md px-6 py-2 max-w-md w-full bg-neutral-950"
+    >
+      <header class="py-4 flex flex-col">
+        <h2 class="text-lg mt-2 text-center items-center gap-2">
+          <strong class="text-red-300">¡Error!</strong>
+        </h2>
+        <p class="text-sm text-white/75 text-center mt-2 max-w-[48ch]">
+          No pudimos completar la autorización
+        </p>
+
+        <div
+          class="flex items-center mb-4 mt-4 justify-between gap-4 relative w-max mx-auto"
+        >
+          <img
+            src="/favicon.svg"
+            alt="SaltoUruguayServer"
+            class="h-16 w-auto saturate-150 object-contain aspect-square bg-gradient-to-br p-3 from-red-800 via-slate-500/30 to-slate-700/50 rounded-md"
+          />
+          <LucideCircleX
+            class="h-8 w-auto object-contain aspect-square text-red-500"
+          />
+        </div>
+      </header>
+      <div class="pt-0 space-y-6">
+        <p
+          class="text-white/75 text-sm text-balance text-center max-w-[48ch] whitespace-pre-wrap"
+          set:html={errorMessage}
+        />
+
+        <footer class="items-center p-6 pt-0 flex flex-col gap-2">
+          <a
+            href="/"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 w-full bg-indigo-800 hover:bg-indigo-600 transition text-white"
+          >
+            <LucideCircleX class="h-4 w-4" />
+            Volver al inicio
+          </a>
+        </footer>
+      </div>
+    </article>
+  </div>
+</SaltoPlayLayout>
