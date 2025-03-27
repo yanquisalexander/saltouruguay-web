@@ -1,11 +1,25 @@
 ---
+interface Props {
+  session?: Session | null;
+  title?: string;
+  description?: string;
+}
 import SidebarNav from "@/components/saltoplay/SidebarNav.astro";
 import Layout from "@/layouts/Layout.astro";
+import type { Session } from "@auth/core/types";
 
 const SHOW_OVERLAY_COMING_SOON = import.meta.env.PROD;
+
+const { session, title = "SaltoPlay", description } = Astro.props;
 ---
 
-<Layout title="SaltoPlay" mainClassname="" hideFooter hideHeader>
+<Layout
+  title={title}
+  description={description}
+  mainClassname=""
+  hideFooter
+  hideHeader
+>
   {
     SHOW_OVERLAY_COMING_SOON && (
       <div
@@ -30,8 +44,10 @@ const SHOW_OVERLAY_COMING_SOON = import.meta.env.PROD;
       </div>
     )
   }
-  <div class="flex min-h-screen h-full bg-black text-white">
+  <div class="flex min-h-screen bg-black text-white">
     <SidebarNav />
-    <section class="flex-1 p-6 overflow-auto"></section>
+    <div role="main" class="flex-1 overflow-auto">
+      <slot />
+    </div>
   </div>
 </Layout>
