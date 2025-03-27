@@ -204,6 +204,13 @@
       "when": 1743094419357,
       "tag": "0028_tough_quicksilver",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1743095392973,
+      "tag": "0029_shallow_daredevil",
+      "breakpoints": true
     }
   ]
 }
