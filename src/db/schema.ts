@@ -112,6 +112,21 @@ export const SaltoPlayGameTokensTable = pgTable("salto_play_game_tokens", {
     };
 });
 
+export const SaltoPlayAuthorizationCodesTable = pgTable("salto_play_authorization_codes", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    gameId: uuid("game_id")
+        .notNull()
+        .references(() => SaltoPlayGamesTable.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+        .notNull()
+        .references(() => UsersTable.id, { onDelete: "cascade" }),
+    code: varchar("code").unique().notNull(),
+    scopes: varchar("scopes").notNull(),
+    redirectUri: varchar("redirect_uri").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+});
+
 export const SaltoPlayAchievementsTable = pgTable("salto_play_achievements", {
     id: uuid("id").primaryKey().defaultRandom(),
     gameId: uuid("game_id")

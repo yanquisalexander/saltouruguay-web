@@ -12,7 +12,6 @@ import { LucideIdCard, type LucideIcon } from "lucide-preact";
 import { DateTime } from 'luxon';
 
 
-// Existing scopes and beautiful scopes definitions
 export const AVAILABLE_SCOPES = [
     "openid",
     "profile",
@@ -54,7 +53,17 @@ export const AUTHORIZATION_CODE_LIFETIME = 10 * 60; // 10 minutes
 export const ACCESS_TOKEN_LIFETIME = 60 * 60; // 1 hour
 export const REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 30; // 30 days
 
-// Generate an authorization code
+export const getClient = async (clientId: string) => {
+    const client = await db.query.SaltoPlayGamesTable.findFirst({
+        where: eq(SaltoPlayGamesTable.id, clientId)
+    });
+
+    if (!client) {
+        throw new Error('Client not found');
+    }
+    return client;
+}
+
 export async function generateAuthorizationCode(
     gameId: string,
     userId: number,
@@ -154,8 +163,12 @@ export async function generateTokens(
     await db.insert(SaltoPlayGameTokensTable).values({
         gameId,
         userId,
-        accessToken: await encryptToken(accessToken),
-        refreshToken: await encryptToken(refreshToken),
+        /* 
+            On the future, we should encrypt the tokens before storing them in the database.
+            For now, we are storing them as plain text for simplicity.
+        */
+        accessToken,
+        refreshToken,
         scopes: scopes.join(','),
         expiresAt: DateTime.now().plus({ seconds: ACCESS_TOKEN_LIFETIME }).toJSDate()
     });
@@ -219,8 +232,8 @@ export async function refreshAccessToken(
     // Update tokens in database
     await db.update(SaltoPlayGameTokensTable)
         .set({
-            accessToken: await encryptToken(newAccessToken),
-            refreshToken: await encryptToken(newRefreshToken),
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
             expiresAt: DateTime.now().plus({ seconds: ACCESS_TOKEN_LIFETIME }).toJSDate()
         })
         .where(
@@ -275,12 +288,6 @@ export async function validateAccessToken(
     };
 }
 
-// Helper function to encrypt tokens (replace with your actual encryption method)
-async function encryptToken(token: string): Promise<string> {
-    // Implement proper encryption 
-    // This is a placeholder - use a real encryption method
-    return Buffer.from(token).toString('base64');
-}
 
 // Revoke tokens for a specific game and user
 export async function revokeTokens(gameId: string, userId: number): Promise<void> {
