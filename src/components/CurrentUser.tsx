@@ -90,10 +90,6 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
 
     if (!pusher) {
         const host = /* import.meta.env.DEV ? 'localhost' :  */`soketi.saltouruguayserver.com`;
-
-
-
-
         setPusher(new Pusher(PUSHER_KEY, {
             wsHost: host,
             cluster: "us2",
@@ -192,12 +188,20 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
 
 
                                     {user.isAdmin && (
-                                        <a
-                                            href="/admin"
-                                            className="w-full items-center justify-between  gap-1 px-4 py-2 flex text-sm text-neutral-200 transition hover:bg-neutral-200/5"
-                                        >
-                                            Administración
-                                        </a>
+                                        <>
+                                            <a
+                                                href="/admin"
+                                                className="w-full items-center justify-between  gap-1 px-4 py-2 flex text-sm text-neutral-200 transition hover:bg-neutral-200/5"
+                                            >
+                                                Administración
+                                            </a>
+                                            <a
+                                                href="/saltoplay"
+                                                className="w-full items-center justify-between  gap-1 px-4 py-2 flex text-sm text-neutral-200 transition hover:bg-neutral-200/5"
+                                            >
+                                                Centro de Juegos SaltoPlay
+                                            </a>
+                                        </>
                                     )}
 
 
