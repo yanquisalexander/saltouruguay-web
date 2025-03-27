@@ -53,17 +53,34 @@ const LaunchCountdown = ({ timestamp, classNames, ...props }: CountdownProps & h
     }, [timestamp]);
 
     const addToCalendar = () => {
-        const eventDate = new Date(timestamp).toISOString();
+        if (typeof window === "undefined") return; // Evita errores en SSR
+
+        const eventStart = new Date(timestamp).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+        const eventEnd = eventStart; // Fin del evento (ajustar si se desea duración)
+
         const googleCalendarUrl = new URL("https://www.google.com/calendar/render");
         googleCalendarUrl.searchParams.set("action", "TEMPLATE");
-        googleCalendarUrl.searchParams.set("dates", `${eventDate.replace(/[-:]/g, "").split(".")[0]}Z/${eventDate.replace(/[-:]/g, "").split(".")[0]}Z`);
+        googleCalendarUrl.searchParams.set("dates", `${eventStart}/${eventEnd}`);
         googleCalendarUrl.searchParams.set("text", props.eventName || "Evento de Salto Uruguay Server");
         googleCalendarUrl.searchParams.set("details", props.eventDescription || "");
-        googleCalendarUrl.searchParams.set("sf", "true");
-        googleCalendarUrl.searchParams.set("output", "xml");
-        googleCalendarUrl.searchParams.set("sprop", "website:saltouruguayserver.com");
-        window.open(googleCalendarUrl, "_blank");
+
+        const appleCalendarUrl = new URL(`webcal://www.google.com/calendar/render`);
+        appleCalendarUrl.searchParams.set("action", "TEMPLATE");
+        appleCalendarUrl.searchParams.set("dates", `${eventStart}/${eventEnd}`);
+        appleCalendarUrl.searchParams.set("text", props.eventName || "Evento de Salto Uruguay Server");
+
+        // Detectar plataforma antes de acceder a `window.navigator`
+        if (typeof navigator !== "undefined") {
+            const userAgent = navigator.userAgent.toLowerCase();
+            if (userAgent.includes("iphone") || userAgent.includes("macintosh")) {
+                window.open(appleCalendarUrl.toString(), "_blank"); // Apple Calendar (iOS/macOS)
+                return;
+            }
+        }
+
+        window.open(googleCalendarUrl.toString(), "_blank"); // Google Calendar (Desktop y Android)
     };
+
 
     return (
         <div className={`flex flex-col items-center space-y-4 mt-8 ${props.class}`} {...props}>
