@@ -1,0 +1,127 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import SaltoPlayLayout from "@/layouts/SaltoPlayLayout.astro";
+import { getSession } from "auth-astro/server";
+import {
+  LucideAward,
+  LucideChevronRight,
+  LucideChevronsLeftRightEllipsis,
+  LucideCircleX,
+  LucideIdCard,
+  LucideUsers,
+} from "lucide-preact";
+
+const title = "Saltanos dicen...";
+
+const session = await getSession(Astro.request);
+---
+
+<SaltoPlayLayout
+  title={`Autorizar "${title}"`}
+  description={`Autorizar "${title}" para acceder a tu cuenta de SaltoUruguayServer`}
+>
+  <img
+    src="/images/oauth_wallpaper.webp"
+    alt="SaltoUruguayServer"
+    class="absolute inset-0 object-cover w-full h-full opacity-30 blur-sm -z-10"
+  />
+  <div
+    role="main"
+    class="mx-auto flex justify-center items-center min-h-screen h-full"
+  >
+    <article
+      class="border border-dashed border-neutral-500 rounded-md px-6 py-2 max-w-md w-full bg-neutral-950"
+    >
+      <header class="py-4 flex flex-col">
+        <h2 class="text-lg mt-2 text-center items-center gap-2">
+          <strong class="text-indigo-300">{title}</strong> quiere acceder a tu cuenta
+          de SaltoUruguayServer
+        </h2>
+        <div
+          class="flex items-center mb-4 mt-4 justify-between gap-4 relative w-max mx-auto"
+        >
+          <img
+            src="/favicon.svg"
+            alt="SaltoUruguayServer"
+            class="h-16 w-auto saturate-150 object-contain aspect-square bg-gradient-to-br p-3 from-indigo-800 via-slate-500/30 to-slate-700/50 rounded-md"
+          />
+          <LucideChevronsLeftRightEllipsis
+            class="h-8 w-auto object-contain aspect-square text-zinc-500 animate-pulse"
+          />
+          <img
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDBujhZN4OCmthAgHgEE331y0798ML4AUa6g&s"
+            alt="Twitch"
+            class="h-16 w-auto object-cover aspect-square rounded-md"
+          />
+        </div>
+      </header>
+      <div class="p-6 pt-0 space-y-6">
+        <div
+          class="flex items-center gap-3 bg-zinc-900 p-2 px-6 rounded-lg mx-auto"
+        >
+          <span
+            class="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full"
+            ><img
+              class="aspect-square h-full w-full"
+              alt="Avatar"
+              src="https://images-eds-ssl.xboxlive.com/image?url=KT_QTPJeC5ZpnbX.xahcbrZ9enA_IV9WfFEWIqHGUb5P30TpCdy9xIzUMuqZVCfbt5wf2r6a_T.R4mCVmV.NX0B66rPz36mfD1AH.ZlwmVw.heTEF5WZFhtnJN123J5av890uk3h6hYvHu0MiyRVm0Oh6SwLV6eKeoB8lgp37UY-&format=png"
+            /></span
+          ><div class="hidden md:block">
+            <p class="text-sm font-medium">Alexitoo</p><p
+              class="text-xs text-muted-foreground"
+            >
+              alexitoo_uy#5190
+            </p>
+          </div><div
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent hover:text-accent-foreground h-8 w-8"
+          >
+          </div>
+        </div>
+
+        <button
+          class="text-sm text-white/75 text-center mt-4 crusor-pointer mx-auto"
+        >
+          ¿No eres tú? <span class="text-indigo-300">Cambia de cuenta</span>
+        </button>
+
+        <p
+          class="text-white/75 text-sm text-balance text-center mt-4 max-w-[48ch]"
+        >
+          Al hacer clic en "Autorizar" estás dando permiso a <strong
+            >{title}</strong
+          > para
+        </p>
+
+        <ul
+          class="text-white/75 text-sm text-balance text-center mt-4 max-w-[48ch] flex flex-col gap-2"
+        >
+          <li class="flex items-center gap-2">
+            <LucideIdCard class="h-4 w-4 text-indigo-300" />
+            Leer tu SaltoTag
+          </li>
+          <li class="flex items-center gap-2">
+            <LucideAward class="h-4 w-4 text-indigo-300" />
+            Ver tus logros
+          </li>
+          <li class="flex items-center gap-2">
+            <LucideUsers class="h-4 w-4 text-indigo-300" />
+            Leer tu lista de amigos
+          </li>
+          <li class="flex items-center gap-2 opacity-60">
+            <LucideCircleX class="h-4 w-4 text-red-500" />
+            Hacer un asado con los pibes
+          </li>
+        </ul>
+
+        <footer class="items-center p-6 pt-0 flex flex-col gap-2">
+          <button
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 w-full bg-indigo-800 hover:bg-indigo-600 transition text-white"
+          >
+            Autorizar
+            <LucideChevronRight class="ml-2 h-4 w-4" />
+          </button>
+        </footer>
+      </div>
+    </article>
+  </div>
+</SaltoPlayLayout>
