@@ -14,6 +14,7 @@ import { count, eq, sql } from "drizzle-orm";
 import { users } from "./admin/users";
 import { streamerWars } from "./streamerWars";
 import { games } from "./games";
+import { oauth } from "./users/oauth";
 
 export const server = {
     sendVotes: defineAction({
@@ -397,6 +398,8 @@ export const server = {
                 throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Error al enviar la apelación" });
             }
         },
-    })
-
+    }),
+    users: {
+        oauth
+    }
 }

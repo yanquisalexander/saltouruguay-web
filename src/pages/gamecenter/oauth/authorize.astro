@@ -206,6 +206,11 @@ const beautifulScopes = scopes.map((scope) => {
 
         <footer class="items-center p-6 pt-0 flex flex-col gap-2">
           <button
+            id="authorize"
+            data-client-id={clientId}
+            data-redirect-uri={redirectUri}
+            data-scope={scope}
+            data-state={session.user.id}
             class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 w-full bg-indigo-800 hover:bg-indigo-600 transition text-white"
           >
             Autorizar
@@ -216,3 +221,52 @@ const beautifulScopes = scopes.map((scope) => {
     </article>
   </div>
 </SaltoPlayLayout>
+
+<script>
+  import { $ } from "@/lib/dom-selector";
+  import { actions, type ActionReturnType, type Actions } from "astro:actions";
+  import { toast } from "sonner";
+
+  document.addEventListener("astro:page-load", () => {
+    const $authorizeBtn = document.querySelector(
+      "#authorize"
+    ) as HTMLButtonElement;
+
+    if (!$authorizeBtn) return;
+
+    $authorizeBtn.addEventListener("click", async () => {
+      const { clientId, redirectUri, scope } = $authorizeBtn.dataset;
+      if (!clientId || !redirectUri) {
+        console.error("Faltan parámetros obligatorios para la autorización.");
+        return;
+      }
+
+      const scopes = scope?.split(" ") ?? [];
+
+      toast.promise(
+        actions.users.oauth.authorize({ clientId, redirectUri, scopes }),
+        {
+          loading: "Autorizando...",
+          success: ({
+            data,
+            error,
+          }: ActionReturnType<Actions["users"]["oauth"]["authorize"]>) => {
+            if (error) {
+              console.error("Error al autorizar:", error);
+              throw new Error(error.message);
+            }
+            if (!data?.redirectUri)
+              throw new Error("No se pudo completar la autorización.");
+
+            window.location.href = data.redirectUri.toString();
+            return "Autorización exitosa";
+          },
+          error: (err: string) => {
+            console.error("Error al autorizar:", err);
+            return err;
+          },
+        }
+      );
+    });
+  });
+</script>
