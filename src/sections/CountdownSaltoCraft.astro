@@ -1,24 +1,35 @@
 ---
 import LaunchCountdown from "@/components/LaunchCountdown";
 
-const LAUNCH_TIMESTAMP = 1741042800000;
+const LAUNCH_TIMESTAMP = 1743721200000;
 ---
 
-<section id="streamer-wars-starts" class="">
-  <h2 class="text-3xl font-teko text-center">
-    <span class="text-2xl font-atomic text-lime-500"
-      >Guerra de Streamers</span
-    >
-<br/>
-La próxima jornada será en
-  </h2>
+<section
+  id="saltocraft-starts"
+  class="flex flex-col items-center justify-center"
+>
+  <img
+    src="/images/logo-saltocraft.webp"
+    alt="SaltoCraft"
+    class="h-24 sm:h-28 w-auto object-contain"
+    loading="lazy"
+    draggable="false"
+  />
+
   <LaunchCountdown
     timestamp={LAUNCH_TIMESTAMP}
     classNames={{
-      timeDisplay: "!text-lime-500",
+      timeDisplay: "!text-yellow-500",
     }}
     client:idle
   />
+
+  <div
+    class="flex flex-col items-center justify-center gap-2 text-center text-gray-300"
+    aria-label="Descripción del evento"
+  >
+    <p class="font-teko mt-6 text-2xl">¿Listo para la aventura?</p>
+  </div>
 
   <div
     class="group mb-4 flex w-full flex-col items-center justify-center px-20 font-medium text-primary pt-16 md:mb-20"
@@ -73,7 +84,7 @@ La próxima jornada será en
         </span>
         <h2
           tabindex="0"
-          class="sm:text-lg md:text-xl uppercase text-[#b4cd02] transition group-hover/twitch:text-electric-violet-500 flex justify-center text-lg text-wrap text-center"
+          class="sm:text-lg md:text-xl uppercase text-electric-violet-300 transition group-hover/twitch:text-electric-violet-500 flex justify-center text-lg text-wrap text-center"
         >
           twitch.tv/saltouruguayserver
         </h2>

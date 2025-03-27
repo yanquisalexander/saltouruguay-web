@@ -10,6 +10,7 @@ import UpcomingCompetitions from "@/sections/UpcomingCompetitions.astro";
 import { FeaturedNews } from "@/components/FeaturedNews";
 import Advantages from "@/sections/Advantages.astro";
 import StreamerWars from "@/sections/StreamerWars.astro";
+import CountdownSaltoCraft from "@/sections/CountdownSaltoCraft.astro";
 
 const IS_PROD = import.meta.env.PROD;
 
@@ -49,6 +50,9 @@ export const prerender = true;
       </h1>
     </header>
   </div>
+
+  <CountdownSaltoCraft />
+
   <LiveStream server:defer />
 
   <FeaturedNews client:idle />
