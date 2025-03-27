@@ -4,18 +4,18 @@ import {
   getOauthClient,
   AVAILABLE_SCOPES,
   BEAUTIFUL_SCOPES,
+  getBeautifulScopes,
 } from "@/lib/saltoplay/oauth";
 import { getSession } from "auth-astro/server";
 import {
   LucideAward,
+  LucideBadgeHelp,
   LucideChevronRight,
   LucideChevronsLeftRightEllipsis,
   LucideCircleX,
   LucideIdCard,
   LucideUsers,
 } from "lucide-preact";
-
-const title = "Saltanos dicen...";
 
 const session = await getSession(Astro.request);
 
@@ -27,70 +27,88 @@ if (!session) {
   );
 }
 
-const prevalidateOauth = async () => {
-  // Obtener los parámetros de búsqueda de la URL
-  const clientId = Astro.url.searchParams.get("client_id");
-  const redirectUri = Astro.url.searchParams.get("redirect_uri");
-  const responseType = Astro.url.searchParams.get("response_type");
-  const scope = Astro.url.searchParams.get("scope");
+// Obtener los parámetros de búsqueda de la URL
+const clientId = Astro.url.searchParams.get("client_id");
+const redirectUri = Astro.url.searchParams.get("redirect_uri");
+const responseType = Astro.url.searchParams.get("response_type");
+const scope = Astro.url.searchParams.get("scope");
 
-  // Verificación básica de los parámetros
-  if (!clientId || !redirectUri || !responseType || !scope) {
-    return Astro.redirect("/gamecenter/oauth/error?error=invalid_request");
-  }
+// Verificación básica de los parámetros
+if (!clientId || !redirectUri || !responseType || !scope) {
+  return Astro.redirect("/gamecenter/oauth/error?error=invalid_request");
+}
 
-  // Mapeo de parámetros a camelCase si es necesario
-  const params = {
-    clientId,
-    redirectUri,
-    responseType,
-    scope,
-  };
-
-  // Obtener el cliente de OAuth
-  const client = await getOauthClient(params.clientId);
-
-  // Verificación de cliente
-  if (!client) {
-    return Astro.redirect("/gamecenter/oauth/error?error=invalid_client");
-  }
-
-  // Verificación de URI de redirección
-  if (client.redirectUri !== params.redirectUri) {
-    return Astro.redirect(
-      "/gamecenter/oauth/error?error=mismatch_redirect_uri"
-    );
-  }
-
-  // Verificación de tipo de respuesta
-  if (params.responseType !== "code") {
-    return Astro.redirect(
-      "/gamecenter/oauth/error?error=unsupported_response_type"
-    );
-  }
-
-  // Procesamiento del scope
-  const scopes = params.scope.split(" ");
-
-  const invalidScopes = scopes.filter((s) => !AVAILABLE_SCOPES.includes(s));
-  if (invalidScopes.length > 0) {
-    return Astro.redirect(
-      `/gamecenter/oauth/error?error=invalid_scope&scope=${encodeURIComponent(
-        invalidScopes.join(" ")
-      )}`
-    );
-  }
+// Mapeo de parámetros a camelCase si es necesario
+const params = {
+  clientId,
+  redirectUri,
+  responseType,
+  scope,
 };
 
-const prevalidated = await prevalidateOauth();
-if (prevalidated) {
-  return prevalidated;
+// Obtener el cliente de OAuth
+const client = await getOauthClient(params.clientId);
+
+// Verificación de cliente
+if (!client) {
+  return Astro.redirect("/gamecenter/oauth/error?error=invalid_client");
 }
+
+// Verificación de URI de redirección
+if (client.redirectUri !== params.redirectUri) {
+  return Astro.redirect("/gamecenter/oauth/error?error=mismatch_redirect_uri");
+}
+
+// Verificación de tipo de respuesta
+if (params.responseType !== "code") {
+  return Astro.redirect(
+    "/gamecenter/oauth/error?error=unsupported_response_type"
+  );
+}
+
+// Procesamiento del scope
+const scopes = params.scope.split(" ");
+
+const RANDOM_FAKE_SCOPE_PHRASES = [
+  "Hacer un asado con los pibes",
+  "Resolver un misterio con Scooby Doo",
+  "Hacer un truco de magia con una carta",
+  "Traerte un café",
+];
+
+const invalidScopes = scopes.filter((s) => !AVAILABLE_SCOPES.includes(s));
+if (invalidScopes.length > 0) {
+  return Astro.redirect(
+    `/gamecenter/oauth/error?error=invalid_scope&scope=${encodeURIComponent(
+      invalidScopes.join(" ")
+    )}`
+  );
+}
+
+const getBeautifulScope = (scope: string) => {
+  const beautifulScope =
+    BEAUTIFUL_SCOPES[scope as keyof typeof BEAUTIFUL_SCOPES];
+  return beautifulScope
+    ? beautifulScope
+    : {
+        name: scope,
+        description: "Descripción no disponible",
+        icon: LucideBadgeHelp,
+      };
+};
+
+const beautifulScopes = scopes.map((scope) => {
+  const beautifulScope = getBeautifulScope(scope);
+  return {
+    ...beautifulScope,
+    icon: beautifulScope.icon,
+  };
+});
 ---
 
 <SaltoPlayLayout
-  title={`Autorizar "${title}"`}
-  description={`Autorizar "${title}" para acceder a tu cuenta de SaltoUruguayServer`}
+  title={`Autorizar "${client.name}"`}
+  description={`Autorizar "${client.name}" para acceder a tu cuenta de SaltoUruguayServer`}
 >
   <img
     src="/images/oauth_wallpaper.webp"
@@ -106,8 +124,8 @@ if (prevalidated) {
     >
       <header class="py-4 flex flex-col">
         <h2 class="text-lg mt-2 text-center items-center gap-2">
-          <strong class="text-indigo-300">{title}</strong> quiere acceder a tu cuenta
-          de SaltoUruguayServer
+          <strong class="text-indigo-300">{client.name}</strong> quiere acceder a
+          tu cuenta de SaltoUruguayServer
         </h2>
         <div
           class="flex items-center mb-4 mt-4 justify-between gap-4 relative w-max mx-auto"
@@ -121,8 +139,9 @@ if (prevalidated) {
             class="h-8 w-auto object-contain aspect-square text-zinc-500 animate-pulse"
           />
           <img
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDBujhZN4OCmthAgHgEE331y0798ML4AUa6g&s"
-            alt="Twitch"
+            src={client.icon ??
+              `https://ui-avatars.com/api/?name=${client.name}&background=random`}
+            alt={client.name}
             class="h-16 w-auto object-cover aspect-square rounded-md"
           />
         </div>
@@ -160,30 +179,30 @@ if (prevalidated) {
           class="text-white/75 text-sm text-balance text-center mt-4 max-w-[48ch]"
         >
           Al hacer clic en "Autorizar" estás dando permiso a <strong
-            >{title}</strong
+            >{client.name}</strong
           > para
         </p>
 
-        <ul
-          class="text-white/75 text-sm text-balance text-center mt-4 max-w-[48ch] flex flex-col gap-2"
-        >
-          <li class="flex items-center gap-2">
-            <LucideIdCard class="h-4 w-4 text-indigo-300" />
-            Leer tu SaltoTag
-          </li>
-          <li class="flex items-center gap-2">
-            <LucideAward class="h-4 w-4 text-indigo-300" />
-            Ver tus logros
-          </li>
-          <li class="flex items-center gap-2">
-            <LucideUsers class="h-4 w-4 text-indigo-300" />
-            Leer tu lista de amigos
-          </li>
-          <li class="flex items-center gap-2 opacity-60">
-            <LucideCircleX class="h-4 w-4 text-red-500" />
-            Hacer un asado con los pibes
-          </li>
-        </ul>
+        {
+          scopes && scopes.length > 0 && (
+            <ul class="text-white/75 text-sm text-balance text-center mt-4 max-w-[48ch] flex flex-col gap-2">
+              {beautifulScopes.map((scope) => (
+                <li class="flex items-center gap-2">
+                  <scope.icon class="h-4 w-4 text-indigo-300" />
+                  {scope.name}
+                </li>
+              ))}
+              <li class="flex items-center gap-2 opacity-60">
+                <LucideCircleX class="h-4 w-4 text-red-500" />
+                {
+                  RANDOM_FAKE_SCOPE_PHRASES[
+                    Math.floor(Math.random() * RANDOM_FAKE_SCOPE_PHRASES.length)
+                  ]
+                }
+              </li>
+            </ul>
+          )
+        }
 
         <footer class="items-center p-6 pt-0 flex flex-col gap-2">
           <button

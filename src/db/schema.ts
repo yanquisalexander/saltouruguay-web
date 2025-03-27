@@ -151,6 +151,63 @@ export const SaltoTagAchievementsTable = pgTable("salto_tag_achievements", {
     unlockedAt: timestamp("unlocked_at").notNull().default(sql`current_timestamp`),
 });
 
+/* 
+    SaltoPlay Relations
+*/
+
+export const saltoPlayGameTokensRelations = relations(SaltoPlayGameTokensTable, ({ one }) => ({
+    game: one(SaltoPlayGamesTable, {
+        fields: [SaltoPlayGameTokensTable.gameId],
+        references: [SaltoPlayGamesTable.id],
+    }),
+    user: one(UsersTable, {
+        fields: [SaltoPlayGameTokensTable.userId],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const saltoPlayGamesRelations = relations(SaltoPlayGamesTable, ({ one, many }) => ({
+    developer: one(SaltoPlayDevelopersTable, {
+        fields: [SaltoPlayGamesTable.developerId],
+        references: [SaltoPlayDevelopersTable.id],
+    }),
+    tokens: many(SaltoPlayGameTokensTable),
+    achievements: many(SaltoPlayAchievementsTable),
+}));
+
+export const saltoPlayDevelopersRelations = relations(SaltoPlayDevelopersTable, ({ one, many }) => ({
+    user: one(UsersTable, {
+        fields: [SaltoPlayDevelopersTable.userId],
+        references: [UsersTable.id],
+    }),
+    games: many(SaltoPlayGamesTable),
+}));
+
+export const saltoPlayAchievementsRelations = relations(SaltoPlayAchievementsTable, ({ one }) => ({
+    game: one(SaltoPlayGamesTable, {
+        fields: [SaltoPlayAchievementsTable.gameId],
+        references: [SaltoPlayGamesTable.id],
+    }),
+}));
+
+export const saltoTagAchievementsRelations = relations(SaltoTagAchievementsTable, ({ one }) => ({
+    saltoTag: one(SaltoTagsTable, {
+        fields: [SaltoTagAchievementsTable.saltoTagId],
+        references: [SaltoTagsTable.id],
+    }),
+    achievement: one(SaltoPlayAchievementsTable, {
+        fields: [SaltoTagAchievementsTable.achievementId],
+        references: [SaltoPlayAchievementsTable.id],
+    }),
+}));
+
+export const saltoTagsRelations = relations(SaltoTagsTable, ({ one, many }) => ({
+    user: one(UsersTable, {
+        fields: [SaltoTagsTable.userId],
+        references: [UsersTable.id],
+    }),
+    achievements: many(SaltoTagAchievementsTable),
+}));
 
 
 export const VotesTable = pgTable("votes", {

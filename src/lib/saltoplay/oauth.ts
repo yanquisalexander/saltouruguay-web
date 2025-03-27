@@ -25,21 +25,15 @@ export const AVAILABLE_SCOPES = [
 
 export const BEAUTIFUL_SCOPES: Record<string, { name: string; description: string; icon: LucideIcon } | undefined> = {
     "openid": {
-        name: "OpenID",
+        name: "Leer tu perfil",
         description: "OpenID Connect scope",
         icon: LucideIdCard
     },
-    "profile": {
-        name: "Profile",
-        description: "Access to basic profile information",
+    "saltotag:read": {
+        name: "Leer tu SaltoTag",
+        description: "Permite leer tu SaltoTag",
         icon: LucideIdCard
     },
-    "email": {
-        name: "Email",
-        description: "Access to email address",
-        icon: LucideIdCard
-    },
-    // Add more beautiful scopes as needed
 };
 
 export const getBeautifulScopes = (scopes: string[]) => {
@@ -55,12 +49,33 @@ export const REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 30; // 30 days
 
 export const getOauthClient = async (clientId: string) => {
     const client = await db.query.SaltoPlayGamesTable.findFirst({
-        where: eq(SaltoPlayGamesTable.id, clientId)
+        where: eq(SaltoPlayGamesTable.id, clientId),
+        columns: {
+            id: true,
+            name: true,
+            icon: true,
+            status: true,
+            clientSecret: true,
+            redirectUri: true
+        },
+        with: {
+            developer: {
+                columns: {
+                    id: true,
+                    developerName: true,
+                },
+                with: {
+                    user: {
+                        columns: {
+                            email: true,
+                        }
+                    }
+                }
+
+            }
+        }
     });
 
-    if (!client) {
-        throw new Error('Client not found');
-    }
     return client;
 }
 
