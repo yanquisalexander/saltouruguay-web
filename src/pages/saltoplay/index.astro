@@ -1,9 +1,12 @@
 ---
 import SaltoPlayLayout from "@/layouts/SaltoPlayLayout.astro";
+import { getSession } from "auth-astro/server";
 import { LucideChevronRight, LucideUsers } from "lucide-preact";
+
+const session = await getSession(Astro.request);
 ---
 
-<SaltoPlayLayout>
+<SaltoPlayLayout session={session}>
   <div class="p-6 overflow-auto">
     <div class="flex items-center justify-between mb-8">
       <header>
@@ -20,7 +23,7 @@ import { LucideChevronRight, LucideUsers } from "lucide-preact";
       <div class="flex items-center gap-4">
         <div class="relative">
           <button
-            class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10 rounded-full"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-neutral-800 bg-transparent hover:bg-neutral-800 hover:border-neutral-800 h-10 w-10 rounded-full"
             ><svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -35,7 +38,7 @@ import { LucideChevronRight, LucideUsers } from "lucide-preact";
               ><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path
                 d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg
             ><span class="sr-only">Notificaciones</span><div
-              class="border text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent hover:bg-primary/80 absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-primary text-primary-foreground"
+              class="border text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent hover:bg-indigo-400/80 absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-indigo-500 text-primary-foreground"
               data-v0-t="badge"
             >
               3
@@ -47,13 +50,13 @@ import { LucideChevronRight, LucideUsers } from "lucide-preact";
             ><img
               class="aspect-square h-full w-full"
               alt="Avatar"
-              src="/placeholder.svg?height=40&width=40"
+              src="https://images-eds-ssl.xboxlive.com/image?url=KT_QTPJeC5ZpnbX.xahcbrZ9enA_IV9WfFEWIqHGUb5P30TpCdy9xIzUMuqZVCfbt5wf2r6a_T.R4mCVmV.NX0B66rPz36mfD1AH.ZlwmVw.heTEF5WZFhtnJN123J5av890uk3h6hYvHu0MiyRVm0Oh6SwLV6eKeoB8lgp37UY-&format=png"
             /></span
           ><div class="hidden md:block">
-            <p class="text-sm font-medium">JugadorPro</p><p
+            <p class="text-sm font-medium">Alexitoo</p><p
               class="text-xs text-muted-foreground"
             >
-              @SaltoTag
+              alexitoo_uy#5190
             </p>
           </div><button
             class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent hover:text-accent-foreground h-8 w-8"
@@ -112,7 +115,7 @@ import { LucideChevronRight, LucideUsers } from "lucide-preact";
         <div class="p-6 pt-0">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div
-              class="rounded-lg border text-card-foreground shadow-sm overflow-hidden bg-zinc-800 border-zinc-700 transition-all hover:border-primary/50 hover:shadow-md hover:shadow-primary/20"
+              class="rounded-lg border text-card-foreground shadow-sm overflow-hidden bg-zinc-800 border-zinc-700 transition-all hover:border-indigo-400/50 hover:shadow-md hover:shadow-primary/20"
               data-v0-t="card"
             >
               <div class="relative">
@@ -160,7 +163,7 @@ import { LucideChevronRight, LucideUsers } from "lucide-preact";
               </div><div class="flex items-center p-4 pt-0">
                 <a
                   href="#"
-                  class="w-full bg-indigo-500/10 hover:bg-indigo-500/20 text-primary font-medium py-2 rounded-md text-center text-sm transition-colors"
+                  class="w-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-medium py-2 rounded-md text-center text-sm transition-colors"
                   >Jugar ahora</a
                 >
               </div>
