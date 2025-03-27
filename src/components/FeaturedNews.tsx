@@ -29,8 +29,8 @@ const NEWS = [
         },
         navImage: "/images/ads/saltocraft.webp",
         ctaLink: {
-            text: "Próximamente",
-            url: "#",
+            text: "¡Únete ahora!",
+            url: "/saltocraft",
             newTab: false,
         }
     },
