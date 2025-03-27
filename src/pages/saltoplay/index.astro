@@ -1,5 +1,6 @@
 ---
 import SaltoPlayLayout from "@/layouts/SaltoPlayLayout.astro";
+import { LucideChevronRight, LucideUsers } from "lucide-preact";
 ---
 
 <SaltoPlayLayout>
@@ -77,6 +78,186 @@ import SaltoPlayLayout from "@/layouts/SaltoPlayLayout.astro";
               ></path><circle cx="12" cy="12" r="3"></circle></svg
             ><span class="sr-only">Abrir menú</span></button
           >
+        </div>
+      </div>
+    </div>
+
+    {
+      /*
+      Grid
+    */
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div
+        class="rounded-lg border text-card-foreground shadow-sm col-span-3 bg-zinc-900 border-zinc-800"
+      >
+        <div class="space-y-1.5 p-6 flex flex-row items-center justify-between">
+          <div>
+            <h3
+              class="text-2xl font-semibold font-teko leading-none tracking-tight"
+            >
+              Juegos Destacados
+            </h3><p class="text-sm text-neutral-400">
+              Los juegos más populares de la semana
+            </p>
+          </div><a
+            href="/saltoplay/games"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent hover:text-indigo-100 h-9 rounded-md px-3 text-indigo-400"
+            >Ver todos
+            <LucideChevronRight class="h-4 w-4 ml-1" aria-hidden="true" />
+          </a>
+        </div>
+
+        <div class="p-6 pt-0">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div
+              class="rounded-lg border text-card-foreground shadow-sm overflow-hidden bg-zinc-800 border-zinc-700 transition-all hover:border-primary/50 hover:shadow-md hover:shadow-primary/20"
+              data-v0-t="card"
+            >
+              <div class="relative">
+                <img
+                  alt="Cyber Racer 2077"
+                  loading="lazy"
+                  width="250"
+                  height="150"
+                  decoding="async"
+                  data-nimg="1"
+                  class="w-full h-[150px] object-cover"
+                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDBujhZN4OCmthAgHgEE331y0798ML4AUa6g&s"
+                  style="color: transparent;"
+                /><button
+                  class="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-primary/80 transition-colors"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-heart h-4 w-4"
+                    ><path
+                      d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+                    ></path></svg
+                  ></button
+                >
+              </div><div class="p-4">
+                <h3 class="font-bold">Saltanos dicen...</h3><div
+                  class="flex items-center justify-between mt-2"
+                >
+                  <div
+                    class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground bg-zinc-900"
+                  >
+                    Multijugador
+                  </div><div class="flex items-center text-xs">
+                    <LucideUsers class="h-4 w-4 mr-1" aria-hidden="true" />
+                    12.5k
+                  </div>
+                </div>
+              </div><div class="flex items-center p-4 pt-0">
+                <a
+                  href="#"
+                  class="w-full bg-indigo-500/10 hover:bg-indigo-500/20 text-primary font-medium py-2 rounded-md text-center text-sm transition-colors"
+                  >Jugar ahora</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {
+        /*
+        Progreso del jugador
+      */
+      }
+
+      <div
+        class="rounded-lg border text-card-foreground shadow-sm bg-zinc-900 border-zinc-800"
+      >
+        <div class="flex flex-col space-y-1.5 p-6">
+          <h3
+            class="text-2xl font-semibold leading-none tracking-tight font-teko"
+          >
+            Tu Progreso
+          </h3><p class="text-sm text-neutral-400">Nivel y logros</p>
+        </div>
+        <div class="p-6 pt-0 space-y-4">
+          <div class="space-y-2">
+            <div class="flex justify-between">
+              <span class="text-sm">Nivel 24</span><span
+                class="text-sm text-primary">78%</span
+              >
+            </div><div
+              aria-valuemax="100"
+              aria-valuemin="0"
+              role="progressbar"
+              data-state="indeterminate"
+              data-max="100"
+              class="relative w-full overflow-hidden rounded-full h-2 bg-zinc-800"
+            >
+              <div
+                data-state="indeterminate"
+                data-max="100"
+                class="h-full w-full flex-1 bg-indigo-300 transition-all"
+                style="transform: translateX(-22%);"
+              >
+              </div>
+            </div>
+          </div><div class="grid grid-cols-2 gap-2">
+            <div class="bg-zinc-800 p-3 rounded-lg text-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-trophy h-5 w-5 mx-auto mb-1 text-yellow-500"
+                ><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path
+                  d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"
+                ></path><path
+                  d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"
+                ></path><path
+                  d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"
+                ></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg
+              ><p class="text-sm font-medium">42</p><p
+                class="text-xs text-muted-foreground"
+              >
+                Logros
+              </p>
+            </div><div class="bg-zinc-800 p-3 rounded-lg text-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-medal h-5 w-5 mx-auto mb-1 text-blue-500"
+                ><path
+                  d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"
+                ></path><path d="M11 12 5.12 2.2"></path><path
+                  d="m13 12 5.88-9.8"></path><path d="M8 7h8"></path><circle
+                  cx="12"
+                  cy="17"
+                  r="5"></circle><path d="M12 18v-2h-.5"></path></svg
+              ><p class="text-sm font-medium">12</p><p
+                class="text-xs text-muted-foreground"
+              >
+                Medallas
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
