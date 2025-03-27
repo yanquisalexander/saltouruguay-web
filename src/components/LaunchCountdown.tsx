@@ -78,6 +78,8 @@ const LaunchCountdown = ({ timestamp, classNames, ...props }: CountdownProps & h
             }
         }
 
+        console.log(appleCalendarUrl.toString());
+
         window.open(googleCalendarUrl.toString(), "_blank"); // Google Calendar (Desktop y Android)
     };
 

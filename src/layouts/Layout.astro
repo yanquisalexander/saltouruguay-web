@@ -30,6 +30,7 @@ interface Props {
   image?: string;
   hideHeader?: boolean;
   hideFooter?: boolean;
+  mainClassname?: string;
 }
 
 //const session = await getSession(Astro.request);
@@ -43,6 +44,7 @@ const {
   image,
   hideHeader,
   hideFooter,
+  mainClassname = "px-6 sm:px-10",
 } = Astro.props;
 
 const session = await getSession(Astro.request);
@@ -98,7 +100,7 @@ preload?.push({
   >
     {!hideHeader && <SiteHeader session={session} />}
 
-    <main class="px-6 sm:px-10">
+    <main class={mainClassname}>
       <slot />
     </main>
     <SignInModal />
@@ -174,7 +176,17 @@ preload?.push({
 
     <DebugInfo client:load transition:name="debug-info" transition:persist />
 
-<script data-collect-dnt="true" async defer="true" src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
-<noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif?collect-dnt=true" alt="" referrerpolicy="no-referrer-when-downgrade"/></noscript>
+    <script
+      data-collect-dnt="true"
+      async
+      defer="true"
+      src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+    <noscript
+      ><img
+        src="https://queue.simpleanalyticscdn.com/noscript.gif?collect-dnt=true"
+        alt=""
+        referrerpolicy="no-referrer-when-downgrade"
+      /></noscript
+    >
   </body>
 </html>

@@ -49,6 +49,62 @@ export const SessionsTable = pgTable("sessions", {
         .default(sql`current_timestamp`),
 });
 
+export const SaltoTagsTable = pgTable("salto_tags", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").references(() => UsersTable.id, { onDelete: "cascade" }),
+    saltoTag: varchar("salto_tag").unique().notNull(), // El nombre del SaltoTag
+    discriminator: varchar("discriminator").notNull(), // El número del SaltoTag
+    /* alexitoo_uy#5190 for example */
+    avatar: varchar("avatar"), // Avatar de la plataforma (opcional)
+    totalXP: integer("total_xp").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
+});
+
+export const SaltoPlayDevelopersTable = pgTable("salto_play_developers", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    developerName: varchar("developer_name").notNull(), // Nombre del desarrollador
+    developerUrl: varchar("developer_url").notNull(), // URL del desarrollador
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`)
+}, (t) => ({
+    uniqueUserId: unique().on(t.userId)
+}))
+
+
+export const SaltoPlayGamesTable = pgTable("salto_play_games", {
+    id: serial("id").primaryKey(),
+    name: varchar("name").unique().notNull(), // Nombre del juego
+    description: text("description"), // Descripción del juego
+    developerId: integer("developer_id").references(() => SaltoPlayDevelopersTable.id, { onDelete: "cascade" }), // Desarrollador del juego
+    icon: varchar("icon"), // Icono del juego
+    url: varchar("url"), // URL del juego (si es web)
+    status: varchar("status", { enum: ["pending", "approved", "banned"] }).notNull().default("pending"), // Estado del juego
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
+});
+
+export const SaltoPlayAchievementsTable = pgTable("salto_play_achievements", {
+    id: serial("id").primaryKey(),
+    gameId: integer("game_id").references(() => SaltoPlayGamesTable.id, { onDelete: "cascade" }), // Juego asociado
+    name: varchar("name").notNull(), // Nombre del logro
+    description: text("description"), // Descripción del logro
+    icon: varchar("icon"), // Icono del logro
+    xpReward: integer("xp_reward").notNull().default(100), // XP que da el logro
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
+});
+
+export const SaltoTagAchievementsTable = pgTable("salto_tag_achievements", {
+    id: serial("id").primaryKey(),
+    saltoTagId: integer("salto_tag_id").references(() => SaltoTagsTable.id, { onDelete: "cascade" }), // SaltoTag relacionado
+    achievementId: integer("achievement_id").references(() => SaltoPlayAchievementsTable.id, { onDelete: "cascade" }), // Logro desbloqueado
+    unlockedAt: timestamp("unlocked_at").notNull().default(sql`current_timestamp`), // Fecha de desbloqueo
+});
+
+
+
 export const VotesTable = pgTable("votes", {
     id: serial("id").primaryKey(),
     userId: integer("user_id").notNull().references(() => UsersTable.id),

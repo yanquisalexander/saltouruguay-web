@@ -1,0 +1,92 @@
+---
+import type { Session } from "@auth/core/types";
+import {
+  LucideGamepad2,
+  LucideHome,
+  LucideMedal,
+  LucideTrophy,
+  LucideUsers,
+  LucideCode,
+  LucideSettings,
+  LucideLogOut,
+} from "lucide-preact";
+
+interface Props {
+  session?: Session | null;
+}
+
+const { session } = Astro.props;
+const links = [
+  {
+    label: "Inicio",
+    url: "/saltoplay",
+    icon: LucideHome,
+  },
+  {
+    label: "Juegos",
+    url: "/saltoplay/games",
+    icon: LucideGamepad2,
+  },
+  {
+    label: "Mis amigos",
+    url: "/saltoplay/friends",
+    icon: LucideUsers,
+  },
+  {
+    label: "Torneos",
+    url: "/torneos",
+    icon: LucideTrophy,
+  },
+
+  {
+    label: "Awards",
+    url: "/awards",
+    icon: LucideMedal,
+  },
+  {
+    label: "Modpack",
+    url: "/modpack",
+    icon: LucideCode,
+  },
+  {
+    label: "Configuración",
+    url: "/configuracion",
+    icon: LucideSettings,
+  },
+];
+const activeClasses = ["bg-brand-gray/10", "border-gray-900/10"];
+---
+
+<div
+  class="fixed top-0 left-0 h-full hidden md:flex flex-col w-16 bg-zinc-950 border-r border-zinc-900 items-center py-6"
+>
+  <div class="mb-8">
+    <div
+      class="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold"
+    >
+      <img
+        src="/images/logo_salto.webp"
+        alt="SaltoCraft"
+        class="h-10 w-10 object-contain"
+        loading="lazy"
+        draggable="false"
+      />
+    </div>
+  </div>
+  <nav class="flex flex-col items-center gap-4 flex-1">
+    {
+      links.map((link) => {
+        const Icon = link.icon;
+        return (
+          <a
+            href={link.url}
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 w-10 text-white hover:bg-zinc-900 hover:text-primary"
+          >
+            <Icon class="w-5 h-5" />
+            <span class="sr-only">{link.label}</span>
+          </a>
+        );
+      })
+    }
+  </nav>
+</div>
