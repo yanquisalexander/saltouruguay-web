@@ -56,6 +56,10 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
             "Twitch Login",
             `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
         )
+
+        window.addEventListener('SignInError', () => {
+            toast.error('¡Ups! Ocurrió un error al iniciar sesión!')
+        }, { once: true })
     };
 
     const linkDiscord = async () => {

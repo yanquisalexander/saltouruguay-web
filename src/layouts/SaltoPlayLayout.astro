@@ -23,7 +23,7 @@ const { session, title = "SaltoPlay", description } = Astro.props;
   {
     SHOW_OVERLAY_COMING_SOON && (
       <div
-        class="absolute inset-0 flex  items-center justify-center bg-black bg-opacity-10 backdrop-blur-md z-10"
+        class="inset-0 flex fixed items-center justify-center bg-black bg-opacity-10 backdrop-blur-md z-10"
         id="coming-soon-overlay"
       >
         <div class="text-center animate-blurred-fade-in">

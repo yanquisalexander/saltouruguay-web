@@ -2,6 +2,18 @@
 import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
 
+const ERROR_MESSAGES = {
+  Configuration: "Ocurrió un error por nuestra parte. Por favor, inténtalo de nuevo más tarde.",
+};
+
+const url = new URL(Astro.request.url);
+const error = url.searchParams.get("error") as keyof typeof ERROR_MESSAGES | null;
+
+/* 
+  ¿Has any authjs error?
+  https://authjs.dev/reference/core/errors
+*/
+
 const session = await getSession(Astro.request);
 ---
 <Layout
@@ -10,19 +22,38 @@ const session = await getSession(Astro.request);
   description="Iniciando sesión en Twitch..."
   hideFooter>
   <main class="flex min-h-screen items-center justify-center text-center">
-    {session ? "Ingresando..." : "No se ha podido iniciar sesión"}
+    {error ? (
+      <div class="text-red-500">
+        <h1 class="text-2xl font-bold">Error</h1>
+        <p class="mt-4">{ERROR_MESSAGES[error] || "Ocurrió un error inesperado."}</p>
+      </div>
+    ) : (
+      <p>{session ? "Ingresando..." : "No se ha podido iniciar sesión"}</p>
+    )}
   </main>
 </Layout>
 
-{
-  session !== null && (
-    <script>
-      if(window.opener) {
-      window.close(); 
-      window.opener.location.reload()
-      } else {
+{session && (
+  <script is:inline>
+    if (window.opener) {
+      //window.opener.location.reload();
+      // window.close(); // Descomentar si quieres cerrar la ventana después
+    } else {
       location.href = "/";
-      }
-      </script>
-  )
-}
+    }
+  </script>
+)}
+
+{error && (
+  <script is:inline>
+         if (window.opener) {
+          const event = new Event("SignInError");
+          event.error = "${error}";
+          window.opener.dispatchEvent(event);
+          window.close();
+        } else {
+          location.href = "/auth/twitch";
+        }
+        
+  </script>
+)}

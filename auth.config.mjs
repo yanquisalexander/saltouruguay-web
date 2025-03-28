@@ -173,7 +173,7 @@ export default defineConfig({
         },
     },
     pages: {
-        error: "/",
+        error: "/auth/twitch/callback",
         signIn: "/",
     },
     events: {
