@@ -36,8 +36,8 @@ const session = await getSession(Astro.request);
 {session && (
   <script is:inline>
     if (window.opener) {
-      //window.opener.location.reload();
-      // window.close(); // Descomentar si quieres cerrar la ventana después
+      window.opener.location.reload();
+      window.close(); 
     } else {
       location.href = "/";
     }
@@ -54,6 +54,6 @@ const session = await getSession(Astro.request);
         } else {
           location.href = "/auth/twitch";
         }
-        
+
   </script>
 )}

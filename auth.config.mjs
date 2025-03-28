@@ -21,13 +21,14 @@ export default defineConfig({
         }),
     ],
     callbacks: {
-        signIn: async ({ account, profile }) => {
+        signIn: async ({ account, profile, credentials }) => {
             if (account?.provider === "twitch" && !profile?.email) {
                 throw new Error("Email is required to sign in");
             }
             return true;
         },
         jwt: async ({ token, user, account, profile }) => {
+
             if (user && account?.provider === "twitch") {
                 const email = profile?.email || null;
                 const username = user?.name?.toLowerCase();

@@ -231,7 +231,7 @@ export const saveSession = async (
 
             const email = user?.email;
 
-            if (email) {
+            if (email && import.meta.env.PROD) {
                 await sendNotificationEmail(
                     email,
                     emailSubject,

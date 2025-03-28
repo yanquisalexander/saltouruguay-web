@@ -84,5 +84,5 @@ if (session) {
 <script>
   const { signIn } = await import("auth-astro/client");
   // @ts-expect-error - TS doesn't know about signIn
-  signIn("twitch", { callbackUrl: "/auth/twitch/callback" });
+  signIn("twitch", { callbackUrl: "/auth/twitch/callback", aaaa: "hola papa" });
 </script>
