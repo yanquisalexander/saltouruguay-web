@@ -4,9 +4,9 @@ import CryptoJS from 'crypto-js';
 import { client } from "@/db/client";
 import { SessionsTable, UsersTable } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import { DateTime } from "luxon";
 
 const AUTH_SECRET = import.meta.env.AUTH_SECRET || 'default_secret_for_dev';
-
 
 // Función para encriptar un texto usando la variable de entorno AUTH_SECRET
 export const encrypt = (text: string): string => {
@@ -15,61 +15,78 @@ export const encrypt = (text: string): string => {
 };
 
 // Función para desencriptar un texto usando AUTH_SECRET
-const decrypt = (encryptedText: string): string => {
+export const decrypt = (encryptedText: string): string => {
     const bytes = CryptoJS.AES.decrypt(encryptedText, AUTH_SECRET);
     const decrypted = bytes.toString(CryptoJS.enc.Utf8);
     return decrypted;
 };
 
 // 1. Generar el secreto TOTP usando speakeasy
-export const generateTotpSecret = (): { secret: string, base32: string, encryptedSecret: string } => {
-    const secret = speakeasy.generateSecret({ length: 20 });
-    console.log('Generated Secret Details:', {
+export const generateTotpSecret = (): {
+    secret: string,
+    base32: string,
+    encryptedSecret: string,
+    otpauth_url: string
+} => {
+    const secret = speakeasy.generateSecret({
+        length: 20,
+        name: "SaltoUruguayServer",
+        issuer: "SaltoUruguayServer",
+    });
+
+    console.log('Secret Generation Debug:', {
         base32: secret.base32,
         hex: secret.hex,
         otpauth_url: secret.otpauth_url
     });
+
     const encryptedSecret = encrypt(secret.base32);
+
     return {
-        secret: secret.base32,  // Return the original base32 secret
+        secret: secret.base32,
         base32: secret.base32,
-        encryptedSecret: encryptedSecret
+        encryptedSecret,
+        otpauth_url: secret.otpauth_url!
     };
 };
+
 // 2. Generar el código QR
 export const generateTotpQrCode = async (username: string, secret: string): Promise<string> => {
-    const decryptedSecret = decrypt(secret); // Desencriptamos el secreto
-    const label = `saltouruguayserver:${username}`;  // Cambiar "MyApp" por el nombre de tu aplicación
+    // Desencriptamos el secreto para obtener el valor en base32.
+    const decryptedSecret = decrypt(secret);
+
+    // Construimos la URL otpauth con el formato adecuado.
+    const label = `saltoUruguayServer:${username}`;
     const otpauthUrl = speakeasy.otpauthURL({
         secret: decryptedSecret,
         label,
-        issuer: 'SaltoUruguayServer', // Cambiar con el nombre de tu aplicación
-        algorithm: 'sha1',
+        issuer: 'SaltoUruguayServer',
+        encoding: 'base32'
     });
 
-    return await QRCode.toDataURL(otpauthUrl); // Devuelve la URL de la imagen QR
+    return await QRCode.toDataURL(otpauthUrl);
 };
+
 
 // 3. Verificar el código TOTP
 export const verifyTotp = (secret: string, token: string): boolean => {
     try {
+        // Desencriptamos el secreto guardado
         const decryptedSecret = decrypt(secret);
 
+        // Verificamos el token usando la función nativa de speakeasy,
+        // que toma el tiempo actual y permite una ventana configurable.
         const isValid = speakeasy.totp.verify({
             secret: decryptedSecret,
             encoding: 'base32',
             token,
-            window: import.meta.env.DEV ? 2 : 1, // Permitir un pequeño margen de error en el tiempo
-            time: Math.floor(Date.now() / 1000), // Tiempo actual en UNIX timestamp
-            step: 30,
+            window: import.meta.env.DEV ? 5 : 1
         });
 
-        console.log('Verification Debug:', {
+        console.log('TOTP Verification Debug:', {
             decryptedSecret,
             token,
-            utcTime: new Date().toUTCString(),
-            localTime: new Date().toString(),
-            unixTime: Math.floor(Date.now() / 1000)
+            isValid
         });
 
         return isValid;
@@ -78,6 +95,7 @@ export const verifyTotp = (secret: string, token: string): boolean => {
         return false;
     }
 };
+
 
 // 4. Generar códigos de recuperación
 export const generateRecoveryCodes = (): string[] => {
@@ -120,8 +138,6 @@ export const validateRecoveryCode = async (userId: number, recoveryCode: string)
         where: eq(UsersTable.id, userId),
     });
 
-
-
     if (!user) {
         throw new Error('User not found');
     }
@@ -146,7 +162,6 @@ export const validateRecoveryCode = async (userId: number, recoveryCode: string)
 
     return isValid ?? false;
 };
-
 
 export const userHasTwoFactorEnabled = async (userId: number): Promise<boolean> => {
     const user = await client.query.UsersTable.findFirst({
@@ -193,6 +208,20 @@ export const verifyTwoFactor = async (userId: number, token: string, sessionId?:
 
 export const firstVerification = async (userId: number, otp: string, secret: string): Promise<boolean> => {
     const isValid = verifyTotp(secret, otp);
+
+    const generateCurrentTotpToken = (secret: string): string => {
+        const decryptedSecret = decrypt(secret);
+        const token = speakeasy.totp({
+            secret: decryptedSecret,
+            encoding: 'base32'
+        });
+        console.log('Generated TOTP Token:', token);
+        return token;
+    };
+
+    const currentTotpToken = generateCurrentTotpToken(secret);
+    console.log('Current TOTP Token:', currentTotpToken);
+
 
     if (isValid) {
         await client

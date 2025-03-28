@@ -3,7 +3,10 @@ import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
 import { getSessionById } from "@/utils/user";
-import { verifyTwoFactor, disableTwoFactorAuth, enableTwoFactorAuth, generateRecoveryCodes, generateTotpSecret, generateTotpQrCode, firstVerification, encrypt } from "@/lib/auth/two-factor";
+import { verifyTwoFactor, disableTwoFactorAuth, enableTwoFactorAuth, generateRecoveryCodes, generateTotpSecret, generateTotpQrCode, firstVerification, encrypt, decrypt } from "@/lib/auth/two-factor";
+import { client } from "@/db/client";
+import { eq } from "drizzle-orm";
+import { UsersTable } from "@/db/schema";
 
 export const twoFactor = {
     verifyTwoFactor: defineAction({
@@ -27,11 +30,32 @@ export const twoFactor = {
                     message: "Session not found",
                 });
             }
+            const encryptedSecret = await client.query.UsersTable.findFirst({
+                where: eq(UsersTable.id, session.user.id),
+                columns: {
+                    twoFactorEnabled: true,
+                    twoFactorSecret: true,
+                }
+            });
+            if (!encryptedSecret) {
+                throw new ActionError({
+                    code: "NOT_FOUND",
+                    message: "Secret not found",
+                });
+            }
+            if (!encryptedSecret.twoFactorEnabled) {
+                throw new ActionError({
+                    code: "UNPROCESSABLE_CONTENT",
+                    message: "Two-factor authentication is not enabled",
+                });
+            }
+
+            const secret = decrypt(encryptedSecret.twoFactorSecret!); // Desencriptamos el secreto
 
             const isValid = await verifyTwoFactor(
                 session.user.id,
                 code,
-                serverSession.sessionId
+                secret  // Usamos el secreto desencriptado para la comparación
             );
 
             if (!isValid) {
@@ -44,6 +68,7 @@ export const twoFactor = {
             return { success: true };
         }
     }),
+
     disableTwoFactor: defineAction({
         input: z.object({
             code: z.string(),
@@ -66,9 +91,27 @@ export const twoFactor = {
                 });
             }
 
+            const encryptedSecret = await client.query.UsersTable.findFirst({
+                where: eq(UsersTable.id, session.user.id),
+                columns: {
+                    twoFactorEnabled: true,
+                    twoFactorSecret: true,
+                }
+            });
+            if (!encryptedSecret) {
+                throw new ActionError({
+                    code: "NOT_FOUND",
+                    message: "Secret not found",
+                });
+            }
+
+
+            const secret = decrypt(encryptedSecret.twoFactorSecret!); // Desencriptamos el secreto
+
             const isValid = await verifyTwoFactor(
                 session.user.id,
                 code,
+                secret  // Verificamos con el secreto desencriptado
             );
 
             if (!isValid) {
@@ -83,6 +126,7 @@ export const twoFactor = {
             return { success: true };
         }
     }),
+
     generateTwoFactor: defineAction({
         handler: async (_, { request }) => {
             const session = await getSession(request);
@@ -93,26 +137,36 @@ export const twoFactor = {
                 });
             }
 
-            // Generate a new TOTP secret
+            // Generar un nuevo secreto TOTP
             const { secret, encryptedSecret } = generateTotpSecret();
 
-            // Generate QR code for the secret
+            // Guardar el secreto encriptado en la base de datos
+
+            await client
+                .update(UsersTable)
+                .set({ twoFactorSecret: encryptedSecret })
+                .where(eq(UsersTable.id, session.user.id));
+            // Guardar el secreto encriptado en la sesión
+
+
+            // Generar el código QR para el secreto
             const qrCode = await generateTotpQrCode(
                 session.user.username,
-                encryptedSecret  // Use the encrypted secret here
+                encryptedSecret  // Usar el secreto encriptado para generar el QR
             );
 
             return {
-                secret,  // Return the original base32 secret
+                secret,  // Retornar el secreto original base32
                 qrCode,
                 encryptedSecret
             };
         }
     }),
+
     enableTwoFactor: defineAction({
         input: z.object({
             code: z.string(),
-            secret: z.string(),  // This will now be the original base32 secret
+            secret: z.string(),  // Ahora el secreto base32 original
         }),
         handler: async ({ code, secret }, { request }) => {
             const session = await getSession(request);
@@ -132,13 +186,13 @@ export const twoFactor = {
                 });
             }
 
-            // Encrypt the original base32 secret
+            // Encriptar el secreto base32 para guardarlo
             const encryptedSecret = encrypt(secret);
 
             const isValid = await firstVerification(
                 session.user.id,
                 code,
-                encryptedSecret  // Pass the encrypted secret
+                encryptedSecret  // Usar el secreto encriptado
             );
 
             if (!isValid) {
@@ -156,5 +210,4 @@ export const twoFactor = {
         }
     })
 }
-
 
