@@ -1,0 +1,12 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session || !session.user.twoFactorEnabled) {
+  return Astro.redirect("/");
+}
+---
+
+<Layout title="Autenticación de dos factores" hideFooter hideHeader />
