@@ -38,22 +38,41 @@ export const SecuritySection = ({ session }: { session: Session }) => {
         if (!twoFactorEnabled) {
             openTwoFactorSetup();
         } else {
-            try {
-                const response = await fetch('/api/account/two-factor', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ disable: true })
-                });
+            const confirmation = confirm(
+                '¿Estás seguro de que deseas desactivar la autenticación de dos factores?'
+            );
+            if (!confirmation) return;
 
-                if (response.ok) {
-                    setTwoFactorEnabled(false);
-                } else {
-                    console.error('Failed to disable 2FA');
+            const code = prompt(
+                'Introduce el código de 6 dígitos de tu aplicación de autenticación'
+            );
+            if (!code) return;
+
+            toast.loading('Desactivando 2FA...', {
+                id: "disabling-2fa"
+            })
+
+
+            try {
+                const { error, data } = await actions.users.twoFactor.disableTwoFactor({ code })
+
+                if (error) {
+                    console.error('Error disabling 2FA:', error);
+                    toast.error(error.message, {
+                        id: "disabling-2fa"
+                    })
+                    return;
                 }
+                toast.success('2FA desactivado correctamente', {
+                    id: "disabling-2fa"
+                })
+
+
             } catch (error) {
                 console.error('Error disabling 2FA:', error);
+                toast.error('Error desactivando 2FA', {
+                    id: "disabling-2fa"
+                })
             }
         }
     };
