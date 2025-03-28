@@ -191,6 +191,10 @@ export const verifyTwoFactor = async (userId: number, token: string, sessionId?:
 
     const isValid = verifyTotp(secret, token);
 
+    console.log("sessionId:", sessionId);
+    console.log("userId:", userId);
+
+
     if (isValid && sessionId) {
         await client
             .update(SessionsTable)

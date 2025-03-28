@@ -20,7 +20,21 @@ if (!session) {
   >
     <img src="/favicon.svg" alt="Logo" class="h-16 w-16 mx-auto mb-4" />
     <h1 class="text-xl mb-4 font-rubik font-medium">Verifica tu código OTP</h1>
-    <p class="text-center text-gray-200 mb-4">
+
+    <div
+      class="flex items-center gap-3 bg-zinc-900 p-2 px-6 rounded-lg mx-auto"
+    >
+      <img
+        src={session.user.image}
+        alt={session.user.name}
+        class="rounded-full size-10"
+      />
+      <div class="flex flex-col">
+        <p class="text-sm font-medium">{session.user.name}</p>
+        <p class="text-gray-400 text-xs">{session.user.email}</p>
+      </div>
+    </div>
+    <p class="text-center text-gray-200 mb-4 mt-4">
       Ingresa el código OTP que te proporcionó tu aplicación autenticadora.
     </p>
     <form id="otp-form" class="w-full flex flex-col gap-4">

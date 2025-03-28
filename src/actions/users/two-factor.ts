@@ -50,12 +50,11 @@ export const twoFactor = {
                 });
             }
 
-            const secret = decrypt(encryptedSecret.twoFactorSecret!); // Desencriptamos el secreto
 
             const isValid = await verifyTwoFactor(
                 session.user.id,
                 code,
-                secret  // Usamos el secreto desencriptado para la comparación
+                serverSession.sessionId, // Pasar el sessionId para marcarlo como verificado
             );
 
             if (!isValid) {
@@ -106,12 +105,10 @@ export const twoFactor = {
             }
 
 
-            const secret = decrypt(encryptedSecret.twoFactorSecret!); // Desencriptamos el secreto
 
             const isValid = await verifyTwoFactor(
                 session.user.id,
-                code,
-                secret  // Verificamos con el secreto desencriptado
+                code
             );
 
             if (!isValid) {
