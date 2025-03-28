@@ -45,7 +45,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     const serverSession = await getSessionById(session.user.sessionId!);
 
-    if (session.user.twoFactorEnabled && !session.user.isSuspended && !serverSession?.twoFactorVerified && currentPath !== "/2fa") {
+    if (session.user.twoFactorEnabled && !session.user.isSuspended && !serverSession?.twoFactorVerified && currentPath !== "/two-factor") {
         return redirect("/two-factor", 302);
     }
 
