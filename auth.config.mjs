@@ -130,6 +130,7 @@ export default defineConfig({
                         discordId: true,
                         coins: true,
                         username: true,
+                        twoFactorEnabled: true,
                     },
                     with: {
                         streamerWarsPlayer: {
@@ -164,6 +165,7 @@ export default defineConfig({
                         coins: userRecord.coins,
                         streamerWarsPlayerNumber: userRecord.streamerWarsPlayer?.playerNumber,
                         isSuspended,
+                        twoFactorEnabled: userRecord.twoFactorEnabled,
                         sessionId: token.sessionId,
                     };
                 }

@@ -1,5 +1,6 @@
 import { defineMiddleware } from "astro:middleware";
 import { getSession } from "auth-astro/server";
+import { getSessionById } from "./utils/user";
 
 export const onRequest = defineMiddleware(async (context, next) => {
     const { request, redirect } = context;
@@ -25,6 +26,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const { user } = session;
     const isSuspended = user.isSuspended;
 
+
+
     const currentPath = new URL(request.url).pathname;
 
 
@@ -34,6 +37,19 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (isSuspended) {
         return redirect("/suspended", 302);
     }
+
+    /* 
+        User has 2fa and is not on the 2fa page
+        Redirect to the 2fa page (if they don't unlocked yet)
+    */
+
+    const serverSession = await getSessionById(session.user.sessionId!);
+
+    if (session.user.twoFactorEnabled && !session.user.isSuspended && !serverSession?.twoFactorVerified && currentPath !== "/2fa") {
+        return redirect("/2fa", 302);
+    }
+
+
 
     return next();
 });

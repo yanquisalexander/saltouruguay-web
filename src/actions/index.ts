@@ -15,6 +15,7 @@ import { users } from "./admin/users";
 import { streamerWars } from "./streamerWars";
 import { games } from "./games";
 import { oauth } from "./users/oauth";
+import { twoFactor } from "./users/two-factor";
 
 export const server = {
     sendVotes: defineAction({
@@ -400,6 +401,7 @@ export const server = {
         },
     }),
     users: {
-        oauth
+        oauth,
+        twoFactor
     }
 }

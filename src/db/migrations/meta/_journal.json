@@ -211,6 +211,20 @@
       "when": 1743095392973,
       "tag": "0029_shallow_daredevil",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1743187996929,
+      "tag": "0030_third_victor_mancha",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1743188926061,
+      "tag": "0031_medical_tempest",
+      "breakpoints": true
     }
   ]
 }

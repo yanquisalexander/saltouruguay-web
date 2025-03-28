@@ -1,8 +1,13 @@
 ---
+import { UserAccountLayout } from "@/components/UsersPage/UserAccountLayout";
 import Layout from "@/layouts/Layout.astro";
 import { getDiscordUser } from "@/services/discord";
 import { getSession } from "auth-astro/server";
-import { LucideCheckCircle } from "lucide-preact";
+import {
+  LucideCheckCircle,
+  LucideExternalLink,
+  LucideLogOut,
+} from "lucide-preact";
 
 const session = await getSession(Astro.request);
 
@@ -29,145 +34,102 @@ const discordUser = session?.user?.discordId
       </span>
     </nav>
 
-    <div
-      class="grid my-10 grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_400px] gap-6"
-    >
-      <section
-        class="p-4 relative rounded-lg bg-[#0b1422] overflow-hidden border border-line"
-      >
-        <h2 class="text-2xl font-bold text-center lg:text-left">
-          Información de usuario
-        </h2>
-        <div
-          class="flex flex-col lg:flex-row items-center lg:items-start justify-center lg:justify-start text-center lg:text-left gap-4 my-4"
+    <div class="grid gap-6 md:grid-cols-[250px_1fr] lg:grid-cols-[300px_1fr]">
+      <aside class="flex flex-col gap-4">
+        <section
+          class="p-4 relative rounded-lg bg-[#0b1422] overflow-hidden border border-line"
         >
-          <picture
-            class="relative bg-box p-1 border border-line inline-block overflow-hidden rounded-[22px]"
-          >
-            <img
-              src={session.user.image}
-              alt={`Foto de perfil de ${session.user.name}`}
-              width="200"
-              height="200"
-              class="z-10 relative rounded-[18px] w-20 h-20"
-            />
-          </picture>
-          <div>
-            <p class="text-xl font-bold flex flex-col">
-              <span>{session.user.name}</span>
-            </p>
-            <p class="text-brand-gray">
-              {session.user.email}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {
-        session.user.tier ? (
-          <div class="p-4 relative rounded-lg bg-[#0b1422] overflow-hidden border border-line text-center lg:text-left">
-            <h2 class="text-2xl font-bold items-center gap-4 flex justify-center lg:justify-start">
-              Suscripción{" "}
-              <span class="px-2 py-0.5 rounded-full bg-violet-800/80 text-xs border border-violet-900/20 backdrop-blur-sm left-1/2 w-max block text-violet-200">
-                Tier {session.user.tier}
-              </span>
-            </h2>
-            <div class="grid grid-cols-1 justify-center lg:justify-start lg:grid-cols-[auto_1fr] gap-4 my-4">
-              <picture class="relative bg-[#0b1422] p-1 mx-auto lg:mx-0 border border-line inline-block overflow-hidden rounded-[22px]">
+          <div class="flex flex-col space-y-1.5 p-4">
+            <div class="flex flex-col items-center text-center">
+              <picture
+                class="relative bg-box p-1 border border-line inline-block overflow-hidden rounded-[22px] mb-3"
+              >
                 <img
-                  src="/twitch-icon.png"
-                  class="w-20 relative h-20 z-10"
-                  alt=""
+                  src={session.user.image}
+                  alt={`Foto de perfil de ${session.user.name}`}
                   width="200"
                   height="200"
+                  class="z-10 relative rounded-[18px] size-16"
                 />
               </picture>
               <div>
-                <p class="text-violet-100 text-sm">¡Gracias por tu apoyo!</p>
-                <p class="text-violet-200">
-                  Eres miembro del canal de{" "}
-                  <a
-                    class="text-violet-50 underline"
-                    href="https://twitch.tv/SaltoUruguayServer"
-                    target="_blank"
-                  >
-                    SaltoUruguayServer
-                  </a>{" "}
-                  en Twitch
+                <h3 class="text-md font-semibold leading-none tracking-tight">
+                  {session.user.name}
+                </h3>
+                <p class="text-neutral-400 text-xs mt-1">
+                  {session.user.email}
                 </p>
               </div>
             </div>
           </div>
-        ) : (
-          <div class="p-4 relative rounded-lg bg-[#0b1422] overflow-hidden border border-line text-center lg:text-left">
-            <h2 class="text-2xl font-bold items-center gap-4 flex justify-center lg:justify-start">
-              Suscripción{" "}
-              <span class="px-2 py-0.5 rounded-full bg-violet-800/80 text-xs border border-violet-900/20 backdrop-blur-sm left-1/2 w-max block text-violet-200">
-                Sin suscripción
-              </span>
-            </h2>
-            <div class="grid grid-cols-1 justify-center lg:justify-start lg:grid-cols-[auto_1fr] gap-4 my-4">
-              <picture class="relative bg-[#0b1422] p-1 mx-auto lg:mx-0 border border-line inline-block overflow-hidden rounded-[22px]">
-                <img
-                  src="/twitch-icon.png"
-                  class="w-20 relative h-20 z-10"
-                  alt=""
-                  width="200"
-                  height="200"
-                />
-              </picture>
-              <div>
-                <p class="text-violet-100 text-sm">¡Apóyanos en Twitch!</p>
-                <p class="text-violet-200">
-                  Con tu suscripción a nuestro canal de Twitch obtendrás
-                  beneficios exclusivos
-                </p>
-                <a
-                  href="https://twitch.tv/subs/SaltoUruguayServer"
-                  target="_blank"
-                  class="text-violet-50 underline"
+          <nav class="grid">
+            <button
+              id="account-logout"
+              class="flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-400/10 transition-colors text-left"
+            >
+              <LucideLogOut class="size-5" />
+              <span class="text-red-400">Cerrar sesión</span>
+            </button>
+          </nav>
+        </section>
+
+        <section
+          class="p-4 relative rounded-lg bg-[#0b1422] overflow-hidden border border-line text-center lg:text-left"
+        >
+          <div class="flex flex-col space-y-1.5 p-4">
+            <h3 class="font-semibold tracking-tight text-base">Suscripción</h3>
+          </div>
+          <div class="p-4 pt-0">
+            <article class="flex items-start gap-3">
+              <img
+                src="/twitch-icon.png"
+                class="size-12 relative z-10 rounded-md"
+                alt=""
+                width="200"
+                height="200"
+              />
+              <div class="space-y-1">
+                <span
+                  class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 bg-electric-violet-500/10 text-electric-violet-400 border-electric-violet-500/20"
                 >
-                  Suscribirse en Twitch
-                </a>
-              </div>
-            </div>
-          </div>
-        )
-      }
-    </div>
+                  {
+                    session.user.tier
+                      ? `Tier ${session.user.tier}`
+                      : "Sin suscripción"
+                  }
+                </span>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_400px] gap-6">
-      <section
-        class="p-4 relative rounded-lg bg-[#0b1422] overflow-hidden border border-line"
-      >
-        <h2 class="text-2xl font-bold text-center lg:text-left">
-          Configuración de cuenta
-        </h2>
-        <div class="grid grid-cols-1 gap-4 my-4">
-          <button
-            class="flex hover:bg-brand-gray/10 transition-colors p-4 rounded-lg"
-          >
-            <div class="flex flex-col items-start">
-              <h3 class="text-xl font-bold">Discord</h3>
-              <p class="text-brand-gray w-full">
+                <p class="text-xs text-neutral-400">
+                  {
+                    session.user.tier
+                      ? "Eres miembro del canal de SaltoUruguayServer en Twitch"
+                      : "¡Apóyanos en Twitch! Obtén beneficios exclusivos."
+                  }
+                </p>
+
                 {
-                  discordUser ? (
-                    <>
-                      Conectado como{" "}
-                      <span class="text-white font-bold ">
-                        {discordUser.username}{" "}
-                        <LucideCheckCircle class="size-5 inline ml-auto text-green-500" />
-                      </span>
-                    </>
-                  ) : (
-                    "Conecta tu cuenta de Discord"
+                  !session.user.tier && (
+                    <a
+                      href="https://twitch.tv/subs/SaltoUruguayServer"
+                      target="_blank"
+                      class="!mt-4 px-3 py-2 bg-neutral-800 rounded-md hover:bg-electric-violet-700 transition-colors inline-flex items-center  text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    >
+                      <LucideExternalLink class="size-5 mr-1 inline" />
+                      Suscribirse
+                    </a>
                   )
                 }
-              </p>
-            </div>
-          </button>
-        </div>
-      </section>
+              </div>
+            </article>
+          </div>
+        </section>
+      </aside>
+
+      <UserAccountLayout
+        session={session}
+        discordUser={discordUser}
+        client:idle
+      />
     </div>
   </div>
 </Layout>

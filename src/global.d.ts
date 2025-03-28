@@ -13,6 +13,8 @@ declare module "@auth/core/types" {
             coins?: number;
             streamerWarsPlayerNumber?: number;
             isSuspended?: boolean;
+            sessionId?: string;
+            twoFactorEnabled?: boolean;
         } & DefaultSession["user"]; // Extiende las propiedades originales del tipo `user`
     }
 }

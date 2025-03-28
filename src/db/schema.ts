@@ -13,6 +13,9 @@ export const UsersTable = pgTable("users", {
     admin: boolean("admin").notNull().default(false),
     playedSystemCinematics: text("played_system_cinematics").array().default([]),
     coins: integer("coins").notNull().default(0),
+    twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+    twoFactorSecret: varchar("two_factor_secret"),
+    twoFactorRecoveryCodes: text("two_factor_recovery_codes").array(),
     createdAt: timestamp("created_at")
         .notNull()
         .default(sql`current_timestamp`),
@@ -41,6 +44,7 @@ export const SessionsTable = pgTable("sessions", {
     userAgent: text("user_agent").notNull(),
     ip: text("ip").notNull(),
     lastActivity: timestamp("last_activity"),
+    twoFactorVerified: boolean("two_factor_verified").notNull().default(false),
     createdAt: timestamp("created_at")
         .notNull()
         .default(sql`current_timestamp`),
