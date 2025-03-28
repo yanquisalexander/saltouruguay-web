@@ -59,7 +59,7 @@ export const verifyTotp = (secret: string, token: string): boolean => {
             secret: decryptedSecret,
             encoding: 'base32',
             token,
-            window: import.meta.env.DEV ? 2 : 0, // Permitir un pequeño margen de error en el tiempo
+            window: import.meta.env.DEV ? 2 : 1, // Permitir un pequeño margen de error en el tiempo
             time: Math.floor(Date.now() / 1000), // Tiempo actual en UNIX timestamp
             step: 30,
         });
