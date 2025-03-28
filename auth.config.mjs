@@ -8,27 +8,29 @@ import { eq, or } from "drizzle-orm";
 import { saveSession, updateSessionActivity, destroySession, getSessionById } from "@/utils/user";
 
 export default defineConfig({
+    injectEndpoints: false,
     providers: [
         TwitchProvider({
             clientId: import.meta.env.TWITCH_CLIENT_ID,
             clientSecret: import.meta.env.TWITCH_CLIENT_SECRET,
             authorization: {
                 params: {
-                    scope: TWITCH_SCOPES.join(" "), // Usar scopes extendidos
+                    scope: TWITCH_SCOPES.join(" "),
                     force_verify: true,
                 },
             },
         }),
     ],
     callbacks: {
-        signIn: async ({ account, profile, credentials }) => {
+        signIn: async ({ account, profile, ...props }) => {
+            console.log("SignIn Callback", { ...props });
             if (account?.provider === "twitch" && !profile?.email) {
                 throw new Error("Email is required to sign in");
             }
             return true;
         },
-        jwt: async ({ token, user, account, profile }) => {
-
+        jwt: async ({ token, user, account, profile, ...props }) => {
+            console.log("JWT Callback", { ...props });
             if (user && account?.provider === "twitch") {
                 const email = profile?.email || null;
                 const username = user?.name?.toLowerCase();
