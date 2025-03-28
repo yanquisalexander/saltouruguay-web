@@ -6,6 +6,12 @@ import { SessionsTable, UsersTable } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { DateTime } from "luxon";
 
+export const DATE_ADMINS_REQUIRE_TWO_FACTOR = DateTime.fromObject({
+    year: 2025,
+    month: 6,
+    day: 30
+}).toJSDate();
+
 const AUTH_SECRET = import.meta.env.AUTH_SECRET || 'default_secret_for_dev';
 
 // Función para encriptar un texto usando la variable de entorno AUTH_SECRET

@@ -1,0 +1,23 @@
+---
+import { DATE_ADMINS_REQUIRE_TWO_FACTOR } from "@/lib/auth/two-factor";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+---
+
+{
+  session?.user.isAdmin && !session.user.twoFactorEnabled ? (
+    <div class="bg-blue-500/20 border-blue-300/20 border text-white p-4 rounded-md mb-16">
+      <p class="text-sm">
+        A partir del{" "}
+        {DATE_ADMINS_REQUIRE_TWO_FACTOR.toLocaleDateString("es-ES", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })}
+        , todas las cuentas de administración deberán activar la autenticación
+        en dos pasos (2FA) para mayor seguridad
+      </p>
+    </div>
+  ) : null
+}

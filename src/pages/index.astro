@@ -11,6 +11,7 @@ import { FeaturedNews } from "@/components/FeaturedNews";
 import Advantages from "@/sections/Advantages.astro";
 import StreamerWars from "@/sections/StreamerWars.astro";
 import CountdownSaltoCraft from "@/sections/CountdownSaltoCraft.astro";
+import Required2FA from "@/components/admin/Required2FA.astro";
 
 const IS_PROD = import.meta.env.PROD;
 
@@ -26,6 +27,7 @@ export const prerender = true;
   <!--VoteCallToAction server:defer /-->
 
   <div class="flex flex-col py-16 items-center h-full">
+    <Required2FA server:defer />
     <header
       class="flex items-center justify-center w-full gap-x-14 gap-y-6 flex-col md:flex-row"
     >
