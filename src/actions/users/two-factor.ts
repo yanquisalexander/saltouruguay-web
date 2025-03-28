@@ -60,7 +60,7 @@ export const twoFactor = {
             if (!isValid) {
                 throw new ActionError({
                     code: "UNPROCESSABLE_CONTENT",
-                    message: "Invalid verification code",
+                    message: "El código de verificación no es válido",
                 });
             }
 
@@ -114,7 +114,7 @@ export const twoFactor = {
             if (!isValid) {
                 throw new ActionError({
                     code: "UNPROCESSABLE_CONTENT",
-                    message: "Invalid verification code",
+                    message: "El código de verificación no es válido",
                 });
             }
 
@@ -195,7 +195,7 @@ export const twoFactor = {
             if (!isValid) {
                 throw new ActionError({
                     code: "UNPROCESSABLE_CONTENT",
-                    message: "Invalid verification code",
+                    message: "El código de verificación no es válido",
                 });
             }
 
