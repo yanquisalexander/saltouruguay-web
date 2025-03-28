@@ -11,7 +11,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
         This is important for any client-side requests
     */
 
-    if (request.url.includes("/api/auth") || request.url.includes("/_actions") || request.url.includes("/_astro") || request.url.includes("/auth")) {
+    if (request.url.includes("/api/auth") ||
+        request.url.includes("/_actions") ||
+        request.url.includes("/_astro") ||
+        request.url.includes("/auth") ||
+        request.url.includes("/_server-islands")
+
+    ) {
         return next();
     }
 
