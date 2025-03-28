@@ -6,7 +6,10 @@ const session = await getSession(Astro.request);
 ---
 
 {
-  session?.user.isAdmin && !session.user.twoFactorEnabled ? (
+  session?.user.isAdmin &&
+  !session.user.twoFactorEnabled &&
+  !import.meta.env.DEV &&
+  DATE_ADMINS_REQUIRE_TWO_FACTOR > new Date() ? (
     <div class="bg-blue-500/20 border-blue-300/20 border text-white p-4 rounded-md mb-16">
       <p class="text-sm">
         A partir del{" "}
