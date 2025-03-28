@@ -85,7 +85,8 @@ const LaunchCountdown = ({
             location: "Twitch",
             options: ["Google", "Apple"],
             timeZone: "America/Montevideo",
-            iCalFileName: "Reminder-Event",
+            iCalFileName: `${eventName.replace(/\s+/g, "_")}.ics`,
+            hideBranding: true,
         };
 
         atcb_action?.(config);
