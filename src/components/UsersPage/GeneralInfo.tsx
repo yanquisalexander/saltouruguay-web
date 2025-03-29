@@ -15,6 +15,7 @@ export const GeneralInfo = ({ session, discordUser }: { session: Session, discor
             details: session ? `Conectado como ${session.user.name}` : "No conectado",
             canUnlink: true,
             unlinkHandler: () => toast.error("Tu cuenta de Twitch no puede ser desconectada", {
+                id: "twitch-unlink",
                 description: "Este es el método de autenticación principal de la plataforma, por lo que no puedes desconectarla.",
             }),
 
