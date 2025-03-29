@@ -210,7 +210,7 @@ export const SecuritySection = ({ session }: { session: Session }) => {
                 </button>
             </dialog>
 
-            <div class="flex flex-col space-y-1.5 p-6">
+            <div class="flex flex-col space-y-1.5 py-6 px-2">
                 <h3 class="text-xl font-semibold leading-none tracking-tight">
                     Seguridad de la cuenta
                 </h3>

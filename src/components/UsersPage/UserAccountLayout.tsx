@@ -1,14 +1,16 @@
 import type { Session } from "@auth/core/types";
 import { SecuritySection } from "./Security";
 import { useState } from "preact/hooks";
+import { GeneralInfo } from "./GeneralInfo";
+import type { APIUser } from "discord-api-types/v10";
 
 
-export const UserAccountLayout = ({ session }: { session: Session }) => {
+export const UserAccountLayout = ({ session, discordUser }: { session: Session, discordUser: APIUser | null }) => {
     const Tabs = [
         {
             name: "Información",
             key: "info",
-            component: <div>Información</div>
+            component: <GeneralInfo session={session} discordUser={discordUser} />
         },
         {
             name: "Seguridad",
@@ -49,7 +51,7 @@ export const UserAccountLayout = ({ session }: { session: Session }) => {
                 ))}
             </div>
 
-            <div class="rounded-lg p-4 bg-[#0b1422] border border-line">
+            <div class="rounded-lg px-2 md:p-4 bg-[#0b1422] border border-line">
                 {renderTabContent()}
             </div>
         </div>
