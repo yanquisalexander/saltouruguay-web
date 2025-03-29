@@ -109,7 +109,7 @@ export const GeneralInfo = ({ session, discordUser }: { session: Session, discor
                                             type="button"
                                             onClick={() => {
                                                 toast.loading('Conectando a Discord...')
-                                                location.href = "/api/link/discord"
+                                                location.href = "/api/discord/link"
                                             }}
                                         >
                                             Conectar
