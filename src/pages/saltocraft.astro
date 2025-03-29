@@ -7,15 +7,18 @@ import { LucideCopy } from "lucide-preact";
 import Discord from "@/icons/Discord.astro";
 import { SOCIAL_NETWORKS } from "@/consts/SocialNetworks";
 import SaltoCraftOnlineUsers from "@/components/SaltoCraftOnlineUsers.astro";
+import CurseForgeIcon from "@/icons/CurseForgeIcon.astro";
 
 const MODPACK_INFO = {
-  AVAILABLE: import.meta.env.DEV,
+  AVAILABLE: true,
   MINECRAFT_VERSION: "1.20.1",
   VERSION: "forge arclight/Trials 1.20.1",
   EDITION: "Java Edition",
   IP_ADDRESS: "saltocraft.saltouruguayserver.com",
   PORT: 25594,
-  DOWNLOAD_URL: "https://www.curseforge.com/minecraft/modpacks/saltocraft-iii",
+  DOWNLOAD_URL: "https://cdn.saltouruguayserver.com/modpacks/SaltoCraft3.rar",
+  CURSEFORGE_DOWNLOAD_URL:
+    "https://cdn.saltouruguayserver.com/modpacks/SaltoCraft3-curseforge.zip",
 };
 ---
 
@@ -78,40 +81,60 @@ const MODPACK_INFO = {
               class="flex gap-x-2 items-center justify-center bg-yellow-400 text-black font-minecraftia text-2xl py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out hover:bg-green-600 hover:scale-105 hover:rotate-1 transform-gpu"
             >
               <MinecraftSword class="size-12 inline-block" />
-              <span class="title text-2xl font-minecraftia text-center">
+              <span
+                class="font-semibold text-2xl font-minecraftia text-center"
+                style={{
+                  fontSmooth: "none",
+                }}
+              >
                 Descargar SaltoCraft III
               </span>
             </a>
 
-            <button
-              id="how-to-join"
-              class="flex items-center justify-center gap-x-2 mt-8 bg-gray-800 text-white font-minecraftia text-xs py-1 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out hover:bg-green-600 hover:scale-105 hover:rotate-1 transform-gpu"
-            >
-              <MinecraftFabric class="size-8 inline-block" />
-              <span class="title font-minecraftia text-center">
-                ¿Cómo acceder al servidor?
-              </span>
-            </button>
+            <div class="space-y-3 flex flex-col justify-center items-center mt-4">
+              <span class="text-neutral-400">¿Usas CurseForge? </span>
+              <a
+                href={MODPACK_INFO.CURSEFORGE_DOWNLOAD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex gap-x-2 items-center justify-center bg-neutral-600 text-white font-minecraftia text-xs py-1 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out hover:bg-green-600 hover:scale-105 hover:rotate-1 transform-gpu"
+              >
+                <CurseForgeIcon class="size-6 inline-block" />
+                Descargar pack desde CurseForge
+              </a>
+            </div>
 
-            {/* 
+            <footer class="flex gap-3 flex-col md:flex-row justify-center items-center mt-16">
+              <button
+                id="how-to-join"
+                class="flex items-center justify-center gap-x-2  bg-gray-800 text-white font-minecraftia text-xs py-1 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out hover:bg-green-600 hover:scale-105 hover:rotate-1 transform-gpu"
+              >
+                <MinecraftFabric class="size-8 inline-block" />
+                <span class="title font-minecraftia text-center">
+                  ¿Cómo acceder al servidor?
+                </span>
+              </button>
+
+              {/* 
                 Enlace de soporte a Discord
             */}
 
-            <a
-              href={
-                Array.from(SOCIAL_NETWORKS).find(
-                  (network) => network.name === "Discord"
-                )?.url
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex gap-x-2 items-center justify-center bg-blue-600 text-white font-minecraftia text-xs py-1 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out hover:bg-green-600 hover:scale-105 hover:rotate-1 transform-gpu mt-4"
-            >
-              <Discord class="size-6 inline-block" />
-              <span class="title font-minecraftia text-center">
-                Soporte en Discord
-              </span>
-            </a>
+              <a
+                href={
+                  Array.from(SOCIAL_NETWORKS).find(
+                    (network) => network.name === "Discord"
+                  )?.url
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center justify-center gap-x-2  bg-blue-600 text-white font-minecraftia text-xs py-1 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out hover:bg-green-600 hover:scale-105 hover:rotate-1 transform-gpu"
+              >
+                <Discord class="size-8 inline-block" />
+                <span class="title font-minecraftia text-center">
+                  Soporte en Discord
+                </span>
+              </a>
+            </footer>
 
             <dialog
               id="copy-ip-dialog"
