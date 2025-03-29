@@ -57,9 +57,9 @@ export const GeneralInfo = ({ session, discordUser }: { session: Session, discor
                 </div>
                 <div class="space-y-2">
                     <label class="text-sm font-medium" for="email">Correo electrónico</label>
-                    <div class="flex items-center gap-2">
-                        <div class="rounded-md border px-3 py-2 text-sm bg-zinc-900/50 w-full">{session.user.email}</div>
-                        <button disabled class="rounded-md border px-3 py-2 text-sm bg-zinc-900/50 disabled:opacity-60">Verificado</button>
+                    <div class="flex items-center gap-2" title="Tu correo electrónico, proporcionado por Twitch">
+                        <div class="rounded-md border px-3 py-2 text-sm bg-zinc-900/50 cursor-not-allowed w-full opacity-60">{session.user.email}</div>
+                        <button disabled class="rounded-md border disabled:cursor-not-allowed px-3 py-2 text-sm bg-zinc-900/50 disabled:opacity-60">Verificado</button>
                     </div>
                 </div>
                 <div class="pt-4 border-t border-neutral-500/10">
