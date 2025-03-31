@@ -14,11 +14,10 @@ const MODPACK_INFO = {
   MINECRAFT_VERSION: "1.20.1",
   VERSION: "forge arclight/Trials 1.20.1",
   EDITION: "Java Edition",
-  IP_ADDRESS: "saltocraft.saltouruguayserver.com",
-  PORT: 25594,
-  DOWNLOAD_URL: "https://cdn.saltouruguayserver.com/modpacks/SaltoCraft3.rar",
+  IP_ADDRESS: "play.saltouruguayserver.com",
+  DOWNLOAD_URL: "https://cdn.saltouruguayserver.com/modpacks/SaltoCraft3-no-premium.rar",
   CURSEFORGE_DOWNLOAD_URL:
-    "https://cdn.saltouruguayserver.com/modpacks/SaltoCraft3-curseforge.zip",
+    "https://cdn.saltouruguayserver.com/modpacks/SaltoCraft3-curse.zip",
 };
 ---
 
@@ -37,7 +36,6 @@ const MODPACK_INFO = {
     class="-mt-28 min-h-screen absolute inset-0 -z-10"
   >
   </div>
-  <div data-ip-address-full="{MODPACK_INFO.IP_ADDRESS}:{MODPACK_INFO.PORT}">
   </div>
   <header
     class="flex items-center flex-col justify-center text-center mt-16 animate-fade-in-up"
@@ -148,7 +146,7 @@ const MODPACK_INFO = {
 
                 <div class="flex gap-x-2 items-center text-center mt-4 font-minecraftia text-lg bg-gray-800 p-2 rounded-lg">
                   <code class="text-yellow-400 text-sm font-minecraftia w-full">
-                    {MODPACK_INFO.IP_ADDRESS}:{MODPACK_INFO.PORT}
+                    {MODPACK_INFO.IP_ADDRESS}
                   </code>
                   <button class="bg-green-600 text-white flex items-center justify-center font-minecraftia text-xs size-8 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out hover:bg-gray-800 hover:scale-105 hover:rotate-1 transform-gpu">
                     <LucideCopy class="size-5" />
@@ -179,11 +177,8 @@ const MODPACK_INFO = {
 
   document.addEventListener("astro:page-load", () => {
     const $ipDialog = $("#copy-ip-dialog") as HTMLDialogElement;
-    const $fullIp = document.querySelector(
-      "[data-ip-address-full]"
-    ) as HTMLElement;
+   
     const $howToJoinButton = $("#how-to-join") as HTMLButtonElement;
-    const ipAddress = $fullIp.dataset.ipAddressFull;
     const $copyButton = $ipDialog.querySelector("button") as HTMLButtonElement;
     const $closeButton = $ipDialog.querySelector(
       "button[type=submit]"
@@ -195,7 +190,7 @@ const MODPACK_INFO = {
 
     $copyButton.addEventListener("click", () => {
       if (navigator.clipboard && ipAddress) {
-        navigator.clipboard.writeText(ipAddress);
+        navigator.clipboard.writeText('play.saltouruguayserver.com');
         toast.success("IP copiada al portapapeles");
         $ipDialog.close();
       }
