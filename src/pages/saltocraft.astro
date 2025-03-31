@@ -189,7 +189,7 @@ const MODPACK_INFO = {
     });
 
     $copyButton.addEventListener("click", () => {
-      if (navigator.clipboard && ipAddress) {
+      if (navigator.clipboard) {
         navigator.clipboard.writeText('play.saltouruguayserver.com');
         toast.success("IP copiada al portapapeles");
         $ipDialog.close();
