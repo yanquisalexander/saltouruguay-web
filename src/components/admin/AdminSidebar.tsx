@@ -88,6 +88,7 @@ export default function Sidebar({ session, initialPathname }: { session: Session
                                     <a
                                         key={linkIndex}
                                         href={link.url}
+                                        title={link.label}
                                         class={`flex items-center ${!collapsed ? "gap-2" : "justify-center"
                                             } whitespace-nowrap rounded-md text-sm font-medium text-white hover:bg-zinc-900 hover:text-primary transition-colors w-full py-2 ${collapsed ? "justify-center" : "justify-start px-2"}
                                         ${isActive(link.url) ? "bg-zinc-900 text-primary" : ""}
