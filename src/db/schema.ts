@@ -1,4 +1,4 @@
-import { TournamentMatchStatus, TournamentParticipantStatus, TournamentStatus, TournamentType } from "@/consts/Torneos";
+import { TournamentMatchStatus, TournamentParticipantStatus, TournamentStatus, TournamentType } from "../consts/Torneos";
 import { relations, sql } from "drizzle-orm";
 import { boolean, integer, jsonb, pgEnum, pgTable, serial, text, timestamp, unique, uuid, varchar } from "drizzle-orm/pg-core";
 
