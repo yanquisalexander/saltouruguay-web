@@ -68,9 +68,14 @@ const BEAUTIFIED_STATS = [
     title: "Usuarios totales",
     value: stats.totalUsers,
     /* Comparación a la última semana, caclulando total con stats.newSignupsWeek */
-    percentage: Math.round(
-      ((stats.totalUsers - stats.newSignupsWeek) / stats.newSignupsWeek) * 100
-    ),
+    percentage:
+      stats.totalUsers > stats.newSignupsWeek
+        ? Math.round(
+            (stats.newSignupsWeek / (stats.totalUsers - stats.newSignupsWeek)) *
+              100
+          )
+        : 100,
+
     percentageText: "más que la semana pasada",
   },
   {
