@@ -68,9 +68,26 @@ const getTimeStatus = (startDate: Date, endDate: Date) => {
                     <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary text-primary-foreground">
                       Destacado
                     </div>
-                    <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-green-500/10 text-green-500">
-                      En curso
-                    </div>
+                    {getTimeStatus(
+                      firstFeaturedEvent.startDate,
+                      firstFeaturedEvent.endDate
+                    ).status === 0 ? (
+                      <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-blue-500/10 text-blue-500">
+                        Próximo
+                      </div>
+                    ) : getTimeStatus(
+                        firstFeaturedEvent.startDate,
+                        firstFeaturedEvent.endDate
+                      ).status === 1 ? (
+                      <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-yellow-500/10 text-yellow-500">
+                        En curso
+                      </div>
+                    ) : (
+                      <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-red-500/10 text-red-500">
+                        Finalizado
+                      </div>
+                    )}
+
                     <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-purple-500/10 text-purple-500">
                       Stream especial
                     </div>
