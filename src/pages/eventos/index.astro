@@ -4,21 +4,22 @@ import Twitch from "@/icons/Twitch.astro";
 import Layout from "@/layouts/Layout.astro";
 import { getPaginatedEvents } from "@/lib/events";
 import { LucideCalendar, LucideClock, LucideUsers } from "lucide-preact";
+import { DateTime } from "luxon";
 
 const { events } = await getPaginatedEvents(1, 10);
 const firstFeaturedEvent = events.find((event) => event.featured);
 
 const getTimeStatus = (startDate: Date, endDate: Date) => {
-  const now = new Date();
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const now = DateTime.local(); // Hora local de la zona horaria actual
+  const start = DateTime.fromJSDate(new Date(startDate)).setZone(
+    "America/Montevideo"
+  ); // Cambia "America/Montevideo" por la zona horaria que necesites
+  const end = DateTime.fromJSDate(new Date(endDate)).setZone(
+    "America/Montevideo"
+  );
 
-  const hoursUntilStart = Math.ceil(
-    (start.getTime() - now.getTime()) / (1000 * 60 * 60)
-  );
-  const hoursUntilEnd = Math.ceil(
-    (end.getTime() - now.getTime()) / (1000 * 60 * 60)
-  );
+  const hoursUntilStart = Math.ceil(start.diff(now, "hours").hours);
+  const hoursUntilEnd = Math.ceil(end.diff(now, "hours").hours);
 
   if (now < start) {
     return { text: `Faltan ${hoursUntilStart} horas`, status: 0 };
