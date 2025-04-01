@@ -274,7 +274,7 @@ export const TournamentsTable = pgTable("tournaments", {
         enum: Object.values(TournamentStatus) as [string, ...string[]]
     }).notNull().default(TournamentStatus.DRAFT),
     config: jsonb("config").default({}),
-    gameName: varchar("game_name", { length: 255 }).notNull(),
+    gameName: varchar("game_name", { length: 255 }),
     createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
     updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
 });
