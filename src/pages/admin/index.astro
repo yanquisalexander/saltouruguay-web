@@ -6,12 +6,19 @@ import { checkAdmin } from "@/lib/checkAdmin";
 import { createDataset } from "@/utils/chart";
 import { getSession } from "auth-astro/server";
 import { SALTO_BROADCASTER_ID } from "@/config";
-import { LucideArrowRight, LucideBell } from "lucide-preact";
+import {
+  LucideArrowRight,
+  LucideBell,
+  LucideTrendingUpDown,
+  LucideUsers,
+} from "lucide-preact";
 import NomineesLiveNow from "@/components/NomineesLiveNow.astro";
 import WarsCurrentInscriptions from "@/components/admin/WarsCurrentInscriptions.astro";
 import { UsersManager } from "@/components/admin/UsersManager";
 import { CinematicLauncher } from "@/components/admin/CinematicLauncher";
 import { getNegativeVotes } from "@/utils/streamer-wars";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { getSiteStats } from "@/utils/site-admin";
 
 const session = await getSession(Astro.request);
 
@@ -51,41 +58,74 @@ const chartOptions: Partial<ChartOptions> = {
     },
   },
 };
+
+const stats = await getSiteStats();
+
+const BEAUTIFIED_STATS = [
+  {
+    id: "total-users",
+    icon: LucideUsers,
+    title: "Usuarios totales",
+    value: stats.totalUsers,
+    /* Comparación a la última semana, caclulando total con stats.newSignupsWeek */
+    percentage: Math.round(
+      ((stats.totalUsers - stats.newSignupsWeek) / stats.newSignupsWeek) * 100
+    ),
+    percentageText: "más que la semana pasada",
+  },
+  {
+    id: "new-signups",
+    icon: LucideBell,
+    title: "Nuevos usuarios",
+    value: stats.newSignupsWeek,
+    description: "Nuevos usuarios registrados en la última semana",
+  },
+];
 ---
 
-<Layout title="Administrador">
+<AdminLayout title="Administrador" session={session}>
   <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
-    <header class="relative z-10 flex flex-col justify-center h-full">
-      <div class="flex items-center gap-x-4">
-        <div
-          class="relative animate-fade-in-up"
-          style="--floating-duration: 5000ms"
-        >
-          <img
-            src="/images/logo_salto.webp"
-            alt="SaltoUruguayServer"
-            class="size-20 md:size-24 w-auto object-contain aspect-square animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)] saturate-150"
-          />
-          <img
-            src="/images/logo_salto.webp"
-            alt="SaltoUruguayServer"
-            class="absolute blur-md brightness-125 saturate-200 inset-0 size-20 md:size-24 w-auto object-contain aspect-square z-[-1] animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)]"
-          />
-        </div>
-        <h1
-          class="text-3xl animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen"
-        >
-          Administrador
-        </h1>
-      </div>
-
-      <h2
-        class="text-lg animate-fade-in-up animate-delay-300 font-rubik uppercase text-white mix-blend-screen my-5"
-      >
-        Hola, <span class="text-blue-400">{session?.user.name}</span>!
+    <div
+      class="px-4 py-2 bg-gradient-to-br from-blue-500/40 to-blue-900/40 rounded-lg shadow-lg mb-8"
+    >
+      <h2 class="text-xl font-medium text-white mix-blend-screen">
+        Bienvenido al nuevo panel de administración
       </h2>
-    </header>
+      <p class="text-white/70 mb-4">
+        El panel de administración ha sido renovado y ahora es más fácil de
+        usar.
+      </p>
+    </div>
 
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+      {
+        BEAUTIFIED_STATS.map((stat) => (
+          <div class="bg-neutral-900/50 rounded-lg p-4 border border-white/10 shadow-md">
+            <div class="space-y-1.5 p-6 flex flex-row items-center justify-between pb-2">
+              <h3 class="tracking-tight text-sm font-medium flex gap-x-1">
+                <span class="ml-2">{stat.title}</span>
+                <stat.icon class="size-4 text-white" />
+              </h3>
+            </div>
+            <div class="p-6 pt-0">
+              <div class="text-2xl font-bold">{stat.value}</div>
+            </div>
+            <p class="text-xs text-neutral-600 flex items-center gap-1 mt-1">
+              {stat.percentage !== undefined && stat.percentage !== null ? (
+                <span class="text-green-400">
+                  <LucideTrendingUpDown class="inline-block align-middle w-4 h-4 mr-1" />
+                  {stat.percentage > 0 ? "+" : ""}
+                  {stat.percentage}% {stat.percentageText}
+                </span>
+              ) : null}
+              {stat.description && (
+                <span class="text-neutral-400">{stat.description}</span>
+              )}
+            </p>
+          </div>
+        ))
+      }
+    </div>
     <div class="grid grid-cols-1 md:grid-cols-2">
       <a
         class="relative group rounded-lg overflow-hidden mt-8 mb-8"
@@ -129,4 +169,4 @@ const chartOptions: Partial<ChartOptions> = {
       <CinematicLauncher client:idle />
     </div>
   </div>
-</Layout>
+</AdminLayout>

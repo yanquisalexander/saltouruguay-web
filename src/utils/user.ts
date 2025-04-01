@@ -3,7 +3,7 @@ import { client } from "@/db/client";
 import { MemberCards, SessionsTable, UserAchievementsTable, UsersTable, UserSuspensionsTable } from "@/db/schema";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { createUserApiClient, createStaticAuthProvider } from "@/lib/Twitch";
-import { count, eq } from "drizzle-orm";
+import { and, count, eq, gt, lt } from "drizzle-orm";
 import { unlockAchievement } from "./achievements";
 import { ACHIEVEMENTS } from "@/consts/Achievements";
 import { experimental_AstroContainer } from "astro/container";
@@ -369,4 +369,24 @@ export const handleTwitchRevoke = async (twitchId: string) => {
         )
     }
 
+}
+
+export const getTotalOfUsers = async () => {
+    const result = await client.select({ value: count() }).from(UsersTable).execute();
+    return result[0]?.value || 0;
+}
+
+export const getNewSignupsLastWeek = async () => {
+    const result = await client
+        .select({ value: count() })
+        .from(UsersTable)
+        .where(
+            and(
+                gt(UsersTable.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+                lt(UsersTable.createdAt, new Date())
+            )
+        )
+        .execute();
+
+    return result[0]?.value || 0;
 }

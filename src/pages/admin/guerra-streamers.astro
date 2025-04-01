@@ -6,6 +6,7 @@ import { SALTO_BROADCASTER_ID } from "@/config";
 import { GameSelector } from "@/components/admin/streamer-wars/GameSelector";
 import { StreamerWarsPlayers } from "@/components/admin/streamer-wars/Players";
 import { StreamerWarsAdmin } from "@/components/admin/StreamerWarsAdmin";
+import AdminLayout from "@/layouts/AdminLayout.astro";
 
 const PRELOAD = [
   {
@@ -26,7 +27,7 @@ if (checkResult) {
 }
 ---
 
-<Layout title="Admin Guerra Streamers" preload={PRELOAD}>
+<AdminLayout title="Admin Guerra Streamers" session={session}>
   <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
     <header class="relative z-10 flex flex-col justify-center h-full">
       <div class="flex items-center gap-x-4">
@@ -63,4 +64,4 @@ if (checkResult) {
 
     <StreamerWarsAdmin client:idle session={session!} />
   </div>
-</Layout>
+</AdminLayout>

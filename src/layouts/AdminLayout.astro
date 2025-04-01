@@ -1,0 +1,27 @@
+---
+interface Props {
+  session: Session | null;
+  title?: string;
+  description?: string;
+}
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import Layout from "@/layouts/Layout.astro";
+import type { Session } from "@auth/core/types";
+
+const { session, title = "Admin", description } = Astro.props;
+---
+
+<Layout
+  title={title}
+  description={description}
+  mainClassname=""
+  hideFooter
+  hideHeader
+>
+  <div class="flex min-h-screen text-white">
+    <AdminSidebar session={session} pathname={Astro.url.pathname} client:load />
+    <div role="main" class="flex-1 overflow-auto px-4">
+      <slot />
+    </div>
+  </div>
+</Layout>
