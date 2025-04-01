@@ -41,12 +41,12 @@ export default function TwitchProcessedEvents() {
 
     return (
         <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300">
-                <thead className="bg-gray-200">
+            <table className="w-full border-collapse border border-neutral-700">
+                <thead className="bg-neutral-800">
                     <tr>
-                        <th className="border border-gray-300 px-4 py-2">Fecha</th>
-                        <th className="border border-gray-300 px-4 py-2">Mensaje</th>
-                        <th className="border border-gray-300 px-4 py-2">Usuario</th>
+                        <th className="border border-neutral-700 px-4 py-2">Fecha</th>
+                        <th className="border border-neutral-700 px-4 py-2">Mensaje</th>
+                        <th className="border border-neutral-700 px-4 py-2">Usuario</th>
                     </tr>
                 </thead>
                 <tbody>
