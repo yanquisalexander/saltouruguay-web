@@ -1,0 +1,17 @@
+---
+import TwitchProcessedEvents from "@/components/admin/TwitchProcessedEvents";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session?.user.isAdmin) {
+  return new Response(null, {
+    status: 404,
+  });
+}
+---
+
+<AdminLayout title="Eventos de Twitch" session={session}>
+  <TwitchProcessedEvents client:idle />
+</AdminLayout>

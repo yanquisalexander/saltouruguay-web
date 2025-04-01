@@ -1,4 +1,7 @@
-import { getNewSignupsLastWeek, getTotalOfUsers } from "./user"
+import { client } from "@/db/client";
+import { getNewSignupsLastWeek, getTotalOfUsers } from "./user";
+import { TwitchProcessedEventsTable } from "@/db/schema";
+import { count, desc } from "drizzle-orm";
 
 export const getSiteStats = async () => {
     const [totalUsers, newSignupsWeek] = await Promise.all([
@@ -6,8 +9,21 @@ export const getSiteStats = async () => {
         getNewSignupsLastWeek()
     ]);
 
-    return {
-        totalUsers,
-        newSignupsWeek
-    }
-}
+    return { totalUsers, newSignupsWeek };
+};
+
+export const getTwitchEvents = async (page: number, limit: number) => {
+    const events = await client
+        .select()
+        .from(TwitchProcessedEventsTable)
+        .orderBy(desc(TwitchProcessedEventsTable.processedAt))
+        .limit(limit + 1) // +1 para verificar si hay más
+        .offset((page - 1) * limit);
+
+    const hasMore = events.length > limit;
+    return { events: events.slice(0, limit), hasMore };
+};
+
+export const getPaginatedTwitchEvents = async (page: number, limit: number) => {
+    return await getTwitchEvents(page, limit);
+};

@@ -40,7 +40,7 @@ const categories = [
     },
     {
         title: "SISTEMA",
-        links: [{ label: "Configuración", url: "/configuracion", icon: "settings" }],
+        links: [{ label: "Twitch Events", url: "/admin/system/twitch-events", icon: "code" }]
     },
 ];
 
