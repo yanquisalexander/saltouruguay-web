@@ -136,6 +136,12 @@ export class TwitchEvents {
                 this.log(`Subscription ended: ${eventData.user_name}`);
                 // Implementar lógica para fin de suscripciones
                 break;
+            case 'user.update':
+                this.log(`User updated: ${eventData.user_id}`);
+                this.log(`New display name: ${eventData.user_name}`);
+
+                break;
+
 
             case 'user.authorization.revoke':
                 this.log(`User revoked authorization: ${eventData.user_id}`);
