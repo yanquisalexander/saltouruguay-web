@@ -125,7 +125,7 @@ export const updateUserTier = async (twitchUserId: string, tier: 1 | 2 | 3 | nul
     await client
         .update(UsersTable)
         .set({ twitchTier: tier })
-        .where(eq(UsersTable.id, userId))
+        .where(eq(UsersTable.twitchId, twitchUserId))
         .execute();
 
 }
