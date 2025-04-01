@@ -214,6 +214,16 @@ export const saltoTagsRelations = relations(SaltoTagsTable, ({ one, many }) => (
 }));
 
 
+
+export const TwitchProcessedEventsTable = pgTable("twitch_processed_events", {
+    messageId: text("message_id").primaryKey(),
+    eventType: text("event_type").notNull(),
+    processedAt: timestamp("processed_at").notNull().default(sql`current_timestamp`),
+    userId: integer("user_id"),
+    eventData: text("event_data"),
+});
+
+
 export const VotesTable = pgTable("votes", {
     id: serial("id").primaryKey(),
     userId: integer("user_id").notNull().references(() => UsersTable.id),

@@ -225,6 +225,13 @@
       "when": 1743188926061,
       "tag": "0031_medical_tempest",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1743469707048,
+      "tag": "0032_blue_scarecrow",
+      "breakpoints": true
     }
   ]
 }
