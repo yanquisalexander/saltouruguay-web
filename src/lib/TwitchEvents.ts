@@ -60,6 +60,13 @@ export class TwitchEvents {
             case 'channel.follow':
                 this.log(`New follower: ${bodyJson.event.user_name}`);
                 break;
+            case 'channel.subscribe':
+                this.log(`New subscriber: ${bodyJson.event.user_name}`);
+                break;
+            case 'channel.subscription.end':
+                this.log(`Subscription ended: ${bodyJson.event.user_name}`);
+                break;
+
             /* 
                 User revoked authorization
              */
