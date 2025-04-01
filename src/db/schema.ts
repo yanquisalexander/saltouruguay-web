@@ -223,6 +223,29 @@ export const TwitchProcessedEventsTable = pgTable("twitch_processed_events", {
     eventData: text("event_data"),
 });
 
+/* 
+    Custom pages (all on the prefix /content/)
+    Se pueden crear páginas personalizadas para el sitio
+
+    Probablemente se utilizará EditorJS o similar para la edición de contenido
+    de forma visual
+*/
+
+export const CustomPagesTable = pgTable("custom_pages", {
+    id: serial("id").primaryKey(),
+    title: varchar("title").notNull(),
+    slug: varchar("slug").notNull().unique(),
+    permalink: varchar("permalink").notNull().unique(),
+    content: text("content").notNull(),
+    isPublic: boolean("is_public").notNull().default(false),
+    isDraft: boolean("is_draft").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueSlug: unique("slug").on(t.slug),
+    uniquePermalink: unique("permalink").on(t.permalink),
+}))
+
 
 export const VotesTable = pgTable("votes", {
     id: serial("id").primaryKey(),

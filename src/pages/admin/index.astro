@@ -28,17 +28,35 @@ if (checkResult) {
   return checkResult;
 }
 
+const fillMissingDays = (byDay: { day: string; value: number }[]) => {
+  const startDate = new Date(byDay[0].day);
+  const endDate = new Date(byDay[byDay.length - 1].day);
+  const completeDays: { day: string; value: number }[] = [];
+
+  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+    const dayString = d.toISOString().split("T")[0];
+    const existing = byDay.find((entry) => entry.day === dayString);
+    completeDays.push({ day: dayString, value: existing ? existing.value : 0 });
+  }
+
+  return completeDays;
+};
+
 const visitorStats = await fetch(
   "https://librecounter.org/saltouruguayserver.com/siteStats"
 ).then((res) => res.json());
 
+const completeByDay = fillMissingDays(visitorStats.byDay);
+
 const data = {
-  labels: visitorStats.byDay.map((stat: any) => stat.day),
+  labels: completeByDay.map((stat) => stat.day),
   datasets: [
     createDataset({
       label: "Visitas",
-      data: visitorStats.byDay.map((stat: any) => stat.value),
-      borderColor: "rgb(75, 192, 192)",
+      data: completeByDay.map((stat) => stat.value),
+      borderColor: "rgb(255, 255, 255)",
+      backgroundColor: "rgba(255, 255, 255, 0.2)",
+      borderWidth: 2,
       tension: 0.2,
       fill: true,
     }),
