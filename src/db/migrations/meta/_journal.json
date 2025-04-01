@@ -246,6 +246,13 @@
       "when": 1743536483833,
       "tag": "0034_low_chameleon",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1743536921307,
+      "tag": "0035_lively_vanisher",
+      "breakpoints": true
     }
   ]
 }
