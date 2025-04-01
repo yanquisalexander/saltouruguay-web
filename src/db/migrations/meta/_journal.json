@@ -239,6 +239,13 @@
       "when": 1743529685653,
       "tag": "0033_funny_earthquake",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1743536483833,
+      "tag": "0034_low_chameleon",
+      "breakpoints": true
     }
   ]
 }

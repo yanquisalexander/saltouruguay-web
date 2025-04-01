@@ -97,3 +97,31 @@ export const getPostBySlug = async (slug: string) => {
     }
 }
 
+export const TournamentType = {
+    SINGLE_ELIMINATION: 'single_elimination',
+    DOUBLE_ELIMINATION: 'double_elimination',
+    ROUND_ROBIN: 'round_robin',
+    GROUP_KNOCKOUT: 'group_knockout',
+    SWISS: 'swiss',
+} as const;
+
+export const TournamentStatus = {
+    DRAFT: 'draft',
+    REGISTRATION: 'registration',
+    ACTIVE: 'active',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled',
+} as const;
+
+export const TournamentParticipantStatus = {
+    PENDING: 'pending',
+    ACCEPTED: 'accepted',
+    REJECTED: 'rejected',
+} as const;
+
+export const TournamentMatchStatus = {
+    PENDING: 'pending',
+    IN_PROGRESS: 'in_progress',
+    COMPLETED: 'completed',
+    FORFEITED: 'forfeited',
+} as const;
