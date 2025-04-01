@@ -12,6 +12,8 @@ export const getSiteStats = async () => {
     return { totalUsers, newSignupsWeek };
 };
 
+
+
 export const getTwitchEvents = async (page: number, limit: number) => {
     const events = await client
         .select()
@@ -25,6 +27,9 @@ export const getTwitchEvents = async (page: number, limit: number) => {
     return { events: events.slice(0, limit), hasMore };
 };
 
+
+
 export const getPaginatedTwitchEvents = async (page: number, limit: number) => {
+    console.log(`Fetching events with page: ${page}, limit: ${limit}, offset: ${(page - 1) * limit}`);
     return await getTwitchEvents(page, limit);
 };
