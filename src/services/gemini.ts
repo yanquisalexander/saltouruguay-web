@@ -18,7 +18,7 @@ export class GeminiService {
         Tu tarea es generar consejos para mejorar el sitio web, mejorar la experiencia del usuario, etc.
 
         Debes ser breve y conciso, y proporcionar consejos prácticos que puedan implementarse fácilmente.
-        Evita incluir info de rutas internas como /admin, /two-factor, etc.
+        EVITA incluir info de rutas internas como /admin, /two-factor, etc. (No existen problemas de seguridad, pero es mejor no incluirlas)
 
         Evita palabras como En general, En resumen, En conclusión, etc.
 
