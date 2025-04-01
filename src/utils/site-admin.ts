@@ -20,6 +20,7 @@ export const getTwitchEvents = async (page: number, limit: number) => {
         .limit(limit + 1)
         .offset((page - 1) * limit);
 
+    console.log("Events: ", events);
     const hasMore = events.length > limit;
     return { events: events.slice(0, limit), hasMore };
 };
