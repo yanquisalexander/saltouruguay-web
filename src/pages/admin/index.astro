@@ -17,6 +17,10 @@ import {
 
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { getSiteStats } from "@/utils/site-admin";
+import Cache from "@/lib/Cache";
+import cacheService from "@/services/cache";
+import { GeminiService } from "@/services/gemini";
+import { markdown } from "@astropub/md";
 
 const session = await getSession(Astro.request);
 
@@ -76,6 +80,31 @@ const chartOptions: Partial<ChartOptions> = {
 };
 
 const stats = await getSiteStats();
+
+const cache = cacheService.create();
+const cacheKey = "site-admin-tips";
+
+let tips: string | null = null;
+
+const cacheValue = (await cache.get(cacheKey)) as string | null;
+if (cacheValue && import.meta.env.PROD) {
+  tips = cacheValue;
+} else {
+  console.log("Cache miss");
+  const gemini = new GeminiService();
+  const message = `
+    JSON de Visitas: ${JSON.stringify(visitorStats)}
+
+    JSON de Stats: ${JSON.stringify(stats)}
+  `;
+  const generatedTips = await gemini.generateTipsForAdminPanel({
+    dashboardStats: message.trim(),
+  });
+  await cache.set(cacheKey, generatedTips, 60 * 60 * 24); // 1 día
+  tips = generatedTips;
+}
+
+console.log("Generated tips:", tips);
 
 const BEAUTIFIED_STATS = [
   {
@@ -143,6 +172,17 @@ const BEAUTIFIED_STATS = [
       </p>
     </div>
 
+    {
+      tips && (
+        <div class="bg-neutral-900/50 rounded-lg p-4 border border-white/10 shadow-md mb-8">
+          <h3 class="text-xl font-bold text-white">Consejos</h3>
+          <div
+            class="text-white/70 mb-4 text-sm prose prose-invert prose-indigo prose-p:text-sm prose-p:leading-6 prose-p:text-neutral-400 prose-p:mb-4 prose-p:mt-0 prose-p:prose-neutral-100"
+            set:html={markdown(tips)}
+          />
+        </div>
+      )
+    }
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
       {
         BEAUTIFIED_STATS.map((stat) => (

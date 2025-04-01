@@ -12,6 +12,7 @@
     "db:migrate": "tsx ./src/db/migrator.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^1.2.5",
     "@appnest/masonry-layout": "^2.2.3",
     "@astrojs/check": "^0.9.4",
     "@astrojs/preact": "^4.0.6",
@@ -33,6 +34,7 @@
     "@types/ejs": "^3.1.5",
     "@types/nodemailer": "^6.4.17",
     "add-to-calendar-button": "^2.8.6",
+    "ai": "^4.2.10",
     "astro": "5.5.4",
     "astro-loading-indicator": "^0.6.1",
     "atropos": "^2.0.2",
