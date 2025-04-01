@@ -14,8 +14,7 @@ import {
   LucideTrophy,
   LucideUsers,
 } from "lucide-preact";
-import WarsCurrentInscriptions from "@/components/admin/WarsCurrentInscriptions.astro";
-import { CinematicLauncher } from "@/components/admin/CinematicLauncher";
+
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { getSiteStats } from "@/utils/site-admin";
 
@@ -98,7 +97,7 @@ const BEAUTIFIED_STATS = [
 
     percentageText:
       stats.newSignupsWeek === 0
-        ? "igual que la semana pasada"
+        ? "Sin cambios"
         : stats.totalUsers > stats.newSignupsWeek
           ? "más que la semana pasada"
           : "menos que la semana pasada",
