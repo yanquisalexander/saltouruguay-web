@@ -4,7 +4,7 @@ import { TWITCH_CLIENT_ID } from "astro:env/server";
 import { client as db } from "@/db/client";
 import { eq } from "drizzle-orm";
 import { TwitchProcessedEventsTable, UsersTable } from "@/db/schema";
-import { handleTwitchRevoke } from "@/utils/user";
+import { handleTwitchRevoke, updateUserTier } from "@/utils/user";
 
 
 
@@ -129,7 +129,12 @@ export class TwitchEvents {
 
             case 'channel.subscribe':
                 this.log(`New subscriber: ${eventData.user_name}`);
-                // Implementar lógica para suscripciones
+                const parsedTier = eventData.tier ? (parseInt(eventData.tier.charAt(0)) as 1 | 2 | 3) : null;
+                try {
+                    await updateUserTier(eventData.user_id, parsedTier);
+                } catch (error) {
+                    console.error(`Error updating user tier: ${error}`);
+                }
                 break;
 
             case 'channel.subscription.end':

@@ -115,6 +115,21 @@ export const getUserAchievements = async (userId: number) => {
     });
 }
 
+export const updateUserTier = async (twitchUserId: string, tier: 1 | 2 | 3 | null) => {
+    const user = await client.query.UsersTable.findFirst({
+        where: eq(UsersTable.twitchId, twitchUserId),
+    });
+
+    if (!user) return;
+
+    await client
+        .update(UsersTable)
+        .set({ twitchTier: tier })
+        .where(eq(UsersTable.id, userId))
+        .execute();
+
+}
+
 export const getDebateMessages = async () => {
     return await client.query.DebateAnonymousMessagesTable.findMany({
         with: {
