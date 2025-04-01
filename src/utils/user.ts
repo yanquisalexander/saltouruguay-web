@@ -3,7 +3,7 @@ import { client } from "@/db/client";
 import { MemberCards, SessionsTable, UserAchievementsTable, UsersTable, UserSuspensionsTable } from "@/db/schema";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { createUserApiClient, createStaticAuthProvider } from "@/lib/Twitch";
-import { and, count, eq, gt, ilike, lt, or } from "drizzle-orm";
+import { and, count, eq, gt, ilike, lt, or, desc } from "drizzle-orm";
 import { unlockAchievement } from "./achievements";
 import { ACHIEVEMENTS } from "@/consts/Achievements";
 import { experimental_AstroContainer } from "astro/container";
@@ -155,6 +155,7 @@ export const getUsers = async ({ page = 1, search = "", limit = 15 }) => {
                 ilike(UsersTable.displayName, `%${search}%`)
             )
         )
+        .orderBy(desc(UsersTable.createdAt))
         .limit(limit + 1)
         .offset((page - 1) * limit);
 
