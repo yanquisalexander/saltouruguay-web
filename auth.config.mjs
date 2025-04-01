@@ -1,6 +1,6 @@
 import TwitchProvider from "@auth/core/providers/twitch";
 import { defineConfig } from "auth-astro";
-import { EXTENDED_TWITCH_SCOPES, TWITCH_SCOPES } from "@/lib/Twitch";
+import { createTwitchEventsInstance, EXTENDED_TWITCH_SCOPES, TWITCH_SCOPES } from "@/lib/Twitch";
 import { client } from "@/db/client";
 import { UsersTable } from "@/db/schema";
 import { getUserSubscription } from "@/utils/user";
@@ -84,6 +84,13 @@ export default defineConfig({
                         };
                     }
 
+                    try {
+                        const eventSub = createTwitchEventsInstance(
+                            eventSub.registerUserEventSub(twitchId)
+                        )
+                    } catch (error) {
+
+                    }
 
 
                 } catch (error) {
