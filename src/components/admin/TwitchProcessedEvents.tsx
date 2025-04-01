@@ -63,7 +63,7 @@ export default function TwitchProcessedEvents() {
                             </td>
 
                             {/* Tipo de evento con Chip */}
-                            <td className="p-4 align-middle">
+                            <td className="p-4 align-middle w-[180px]">
                                 <EventChip eventType={event.eventType} />
                             </td>
 
