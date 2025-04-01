@@ -154,40 +154,70 @@ export class TwitchEvents {
     }
 
     async registerEventSub(broadcasterId: string): Promise<void> {
+        this.log('Registering EventSub subscriptions...');
+
+        // Función auxiliar para manejar cada suscripción individualmente
+        const handleSubscription = async (subscriptionFn: Promise<any>, name: string) => {
+            try {
+                await subscriptionFn;
+                this.log(`Successfully registered ${name} subscription`);
+                return true;
+            } catch (error: any) {
+                // Si es error 409 (conflicto/ya existe), lo ignoramos
+                if (error.status === 409 || (error.body && error.body.status === 409)) {
+                    this.log(`Subscription ${name} already exists, skipping`);
+                    return true;
+                }
+                // Cualquier otro error lo registramos pero continuamos
+                this.log(`Error registering ${name} subscription: ${error}`);
+                return false;
+            }
+        };
+
         try {
-            this.log('Registering EventSub subscriptions...');
-
-            // Crear un array de promesas para las suscripciones
-            const subscriptionPromises = [
-                // Suscripción a eventos de canal
-                this.client.eventSub.subscribeToChannelSubscriptionEvents(broadcasterId, {
-                    callback: `https://${this.hostName}${this.callbackPath}`,
-                    method: 'webhook',
-                    secret: this.secret,
-                }),
-
-                // Suscripción a eventos de revocación de autorización
-                this.client.eventSub.subscribeToUserAuthorizationRevokeEvents(TWITCH_CLIENT_ID, {
-                    callback: `https://${this.hostName}${this.callbackPath}`,
-                    method: 'webhook',
-                    secret: this.secret,
-                }),
-
-                // Añadir más suscripciones según sea necesario
-                this.client.eventSub.subscribeToChannelFollowEvents(broadcasterId, {
-                    callback: `https://${this.hostName}${this.callbackPath}`,
-                    method: 'webhook',
-                    secret: this.secret,
-                })
+            // Definir las suscripciones con nombres descriptivos
+            const subscriptions = [
+                {
+                    name: "channel.subscription",
+                    fn: this.client.eventSub.subscribeToChannelSubscriptionEvents(broadcasterId, {
+                        callback: `https://${this.hostName}${this.callbackPath}`,
+                        method: 'webhook',
+                        secret: this.secret,
+                    })
+                },
+                {
+                    name: "user.authorization.revoke",
+                    fn: this.client.eventSub.subscribeToUserAuthorizationRevokeEvents(TWITCH_CLIENT_ID, {
+                        callback: `https://${this.hostName}${this.callbackPath}`,
+                        method: 'webhook',
+                        secret: this.secret,
+                    })
+                },
+                {
+                    name: "channel.follow",
+                    fn: this.client.eventSub.subscribeToChannelFollowEvents(broadcasterId, {
+                        callback: `https://${this.hostName}${this.callbackPath}`,
+                        method: 'webhook',
+                        secret: this.secret,
+                    })
+                }
             ];
 
-            // Esperar a que todas las suscripciones se completen
-            await Promise.all(subscriptionPromises);
+            // Procesar todas las suscripciones en paralelo
+            const results = await Promise.all(
+                subscriptions.map(sub => handleSubscription(sub.fn, sub.name))
+            );
 
-            this.log('Successfully registered all EventSub subscriptions');
+            // Verificar si al menos una suscripción tuvo éxito
+            const successCount = results.filter(Boolean).length;
+            this.log(`Registered ${successCount}/${subscriptions.length} EventSub subscriptions`);
+
+            if (successCount === 0) {
+                this.log('Warning: No subscriptions were registered successfully');
+            }
         } catch (error) {
-            this.log(`Error registering EventSub subscriptions: ${error}`);
-            throw error; // Re-lanzar para manejo de errores consistente
+            this.log(`Unexpected error during subscription registration: ${error}`);
+            // No relanzamos el error para evitar que falle todo el proceso
         }
     }
 
