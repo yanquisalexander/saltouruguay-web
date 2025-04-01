@@ -10,10 +10,10 @@ const { events } = await getPaginatedEvents(1, 10);
 const firstFeaturedEvent = events.find((event) => event.featured);
 
 const getTimeStatus = (startDate: Date, endDate: Date) => {
-  const now = DateTime.local(); // Hora local de la zona horaria actual
+  const now = DateTime.local();
   const start = DateTime.fromJSDate(new Date(startDate)).setZone(
     "America/Montevideo"
-  ); // Cambia "America/Montevideo" por la zona horaria que necesites
+  );
   const end = DateTime.fromJSDate(new Date(endDate)).setZone(
     "America/Montevideo"
   );
@@ -43,7 +43,7 @@ const getTimeStatus = (startDate: Date, endDate: Date) => {
   title="Eventos"
   description="Participa en nuestros eventos exclusivos y conéctate con la comunidad"
 >
-  <div class="flex flex-col max-w-7xl mx-auto min-h-screen mt-16">
+  <div class="flex flex-col max-w-7xl mx-auto min-h-screen mt-16 px-4 sm:px-6">
     <header class="mb-8">
       <PageBreadcrumb
         breadcrumbs={[{ text: "Eventos", href: "/eventos" }]}
@@ -61,42 +61,47 @@ const getTimeStatus = (startDate: Date, endDate: Date) => {
       {
         firstFeaturedEvent && (
           <div class="rounded-lg border text-card-foreground shadow-sm col-span-full border-white/50 bg-neutral-500/5">
-            <div class="flex flex-col space-y-1.5 p-6 pb-4">
-              <div class="flex justify-between items-start">
-                <div class="space-y-1">
-                  <div class="flex items-center gap-2">
+            <div class="flex flex-col space-y-1.5 p-4 sm:p-6 pb-4">
+              <div class="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0">
+                <div class="space-y-1 w-full sm:w-auto">
+                  <div class="flex flex-wrap items-center gap-2">
                     <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary text-primary-foreground">
                       Destacado
                     </div>
-                    {getTimeStatus(
-                      firstFeaturedEvent.startDate,
-                      firstFeaturedEvent.endDate
-                    ).status === 0 ? (
-                      <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-blue-500/10 text-blue-500">
-                        Próximo
-                      </div>
-                    ) : getTimeStatus(
+                    {(() => {
+                      const status = getTimeStatus(
                         firstFeaturedEvent.startDate,
                         firstFeaturedEvent.endDate
-                      ).status === 1 ? (
-                      <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-yellow-500/10 text-yellow-500">
-                        En curso
-                      </div>
-                    ) : (
-                      <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-red-500/10 text-red-500">
-                        Finalizado
-                      </div>
-                    )}
-
+                      );
+                      if (status.status === 0) {
+                        return (
+                          <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-blue-500/10 text-blue-500">
+                            Próximo
+                          </div>
+                        );
+                      }
+                      if (status.status === 1) {
+                        return (
+                          <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-yellow-500/10 text-yellow-500">
+                            En curso
+                          </div>
+                        );
+                      }
+                      return (
+                        <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-red-500/10 text-red-500">
+                          Finalizado
+                        </div>
+                      );
+                    })()}
                     <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-purple-500/10 text-purple-500">
                       Stream especial
                     </div>
                   </div>
-                  <h2 class="text-2xl font-semibold">
+                  <h2 class="text-xl sm:text-2xl font-rubik font-semibold pt-2">
                     {firstFeaturedEvent.name}
                   </h2>
                 </div>
-                <div class="flex flex-col items-end">
+                <div class="flex flex-col items-start sm:items-end mt-2 sm:mt-0">
                   <div class="flex items-center gap-1 text-sm text-muted-foreground">
                     <LucideUsers class="h-4 w-4" />
                     <span>
@@ -124,15 +129,15 @@ const getTimeStatus = (startDate: Date, endDate: Date) => {
                   </div>
                 </div>
               </div>
-              <div class="flex items-start gap-4 mt-4">
+              <div class="flex flex-col sm:flex-row items-start gap-4 mt-4">
                 <img
                   src={firstFeaturedEvent.cover}
                   alt={`Portada de ${firstFeaturedEvent.name}`}
                   width={240}
                   height={140}
-                  class="rounded-md object-cover"
+                  class="rounded-md object-cover w-full sm:w-60 h-auto"
                 />
-                <div class="flex-1">
+                <div class="flex-1 flex flex-col mt-3 sm:mt-0">
                   <p class="text-sm">{firstFeaturedEvent.description}</p>
                   <div class="mt-4 space-y-2">
                     <div class="flex items-center justify-between text-sm">
@@ -157,9 +162,17 @@ const getTimeStatus = (startDate: Date, endDate: Date) => {
                   </div>
                 </div>
               </div>
-              <div class="flex justify-between items-center mt-4">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mt-4">
                 <div
-                  class={`flex items-center gap-1 text-sm ${getTimeStatus(firstFeaturedEvent.startDate, firstFeaturedEvent.endDate).status === 0 ? "text-green-500" : getTimeStatus(firstFeaturedEvent.startDate, firstFeaturedEvent.endDate).status === 1 ? "text-yellow-500" : "text-red-500"}`}
+                  class={`flex items-center gap-1 text-sm ${(() => {
+                    const status = getTimeStatus(
+                      firstFeaturedEvent.startDate,
+                      firstFeaturedEvent.endDate
+                    );
+                    if (status.status === 0) return "text-green-500";
+                    if (status.status === 1) return "text-yellow-500";
+                    return "text-red-500";
+                  })()}`}
                 >
                   <LucideClock class="h-4 w-4" />
                   <span>
@@ -176,11 +189,12 @@ const getTimeStatus = (startDate: Date, endDate: Date) => {
                 </div>
 
                 {firstFeaturedEvent.url && (
-                  <button class="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                  <button class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700">
                     <a
                       href={firstFeaturedEvent.url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      class="w-full text-center"
                     >
                       Unirme al stream
                     </a>
