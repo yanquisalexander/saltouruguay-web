@@ -45,8 +45,10 @@ export default function TwitchProcessedEvents() {
                 <thead className="bg-neutral-800">
                     <tr>
                         <th className="border border-neutral-700 px-4 py-2">Fecha</th>
-                        <th className="border border-neutral-700 px-4 py-2">Mensaje</th>
+                        <th className="border border-neutral-700 px-4 py-2">ID del Mensaje</th>
                         <th className="border border-neutral-700 px-4 py-2">Usuario</th>
+                        <th className="border border-neutral-700 px-4 py-2">Tipo de Evento</th>
+                        <th className="border border-neutral-700 px-4 py-2">Datos del Evento</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,6 +59,10 @@ export default function TwitchProcessedEvents() {
                             </td>
                             <td className="border border-gray-300 px-4 py-2">{event.messageId}</td>
                             <td className="border border-gray-300 px-4 py-2">{event.userId}</td>
+                            <td className="border border-gray-300 px-4 py-2">{event.eventType}</td>
+                            <td className="border border-gray-300 px-4 py-2">
+                                <pre class="whitespace-pre-wrap">{JSON.stringify(event.eventData, null, 2)}</pre>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
