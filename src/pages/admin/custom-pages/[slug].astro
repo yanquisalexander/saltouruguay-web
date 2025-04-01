@@ -1,0 +1,34 @@
+---
+import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
+import { CustomPageEditor } from "@/components/admin/CustomPageEditor";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { getCustomPageBySlug } from "@/utils/custom-pages";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+const slug = Astro.params.slug;
+
+if (!session?.user.isAdmin || !slug) {
+  return new Response(null, {
+    status: 404,
+  });
+}
+
+const customPage = await getCustomPageBySlug(slug);
+
+if (!customPage) {
+  return new Response(null, {
+    status: 404,
+  });
+}
+---
+
+<AdminLayout title={`Editando "${customPage.title}"`} session={session}>
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16 pb-16">
+    <AdminPageHeader
+      title={`Editando "${customPage.title}"`}
+      pathname={`/admin/custom-pages/${slug}`}
+    />
+    <CustomPageEditor customPage={customPage} client:only />
+  </div>
+</AdminLayout>

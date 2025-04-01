@@ -1,0 +1,32 @@
+---
+import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
+import CustomPagesManager from "@/components/admin/CustomPagesManager";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session?.user.isAdmin) {
+  return new Response(null, {
+    status: 404,
+  });
+}
+---
+
+<AdminLayout title="Páginas personalizadas" session={session}>
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <AdminPageHeader
+      title="Páginas personalizadas"
+      pathname="/admin/custom-pages"
+    />
+    {
+      import.meta.env.DEV ? (
+        <CustomPagesManager client:idle />
+      ) : (
+        <span class="text-yellow-500">
+          Esta sección aún no está disponible.
+        </span>
+      )
+    }
+  </div>
+</AdminLayout>

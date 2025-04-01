@@ -17,6 +17,7 @@ import { games } from "./games";
 import { oauth } from "./users/oauth";
 import { twoFactor } from "./users/two-factor";
 import { serverTools } from "./admin/serverTools";
+import { customPages } from "./admin/customPages";
 
 export const server = {
     sendVotes: defineAction({
@@ -268,6 +269,7 @@ export const server = {
     admin: {
         users,
         serverTools,
+        customPages,
         launchCinematic: defineAction({
             input: z.object({
                 url: z.string().url(),

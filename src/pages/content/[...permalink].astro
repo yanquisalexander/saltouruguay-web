@@ -1,0 +1,109 @@
+---
+import { getPostBySlug } from "@/consts/Torneos";
+import Layout from "@/layouts/Layout.astro";
+import { getCustomPageByPermalink } from "@/utils/custom-pages";
+import "glightbox/dist/css/glightbox.min.css";
+
+const { permalink } = Astro.params;
+
+if (!permalink || permalink.length === 0) {
+  return new Response(null, { status: 404 });
+}
+
+const page = await getCustomPageByPermalink(permalink);
+
+if (!page) {
+  return new Response(null, { status: 404 });
+}
+---
+
+<Layout
+  title={page.title}
+  description={page.content.length > 150
+    ? page.content.substring(0, 150) + "..."
+    : page.content}
+>
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <!-- Hero Section -->
+    <header
+      class="relative flex flex-col justify-center items-center mb-16 overflow-hidden"
+    >
+      <div class="relative z-10 text-center">
+        <h1
+          class="text-4xl md:text-5xl font-extrabold text-white uppercase tracking-wide"
+        >
+          {page.title}
+        </h1>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex flex-col gap-8 px-0 md:px-4">
+      <section class="bg-black/40 rounded-lg shadow-md p-6">
+        <div
+          id="content-body"
+          class="prose prose-invert max-w-none font-rubik leading-relaxed"
+          set:html={page.content}
+        />
+      </section>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  import { $$ } from "@/lib/dom-selector";
+  import GLightbox from "glightbox";
+
+  document.addEventListener("astro:page-load", () => {
+    const $images = $$("#content-body img") as unknown as HTMLImageElement[];
+    const $links = $$("#content-body a") as unknown as HTMLAnchorElement[];
+
+    /* 
+        Make buttons and link to open in /wp-post/${slug}, because 
+        we are using Astro to fetch the content from the WordPress API
+    */
+
+    $links.forEach(($link) => {
+      const href = $link.getAttribute("href");
+
+      console.log({ href });
+
+      // Solo procede si href no es nulo o vacío
+      if (href) {
+        const url = new URL(href, window.location.origin);
+
+        // Verifica que el host sea cms.saltouruguayserver.com
+        if (url.host === "cms.saltouruguayserver.com") {
+          const pathname = url.pathname.replace(/\/$/, ""); // Elimina la barra final si existe
+          const slug = pathname.split("/").pop(); // Obtiene el último segmento de la URL
+
+          // Reemplaza el href del enlace con el formato interno
+          $link.setAttribute("href", `/wp-post/${slug}`);
+        } else {
+          // Abre enlaces externos en una nueva pestaña
+          $link.setAttribute("target", "_blank");
+          $link.setAttribute("rel", "noopener noreferrer");
+        }
+      }
+    });
+
+    $images.forEach(($img) => {
+      $img.setAttribute("data-glightbox", `src: ${$img.src}`);
+      $img.classList.add(
+        ...[
+          "cursor-pointer",
+          "hover:opacity-80",
+          "transition",
+          "duration-300",
+          "ease-in-out",
+          "hover:scale-105",
+        ]
+      );
+      $img.addEventListener("click", (e) => e.preventDefault());
+    });
+
+    const lightbox = GLightbox({
+      selector: "[data-glightbox]",
+    });
+  });
+</script>

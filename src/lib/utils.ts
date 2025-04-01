@@ -3,6 +3,8 @@ import { twMerge } from 'tailwind-merge'
 import { $ } from "./dom-selector";
 import Pusher from "pusher-js";
 import { PUSHER_APP_ID, PUSHER_APP_KEY } from "astro:env/client";
+const toSlug = (await import("slugify")).default;
+
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
@@ -26,4 +28,8 @@ export const createPusher = () => {
         enabledTransports: ['ws', 'wss'],
         forceTLS: true
     });
+}
+
+export const slugify = (text: string) => {
+    return toSlug(text, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g });
 }

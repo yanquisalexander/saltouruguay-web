@@ -10,6 +10,7 @@ import {
     LucideMenu,
     LucideMoveLeft,
     LucideLayoutDashboard,
+    LucidePaintbrush,
 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 
@@ -21,6 +22,7 @@ const iconMap = {
     gamepad: LucideGamepad2,
     code: LucideCode,
     settings: LucideSettings,
+    paintbrush: LucidePaintbrush,
 };
 
 const categories = [
@@ -29,6 +31,7 @@ const categories = [
         links: [
             { label: "Panel Principal", url: "/admin", icon: "home" },
             { label: "Usuarios", url: "/admin/usuarios", icon: "users" },
+            { label: "Páginas personalizadas", url: "/admin/custom-pages", icon: "paintbrush" },
 
         ],
     },
