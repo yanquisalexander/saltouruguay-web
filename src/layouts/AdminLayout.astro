@@ -23,7 +23,7 @@ const { session, title = "Admin", description } = Astro.props;
       session={session}
       initialPathname={Astro.url.pathname}
       client:load
-      transition:persist="admin-sidebar"
+      transition:name="admin-sidebar"
       transition:persist-props
     />
     <div role="main" class="flex-1 overflow-auto px-4">
