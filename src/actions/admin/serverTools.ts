@@ -19,10 +19,11 @@ export const serverTools = {
                 });
             }
 
-            const events = await getPaginatedTwitchEvents(page, limit);
+            const { events, hasMore } = await getPaginatedTwitchEvents(page, limit);
 
             return {
                 events,
+                hasMore,
             };
         }
     })

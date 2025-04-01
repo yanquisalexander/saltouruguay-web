@@ -24,8 +24,8 @@ export default function TwitchProcessedEvents() {
             }
 
             if (data) {
-                setEvents(prev => [...prev, ...(Array.isArray(data?.events) ? data.events : [])]);
-                setHasMore(data.events.hasMore);
+                setEvents(prev => [...prev, ...data.events]);
+                setHasMore(data.hasMore);
                 setPage(prev => prev + 1);
             }
         };
