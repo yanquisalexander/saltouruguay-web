@@ -145,24 +145,63 @@ export const getDebateMessages = async () => {
 
 
 export const getUsers = async ({ page = 1, search = "", limit = 15 }) => {
-    const users = await client
-        .select()
-        .from(UsersTable)
-        .where(
+    let query = client.select().from(UsersTable);
+
+    // Initialize base conditions
+    let conditions = [];
+    let filterSearch = search;
+
+    // Parse out filter expressions
+    const filterRegex = /filter:(\w+)/g;
+    let match;
+    const filters: Record<string, boolean> = {};
+
+    // Extract all filters from the search string
+    while ((match = filterRegex.exec(search)) !== null) {
+        const filterName = match[1];
+        filters[filterName] = true;
+
+        // Remove the filter expression from the search string
+        filterSearch = filterSearch.replace(match[0], "").trim();
+    }
+
+    // Apply text search if there's any text left after removing filters
+    if (filterSearch) {
+        conditions.push(
             or(
-                ilike(UsersTable.username, `%${search}%`),
-                ilike(UsersTable.email, `%${search}%`),
-                ilike(UsersTable.displayName, `%${search}%`)
+                ilike(UsersTable.username, `%${filterSearch}%`),
+                ilike(UsersTable.email, `%${filterSearch}%`),
+                ilike(UsersTable.displayName, `%${filterSearch}%`)
             )
-        )
+        );
+    }
+
+    // Apply filters based on detected filter expressions
+    if (filters.admin) {
+        conditions.push(eq(UsersTable.admin, true));
+    }
+
+
+
+    // Apply all conditions to the query
+    if (conditions.length > 0) {
+        // @ts-ignore
+        query = query.where(
+            conditions.length > 1
+                ? and(...(conditions as Parameters<typeof and>))
+                : (conditions[0] as Parameters<typeof query.where>[0])
+        );
+    }
+
+    // Apply pagination and ordering
+    const users = await query
         .orderBy(desc(UsersTable.createdAt))
         .limit(limit + 1)
         .offset((page - 1) * limit);
 
-
     const hasMore = users.length > limit;
     return { users: users.slice(0, limit), hasMore };
-}
+};
 
 export const unlinkDiscord = async (userId: number) => {
     await client
