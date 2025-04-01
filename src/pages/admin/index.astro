@@ -88,24 +88,6 @@ const cacheKey = "site-admin-tips";
 let tips: string | null = null;
 
 const cacheValue = (await cache.get(cacheKey)) as string | null;
-if (cacheValue && import.meta.env.PROD) {
-  tips = cacheValue;
-} else {
-  console.log("Cache miss");
-  const gemini = new GeminiService();
-  const message = `
-    JSON de Visitas: ${JSON.stringify(visitorStats)}
-
-    JSON de Stats: ${JSON.stringify(stats)}
-  `;
-  const generatedTips = await gemini.generateTipsForAdminPanel({
-    dashboardStats: message.trim(),
-  });
-  await cache.set(cacheKey, generatedTips, 60 * 60 * 24); // 1 día
-  tips = generatedTips;
-}
-
-console.log("Generated tips:", tips);
 
 const BEAUTIFIED_STATS = [
   {
@@ -157,6 +139,31 @@ const BEAUTIFIED_STATS = [
     description: "0 torneos activos",
   },
 ];
+
+if (cacheValue && import.meta.env.PROD) {
+  tips = cacheValue;
+} else {
+  console.log("Cache miss");
+  const gemini = new GeminiService();
+  const message = `
+    JSON de Visitas: ${JSON.stringify(visitorStats)}
+
+    JSON de Stats: ${JSON.stringify(
+      BEAUTIFIED_STATS.map((stat) => ({
+        id: stat.id,
+        title: stat.title,
+        value: stat.value,
+      }))
+    )}
+  `;
+  const generatedTips = await gemini.generateTipsForAdminPanel({
+    dashboardStats: message.trim(),
+  });
+  await cache.set(cacheKey, generatedTips, 60 * 60 * 24); // 1 día
+  tips = generatedTips;
+}
+
+console.log("Generated tips:", tips);
 ---
 
 <AdminLayout title="Administrador" session={session}>
