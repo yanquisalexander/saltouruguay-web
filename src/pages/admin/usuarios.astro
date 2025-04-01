@@ -1,0 +1,23 @@
+---
+import TwitchProcessedEvents from "@/components/admin/TwitchProcessedEvents";
+import UsersManager from "@/components/admin/UsersManager";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session?.user.isAdmin) {
+  return new Response(null, {
+    status: 404,
+  });
+}
+---
+
+<AdminLayout title="Usuarios" session={session}>
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <header class="mb-4">
+      <h1 class="text-3xl font-bold">Usuarios</h1>
+    </header>
+    <UsersManager client:idle />
+  </div>
+</AdminLayout>

@@ -1,112 +1,132 @@
-import { actions, type SafeResult } from "astro:actions";
-import { useEffect, useState, useCallback } from "preact/hooks";
+import { actions } from "astro:actions";
+import { useState, useEffect, useRef } from "preact/hooks";
+import { toast } from "sonner";
+import { User, Mail, Calendar, ShieldCheck } from "lucide-preact";
 
-export const UsersManager = () => {
-    const [users, setUsers] = useState<SafeResult<
-        { search?: string; limit?: number; page?: number },
-        { id: number; email: string; twitchId: string | null; displayName: string; username: string; avatar: string | null; updatedAt: Date }[]
-    > | null>(null);
-    const [search, setSearch] = useState("");
-    const [loading, setLoading] = useState(false);
+export default function UsersManager() {
+    const [users, setUsers] = useState<
+        { id: number; name: string; email: string; createdAt: Date; admin: boolean, avatar: string }[]
+    >([]);
     const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-
-    const fetchUsers = useCallback(async () => {
-        setLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        try {
-            const { error, data } = await actions.admin.users.getUsers({ search, limit: 10, page });
-            if (data) {
-                setUsers({ data: data.users, error });
-                // Simulated total pages (replace with API response if available)
-                setTotalPages(data.totalPages);
-            }
-        } catch (e) {
-            // @ts-expect-error 
-            setUsers({ data: undefined, error: e as Error });
-        } finally {
-            setLoading(false);
-        }
-    }, [search, page]);
+    const [hasMore, setHasMore] = useState(true);
+    const [search, setSearch] = useState("");
+    const loaderRef = useRef(null);
 
     useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+        if (!hasMore) return;
 
-    const handleNextPage = () => {
-        if (page < totalPages) setPage((prev) => prev + 1);
-    };
+        const loadMore = async () => {
+            const { data, error } = await actions.admin.serverTools.getUsers({
+                page,
+                limit: 10,
+                search,
+            });
 
-    const handlePrevPage = () => {
-        if (page > 1) setPage((prev) => prev - 1);
-    };
+            if (error) {
+                toast.error("Error al cargar los usuarios");
+                console.error("Error loading users:", error);
+                return;
+            }
+
+            if (data) {
+                setUsers(prev => [
+                    ...prev,
+                    ...data.users
+                        .map((user) => ({
+                            id: user.id,
+                            avatar: user.avatar!,
+                            name: user.displayName,
+                            email: user.email,
+                            createdAt: new Date(user.createdAt),
+                            admin: user.admin,
+                        })),
+                ]);
+                setHasMore(data.hasMore);
+                setPage(prev => prev + 1);
+            }
+        };
+
+        const observer = new IntersectionObserver(
+            ([entry]) => entry.isIntersecting && loadMore(),
+            { rootMargin: "100px" }
+        );
+
+        if (loaderRef.current) observer.observe(loaderRef.current);
+        return () => observer.disconnect();
+    }, [page, hasMore]);
 
     return (
-        <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">
-                Usuarios
-            </h1>
-            <div className="flex items-center mb-4">
-                <input
-                    type="text"
-                    value={search}
-                    onInput={(e) => setSearch((e.target as HTMLInputElement).value)}
-                    placeholder="Buscar..."
-                    className="border border-white/20 p-2 rounded mr-2 bg-neutral-900"
-                />
-                <button
-                    onClick={fetchUsers}
-                    disabled={loading}
-                    className="bg-blue-500/20  text-white px-4 py-2 rounded disabled:bg-gray-900"
-                >
-                    {loading ? "Searching..." : "Search"}
-                </button>
-            </div>
+        <div className="relative w-full overflow-auto rounded-md">
+            <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b bg-[#13131f]">
+                    <tr className="border-b transition-colors border-[#1f1f2f] hover:bg-[#13131f]">
+                        <th className="h-12 px-4 text-left align-middle font-medium text-slate-400">
+                            <input
+                                type="text"
+                                placeholder="Buscar..."
+                                value={search}
+                                onChange={(e) => {
+                                    setSearch((e.target as HTMLInputElement).value);
+                                    setPage(1);
+                                    setUsers([]);
+                                    setHasMore(true);
+                                }}
+                                className="w-full px-2 py-1 text-xs bg-[#09090f] text-slate-300 border border-slate-600 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
+                            />
+                        </th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-slate-400">Correo</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-slate-400">Fecha de Registro</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-slate-400">Rol</th>
+                    </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
+                    {users.map(user => (
+                        <tr key={user.id} className="border-b transition-colors border-[#1f1f2f] hover:bg-[#13131f] bg-[#09090f]">
+                            <td className="p-4 align-middle text-slate-300 font-mono text-xs flex items-center gap-2">
 
-            {users?.error && <p className="text-red-500">Error: {users.error.message}</p>}
-
-            {loading && <p>Loading users...</p>}
-
-            {users?.data && (
-                <div>
-                    <ul className="pl-5">
-                        {users.data.length > 0 ? (
-                            users.data.map((user) => (
-                                <li key={user.id} className="mb-2">
-                                    <div className="flex items-center">
-                                        <img
-                                            src={user.avatar || "https://via.placeholder.com/40"}
-                                            alt={user.displayName}
-                                            className="w-10 h-10 rounded-full mr-3"
-                                        />
-                                        <span>{user.displayName} - {user.username}</span>
-                                    </div>
-                                </li>
-                            ))
-                        ) : (
-                            <p>No users found.</p>
-                        )}
-                    </ul>
-
-                    <div className="flex justify-between items-center mt-4">
-                        <button
-                            onClick={handlePrevPage}
-                            disabled={page === 1}
-                            className="bg-blue-500/20 text-white px-4 py-2 rounded disabled:bg-gray-900"
-                        >
-                            Prev
-                        </button>
-                        <span>Página {page} de {totalPages}</span>
-                        <button
-                            onClick={handleNextPage}
-                            disabled={page === totalPages}
-                            className="bg-blue-500/20 text-white px-4 py-2 rounded disabled:bg-gray-900"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
-            )}
+                                <img
+                                    src={user.avatar}
+                                    alt={user.name}
+                                    className="w-8 h-8 rounded-full"
+                                />
+                                {user.name}
+                            </td>
+                            <td className="p-4 align-middle font-mono text-xs text-indigo-300 overflow-hidden text-ellipsis">
+                                <Mail size={14} className="inline-block mr-1" /> {user.email}
+                            </td>
+                            <td className="p-4 align-middle font-mono text-xs text-slate-300">
+                                <Calendar size={14} className="inline-block mr-1" />
+                                {new Date(user.createdAt).toLocaleString()}
+                            </td>
+                            <td className="p-4 align-middle">
+                                {
+                                    <RoleBadge role={user.admin ? "admin" : "user"} />
+                                }
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+            {hasMore && <div ref={loaderRef} className="text-center py-4">Cargando más usuarios...</div>}
         </div>
+    );
+}
+
+/**
+ * Muestra una etiqueta según el rol del usuario
+ */
+function RoleBadge({ role }: { role: string }) {
+    const roleStyles = {
+        admin: { icon: <ShieldCheck size={14} />, color: "bg-red-600", text: "Administrador" },
+        user: { icon: <User size={14} />, color: "bg-blue-600", text: "Usuario" },
+    };
+
+    const roleData = roleStyles[role as keyof typeof roleStyles] ||
+        { icon: <User size={14} />, color: "bg-gray-600", text: `Rol desconocido (${role})` };
+
+    return (
+        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-white rounded-md ${roleData.color}`}>
+            {roleData.icon} {roleData.text}
+        </span>
     );
 }

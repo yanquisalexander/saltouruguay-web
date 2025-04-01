@@ -3,7 +3,7 @@ import { client } from "@/db/client";
 import { MemberCards, SessionsTable, UserAchievementsTable, UsersTable, UserSuspensionsTable } from "@/db/schema";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { createUserApiClient, createStaticAuthProvider } from "@/lib/Twitch";
-import { and, count, eq, gt, lt } from "drizzle-orm";
+import { and, count, eq, gt, ilike, lt, or } from "drizzle-orm";
 import { unlockAchievement } from "./achievements";
 import { ACHIEVEMENTS } from "@/consts/Achievements";
 import { experimental_AstroContainer } from "astro/container";
@@ -143,19 +143,24 @@ export const getDebateMessages = async () => {
     })
 }
 
+
 export const getUsers = async ({ page = 1, search = "", limit = 15 }) => {
-    const users = await client.query.UsersTable.findMany({
-        where: (users, { like }) => {
-            if (search) {
-                return like(users.username, `%${search}%`);
-            }
-        },
-        limit,
-    });
+    const users = await client
+        .select()
+        .from(UsersTable)
+        .where(
+            or(
+                ilike(UsersTable.username, `%${search}%`),
+                ilike(UsersTable.email, `%${search}%`),
+                ilike(UsersTable.displayName, `%${search}%`)
+            )
+        )
+        .limit(limit + 1)
+        .offset((page - 1) * limit);
 
-    const totalPages = Math.ceil(users.length / limit);
 
-    return { users, totalPages };
+    const hasMore = users.length > limit;
+    return { users: users.slice(0, limit), hasMore };
 }
 
 export const unlinkDiscord = async (userId: number) => {
