@@ -19,7 +19,13 @@ const { session, title = "Admin", description } = Astro.props;
   hideHeader
 >
   <div class="flex min-h-screen text-white">
-    <AdminSidebar session={session} pathname={Astro.url.pathname} client:load />
+    <AdminSidebar
+      session={session}
+      initialPathname={Astro.url.pathname}
+      client:load
+      transition:persist="admin-sidebar"
+      transition:persist-props
+    />
     <div role="main" class="flex-1 overflow-auto px-4">
       <slot />
     </div>

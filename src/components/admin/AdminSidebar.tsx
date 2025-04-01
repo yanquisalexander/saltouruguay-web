@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import {
     LucideGamepad2,
     LucideHome,
@@ -44,11 +44,20 @@ const categories = [
     },
 ];
 
-export default function Sidebar({ session, pathname }: { session: Session | null, pathname: string }) {
+export default function Sidebar({ session, initialPathname }: { session: Session | null, initialPathname: string }) {
     const [collapsed, setCollapsed] = useState(true);
+    const [pathname, setPathname] = useState(initialPathname);
     const isActive = (path: string) => {
         return pathname === path
     }
+
+    useEffect(() => {
+        document.addEventListener('astro:page-load', () => {
+            const currentPath = window.location.pathname;
+            setPathname(currentPath);
+        })
+    }
+        , []);
 
     return (
         <div
