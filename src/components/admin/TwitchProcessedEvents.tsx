@@ -1,7 +1,7 @@
 import { actions } from "astro:actions";
 import { useState, useEffect, useRef } from "preact/hooks";
 import { toast } from "sonner";
-import { CheckCircle, UserPlus, Gift, MessageCircle, LucidePiggyBank } from "lucide-preact";
+import { CheckCircle, UserPlus, Gift, MessageCircle, LucidePiggyBank, LucideShieldX } from "lucide-preact";
 
 export default function TwitchProcessedEvents() {
     const [events, setEvents] = useState<
@@ -92,6 +92,7 @@ export default function TwitchProcessedEvents() {
  */
 function EventChip({ eventType }: { eventType: string }) {
     const eventStyles = {
+        "user.authorization.revoke": { icon: <LucideShieldX size={14} />, color: "bg-red-600", text: "Revocación de Autorización" },
         "channel.subscribe": { icon: <LucidePiggyBank size={14} />, color: "bg-orange-500", text: "Suscripción" },
         "channel.follow": { icon: <UserPlus size={14} />, color: "bg-green-600", text: "Nuevo Seguidor" },
         "channel.subscription": { icon: <CheckCircle size={14} />, color: "bg-blue-600", text: "Suscripción" },
