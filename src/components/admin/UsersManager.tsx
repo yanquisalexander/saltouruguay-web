@@ -2,6 +2,9 @@ import { actions } from "astro:actions";
 import { useState, useEffect, useRef } from "preact/hooks";
 import { toast } from "sonner";
 import { User, Mail, Calendar, ShieldCheck } from "lucide-preact";
+import { useDebounce } from "@/hooks/useDebounce";
+
+
 
 export default function UsersManager() {
     const [users, setUsers] = useState<
@@ -10,7 +13,14 @@ export default function UsersManager() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [search, setSearch] = useState("");
+    const debouncedSearch = useDebounce(search, 500);
     const loaderRef = useRef(null);
+
+    useEffect(() => {
+        setPage(1);
+        setUsers([]);
+        setHasMore(true);
+    }, [debouncedSearch]);
 
     useEffect(() => {
         if (!hasMore) return;
@@ -19,7 +29,7 @@ export default function UsersManager() {
             const { data, error } = await actions.admin.serverTools.getUsers({
                 page,
                 limit: 10,
-                search,
+                search: debouncedSearch,
             });
 
             if (error) {
@@ -31,15 +41,14 @@ export default function UsersManager() {
             if (data) {
                 setUsers(prev => [
                     ...prev,
-                    ...data.users
-                        .map((user) => ({
-                            id: user.id,
-                            avatar: user.avatar!,
-                            name: user.displayName,
-                            email: user.email,
-                            createdAt: new Date(user.createdAt),
-                            admin: user.admin,
-                        })),
+                    ...data.users.map((user) => ({
+                        id: user.id,
+                        avatar: user.avatar!,
+                        name: user.displayName,
+                        email: user.email,
+                        createdAt: new Date(user.createdAt),
+                        admin: user.admin,
+                    })),
                 ]);
                 setHasMore(data.hasMore);
                 setPage(prev => prev + 1);
@@ -53,7 +62,7 @@ export default function UsersManager() {
 
         if (loaderRef.current) observer.observe(loaderRef.current);
         return () => observer.disconnect();
-    }, [page, hasMore]);
+    }, [page, hasMore, debouncedSearch]);
 
     return (
         <div className="relative w-full overflow-auto rounded-md">
@@ -65,12 +74,7 @@ export default function UsersManager() {
                                 type="text"
                                 placeholder="Buscar..."
                                 value={search}
-                                onChange={(e) => {
-                                    setSearch((e.target as HTMLInputElement).value);
-                                    setPage(1);
-                                    setUsers([]);
-                                    setHasMore(true);
-                                }}
+                                onChange={(e) => setSearch((e.target as HTMLInputElement).value)}
                                 className="w-full px-2 py-1 text-xs bg-[#09090f] text-slate-300 border border-slate-600 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
                             />
                         </th>
@@ -83,7 +87,6 @@ export default function UsersManager() {
                     {users.map(user => (
                         <tr key={user.id} className="border-b transition-colors border-[#1f1f2f] hover:bg-[#13131f] bg-[#09090f]">
                             <td className="p-4 align-middle text-slate-300 font-mono text-xs flex items-center gap-2">
-
                                 <img
                                     src={user.avatar}
                                     alt={user.name}
