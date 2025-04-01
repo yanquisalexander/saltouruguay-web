@@ -53,7 +53,7 @@ export default function Sidebar({ session, pathname }: { session: Session | null
 
     return (
         <div
-            class={`z-50 top-0 left-0 h-full min-h-screen flex flex-col bg-zinc-950 border-r border-zinc-900  transition-all duration-300 ${collapsed ? "w-16 md:w-16 md:sticky" : "w-56 fixed md:w-56 md:sticky"
+            class={`z-50 top-0 left-0 h-full min-h-screen flex flex-col bg-zinc-950 border-r border-zinc-900  transition-all duration-300 ${collapsed ? "w-16 md:w-16 sticky" : "w-56 fixed md:w-56 md:sticky"
                 }`}
         >
             <div class={`p-2 mb-6 border-b border-neutral-800 flex items-center gap-2 ${collapsed ? "justify-center" : "justify-start"
