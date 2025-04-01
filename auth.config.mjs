@@ -85,11 +85,12 @@ export default defineConfig({
                     }
 
                     try {
-                        const eventSub = createTwitchEventsInstance(
-                            eventSub.registerUserEventSub(twitchId)
-                        )
-                    } catch (error) {
+                        const eventSub = createTwitchEventsInstance()
+                        await eventSub.registerUserEventSub(twitchId)
+                        console.log(`Registered event sub for user ${twitchId}`);
 
+                    } catch (error) {
+                        console.error("Error registering event sub:", error);
                     }
 
 
