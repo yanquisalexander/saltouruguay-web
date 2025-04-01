@@ -17,7 +17,7 @@ export const getTwitchEvents = async (page: number, limit: number) => {
         .select()
         .from(TwitchProcessedEventsTable)
         .orderBy(desc(TwitchProcessedEventsTable.processedAt))
-        .limit(limit + 1) // +1 para verificar si hay más
+        .limit(limit + 1)
         .offset((page - 1) * limit);
 
     const hasMore = events.length > limit;
