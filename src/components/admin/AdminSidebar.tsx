@@ -11,6 +11,7 @@ import {
     LucideMoveLeft,
     LucideLayoutDashboard,
     LucidePaintbrush,
+    LucideCalendar,
 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 
@@ -23,6 +24,7 @@ const iconMap = {
     code: LucideCode,
     settings: LucideSettings,
     paintbrush: LucidePaintbrush,
+    calendar: LucideCalendar,
 };
 
 const categories = [
@@ -32,7 +34,7 @@ const categories = [
             { label: "Panel Principal", url: "/admin", icon: "home" },
             { label: "Usuarios", url: "/admin/usuarios", icon: "users" },
             { label: "Páginas personalizadas", url: "/admin/custom-pages", icon: "paintbrush" },
-
+            { label: "Eventos", url: "/admin/eventos", icon: "calendar" },
         ],
     },
     {
