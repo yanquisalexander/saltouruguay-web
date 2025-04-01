@@ -84,16 +84,24 @@ const BEAUTIFIED_STATS = [
     icon: LucideUsers,
     title: "Usuarios totales",
     value: stats.totalUsers,
-    /* Comparación a la última semana, caclulando total con stats.newSignupsWeek */
-    percentage:
-      stats.totalUsers > stats.newSignupsWeek
-        ? Math.round(
-            (stats.newSignupsWeek / (stats.totalUsers - stats.newSignupsWeek)) *
-              100
-          )
-        : 100,
 
-    percentageText: "más que la semana pasada",
+    percentage:
+      stats.newSignupsWeek === 0
+        ? 0
+        : stats.totalUsers > stats.newSignupsWeek
+          ? Math.round(
+              (stats.newSignupsWeek /
+                (stats.totalUsers - stats.newSignupsWeek)) *
+                100
+            )
+          : -100,
+
+    percentageText:
+      stats.newSignupsWeek === 0
+        ? "igual que la semana pasada"
+        : stats.totalUsers > stats.newSignupsWeek
+          ? "más que la semana pasada"
+          : "menos que la semana pasada",
   },
   {
     id: "new-signups",
@@ -153,7 +161,11 @@ const BEAUTIFIED_STATS = [
               {stat.percentage !== undefined && stat.percentage !== null ? (
                 <span
                   class={
-                    stat.percentage > 0 ? "text-green-400" : "text-red-400"
+                    stat.percentage > 0
+                      ? "text-green-400"
+                      : stat.percentage < 0
+                        ? "text-red-400"
+                        : "text-gray-400"
                   }
                 >
                   <LucideTrendingUpDown class="inline-block align-middle w-4 h-4 mr-1" />
