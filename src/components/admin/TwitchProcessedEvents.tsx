@@ -65,7 +65,7 @@ export default function TwitchProcessedEvents() {
                             <td className="p-4 align-middle font-mono text-xs text-indigo-300 overflow-hidden text-ellipsis">{event.userId}</td>
                             <td className="p-4 align-middle font-mono text-xs text-indigo-300 overflow-hidden text-ellipsis">{event.eventType}</td>
 
-                            <td className="p-4 align-middle font-mono text-xs text-indigo-300 overflow-hidden text-ellipsis">
+                            <td className="p-4 align-middle font-mono text-xs text-indigo-300 overflow-hidden text-ellipsis max-h-[200px]">
                                 <pre class="whitespace-pre-wrap"
                                     dangerouslySetInnerHTML={event.eventData ? { __html: event.eventData } : { __html: "Sin datos" }}></pre>
 
