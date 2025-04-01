@@ -526,6 +526,91 @@ export const TournamentGamesRelations = relations(TournamentGamesTable, ({ one }
 }));
 
 
+/* 
+    Eventos
+*/
+
+export const EventsTable = pgTable("events", {
+    id: serial("id").primaryKey(),
+    name: varchar("name").notNull(),
+    description: text("description"),
+    cover: varchar("cover"),
+    tags: varchar("tags", { enum: ["special-event", "beneficial", "collab", "presential", "premiere", "other"] }).array(),
+    mainOrganizerId: integer("main_organizer_id").notNull().references(() => UsersTable.id),
+    featured: boolean("featured").notNull().default(false),
+    location: varchar("location"),
+    platform: varchar("platform", { enum: ["twitch", "youtube", "other"] }),
+    url: varchar("url"),
+    importantInfo: text("important_info"),
+    startDate: timestamp("start_date").notNull(),
+    endDate: timestamp("end_date").notNull(),
+    createdAt: timestamp("created_at")
+        .notNull()
+        .default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at")
+        .notNull()
+        .default(sql`current_timestamp`),
+})
+
+
+/* Additional organizers */
+export const EventOrganizersTable = pgTable("event_organizers", {
+    id: serial("id").primaryKey(),
+    eventId: integer("event_id").notNull().references(() => EventsTable.id),
+    userId: integer("user_id").notNull().references(() => UsersTable.id),
+    createdAt: timestamp("created_at")
+        .notNull()
+        .default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueEventUser: unique().on(t.eventId, t.userId),
+}))
+
+
+
+export const EventAssistantsTable = pgTable("event_assistants", {
+    id: serial("id").primaryKey(),
+    eventId: integer("event_id").notNull().references(() => EventsTable.id),
+    userId: integer("user_id").notNull().references(() => UsersTable.id),
+    createdAt: timestamp("created_at")
+        .notNull()
+        .default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueEventUser: unique().on(t.eventId, t.userId),
+}))
+
+export const EventRelations = relations(EventsTable, ({ one, many }) => ({
+    mainOrganizer: one(UsersTable, {
+        fields: [EventsTable.mainOrganizerId],
+        references: [UsersTable.id],
+    }),
+    additionalOrganizers: many(EventOrganizersTable),
+    assistants: many(EventAssistantsTable),
+}));
+
+export const EventOrganizersRelations = relations(EventOrganizersTable, ({ one }) => ({
+    event: one(EventsTable, {
+        fields: [EventOrganizersTable.eventId],
+        references: [EventsTable.id],
+    }),
+    user: one(UsersTable, {
+        fields: [EventOrganizersTable.userId],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const EventAssistantsRelations = relations(EventAssistantsTable, ({ one }) => ({
+    event: one(EventsTable, {
+        fields: [EventAssistantsTable.eventId],
+        references: [EventsTable.id],
+    }),
+    user: one(UsersTable, {
+        fields: [EventAssistantsTable.userId],
+        references: [UsersTable.id],
+    }),
+}));
+
+
+
 
 
 export const VotesTable = pgTable("votes", {

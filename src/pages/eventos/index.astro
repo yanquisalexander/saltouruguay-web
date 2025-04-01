@@ -1,136 +1,178 @@
 ---
+import PageBreadcrumb from "@/components/PageBreadcrumb.astro";
+import Twitch from "@/icons/Twitch.astro";
 import Layout from "@/layouts/Layout.astro";
-import { getPlayers } from "@/utils/streamer-wars";
-import { LucideArrowUpRight } from "lucide-preact";
+import { getPaginatedEvents } from "@/lib/events";
+import { LucideCalendar, LucideClock, LucideUsers } from "lucide-preact";
 
-const players = await getPlayers().then((res) => res.slice(0, 51));
+const { events } = await getPaginatedEvents(1, 10);
+const firstFeaturedEvent = events.find((event) => event.featured);
+
+const getTimeStatus = (startDate: Date, endDate: Date) => {
+  const now = new Date();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  const hoursUntilStart = Math.ceil(
+    (start.getTime() - now.getTime()) / (1000 * 60 * 60)
+  );
+  const hoursUntilEnd = Math.ceil(
+    (end.getTime() - now.getTime()) / (1000 * 60 * 60)
+  );
+
+  if (now < start) {
+    return { text: `Faltan ${hoursUntilStart} horas`, status: 0 };
+  }
+
+  if (now > end) {
+    return {
+      text: `Finalizado hace ${Math.abs(hoursUntilEnd)} horas`,
+      status: 2,
+    };
+  }
+
+  return {
+    text: `En curso desde hace ${Math.abs(hoursUntilEnd)} horas`,
+    status: 1,
+  };
+};
 ---
 
 <Layout
   title="Eventos"
-  description="¡Participa en nuestros eventos y gana premios increíbles!"
+  description="Participa en nuestros eventos exclusivos y conéctate con la comunidad"
 >
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
-    <header class="relative z-10 flex flex-col justify-center mb-12">
-      <div class="flex items-center gap-x-4">
-        <div class="flex flex-col justify-center gap-y-1">
-          <h1
-            class="flex w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-black mix-blend-screen bg-blue-400 !skew-x-[-20deg]"
-          >
-            <span class="flex !skew-x-[20deg] transform"> Eventos </span>
-          </h1>
-        </div>
-      </div>
-    </header>
-    <div class="flex flex-col w-full justify-center items-center gap-4">
-      <h3
-        class="with-glyph flex relative w-max text-3xl transform px-2 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen !skew-x-[-20deg] -rotate-6"
-      >
-        <span class="flex !skew-x-[20deg] transform">
-          Guerra de Streamers
-        </span>
-      </h3>
-
-      <p
-        class="text-center text-xl max-w-[56ch] px-8 font-squids pt-16 text-white"
-      >
-        Lista de Jugadores
+  <div class="flex flex-col max-w-7xl mx-auto min-h-screen mt-16">
+    <header class="mb-8">
+      <PageBreadcrumb
+        breadcrumbs={[{ text: "Eventos", href: "/eventos" }]}
+        pathname="/eventos"
+      />
+      <h1 class="text-3xl font-rubik font-medium tracking-tight">
+        Eventos de la Comunidad
+      </h1>
+      <p class="text-neutral-500 mt-1">
+        Participa en nuestros eventos exclusivos y conéctate con la comunidad
       </p>
+    </header>
 
-      <div
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8"
-      >
-        {
-          players.map((player) => (
-            <div class="flex flex-col items-center gap-2 relative">
-              <img
-                src={player.user?.avatar}
-                alt={player.user?.displayName}
-                class="size-32 object-cover mask2"
-                draggable="false"
-              />
-
-              <a
-                class="text-center group font-medium text-xl hover:text-pink-500 transition text-white font-rubik uppercase tracking-wide"
-                href={`https://www.twitch.tv/${player.user?.displayName!}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={`Ver el canal de ${player.user?.displayName} en Twitch`}
-              >
-                {player.user?.displayName.trim()}
-                {!player.eliminated && (
-                  <LucideArrowUpRight
-                    size="24"
-                    class="inline-block group-hover:translate-x-1 group-hover:-translate-y-2 transition"
-                  />
-                )}
-              </a>
-
-              <h3 class="text-center font-bold text-xl text-lime-400 font-atomic tracking-wider">
-                #{player.playerNumber.toString().padStart(3, "0")}{" "}
-              </h3>
-
-              {player.eliminated && (
-                <div class="absolute inset-0 bg-black/50 flex items-center justify-center text-red-500 font-bold">
-                  <span class="font-atomic text-2xl -rotate-45">ELIMINADO</span>
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {
+        firstFeaturedEvent && (
+          <div class="rounded-lg border text-card-foreground shadow-sm col-span-full border-white/50 bg-neutral-500/5">
+            <div class="flex flex-col space-y-1.5 p-6 pb-4">
+              <div class="flex justify-between items-start">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary text-primary-foreground">
+                      Destacado
+                    </div>
+                    <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-green-500/10 text-green-500">
+                      En curso
+                    </div>
+                    <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-purple-500/10 text-purple-500">
+                      Stream especial
+                    </div>
+                  </div>
+                  <h2 class="text-2xl font-semibold">
+                    {firstFeaturedEvent.name}
+                  </h2>
                 </div>
-              )}
-            </div>
-          ))
-        }
-      </div>
+                <div class="flex flex-col items-end">
+                  <div class="flex items-center gap-1 text-sm text-muted-foreground">
+                    <LucideUsers class="h-4 w-4" />
+                    <span>
+                      {firstFeaturedEvent.assistants.length} confirmados
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                    <LucideCalendar class="h-4 w-4" />
+                    <span>
+                      {new Date(
+                        firstFeaturedEvent.startDate
+                      ).toLocaleDateString("es-ES", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                      {", "}
+                      {new Date(
+                        firstFeaturedEvent.startDate
+                      ).toLocaleTimeString("es-ES", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-start gap-4 mt-4">
+                <img
+                  src={firstFeaturedEvent.cover}
+                  alt={`Portada de ${firstFeaturedEvent.name}`}
+                  width={240}
+                  height={140}
+                  class="rounded-md object-cover"
+                />
+                <div class="flex-1">
+                  <p class="text-sm">{firstFeaturedEvent.description}</p>
+                  <div class="mt-4 space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="text-muted-foreground">Organizado por:</span>
+                      <span class="font-medium">
+                        {firstFeaturedEvent.mainOrganizer.displayName}
+                      </span>
+                    </div>
+                    {firstFeaturedEvent.platform && (
+                      <div class="flex items-center justify-between text-sm">
+                        <span class="text-muted-foreground">Plataforma:</span>
+                        <span class="font-medium flex items-center gap-1">
+                          <Twitch class="h-4 w-4 text-purple-500" />
+                          Twitch
+                        </span>
+                      </div>
+                    )}
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="text-muted-foreground">Participación:</span>
+                      <span class="font-medium">Abierta a todos</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="flex justify-between items-center mt-4">
+                <div
+                  class={`flex items-center gap-1 text-sm ${getTimeStatus(firstFeaturedEvent.startDate, firstFeaturedEvent.endDate).status === 0 ? "text-green-500" : getTimeStatus(firstFeaturedEvent.startDate, firstFeaturedEvent.endDate).status === 1 ? "text-yellow-500" : "text-red-500"}`}
+                >
+                  <LucideClock class="h-4 w-4" />
+                  <span>
+                    {new Date(firstFeaturedEvent.startDate) > new Date()
+                      ? "Próximo, "
+                      : "Finalizado, "}
+                    {
+                      getTimeStatus(
+                        firstFeaturedEvent.startDate,
+                        firstFeaturedEvent.endDate
+                      ).text
+                    }
+                  </span>
+                </div>
 
-      <div
-        class="flex flex-col justify-center items-center mt-4 gap-2 mask bg-[#b4cd02] w-full"
-      >
-        <p class="text-center max-w-[56ch] px-8 pt-4 pb-8 text-black">
-          ¿Estás listo para la batalla?<br />¡Participa en nuestra <strong
-            >Guerra de Streamers</strong
-          > y demuestra tus habilidades en el campo de batalla!
-        </p>
-      </div>
+                {firstFeaturedEvent.url && (
+                  <button class="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                    <a
+                      href={firstFeaturedEvent.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Unirme al stream
+                    </a>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      }
     </div>
   </div>
 </Layout>
-
-<style>
-  h3.with-glyph:after {
-    content: "a";
-    @apply !font-atomic-extras text-[80px] mt-8 absolute inset-x-0 text-center;
-    z-index: -1;
-  }
-
-  @font-face {
-    font-family: "Game Of Squids";
-    font-style: normal;
-    font-weight: 100 900;
-    font-display: swap;
-    src:
-      url("/fonts/game-of-squids.woff2") format("woff2"),
-      format("woff2");
-  }
-
-  .mask {
-    -webkit-mask-composite: source-in;
-    mask-image: url(/images/mask.webp);
-    mask-position: 50%;
-    mask-size: cover;
-    mask-repeat: no-repeat;
-    mask-clip: content-box;
-    mask-origin: content-box;
-    mask-composite: source-in;
-    mask-mode: alpha;
-  }
-
-  .mask2 {
-    -webkit-mask-composite: source-in;
-    mask-image: url(/images/mask-wars-votacion.webp);
-    mask-position: 50%;
-    mask-size: cover;
-    mask-repeat: no-repeat;
-    mask-clip: content-box;
-    mask-origin: content-box;
-    mask-composite: source-in;
-    mask-mode: alpha;
-  }
-</style>
