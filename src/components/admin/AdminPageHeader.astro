@@ -1,0 +1,34 @@
+---
+import PageBreadcrumb from "../PageBreadcrumb.astro";
+
+interface Props {
+  pathname?: string;
+  title?: string;
+}
+
+const { pathname = "/", title } = Astro.props;
+
+const pathSegments =
+  pathname === "/" ? [] : pathname.split("/").filter(Boolean);
+const breadcrumbs = pathSegments.map((segment, index) => {
+  const href = "/" + pathSegments.slice(0, index + 1).join("/");
+  return {
+    text:
+      index === 0 && segment === "admin"
+        ? "Admin"
+        : index === pathSegments.length - 1 && title
+          ? title
+          : segment,
+    href,
+  };
+});
+---
+
+<h2 class="text-3xl font-bold mb-4">
+  <span
+    class="text-blue-400 text-ellipsis overflow-hidden w-[20ch] md:w-auto md:max-w-[32ch] whitespace-nowrap"
+  >
+    {title}
+  </span>
+</h2>
+<PageBreadcrumb breadcrumbs={breadcrumbs} pathname={pathname} />

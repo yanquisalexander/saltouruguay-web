@@ -1,4 +1,5 @@
 ---
+import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
 import TwitchProcessedEvents from "@/components/admin/TwitchProcessedEvents";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { getSession } from "auth-astro/server";
@@ -14,6 +15,10 @@ if (!session?.user.isAdmin) {
 
 <AdminLayout title="Eventos de Twitch" session={session}>
   <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <AdminPageHeader
+      pathname="/admin/system/twitch-events"
+      title="Eventos de Twitch"
+    />
     <div class="bg-red-500/20 p-4 rounded-lg mb-4">
       <p class="text-red-300 text-sm">
         Esta información es solo con <strong>fines de depuración</strong>, y

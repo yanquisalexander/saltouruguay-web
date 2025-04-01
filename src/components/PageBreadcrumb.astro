@@ -7,6 +7,10 @@ interface Props {
   pathname: string;
 }
 
+const PATH_TRANSLATIONS = {
+  system: "Sistema",
+};
+
 const { breadcrumbs, pathname } = Astro.props;
 ---
 
@@ -21,13 +25,19 @@ const { breadcrumbs, pathname } = Astro.props;
         {index < breadcrumbs.length - 1 ? (
           <>
             <a href={crumb.href} class="transition-colors hover:underline">
-              {crumb.text}
+              {crumb.text in PATH_TRANSLATIONS
+                ? PATH_TRANSLATIONS[
+                    crumb.text as keyof typeof PATH_TRANSLATIONS
+                  ]
+                : crumb.text}
             </a>
             <span aria-hidden="true">/</span>
           </>
         ) : (
           <span class="text-yellow-400 text-ellipsis overflow-hidden w-[20ch] md:w-auto md:max-w-[32ch] whitespace-nowrap">
-            {crumb.text}
+            {crumb.text in PATH_TRANSLATIONS
+              ? PATH_TRANSLATIONS[crumb.text as keyof typeof PATH_TRANSLATIONS]
+              : crumb.text}
           </span>
         )}
       </>
