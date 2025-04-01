@@ -9,7 +9,9 @@ import { SALTO_BROADCASTER_ID } from "@/config";
 import {
   LucideArrowRight,
   LucideBell,
+  LucideCalendar,
   LucideTrendingUpDown,
+  LucideTrophy,
   LucideUsers,
 } from "lucide-preact";
 import WarsCurrentInscriptions from "@/components/admin/WarsCurrentInscriptions.astro";
@@ -100,6 +102,23 @@ const BEAUTIFIED_STATS = [
     value: stats.newSignupsWeek,
     description: "Nuevos usuarios registrados en la última semana",
   },
+  /* 
+    Por ahora, son placeholders, ya que no hay sistema de torneos y eventos
+  */
+  {
+    id: "active-events",
+    icon: LucideCalendar,
+    title: "Eventos activos",
+    value: 0,
+    description: "0 eventos próximos",
+  },
+  {
+    id: "active-tournaments",
+    icon: LucideTrophy,
+    title: "Torneos activos",
+    value: 0,
+    description: "0 torneos activos",
+  },
 ];
 ---
 
@@ -122,9 +141,9 @@ const BEAUTIFIED_STATS = [
         BEAUTIFIED_STATS.map((stat) => (
           <div class="bg-neutral-900/50 rounded-lg p-4 border border-white/10 shadow-md">
             <div class="space-y-1.5 p-6 flex flex-row items-center justify-between pb-2">
-              <h3 class="tracking-tight text-sm font-medium flex gap-x-1">
-                <span class="ml-2">{stat.title}</span>
+              <h3 class="tracking-tight text-sm font-medium flex gap-x-1 items-center">
                 <stat.icon class="size-4 text-white" />
+                <span class="ml-2">{stat.title}</span>
               </h3>
             </div>
             <div class="p-6 pt-0">
