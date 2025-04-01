@@ -151,7 +151,11 @@ const BEAUTIFIED_STATS = [
             </div>
             <p class="text-xs text-neutral-600 flex items-center gap-1 mt-1">
               {stat.percentage !== undefined && stat.percentage !== null ? (
-                <span class="text-green-400">
+                <span
+                  class={
+                    stat.percentage > 0 ? "text-green-400" : "text-red-400"
+                  }
+                >
                   <LucideTrendingUpDown class="inline-block align-middle w-4 h-4 mr-1" />
                   {stat.percentage > 0 ? "+" : ""}
                   {stat.percentage}% {stat.percentageText}
