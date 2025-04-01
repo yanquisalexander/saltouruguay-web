@@ -206,7 +206,15 @@ export class TwitchEvents {
                         method: 'webhook',
                         secret: this.secret,
                     })
-                }
+                },
+                {
+                    name: "channel.subscription.end",
+                    fn: this.client.eventSub.subscribeToChannelSubscriptionEndEvents(broadcasterId, {
+                        callback: `https://${this.hostName}${this.callbackPath}`,
+                        method: 'webhook',
+                        secret: this.secret,
+                    })
+                },
             ];
 
             // Procesar todas las suscripciones en paralelo
@@ -223,6 +231,67 @@ export class TwitchEvents {
             }
         } catch (error) {
             this.log(`Unexpected error during subscription registration: ${error}`);
+            // No relanzamos el error para evitar que falle todo el proceso
+        }
+    }
+
+    async registerUserEventSub(userId: string): Promise<void> {
+        this.log(`Registering user-specific EventSub subscriptions for user ID: ${userId}`);
+
+        // Función auxiliar para manejar cada suscripción individualmente
+        const handleSubscription = async (subscriptionFn: Promise<any>, name: string) => {
+            try {
+                await subscriptionFn;
+                this.log(`Successfully registered user ${name} subscription`);
+                return true;
+            } catch (error: any) {
+                // Si es error 409 (conflicto/ya existe), lo ignoramos
+                if (error.status === 409 || (error.body && error.body.status === 409)) {
+                    this.log(`User subscription ${name} already exists, skipping`);
+                    return true;
+                }
+                // Cualquier otro error lo registramos pero continuamos
+                this.log(`Error registering user ${name} subscription: ${error}`);
+                return false;
+            }
+        };
+
+        try {
+            // Definir las suscripciones específicas del usuario
+            const subscriptions = [
+                {
+                    name: "user.update",
+                    fn: this.client.eventSub.subscribeToUserUpdateEvents(userId, {
+                        callback: `https://${this.hostName}${this.callbackPath}`,
+                        method: 'webhook',
+                        secret: this.secret,
+                    })
+                },
+                // Puedes añadir otros eventos específicos de usuario aquí
+                {
+                    name: "user.authorization.grant",
+                    fn: this.client.eventSub.subscribeToUserAuthorizationGrantEvents(userId, {
+                        callback: `https://${this.hostName}${this.callbackPath}`,
+                        method: 'webhook',
+                        secret: this.secret,
+                    })
+                }
+            ];
+
+            // Procesar todas las suscripciones en paralelo
+            const results = await Promise.all(
+                subscriptions.map(sub => handleSubscription(sub.fn, sub.name))
+            );
+
+            // Verificar si al menos una suscripción tuvo éxito
+            const successCount = results.filter(Boolean).length;
+            this.log(`Registered ${successCount}/${subscriptions.length} user-specific EventSub subscriptions`);
+
+            if (successCount === 0) {
+                this.log('Warning: No user-specific subscriptions were registered successfully');
+            }
+        } catch (error) {
+            this.log(`Unexpected error during user subscription registration: ${error}`);
             // No relanzamos el error para evitar que falle todo el proceso
         }
     }
