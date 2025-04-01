@@ -46,9 +46,8 @@ const categories = [
 
 export default function Sidebar({ session, pathname }: { session: Session | null, pathname: string }) {
     const [collapsed, setCollapsed] = useState(true);
-    const currentPath = pathname.split("/").slice(0, 3).join("/");
     const isActive = (path: string) => {
-        return currentPath === path
+        return pathname === path
     }
 
     return (
