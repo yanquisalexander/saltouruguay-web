@@ -32,7 +32,11 @@ const firstFeaturedEvent = events.find((event) => event.featured);
     <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {
         firstFeaturedEvent ? (
-          <EventCard event={firstFeaturedEvent} firstFeaturedEvent={true} />
+          <EventCard
+            event={firstFeaturedEvent}
+            firstFeaturedEvent={true}
+            client:idle
+          />
         ) : null
       }
 
@@ -43,7 +47,7 @@ const firstFeaturedEvent = events.find((event) => event.featured);
         events && events.length > 0 ? (
           events
             .filter((event) => event.id !== firstFeaturedEvent?.id)
-            .map((event) => <EventCard event={event} />)
+            .map((event) => <EventCard event={event} client:idle />)
         ) : (
           <p>No hay eventos disponibles.</p>
         )
