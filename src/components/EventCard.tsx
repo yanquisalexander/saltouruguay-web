@@ -103,7 +103,7 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
 
 
 // **Componente Badge**
-const Badge = ({ icon: Icon, text, className }: { icon?: any; text: string; className: string }) => (
+export const Badge = ({ icon: Icon, text, className }: { icon?: any; text: string; className: string }) => (
     <div class={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${className || ""}`}>
         {Icon && <Icon class="h-4 w-4 mr-2" />}
         {text}
@@ -112,7 +112,7 @@ const Badge = ({ icon: Icon, text, className }: { icon?: any; text: string; clas
 );
 
 // **Componente InfoRow**
-const InfoRow = ({ icon: Icon, text }: { icon?: LucideIcon; text: string }) => (
+export const InfoRow = ({ icon: Icon, text }: { icon?: LucideIcon; text: string }) => (
     <div class="flex items-center gap-1 text-sm text-muted-foreground">
         {Icon && <Icon class="h-4 w-4" />}
         <span>{text}</span>
