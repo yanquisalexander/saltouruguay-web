@@ -27,10 +27,10 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
     return (
         <a
             href={`/eventos/${event.id}`}
-            class={`rounded-lg border text-card-foreground shadow-sm hover:saturate-150 hover:scale-105 duration-300 cursor-pointer transition 
+            class={`rounded-lg border shadow-sm hover:saturate-150 hover:scale-105 duration-300 cursor-pointer transition 
                 ${firstFeaturedEvent
-                    ? "col-span-full bg-gradient-to-br from-electric-violet-500/10 via-yellow-500/10"
-                    : "border-white/50 bg-neutral-500/5"
+                    ? "col-span-full bg-gradient-to-br border-neutral-600 from-electric-violet-500/10 via-yellow-500/10"
+                    : "border-neutral-500/50 bg-neutral-500/5"
                 }`}>
             <div class="flex flex-col space-y-1.5 p-4 sm:p-6 pb-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0">
