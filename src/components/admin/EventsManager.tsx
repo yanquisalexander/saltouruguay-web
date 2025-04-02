@@ -455,6 +455,9 @@ export default function EventsManager() {
                 <table className="w-full caption-bottom text-sm">
                     <thead className="[&_tr]:border-b bg-[#13131f] sticky top-14 z-10">
                         <tr className="border-b border-[#1f1f2f]">
+                            <th className="h-12 px-4 text-left text-slate-400">
+
+                            </th>
                             <th className="h-12 px-4 text-left text-slate-400">Nombre</th>
                             <th className="h-12 px-4 text-left text-slate-400">Fecha y Hora</th>
                             <th className="h-12 px-4 text-left text-slate-400">Ubicación</th>
@@ -465,6 +468,14 @@ export default function EventsManager() {
                     <tbody>
                         {events.map(event => (
                             <tr key={event.id} className="border-b border-[#1f1f2f] bg-[#09090f]">
+                                <td class="">
+                                    <img
+                                        src={event.cover || "/og.webp"}
+                                        alt="Evento"
+                                        dragable="false"
+                                        className="aspect-video h-16 object-scale-down rounded-md"
+                                    />
+                                </td>
                                 <td className="p-4 text-slate-300">{event.name}</td>
                                 <td className="p-4 text-slate-300">{formatEventDuration(event)}</td>
                                 <td className="p-4 text-slate-300">{event.location ?? "No especificada"}</td>
