@@ -5,47 +5,49 @@ import type { getEventById } from "@/lib/events";
 
 import { useEffect, useState } from 'preact/hooks';
 
-// Función para calcular el estado de tiempo fuera del componente
-const getTimeStatus = (startDate: Date, endDate?: Date | null) => {
-    // Evitamos DateTime.local() durante SSR
-    if (typeof window === 'undefined') {
-        return { status: 0, text: "Calculando..." };
-    }
-
-    const now = DateTime.local();
-    const start = DateTime.fromISO(startDate.toISOString()).setZone('local');
-    const end = endDate ? DateTime.fromISO(endDate.toISOString()).setZone('local') : null;
-
-    if (now < start) return { status: 0, text: start.toRelative() || "Próximamente" };
-    if (end && now > end) return { status: 2, text: `Finalizado ${end.toRelative() || ""}` };
-    return { status: 1, text: `En curso desde ${start.toRelative() || ""} hasta ${end?.toRelative() || ""}` };
-};
-
 export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: boolean, event: Awaited<ReturnType<typeof getEventById>> }) => {
     if (!event) return null;
 
-    // Estado inicial seguro para SSR
-    const [status, setStatus] = useState<{ status: number, text: string }>({ status: 0, text: "Calculando..." });
-    const [isMounted, setIsMounted] = useState(false);
+    // Usamos un valor estable inicial para SSR
+    const initialStatus = { status: 0, text: "Calculando..." };
+    const [status, setStatus] = useState(initialStatus);
 
+    // Formatear la fecha para SSR de manera consistente
+    // Importante: usar una forma que genere el mismo resultado en servidor y cliente
+    const formattedDate = event.startDate
+        ? DateTime.fromISO(event.startDate.toISOString()).toFormat("EEEE, dd 'de' LLLL 'a las' HH:mm")
+        : "Fecha no disponible";
+
+    // Efecto que se ejecuta SOLO en el cliente, después de la hidratación
     useEffect(() => {
-        // Marcamos que el componente está montado (solo ocurre en el cliente)
-        setIsMounted(true);
-        // Actualizamos el estado con los cálculos que dependen del navegador
-        setStatus(getTimeStatus(event.startDate, event.endDate));
+        // Función para calcular el estado de tiempo (solo en cliente)
+        const getTimeStatus = () => {
+            const now = DateTime.local();
+            const start = DateTime.fromISO(event.startDate.toISOString());
+            const end = event.endDate ? DateTime.fromISO(event.endDate.toISOString()) : null;
+
+            if (now < start) return { status: 0, text: start.toRelative() || "Próximamente" };
+            if (end && now > end) return { status: 2, text: `Finalizado ${end.toRelative() || ""}` };
+            return { status: 1, text: `En curso desde ${start.toRelative() || ""} hasta ${end?.toRelative() || ""}` };
+        };
+
+        // Solo actualizamos el estado después de la hidratación inicial
+        // Esto evita diferencias entre SSR y cliente
+        const timeoutId = setTimeout(() => {
+            setStatus(getTimeStatus());
+        }, 0);
 
         // Configuramos un intervalo para actualizar el estado regularmente
         const intervalId = setInterval(() => {
-            setStatus(getTimeStatus(event.startDate, event.endDate));
+            setStatus(getTimeStatus());
         }, 60000); // Actualizar cada minuto
 
-        return () => clearInterval(intervalId);
+        return () => {
+            clearTimeout(timeoutId);
+            // @ts-ignore
+            clearInterval(intervalId);
+        };
     }, [event.startDate, event.endDate]);
-
-    // Renderizado seguro para SSR
-    const formattedDate = typeof window !== 'undefined'
-        ? DateTime.fromISO(event.startDate.toISOString()).setLocale('es').toFormat("EEEE, dd 'de' LLLL 'a las' HH:mm")
-        : "Cargando fecha...";
 
     return (
         <a
