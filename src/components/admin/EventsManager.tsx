@@ -152,18 +152,48 @@ export default function EventsManager() {
         setIsEditing(false);
     };
 
-    const createEvent = async () => {
-        if (!newEvent.name) {
+    const convertToUTC = (event: any) => {
+        const startDate = DateTime.fromISO(event.startDate).toUTC().toISO();
+        const endDate = event.endDate ? DateTime.fromISO(event.endDate).toUTC().toISO() : null;
+
+        return {
+            ...event,
+            startDate, // Fecha convertida a UTC
+            endDate // Fecha de fin convertida a UTC (si existe)
+        };
+    };
+
+    const validateEvent = (event: any) => {
+        if (!event.name) {
             toast.error("El nombre es obligatorio");
-            return;
+            return false;
         }
-        if (!newEvent.startDate) {
+        if (!event.startDate) {
             toast.error("La fecha de inicio es obligatoria");
+            return false;
+        }
+
+        // Validación para asegurarse de que la fecha de fin no sea antes de la fecha de inicio
+        const startDate = new Date(event.startDate);
+        const endDate = event.endDate ? new Date(event.endDate) : null;
+
+        if (endDate && endDate < startDate) {
+            toast.error("La fecha de finalización no puede ser anterior a la de inicio");
+            return false;
+        }
+
+        return true;
+    };
+
+    const createEvent = async () => {
+        if (!validateEvent(newEvent)) {
             return;
         }
 
+        const eventWithUTC = convertToUTC(newEvent); // Convertir las fechas a UTC
+
         try {
-            const { error } = await actions.admin.events.createEvent(newEvent);
+            const { error } = await actions.admin.events.createEvent(eventWithUTC);
             if (error) {
                 toast.error("Error al crear el evento");
                 return;
@@ -180,26 +210,14 @@ export default function EventsManager() {
     const updateEvent = async () => {
         if (!currentEvent) return;
 
-        if (!currentEvent.name) {
-            toast.error("El nombre es obligatorio");
-            return;
-        }
-        if (!currentEvent.startDate) {
-            toast.error("La fecha de inicio es obligatoria");
+        if (!validateEvent(currentEvent)) {
             return;
         }
 
-        // Validación para asegurarse de que la fecha de fin no sea antes de la fecha de inicio
-        const startDate = new Date(currentEvent.startDate);
-        const endDate = currentEvent.endDate ? new Date(currentEvent.endDate) : null;
-
-        if (endDate && endDate < startDate) {
-            toast.error("La fecha de finalización no puede ser anterior a la de inicio");
-            return;
-        }
+        const eventWithUTC = convertToUTC(currentEvent); // Convertir las fechas a UTC
 
         try {
-            const { error } = await actions.admin.events.updateEvent(currentEvent);
+            const { error } = await actions.admin.events.updateEvent(eventWithUTC);
             if (error) {
                 toast.error("Error al actualizar el evento");
                 return;
@@ -234,15 +252,10 @@ export default function EventsManager() {
 
     const handleDateChange = (e: Event, field: string, isNewEvent = true) => {
         const picker = e.target as HTMLInputElement;
-        const localDate = DateTime.fromISO(picker.value).setZone('local');
-        const utcDate = localDate.toUTC();
-
-        const isoUtcDate = utcDate.toISO();
-
         if (isNewEvent) {
-            setNewEvent({ ...newEvent, [field]: isoUtcDate });
+            setNewEvent({ ...newEvent, [field]: picker.value });
         } else if (currentEvent) {
-            setCurrentEvent({ ...currentEvent, [field]: isoUtcDate });
+            setCurrentEvent({ ...currentEvent, [field]: picker.value });
         }
     };
 
