@@ -1,0 +1,19 @@
+---
+import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session?.user.isAdmin) {
+  return new Response(null, {
+    status: 404,
+  });
+}
+---
+
+<AdminLayout title="Eventos" session={session}>
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <AdminPageHeader title="Eventos" pathname="/admin/eventos" />
+  </div>
+</AdminLayout>

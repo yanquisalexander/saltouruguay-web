@@ -27,7 +27,7 @@ class Cache {
         }
 
         this.defaultTTL = options.ttl;
-        this.client.on("connect", () => console.log("Redis connected"));
+        this.client.on("connect", () => { });
         this.client.on("error", (err: Error) => console.error("Redis error:", err));
     }
 
