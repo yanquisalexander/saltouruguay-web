@@ -6,6 +6,10 @@ import { EventCard } from "@/components/EventCard.tsx";
 
 const { events } = await getPaginatedEvents(1, 10);
 const firstFeaturedEvent = events.find((event) => event.featured);
+
+const eventsWithoutFirstFeaturedEvent = events.filter(
+  (event) => event.id !== firstFeaturedEvent?.id
+);
 ---
 
 <Layout
@@ -41,11 +45,11 @@ const firstFeaturedEvent = events.find((event) => event.featured);
         Resto de eventos, excluyendo el primero destacado
       -->
       {
-        events &&
-          events.length > 0 &&
-          events
-            .filter((event) => event.id !== firstFeaturedEvent?.id)
-            .map((event) => <EventCard event={event} client:idle />)
+        eventsWithoutFirstFeaturedEvent &&
+          eventsWithoutFirstFeaturedEvent.length > 0 &&
+          eventsWithoutFirstFeaturedEvent.map((event) => (
+            <EventCard event={event} client:idle />
+          ))
       }
     </div>
   </div>
