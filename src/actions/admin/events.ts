@@ -32,10 +32,11 @@ export const events = {
             id: z.number(),
             name: z.string(),
             description: z.string(),
+            location: z.string().optional(),
             startDate: z.string(),
             endDate: z.string().optional(),
         }),
-        handler: async ({ id, name, description, startDate, endDate }, { request }) => {
+        handler: async ({ id, name, description, startDate, endDate, location }, { request }) => {
             const session = await getSession(request);
 
             if (!session?.user.isAdmin) {
@@ -48,6 +49,7 @@ export const events = {
             const event = await updateEvent(id, {
                 name,
                 description,
+                location,
                 startDate: new Date(startDate),
                 endDate: endDate ? new Date(endDate) : undefined,
             });

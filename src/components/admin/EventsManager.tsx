@@ -11,7 +11,6 @@ export default function EventsManager() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
     const limit = 10;
 
     // Refs
@@ -33,10 +32,12 @@ export default function EventsManager() {
     const [currentEvent, setCurrentEvent] = useState<null | {
         id: number;
         name: string;
-        startDate: string;
-        endDate: string;
+        startDate: string | null;
+        endDate: string | null;
         location: string;
         description: string;
+        // Guardar el evento original completo para referencias
+        originalEvent: any;
     }>(null);
 
     // Data fetching
@@ -57,11 +58,7 @@ export default function EventsManager() {
             }
 
             const newEvents = data.events || [];
-
-            // Si no hay eventos nuevos o son menos que el límite, no hay más para cargar
             setHasMore(newEvents.length >= limit);
-
-            // Actualizar la lista de eventos
             setEvents(prev => replace ? newEvents : [...prev, ...newEvents]);
         } catch (error) {
             console.error("Error fetching events:", error);
@@ -74,9 +71,9 @@ export default function EventsManager() {
     // Initialize data load
     useEffect(() => {
         fetchEvents(1, true);
-    }, []); // Eliminada la dependencia fetchEvents para evitar cargas iniciales múltiples
+    }, []);
 
-    // Function to load more events - separate from the IntersectionObserver
+    // Function to load more events
     const loadMoreEvents = useCallback(() => {
         if (loading || !hasMore) return;
         const nextPage = page + 1;
@@ -84,15 +81,13 @@ export default function EventsManager() {
         fetchEvents(nextPage);
     }, [loading, hasMore, page, fetchEvents]);
 
-    // Infinite scroll setup - Corregido para evitar bucle infinito
+    // Infinite scroll setup
     useEffect(() => {
-        // Limpiar cualquier observer anterior
         if (observerRef.current) {
             observerRef.current.disconnect();
             observerRef.current = null;
         }
 
-        // No crear un nuevo observer si no hay más elementos o estamos cargando
         if (!hasMore || loading) return;
 
         const observer = new IntersectionObserver(
@@ -101,7 +96,7 @@ export default function EventsManager() {
                     loadMoreEvents();
                 }
             },
-            { threshold: 0.1 } // Reducido el threshold para que sea menos sensible
+            { threshold: 0.1 }
         );
 
         const currentRef = loadMoreRef.current;
@@ -112,12 +107,12 @@ export default function EventsManager() {
         observerRef.current = observer;
 
         return () => {
-            if (currentRef && observer) {
-                observer.unobserve(currentRef);
+            if (observer) {
+                if (currentRef) observer.unobserve(currentRef);
+                observer.disconnect();
             }
-            observer.disconnect();
         };
-    }, [loading, hasMore, page]); // Quitado loadMoreEvents de las dependencias
+    }, [loading, hasMore, loadMoreEvents]);
 
     // Utility functions
     const refreshEvents = () => {
@@ -126,33 +121,78 @@ export default function EventsManager() {
         fetchEvents(1, true);
     };
 
-    const convertToUTC = (event: any) => {
-        const startDate = DateTime.fromISO(event.startDate).toUTC().toISO();
-        const endDate = event.endDate ? DateTime.fromISO(event.endDate).toUTC().toISO() : null;
+    // Lógica de fechas completamente rehecha
+    const prepareEventForSubmission = (formEvent: any, originalEvent: any = null) => {
+        // Crear una copia para no modificar el original
+        const preparedEvent = { ...formEvent };
 
-        return {
-            ...event,
-            startDate,
-            endDate
-        };
+        // CASO 1: Evento nuevo - solo convertir fechas si existen
+        if (!originalEvent) {
+            if (formEvent.startDate) {
+                preparedEvent.startDate = DateTime.fromISO(formEvent.startDate).toUTC().toISO();
+            }
+
+            if (formEvent.endDate) {
+                preparedEvent.endDate = DateTime.fromISO(formEvent.endDate).toUTC().toISO();
+            }
+
+            return preparedEvent;
+        }
+
+        // CASO 2: Edición de un evento existente
+
+        // Preservar ID siempre
+        preparedEvent.id = originalEvent.id;
+
+        // Si el formulario tiene una fecha de inicio y fue modificada, convertirla
+        if (formEvent.startDate) {
+            preparedEvent.startDate = DateTime.fromISO(formEvent.startDate).toUTC().toISO();
+        }
+        // Si el formulario NO tiene fecha de inicio pero el evento original sí, usamos la original
+        else if (originalEvent.startDate) {
+            // Usamos directamente el objeto Date original
+            preparedEvent.startDate = originalEvent.startDate;
+        }
+
+        // Mismo proceso para la fecha de fin
+        if (formEvent.endDate) {
+            preparedEvent.endDate = DateTime.fromISO(formEvent.endDate).toUTC().toISO();
+        }
+        else if (originalEvent.endDate) {
+            preparedEvent.endDate = originalEvent.endDate;
+        }
+
+        return preparedEvent;
     };
 
     const validateEvent = (event: any) => {
-        if (!event.name) {
+        if (!event.name || event.name.trim() === "") {
             toast.error("El nombre es obligatorio");
             return false;
         }
-        if (!event.startDate) {
+
+        // Para nuevos eventos, la fecha de inicio es obligatoria
+        // Para ediciones, permitimos actualizar solo otros campos
+        if (!event.startDate && !event.originalEvent?.startDate) {
             toast.error("La fecha de inicio es obligatoria");
             return false;
         }
 
-        const startDate = new Date(event.startDate);
-        const endDate = event.endDate ? new Date(event.endDate) : null;
+        // Si ambas fechas están presentes, validamos que la fecha fin sea posterior
+        if (event.startDate && event.endDate) {
+            try {
+                const startDate = DateTime.fromISO(event.startDate);
+                const endDate = DateTime.fromISO(event.endDate);
 
-        if (endDate && endDate < startDate) {
-            toast.error("La fecha de finalización no puede ser anterior a la de inicio");
-            return false;
+                if (endDate < startDate) {
+                    toast.error("La fecha de finalización no puede ser anterior a la de inicio");
+                    return false;
+                }
+            } catch (e) {
+                console.error("Error validando fechas:", e);
+                toast.error("Formato de fechas inválido");
+                return false;
+            }
         }
 
         return true;
@@ -167,26 +207,36 @@ export default function EventsManager() {
     };
 
     const openEditorDialog = (event: typeof events[number]) => {
-        const startDate = DateTime.fromISO(event.startDate.toISOString()).setZone('local');
-        const endDate = event.endDate ? DateTime.fromISO(event.endDate.toISOString()).setZone('local') : null;
+        try {
+            // Formatea las fechas para el formulario si existen
+            const startDateFormatted = event.startDate
+                ? DateTime.fromJSDate(event.startDate).toFormat("yyyy-MM-dd'T'HH:mm")
+                : "";
 
-        setCurrentEvent({
-            id: event.id,
-            name: event.name,
-            startDate: startDate.toFormat('yyyy-LL-dd HH:mm'),
-            endDate: endDate ? endDate.toFormat('yyyy-LL-dd HH:mm') : "",
-            location: event.location || "",
-            description: event.description || ""
-        });
+            const endDateFormatted = event.endDate
+                ? DateTime.fromJSDate(event.endDate).toFormat("yyyy-MM-dd'T'HH:mm")
+                : "";
 
-        setIsEditing(true);
-        editorDialogRef.current?.showModal();
+            setCurrentEvent({
+                id: event.id,
+                name: event.name,
+                startDate: startDateFormatted,
+                endDate: endDateFormatted,
+                location: event.location || "",
+                description: event.description || "",
+                originalEvent: event // Guardar el evento original completo
+            });
+
+            editorDialogRef.current?.showModal();
+        } catch (error) {
+            console.error("Error al abrir el diálogo de edición:", error);
+            toast.error("Error al cargar los datos del evento");
+        }
     };
 
     const closeEditorDialog = () => {
         editorDialogRef.current?.close();
         setCurrentEvent(null);
-        setIsEditing(false);
     };
 
     // Event CRUD operations
@@ -194,8 +244,8 @@ export default function EventsManager() {
         if (!validateEvent(newEvent)) return;
 
         try {
-            const eventWithUTC = convertToUTC(newEvent);
-            const { error } = await actions.admin.events.createEvent(eventWithUTC);
+            const eventToSubmit = prepareEventForSubmission(newEvent);
+            const { error } = await actions.admin.events.createEvent(eventToSubmit);
 
             if (error) {
                 toast.error("Error al crear el evento");
@@ -212,11 +262,17 @@ export default function EventsManager() {
     };
 
     const updateEvent = async () => {
-        if (!currentEvent || !validateEvent(currentEvent)) return;
+        if (!currentEvent) return;
+        if (!validateEvent(currentEvent)) return;
 
         try {
-            const eventWithUTC = convertToUTC(currentEvent);
-            const { error } = await actions.admin.events.updateEvent(eventWithUTC);
+            // Usar la función optimizada para preparar el evento
+            const eventToSubmit = prepareEventForSubmission(currentEvent, currentEvent.originalEvent);
+
+            // Log para debug
+            console.log("Enviando actualización:", eventToSubmit);
+
+            const { error } = await actions.admin.events.updateEvent(eventToSubmit);
 
             if (error) {
                 toast.error("Error al actualizar el evento");
@@ -272,8 +328,12 @@ export default function EventsManager() {
 
     // Display formatting
     const formatEventDuration = (event: typeof events[number]) => {
-        const startDate = DateTime.fromISO(event.startDate.toISOString());
-        const endDate = event.endDate ? DateTime.fromISO(event.endDate.toISOString()) : null;
+        if (!event.startDate) {
+            return <span className="text-amber-400">Fecha no definida</span>;
+        }
+
+        const startDate = DateTime.fromJSDate(event.startDate);
+        const endDate = event.endDate ? DateTime.fromJSDate(event.endDate) : null;
         const now = DateTime.local();
 
         if (!endDate) {
@@ -286,7 +346,7 @@ export default function EventsManager() {
 
         if (endDate < now) {
             return (
-                <span title={endDate.toLocaleString(DateTime.DATETIME_FULL)}>
+                <span title={endDate.toLocaleString(DateTime.DATETIME_FULL)} className="text-gray-400">
                     Finalizado hace {endDate.toRelative()}
                 </span>
             );
@@ -300,7 +360,8 @@ export default function EventsManager() {
             return (
                 <span title={percentageElapsed < 50
                     ? startDate.toLocaleString(DateTime.DATETIME_FULL)
-                    : endDate.toLocaleString(DateTime.DATETIME_FULL)}>
+                    : endDate.toLocaleString(DateTime.DATETIME_FULL)}
+                    className="text-green-400">
                     {percentageElapsed < 50
                         ? `Comenzado hace ${startDate.toRelative()}`
                         : `Finaliza en ${endDate.toRelative()}`}
@@ -310,7 +371,7 @@ export default function EventsManager() {
 
         if (startDate > now) {
             return (
-                <span title={startDate.toLocaleString(DateTime.DATETIME_FULL)}>
+                <span title={startDate.toLocaleString(DateTime.DATETIME_FULL)} className="text-blue-400">
                     Comienza en {startDate.toRelative()}
                 </span>
             );
@@ -329,6 +390,7 @@ export default function EventsManager() {
                     value={event.name}
                     onInput={(e) => handleInputChange(e, 'name', isNew)}
                     className="w-full p-2 bg-[#09090f] text-white border border-gray-700 rounded-md"
+                    placeholder="Nombre del evento"
                 />
             </div>
 
@@ -336,7 +398,7 @@ export default function EventsManager() {
                 <label className="block text-sm text-gray-300">Fecha de Inicio</label>
                 <input
                     type="datetime-local"
-                    value={event.startDate}
+                    value={event.startDate || ""}
                     onInput={(e) => handleDateChange(e, 'startDate', isNew)}
                     className="w-full p-2 bg-[#09090f] text-white border border-gray-700 rounded-md"
                     style={{ colorScheme: "dark" }}
@@ -347,7 +409,7 @@ export default function EventsManager() {
                 <label className="block text-sm text-gray-300">Fecha de Fin (opcional)</label>
                 <input
                     type="datetime-local"
-                    value={event.endDate}
+                    value={event.endDate || ""}
                     onInput={(e) => handleDateChange(e, 'endDate', isNew)}
                     className="w-full p-2 bg-[#09090f] text-white border border-gray-700 rounded-md"
                     style={{ colorScheme: "dark" }}
@@ -358,18 +420,20 @@ export default function EventsManager() {
                 <label className="block text-sm text-gray-300">Ubicación</label>
                 <input
                     type="text"
-                    value={event.location}
+                    value={event.location || ""}
                     onInput={(e) => handleInputChange(e, 'location', isNew)}
                     className="w-full p-2 bg-[#09090f] text-white border border-gray-700 rounded-md"
+                    placeholder="Ubicación (opcional)"
                 />
             </div>
 
             <div>
                 <label className="block text-sm text-gray-300">Descripción</label>
                 <textarea
-                    value={event.description}
+                    value={event.description || ""}
                     onInput={(e) => handleInputChange(e, 'description', isNew)}
                     className="w-full p-2 bg-[#09090f] text-white border border-gray-700 rounded-md h-32"
+                    placeholder="Descripción del evento (opcional)"
                 />
             </div>
         </div>
@@ -378,7 +442,7 @@ export default function EventsManager() {
     return (
         <div className="relative w-full overflow-auto rounded-md">
             <div className="flex justify-between mb-4 sticky top-0 z-10 py-3">
-                <h2 className="text-lg font-semibold text-slate-400"></h2>
+                <h2 className="text-lg font-semibold text-slate-400">Administrador de Eventos</h2>
                 <button
                     onClick={openDialog}
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-3 py-2 text-white rounded-md"
@@ -406,8 +470,8 @@ export default function EventsManager() {
                                 <td className="p-4 text-slate-300">{event.location ?? "No especificada"}</td>
                                 <td className="p-4 text-slate-300">
                                     {event.updatedAt ? (
-                                        <span title={DateTime.fromISO(event.updatedAt.toISOString()).toLocal().toLocaleString()}>
-                                            {DateTime.fromISO(event.updatedAt.toISOString()).toLocal().toRelative()}
+                                        <span title={DateTime.fromJSDate(event.updatedAt).toLocaleString()}>
+                                            {DateTime.fromJSDate(event.updatedAt).toRelative()}
                                         </span>
                                     ) : (
                                         "Nunca"
@@ -441,7 +505,6 @@ export default function EventsManager() {
                     </tbody>
                 </table>
 
-                {/* Este div debe estar fuera de la vista inicial hasta que se haga scroll */}
                 {(hasMore || loading) && (
                     <div
                         ref={loadMoreRef}
