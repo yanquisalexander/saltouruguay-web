@@ -472,7 +472,7 @@ export default function EventsManager() {
                                     <img
                                         src={event.cover || "/og.webp"}
                                         alt="Evento"
-                                        dragable="false"
+                                        draggable={false}
                                         className="aspect-video h-16 object-scale-down rounded-md"
                                     />
                                 </td>
