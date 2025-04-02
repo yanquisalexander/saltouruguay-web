@@ -1,7 +1,6 @@
 import { h } from 'preact';
 import { LucideUsers, LucideCalendar, LucideClock, LucideStar, type LucideIcon } from 'lucide-preact';
 import { DateTime } from 'luxon';
-import clsx from 'clsx';
 import type { getEventById } from "@/lib/events";
 
 export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: boolean, event: Awaited<ReturnType<typeof getEventById>> }) => {
@@ -22,12 +21,11 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
     return (
         <a
             href={`/eventos/${event.id}`}
-            class={clsx(
-                "rounded-lg border text-card-foreground shadow-sm hover:saturate-150 hover:scale-105 duration-300 cursor-pointer transition",
-                firstFeaturedEvent
-                    ? "col-span-full  bg-gradient-to-br from-electric-violet-500/10 via-yellow-500/10"
+            class={`rounded-lg border text-card-foreground shadow-sm hover:saturate-150 hover:scale-105 duration-300 cursor-pointer transition 
+                ${firstFeaturedEvent
+                    ? "col-span-full bg-gradient-to-br from-electric-violet-500/10 via-yellow-500/10"
                     : "border-white/50 bg-neutral-500/5"
-            )}>
+                }`}>
             <div class="flex flex-col space-y-1.5 p-4 sm:p-6 pb-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0">
                     <div class="space-y-1 w-full sm:w-auto">
@@ -73,10 +71,13 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
                     </div>
                 </div>
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mt-4">
-                    <div class={clsx(
-                        "flex items-center gap-1 text-sm",
-                        status?.status === 0 ? "text-green-500" : status?.status === 1 ? "text-yellow-500" : "text-red-500"
-                    )}>
+                    <div class={`flex items-center gap-1 text-sm ${status?.status === 0
+                        ? "text-green-500"
+                        : status?.status === 1
+                            ? "text-yellow-500"
+                            : "text-red-500"
+                        }`}
+                    >
                         <LucideClock class="h-4 w-4" />
                         <span>{status?.text}</span>
                     </div>
@@ -98,10 +99,11 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
 
 // **Componente Badge**
 const Badge = ({ icon: Icon, text, className }: { icon?: any; text: string; className: string }) => (
-    <div class={clsx("inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold", className)}>
+    <div class={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${className || ""}`}>
         {Icon && <Icon class="h-4 w-4 mr-2" />}
         {text}
     </div>
+
 );
 
 // **Componente InfoRow**
