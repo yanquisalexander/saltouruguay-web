@@ -85,43 +85,67 @@ const assistants = await getEventAssistants(event.id);
         </article>
       </div>
 
-      <aside>
-        <div class="space-y-4">
-          <div
-            class="bg-neutral-800/10 rounded-lg border border-neutral-800 p-4"
-          >
-            <header class="flex flex-col space-y-1.5 p-6">
-              <h3 class="text-2xl font-semibold leading-none tracking-tight">
-                Detalles del evento
-              </h3>
-            </header>
-            <div class="p-6 pt-0 space-y-4">
-              <div class="flex items-center gap-3">
-                <LucideCalendar class="h-5 w-5 text-neutral-300" />
-                <div>
-                  <p class="text-sm font-semibold">Fecha y hora</p><p
-                    class="text-sm"
-                  >
-                    {
-                      DateTime.fromISO(event.startDate.toISOString()).toFormat(
-                        "dd LLLL yyyy"
-                      )
-                    } a las {
-                      DateTime.fromISO(event.startDate.toISOString()).toFormat(
-                        "HH:mm"
-                      )
-                    }
-                  </p>
-                </div>
+      <aside class="flex flex-col space-y-6">
+        <div class="bg-neutral-800/10 rounded-lg border border-neutral-800 p-4">
+          <header class="flex flex-col space-y-1.5 p-6">
+            <h3 class="text-2xl font-semibold leading-none tracking-tight">
+              Detalles del evento
+            </h3>
+          </header>
+          <div class="p-6 pt-0 space-y-4">
+            <div class="flex items-center gap-3">
+              <LucideCalendar class="h-5 w-5 text-neutral-300" />
+              <div>
+                <p class="text-sm font-semibold">Fecha y hora</p><p
+                  class="text-sm"
+                >
+                  {
+                    DateTime.fromISO(event.startDate.toISOString()).toFormat(
+                      "dd LLLL yyyy"
+                    )
+                  } a las {
+                    DateTime.fromISO(event.startDate.toISOString()).toFormat(
+                      "HH:mm"
+                    )
+                  }
+                </p>
               </div>
-              <div class="flex items-center gap-3">
-                <LucideUsers class="h-5 w-5 text-neutral-300" />
-                <div>
-                  <p class="text-sm font-semibold">Asistentes</p>
-                  <p class="text-sm">
-                    {assistants.length} asistentes
-                  </p>
-                </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <LucideUsers class="h-5 w-5 text-neutral-300" />
+              <div>
+                <p class="text-sm font-semibold">Asistentes</p>
+                <p class="text-sm">
+                  {assistants.length} asistentes
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!--  -->
+
+        <div class="bg-neutral-800/10 rounded-lg border border-neutral-800 p-4">
+          <header class="flex flex-col space-y-1.5 p-6">
+            <h3 class="text-2xl font-semibold leading-none tracking-tight">
+              Organizadores
+            </h3>
+          </header>
+          <div class="p-6 pt-0 space-y-4">
+            <div class="flex items-center gap-3">
+              <span
+                class="relative flex shrink-0 overflow-hidden rounded-full h-10 w-10 border-2 border-primary"
+                ><img
+                  class="aspect-square h-full w-full"
+                  alt={event.mainOrganizer.displayName}
+                  src={event.mainOrganizer.avatar!}
+                /></span
+              ><div>
+                <p class="font-medium">
+                  {event.mainOrganizer.displayName}
+                </p><p class="text-xs text-neutral-500">
+                  Organizador principal
+                </p>
               </div>
             </div>
           </div>
