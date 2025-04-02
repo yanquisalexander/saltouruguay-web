@@ -341,7 +341,16 @@ export default function EventsManager() {
                                 <td className="p-4 text-slate-300">{event.name}</td>
                                 <td className="p-4 text-slate-300">{formatEventDuration(event)}</td>
                                 <td className="p-4 text-slate-300">{event.location ?? "No especificada"}</td>
-                                <td className="p-4 text-slate-300">{new Date(event.updatedAt).toLocaleString()}</td>
+                                <td className="p-4 text-slate-300">
+
+                                    {event.updatedAt ? (
+                                        <span title={DateTime.fromISO(event.updatedAt.toISOString()).toLocal().toLocaleString()}>
+                                            {DateTime.fromISO(event.updatedAt.toISOString()).toLocal().toRelative()}
+                                        </span>
+                                    ) : (
+                                        "Nunca"
+                                    )}
+                                </td>
                                 <td className="p-4">
                                     <div className="flex gap-2">
                                         <button
