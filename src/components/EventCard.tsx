@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { LucideUsers, LucideCalendar, LucideClock, LucideStar } from 'lucide-preact';
+import { LucideUsers, LucideCalendar, LucideClock, LucideStar, type LucideIcon } from 'lucide-preact';
 import { DateTime } from 'luxon';
 import clsx from 'clsx';
 import type { getEventById } from "@/lib/events";
@@ -61,9 +61,14 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
                     <div class="flex-1 flex flex-col mt-3 sm:mt-0">
                         <p class="text-sm">{event.description}</p>
                         <div class="mt-4 space-y-2">
-                            <InfoRow text={`Organizado por: ${event.mainOrganizer.displayName}`} />
+                            <div class="flex flex-col gap-1 text-sm">
+                                <span class="font-semibold">Organizador</span>
+                                <div class="flex items-center gap-2">
+                                    <img src={event.mainOrganizer.avatar!} alt="Organizador" class="w-6 h-6 rounded-full" />
+                                    <span class="font-semibold">{event.mainOrganizer.displayName}</span>
+                                </div>
+                            </div>
                             {event.platform && <InfoRow text="Plataforma: Twitch" />}
-                            <InfoRow text="Participación: Abierta a todos" />
                         </div>
                     </div>
                 </div>
@@ -100,7 +105,7 @@ const Badge = ({ icon: Icon, text, className }: { icon?: any; text: string; clas
 );
 
 // **Componente InfoRow**
-const InfoRow = ({ icon: Icon, text }: { icon?: any; text: string }) => (
+const InfoRow = ({ icon: Icon, text }: { icon?: LucideIcon; text: string }) => (
     <div class="flex items-center gap-1 text-sm text-muted-foreground">
         {Icon && <Icon class="h-4 w-4" />}
         <span>{text}</span>
