@@ -1,0 +1,106 @@
+import { h } from 'preact';
+import { LucideUsers, LucideCalendar, LucideClock, LucideStar } from 'lucide-preact';
+import { DateTime } from 'luxon';
+import clsx from 'clsx';
+import type { getEventById } from "@/lib/events";
+
+export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: boolean, event: Awaited<ReturnType<typeof getEventById>> }) => {
+    if (!event) return null;
+
+    const getTimeStatus = (startDate: Date, endDate?: Date | null) => {
+        const now = DateTime.local();
+        const start = DateTime.fromISO(startDate.toISOString()).setZone('local');
+        const end = endDate ? DateTime.fromISO(endDate.toISOString()).setZone('local') : null;
+
+        if (now < start) return { status: 0, text: start.toRelative() };
+        if (end && now > end) return { status: 2, text: `Finalizado ${end.toRelative()}` };
+        return { status: 1, text: `En curso desde ${start.toRelative()} hasta ${end?.toRelative()}` };
+    };
+
+    const status = getTimeStatus(event.startDate, event.endDate);
+
+    return (
+        <div class={clsx(
+            "rounded-lg border text-card-foreground shadow-sm",
+            firstFeaturedEvent
+                ? "col-span-full bg-gradient-to-br from-electric-violet-500/10 via-yellow-500/10"
+                : "border-white/50 bg-neutral-500/5"
+        )}>
+            <div class="flex flex-col space-y-1.5 p-4 sm:p-6 pb-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0">
+                    <div class="space-y-1 w-full sm:w-auto">
+                        <div class="flex flex-wrap items-center gap-2">
+                            {event.featured && <Badge icon={LucideStar} text="Destacado" className="bg-primary text-primary-foreground" />}
+                            {status?.status === 0 && <Badge text="Próximo" className="bg-blue-500/10 text-blue-500" />}
+                            {status?.status === 1 && <Badge text="En curso" className="bg-yellow-500/10 text-yellow-500" />}
+                            {status?.status === 2 && <Badge icon={LucideClock} text="Finalizado" className="bg-red-500/10 text-red-500" />}
+                            <Badge text="Stream especial" className="bg-purple-500/10 text-purple-500" />
+                        </div>
+                        <h2 class="text-xl sm:text-2xl font-rubik font-semibold pt-2">{event.name}</h2>
+                    </div>
+                    <div class="flex flex-col items-start sm:items-end mt-2 sm:mt-0">
+                        <InfoRow icon={LucideUsers} text={`${event.assistants.length} confirmados`} />
+                        <InfoRow
+                            icon={LucideCalendar}
+                            text={DateTime.fromISO(event.startDate.toISOString()).setLocale('es').toFormat("EEEE, dd 'de' LLLL 'a las' HH:mm")}
+                        />
+
+
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row items-start gap-4 mt-4">
+                    <img
+                        src={event.cover || "/og.webp"}
+                        alt={`Portada de ${event.name}`}
+                        width={240}
+                        height={140}
+                        class="rounded-md object-cover w-full aspect-video max-w-[200px] sm:w-60 h-auto"
+                    />
+                    <div class="flex-1 flex flex-col mt-3 sm:mt-0">
+                        <p class="text-sm">{event.description}</p>
+                        <div class="mt-4 space-y-2">
+                            <InfoRow text={`Organizado por: ${event.mainOrganizer.displayName}`} />
+                            {event.platform && <InfoRow text="Plataforma: Twitch" />}
+                            <InfoRow text="Participación: Abierta a todos" />
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mt-4">
+                    <div class={clsx(
+                        "flex items-center gap-1 text-sm",
+                        status?.status === 0 ? "text-green-500" : status?.status === 1 ? "text-yellow-500" : "text-red-500"
+                    )}>
+                        <LucideClock class="h-4 w-4" />
+                        <span>{status?.text}</span>
+                    </div>
+                    {event.url && (
+                        <a
+                            href={event.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 text-center"
+                        >
+                            Unirme al stream
+                        </a>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// **Componente Badge**
+const Badge = ({ icon: Icon, text, className }: { icon?: any; text: string; className: string }) => (
+    <div class={clsx("inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold", className)}>
+        {Icon && <Icon class="h-4 w-4 mr-2" />}
+        {text}
+    </div>
+);
+
+// **Componente InfoRow**
+const InfoRow = ({ icon: Icon, text }: { icon?: any; text: string }) => (
+    <div class="flex items-center gap-1 text-sm text-muted-foreground">
+        {Icon && <Icon class="h-4 w-4" />}
+        <span>{text}</span>
+    </div>
+);

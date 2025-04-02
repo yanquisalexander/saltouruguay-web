@@ -5,38 +5,10 @@ import Layout from "@/layouts/Layout.astro";
 import { getPaginatedEvents } from "@/lib/events";
 import { LucideCalendar, LucideClock, LucideUsers } from "lucide-preact";
 import { DateTime } from "luxon";
+import { EventCard } from "@/components/EventCard.tsx";
 
 const { events } = await getPaginatedEvents(1, 10);
 const firstFeaturedEvent = events.find((event) => event.featured);
-
-const getTimeStatus = (startDate: Date, endDate: Date) => {
-  const now = DateTime.local();
-  const start = DateTime.fromJSDate(new Date(startDate)).setZone(
-    "America/Montevideo"
-  );
-  const end = DateTime.fromJSDate(new Date(endDate)).setZone(
-    "America/Montevideo"
-  );
-
-  const hoursUntilStart = Math.ceil(start.diff(now, "hours").hours);
-  const hoursUntilEnd = Math.ceil(end.diff(now, "hours").hours);
-
-  if (now < start) {
-    return { text: `Faltan ${hoursUntilStart} horas`, status: 0 };
-  }
-
-  if (now > end) {
-    return {
-      text: `Finalizado hace ${Math.abs(hoursUntilEnd)} horas`,
-      status: 2,
-    };
-  }
-
-  return {
-    text: `En curso desde hace ${Math.abs(hoursUntilEnd)} horas`,
-    status: 1,
-  };
-};
 ---
 
 <Layout
@@ -59,151 +31,21 @@ const getTimeStatus = (startDate: Date, endDate: Date) => {
 
     <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {
-        firstFeaturedEvent && (
-          <div class="rounded-lg border text-card-foreground shadow-sm col-span-full border-white/50 bg-neutral-500/5">
-            <div class="flex flex-col space-y-1.5 p-4 sm:p-6 pb-4">
-              <div class="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0">
-                <div class="space-y-1 w-full sm:w-auto">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-primary text-primary-foreground">
-                      Destacado
-                    </div>
-                    {(() => {
-                      const status = getTimeStatus(
-                        firstFeaturedEvent.startDate,
-                        firstFeaturedEvent.endDate
-                      );
-                      if (status.status === 0) {
-                        return (
-                          <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-blue-500/10 text-blue-500">
-                            Próximo
-                          </div>
-                        );
-                      }
-                      if (status.status === 1) {
-                        return (
-                          <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-yellow-500/10 text-yellow-500">
-                            En curso
-                          </div>
-                        );
-                      }
-                      return (
-                        <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-red-500/10 text-red-500">
-                          Finalizado
-                        </div>
-                      );
-                    })()}
-                    <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-purple-500/10 text-purple-500">
-                      Stream especial
-                    </div>
-                  </div>
-                  <h2 class="text-xl sm:text-2xl font-rubik font-semibold pt-2">
-                    {firstFeaturedEvent.name}
-                  </h2>
-                </div>
-                <div class="flex flex-col items-start sm:items-end mt-2 sm:mt-0">
-                  <div class="flex items-center gap-1 text-sm text-muted-foreground">
-                    <LucideUsers class="h-4 w-4" />
-                    <span>
-                      {firstFeaturedEvent.assistants.length} confirmados
-                    </span>
-                  </div>
-                  <div class="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                    <LucideCalendar class="h-4 w-4" />
-                    <span>
-                      {new Date(
-                        firstFeaturedEvent.startDate
-                      ).toLocaleDateString("es-ES", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                      {", "}
-                      {new Date(
-                        firstFeaturedEvent.startDate
-                      ).toLocaleTimeString("es-ES", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        timeZone: "America/Montevideo",
-                      })}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div class="flex flex-col sm:flex-row items-start gap-4 mt-4">
-                <img
-                  src={firstFeaturedEvent.cover}
-                  alt={`Portada de ${firstFeaturedEvent.name}`}
-                  width={240}
-                  height={140}
-                  class="rounded-md object-cover w-full sm:w-60 h-auto"
-                />
-                <div class="flex-1 flex flex-col mt-3 sm:mt-0">
-                  <p class="text-sm">{firstFeaturedEvent.description}</p>
-                  <div class="mt-4 space-y-2">
-                    <div class="flex items-center justify-between text-sm">
-                      <span class="text-muted-foreground">Organizado por:</span>
-                      <span class="font-medium">
-                        {firstFeaturedEvent.mainOrganizer.displayName}
-                      </span>
-                    </div>
-                    {firstFeaturedEvent.platform && (
-                      <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted-foreground">Plataforma:</span>
-                        <span class="font-medium flex items-center gap-1">
-                          <Twitch class="h-4 w-4 text-purple-500" />
-                          Twitch
-                        </span>
-                      </div>
-                    )}
-                    <div class="flex items-center justify-between text-sm">
-                      <span class="text-muted-foreground">Participación:</span>
-                      <span class="font-medium">Abierta a todos</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mt-4">
-                <div
-                  class={`flex items-center gap-1 text-sm ${(() => {
-                    const status = getTimeStatus(
-                      firstFeaturedEvent.startDate,
-                      firstFeaturedEvent.endDate
-                    );
-                    if (status.status === 0) return "text-green-500";
-                    if (status.status === 1) return "text-yellow-500";
-                    return "text-red-500";
-                  })()}`}
-                >
-                  <LucideClock class="h-4 w-4" />
-                  <span>
-                    {new Date(firstFeaturedEvent.startDate) > new Date()
-                      ? "Próximo, "
-                      : "Finalizado, "}
-                    {
-                      getTimeStatus(
-                        firstFeaturedEvent.startDate,
-                        firstFeaturedEvent.endDate
-                      ).text
-                    }
-                  </span>
-                </div>
+        firstFeaturedEvent ? (
+          <EventCard event={firstFeaturedEvent} firstFeaturedEvent={true} />
+        ) : null
+      }
 
-                {firstFeaturedEvent.url && (
-                  <button class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700">
-                    <a
-                      href={firstFeaturedEvent.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="w-full text-center"
-                    >
-                      Unirme al stream
-                    </a>
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+      <!--
+        Resto de eventos, excluyendo el primero destacado
+      -->
+      {
+        events && events.length > 0 ? (
+          events
+            .filter((event) => event.id !== firstFeaturedEvent?.id)
+            .map((event) => <EventCard event={event} />)
+        ) : (
+          <p>No hay eventos disponibles.</p>
         )
       }
     </div>

@@ -52,11 +52,24 @@ export const getPaginatedEvents = async (page: number, limit: number) => {
 };
 
 export const getEventById = async (id: number) => {
-    return await client
-        .select()
-        .from(EventsTable)
-        .where(eq(EventsTable.id, id))
-        .limit(1)
+    return await client.query.EventsTable.findFirst({
+        where: eq(EventsTable.id, id),
+        with: {
+            mainOrganizer: {
+                columns: {
+                    id: true,
+                    displayName: true,
+                    username: true,
+                    avatar: true,
+                }
+            },
+            assistants: {
+                columns: {
+                    id: true,
+                }
+            },
+        }
+    });
 };
 
 export const updateEvent = async (id: number, data: Partial<typeof EventsTable.$inferInsert>) => {
