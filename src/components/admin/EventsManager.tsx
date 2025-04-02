@@ -234,10 +234,15 @@ export default function EventsManager() {
 
     const handleDateChange = (e: Event, field: string, isNewEvent = true) => {
         const picker = e.target as HTMLInputElement;
+        const localDate = DateTime.fromISO(picker.value).setZone('local');
+        const utcDate = localDate.toUTC();
+
+        const isoUtcDate = utcDate.toISO();
+
         if (isNewEvent) {
-            setNewEvent({ ...newEvent, [field]: picker.value });
+            setNewEvent({ ...newEvent, [field]: isoUtcDate });
         } else if (currentEvent) {
-            setCurrentEvent({ ...currentEvent, [field]: picker.value });
+            setCurrentEvent({ ...currentEvent, [field]: isoUtcDate });
         }
     };
 
