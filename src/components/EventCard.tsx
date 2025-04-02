@@ -27,14 +27,18 @@ export const EventCard = ({ firstFeaturedEvent, event, index }: { firstFeaturedE
     return (
         <a
             href={`/eventos/${event.id}`}
-            class={`rounded-lg border shadow-sm hover:saturate-150 hover:scale-105 duration-300 cursor-pointer transition 
+            key={event.id}
+            class={`rounded-lg border shadow-sm ease-in-out fade-in-up animate-delay-[var(--animation-delay)] 
+                hover:saturate-150 hover:scale-105 duration-300 cursor-pointer transform-gpu will-change-transform
                 ${firstFeaturedEvent
                     ? "col-span-full bg-gradient-to-br border-neutral-600 from-electric-violet-500/10 via-yellow-500/10"
-                    : "border-neutral-500/50 bg-neutral-500/5 animate-fade-in-up"
+                    : "border-neutral-500/50 bg-neutral-500/5"
                 }`}
             style={{
-                animationDelay: `${index * 0.1}s`,
+                "--animation-delay": `${index * 0.1}s`,
             }}
+
+
         >
             <div class="flex flex-col space-y-1.5 p-4 sm:p-6 pb-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0">
