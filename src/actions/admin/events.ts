@@ -1,4 +1,4 @@
-import { getPaginatedEvents, updateEvent } from "@/lib/events";
+import { createEvent, getPaginatedEvents, updateEvent } from "@/lib/events";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -50,6 +50,46 @@ export const events = {
                 description,
                 startDate: new Date(startDate),
                 endDate: endDate ? new Date(endDate) : undefined,
+            });
+
+            if (!event) {
+                throw new ActionError({
+                    code: "NOT_FOUND",
+                    message: "Evento no encontrado"
+                });
+            }
+
+            return {
+                event,
+            };
+        }
+    }),
+    createEvent: defineAction({
+        input: z.object({
+            name: z.string(),
+            description: z.string(),
+            startDate: z.string(),
+            endDate: z.string().optional(),
+            location: z.string().optional(),
+
+        }),
+        handler: async ({ name, description, startDate, endDate, location }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session?.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para crear eventos"
+                });
+            }
+
+            const event = await createEvent({
+                name,
+                description,
+                startDate: new Date(startDate),
+                endDate: endDate ? new Date(endDate) : undefined,
+                location,
+                mainOrganizerId: session.user.id,
             });
 
             if (!event) {
