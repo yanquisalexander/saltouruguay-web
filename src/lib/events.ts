@@ -1,7 +1,7 @@
 import { EventAssistantsTable, EventsTable } from "@/db/schema";
 
 import { client } from "@/db/client";
-import { count, desc, eq, lt } from "drizzle-orm";
+import { and, count, desc, eq, lt } from "drizzle-orm";
 
 
 export const getEvents = async (page: number, limit: number) => {
@@ -108,6 +108,19 @@ export const confirmAssistanceToEvent = async (id: number, userId: number) => {
             userId
         })
         .onConflictDoNothing()
+        .returning()
+        .then((res) => res[0]);
+}
+
+export const cancelAssistanceToEvent = async (id: number, userId: number) => {
+    return await client
+        .delete(EventAssistantsTable)
+        .where(
+            and(
+                eq(EventAssistantsTable.eventId, id),
+                eq(EventAssistantsTable.userId, userId)
+            )
+        )
         .returning()
         .then((res) => res[0]);
 }

@@ -1,0 +1,60 @@
+---
+import PageBreadcrumb from "@/components/PageBreadcrumb.astro";
+import Layout from "@/layouts/Layout.astro";
+import { getEventAssistants, getEventById } from "@/lib/events";
+import { getSession } from "auth-astro/server";
+import { ParticipeOnEvent } from "@/components/events/ParticipeOnEvent.tsx";
+
+const { eventId } = Astro.params;
+
+const session = await getSession(Astro.request);
+
+const event = await getEventById(parseInt(eventId!));
+
+if (!event) {
+  return new Response("Evento no encontrado", { status: 404 });
+}
+
+const assistants = await getEventAssistants(event.id);
+---
+
+<Layout
+  title={event.name}
+  description={event.description!}
+  image={event.cover!}
+>
+  <div class="flex flex-col max-w-7xl mx-auto min-h-screen px-4 sm:px-6">
+    <PageBreadcrumb
+      breadcrumbs={[
+        { text: "Eventos", href: "/eventos" },
+        { text: event.name, href: `/eventos/${eventId}` },
+      ]}
+      pathname={`/eventos/${eventId}`}
+    />
+    <header
+      class="flex flex-col md:flex-row gap-4 md:items-start justify-between"
+    >
+      <div>
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+          <!-- 
+                Badges
+            -->
+        </div>
+        <h1 class="text-3xl font-rubik font-medium tracking-tight">
+          {event.name}
+        </h1>
+        <p class="text-neutral-500 mt-1 text-sm max-w-[60ch]">
+          {event.description}
+        </p>
+      </div>
+      <aside class="flex flex-wrap gap-2">
+        <ParticipeOnEvent
+          event={event}
+          assistants={assistants}
+          session={session}
+          client:load
+        />
+      </aside>
+    </header>
+  </div>
+</Layout>

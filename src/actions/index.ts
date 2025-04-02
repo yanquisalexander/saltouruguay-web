@@ -19,7 +19,9 @@ import { twoFactor } from "./users/two-factor";
 import { serverTools } from "./admin/serverTools";
 import { customPages } from "./admin/customPages";
 import { events } from "./admin/events";
+import { events as userEvents } from "./events";
 export const server = {
+    userEvents,
     sendVotes: defineAction({
         input: z.object({
             votes: z.record(z.array(z.object({
