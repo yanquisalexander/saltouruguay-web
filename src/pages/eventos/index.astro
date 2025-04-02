@@ -2,7 +2,7 @@
 import PageBreadcrumb from "@/components/PageBreadcrumb.astro";
 import Layout from "@/layouts/Layout.astro";
 import { getPaginatedEvents } from "@/lib/events";
-import EventCard from "@/components/EventCard.astro";
+import { EventCard } from "@/components/EventCard.tsx";
 
 const { events } = await getPaginatedEvents(1, 10);
 const firstFeaturedEvent = events.find((event) => event.featured);

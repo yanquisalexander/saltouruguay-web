@@ -5,24 +5,47 @@ import type { getEventById } from "@/lib/events";
 
 import { useEffect, useState } from 'preact/hooks';
 
+// Función para calcular el estado de tiempo fuera del componente
+const getTimeStatus = (startDate: Date, endDate?: Date | null) => {
+    // Evitamos DateTime.local() durante SSR
+    if (typeof window === 'undefined') {
+        return { status: 0, text: "Calculando..." };
+    }
+
+    const now = DateTime.local();
+    const start = DateTime.fromISO(startDate.toISOString()).setZone('local');
+    const end = endDate ? DateTime.fromISO(endDate.toISOString()).setZone('local') : null;
+
+    if (now < start) return { status: 0, text: start.toRelative() || "Próximamente" };
+    if (end && now > end) return { status: 2, text: `Finalizado ${end.toRelative() || ""}` };
+    return { status: 1, text: `En curso desde ${start.toRelative() || ""} hasta ${end?.toRelative() || ""}` };
+};
+
 export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: boolean, event: Awaited<ReturnType<typeof getEventById>> }) => {
     if (!event) return null;
 
-    const [status, setStatus] = useState<{ status: number, text: string } | null>(null);
+    // Estado inicial seguro para SSR
+    const [status, setStatus] = useState<{ status: number, text: string }>({ status: 0, text: "Calculando..." });
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
-        const getTimeStatus = (startDate: Date, endDate?: Date | null) => {
-            const now = DateTime.local();
-            const start = DateTime.fromISO(startDate.toISOString()).setZone('local');
-            const end = endDate ? DateTime.fromISO(endDate.toISOString()).setZone('local') : null;
-
-            if (now < start) return { status: 0, text: start.toRelative() || "Próximamente" };
-            if (end && now > end) return { status: 2, text: `Finalizado ${end.toRelative() || ""}` };
-            return { status: 1, text: `En curso desde ${start.toRelative() || ""} hasta ${end?.toRelative() || ""}` };
-        };
-
+        // Marcamos que el componente está montado (solo ocurre en el cliente)
+        setIsMounted(true);
+        // Actualizamos el estado con los cálculos que dependen del navegador
         setStatus(getTimeStatus(event.startDate, event.endDate));
+
+        // Configuramos un intervalo para actualizar el estado regularmente
+        const intervalId = setInterval(() => {
+            setStatus(getTimeStatus(event.startDate, event.endDate));
+        }, 60000); // Actualizar cada minuto
+
+        return () => clearInterval(intervalId);
     }, [event.startDate, event.endDate]);
+
+    // Renderizado seguro para SSR
+    const formattedDate = typeof window !== 'undefined'
+        ? DateTime.fromISO(event.startDate.toISOString()).setLocale('es').toFormat("EEEE, dd 'de' LLLL 'a las' HH:mm")
+        : "Cargando fecha...";
 
     return (
         <a
@@ -48,7 +71,7 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
                         <InfoRow icon={LucideUsers} text={`${event.assistants.length} confirmados`} />
                         <InfoRow
                             icon={LucideCalendar}
-                            text={DateTime.fromISO(event.startDate.toISOString()).setLocale('es').toFormat("EEEE, dd 'de' LLLL 'a las' HH:mm")}
+                            text={formattedDate}
                         />
                     </div>
                 </div>
@@ -66,7 +89,7 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
                             <div class="flex flex-col gap-1 text-sm">
                                 <span class="font-semibold">Organizador</span>
                                 <div class="flex items-center gap-2">
-                                    <img src={event.mainOrganizer.avatar!} alt="Organizador" class="w-6 h-6 rounded-full" />
+                                    <img src={event.mainOrganizer.avatar || ""} alt="Organizador" class="w-6 h-6 rounded-full" />
                                     <span class="font-semibold">{event.mainOrganizer.displayName}</span>
                                 </div>
                             </div>
@@ -108,7 +131,6 @@ export const Badge = ({ icon: Icon, text, className }: { icon?: any; text: strin
         {Icon && <Icon class="h-4 w-4 mr-2" />}
         {text}
     </div>
-
 );
 
 // **Componente InfoRow**
