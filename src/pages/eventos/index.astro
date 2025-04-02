@@ -33,11 +33,7 @@ const eventsWithoutFirstFeaturedEvent = events.filter(
     <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {
         firstFeaturedEvent && (
-          <EventCard
-            event={firstFeaturedEvent}
-            firstFeaturedEvent={true}
-            client:only="preact"
-          />
+          <EventCard event={firstFeaturedEvent} firstFeaturedEvent={true} />
         )
       }
 
@@ -48,7 +44,7 @@ const eventsWithoutFirstFeaturedEvent = events.filter(
         eventsWithoutFirstFeaturedEvent &&
           eventsWithoutFirstFeaturedEvent.length > 0 &&
           eventsWithoutFirstFeaturedEvent.map((event) => (
-            <EventCard event={event} client:only="preact" />
+            <EventCard event={event} />
           ))
       }
     </div>
