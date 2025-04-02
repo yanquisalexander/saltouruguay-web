@@ -66,7 +66,7 @@ export default function Sidebar({ session, initialPathname }: { session: Session
 
     return (
         <div
-            class={`z-50 top-0 left-0 h-full min-h-dvh flex flex-col bg-zinc-950 border-r border-zinc-900  transition-all duration-300 ${collapsed ? "w-16 md:w-16 sticky" : "w-56 fixed md:w-56 md:sticky"
+            class={`z-50 top-0 left-0 h-full min-h-dvh flex flex-col bg-zinc-950 border-r border-zinc-900  transition-all duration-300 ${collapsed ? "w-16  sticky" : "w-64 fixed md:sticky"
                 }`}
         >
             <div class={`p-2 mb-6 border-b border-neutral-800 flex items-center gap-2 ${collapsed ? "justify-center" : "justify-start"
@@ -94,14 +94,14 @@ export default function Sidebar({ session, initialPathname }: { session: Session
                                         key={linkIndex}
                                         href={link.url}
                                         title={link.label}
-                                        class={`flex items-center ${!collapsed ? "gap-2" : "justify-center"
-                                            } whitespace-nowrap rounded-md text-sm font-medium text-white hover:bg-zinc-900 hover:text-primary transition-colors w-full py-2 ${collapsed ? "justify-center" : "justify-start px-2"}
-                                        ${isActive(link.url) ? "bg-zinc-900 text-primary" : ""}
+                                        class={`flex items-center ${!collapsed ? "gap-2 whitespace-nowrap " : "justify-center"
+                                            } rounded-md font-medium text-white hover:bg-zinc-900  transition-colors w-full py-2 ${collapsed ? "justify-center" : "justify-start px-2"}
+                                            ${isActive(link.url) ? "bg-zinc-900 " : ""}
 
                                                 `}
                                     >
-                                        <Icon class="size-5" />
-                                        {!collapsed && <span>{link.label}</span>}
+                                        <Icon class="size-5" size={collapsed ? 20 : 16} />
+                                        {!collapsed && <span class="text-sm truncate">{link.label}</span>}
                                     </a>
                                 );
                             })}
