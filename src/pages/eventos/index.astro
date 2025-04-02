@@ -35,8 +35,9 @@ const eventsWithoutFirstFeaturedEvent = events.filter(
         firstFeaturedEvent && (
           <EventCard
             event={firstFeaturedEvent}
+            index={1}
             firstFeaturedEvent={true}
-            client:load
+            client:only="preact"
           />
         )
       }
@@ -47,8 +48,8 @@ const eventsWithoutFirstFeaturedEvent = events.filter(
       {
         eventsWithoutFirstFeaturedEvent &&
           eventsWithoutFirstFeaturedEvent.length > 0 &&
-          eventsWithoutFirstFeaturedEvent.map((event) => (
-            <EventCard event={event} client:load />
+          eventsWithoutFirstFeaturedEvent.map((event, index) => (
+            <EventCard event={event} index={index + 1} client:only="preact" />
           ))
       }
     </div>

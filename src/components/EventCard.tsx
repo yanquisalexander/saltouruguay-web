@@ -5,48 +5,23 @@ import type { getEventById } from "@/lib/events";
 
 import { useEffect, useState } from 'preact/hooks';
 
-export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: boolean, event: Awaited<ReturnType<typeof getEventById>> }) => {
+export const EventCard = ({ firstFeaturedEvent, event, index }: { firstFeaturedEvent?: boolean, event: Awaited<ReturnType<typeof getEventById>>, index: number }) => {
     if (!event) return null;
 
-    // Usamos un valor estable inicial para SSR
-    const initialStatus = { status: 0, text: "Calculando..." };
-    const [status, setStatus] = useState(initialStatus);
+    const [status, setStatus] = useState<{ status: number, text: string } | null>(null);
 
-    // Formatear la fecha para SSR de manera consistente
-    // Importante: usar una forma que genere el mismo resultado en servidor y cliente
-    const formattedDate = event.startDate
-        ? DateTime.fromISO(event.startDate.toISOString()).toFormat("EEEE, dd 'de' LLLL 'a las' HH:mm")
-        : "Fecha no disponible";
-
-    // Efecto que se ejecuta SOLO en el cliente, después de la hidratación
     useEffect(() => {
-        // Función para calcular el estado de tiempo (solo en cliente)
-        const getTimeStatus = () => {
+        const getTimeStatus = (startDate: Date, endDate?: Date | null) => {
             const now = DateTime.local();
-            const start = DateTime.fromISO(event.startDate.toISOString());
-            const end = event.endDate ? DateTime.fromISO(event.endDate.toISOString()) : null;
+            const start = DateTime.fromISO(startDate.toISOString()).setZone('local');
+            const end = endDate ? DateTime.fromISO(endDate.toISOString()).setZone('local') : null;
 
             if (now < start) return { status: 0, text: start.toRelative() || "Próximamente" };
             if (end && now > end) return { status: 2, text: `Finalizado ${end.toRelative() || ""}` };
             return { status: 1, text: `En curso desde ${start.toRelative() || ""} hasta ${end?.toRelative() || ""}` };
         };
 
-        // Solo actualizamos el estado después de la hidratación inicial
-        // Esto evita diferencias entre SSR y cliente
-        const timeoutId = setTimeout(() => {
-            setStatus(getTimeStatus());
-        }, 0);
-
-        // Configuramos un intervalo para actualizar el estado regularmente
-        const intervalId = setInterval(() => {
-            setStatus(getTimeStatus());
-        }, 60000); // Actualizar cada minuto
-
-        return () => {
-            clearTimeout(timeoutId);
-            // @ts-ignore
-            clearInterval(intervalId);
-        };
+        setStatus(getTimeStatus(event.startDate, event.endDate));
     }, [event.startDate, event.endDate]);
 
     return (
@@ -55,8 +30,12 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
             class={`rounded-lg border shadow-sm hover:saturate-150 hover:scale-105 duration-300 cursor-pointer transition 
                 ${firstFeaturedEvent
                     ? "col-span-full bg-gradient-to-br border-neutral-600 from-electric-violet-500/10 via-yellow-500/10"
-                    : "border-neutral-500/50 bg-neutral-500/5"
-                }`}>
+                    : "border-neutral-500/50 bg-neutral-500/5 animate-fade-in-up"
+                }`}
+            style={{
+                animationDelay: `${index * 0.1}s`,
+            }}
+        >
             <div class="flex flex-col space-y-1.5 p-4 sm:p-6 pb-4">
                 <div class="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0">
                     <div class="space-y-1 w-full sm:w-auto">
@@ -73,7 +52,7 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
                         <InfoRow icon={LucideUsers} text={`${event.assistants.length} confirmados`} />
                         <InfoRow
                             icon={LucideCalendar}
-                            text={formattedDate}
+                            text={DateTime.fromISO(event.startDate.toISOString()).setLocale('es').toFormat("EEEE, dd 'de' LLLL 'a las' HH:mm")}
                         />
                     </div>
                 </div>
@@ -91,7 +70,7 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
                             <div class="flex flex-col gap-1 text-sm">
                                 <span class="font-semibold">Organizador</span>
                                 <div class="flex items-center gap-2">
-                                    <img src={event.mainOrganizer.avatar || ""} alt="Organizador" class="w-6 h-6 rounded-full" />
+                                    <img src={event.mainOrganizer.avatar!} alt="Organizador" class="w-6 h-6 rounded-full" />
                                     <span class="font-semibold">{event.mainOrganizer.displayName}</span>
                                 </div>
                             </div>
@@ -128,15 +107,16 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
 
 
 // **Componente Badge**
-export const Badge = ({ icon: Icon, text, className }: { icon?: any; text: string; className: string }) => (
+const Badge = ({ icon: Icon, text, className }: { icon?: any; text: string; className: string }) => (
     <div class={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${className || ""}`}>
         {Icon && <Icon class="h-4 w-4 mr-2" />}
         {text}
     </div>
+
 );
 
 // **Componente InfoRow**
-export const InfoRow = ({ icon: Icon, text }: { icon?: LucideIcon; text: string }) => (
+const InfoRow = ({ icon: Icon, text }: { icon?: LucideIcon; text: string }) => (
     <div class="flex items-center gap-1 text-sm text-muted-foreground">
         {Icon && <Icon class="h-4 w-4" />}
         <span>{text}</span>
