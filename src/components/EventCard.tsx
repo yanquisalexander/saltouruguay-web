@@ -3,20 +3,26 @@ import { LucideUsers, LucideCalendar, LucideClock, LucideStar, type LucideIcon }
 import { DateTime } from 'luxon';
 import type { getEventById } from "@/lib/events";
 
+import { useEffect, useState } from 'preact/hooks';
+
 export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: boolean, event: Awaited<ReturnType<typeof getEventById>> }) => {
     if (!event) return null;
 
-    const getTimeStatus = (startDate: Date, endDate?: Date | null) => {
-        const now = DateTime.local();
-        const start = DateTime.fromISO(startDate.toISOString()).setZone('local');
-        const end = endDate ? DateTime.fromISO(endDate.toISOString()).setZone('local') : null;
+    const [status, setStatus] = useState<{ status: number, text: string } | null>(null);
 
-        if (now < start) return { status: 0, text: start.toRelative() };
-        if (end && now > end) return { status: 2, text: `Finalizado ${end.toRelative()}` };
-        return { status: 1, text: `En curso desde ${start.toRelative()} hasta ${end?.toRelative()}` };
-    };
+    useEffect(() => {
+        const getTimeStatus = (startDate: Date, endDate?: Date | null) => {
+            const now = DateTime.local();
+            const start = DateTime.fromISO(startDate.toISOString()).setZone('local');
+            const end = endDate ? DateTime.fromISO(endDate.toISOString()).setZone('local') : null;
 
-    const status = getTimeStatus(event.startDate, event.endDate);
+            if (now < start) return { status: 0, text: start.toRelative() || "Próximamente" };
+            if (end && now > end) return { status: 2, text: `Finalizado ${end.toRelative() || ""}` };
+            return { status: 1, text: `En curso desde ${start.toRelative() || ""} hasta ${end?.toRelative() || ""}` };
+        };
+
+        setStatus(getTimeStatus(event.startDate, event.endDate));
+    }, [event.startDate, event.endDate]);
 
     return (
         <a
@@ -44,8 +50,6 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
                             icon={LucideCalendar}
                             text={DateTime.fromISO(event.startDate.toISOString()).setLocale('es').toFormat("EEEE, dd 'de' LLLL 'a las' HH:mm")}
                         />
-
-
                     </div>
                 </div>
                 <div class="flex flex-col sm:flex-row items-start gap-4 mt-4">
@@ -79,7 +83,7 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
                         }`}
                     >
                         <LucideClock class="h-4 w-4" />
-                        <span>{status?.text}</span>
+                        <span>{status ? status.text : "Calculando..."}</span>
                     </div>
                     {event.url && (
                         <a
@@ -96,6 +100,7 @@ export const EventCard = ({ firstFeaturedEvent, event }: { firstFeaturedEvent?: 
         </a>
     );
 };
+
 
 // **Componente Badge**
 const Badge = ({ icon: Icon, text, className }: { icon?: any; text: string; className: string }) => (
