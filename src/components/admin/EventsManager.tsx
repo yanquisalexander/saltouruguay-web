@@ -347,7 +347,7 @@ export default function EventsManager() {
         if (endDate < now) {
             return (
                 <span title={endDate.toLocaleString(DateTime.DATETIME_FULL)} className="text-gray-400">
-                    Finalizado hace {endDate.toRelative()}
+                    Finalizado {endDate.toRelative()}
                 </span>
             );
         }
@@ -363,8 +363,8 @@ export default function EventsManager() {
                     : endDate.toLocaleString(DateTime.DATETIME_FULL)}
                     className="text-green-400">
                     {percentageElapsed < 50
-                        ? `Comenzado hace ${startDate.toRelative()}`
-                        : `Finaliza en ${endDate.toRelative()}`}
+                        ? `Comenzado ${startDate.toRelative()}`
+                        : `Finaliza ${endDate.toRelative()}`}
                 </span>
             );
         }
