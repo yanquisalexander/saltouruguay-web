@@ -4,6 +4,8 @@ import Layout from "@/layouts/Layout.astro";
 import { getEventAssistants, getEventById } from "@/lib/events";
 import { getSession } from "auth-astro/server";
 import { ParticipeOnEvent } from "@/components/events/ParticipeOnEvent.tsx";
+import { LucideCalendar, LucideUsers } from "lucide-preact";
+import { DateTime } from "luxon";
 
 const { eventId } = Astro.params;
 
@@ -32,7 +34,7 @@ const assistants = await getEventAssistants(event.id);
       pathname={`/eventos/${eventId}`}
     />
     <header
-      class="flex flex-col md:flex-row gap-4 md:items-start justify-between"
+      class="flex flex-col md:flex-row gap-4 md:items-start justify-between mb-6"
     >
       <div>
         <div class="flex flex-wrap items-center gap-2 mb-2">
@@ -44,7 +46,11 @@ const assistants = await getEventAssistants(event.id);
           {event.name}
         </h1>
         <p class="text-neutral-500 mt-1 text-sm max-w-[60ch]">
-          {event.description}
+          {
+            event.description?.length > 120
+              ? event.description?.slice(0, 120) + "..."
+              : event.description
+          }
         </p>
       </div>
       <aside class="flex flex-wrap gap-2">
@@ -56,5 +62,71 @@ const assistants = await getEventAssistants(event.id);
         />
       </aside>
     </header>
+
+    <div class="grid gap-6 md:grid-cols-3">
+      <div class="md:col-span-2">
+        <article
+          class="rounded-lg border border-neutral-800 bg-neutral-500/10 shadow-sm"
+        >
+          <div class="aspect-video relative">
+            <img
+              alt={event.name}
+              loading="lazy"
+              decoding="async"
+              class="object-cover rounded-t-lg"
+              src={event.cover || "/og.webp"}
+            />
+          </div>
+          <div class="p-6 pt-8 space-y-4">
+            <div class="prose max-w-none prose-invert prose-neutral">
+              <p>{event.description}</p>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <aside>
+        <div class="space-y-4">
+          <div
+            class="bg-neutral-800/10 rounded-lg border border-neutral-800 p-4"
+          >
+            <header class="flex flex-col space-y-1.5 p-6">
+              <h3 class="text-2xl font-semibold leading-none tracking-tight">
+                Detalles del evento
+              </h3>
+            </header>
+            <div class="p-6 pt-0 space-y-4">
+              <div class="flex items-center gap-3">
+                <LucideCalendar class="h-5 w-5 text-neutral-300" />
+                <div>
+                  <p class="text-sm font-semibold">Fecha y hora</p><p
+                    class="text-sm"
+                  >
+                    {
+                      DateTime.fromISO(event.startDate.toISOString()).toFormat(
+                        "dd LLLL yyyy"
+                      )
+                    } a las {
+                      DateTime.fromISO(event.startDate.toISOString()).toFormat(
+                        "HH:mm"
+                      )
+                    }
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <LucideUsers class="h-5 w-5 text-neutral-300" />
+                <div>
+                  <p class="text-sm font-semibold">Asistentes</p>
+                  <p class="text-sm">
+                    {assistants.length} asistentes
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
   </div>
 </Layout>
