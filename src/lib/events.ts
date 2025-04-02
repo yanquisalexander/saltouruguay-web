@@ -47,7 +47,10 @@ export const getEventById = async (id: number) => {
 export const updateEvent = async (id: number, data: Partial<typeof EventsTable.$inferInsert>) => {
     return await client
         .update(EventsTable)
-        .set(data)
+        .set({
+            ...data,
+            updatedAt: new Date()
+        })
         .where(eq(EventsTable.id, id))
         .returning()
         .then((res) => res[0]);
