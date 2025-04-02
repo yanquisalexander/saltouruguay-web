@@ -1,5 +1,6 @@
 ---
 import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
+import EventsManager from "@/components/admin/EventsManager";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { getSession } from "auth-astro/server";
 
@@ -15,5 +16,8 @@ if (!session?.user.isAdmin) {
 <AdminLayout title="Eventos" session={session}>
   <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
     <AdminPageHeader title="Eventos" pathname="/admin/eventos" />
+    <EventsManager client:only />
   </div>
 </AdminLayout>
+
+<style></style>

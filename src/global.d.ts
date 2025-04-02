@@ -1,6 +1,7 @@
 import type { Session as AuthSession } from "@auth/core/types";
 import { JSX } from "preact";
 
+
 declare module "@auth/core/types" {
     interface Session extends AuthSession {
         user: {
@@ -26,7 +27,13 @@ declare module "preact" {
         interface IntrinsicElements {
             a: JSX.IntrinsicElements['a'] & {
                 disabled?: boolean;
-            }
+            },
+            'vaadin-date-time-picker': VaadinDateTimePickerAttributes;
         }
+        /* 
+    Extend JSX.IntrinsicElements
+    to include the vaadin-date-time-picker element
+*/
     }
 }
+
