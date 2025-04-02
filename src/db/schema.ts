@@ -543,7 +543,7 @@ export const EventsTable = pgTable("events", {
     url: varchar("url"),
     importantInfo: text("important_info"),
     startDate: timestamp("start_date").notNull(),
-    endDate: timestamp("end_date").notNull(),
+    endDate: timestamp("end_date"),
     createdAt: timestamp("created_at")
         .notNull()
         .default(sql`current_timestamp`),
