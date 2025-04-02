@@ -1,10 +1,7 @@
 ---
 import PageBreadcrumb from "@/components/PageBreadcrumb.astro";
-import Twitch from "@/icons/Twitch.astro";
 import Layout from "@/layouts/Layout.astro";
 import { getPaginatedEvents } from "@/lib/events";
-import { LucideCalendar, LucideClock, LucideUsers } from "lucide-preact";
-import { DateTime } from "luxon";
 import { EventCard } from "@/components/EventCard.tsx";
 
 const { events } = await getPaginatedEvents(1, 10);
