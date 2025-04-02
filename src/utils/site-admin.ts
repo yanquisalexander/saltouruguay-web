@@ -2,14 +2,16 @@ import { client } from "@/db/client";
 import { getNewSignupsLastWeek, getTotalOfUsers } from "./user";
 import { TwitchProcessedEventsTable } from "@/db/schema";
 import { count, desc } from "drizzle-orm";
+import { getEventsCount } from "@/lib/events";
 
 export const getSiteStats = async () => {
-    const [totalUsers, newSignupsWeek] = await Promise.all([
+    const [totalUsers, newSignupsWeek, activeEvents] = await Promise.all([
         getTotalOfUsers(),
-        getNewSignupsLastWeek()
+        getNewSignupsLastWeek(),
+        getEventsCount()
     ]);
 
-    return { totalUsers, newSignupsWeek };
+    return { totalUsers, newSignupsWeek, activeEvents };
 };
 
 

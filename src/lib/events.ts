@@ -1,7 +1,7 @@
 import { EventAssistantsTable, EventsTable } from "@/db/schema";
 
 import { client } from "@/db/client";
-import { count, desc, eq } from "drizzle-orm";
+import { count, desc, eq, lt } from "drizzle-orm";
 
 
 export const getEvents = async (page: number, limit: number) => {
@@ -30,6 +30,21 @@ export const getEvents = async (page: number, limit: number) => {
     const hasMore = events.length > limit;
     return { events: events.slice(0, limit), hasMore };
 };
+
+export const getEventsCount = async () => {
+    return await client
+        .select({ value: count() })
+
+        .from(EventsTable)
+        /* 
+            Not finished events
+        */
+        .where(
+            lt(EventsTable.endDate, new Date())
+        )
+
+        .then((res) => res[0]?.value ?? 0);
+}
 
 export const getPaginatedEvents = async (page: number, limit: number) => {
     console.log(`Fetching events with page: ${page}, limit: ${limit}, offset: ${(page - 1) * limit}`);
