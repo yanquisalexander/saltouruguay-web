@@ -57,7 +57,7 @@ export const ParticipeOnEvent = ({ event, assistants, session }: { event: Awaite
             class="bg-white px-4 py-2 rounded-lg shadow-md hover:bg-gray-100 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
             <div class="flex items-center space-x-2">
                 {loading ? (
-                    <LucideLoader2 class="w-6 h-6 animate-spin text-gray-500" />
+                    <LucideLoader2 class="w-6 h-6 animate-spin-clockwise animate-iteration-count-infinite animate-duration-1000 text-gray-500" />
                 ) : isAssistant ? (
                     <LucideUserX class="w-6 h-6 text-red-500" />
                 ) : (
