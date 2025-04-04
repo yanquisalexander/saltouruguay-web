@@ -88,14 +88,15 @@ if (!session) {
           actions.users.twoFactor.verifyTwoFactor({ code: otpCode }),
           {
             loading: "Verificando OTP...",
-            success: "Código OTP verificado con éxito.",
+            success: () => {
+              // Si la verificación es exitosa, redirigimos a la página principal o al dashboard
+              navigate("/");
+              return "Código OTP verificado con éxito.";
+            },
             error: (err: ActionError) =>
               `Error al verificar OTP: ${err.message}`,
           }
         );
-
-        // Si la verificación es exitosa, redirigimos a la página principal o al dashboard
-        navigate("/");
       } catch (err) {
         toast.error("Error inesperado al verificar el OTP.");
       }
