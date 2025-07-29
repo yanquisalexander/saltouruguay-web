@@ -6,6 +6,9 @@ export default {
 	content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
 	theme: {
 		extend: {
+			maxWidth: {
+				'screen-full': '1200px',
+			},
 			colors: {
 				'brand-gray': '#acb5c7',
 				'electric-violet': {
