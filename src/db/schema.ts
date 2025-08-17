@@ -685,6 +685,17 @@ export const DebateAnonymousMessagesTable = pgTable('debate_anonymous_messages',
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
 })
 
+export const SaltoCraftExtremo3InscriptionsTable = pgTable('salto_craft_extremo3_inscriptions', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => UsersTable.id),
+    discordUsername: varchar('discord_username'),
+    acceptedTerms: boolean('accepted_terms').notNull().default(false),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueUserId: unique().on(t.userId)
+}))
+
 export const debateMessagesUserRelation = relations(DebateAnonymousMessagesTable, ({ one, many }) => ({
     user: one(UsersTable, {
         fields: [DebateAnonymousMessagesTable.userId],

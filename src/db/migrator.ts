@@ -1,14 +1,16 @@
 import "dotenv/config";
 import { client, pool } from "./client";
-import { resolve } from "node:path";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { seed } from "./seed";
 
-const __dirname = resolve();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export const migrateDatabase = async () => {
   await migrate(client, {
-    migrationsFolder: resolve(__dirname, "./src/db/migrations"),
+    migrationsFolder: resolve(__dirname, "./migrations"),
   });
 
   try {
@@ -18,12 +20,8 @@ export const migrateDatabase = async () => {
   }
 };
 
-/* 
-  If executed as a script, this file will migrate the database. (ECMAScript module)
-  Remember: require() is not available in ES modules.
-*/
-
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Permite ejecutar el script con: node, yarn node, npm run, pnpm exec, etc.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   migrateDatabase()
     .then(() => {
       console.log("Database migrated successfully");

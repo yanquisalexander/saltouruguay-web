@@ -3,7 +3,7 @@ import { NOMINEES } from "@/awards/Nominees";
 import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
 import type { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { client } from "@/db/client";
-import { DebateAnonymousMessagesTable, NegativeVotesStreamersTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, UserSuspensionsTable } from "@/db/schema";
+import { DebateAnonymousMessagesTable, NegativeVotesStreamersTable, SaltoCraftExtremo3InscriptionsTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, UserSuspensionsTable } from "@/db/schema";
 import { submitVotes } from "@/utils/awards-vote-system";
 import { pusher } from "@/utils/pusher";
 import { updateCardSkin, updateStickers } from "@/utils/user";
@@ -266,6 +266,40 @@ export const server = {
 
             return { success: true }
 
+        }
+    }),
+    inscribeToSaltoCraftExtremo3: defineAction({
+        input: z.object({
+            acceptedTerms: z.boolean(),
+            discordUsername: z.string().min(1).max(50),
+        }),
+        handler: async ({ acceptedTerms, discordUsername }, { request }) => {
+            const session = await getSession(request)
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para inscribirte a SaltoCraft Extremo 3"
+                })
+            }
+
+            if (!acceptedTerms) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: "Debes aceptar los términos y condiciones para inscribirte a SaltoCraft Extremo 3"
+                })
+            }
+
+            await client.insert(SaltoCraftExtremo3InscriptionsTable)
+                .values({
+                    userId: session.user.id,
+                    acceptedTerms,
+                    discordUsername
+                })
+                .onConflictDoNothing()
+                .execute()
+
+            return { success: true }
         }
     }),
     admin: {

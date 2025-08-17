@@ -12,6 +12,7 @@ import Advantages from "@/sections/Advantages.astro";
 import StreamerWars from "@/sections/StreamerWars.astro";
 import CountdownSaltoCraft from "@/sections/CountdownSaltoCraft.astro";
 import Required2FA from "@/components/admin/Required2FA.astro";
+import StingerGsap from "@/components/StingerGsap";
 
 const IS_PROD = import.meta.env.PROD;
 
@@ -52,6 +53,8 @@ export const prerender = true;
       </h1>
     </header>
   </div>
+
+  <StingerGsap client:only transition:persist="stinger-su" />
 
   <LiveStream server:defer />
 

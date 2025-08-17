@@ -9,12 +9,19 @@ import { getSession } from "auth-astro/server";
 import { experimental_AstroContainer } from "astro/container";
 import Layout from "@/layouts/Layout.astro";
 import SaltoCraft3 from "@/email/SaltoCraft3.astro";
+import InscripcionExtremo from "@/email/InscripcionExtremo.astro";
 import { LucideDownload } from "lucide-preact";
 
 const EmailComponents = {
   SaltoCraft: (props: { name: string }) => {
     return {
       component: SaltoCraft3,
+      props,
+    };
+  },
+  InscripcionExtremo: (props: { name: string }) => {
+    return {
+      component: InscripcionExtremo,
       props,
     };
   },
