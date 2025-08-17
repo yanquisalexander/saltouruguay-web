@@ -20,6 +20,9 @@ import { serverTools } from "./admin/serverTools";
 import { customPages } from "./admin/customPages";
 import { events } from "./admin/events";
 import { events as userEvents } from "./events";
+import { sendNotificationEmail } from "@/utils/email";
+import { experimental_AstroContainer } from "astro/container";
+import InscripcionExtremo from "@/email/InscripcionExtremo.astro";
 export const server = {
     userEvents,
     sendVotes: defineAction({
@@ -298,6 +301,14 @@ export const server = {
                 })
                 .onConflictDoNothing()
                 .execute()
+
+            try {
+                const container = await experimental_AstroContainer.create()
+                const emailBody = await container.renderToString(InscripcionExtremo)
+                await sendNotificationEmail(session.user.email!, "Inscripción SaltoCraft Extremo 3", emailBody)
+            } catch (error) {
+                console.error("Error sending inscription email:", error)
+            }
 
             return { success: true }
         }

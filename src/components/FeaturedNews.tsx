@@ -3,18 +3,18 @@ import { gsap } from "gsap";
 
 const NEWS = [
     {
-        title: "SaltoCraft III",
+        title: "SaltoCraft Extremo III",
         description: `
-        ¡Se acerca la tercera edición de SaltoCraft! ¿Estás listo para la aventura?
+        ¿Estás listo para el desafío definitivo? SaltoCraft Extremo III está por comenzar. Prepárate para una experiencia de juego intensa y llena de aventuras.
     `,
         tags: ["Minecraft"],
         background: {
-            img: "/images/ads/saltocraft.webp",
+            img: "/images/ads/mc-extremo.webp",
         },
-        navImage: "/images/ads/saltocraft.webp",
+        navImage: "/images/ads/mc-extremo.webp",
         ctaLink: {
-            text: "¡Únete ahora!",
-            url: "/saltocraft",
+            text: "Las inscripciones abren pronto",
+            url: "#",
             newTab: false,
         }
     },
