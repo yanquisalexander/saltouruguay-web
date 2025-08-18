@@ -11,19 +11,19 @@ import { eq } from "drizzle-orm";
 
 const inscripcionTOS = `
 ### 1) Modificaciones por parte de la Organización
-LA ORGANIZACIÓN se reserva el derecho de alterar o modificar los datos del evento, incluyendo los presentes términos y condiciones, comprometiéndose a avisar de la debida forma.
+LA ORGANIZACIÓN se reserva el derecho de alterar o modificar la información de la serie de Minecraft, incluyendo los presentes términos y condiciones, comprometiéndose a notificar oportunamente a los participantes.
 
 ### 2) Derecho de admisión
-LA ORGANIZACIÓN se reserva el derecho de admisión.
+LA ORGANIZACIÓN se reserva el derecho de admitir o rechazar solicitudes de participación en la serie.
 
 ### 3) Derechos de propiedad intelectual
-EL PARTICIPANTE reconoce y acepta que LA ORGANIZACIÓN ostenta y es titular de todos los derechos de propiedad intelectual y cualesquiera otros, incluidos los de imagen, derivados, directa o indirectamente, de las representaciones artísticas o cualesquiera otras que tuvieran lugar con motivo de la celebración del evento.
+EL PARTICIPANTE reconoce y acepta que LA ORGANIZACIÓN es titular de los derechos de propiedad intelectual y de imagen asociados al proyecto de la serie de Minecraft, incluyendo la marca y la identidad gráfica. Los contenidos generados por los participantes (como transmisiones, videos o clips) les pertenecen a ellos, siempre que no infrinjan derechos de terceros ni afecten la imagen de la serie.
 
-### 4) Transmisión y exclusividad
-El evento no podrá ser emitido por ningún medio sin previa autorización por parte de LA ORGANIZACIÓN. LA ORGANIZACIÓN tiene la exclusividad del vivo y en directo del evento. La retransmisión de imágenes podrá autorizarse con fines de generación de contenido y publicitarios, siempre haciendo hincapié en que la exclusividad del evento corresponde al canal SaltoUruguayServer. En estos casos, se podrá exigir la inclusión del logo, leyenda o marca de agua en las imágenes.
+### 4) Transmisión y difusión
+Los participantes tienen libertad para grabar o transmitir en vivo su experiencia en la serie de Minecraft a través de sus propios canales y plataformas. LA ORGANIZACIÓN podrá establecer lineamientos generales, como la inclusión de un logo, leyenda o marca de agua, con fines de promoción y visibilidad de la serie.
 
-### 5) Premios y ganadores
-Los premios y las condiciones para determinarlos serán detallados por LA ORGANIZACIÓN y estarán sujetos a los presentes términos y condiciones. LA ORGANIZACIÓN se reserva el derecho de modificar las reglas de asignación de premios en caso de fuerza mayor o circunstancias imprevistas, notificándolo oportunamente.
+### 5) Premios y reconocimientos
+En caso de que existan premios, reconocimientos o beneficios vinculados a la participación, serán detallados por LA ORGANIZACIÓN y estarán sujetos a los presentes términos y condiciones. LA ORGANIZACIÓN se reserva el derecho de modificar las reglas de asignación en caso de fuerza mayor o circunstancias imprevistas, notificándolo oportunamente.
 
 ---
 
@@ -57,12 +57,16 @@ const IS_USER_INSCRIBED = await client
 >
   <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
     <header class="flex flex-col items-center justify-center space-y-4 mb-16">
+      <img
+        src="/images/logo-scextremo.webp"
+        alt="Logo SaltoCraft Extremo 3"
+        class="h-28 lg:h-32"
+      />
+
       <h1
         class="with-glyph flex relative w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-minecraftia tracking-wider font-bold text-[#FF4444] mix-blend-screen !skew-x-[-20deg] -rotate-6"
       >
-        <span class="flex !skew-x-[20deg] transform">
-          SaltoCraft <br />Extremo 3
-        </span>
+        <span class="flex !skew-x-[20deg] transform"> Inscripción </span>
       </h1>
     </header>
     {
@@ -454,7 +458,7 @@ const IS_USER_INSCRIBED = await client
 <style>
   h1.with-glyph:after {
     content: "a";
-    @apply text-[80px] font-atomic-extras mt-20 absolute inset-x-0 text-center;
+    @apply text-[80px] font-atomic-extras mt-10 absolute inset-x-0 text-center;
     z-index: -1;
   }
 
