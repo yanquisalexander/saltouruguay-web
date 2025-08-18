@@ -13,8 +13,8 @@ const NEWS = [
         },
         navImage: "/images/ads/mc-extremo.webp",
         ctaLink: {
-            text: "Las inscripciones abren pronto",
-            url: "#",
+            text: "¡Inscríbete ahora!",
+            url: "/mc-extremo/inscripcion",
             newTab: false,
         }
     },
