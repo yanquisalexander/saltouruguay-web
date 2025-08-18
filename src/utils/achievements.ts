@@ -15,8 +15,11 @@ export const unlockAchievement = async ({ userId, achievementId }: { userId: num
 
     if (result.rowCount === 1) {
         console.log(`Logro desbloqueado para el usuario ${userId}:`, achievementId);
-        pusher.trigger(`user-${userId}-achievements`, 'achievement-unlocked', { id: achievementId, title: ACHIEVEMENTS_TEXTS.find(achievement => achievement.id === achievementId)?.title })
-        return true
+        try {
+            pusher.trigger(`user-${userId}-achievements`, 'achievement-unlocked', { id: achievementId, title: ACHIEVEMENTS_TEXTS.find(achievement => achievement.id === achievementId)?.title })
+        } catch (error) {
+            console.error("Pusher error:", error);
+        } return true
     }
 
     return false
