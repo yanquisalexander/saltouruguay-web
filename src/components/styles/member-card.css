@@ -123,6 +123,19 @@
         rgba(26, 35, 126, 0.5) 100%);
   }
 
+  &.skin-sc-extremo {
+  background: radial-gradient(120% 100% at 10% 90%,
+    /* Gris piedra claro */
+    #d7d9db 0%,
+    /* Acero azulado */
+    #8a9aa5 25%,
+    /* Grafito */
+    #4b5a61 50%,
+    /* Rojo oscuro quemado */
+    #2d1f1f 75%,
+    /* Negro profundo */
+    #0d0d0d 100%);
+}
 }
 
 .member-card-gradient-bg:before {

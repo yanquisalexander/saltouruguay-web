@@ -224,7 +224,7 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
                     </h2>
 
                     <div
-                        class="flex flex-row w-full p-8 max-h-[30rem] overflow-x-auto text-center flex-nowrap md:flex-wrap gap-x-8 gap-y-12 lg:pb-20 hidden-scroll h-40 relative"
+                        class="flex flex-row w-full p-8 max-h-[32rem] overflow-x-auto text-center flex-nowrap md:flex-wrap gap-x-8 gap-y-12 lg:pb-20 hidden-scroll h-48 relative"
                     >
                         {
                             MemberCardSkins.map(({ id, name, description }) => (

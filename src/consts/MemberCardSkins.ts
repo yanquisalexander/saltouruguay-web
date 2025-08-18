@@ -24,6 +24,12 @@ export const MemberCardSkins = [
         image: '/images/member-card-skins/awards.webp',
     },
     {
+        id: 'sc-extremo',
+        name: 'SaltoCraft Extremo',
+        description: 'Un diseño inspirado en SaltoCraft Extremo',
+        image: '/images/logo-scextremo.webp',
+    },
+    {
         id: 'guerra-streamers',
         name: 'Guerra de Streamers',
         description: 'Sentite parte de la Guerra de Streamers',
