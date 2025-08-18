@@ -164,11 +164,160 @@ const IS_USER_INSCRIBED = await client
     }
   </div>
 
+  <!-- Modal de inscripción -->
   <dialog
     id="inscripcion-modal"
+    class="max-w-[640px] w-full fixed inset-0 z-[99999999] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+  >
+    <form id="inscripcion-modal-close" class="absolute top-5 right-5">
+      <button type="button" class="text-white">
+        <LucideX class="w-6 h-6" />
+      </button>
+    </form>
+
+    <div class="flex flex-col items-center space-y-4">
+      <img src="/favicon.svg" class="aspect-square size-24" />
+      <h2 class="text-2xl font-bold text-center">
+        Inscripción SaltoCraft Extremo 3
+      </h2>
+    </div>
+
+    <div class="flex flex-col space-y-4 mt-8">
+      <form id="inscription-form" class="space-y-6">
+        <!-- Instagram -->
+        <div class="flex flex-col space-y-2">
+          <label for="instagram" class="font-rubik font-semibold">
+            Instagram <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            id="instagram"
+            name="instagram"
+            placeholder="Tu nickname o link de Instagram"
+            class="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-[#FF4444] focus:outline-none"
+            required
+          />
+          <small class="text-gray-400 text-sm"
+            >Puede ser tu Nickname o el link que nos lleve a él</small
+          >
+        </div>
+
+        <!-- Participación anterior -->
+        <div class="flex flex-col space-y-2">
+          <label class="font-rubik font-semibold">
+            ¿Participaste de alguna edición anterior de SaltoCraft EXTREMO? <span
+              class="text-red-400">*</span
+            >
+          </label>
+          <div class="flex gap-4">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="participated_sc"
+                value="si"
+                class="text-[#FF4444]"
+              />
+              <span>Sí</span>
+            </label>
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="participated_sc"
+                value="no"
+                class="text-[#FF4444]"
+              />
+              <span>No</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Usuario Minecraft -->
+        <div class="flex flex-col space-y-2">
+          <label for="minecraft_username" class="font-rubik font-semibold">
+            Usuario de Minecraft <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            id="minecraft_username"
+            name="minecraft_username"
+            placeholder="Tu usuario exacto de Minecraft"
+            class="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-[#FF4444] focus:outline-none"
+            required
+          />
+          <small class="text-gray-400 text-sm"
+            >Debe ser exacto y no necesita ser cuenta PREMIUM</small
+          >
+        </div>
+
+        <!-- Equipo -->
+        <div class="flex flex-col space-y-2">
+          <label class="font-rubik font-semibold">
+            Estado del equipo <span class="text-red-400">*</span>
+          </label>
+          <div class="flex flex-col gap-2">
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="team_status"
+                value="tengo"
+                required
+                class="text-[#FF4444]"
+              />
+              <span>Sí, ya tengo equipo</span>
+            </label>
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="radio"
+                name="team_status"
+                value="buscare"
+                required
+                class="text-[#FF4444]"
+              />
+              <span>Ok, trataré de buscar</span>
+            </label>
+          </div>
+          <small class="text-gray-400 text-sm"
+            >Recuerda que se podrán ayudar al comenzar el desafío (Todos deben
+            llenar el formulario)</small
+          >
+        </div>
+
+        <!-- Canal de contenido -->
+        <div class="flex flex-col space-y-2">
+          <label for="content_channel" class="font-rubik font-semibold">
+            Canal de contenido (opcional)
+          </label>
+          <input
+            type="url"
+            id="content_channel"
+            name="content_channel"
+            placeholder="Link a tu canal de YouTube, Twitch, etc."
+            class="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-[#FF4444] focus:outline-none"
+          />
+          <small class="text-gray-400 text-sm"
+            >Si tienes un canal donde creas contenido, déjanos el link para
+            promocionarte</small
+          >
+        </div>
+
+        <div class="pt-4">
+          <button
+            type="submit"
+            class="w-full py-3 bg-[#FF4444] rounded-lg text-white font-semibold transition duration-300 hover:bg-[#e63939]"
+          >
+            Continuar
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Modal de confirmación -->
+  <dialog
+    id="confirmation-modal"
     class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
   >
-    <form id="login-modal-close" class="absolute top-5 right-5">
+    <form id="confirmation-modal-close" class="absolute top-5 right-5">
       <button type="button" class="text-white">
         <LucideX class="w-6 h-6" />
       </button>
@@ -182,15 +331,24 @@ const IS_USER_INSCRIBED = await client
       <div class="prose prose-invert font-rubik text-sm">
         <h2 class="text-2xl font-bold text-center">Términos y condiciones</h2>
         <div
-          class="prose prose-invert font-rubik text-sm"
+          class="prose prose-invert font-rubik text-sm max-h-64 overflow-y-auto"
           set:html={markdown(inscripcionTOS)}
         />
+        <div
+          class="bg-yellow-900/30 border border-yellow-600 rounded-lg p-4 mt-4"
+        >
+          <p class="text-yellow-200 text-sm mb-2">
+            <strong>⚠️ Importante:</strong> Al entrar al DESAFIO SaltoCraft EXTREMO
+            3 lees y aceptas las reglas aclaradas en el DISCORD OFICIAL de SaltoUruguay
+            Server.
+          </p>
+        </div>
         <form class="flex flex-col space-y-4 mt-8" id="accept-tos-form">
           <button
             type="submit"
             class="accept w-full py-3 bg-electric-violet-500 rounded-lg text-white transition duration-300 hover:bg-electric-violet-600"
           >
-            Aceptar y continuar
+            Aceptar términos e inscribirme
           </button>
         </form>
       </div>
@@ -227,17 +385,40 @@ const IS_USER_INSCRIBED = await client
 
     const $inscribirseButton = $("#inscribirse");
     const $inscripcionModal = $("#inscripcion-modal") as HTMLDialogElement;
+    const $confirmationModal = $("#confirmation-modal") as HTMLDialogElement;
 
     const $closeInscripcionModal = $inscripcionModal.querySelector(
-      "#login-modal-close button"
+      "#inscripcion-modal-close button"
+    );
+    const $closeConfirmationModal = $confirmationModal.querySelector(
+      "#confirmation-modal-close button"
     );
 
     $closeInscripcionModal?.addEventListener("click", () => {
       $inscripcionModal.close();
     });
 
+    $closeConfirmationModal?.addEventListener("click", () => {
+      $confirmationModal.close();
+    });
+
     $inscribirseButton?.addEventListener("click", () => {
       $inscripcionModal.showModal();
+    });
+
+    // Form data storage
+    let formData = {};
+
+    const $inscriptionForm = $("#inscription-form");
+
+    $inscriptionForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formDataObj = new FormData(e.target as HTMLFormElement);
+      formData = Object.fromEntries(formDataObj.entries());
+
+      $inscripcionModal.close();
+      $confirmationModal.showModal();
     });
 
     const $acceptTOSForm = $("#accept-tos-form");
@@ -251,9 +432,11 @@ const IS_USER_INSCRIBED = await client
         return;
       }
 
+      // @ts-ignore
       const { error } = await actions.inscribeToSaltoCraftExtremo3({
         discordUsername: $discordUsername.dataset.discordUsername,
         acceptedTerms: true,
+        ...formData,
       });
 
       if (error) {
@@ -262,7 +445,7 @@ const IS_USER_INSCRIBED = await client
       }
 
       toast.success("¡Te has inscrito correctamente a SaltoCraft Extremo 3!");
-      $inscripcionModal.close();
+      $confirmationModal.close();
       window.location.reload();
     });
   });

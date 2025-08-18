@@ -690,6 +690,11 @@ export const SaltoCraftExtremo3InscriptionsTable = pgTable('salto_craft_extremo3
     userId: integer('user_id').references(() => UsersTable.id),
     discordUsername: varchar('discord_username'),
     acceptedTerms: boolean('accepted_terms').notNull().default(false),
+    instagram: varchar('instagram'),
+    participated_sc: varchar('participated_sc'),
+    minecraft_username: varchar('minecraft_username'),
+    team_status: varchar('team_status'),
+    content_channel: varchar('content_channel'),
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
 }, (t) => ({

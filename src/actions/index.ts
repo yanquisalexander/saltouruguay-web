@@ -275,8 +275,24 @@ export const server = {
         input: z.object({
             acceptedTerms: z.boolean(),
             discordUsername: z.string().min(1).max(50),
+            instagram: z.string().min(1),
+            participated_sc: z.enum(["si", "no"]),
+            minecraft_username: z.string().min(1),
+            team_status: z.enum(["tengo", "buscare"]),
+            content_channel: z.string().url().optional().or(z.literal("").optional()),
         }),
-        handler: async ({ acceptedTerms, discordUsername }, { request }) => {
+        handler: async (
+            {
+                acceptedTerms,
+                discordUsername,
+                instagram,
+                participated_sc,
+                minecraft_username,
+                team_status,
+                content_channel
+            },
+            { request }
+        ) => {
             const session = await getSession(request)
 
             if (!session) {
@@ -293,11 +309,18 @@ export const server = {
                 })
             }
 
+
+
             await client.insert(SaltoCraftExtremo3InscriptionsTable)
                 .values({
                     userId: session.user.id,
                     acceptedTerms,
-                    discordUsername
+                    discordUsername,
+                    instagram,
+                    participated_sc,
+                    minecraft_username,
+                    team_status,
+                    content_channel: content_channel || null
                 })
                 .onConflictDoNothing()
                 .execute()
