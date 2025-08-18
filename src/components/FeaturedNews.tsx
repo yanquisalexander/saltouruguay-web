@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "preact/compat";
 import { gsap } from "gsap";
+import { navigate } from "astro:transitions/client";
 
 const NEWS = [
     {
@@ -189,8 +190,7 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 10000 }: { newsItems
                     });
                 }
             } else {
-                // Simulate navigation - in real app would use navigate
-                console.log("Navigating to:", ctaLink.url);
+                navigate(ctaLink.url);
             }
         }
     };
