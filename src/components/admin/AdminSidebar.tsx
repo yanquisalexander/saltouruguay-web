@@ -12,6 +12,7 @@ import {
     LucideLayoutDashboard,
     LucidePaintbrush,
     LucideCalendar,
+    LucideSwords,
 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 
@@ -25,6 +26,7 @@ const iconMap = {
     settings: LucideSettings,
     paintbrush: LucidePaintbrush,
     calendar: LucideCalendar,
+    swords: LucideSwords
 };
 
 const categories = [
@@ -35,6 +37,7 @@ const categories = [
             { label: "Usuarios", url: "/admin/usuarios", icon: "users" },
             { label: "Páginas personalizadas", url: "/admin/custom-pages", icon: "paintbrush" },
             { label: "Eventos", url: "/admin/eventos", icon: "calendar" },
+            { label: "Inscripciones Extremo", url: "/admin/mc-extremo", icon: "swords" }
         ],
     },
     {
@@ -50,7 +53,7 @@ const categories = [
 ];
 
 export default function Sidebar({ session, initialPathname }: { session: Session | null, initialPathname: string }) {
-    const [collapsed, setCollapsed] = useState(true);
+    const [collapsed, setCollapsed] = useState(true)
     const [pathname, setPathname] = useState(initialPathname);
     const isActive = (path: string) => {
         return pathname === path
@@ -61,8 +64,13 @@ export default function Sidebar({ session, initialPathname }: { session: Session
             const currentPath = window.location.pathname;
             setPathname(currentPath);
         })
-    }
-        , []);
+
+        setCollapsed(window.innerWidth < 768);
+
+        return () => {
+            document.removeEventListener('astro:page-load', () => { });
+        }
+    }, []);
 
     return (
         <div

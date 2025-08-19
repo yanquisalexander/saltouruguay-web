@@ -701,6 +701,13 @@ export const SaltoCraftExtremo3InscriptionsTable = pgTable('salto_craft_extremo3
     uniqueUserId: unique().on(t.userId)
 }))
 
+export const saltoCraftExtremo3InscriptionsRelations = relations(SaltoCraftExtremo3InscriptionsTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [SaltoCraftExtremo3InscriptionsTable.userId],
+        references: [UsersTable.id],
+    })
+}));
+
 export const debateMessagesUserRelation = relations(DebateAnonymousMessagesTable, ({ one, many }) => ({
     user: one(UsersTable, {
         fields: [DebateAnonymousMessagesTable.userId],
