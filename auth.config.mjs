@@ -28,7 +28,6 @@ export default defineConfig({
             return true;
         },
         jwt: async ({ token, user, account, profile, ...props }) => {
-            console.log(props)
             if (user && account?.provider === "twitch") {
                 const email = profile?.email || null;
                 const username = user?.name?.toLowerCase();

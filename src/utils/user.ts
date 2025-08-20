@@ -322,24 +322,10 @@ export const sendNewLoginDetectedEmail = async (sessionId: string, request: Requ
         "forwarded",
     ];
 
-    const clientIp = IP_HEADERS.map(header => request.headers.get(header)).find(ip => ip !== undefined) ?? "";
+    const clientIp = IP_HEADERS.map(header => request.headers.get(header)).find(ip => ip !== undefined) ?? "unknown";
     const userAgent = request.headers.get("user-agent")!;
     // Actualiza la sesión con la nueva información
     await updateSession(sessionId, { ip: clientIp!, userAgent });
-
-
-    /** The email address of the user 
- email: string;
- /** The date and time of the login 
- date: Date;
- /** The location of the login 
- location: string;
- /** The device used for the login 
- device: string;
- /** The browser used for the login 
- browser: string;
- 
- */
 
     const ipInfo = await getIpInfo(clientIp!);
     const container = await experimental_AstroContainer.create();
@@ -351,8 +337,6 @@ export const sendNewLoginDetectedEmail = async (sessionId: string, request: Requ
             browser: userAgent,
         }
     });
-
-
 
 
     const emailSubject = "Nuevo inicio de sesión detectado";

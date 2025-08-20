@@ -18,7 +18,11 @@ const error = url.searchParams.get("error") as keyof typeof ERROR_MESSAGES | nul
 const session = await getSession(Astro.request);
 
 if(session && !error) {
-  await sendNewLoginDetectedEmail(session.user.sessionId!, Astro.request)
+  try {
+    await sendNewLoginDetectedEmail(session.user.sessionId!, Astro.request)
+  } catch (error) {
+    console.error("Error sending login email:", error);
+  }
 }
 ---
 <Layout
