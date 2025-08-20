@@ -1,5 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { sendNewLoginDetectedEmail } from "@/utils/user";
 import { getSession } from "auth-astro/server";
 
 const ERROR_MESSAGES = {
@@ -15,6 +16,10 @@ const error = url.searchParams.get("error") as keyof typeof ERROR_MESSAGES | nul
 */
 
 const session = await getSession(Astro.request);
+
+if(session && !error) {
+  await sendNewLoginDetectedEmail(session.user.sessionId!, Astro.request)
+}
 ---
 <Layout
   hideHeader

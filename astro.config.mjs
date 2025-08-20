@@ -23,7 +23,7 @@ export default defineConfig({
     preact({
       compat: true
     }),
-    auth(),
+    auth({ injectEndpoints: true, }),
     migrateDatabaseIntegration(),
     notifyNewVersion(),
     sitemap({

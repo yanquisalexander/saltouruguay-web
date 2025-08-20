@@ -3,13 +3,15 @@ import { client } from "@/db/client";
 import { MemberCards, SessionsTable, UserAchievementsTable, UsersTable, UserSuspensionsTable } from "@/db/schema";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { createUserApiClient, createStaticAuthProvider } from "@/lib/Twitch";
-import { and, count, eq, gt, ilike, lt, or, desc } from "drizzle-orm";
+import { and, count, eq, gt, ilike, lt, or, desc, type InferInsertModel } from "drizzle-orm";
 import { unlockAchievement } from "./achievements";
 import { ACHIEVEMENTS } from "@/consts/Achievements";
 import { experimental_AstroContainer } from "astro/container";
 import NewLoginDetected from "@/email/NewLoginDetected.astro";
 import { sendNotificationEmail } from "./email";
 import TwitchAuthorizationRevoked from "@/email/TwitchAuthorizationRevoked.astro";
+import { getIpInfo } from "./ipAddress";
+
 
 /**
  * Obtiene la suscripción de un usuario en Twitch.
@@ -271,37 +273,7 @@ export const saveSession = async (
             })
             .returning();
 
-        try {
-            const container = await experimental_AstroContainer.create()
-            const emailBody = await container.renderToString(NewLoginDetected, {
-                props: {
-                    date: new Date(),
 
-                }
-            });
-
-            const emailSubject = "Nuevo inicio de sesión detectado";
-            const user = await client
-                .query.UsersTable.findFirst({
-                    where: eq(UsersTable.id, userId),
-                    columns: {
-                        email: true,
-                    }
-                });
-
-            const email = user?.email;
-
-            if (email && import.meta.env.PROD) {
-                await sendNotificationEmail(
-                    email,
-                    emailSubject,
-                    emailBody,
-                )
-            }
-
-        } catch (error) {
-            console.error("Error sending email:", error);
-        }
 
         return newSession;
     } catch (error) {
@@ -309,6 +281,90 @@ export const saveSession = async (
         throw error;
     }
 };
+
+export const updateSession = async (sessionId: string, updates: Partial<InferInsertModel<typeof SessionsTable>>) => {
+    try {
+        const updatedSession = await client
+            .update(SessionsTable)
+            .set(updates)
+            .where(eq(SessionsTable.sessionId, sessionId))
+            .returning();
+
+        return updatedSession[0];
+    } catch (error) {
+        console.error("Error updating session:", error);
+        throw error;
+    }
+};
+
+export const sendNewLoginDetectedEmail = async (sessionId: string, request: Request) => {
+    // Originalmente, las sesiones no tienen
+    // datos como IP, ya que no tenemos
+    // acceso a la request durante el jwt en
+    // auth-astro
+    // Por lo que en el callback, llamamos a
+    // este método para actualizar la sesión, y enviar
+    // el email
+
+    const session = await getSessionById(sessionId);
+    if (!session) return;
+
+    const user = session.user;
+    if (!user) return;
+
+    const IP_HEADERS = [
+        "x-vercel-forwarded-for",
+        "x-forwarded-for",
+        "x-real-ip",
+        "cf-connecting-ip",
+        "true-client-ip",
+        "x-cluster-client-ip",
+        "forwarded",
+    ];
+
+    const clientIp = IP_HEADERS.map(header => request.headers.get(header)).find(ip => ip !== undefined) ?? "";
+    const userAgent = request.headers.get("user-agent")!;
+    // Actualiza la sesión con la nueva información
+    await updateSession(sessionId, { ip: clientIp!, userAgent });
+
+
+    /** The email address of the user 
+ email: string;
+ /** The date and time of the login 
+ date: Date;
+ /** The location of the login 
+ location: string;
+ /** The device used for the login 
+ device: string;
+ /** The browser used for the login 
+ browser: string;
+ 
+ */
+
+    const ipInfo = await getIpInfo(clientIp!);
+    const container = await experimental_AstroContainer.create();
+    const emailBody = await container.renderToString(NewLoginDetected, {
+        props: {
+            date: new Date(),
+            location: `${ipInfo?.cityName}, ${ipInfo?.regionName}, ${ipInfo?.countryName}`,
+            device: userAgent,
+            browser: userAgent,
+        }
+    });
+
+
+
+
+    const emailSubject = "Nuevo inicio de sesión detectado";
+
+    if (user.email && import.meta.env.PROD) {
+        await sendNotificationEmail(
+            user.email,
+            emailSubject,
+            emailBody,
+        );
+    }
+}
 
 export const destroySession = async (sessionId: string) => {
     try {
@@ -334,6 +390,8 @@ export const getSessionById = async (sessionId: string) => {
                         id: true,
                         username: true,
                         email: true,
+                        displayName: true,
+                        avatar: true,
                     }
                 }
             }

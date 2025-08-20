@@ -8,7 +8,6 @@ import { eq, or } from "drizzle-orm";
 import { saveSession, updateSessionActivity, destroySession, getSessionById } from "@/utils/user";
 
 export default defineConfig({
-    injectEndpoints: false,
     providers: [
         TwitchProvider({
             clientId: import.meta.env.TWITCH_CLIENT_ID,
@@ -29,6 +28,7 @@ export default defineConfig({
             return true;
         },
         jwt: async ({ token, user, account, profile, ...props }) => {
+            console.log(props)
             if (user && account?.provider === "twitch") {
                 const email = profile?.email || null;
                 const username = user?.name?.toLowerCase();
