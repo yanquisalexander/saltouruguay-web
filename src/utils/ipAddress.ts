@@ -43,9 +43,10 @@ export const getIpInfo = async (ipAddress: string): Promise<IpInfo | null> => {
 
         const data: unknown = await res.json();
 
-        if (!Array.isArray(data) || data.length === 0) return null;
+        // Aceptar tanto un objeto como un array de objetos
+        if (!data || (Array.isArray(data) && data.length === 0)) return null;
 
-        const raw = data[0] as Record<string, unknown>;
+        const raw = (Array.isArray(data) ? data[0] : data) as Record<string, unknown>;
 
         const info: IpInfo = {
             ipVersion: typeof raw.ipVersion === "number" ? raw.ipVersion : undefined,
