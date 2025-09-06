@@ -1,4 +1,3 @@
-import SaltoCraft3 from "@/email/SaltoCraft3.astro";
 import { Resend } from "resend";
 
 export const NOTIFICATIONS_EMAIL = "SaltoUruguayServer <notificaciones@saltouruguayserver.com>"
