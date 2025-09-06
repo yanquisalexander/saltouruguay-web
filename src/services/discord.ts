@@ -131,7 +131,9 @@ export const addRoleToUser = async (guildId: Snowflake, userId: Snowflake, roleI
     }
 }
 
-
+export const addRoleToUserWithoutLogging = async (guildId: Snowflake, userId: Snowflake, roleId: Snowflake) => {
+    return discord.put(Routes.guildMemberRole(guildId, userId, roleId))
+}
 
 export const removeRoleFromUser = async (guildId: Snowflake, userId: Snowflake, roleId: Snowflake) => {
     try {

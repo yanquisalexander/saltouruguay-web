@@ -1,6 +1,6 @@
 import { CATEGORIES } from "@/awards/Categories";
 import { NOMINEES } from "@/awards/Nominees";
-import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
+import { IS_VOTES_OPEN, SALTO_DISCORD_GUILD_ID, VOTES_OPEN_TIMESTAMP } from "@/config";
 import type { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { client } from "@/db/client";
 import { DebateAnonymousMessagesTable, NegativeVotesStreamersTable, SaltoCraftExtremo3InscriptionsTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, UserSuspensionsTable } from "@/db/schema";
@@ -23,6 +23,7 @@ import { events as userEvents } from "./events";
 import { sendNotificationEmail } from "@/utils/email";
 import { experimental_AstroContainer } from "astro/container";
 import InscripcionExtremo from "@/email/InscripcionExtremo.astro";
+import { addRoleToUserWithoutLogging } from "@/services/discord";
 export const server = {
     userEvents,
     sendVotes: defineAction({
@@ -332,6 +333,16 @@ export const server = {
             } catch (error) {
                 console.error("Error sending inscription email:", error)
             }
+
+            // Try to add role on Discord
+
+            try {
+                await addRoleToUserWithoutLogging(SALTO_DISCORD_GUILD_ID, session.user.discordId!, "1283086442842554521")
+            } catch {
+                console.error("Error adding role on Discord")
+            }
+
+
 
             return { success: true }
         }
