@@ -2,20 +2,14 @@ import { useState, useEffect, useRef } from "preact/hooks";
 
 const notifications = [
     {
-        id: "saltocraft-iii",
-        title: "Se viene SaltoCraft III",
-        description: "¡Prepárate para la nueva temporada de SaltoCraft! ¿Estás listo para la aventura?",
-        imageURL: "/images/ads/saltocraft.webp",
-        link: { title: "Inscríbete", url: "/saltocraft" },
+        id: "saltocraft-iii-extremo",
+        title: "Se viene SaltoCraft Extremo 3",
+        description: "¡Prepárate para el desafío más extremo de SaltoCraft!",
+        imageURL: "/images/ads/mc-extremo.webp",
+        link: { title: "Inscríbete", url: "/mc-extremo/inscripcion" },
         tags: [{ type: "ads", title: "" }],
     },
-    {
-        id: "administrar-cuenta",
-        title: '"Mi cuenta" ahora disponible',
-        description: "Administra tu cuenta de forma más sencilla y rápida. ¡Descubre todas las novedades!",
-        link: { title: "Mi Cuenta", url: "/usuario" },
-        tags: [{ type: "ads", title: "" }],
-    },
+
 ];
 
 interface Notification {
