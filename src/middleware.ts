@@ -5,6 +5,15 @@ import { getSessionById } from "./utils/user";
 export const onRequest = defineMiddleware(async (context, next) => {
     const { request, redirect } = context;
 
+    // Modo mantenimiento
+
+    // Ponemos error 500 con locals isMaintenanceMode
+
+    context.locals.isMaintenanceMode = true;
+    return new Response("Internal Server Error", { status: 500 });
+
+
+
     /* 
         Allow any /api/auth* requests to pass through
         Allow any /_actions* requests to pass through
