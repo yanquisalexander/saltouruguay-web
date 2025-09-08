@@ -10,7 +10,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // Ponemos error 500 con locals isMaintenanceMode
 
     context.locals.isMaintenanceMode = true;
-    return new Response("Internal Server Error", { status: 500 });
+    return context.rewrite("/500");
 
 
 
