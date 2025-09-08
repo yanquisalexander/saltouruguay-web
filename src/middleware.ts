@@ -2,17 +2,17 @@ import { defineMiddleware } from "astro:middleware";
 import { getSession } from "auth-astro/server";
 import { getSessionById } from "./utils/user";
 
+const ENABLE_MAINTENANCE = true; // Cambia a true para activar modo mantenimiento
+
 export const onRequest = defineMiddleware(async (context, next) => {
     const { request, redirect } = context;
+    const currentPath = new URL(request.url).pathname;
 
     // Modo mantenimiento
-
-    // Ponemos error 500 con locals isMaintenanceMode
-
-    context.locals.isMaintenanceMode = true;
-    return context.rewrite("/500");
-
-
+    if (ENABLE_MAINTENANCE && currentPath !== "/500") {
+        context.locals.isMaintenanceMode = true;
+        return context.rewrite("/500");
+    }
 
     /* 
         Allow any /api/auth* requests to pass through
@@ -41,12 +41,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const { user } = session;
     const isSuspended = user.isSuspended;
 
-
-
-    const currentPath = new URL(request.url).pathname;
-
-
-
     if (currentPath === "/suspended") return next();
 
     if (isSuspended) {
@@ -63,8 +57,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (session.user.twoFactorEnabled && !session.user.isSuspended && !serverSession?.twoFactorVerified && currentPath !== "/two-factor") {
         return redirect("/two-factor", 302);
     }
-
-
 
     return next();
 });
