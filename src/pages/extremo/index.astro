@@ -30,6 +30,20 @@ const players = await client
 ---
 
 <Layout title="SaltoCraft Extremo 3 - Jugadores">
+  <!-- SVG filter for wavy parchment effect -->
+  <svg width="0" height="0" style="position: absolute;">
+    <defs>
+      <filter id="wavy2">
+        <feTurbulence
+          baseFrequency="0.02"
+          numOctaves="3"
+          result="noise"
+          seed="1"></feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="3"
+        ></feDisplacementMap>
+      </filter>
+    </defs>
+  </svg>
   <div class="max-w-5xl w-full mx-auto py-8 px-4">
     <h1 class="text-3xl font-bold mb-8 text-center font-anton text-white">
       Jugadores de SaltoCraft Extremo 3
@@ -38,17 +52,15 @@ const players = await client
     <!-- Desktop: parchment background with an absolute centered grid so players "fit" inside the scroll area -->
     <div class="hidden md:block">
       <div class="relative w-full max-w-5xl mx-auto">
-        <div
-          class="bg-[url('/images/cartel.webp')] bg-center bg-no-repeat bg-contain w-full aspect-[642/461] min-h-[462px]"
-        >
+        <div class="parchment w-full aspect-[4/3] min-h-[462px] relative">
           <div
-            class="absolute inset-0 grid grid-cols-3 lg:grid-cols-6 gap-2 place-items-center px-16 py-8"
+            class="grid grid-cols-3 lg:grid-cols-6 gap-2 place-items-center p-8"
           >
             {
               players.map((player) => (
                 <div class="flex flex-col items-center justify-center text-center">
                   <h3
-                    class={`font-semibold text-lg font-playwrite ${
+                    class={`font-semibold text-base font-playwrite player-label ${
                       player.livesCount === 0
                         ? "text-red-500 line-through"
                         : "text-black"
@@ -83,7 +95,7 @@ const players = await client
         players.map((player) => (
           <div class="flex items-center justify-between px-4 py-2 bg-[rgba(0,0,0,0.35)] rounded-md">
             <h3
-              class={`font-playwrite text-sm ${player.livesCount === 0 ? "text-red-500 line-through" : "text-white"}`}
+              class={`font-playwrite text-sm player-label ${player.livesCount === 0 ? "text-red-500 line-through" : "text-white"}`}
             >
               {player.minecraft_username}
             </h3>
@@ -114,5 +126,80 @@ const players = await client
         </div>
       )
     }
+
+    <div class="bookmark-feedback"></div>
   </div>
 </Layout>
+
+<style>
+  @font-face {
+    font-family: Morris;
+    src: url(https://cdn.statically.io/gh/EmmesCodes/Tipografias/dae9f5bb/MorrisInitials.ttf);
+  }
+
+  .parchment {
+    background: tan;
+    padding: 12px;
+    border: solid calc(0.8vw + 4px) #f9e2c3;
+    border-image: url("https://res.cloudinary.com/ez-nettools/image/upload/v1635183100/parchment-hand-painted_zfdfpt.avif");
+    border-image-slice: 32 fill;
+    border-image-repeat: stretch;
+    background-clip: padding-box;
+    background-image: url(data:image/png;base64,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);
+    overflow: hidden;
+  }
+
+  .parchment::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: conic-gradient(
+      #fff3,
+      #fff0 2% 24%,
+      #fff2 25%,
+      #4321 0,
+      #0000 27% 48%,
+      #9632 50%,
+      #fff2 0,
+      #fff0 52% 73%,
+      #9632 75%,
+      #fff3 0,
+      #fff0 78% 97%,
+      #9632
+    );
+  }
+
+  .player-label {
+    text-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.6),
+      0 6px 12px rgba(0, 0, 0, 0.45);
+  }
+
+  .bookmark-feedback {
+    background: #911;
+    width: 34px;
+    height: 90px;
+    padding: 2px;
+    clip-path: polygon(
+      0% 0%,
+      100% 0%,
+      100% 100%,
+      50% calc(100% - 12px),
+      0% 100%
+    );
+    position: absolute;
+    top: 20px;
+    right: 20px;
+  }
+
+  .bookmark-feedback:before {
+    content: "";
+    display: block;
+    border: dotted thin gold;
+    height: calc(100% - 6px);
+    clip-path: inherit;
+  }
+</style>

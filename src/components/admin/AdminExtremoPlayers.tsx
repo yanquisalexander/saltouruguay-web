@@ -49,15 +49,17 @@ export default function AdminExtremoPlayers() {
                 updateData.livesCount = value;
             }
 
-            await toast.promise(
+            toast.promise(
                 actions.admin.updateExtremoPlayer(updateData),
                 {
                     loading: "Actualizando jugador...",
-                    success: "Jugador actualizado",
+                    success: () => {
+                        fetchPlayers();
+                        return "Jugador actualizado";
+                    },
                     error: "Error al actualizar jugador",
                 }
             );
-            await fetchPlayers(); // Refresh the list
         } catch (error) {
             console.error("Error updating player:", error);
         }
