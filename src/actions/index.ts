@@ -3,7 +3,7 @@ import { NOMINEES } from "@/awards/Nominees";
 import { IS_VOTES_OPEN, SALTO_DISCORD_GUILD_ID, VOTES_OPEN_TIMESTAMP } from "@/config";
 import type { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { client } from "@/db/client";
-import { DebateAnonymousMessagesTable, NegativeVotesStreamersTable, SaltoCraftExtremo3InscriptionsTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, UserSuspensionsTable } from "@/db/schema";
+import { DebateAnonymousMessagesTable, NegativeVotesStreamersTable, SaltoCraftExtremo3InscriptionsTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, UserSuspensionsTable, Extremo3PlayersTable } from "@/db/schema";
 import { submitVotes } from "@/utils/awards-vote-system";
 import { pusher } from "@/utils/pusher";
 import { updateCardSkin, updateStickers } from "@/utils/user";
@@ -394,8 +394,52 @@ export const server = {
 
                 return { success: true };
             },
-        })
+        }),
+        updateExtremoPlayer: defineAction({
+            input: z.object({
+                playerId: z.number(),
+                livesCount: z.number().min(0).max(3).optional(),
+                isConfirmedPlayer: z.boolean().optional(),
+            }),
+            handler: async ({ playerId, livesCount, isConfirmedPlayer }, { request }) => {
+                const session = await getSession(request);
 
+                if (!session) {
+                    throw new ActionError({
+                        code: "UNAUTHORIZED",
+                        message: "Debes iniciar sesión para actualizar jugadores",
+                    });
+                }
+
+                if (!session.user.isAdmin) {
+                    throw new ActionError({
+                        code: "FORBIDDEN",
+                        message: "No tienes permisos para actualizar jugadores",
+                    });
+                }
+
+                // Solo actualizar los campos que se hayan enviado
+                const updateData: any = {
+                    updatedAt: new Date(),
+                };
+
+                if (livesCount !== undefined) {
+                    updateData.livesCount = livesCount;
+                }
+
+                if (isConfirmedPlayer !== undefined) {
+                    updateData.isConfirmedPlayer = isConfirmedPlayer;
+                }
+
+                await client
+                    .update(Extremo3PlayersTable)
+                    .set(updateData)
+                    .where(eq(Extremo3PlayersTable.id, playerId))
+                    .execute();
+
+                return { success: true };
+            },
+        })
     },
     streamerWars,
     games,

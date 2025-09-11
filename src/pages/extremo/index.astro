@@ -1,0 +1,119 @@
+---
+import '@fontsource-variable/playwrite-au-nsw';
+
+
+import Layout from "@/layouts/Layout.astro";
+import { client } from "@/db/client";
+import {
+  Extremo3PlayersTable,
+  SaltoCraftExtremo3InscriptionsTable,
+} from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+const players = await client
+  .select({
+    id: Extremo3PlayersTable.id,
+    livesCount: Extremo3PlayersTable.livesCount,
+    isConfirmedPlayer: Extremo3PlayersTable.isConfirmedPlayer,
+    minecraft_username: SaltoCraftExtremo3InscriptionsTable.minecraft_username,
+    discordUsername: SaltoCraftExtremo3InscriptionsTable.discordUsername,
+  })
+  .from(Extremo3PlayersTable)
+  .innerJoin(
+    SaltoCraftExtremo3InscriptionsTable,
+    eq(
+      Extremo3PlayersTable.inscriptionId,
+      SaltoCraftExtremo3InscriptionsTable.id
+    )
+  )
+  .where(eq(Extremo3PlayersTable.isConfirmedPlayer, true))
+  .execute();
+---
+
+<Layout title="SaltoCraft Extremo 3 - Jugadores">
+  <div class="max-w-5xl w-full mx-auto py-8 px-4">
+    <h1 class="text-3xl font-bold mb-8 text-center font-anton text-white">
+      Jugadores de SaltoCraft Extremo 3
+    </h1>
+
+    <!-- Desktop: parchment background with an absolute centered grid so players "fit" inside the scroll area -->
+    <div class="hidden md:block">
+      <div class="relative w-full max-w-5xl mx-auto">
+        <div
+          class="bg-[url('/images/cartel.webp')] bg-center bg-no-repeat bg-contain w-full aspect-[642/461] min-h-[462px]"
+        >
+          <div
+            class="absolute inset-0 grid grid-cols-3 lg:grid-cols-6 gap-2 place-items-center px-16 py-8"
+          >
+            {
+              players.map((player) => (
+                <div class="flex flex-col items-center justify-center text-center">
+                  <h3
+                    class={`font-semibold text-lg font-playwrite ${
+                      player.livesCount === 0
+                        ? "text-red-500 line-through"
+                        : "text-black"
+                    }`}
+                  >
+                    {player.minecraft_username}
+                  </h3>
+                  <div class="flex items-center gap-1 mt-1">
+                    {Array.from({ length: 3 }, (_, i) => (
+                      <img
+                        src={
+                          i < player.livesCount
+                            ? "/images/vida.webp"
+                            : "/images/calavera.webp"
+                        }
+                        alt={i < player.livesCount ? "Vida" : "Sin vida"}
+                        class="w-4 h-4 object-contain"
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile: stacked list below the parchment for small screens -->
+    <div class="md:hidden grid gap-3 mt-6">
+      {
+        players.map((player) => (
+          <div class="flex items-center justify-between px-4 py-2 bg-[rgba(0,0,0,0.35)] rounded-md">
+            <h3
+              class={`font-minecraftia text-sm ${player.livesCount === 0 ? "text-red-500 line-through" : "text-white"}`}
+            >
+              {player.minecraft_username}
+            </h3>
+            <div class="flex items-center gap-1">
+              {Array.from({ length: 3 }, (_, i) => (
+                <img
+                  src={
+                    i < player.livesCount
+                      ? "/images/vida.webp"
+                      : "/images/calavera.webp"
+                  }
+                  alt={i < player.livesCount ? "Vida" : "Sin vida"}
+                  class="w-4 h-4 object-contain"
+                />
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    {
+      players.length === 0 && (
+        <div class="text-center py-12">
+          <p class="text-gray-400 font-rubik">
+            No hay jugadores confirmados aún.
+          </p>
+        </div>
+      )
+    }
+  </div>
+</Layout>

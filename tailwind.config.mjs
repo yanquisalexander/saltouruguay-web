@@ -34,6 +34,7 @@ export default {
 				squids: ["Game of Squids", "cursive"],
 				minecraft: ["Minecraft", "sans-serif"],
 				minecraftia: ["Minecraftia", "sans-serif"],
+				playwrite: ["Playwrite AU NSW Variable", "cursive"]
 			}
 		},
 	},

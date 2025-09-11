@@ -50,6 +50,9 @@ importers:
       '@floating-ui/react':
         specifier: ^0.26.28
         version: 0.26.28(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@fontsource-variable/playwrite-au-nsw':
+        specifier: ^5.2.8
+        version: 5.2.8
       '@fontsource-variable/rubik':
         specifier: ^5.1.0
         version: 5.2.5
@@ -977,6 +980,9 @@ packages:
 
   '@floating-ui/utils@0.2.9':
     resolution: {integrity: sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==}
+
+  '@fontsource-variable/playwrite-au-nsw@5.2.8':
+    resolution: {integrity: sha512-IyUHuTY2dSjPbffkvybJrq4FqCophjlFdSGosvTjgjMsAdqqjyu7cwrrquDIYLQsXQyuxOfRfiR4oSV5W+wOGw==}
 
   '@fontsource-variable/rubik@5.2.5':
     resolution: {integrity: sha512-6tXqnHFA9/ItIEODfH5LrzLSmcNE5TXD8OuXx14cvmS7j1zX4JgEHjYrhlWhLGuBXXzrOnz0A0oMheMMbXwmWA==}
@@ -5001,6 +5007,8 @@ snapshots:
       tabbable: 6.2.0
 
   '@floating-ui/utils@0.2.9': {}
+
+  '@fontsource-variable/playwrite-au-nsw@5.2.8': {}
 
   '@fontsource-variable/rubik@5.2.5': {}
 

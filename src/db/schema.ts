@@ -701,10 +701,30 @@ export const SaltoCraftExtremo3InscriptionsTable = pgTable('salto_craft_extremo3
     uniqueUserId: unique().on(t.userId)
 }))
 
-export const saltoCraftExtremo3InscriptionsRelations = relations(SaltoCraftExtremo3InscriptionsTable, ({ one }) => ({
+export const Extremo3PlayersTable = pgTable('extremo3_players', {
+    id: serial('id').primaryKey(),
+    inscriptionId: integer('inscription_id').references(() => SaltoCraftExtremo3InscriptionsTable.id),
+    isConfirmedPlayer: boolean('is_confirmed_player').notNull().default(false),
+    livesCount: integer('lives_count').notNull().default(3),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueInscriptionId: unique().on(t.inscriptionId)
+}))
+
+export const saltoCraftExtremo3InscriptionsRelations = relations(SaltoCraftExtremo3InscriptionsTable, ({ one, many }) => ({
     user: one(UsersTable, {
         fields: [SaltoCraftExtremo3InscriptionsTable.userId],
         references: [UsersTable.id],
+    }),
+    players: many(Extremo3PlayersTable),
+}));
+
+export const extremo3PlayersRelations = relations(Extremo3PlayersTable, ({ one }) => ({
+
+    inscription: one(SaltoCraftExtremo3InscriptionsTable, {
+        fields: [Extremo3PlayersTable.inscriptionId],
+        references: [SaltoCraftExtremo3InscriptionsTable.id],
     })
 }));
 

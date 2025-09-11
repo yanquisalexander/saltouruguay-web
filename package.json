@@ -26,6 +26,7 @@
     "@editorjs/header": "^2.8.8",
     "@editorjs/list": "^2.0.6",
     "@floating-ui/react": "^0.26.28",
+    "@fontsource-variable/playwrite-au-nsw": "^5.2.8",
     "@fontsource-variable/rubik": "^5.1.0",
     "@fontsource-variable/teko": "^5.1.0",
     "@fontsource/anton": "^5.1.0",

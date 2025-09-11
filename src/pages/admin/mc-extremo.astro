@@ -1,5 +1,6 @@
 ---
 import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
+import AdminExtremoPlayers from "@/components/admin/AdminExtremoPlayers.tsx";
 import { client } from "@/db/client";
 import { SaltoCraftExtremo3InscriptionsTable } from "@/db/schema";
 import AdminLayout from "@/layouts/AdminLayout.astro";
@@ -105,5 +106,9 @@ const inscriptos =
         }
       </tbody>
     </table>
+
+    <div class="mt-12">
+      <AdminExtremoPlayers client:load />
+    </div>
   </div>
 </AdminLayout>
