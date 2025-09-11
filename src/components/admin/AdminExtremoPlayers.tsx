@@ -111,6 +111,16 @@ export default function AdminExtremoPlayers() {
         <div className="space-y-6">
             <h2 className="text-2xl font-bold font-anton text-white">Gestión de Jugadores - SaltoCraft Extremo 3</h2>
 
+            {/* Botón para añadir jugadores faltantes desde las inscripciones */}
+            <div className="flex items-center gap-4">
+                <button
+                    onClick={seedPlayers}
+                    className="px-4 py-2 bg-electric-violet-500 text-white rounded font-rubik hover:bg-electric-violet-600 transition-colors"
+                >
+                    Añadir jugadores faltantes (Desde inscripción)
+                </button>
+            </div>
+
             <div className="grid gap-4">
                 {players.map((player) => (
                     <div key={player.id} className="bg-zinc-900/50 backdrop-blur-sm p-4 rounded-lg border border-neutral-800 shadow-lg hover:bg-zinc-800/50 transition-colors">
@@ -131,7 +141,7 @@ export default function AdminExtremoPlayers() {
                                     <input
                                         type="checkbox"
                                         checked={player.isConfirmedPlayer}
-                                        onChange={(e) => updatePlayer(player.id, 'isConfirmedPlayer', e.target.checked)}
+                                        onChange={(e: any) => updatePlayer(player.id, 'isConfirmedPlayer', e.currentTarget?.checked)}
                                         className="rounded bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
                                     />
                                 </div>
