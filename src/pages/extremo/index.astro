@@ -1,6 +1,5 @@
 ---
-import '@fontsource-variable/playwrite-au-nsw';
-
+import "@fontsource-variable/playwrite-au-nsw";
 
 import Layout from "@/layouts/Layout.astro";
 import { client } from "@/db/client";
@@ -84,7 +83,7 @@ const players = await client
         players.map((player) => (
           <div class="flex items-center justify-between px-4 py-2 bg-[rgba(0,0,0,0.35)] rounded-md">
             <h3
-              class={`font-minecraftia text-sm ${player.livesCount === 0 ? "text-red-500 line-through" : "text-white"}`}
+              class={`font-playwrite text-sm ${player.livesCount === 0 ? "text-red-500 line-through" : "text-white"}`}
             >
               {player.minecraft_username}
             </h3>
