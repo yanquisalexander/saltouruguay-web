@@ -157,20 +157,14 @@ const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
     background-color: var(--color-brand-black);
   }
 
-  @media (width > 768px) {
-    .header-animate {
-      background-color: transparent;
-    }
-
-    @keyframes reduce-header {
-      to {
-        box-shadow:
-          0 5px 50px -5px #ffffff1a,
-          0 0 0 1px #ffffff1a;
-        background: #0000004d;
-        @apply py-3;
-        backdrop-filter: blur(10px);
-      }
+  @keyframes reduce-header {
+    to {
+      box-shadow:
+        0 5px 50px -5px #ffffff1a,
+        0 0 0 1px #ffffff1a;
+      background: #0000004d;
+      @apply py-3;
+      backdrop-filter: blur(10px);
     }
   }
 </style>
