@@ -1,5 +1,6 @@
 import { useState, useEffect } from "preact/compat";
 import { actions } from "astro:actions";
+import { toast } from "sonner";
 
 interface Player {
     id: number;
@@ -23,7 +24,14 @@ export default function AdminExtremoPlayers() {
         try {
             const response = await fetch("/api/extremo-players");
             const data = await response.json();
-            setPlayers(data.players);
+            // Ordenar: primero confirmados (true), luego por vidas descendente
+            const sorted = [...(data.players || [])].sort((a, b) => {
+                if (a.isConfirmedPlayer !== b.isConfirmedPlayer) {
+                    return Number(b.isConfirmedPlayer) - Number(a.isConfirmedPlayer);
+                }
+                return (b.livesCount ?? 0) - (a.livesCount ?? 0);
+            });
+            setPlayers(sorted);
         } catch (error) {
             console.error("Error fetching players:", error);
         } finally {
@@ -41,7 +49,14 @@ export default function AdminExtremoPlayers() {
                 updateData.livesCount = value;
             }
 
-            await actions.admin.updateExtremoPlayer(updateData);
+            await toast.promise(
+                actions.admin.updateExtremoPlayer(updateData),
+                {
+                    loading: "Actualizando jugador...",
+                    success: "Jugador actualizado",
+                    error: "Error al actualizar jugador",
+                }
+            );
             await fetchPlayers(); // Refresh the list
         } catch (error) {
             console.error("Error updating player:", error);
@@ -50,15 +65,22 @@ export default function AdminExtremoPlayers() {
 
     const seedPlayers = async () => {
         try {
-            const response = await fetch("/api/seed-extremo-players", {
+            const seedPromise = fetch("/api/seed-extremo-players", {
                 method: "POST",
+            })
+                .then((r) => r.json())
+                .then((data) => {
+                    if (!data.success) throw new Error(data.error || "Error al inicializar");
+                    return data;
+                });
+
+            await toast.promise(seedPromise, {
+                loading: "Inicializando jugadores...",
+                success: "Jugadores inicializados",
+                error: "Error al inicializar jugadores",
             });
-            const data = await response.json();
-            if (data.success) {
-                await fetchPlayers(); // Refresh the list
-            } else {
-                console.error("Error seeding players:", data.error);
-            }
+
+            await fetchPlayers(); // Refresh the list
         } catch (error) {
             console.error("Error seeding players:", error);
         }
