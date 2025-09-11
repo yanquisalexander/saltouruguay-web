@@ -137,8 +137,6 @@ const players = await client
         </div>
       )
     }
-
-    <div class="bookmark-feedback"></div>
   </div>
 </Layout>
 
@@ -187,30 +185,5 @@ const players = await client
     text-shadow:
       0 1px 0 rgba(255, 255, 255, 0.6),
       0 6px 12px rgba(0, 0, 0, 0.45);
-  }
-
-  .bookmark-feedback {
-    background: #911;
-    width: 34px;
-    height: 90px;
-    padding: 2px;
-    clip-path: polygon(
-      0% 0%,
-      100% 0%,
-      100% 100%,
-      50% calc(100% - 12px),
-      0% 100%
-    );
-    position: absolute;
-    top: 20px;
-    right: 20px;
-  }
-
-  .bookmark-feedback:before {
-    content: "";
-    display: block;
-    border: dotted thin gold;
-    height: calc(100% - 6px);
-    clip-path: inherit;
   }
 </style>
