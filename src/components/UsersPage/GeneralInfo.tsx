@@ -6,6 +6,38 @@ import type { APIUser } from "discord-api-types/v10";
 import { IcBaselineDiscord } from "../preactIcons/Discord";
 
 export const GeneralInfo = ({ session, discordUser }: { session: Session, discordUser: APIUser | null }) => {
+    const [unlinkingDiscord, setUnlinkingDiscord] = useState(false);
+
+    const handleDiscordUnlink = async () => {
+        setUnlinkingDiscord(true);
+        
+        try {
+            const response = await fetch('/api/discord/unlink', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                toast.success(data.message || "Cuenta de Discord desvinculada exitosamente");
+                // Reload the page to reflect changes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                toast.error(data.error || "Error al desvincular la cuenta de Discord");
+            }
+        } catch (error) {
+            console.error('Error unlinking Discord:', error);
+            toast.error("Error interno del servidor");
+        } finally {
+            setUnlinkingDiscord(false);
+        }
+    };
+
     const [connections] = useState([
         {
             id: "twitch",
@@ -30,7 +62,7 @@ export const GeneralInfo = ({ session, discordUser }: { session: Session, discor
                 toast.loading("Conectando a Discord...");
                 location.href = "/api/discord/link";
             },
-            unlinkHandler: () => toast.error("No disponible por el momento."),
+            unlinkHandler: handleDiscordUnlink,
         },
     ]);
 
@@ -92,11 +124,19 @@ export const GeneralInfo = ({ session, discordUser }: { session: Session, discor
                                     {conn.isConnected && <LucideCircleCheckBig class="text-green-500" />}
                                     {conn.canUnlink && (
                                         <button
-                                            class="border px-3 py-2 rounded-md text-sm hover:bg-accent w-full sm:w-auto"
+                                            class="border px-3 py-2 rounded-md text-sm hover:bg-accent w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                             type="button"
+                                            disabled={conn.id === 'discord' && unlinkingDiscord}
                                             onClick={conn.isConnected ? conn.unlinkHandler : conn.linkHandler}
                                         >
-                                            {conn.isConnected ? "Desconectar" : "Conectar"}
+                                            {conn.id === 'discord' && unlinkingDiscord && conn.isConnected ? (
+                                                <>
+                                                    <div class="animate-spin-clockwise animate-iteration-count-infinite w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                                    Desvinculando...
+                                                </>
+                                            ) : (
+                                                conn.isConnected ? "Desconectar" : "Conectar"
+                                            )}
                                         </button>
                                     )}
                                 </div>
