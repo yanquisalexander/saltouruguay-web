@@ -10,6 +10,7 @@ import { LucideLoader } from "lucide-preact";
 
 const DISCORD_LINK_ERRORS = {
   USER_IS_NOT_MEMBER: "USER_IS_NOT_MEMBER",
+  DISCORD_ALREADY_LINKED: "DISCORD_ALREADY_LINKED",
 };
 
 async function linkDiscordAccount(request: Request) {
@@ -103,6 +104,21 @@ async function linkDiscordAccount(request: Request) {
 
   // Actualizar base de datos
   try {
+    // Check if Discord ID is already linked to another user
+    const existingUser = await client
+      .select({ id: UsersTable.id })
+      .from(UsersTable)
+      .where(eq(UsersTable.discordId, userData.id))
+      .limit(1);
+
+    if (existingUser.length > 0 && existingUser[0].id !== session.user.id) {
+      return {
+        error: true,
+        error_code: DISCORD_LINK_ERRORS.DISCORD_ALREADY_LINKED,
+        status: 409,
+      };
+    }
+
     await client
       .update(UsersTable)
       .set({ discordId: userData.id })
@@ -138,6 +154,21 @@ const result = await linkDiscordAccount(Astro.request);
               target="_blank"
             >
               Unirse a Discord
+            </a>
+          </div>
+        ) : result.error_code === DISCORD_LINK_ERRORS.DISCORD_ALREADY_LINKED ? (
+          <div class="bg-red-500/20 rounded-2xl p-8 flex flex-col items-center border border-white/20 ring-4 ring-red-500/20 border-dotted mx-4">
+            <h2 class="text-lg font-medium font-rubik">
+              Esta cuenta de Discord ya está vinculada a otro usuario
+            </h2>
+            <p class="text-base flex-col mt-2 flex items-center gap-2 text-center max-w-xl">
+              La cuenta de Discord que intentas vincular ya está asociada con otro usuario de la plataforma.
+            </p>
+            <a
+              href="/usuario"
+              class="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+            >
+              Volver a mi cuenta
             </a>
           </div>
         ) : (
