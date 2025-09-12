@@ -1,6 +1,6 @@
 import { client } from "@/db/client";
 import { Extremo3PlayersTable, SaltoCraftExtremo3InscriptionsTable } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 export async function GET() {
     try {
@@ -19,6 +19,7 @@ export async function GET() {
                 SaltoCraftExtremo3InscriptionsTable,
                 eq(Extremo3PlayersTable.inscriptionId, SaltoCraftExtremo3InscriptionsTable.id)
             )
+            .orderBy(desc(Extremo3PlayersTable.livesCount))
             .execute();
 
         return new Response(JSON.stringify({ players }), {
