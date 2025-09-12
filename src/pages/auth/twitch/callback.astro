@@ -5,6 +5,7 @@ import { getSession } from "auth-astro/server";
 
 const ERROR_MESSAGES = {
   Configuration: "Ocurrió un error por nuestra parte. Por favor, inténtalo de nuevo más tarde.",
+  AccessDenied: "No se pudo iniciar sesión. Por favor, verifica que tengas tu cuenta de Twitch activa y correo electrónico verificado."
 };
 
 const url = new URL(Astro.request.url);
