@@ -12,9 +12,11 @@ interface Player {
     };
 }
 
+
 export default function AdminExtremoPlayers() {
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         fetchPlayers();
@@ -107,6 +109,17 @@ export default function AdminExtremoPlayers() {
         );
     }
 
+    // Filtrar confirmados y aplicar búsqueda
+    const confirmedPlayers = players.filter((p) => p.isConfirmedPlayer);
+    const filteredConfirmed = confirmedPlayers.filter((p) => {
+        const q = search.trim().toLowerCase();
+        if (!q) return true;
+        return (
+            p.inscription.minecraft_username.toLowerCase().includes(q) ||
+            p.inscription.discordUsername.toLowerCase().includes(q)
+        );
+    });
+
     return (
         <div className="space-y-6">
             <h2 className="text-2xl font-bold font-anton text-white">Gestión de Jugadores - SaltoCraft Extremo 3</h2>
@@ -121,9 +134,80 @@ export default function AdminExtremoPlayers() {
                 </button>
             </div>
 
+            {/* Barra de búsqueda para confirmados */}
+            {confirmedPlayers.length > 0 && (
+                <div className="my-2">
+                    <input
+                        type="text"
+                        value={search}
+                        onInput={e => setSearch((e.target as HTMLInputElement).value)}
+                        placeholder="Buscar jugador confirmado..."
+                        className="w-full md:w-96 px-3 py-2 rounded border border-neutral-700 bg-zinc-900/70 text-white font-rubik focus:outline-none focus:border-electric-violet-500 transition"
+                    />
+                </div>
+            )}
+
+            {/* Lista de confirmados filtrados */}
             <div className="grid gap-4">
-                {players.map((player) => (
+                {filteredConfirmed.map((player) => (
                     <div key={player.id} className="bg-zinc-900/50 backdrop-blur-sm p-4 rounded-lg border border-neutral-800 shadow-lg hover:bg-zinc-800/50 transition-colors">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className={`font-semibold text-white font-minecraftia ${player.livesCount === 0
+                                    ? 'text-red-500 line-through'
+                                    : ''
+                                    }`}>
+                                    {player.inscription.minecraft_username}
+                                </h3>
+                                <p className="text-sm text-gray-300 font-rubik">{player.inscription.discordUsername}</p>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm text-gray-300 font-rubik">Confirmado:</label>
+                                    <input
+                                        type="checkbox"
+                                        checked={player.isConfirmedPlayer}
+                                        onChange={(e: any) => updatePlayer(player.id, 'isConfirmedPlayer', e.currentTarget?.checked)}
+                                        className="rounded bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
+                                    />
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm text-gray-300 font-rubik">Vidas:</label>
+                                    <button
+                                        onClick={() => updatePlayer(player.id, 'livesCount', Math.max(0, player.livesCount - 1))}
+                                        className="px-2 py-1 bg-red-600 text-white rounded font-rubik hover:bg-red-700 transition-colors"
+                                    >
+                                        -
+                                    </button>
+                                    <div className="flex items-center gap-1 px-2">
+                                        {Array.from({ length: 3 }, (_, i) => (
+                                            <img
+                                                key={i}
+                                                src={i < player.livesCount ? "/images/vida.webp" : "/images/calavera.webp"}
+                                                alt={i < player.livesCount ? "Vida" : "Sin vida"}
+                                                className="w-5 h-5"
+                                            />
+                                        ))}
+                                    </div>
+                                    <button
+                                        onClick={() => updatePlayer(player.id, 'livesCount', Math.min(3, player.livesCount + 1))}
+                                        className="px-2 py-1 bg-green-600 text-white rounded font-rubik hover:bg-green-700 transition-colors"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* El resto de jugadores no confirmados */}
+            <div className="grid gap-4 mt-8">
+                {players.filter((p) => !p.isConfirmedPlayer).map((player) => (
+                    <div key={player.id} className="bg-zinc-900/30 p-4 rounded-lg border border-neutral-800 shadow hover:bg-zinc-800/30 transition-colors opacity-80">
                         <div className="flex items-center justify-between">
                             <div>
                                 <h3 className={`font-semibold text-white font-minecraftia ${player.livesCount === 0
