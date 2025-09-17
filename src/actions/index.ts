@@ -400,8 +400,9 @@ export const server = {
                 playerId: z.number(),
                 livesCount: z.number().min(0).max(3).optional(),
                 isConfirmedPlayer: z.boolean().optional(),
+                minecraft_username: z.string().optional(),
             }),
-            handler: async ({ playerId, livesCount, isConfirmedPlayer }, { request }) => {
+            handler: async ({ playerId, livesCount, isConfirmedPlayer, minecraft_username }, { request }) => {
                 const session = await getSession(request);
 
                 if (!session) {
@@ -436,6 +437,23 @@ export const server = {
                     .set(updateData)
                     .where(eq(Extremo3PlayersTable.id, playerId))
                     .execute();
+
+                // Actualizar minecraft_username en la tabla de inscripciones si se proporcionó
+                if (minecraft_username !== undefined) {
+                    const player = await client
+                        .select({ inscriptionId: Extremo3PlayersTable.inscriptionId })
+                        .from(Extremo3PlayersTable)
+                        .where(eq(Extremo3PlayersTable.id, playerId))
+                        .execute();
+
+                    if (player.length > 0) {
+                        await client
+                            .update(SaltoCraftExtremo3InscriptionsTable)
+                            .set({ minecraft_username })
+                            .where(eq(SaltoCraftExtremo3InscriptionsTable.id, player[0].inscriptionId))
+                            .execute();
+                    }
+                }
 
                 return { success: true };
             },

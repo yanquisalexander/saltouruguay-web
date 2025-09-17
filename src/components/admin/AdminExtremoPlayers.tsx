@@ -12,11 +12,12 @@ interface Player {
     };
 }
 
-
 export default function AdminExtremoPlayers() {
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingValue, setEditingValue] = useState("");
 
     useEffect(() => {
         fetchPlayers();
@@ -49,6 +50,8 @@ export default function AdminExtremoPlayers() {
                 updateData.isConfirmedPlayer = value;
             } else if (field === 'livesCount') {
                 updateData.livesCount = value;
+            } else if (field === 'minecraft_username') {
+                updateData.minecraft_username = value;
             }
 
             toast.promise(
@@ -153,12 +156,43 @@ export default function AdminExtremoPlayers() {
                     <div key={player.id} className="bg-zinc-900/50 backdrop-blur-sm p-4 rounded-lg border border-neutral-800 shadow-lg hover:bg-zinc-800/50 transition-colors">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className={`font-semibold text-white font-minecraftia ${player.livesCount === 0
-                                    ? 'text-red-500 line-through'
-                                    : ''
-                                    }`}>
-                                    {player.inscription.minecraft_username}
-                                </h3>
+                                {/* Username editable */}
+                                {editingId === player.id ? (
+                                    <input
+                                        type="text"
+                                        value={editingValue}
+                                        autoFocus
+                                        onInput={e => setEditingValue((e.target as HTMLInputElement).value)}
+                                        onBlur={() => {
+                                            setEditingId(null);
+                                            if (editingValue.trim() && editingValue !== player.inscription.minecraft_username) {
+                                                updatePlayer(player.id, 'minecraft_username', editingValue.trim());
+                                            }
+                                        }}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                setEditingId(null);
+                                                if (editingValue.trim() && editingValue !== player.inscription.minecraft_username) {
+                                                    updatePlayer(player.id, 'minecraft_username', editingValue.trim());
+                                                }
+                                            } else if (e.key === 'Escape') {
+                                                setEditingId(null);
+                                            }
+                                        }}
+                                        className="font-semibold text-white font-minecraftia bg-zinc-800 px-2 py-1 rounded border border-electric-violet-500 focus:outline-none w-48"
+                                    />
+                                ) : (
+                                    <h3
+                                        className={`font-semibold text-white font-minecraftia cursor-pointer ${player.livesCount === 0 ? 'text-red-500 line-through' : ''}`}
+                                        title="Editar username"
+                                        onClick={() => {
+                                            setEditingId(player.id);
+                                            setEditingValue(player.inscription.minecraft_username);
+                                        }}
+                                    >
+                                        {player.inscription.minecraft_username}
+                                    </h3>
+                                )}
                                 <p className="text-sm text-gray-300 font-rubik">{player.inscription.discordUsername}</p>
                             </div>
 
