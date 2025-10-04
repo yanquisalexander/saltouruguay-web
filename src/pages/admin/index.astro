@@ -159,6 +159,9 @@ if (cacheValue) {
   `;
   const generatedTips = await gemini.generateTipsForAdminPanel({
     dashboardStats: message.trim(),
+  }).catch((err) => {
+    console.error("Error generating tips:", err);
+    return "No se pudieron generar consejos en este momento.";
   });
   await cache.set(cacheKey, generatedTips, 60 * 60 * 24); // 1 día
   tips = generatedTips;
