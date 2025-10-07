@@ -1,8 +1,20 @@
 import { client } from "@/db/client";
 import { Extremo3PlayersTable, SaltoCraftExtremo3InscriptionsTable, Extremo3RepechajeVotesTable } from "@/db/schema";
+import type { APIContext, APIRoute } from "astro";
+import { getSession } from "auth-astro/server";
 import { eq, count, desc } from "drizzle-orm";
 
-export async function GET() {
+export async function GET({ request }: APIContext) {
+
+    const session = await getSession(request);
+
+    if (!session || !session.user.isAdmin) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+        });
+    }
+
     try {
         // Obtener jugadores en repechaje
         const playersInRepechaje = await client
