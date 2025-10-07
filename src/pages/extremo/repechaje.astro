@@ -103,10 +103,10 @@ const hasVoted = userVote.length > 0;
     >
       {
         playersWithVotes.map((player) => (
-          <div class="flex flex-col items-center gap-4">
-            <div class="bg-zinc-800/50 backdrop-blur-sm p-6 rounded-lg border border-neutral-700 shadow-lg hover:bg-zinc-700/50 transition-colors">
-              <div class="text-center">
-                <h3 class="text-xl font-bold font-minecraftia text-white mb-2">
+          <div class="flex flex-col items-center gap-4 h-full">
+            <div class="bg-zinc-800/50 backdrop-blur-sm p-6 rounded-lg border border-neutral-700 shadow-lg hover:bg-zinc-700/50 transition-colors w-full min-h-[280px] flex flex-col justify-between">
+              <div class="text-center flex-1 flex flex-col justify-center">
+                <h3 class="text-xl font-bold font-minecraftia text-white mb-2 break-words">
                   {player.inscription.minecraft_username}
                 </h3>
                 <p class="text-sm text-gray-300 font-rubik mb-4">
@@ -125,9 +125,8 @@ const hasVoted = userVote.length > 0;
                     />
                   ))}
                 </div>
-                <p class="text-lg font-semibold text-[#FF4444] mb-4">
-                  Votos: {player.voteCount}
-                </p>
+              </div>
+              <div class="mt-auto">
                 {!hasVoted && (
                   <button
                     data-player-id={player.id}
