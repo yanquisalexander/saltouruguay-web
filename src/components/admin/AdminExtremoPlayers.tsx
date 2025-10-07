@@ -6,6 +6,7 @@ interface Player {
     id: number;
     livesCount: number;
     isConfirmedPlayer: boolean;
+    isRepechaje: boolean;
     inscription: {
         minecraft_username: string;
         discordUsername: string;
@@ -48,6 +49,8 @@ export default function AdminExtremoPlayers() {
 
             if (field === 'isConfirmedPlayer') {
                 updateData.isConfirmedPlayer = value;
+            } else if (field === 'isRepechaje') {
+                updateData.isRepechaje = value;
             } else if (field === 'livesCount') {
                 updateData.livesCount = value;
             } else if (field === 'minecraft_username') {
@@ -206,6 +209,15 @@ export default function AdminExtremoPlayers() {
                                         className="rounded bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
                                     />
                                 </div>
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm text-gray-300 font-rubik">Repechaje:</label>
+                                    <input
+                                        type="checkbox"
+                                        checked={player.isRepechaje}
+                                        onChange={(e: any) => updatePlayer(player.id, 'isRepechaje', e.currentTarget?.checked)}
+                                        className="rounded bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
+                                    />
+                                </div>
 
                                 <div className="flex items-center gap-2">
                                     <label className="text-sm text-gray-300 font-rubik">Vidas:</label>
@@ -260,6 +272,15 @@ export default function AdminExtremoPlayers() {
                                         type="checkbox"
                                         checked={player.isConfirmedPlayer}
                                         onChange={(e: any) => updatePlayer(player.id, 'isConfirmedPlayer', e.currentTarget?.checked)}
+                                        className="rounded bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm text-gray-300 font-rubik">Repechaje:</label>
+                                    <input
+                                        type="checkbox"
+                                        checked={player.isRepechaje}
+                                        onChange={(e: any) => updatePlayer(player.id, 'isRepechaje', e.currentTarget?.checked)}
                                         className="rounded bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
                                     />
                                 </div>

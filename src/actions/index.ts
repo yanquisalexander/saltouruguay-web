@@ -3,7 +3,7 @@ import { NOMINEES } from "@/awards/Nominees";
 import { IS_VOTES_OPEN, SALTO_DISCORD_GUILD_ID, VOTES_OPEN_TIMESTAMP } from "@/config";
 import type { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { client } from "@/db/client";
-import { DebateAnonymousMessagesTable, NegativeVotesStreamersTable, SaltoCraftExtremo3InscriptionsTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, UserSuspensionsTable, Extremo3PlayersTable } from "@/db/schema";
+import { DebateAnonymousMessagesTable, NegativeVotesStreamersTable, SaltoCraftExtremo3InscriptionsTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, UserSuspensionsTable, Extremo3PlayersTable, Extremo3RepechajeVotesTable } from "@/db/schema";
 import { submitVotes } from "@/utils/awards-vote-system";
 import { pusher } from "@/utils/pusher";
 import { updateCardSkin, updateStickers } from "@/utils/user";
@@ -400,9 +400,10 @@ export const server = {
                 playerId: z.number(),
                 livesCount: z.number().min(0).max(3).optional(),
                 isConfirmedPlayer: z.boolean().optional(),
+                isRepechaje: z.boolean().optional(),
                 minecraft_username: z.string().optional(),
             }),
-            handler: async ({ playerId, livesCount, isConfirmedPlayer, minecraft_username }, { request }) => {
+            handler: async ({ playerId, livesCount, isConfirmedPlayer, isRepechaje, minecraft_username }, { request }) => {
                 const session = await getSession(request);
 
                 if (!session) {
@@ -432,6 +433,10 @@ export const server = {
                     updateData.isConfirmedPlayer = isConfirmedPlayer;
                 }
 
+                if (isRepechaje !== undefined) {
+                    updateData.isRepechaje = isRepechaje;
+                }
+
                 await client
                     .update(Extremo3PlayersTable)
                     .set(updateData)
@@ -446,7 +451,7 @@ export const server = {
                         .where(eq(Extremo3PlayersTable.id, playerId))
                         .execute();
 
-                    if (player.length > 0) {
+                    if (player.length > 0 && player[0].inscriptionId) {
                         await client
                             .update(SaltoCraftExtremo3InscriptionsTable)
                             .set({ minecraft_username })
@@ -454,6 +459,60 @@ export const server = {
                             .execute();
                     }
                 }
+
+                return { success: true };
+            },
+        }),
+        voteExtremoRepechaje: defineAction({
+            input: z.object({
+                playerId: z.number(),
+            }),
+            handler: async ({ playerId }, { request }) => {
+                const session = await getSession(request);
+
+                if (!session) {
+                    throw new ActionError({
+                        code: "UNAUTHORIZED",
+                        message: "Debes iniciar sesión para votar en repechaje",
+                    });
+                }
+
+                // Verificar si el player está en repechaje
+                const player = await client
+                    .select()
+                    .from(Extremo3PlayersTable)
+                    .where(eq(Extremo3PlayersTable.id, playerId))
+                    .execute();
+
+                if (player.length === 0 || !player[0].isRepechaje) {
+                    throw new ActionError({
+                        code: "BAD_REQUEST",
+                        message: "El jugador no está en repechaje",
+                    });
+                }
+
+                // Verificar si ya votó
+                const existingVote = await client
+                    .select()
+                    .from(Extremo3RepechajeVotesTable)
+                    .where(eq(Extremo3RepechajeVotesTable.userId, session.user.id))
+                    .execute();
+
+                if (existingVote.length > 0) {
+                    throw new ActionError({
+                        code: "BAD_REQUEST",
+                        message: "Ya has votado en repechaje",
+                    });
+                }
+
+                // Insertar voto
+                await client
+                    .insert(Extremo3RepechajeVotesTable)
+                    .values({
+                        userId: session.user.id,
+                        playerId,
+                    })
+                    .execute();
 
                 return { success: true };
             },

@@ -9,6 +9,7 @@ export async function GET() {
                 id: Extremo3PlayersTable.id,
                 livesCount: Extremo3PlayersTable.livesCount,
                 isConfirmedPlayer: Extremo3PlayersTable.isConfirmedPlayer,
+                isRepechaje: Extremo3PlayersTable.isRepechaje,
                 inscription: {
                     minecraft_username: SaltoCraftExtremo3InscriptionsTable.minecraft_username,
                     discordUsername: SaltoCraftExtremo3InscriptionsTable.discordUsername,

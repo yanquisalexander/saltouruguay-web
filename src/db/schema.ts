@@ -705,12 +705,36 @@ export const Extremo3PlayersTable = pgTable('extremo3_players', {
     id: serial('id').primaryKey(),
     inscriptionId: integer('inscription_id').references(() => SaltoCraftExtremo3InscriptionsTable.id),
     isConfirmedPlayer: boolean('is_confirmed_player').notNull().default(false),
+    isRepechaje: boolean('is_repechaje').notNull().default(false),
     livesCount: integer('lives_count').notNull().default(3),
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
 }, (t) => ({
     uniqueInscriptionId: unique().on(t.inscriptionId)
 }))
+
+
+
+export const Extremo3RepechajeVotesTable = pgTable('extremo3_repechaje_votes', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => UsersTable.id),
+    playerId: integer('player_id').notNull().references(() => Extremo3PlayersTable.id),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueUserPlayer: unique().on(t.userId, t.playerId)
+}))
+
+export const extremo3PlayersRelations = relations(Extremo3PlayersTable, ({ one, many }) => ({
+    user: one(UsersTable, {
+        fields: [Extremo3PlayersTable.id],
+        references: [UsersTable.id],
+    }),
+    inscription: one(SaltoCraftExtremo3InscriptionsTable, {
+        fields: [Extremo3PlayersTable.inscriptionId],
+        references: [SaltoCraftExtremo3InscriptionsTable.id],
+    }),
+    repechajeVotes: many(Extremo3RepechajeVotesTable),
+}));
 
 export const saltoCraftExtremo3InscriptionsRelations = relations(SaltoCraftExtremo3InscriptionsTable, ({ one, many }) => ({
     user: one(UsersTable, {
@@ -720,15 +744,18 @@ export const saltoCraftExtremo3InscriptionsRelations = relations(SaltoCraftExtre
     players: many(Extremo3PlayersTable),
 }));
 
-export const extremo3PlayersRelations = relations(Extremo3PlayersTable, ({ one }) => ({
-
-    inscription: one(SaltoCraftExtremo3InscriptionsTable, {
-        fields: [Extremo3PlayersTable.inscriptionId],
-        references: [SaltoCraftExtremo3InscriptionsTable.id],
-    })
+export const extremo3RepechajeVotesRelations = relations(Extremo3RepechajeVotesTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [Extremo3RepechajeVotesTable.userId],
+        references: [UsersTable.id],
+    }),
+    player: one(Extremo3PlayersTable, {
+        fields: [Extremo3RepechajeVotesTable.playerId],
+        references: [Extremo3PlayersTable.id],
+    }),
 }));
 
-export const debateMessagesUserRelation = relations(DebateAnonymousMessagesTable, ({ one, many }) => ({
+export const DebateAnonymousMessagesRelations = relations(DebateAnonymousMessagesTable, ({ one, many }) => ({
     user: one(UsersTable, {
         fields: [DebateAnonymousMessagesTable.userId],
         references: [UsersTable.id],
@@ -743,6 +770,7 @@ export const userRelations = relations(UsersTable, ({ one, many }) => ({
     }),
     suspensions: many(UserSuspensionsTable),
     sessions: many(SessionsTable),
+    extremo3RepechajeVotes: many(Extremo3RepechajeVotesTable),
 }))
 
 export const sessionsRelations = relations(SessionsTable, ({ one }) => ({

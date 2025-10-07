@@ -1,0 +1,213 @@
+---
+import { client } from "@/db/client";
+import {
+  Extremo3PlayersTable,
+  SaltoCraftExtremo3InscriptionsTable,
+  Extremo3RepechajeVotesTable,
+  UsersTable,
+} from "@/db/schema";
+import { eq, count, desc } from "drizzle-orm";
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+// Obtener jugadores en repechaje
+const playersInRepechaje = await client
+  .select({
+    id: Extremo3PlayersTable.id,
+    livesCount: Extremo3PlayersTable.livesCount,
+    inscription: {
+      minecraft_username:
+        SaltoCraftExtremo3InscriptionsTable.minecraft_username,
+      discordUsername: SaltoCraftExtremo3InscriptionsTable.discordUsername,
+    },
+  })
+  .from(Extremo3PlayersTable)
+  .innerJoin(
+    SaltoCraftExtremo3InscriptionsTable,
+    eq(
+      Extremo3PlayersTable.inscriptionId,
+      SaltoCraftExtremo3InscriptionsTable.id
+    )
+  )
+  .where(eq(Extremo3PlayersTable.isRepechaje, true))
+  .execute();
+
+// Obtener conteo de votos para cada jugador
+const voteCounts = await client
+  .select({
+    playerId: Extremo3RepechajeVotesTable.playerId,
+    count: count(Extremo3RepechajeVotesTable.id),
+  })
+  .from(Extremo3RepechajeVotesTable)
+  .groupBy(Extremo3RepechajeVotesTable.playerId)
+  .execute();
+
+// Combinar los datos
+const playersWithVotes = playersInRepechaje
+  .map((player) => {
+    const voteData = voteCounts.find((v) => v.playerId === player.id);
+    return {
+      ...player,
+      voteCount: voteData?.count || 0,
+    };
+  })
+  .sort((a, b) => b.voteCount - a.voteCount);
+
+// Verificar si el usuario ya votó
+const userVote = session
+  ? await client
+      .select()
+      .from(Extremo3RepechajeVotesTable)
+      .where(eq(Extremo3RepechajeVotesTable.userId, session.user.id))
+      .execute()
+  : [];
+
+const hasVoted = userVote.length > 0;
+---
+
+<Layout title="Votación Repechaje - SaltoCraft Extremo 3">
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <header class="relative z-10 flex flex-col justify-center mb-12">
+      <div class="flex items-center gap-x-4">
+        <div class="flex flex-col justify-center gap-y-1"></div>
+      </div>
+    </header>
+    <div class="flex flex-col w-full justify-center items-center gap-4">
+      <h1
+        class="with-glyph flex relative w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-minecraftia tracking-wider font-bold text-[#FF4444] mix-blend-screen !skew-x-[-20deg] -rotate-6"
+      >
+        <span class="flex !skew-x-[20deg] transform"> Repechaje </span>
+      </h1>
+      <div class="flex flex-col w-full mt-8 max-w-[50ch] gap-4">
+        <p class="text-center font-teko text-3xl text-white">
+          ¡Vota por el jugador que quieres que vuelva al SaltoCraft Extremo 3!
+        </p>
+        {
+          hasVoted ? (
+            <p class="text-center font-teko text-xl text-gray-300">
+              Ya has votado. ¡Gracias por participar!
+            </p>
+          ) : (
+            <p class="text-center font-teko text-xl text-gray-300">
+              Solo puedes votar una vez.
+            </p>
+          )
+        }
+      </div>
+    </div>
+
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8"
+    >
+      {
+        playersWithVotes.map((player) => (
+          <div class="flex flex-col items-center gap-4">
+            <div class="bg-zinc-800/50 backdrop-blur-sm p-6 rounded-lg border border-neutral-700 shadow-lg hover:bg-zinc-700/50 transition-colors">
+              <div class="text-center">
+                <h3 class="text-xl font-bold font-minecraftia text-white mb-2">
+                  {player.inscription.minecraft_username}
+                </h3>
+                <p class="text-sm text-gray-300 font-rubik mb-4">
+                  {player.inscription.discordUsername}
+                </p>
+                <div class="flex items-center justify-center gap-2 mb-4">
+                  {Array.from({ length: 3 }, (_, i) => (
+                    <img
+                      src={
+                        i < player.livesCount
+                          ? "/images/vida.webp"
+                          : "/images/calavera.webp"
+                      }
+                      alt={i < player.livesCount ? "Vida" : "Sin vida"}
+                      class="w-6 h-6"
+                    />
+                  ))}
+                </div>
+                <p class="text-lg font-semibold text-[#FF4444] mb-4">
+                  Votos: {player.voteCount}
+                </p>
+                {!hasVoted && (
+                  <button
+                    data-player-id={player.id}
+                    class="vote-btn bg-[#FF4444] text-white font-bold py-2 px-8 -skew-x-[20deg] hover:bg-[#e63939] transition-colors"
+                  >
+                    <span class="inline-block !skew-x-[20deg]"> Votar </span>
+                  </button>
+                )}
+                {hasVoted && (
+                  <button
+                    disabled
+                    class="bg-neutral-500 text-white cursor-not-allowed font-bold py-2 px-8 -skew-x-[20deg]"
+                  >
+                    <span class="inline-block !skew-x-[20deg]">
+                      {" "}
+                      Ya votaste{" "}
+                    </span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    {
+      playersWithVotes.length === 0 && (
+        <div class="text-center py-12">
+          <p class="text-gray-300 font-rubik text-xl">
+            No hay jugadores en repechaje actualmente.
+          </p>
+        </div>
+      )
+    }
+  </div>
+</Layout>
+
+<style>
+  h1.with-glyph:after {
+    content: "a";
+    @apply text-[80px] font-atomic-extras mt-10 absolute inset-x-0 text-center;
+    z-index: -1;
+  }
+
+  @font-face {
+    font-family: "Minecraftia";
+    src: url("/fonts/Minecraftia.woff2") format("woff2");
+  }
+</style>
+
+<script>
+  import { $$ } from "@/lib/dom-selector";
+  import { actions } from "astro:actions";
+  import { navigate } from "astro:transitions/client";
+  import { toast } from "sonner";
+
+  document.addEventListener("astro:page-load", () => {
+    const $voteButtons = $$(
+      "button.vote-btn"
+    ) as unknown as HTMLButtonElement[];
+
+    $voteButtons.forEach(($button) => {
+      $button.addEventListener("click", async (e) => {
+        if (!confirm("¿Estás seguro de votar por este jugador?")) {
+          return;
+        }
+        const playerId = $button.dataset.playerId;
+        const result = await actions.admin.voteExtremoRepechaje({
+          playerId: Number(playerId),
+        });
+
+        if (result.error) {
+          toast(result.error.message);
+          return;
+        }
+
+        toast(`Votaste por el jugador`);
+        navigate("/extremo/repechaje");
+      });
+    });
+  });
+</script>
