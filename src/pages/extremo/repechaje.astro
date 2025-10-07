@@ -65,6 +65,7 @@ const userVote = session
   : [];
 
 const hasVoted = userVote.length > 0;
+const userVotedPlayerId = hasVoted ? userVote[0].playerId : null;
 ---
 
 <Layout title="Votación Repechaje - SaltoCraft Extremo 3">
@@ -104,7 +105,12 @@ const hasVoted = userVote.length > 0;
       {
         playersWithVotes.map((player) => (
           <div class="flex flex-col items-center gap-4 h-full">
-            <div class="bg-zinc-800/50 backdrop-blur-sm p-6 rounded-lg border border-neutral-700 shadow-lg hover:bg-zinc-700/50 transition-colors w-full min-h-[280px] flex flex-col justify-between">
+            <div class="bg-zinc-800/50 backdrop-blur-sm p-6 rounded-lg border border-neutral-700 shadow-lg hover:bg-zinc-700/50 transition-colors w-full min-h-[280px] flex flex-col justify-between relative overflow-hidden">
+              {hasVoted && userVotedPlayerId === player.id && (
+                <div class="absolute top-0 right-0 bg-[#FF4444] text-white font-bold py-1 px-3 rounded-bl-lg font-minecraftia text-sm">
+                  Tu voto
+                </div>
+              )}
               <div class="text-center flex-1 flex flex-col justify-center">
                 <h3 class="text-xl font-bold font-minecraftia text-white mb-2 break-words">
                   {player.inscription.minecraft_username}
