@@ -10,6 +10,12 @@ import { eq, count, desc } from "drizzle-orm";
 import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
 
+export const prerender = true;
+
+return new Response(null, {
+  status: 404,
+});
+
 const session = await getSession(Astro.request);
 
 // Obtener jugadores en repechaje
