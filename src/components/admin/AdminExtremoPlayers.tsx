@@ -24,11 +24,9 @@ export default function AdminExtremoPlayers() {
     const [search, setSearch] = useState("");
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editingValue, setEditingValue] = useState("");
-    const [repechajeVotes, setRepechajeVotes] = useState<Array<{ playerId: number, minecraft_username: string, discordUsername: string, voteCount: number }>>([]);
 
     useEffect(() => {
         fetchPlayers();
-        fetchRepechajeVotes();
     }, []);
 
     const fetchPlayers = async () => {
@@ -50,15 +48,7 @@ export default function AdminExtremoPlayers() {
         }
     };
 
-    const fetchRepechajeVotes = async () => {
-        try {
-            const response = await fetch("/api/repechaje-votes");
-            const data = await response.json();
-            setRepechajeVotes(data.votes || []);
-        } catch (error) {
-            console.error("Error fetching repechaje votes:", error);
-        }
-    };
+
 
     const updatePlayer = async (playerId: number, field: string, value: any) => {
         try {
@@ -333,149 +323,7 @@ export default function AdminExtremoPlayers() {
                 ))}
             </div>
 
-            {/* Sección de Votos del Repechaje */}
-            <div className="mt-12 space-y-6">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-bold font-anton text-white">Votos del Repechaje</h3>
-                    <button
-                        onClick={fetchRepechajeVotes}
-                        className="px-4 py-2 bg-electric-violet-500 text-white rounded font-rubik hover:bg-electric-violet-600 transition-colors"
-                    >
-                        Actualizar Votos
-                    </button>
-                </div>
 
-                {repechajeVotes.length > 0 ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Gráfica de Pastel */}
-                        <div className="bg-zinc-900/50 backdrop-blur-sm p-6 rounded-lg border border-neutral-800 shadow-lg">
-                            <h4 className="text-xl font-bold text-white font-minecraftia mb-4">Distribución de Votos</h4>
-                            <div className="h-80">
-                                <Pie
-                                    data={{
-                                        labels: repechajeVotes.map(v => v.minecraft_username),
-                                        datasets: [{
-                                            data: repechajeVotes.map(v => v.voteCount),
-                                            backgroundColor: [
-                                                '#FF4444', '#FF6B44', '#FF9244', '#FFD144',
-                                                '#44FF44', '#44FF92', '#44FFD1', '#44D1FF',
-                                                '#4492FF', '#446BFF', '#4444FF', '#6B44FF'
-                                            ],
-                                            borderColor: '#ffffff',
-                                            borderWidth: 2,
-                                        }],
-                                    }}
-                                    options={{
-                                        responsive: true,
-                                        maintainAspectRatio: false,
-                                        plugins: {
-                                            legend: {
-                                                position: 'bottom' as const,
-                                                labels: {
-                                                    color: '#ffffff',
-                                                    font: {
-                                                        size: 12
-                                                    }
-                                                }
-                                            },
-                                            tooltip: {
-                                                backgroundColor: '#1f2937',
-                                                titleColor: '#ffffff',
-                                                bodyColor: '#ffffff',
-                                            }
-                                        }
-                                    }}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Gráfica de Barras */}
-                        <div className="bg-zinc-900/50 backdrop-blur-sm p-6 rounded-lg border border-neutral-800 shadow-lg">
-                            <h4 className="text-xl font-bold text-white font-minecraftia mb-4">Votos por Jugador</h4>
-                            <div className="h-80">
-                                <Bar
-                                    data={{
-                                        labels: repechajeVotes.map(v => v.minecraft_username.length > 15 ? v.minecraft_username.substring(0, 15) + '...' : v.minecraft_username),
-                                        datasets: [{
-                                            label: 'Votos',
-                                            data: repechajeVotes.map(v => v.voteCount),
-                                            backgroundColor: '#FF4444',
-                                            borderColor: '#ffffff',
-                                            borderWidth: 1,
-                                        }],
-                                    }}
-                                    options={{
-                                        responsive: true,
-                                        maintainAspectRatio: false,
-                                        scales: {
-                                            y: {
-                                                beginAtZero: true,
-                                                ticks: {
-                                                    color: '#ffffff',
-                                                    stepSize: 1
-                                                },
-                                                grid: {
-                                                    color: '#374151'
-                                                }
-                                            },
-                                            x: {
-                                                ticks: {
-                                                    color: '#ffffff',
-                                                    maxRotation: 45,
-                                                    minRotation: 45
-                                                },
-                                                grid: {
-                                                    color: '#374151'
-                                                }
-                                            }
-                                        },
-                                        plugins: {
-                                            legend: {
-                                                display: false
-                                            },
-                                            tooltip: {
-                                                backgroundColor: '#1f2937',
-                                                titleColor: '#ffffff',
-                                                bodyColor: '#ffffff',
-                                            }
-                                        }
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="bg-zinc-900/50 backdrop-blur-sm p-6 rounded-lg border border-neutral-800 shadow-lg text-center">
-                        <p className="text-gray-300 font-rubik">No hay votos registrados aún.</p>
-                    </div>
-                )}
-
-                {/* Lista detallada de votos */}
-                {repechajeVotes.length > 0 && (
-                    <div className="bg-zinc-900/50 backdrop-blur-sm p-6 rounded-lg border border-neutral-800 shadow-lg">
-                        <h4 className="text-xl font-bold text-white font-minecraftia mb-4">Lista de Votos Detallada</h4>
-                        <div className="space-y-3">
-                            {repechajeVotes
-                                .sort((a, b) => b.voteCount - a.voteCount)
-                                .map((vote, index) => (
-                                    <div key={vote.playerId} className="flex items-center justify-between p-3 bg-zinc-800/50 rounded border border-neutral-700">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-lg font-bold text-[#FF4444] w-8">#{index + 1}</span>
-                                            <div>
-                                                <h5 className="font-semibold text-white font-minecraftia">{vote.minecraft_username}</h5>
-                                                <p className="text-sm text-gray-300 font-rubik">{vote.discordUsername}</p>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="text-2xl font-bold text-[#FF4444]">{vote.voteCount}</span>
-                                            <p className="text-sm text-gray-300">voto{vote.voteCount !== 1 ? 's' : ''}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                        </div>
-                    </div>
-                )}
-            </div>
         </div>
     );
 }
