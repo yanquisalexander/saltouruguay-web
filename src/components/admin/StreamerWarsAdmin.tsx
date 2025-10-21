@@ -197,7 +197,7 @@ export const StreamerWarsAdmin = ({ session }: { session: Session }) => {
         const host = 'soketi.saltouruguayserver.com';
 
         const pusherInstance = new Pusher(PUSHER_KEY, {
-            wsHost: host,
+            //  wsHost: host,
             cluster: "us2",
             enabledTransports: ['ws', 'wss'],
             forceTLS: !import.meta.env.DEV, // Usa TLS solo en producción

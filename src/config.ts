@@ -1,6 +1,6 @@
-/* This import is causing error on vercel build */
-//import { PUSHER_APP_KEY } from "astro:env/client";
+import { PUSHER_APP_KEY } from "astro:env/client";
 import { DateTime } from 'luxon';
+
 
 
 export const VOTES_OPEN_TIMESTAMP = 1733022000000;
@@ -11,7 +11,7 @@ export const EVENT_TIMESTAMP = 1734737400000;
 
 export const SALTO_BROADCASTER_ID = '238809411'
 
-export const PUSHER_KEY = "mieit3wxzvktfm7gbxeq"
+export { PUSHER_APP_KEY as PUSHER_KEY };
 
 export const SALTO_DISCORD_GUILD_ID = '700185692826763264'
 

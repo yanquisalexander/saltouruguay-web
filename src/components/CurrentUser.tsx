@@ -95,7 +95,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     if (!pusher) {
         const host = /* import.meta.env.DEV ? 'localhost' :  */`soketi.saltouruguayserver.com`;
         setPusher(new Pusher(PUSHER_KEY, {
-            wsHost: host,
+            // wsHost: host,
             cluster: "us2",
             enabledTransports: ['ws', 'wss'],
             forceTLS: true

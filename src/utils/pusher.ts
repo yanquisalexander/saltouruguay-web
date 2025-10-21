@@ -10,7 +10,7 @@ const port = "443"
 
 
 export const pusher = new Pusher({
-    host,
+    // host,
     port,
     appId: PUSHER_APP_ID,
     key: PUSHER_APP_KEY,

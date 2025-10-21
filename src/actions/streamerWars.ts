@@ -353,7 +353,9 @@ export const streamerWars = {
                 videoUrl: `${CINEMATICS_CDN_PREFIX}/cinematica-jornada-guerra.mp4`
             }) */
 
-            await pusher.trigger("streamer-wars", "day-available", null);
+            await pusher.trigger("streamer-wars", "day-available", null).catch((error) => {
+                console.error(`Error triggering Pusher event: ${error}`);
+            });
             return { success: true }
         }
     }),

@@ -1,7 +1,6 @@
 ---
 import type { Preload } from "@/types/Preload";
 import SEO from "@/components/SEO.astro";
-//import "@/assets/styles/sonner-style.css";
 import LoadingIndicator from "astro-loading-indicator/component";
 import { getSession } from "auth-astro/server";
 import { Toaster } from "sonner";
@@ -16,24 +15,20 @@ import anton from "@fontsource/anton/files/anton-latin-400-normal.woff2";
 import teko from "@fontsource-variable/teko/files/teko-latin-wght-normal.woff2";
 import rubik from "@fontsource-variable/rubik/files/rubik-latin-wght-normal.woff2";
 
-import SiteFooter from "@/components/SiteFooter.astro";
-import SiteHeader from "@/components/SiteHeader.astro";
 import SignInModal from "@/components/SignInModal.astro";
 import KonamiCode from "@/components/KonamiCode.astro";
 import { DebugInfo } from "@/components/DebugInfo";
 import { ClientRouter } from "astro:transitions";
+
 interface Props {
   title?: string;
   description?: string;
   preload?: Array<Preload>;
   canonical?: string;
   image?: string;
-  hideHeader?: boolean;
-  hideFooter?: boolean;
   mainClassname?: string;
 }
 
-//const session = await getSession(Astro.request);
 if (!Astro.props.preload) Astro.props.preload = [];
 
 const {
@@ -42,9 +37,7 @@ const {
   preload,
   canonical,
   image,
-  hideHeader,
-  hideFooter,
-  mainClassname = "px-6 sm:px-10",
+  mainClassname = "w-full",
 } = Astro.props;
 
 const session = await getSession(Astro.request);
@@ -76,6 +69,13 @@ preload?.push({
   type: "font/woff2",
   crossorigin: "anonymous",
 });
+
+preload?.push({
+  href: "/fonts/set-sail-studios-atomic-marker-regular.woff2",
+  as: "font",
+  type: "font/woff2",
+  crossorigin: "anonymous",
+});
 ---
 
 <!doctype html>
@@ -90,21 +90,14 @@ preload?.push({
     />
     <ClientRouter />
     <LoadingIndicator color="#1f97ff" height="3px" />
-    <!-- <meta
-      id="current-user-data"
-      data-user={JSON.stringify({ user: session?.user || null })}
-    /> -->
   </head>
   <body
     class="bg-repeat text-white overflow-x-hidden font-sans bg-[url(https://www.alexitoo.dev/bg.svg)] bg-cover"
   >
-    {!hideHeader && <SiteHeader session={session} />}
-
     <main class={mainClassname}>
       <slot />
     </main>
     <SignInModal />
-    {!hideFooter && <SiteFooter />}
     <style is:global>
       @font-face {
         font-family: "Atomic Marker";

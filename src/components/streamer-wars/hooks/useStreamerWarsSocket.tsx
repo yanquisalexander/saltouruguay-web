@@ -44,7 +44,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         const timeouts: number[] = [];
 
         const pusherInstance = new Pusher(PUSHER_KEY, {
-            wsHost: "soketi.saltouruguayserver.com",
+            // wsHost: "soketi.saltouruguayserver.com",
             cluster: "us2",
             enabledTransports: ["ws", "wss"],
             forceTLS: true,

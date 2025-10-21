@@ -1,6 +1,6 @@
 ---
 import { StreamerWars } from "@/components/streamer-wars/StreamerWars";
-import Layout from "@/layouts/Layout.astro";
+import StreamerWarsLayout from "@/layouts/StreamerWarsLayout.astro";
 import { isPlayerAislated, isPlayerEliminated } from "@/utils/streamer-wars";
 import { getSession } from "auth-astro/server";
 
@@ -17,41 +17,39 @@ const playerIsEliminated = await isPlayerEliminated(
 const aislated = await isPlayerAislated(session.user.streamerWarsPlayerNumber);
 ---
 
-<Layout title="Guerra de Streamers">
-  <div class="max-w-6xl w-full mt-4 mx-auto">
-    {
-      playerIsEliminated ? (
-        <div class=" text-white p-4 flex justify-center flex-col items-center mt-16 rounded-lg">
-          <p class="text-5xl font-atomic tracking-wider -skew-y-6 font-medium">
-            ¡Has sido eliminado!
-          </p>
-          <p class="text-sm mt-12 font-rubik max-w-[50ch] text-center">
-            No te preocupes, puedes seguir viendo la guerra de streamers en vivo
-            a través de nuestro canal de Twitch.
-          </p>
-        </div>
-      ) : aislated ? (
-        <div class=" text-white p-4 flex justify-center flex-col items-center mt-16 rounded-lg">
-          <p class="text-5xl font-squids tracking-wider font-medium">
-            ¡Has sido <span class="text-lime-500">aislado</span>!
-          </p>
-          <p class="text-sm mt-12 font-rubik max-w-[58ch] text-center">
-            Es posible que hayas sido aislado por no cumplir con las reglas del
-            juego o por comportamiento inapropiado.{" "}
-            <>
-              <br />
-              <br />
-            </>
-            Un moderador analizará tu caso y te informará mediante Discord si
-            puedes volver a jugar.
-          </p>
-        </div>
-      ) : (
-        <StreamerWars session={session} client:idle />
-      )
-    }
-  </div>
-</Layout>
+<StreamerWarsLayout title="Guerra de Streamers">
+  {
+    playerIsEliminated ? (
+      <div class=" text-white p-4 flex justify-center flex-col items-center mt-16 rounded-lg">
+        <p class="text-5xl font-atomic tracking-wider -skew-y-6 font-medium">
+          ¡Has sido eliminado!
+        </p>
+        <p class="text-sm mt-12 font-rubik max-w-[50ch] text-center">
+          No te preocupes, puedes seguir viendo la guerra de streamers en vivo a
+          través de nuestro canal de Twitch.
+        </p>
+      </div>
+    ) : aislated ? (
+      <div class=" text-white p-4 flex justify-center flex-col items-center mt-16 rounded-lg">
+        <p class="text-5xl font-squids tracking-wider font-medium">
+          ¡Has sido <span class="text-lime-500">aislado</span>!
+        </p>
+        <p class="text-sm mt-12 font-rubik max-w-[58ch] text-center">
+          Es posible que hayas sido aislado por no cumplir con las reglas del
+          juego o por comportamiento inapropiado.{" "}
+          <>
+            <br />
+            <br />
+          </>
+          Un moderador analizará tu caso y te informará mediante Discord si
+          puedes volver a jugar.
+        </p>
+      </div>
+    ) : (
+      <StreamerWars session={session} client:idle />
+    )
+  }
+</StreamerWarsLayout>
 
 <style>
   @font-face {
