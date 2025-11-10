@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 import { SimonSays } from "./games/SimonSays";
 import { WaitForDayOpen } from "./views/WaitForDayOpen";
+import WaitingScreen from "./WaitingScreen";
 import Pusher, { type Channel } from "pusher-js";
 import { CDN_PREFIX, playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { PlayerEliminated } from "./PlayerEliminated";
@@ -87,6 +88,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [showingJourneyTransition, setShowingJourneyTransition] = useState(false);
     const [showedWelcomeDialog, setShowedWelcomeDialog] = useState(false);
     const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
+    const [showWaitingScreen, setShowWaitingScreen] = useState(false);
+    const [expectedPlayers, setExpectedPlayers] = useState<number>(0);
 
     useEffect(() => {
         document.addEventListener("splash-screen-ended", () => {
@@ -169,6 +172,18 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
                 }, 500);
             }, { once: true });
+        });
+
+        // Nuevo evento para mostrar la pantalla de espera y pasar expectedPlayers
+        globalChannel.current?.bind("show-waiting-screen", (payload: any) => {
+            try {
+                const expected = typeof payload?.expectedPlayers === 'number' ? payload.expectedPlayers : parseInt(payload?.expectedPlayers || '0', 10);
+                setExpectedPlayers(Number.isFinite(expected) ? expected : 0);
+                setShowWaitingScreen(true);
+            } catch (e) {
+                console.warn('show-waiting-screen payload parse error', e, payload);
+                setShowWaitingScreen(true);
+            }
         });
 
 
@@ -259,6 +274,11 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         return () => {
             presenceChannel.current?.unbind_all();
             presenceChannel.current?.unsubscribe();
+            globalChannel.current?.unbind('show-waiting-screen');
+            globalChannel.current?.unbind('day-available');
+            globalChannel.current?.unbind('day-finished');
+            globalChannel.current?.unbind('new-version');
+            globalChannel.current?.unbind('tech-difficulties');
         };
     }, []);
 
@@ -298,6 +318,12 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                                     players={players.filter((p) => p.playerNumber <= 50)}
                                     {...journeyTransitionProps} />
 
+                            )
+                        }
+                        {
+                            // Mostrar WaitingScreen cuando el día esté disponible y el flag esté activo
+                            dayAvailable && showWaitingScreen && (
+                                <WaitingScreen players={players} expectedPlayers={expectedPlayers} />
                             )
                         }
                         <WelcomeToStreamerWars session={session} bgAudio={bgAudio.current!} isOpen={showWelcomeDialog} setIsOpen={setShowWelcomeDialog} />
