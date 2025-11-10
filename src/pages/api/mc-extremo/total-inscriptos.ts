@@ -1,14 +1,10 @@
 import { client } from "@/db/client";
-import { SaltoCraftExtremo3InscriptionsTable } from "@/db/schema";
+import { SaltoCraftExtremo3Inscription } from "@/db/entities/SaltoCraftExtremo3Inscription";
 import type { APIRoute } from "astro";
-import { count } from "drizzle-orm";
 
 export const GET: APIRoute = async ({ request }) => {
     try {
-        const result = await client.select({
-            inscriptosAtTheMoment: count()
-        }).from(SaltoCraftExtremo3InscriptionsTable);
-        const inscriptosAtTheMoment = result[0]?.inscriptosAtTheMoment ?? 0;
+        const inscriptosAtTheMoment = await client.getRepository(SaltoCraftExtremo3Inscription).count();
 
         return new Response(`🔥 #SaltoCraft EXTREMO 3 🔥 ${inscriptosAtTheMoment} inscritos hasta el momento ☠️`, {
             status: 200,
