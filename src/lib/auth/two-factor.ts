@@ -2,8 +2,8 @@ import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
 import { client } from "@/db/client";
-import { User } from "@/db/entities/User";
-import { Session } from "@/db/entities/Session";
+import { SessionsTable, UsersTable } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
 import { DateTime } from "luxon";
 
 export const DATE_ADMINS_REQUIRE_TWO_FACTOR = DateTime.fromObject({
@@ -116,26 +116,32 @@ export const generateRecoveryCodes = (): string[] => {
 
 // 5. Habilitar 2FA en la base de datos
 export const enableTwoFactorAuth = async (userId: number, secret: string, recoveryCodes: string[]): Promise<void> => {
-    await client.getRepository(User).update(userId, {
-        twoFactorEnabled: true,
-        twoFactorSecret: secret,
-        twoFactorRecoveryCodes: recoveryCodes,
-    });
+    await client
+        .update(UsersTable)
+        .set({
+            twoFactorEnabled: true,
+            twoFactorSecret: secret,
+            twoFactorRecoveryCodes: recoveryCodes,
+        })
+        .where(eq(UsersTable.id, userId));
 };
 
 // 6. Deshabilitar 2FA en la base de datos
 export const disableTwoFactorAuth = async (userId: number): Promise<void> => {
-    await client.getRepository(User).update(userId, {
-        twoFactorEnabled: false,
-        twoFactorSecret: null,
-        twoFactorRecoveryCodes: [],
-    });
+    await client
+        .update(UsersTable)
+        .set({
+            twoFactorEnabled: false,
+            twoFactorSecret: null,
+            twoFactorRecoveryCodes: [],
+        })
+        .where(eq(UsersTable.id, userId));
 };
 
 // 7. Validar códigos de recuperación (para cuando el usuario pierde el dispositivo 2FA)
 export const validateRecoveryCode = async (userId: number, recoveryCode: string): Promise<boolean> => {
-    const user = await client.getRepository(User).findOne({
-        where: { id: userId },
+    const user = await client.query.UsersTable.findFirst({
+        where: eq(UsersTable.id, userId),
     });
 
     if (!user) {
@@ -151,9 +157,12 @@ export const validateRecoveryCode = async (userId: number, recoveryCode: string)
         const updatedCodes = decryptedCodes?.filter(code => code !== recoveryCode);
         const encryptedUpdatedCodes = updatedCodes?.map(code => encrypt(code)); // Encriptamos los códigos restantes
 
-        await client.getRepository(User).update(userId, {
-            twoFactorRecoveryCodes: encryptedUpdatedCodes,
-        });
+        await client
+            .update(UsersTable)
+            .set({
+                twoFactorRecoveryCodes: encryptedUpdatedCodes,
+            })
+            .where(eq(UsersTable.id, userId));
 
     }
 
@@ -161,8 +170,8 @@ export const validateRecoveryCode = async (userId: number, recoveryCode: string)
 };
 
 export const userHasTwoFactorEnabled = async (userId: number): Promise<boolean> => {
-    const user = await client.getRepository(User).findOne({
-        where: { id: userId },
+    const user = await client.query.UsersTable.findFirst({
+        where: eq(UsersTable.id, userId),
     });
 
     if (!user) {
@@ -173,8 +182,8 @@ export const userHasTwoFactorEnabled = async (userId: number): Promise<boolean> 
 }
 
 export const verifyTwoFactor = async (userId: number, token: string, sessionId?: string): Promise<boolean> => {
-    const user = await client.getRepository(User).findOne({
-        where: { id: userId },
+    const user = await client.query.UsersTable.findFirst({
+        where: eq(UsersTable.id, userId),
     });
 
     if (!user) {
@@ -193,10 +202,15 @@ export const verifyTwoFactor = async (userId: number, token: string, sessionId?:
 
 
     if (isValid && sessionId) {
-        await client.getRepository(Session).update(
-            { userId: userId, sessionId: sessionId },
-            { twoFactorVerified: true }
-        );
+        await client
+            .update(SessionsTable)
+            .set({
+                twoFactorVerified: true,
+            })
+            .where(and(
+                eq(SessionsTable.userId, userId),
+                eq(SessionsTable.sessionId, sessionId)
+            ));
     }
 
     return isValid;

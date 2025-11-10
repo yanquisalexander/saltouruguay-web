@@ -1,21 +1,19 @@
-import "reflect-metadata";
 import "dotenv/config";
-import { AppDataSource } from "./data-source";
 
-// Initialize the TypeORM data source
-let isInitialized = false;
+import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
+import * as schema from "./schema";
 
-export const initializeDatabase = async () => {
-    if (!isInitialized) {
-        await AppDataSource.initialize();
-        isInitialized = true;
-        console.log("Database connection initialized");
-    }
-    return AppDataSource;
-};
+const { Pool } = pg;
 
-// Export AppDataSource as client for compatibility
-export const client = AppDataSource;
+export const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD || "",
+    database: process.env.DB_NAME,
+    ssl: process.env.DB_SSL === "true" ? true : false,
+});
 
-// Auto-initialize when importing
-initializeDatabase().catch(console.error);
+export const client = drizzle(pool, { schema });
