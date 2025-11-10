@@ -1,4 +1,3 @@
-import { PUSHER_APP_KEY } from "astro:env/client";
 import { DateTime } from 'luxon';
 
 
@@ -11,7 +10,6 @@ export const EVENT_TIMESTAMP = 1734737400000;
 
 export const SALTO_BROADCASTER_ID = '238809411'
 
-export { PUSHER_APP_KEY as PUSHER_KEY };
 
 export const SALTO_DISCORD_GUILD_ID = '700185692826763264'
 
