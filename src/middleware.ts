@@ -2,14 +2,17 @@ import { defineMiddleware } from "astro:middleware";
 import { getSession } from "auth-astro/server";
 import { getSessionById } from "./utils/user";
 
-const ENABLE_MAINTENANCE = false; // Cambia a true para activar modo mantenimiento
+const ENABLE_MAINTENANCE = true; // Cambia a true para activar modo mantenimiento
 
 export const onRequest = defineMiddleware(async (context, next) => {
     const { request, redirect } = context;
     const currentPath = new URL(request.url).pathname;
 
     // Modo mantenimiento
-    if (ENABLE_MAINTENANCE && currentPath !== "/500") {
+    const userAgent = request.headers.get('user-agent') || '';
+    const isBot = /googlebot|bingbot|slurp|duckduckbot|yandexbot|baiduspider/i.test(userAgent);
+
+    if (ENABLE_MAINTENANCE && currentPath !== "/500" && !isBot) {
         context.locals.isMaintenanceMode = true;
         return context.rewrite("/500");
     }
