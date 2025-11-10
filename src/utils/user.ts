@@ -1,13 +1,9 @@
 import { SALTO_BROADCASTER_ID } from "@/config";
 import { client } from "@/db/client";
-import { MemberCard } from "@/db/entities/MemberCard";
-import { Session } from "@/db/entities/Session";
-import { UserAchievement } from "@/db/entities/UserAchievement";
-import { User } from "@/db/entities/User";
-import { UserSuspension } from "@/db/entities/UserSuspension";
+import { MemberCards, SessionsTable, UserAchievementsTable, UsersTable, UserSuspensionsTable } from "@/db/schema";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { createUserApiClient, createStaticAuthProvider } from "@/lib/Twitch";
-import { ILike, LessThan, MoreThan } from "typeorm";
+import { and, count, eq, gt, ilike, lt, or, desc, type InferInsertModel } from "drizzle-orm";
 import { unlockAchievement } from "./achievements";
 import { ACHIEVEMENTS } from "@/consts/Achievements";
 import { experimental_AstroContainer } from "astro/container";
@@ -42,12 +38,13 @@ export const updateStickers = async (memberId: number, stickers: string[]) => {
     await ensureMemberCardExists(memberId);
 
     try {
-        const memberCardRepo = client.getRepository(MemberCard);
-        await memberCardRepo.save({
-            userId: memberId.toString(),
-            stickers,
-            updatedAt: new Date()
-        });
+        await client
+            .insert(MemberCards)
+            .values({ userId: memberId.toString(), stickers })
+            .onConflictDoUpdate({
+                target: [MemberCards.userId],
+                set: { stickers, updatedAt: new Date() },
+            });
     } catch (error) {
         console.error("Error updating stickers:", error);
     }
@@ -57,8 +54,8 @@ export const updateStickers = async (memberId: number, stickers: string[]) => {
  * Obtiene la información de una MemberCard específica.
  */
 export const getMemberCardData = async (memberId: number) => {
-    return await client.getRepository(MemberCard).findOne({
-        where: { userId: memberId.toString() },
+    return await client.query.MemberCards.findFirst({
+        where: eq(MemberCards.userId, memberId.toString()),
     });
 };
 
@@ -66,7 +63,8 @@ export const getMemberCardData = async (memberId: number) => {
  * Obtiene el total de MemberCards registradas.
  */
 export const getTotalOfMemberCards = async () => {
-    return await client.getRepository(MemberCard).count();
+    const result = await client.select({ value: count() }).from(MemberCards).execute();
+    return result[0]?.value || 0;
 };
 
 /**
@@ -76,13 +74,13 @@ export const updateCardSkin = async (memberId: number, skin: typeof MemberCardSk
     await ensureMemberCardExists(memberId);
 
     try {
-        const memberCardRepo = client.getRepository(MemberCard);
-        await memberCardRepo.save({
-            userId: memberId.toString(),
-            skin,
-            stickers: [],
-            updatedAt: new Date()
-        });
+        await client
+            .insert(MemberCards)
+            .values({ userId: memberId.toString(), skin, stickers: [] })
+            .onConflictDoUpdate({
+                target: [MemberCards.userId],
+                set: { skin, updatedAt: new Date() },
+            });
     } catch (error) {
         console.error("Error updating card skin:", error);
     }
@@ -92,11 +90,13 @@ export const updateCardSkin = async (memberId: number, skin: typeof MemberCardSk
  * Asegura que exista un registro para la MemberCard del usuario y desbloquea un logro si es necesario.
  */
 const ensureMemberCardExists = async (memberId: number) => {
-    const existingCard = await client.getRepository(MemberCard).findOne({
-        where: { userId: memberId.toString() },
-    });
+    const existingCard = await client
+        .select()
+        .from(MemberCards)
+        .where(eq(MemberCards.userId, memberId.toString()))
+        .execute();
 
-    if (!existingCard) {
+    if (!existingCard.length) {
         try {
             await unlockAchievement({
                 userId: memberId,
@@ -112,41 +112,45 @@ const ensureMemberCardExists = async (memberId: number) => {
 };
 
 export const getUserAchievements = async (userId: number) => {
-    return await client.getRepository(UserAchievement).find({
-        where: { userId },
+    return await client.query.UserAchievementsTable.findMany({
+        where: eq(UserAchievementsTable.userId, userId),
     });
 }
 
 export const updateUserTier = async (twitchUserId: string, tier: 1 | 2 | 3 | null) => {
-    const userRepo = client.getRepository(User);
-    const user = await userRepo.findOne({
-        where: { twitchId: twitchUserId },
+    const user = await client.query.UsersTable.findFirst({
+        where: eq(UsersTable.twitchId, twitchUserId),
     });
 
     if (!user) return;
 
-    await userRepo.update({ twitchId: twitchUserId }, { twitchTier: tier });
+    await client
+        .update(UsersTable)
+        .set({ twitchTier: tier })
+        .where(eq(UsersTable.twitchId, twitchUserId))
+        .execute();
+
 }
 
 export const getDebateMessages = async () => {
-    const { DebateAnonymousMessage } = await import("@/db/entities/DebateAnonymousMessage");
-    return await client.getRepository(DebateAnonymousMessage).find({
-        relations: ["user"],
-        select: {
+    return await client.query.DebateAnonymousMessagesTable.findMany({
+        with: {
             user: {
-                displayName: true,
-                avatar: true,
+                columns: {
+                    displayName: true,
+                    avatar: true,
+                }
             }
         }
-    });
+    })
 }
 
 
 export const getUsers = async ({ page = 1, search = "", limit = 15 }) => {
-    const userRepo = client.getRepository(User);
-    const queryBuilder = userRepo.createQueryBuilder("user");
+    let query = client.select().from(UsersTable);
 
     // Initialize base conditions
+    let conditions = [];
     let filterSearch = search;
 
     // Parse out filter expressions
@@ -165,48 +169,67 @@ export const getUsers = async ({ page = 1, search = "", limit = 15 }) => {
 
     // Apply text search if there's any text left after removing filters
     if (filterSearch) {
-        queryBuilder.where(
-            "(user.username ILIKE :search OR user.email ILIKE :search OR user.displayName ILIKE :search)",
-            { search: `%${filterSearch}%` }
+        conditions.push(
+            or(
+                ilike(UsersTable.username, `%${filterSearch}%`),
+                ilike(UsersTable.email, `%${filterSearch}%`),
+                ilike(UsersTable.displayName, `%${filterSearch}%`)
+            )
         );
     }
 
     // Apply filters based on detected filter expressions
     if (filters.admin) {
-        queryBuilder.andWhere("user.admin = :admin", { admin: true });
+        conditions.push(eq(UsersTable.admin, true));
+    }
+
+
+
+    // Apply all conditions to the query
+    if (conditions.length > 0) {
+        // @ts-ignore
+        query = query.where(
+            conditions.length > 1
+                ? and(...(conditions as Parameters<typeof and>))
+                : (conditions[0] as Parameters<typeof query.where>[0])
+        );
     }
 
     // Apply pagination and ordering
-    const users = await queryBuilder
-        .orderBy("user.createdAt", "DESC")
-        .skip((page - 1) * limit)
-        .take(limit + 1)
-        .getMany();
+    const users = await query
+        .orderBy(desc(UsersTable.createdAt))
+        .limit(limit + 1)
+        .offset((page - 1) * limit);
 
     const hasMore = users.length > limit;
     return { users: users.slice(0, limit), hasMore };
 };
 
 export const unlinkDiscord = async (userId: number) => {
-    await client.getRepository(User).update(userId, { discordId: null });
+    await client
+        .update(UsersTable)
+        .set({ discordId: null })
+        .where(eq(UsersTable.id, userId))
+        .execute();
 }
 
 export const getAllUserEmails = async () => {
     /* 
         Get all emails from the UsersTable (To send emails to all users)
     */
-    const users = await client.getRepository(User).find({ select: ["email"] });
-    return users.map(user => user.email);
+    const result = await client.select({ value: UsersTable.email }).from(UsersTable).execute();
+    return result.map(row => row.value);
 }
 
 export const getUserSuspension = async (userId: number) => {
-    const suspension = await client.getRepository(UserSuspension).findOne({
-        where: { userId },
-        relations: ["user"],
-        select: {
+    const suspension = await client.query.UserSuspensionsTable.findFirst({
+        where: eq(UserSuspensionsTable.userId, userId),
+        with: {
             user: {
-                displayName: true,
-                avatar: true,
+                columns: {
+                    displayName: true,
+                    avatar: true,
+                }
             }
         }
     });
@@ -215,13 +238,14 @@ export const getUserSuspension = async (userId: number) => {
 }
 
 export const getUserSuspensions = async (userId: number) => {
-    const suspensions = await client.getRepository(UserSuspension).find({
-        where: { userId },
-        relations: ["user"],
-        select: {
+    const suspensions = await client.query.UserSuspensionsTable.findMany({
+        where: eq(UserSuspensionsTable.userId, userId),
+        with: {
             user: {
-                displayName: true,
-                avatar: true,
+                columns: {
+                    displayName: true,
+                    avatar: true,
+                }
             }
         }
     });
@@ -238,16 +262,18 @@ export const saveSession = async (
 ) => {
     try {
         console.log("Saving session for user:", userId, "Session ID:", sessionId);
-        const sessionRepo = client.getRepository(Session);
-        const newSession = sessionRepo.create({
-            userId,
-            sessionId,
-            userAgent,
-            ip,
-            lastActivity: new Date(),
-        });
-        
-        await sessionRepo.save(newSession);
+        const [newSession] = await client
+            .insert(SessionsTable)
+            .values({
+                userId,
+                sessionId,
+                userAgent,
+                ip,
+                lastActivity: new Date(),
+            })
+            .returning();
+
+
 
         return newSession;
     } catch (error) {
@@ -256,12 +282,15 @@ export const saveSession = async (
     }
 };
 
-export const updateSession = async (sessionId: string, updates: Partial<Session>) => {
+export const updateSession = async (sessionId: string, updates: Partial<InferInsertModel<typeof SessionsTable>>) => {
     try {
-        const sessionRepo = client.getRepository(Session);
-        await sessionRepo.update({ sessionId }, updates);
-        
-        return await sessionRepo.findOne({ where: { sessionId } });
+        const updatedSession = await client
+            .update(SessionsTable)
+            .set(updates)
+            .where(eq(SessionsTable.sessionId, sessionId))
+            .returning();
+
+        return updatedSession[0];
     } catch (error) {
         console.error("Error updating session:", error);
         throw error;
@@ -323,13 +352,12 @@ export const sendNewLoginDetectedEmail = async (sessionId: string, request: Requ
 
 export const destroySession = async (sessionId: string) => {
     try {
-        const sessionRepo = client.getRepository(Session);
-        const session = await sessionRepo.findOne({ where: { sessionId } });
-        if (session) {
-            await sessionRepo.remove(session);
-            return session.sessionId;
-        }
-        return undefined;
+        const deletedSession = await client
+            .delete(SessionsTable)
+            .where(eq(SessionsTable.sessionId, sessionId))
+            .returning({ deletedSessionId: SessionsTable.sessionId });
+
+        return deletedSession[0]?.deletedSessionId;
     } catch (error) {
         console.error("Error destroying session:", error);
         throw error;
@@ -338,17 +366,17 @@ export const destroySession = async (sessionId: string) => {
 
 export const getSessionById = async (sessionId: string) => {
     try {
-        const sessionRepo = client.getRepository(Session);
-        const session = await sessionRepo.findOne({
-            where: { sessionId },
-            relations: ["user"],
-            select: {
+        const session = await client.query.SessionsTable.findFirst({
+            where: eq(SessionsTable.sessionId, sessionId),
+            with: {
                 user: {
-                    id: true,
-                    username: true,
-                    email: true,
-                    displayName: true,
-                    avatar: true,
+                    columns: {
+                        id: true,
+                        username: true,
+                        email: true,
+                        displayName: true,
+                        avatar: true,
+                    }
                 }
             }
         });
@@ -362,16 +390,16 @@ export const getSessionById = async (sessionId: string) => {
 
 export const updateSessionActivity = async (sessionId: string) => {
     try {
-        const sessionRepo = client.getRepository(Session);
-        await sessionRepo.update(
-            { sessionId },
-            {
+        const updatedSession = await client
+            .update(SessionsTable)
+            .set({
                 lastActivity: new Date(),
                 updatedAt: new Date()
-            }
-        );
+            })
+            .where(eq(SessionsTable.sessionId, sessionId))
+            .returning();
 
-        return await sessionRepo.findOne({ where: { sessionId } });
+        return updatedSession[0];
     } catch (error) {
         console.error("Error updating session activity:", error);
         throw error;
@@ -380,20 +408,20 @@ export const updateSessionActivity = async (sessionId: string) => {
 
 export const destroyAllSessions = async (userId: number) => {
     try {
-        const sessionRepo = client.getRepository(Session);
-        const sessions = await sessionRepo.find({ where: { userId } });
-        await sessionRepo.remove(sessions);
+        const deletedSessions = await client
+            .delete(SessionsTable)
+            .where(eq(SessionsTable.userId, userId))
+            .returning({ deletedSessionId: SessionsTable.sessionId });
 
-        return sessions;
+        return deletedSessions;
     } catch (error) {
         console.error("Error destroying all sessions:", error);
         throw error;
     }
 }
 export const handleTwitchRevoke = async (twitchId: string) => {
-    const userRepo = client.getRepository(User);
-    const user = await userRepo.findOne({
-        where: { twitchId },
+    const user = await client.query.UsersTable.findFirst({
+        where: eq(UsersTable.twitchId, twitchId),
     });
 
     if (!user) return;
@@ -402,8 +430,10 @@ export const handleTwitchRevoke = async (twitchId: string) => {
      Revoke all sessions for this user
     */
 
-    const sessionRepo = client.getRepository(Session);
-    await sessionRepo.delete({ userId: user.id });
+    await client
+        .delete(SessionsTable)
+        .where(eq(SessionsTable.userId, user.id))
+        .execute();
 
 
     // Send an email to the user informing them that their Twitch account has been revoked
@@ -429,16 +459,21 @@ export const handleTwitchRevoke = async (twitchId: string) => {
 }
 
 export const getTotalOfUsers = async () => {
-    return await client.getRepository(User).count();
+    const result = await client.select({ value: count() }).from(UsersTable).execute();
+    return result[0]?.value || 0;
 }
 
 export const getNewSignupsLastWeek = async () => {
-    const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const now = new Date();
-    
-    return await client.getRepository(User).count({
-        where: {
-            createdAt: MoreThan(lastWeek) as any,
-        }
-    });
+    const result = await client
+        .select({ value: count() })
+        .from(UsersTable)
+        .where(
+            and(
+                gt(UsersTable.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+                lt(UsersTable.createdAt, new Date())
+            )
+        )
+        .execute();
+
+    return result[0]?.value || 0;
 }
