@@ -3,22 +3,7 @@ import { gsap } from "gsap";
 import { navigate } from "astro:transitions/client";
 
 const NEWS = [
-    {
-        title: "SaltoCraft Extremo III",
-        description: `
-        ¿Estás listo para el desafío definitivo? SaltoCraft Extremo III está por comenzar. Prepárate para una experiencia de juego intensa y llena de aventuras.
-    `,
-        tags: ["Minecraft"],
-        background: {
-            img: "/images/ads/mc-extremo.webp",
-        },
-        navImage: "/images/ads/mc-extremo.webp",
-        ctaLink: {
-            text: "¡Inscríbete ahora!",
-            url: "/mc-extremo/inscripcion",
-            newTab: false,
-        }
-    },
+
     {
         title: "Bienvenido a la nueva web",
         description: `

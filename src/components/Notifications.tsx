@@ -2,15 +2,15 @@ import { FluentEmailAlert } from "@/icons/FluentEmailAlert";
 import { useState, useEffect, useRef } from "preact/hooks";
 
 
-const notifications = [
-    {
+const notifications: Notification[] = [
+    /* {
         id: "saltocraft-iii-extremo",
         title: "Se viene SaltoCraft Extremo 3",
         description: "¡Prepárate para el desafío más extremo de SaltoCraft!",
         imageURL: "/images/ads/mc-extremo.webp",
         link: { title: "Inscríbete", url: "/mc-extremo/inscripcion" },
         tags: [{ type: "ads", title: "" }],
-    },
+    }, */
 
 ];
 
