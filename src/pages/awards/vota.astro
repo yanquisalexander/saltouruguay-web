@@ -18,8 +18,11 @@ if (session?.user) {
 }
 ---
 
-<Layout title="Votación">
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+<Layout title="Votación" customId="awards-voting-layout">
+  <div
+    class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16"
+    id="awards-voting-page"
+  >
     <header
       class="relative z-10 flex flex-col items-center justify-center h-full max-w-4xl mx-auto"
     >
@@ -120,6 +123,9 @@ if (session?.user) {
 
   document.addEventListener("astro:page-load", () => {
     const $awardsLogin = $("#awards-login");
+
+    const $body = document.body;
+    $body.classList.add("revealed");
 
     $awardsLogin?.addEventListener("click", () => {
       showSignInDialog();

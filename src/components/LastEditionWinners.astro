@@ -2,6 +2,22 @@
 import { AWARDS_VOTES_RESULT } from "@/data/awards-winners";
 import { NOMINEES } from "@/awards/Nominees";
 import { CATEGORIES } from "@/awards/Categories";
+
+interface Props {
+  year?: number | string;
+}
+
+const { year } = Astro.props as Props;
+
+// Determine which year to render: provided year or latest available
+const availableYears = Object.keys(AWARDS_VOTES_RESULT)
+  .map((y) => Number(y))
+  .sort((a, b) => b - a);
+const renderYear = year ? Number(year) : availableYears[0];
+const votesForYear = AWARDS_VOTES_RESULT[renderYear];
+if (!votesForYear) {
+  // If no data for the year, render nothing (parent can show fallback)
+}
 ---
 
 <section
@@ -11,12 +27,12 @@ import { CATEGORIES } from "@/awards/Categories";
   <h3
     class="max-w-xl text-center text-yellow-400 tracking-wider uppercase font-medium mix-blend-screen mt-2 pb-6"
   >
-    ¡Conoce a los ganadores de la última edición de los #SaltoAwards!
+    ¡Conoce a los ganadores de la edición {renderYear} de los #SaltoAwards!
   </h3>
   <div class="gap-8 gap-y-16 mt-10 flex flex-col">
     {
-      Object.entries(AWARDS_VOTES_RESULT["2024"]).map(
-        ([category, nominees]) => {
+      votesForYear &&
+        Object.entries(votesForYear).map(([category, nominees]) => {
           const highestPointsInCategory = Math.max(
             ...nominees.map((vote) => vote.roundTotalPoints)
           );
@@ -63,8 +79,7 @@ import { CATEGORIES } from "@/awards/Categories";
               </div>
             </div>
           );
-        }
-      )
+        })
     }
   </div>
 </section>

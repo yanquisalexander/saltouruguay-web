@@ -4,7 +4,7 @@ import {
 } from 'astro:env/server'
 import { PUSHER_APP_CLUSTER, PUSHER_APP_ID, PUSHER_APP_KEY } from "astro:env/client";
 
-const host = /* import.meta.env.DEV ? 'localhost' :  */`soketi.saltouruguayserver.com`;
+const host = import.meta.env.DEV ? 'localhost' : `soketi.saltouruguayserver.com`;
 const port = "443"
 
 

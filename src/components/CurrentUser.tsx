@@ -109,7 +109,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
 
 
     return (
-        <div className="flex items-center ml-2">
+        <div className="flex items-center">
             {/* Mostrar el spinner si estamos obteniendo datos en una ruta prerenderizada */}
             {fetchingUser ? (
                 <div className="flex items-center py-[17px] px-3">

@@ -31,6 +31,7 @@ interface Props {
   hideHeader?: boolean;
   hideFooter?: boolean;
   mainClassname?: string;
+  customId?: string;
 }
 
 //const session = await getSession(Astro.request);
@@ -45,6 +46,7 @@ const {
   hideHeader,
   hideFooter,
   mainClassname = "px-6 sm:px-10",
+  customId,
 } = Astro.props;
 
 const session = await getSession(Astro.request);
@@ -96,7 +98,8 @@ preload?.push({
     /> -->
   </head>
   <body
-    class="bg-repeat text-white overflow-x-hidden font-sans bg-[url(https://www.alexitoo.dev/bg.svg)] bg-cover"
+    {...customId ? { id: customId } : {}}
+    class="bg-repeat text-white overflow-x-hidden font-sans bg-[url(/bg.svg)] bg-cover"
   >
     {!hideHeader && <SiteHeader session={session} />}
 

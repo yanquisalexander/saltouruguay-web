@@ -2,8 +2,12 @@
 export const prerender = true;
 import LastEditionWinners from "@/components/LastEditionWinners.astro";
 import VerticalVideoPlayer from "@/components/VerticalVideoPlayer.astro";
-
 import Layout from "@/layouts/Layout.astro";
+import { AWARDS_VOTES_RESULT } from "@/data/awards-winners";
+import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
+import LaunchCountdown from "@/components/LaunchCountdown";
+
+console.log({ IS_VOTES_OPEN: IS_VOTES_OPEN() });
 ---
 
 <Layout title="SaltoAwards">
@@ -40,7 +44,62 @@ import Layout from "@/layouts/Layout.astro";
       </h2>
     </header>
 
-    <LastEditionWinners />
+    {
+      IS_VOTES_OPEN() ? (
+        <section
+          id="active-edition"
+          class="flex flex-col items-center justify-center mt-8"
+        >
+          <h2 class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen my-5">
+            Edición en curso
+          </h2>
+          <p class="text-white">
+            ¡La votación está abierta! Participa y elige a tus favoritos.
+          </p>
+          <LaunchCountdown
+            timestamp={VOTES_OPEN_TIMESTAMP}
+            showCalendarButton={false}
+            classNames={{ timeDisplay: "text-yellow-400" }}
+          />
+          <div class="mt-6">
+            <a
+              href="/awards/vota"
+              class="px-4 py-2 bg-yellow-500 text-black rounded font-bold"
+            >
+              Votar ahora
+            </a>
+          </div>
+          <div class="mt-12 w-full text-center">
+            <a href="/awards/" class="text-white underline">
+              Ver ediciones anteriores
+            </a>
+          </div>
+        </section>
+      ) : (
+        <>
+          <LastEditionWinners />
+
+          <section class="mt-10 w-full max-w-5xl mx-auto">
+            <h3 class="text-lg font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen text-center mb-4">
+              Ediciones anteriores
+            </h3>
+            <div class="flex flex-wrap justify-center gap-3">
+              {Object.keys(AWARDS_VOTES_RESULT).map((y) => {
+                const year = Number(y);
+                return (
+                  <a
+                    href={`/awards/${year}`}
+                    class="px-3 py-2 bg-white/5 hover:bg-white/10 rounded text-white"
+                  >
+                    {year}
+                  </a>
+                );
+              })}
+            </div>
+          </section>
+        </>
+      )
+    }
 
     <!--  <section
       id="casters"

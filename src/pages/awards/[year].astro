@@ -1,0 +1,44 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import LastEditionWinners from "@/components/LastEditionWinners.astro";
+import { AWARDS_VOTES_RESULT } from "@/data/awards-winners";
+import { CATEGORIES } from "@/awards/Categories";
+import { NOMINEES } from "@/awards/Nominees";
+
+const { year: yearParam } = Astro.params;
+const year = Number(yearParam);
+
+const availableYears = Object.keys(AWARDS_VOTES_RESULT)
+  .map((y) => Number(y))
+  .sort((a, b) => b - a);
+
+if (!availableYears.includes(year)) {
+  // Return 404 if year not found
+  throw new Response(null, { status: 404 });
+}
+---
+
+<Layout title={`SaltoAwards ${year}`}>
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+    <header
+      class="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-4xl mx-auto"
+    >
+      <h1
+        class="text-4xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen mt-8"
+      >
+        #SaltoAwards {year}
+      </h1>
+      <p class="text-white mt-4">
+        Resultados y ganadores de la edición {year}.
+      </p>
+    </header>
+
+    <LastEditionWinners year={year} />
+
+    <div class="mt-8 w-full text-center">
+      <a href="/awards" class="text-yellow-400 underline"
+        >Volver a todas las ediciones</a
+      >
+    </div>
+  </div>
+</Layout>

@@ -4,7 +4,7 @@ import { getLiveStream } from "@/utils/twitch-runtime";
 import TwitchEmbed from "./TwitchEmbed.astro";
 import TwitchIcon from "@/icons/Twitch.astro";
 import { LucideExternalLink } from "lucide-preact";
-const stream = await getLiveStream(SALTO_BROADCASTER_ID);
+const stream = await getLiveStream(import.meta.env.DEV ? '277624494' : SALTO_BROADCASTER_ID);
 
 const PREVIEW = stream?.getThumbnailUrl(1280, 720);
 ---

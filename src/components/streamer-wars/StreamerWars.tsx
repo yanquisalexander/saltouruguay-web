@@ -88,8 +88,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [showingJourneyTransition, setShowingJourneyTransition] = useState(false);
     const [showedWelcomeDialog, setShowedWelcomeDialog] = useState(false);
     const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
-    const [showWaitingScreen, setShowWaitingScreen] = useState(false);
-    const [expectedPlayers, setExpectedPlayers] = useState<number>(0);
+    const [showWaitingScreen, setShowWaitingScreen] = useState(true);
+    const [expectedPlayers, setExpectedPlayers] = useState<number>(50);
 
     useEffect(() => {
         document.addEventListener("splash-screen-ended", () => {

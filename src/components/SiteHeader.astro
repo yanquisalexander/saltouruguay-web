@@ -4,6 +4,7 @@ import type { Session } from "@auth/core/types";
 import { CurrentUser } from "./CurrentUser";
 import DiscordPresenceCount from "./DiscordPresenceCount";
 import { Notifications } from "./Notifications";
+import SiteFooter from "./SiteFooter.astro";
 
 interface Props {
   session?: Session | null;
@@ -47,68 +48,97 @@ const links = [
 const activeClasses = ["bg-brand-gray/10", "border-gray-900/10"];
 
 const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
+
+// Divide en dos arrays: enlaces pares e impares
+const evenLinks = links.filter((_, index) => index % 2 === 0);
+const oddLinks = links.filter((_, index) => index % 2 !== 0);
 ---
 
 {
   !hideNav && (
     <header class="z-[1001] header-animate sticky inset-x-0 flex items-center justify-between px-5 py-4 md:py-8 transition-all duration-300 md:px-10">
-      <div class="grid items-center justify-center md:justify-normal w-full grid-cols-[auto_1fr] mx-auto text-white gap-x-10 md:flex max-w-screen-full">
-        <div class="flex items-center">
-          <a
-            id="home-button"
-            href="/"
-            class="h-10 w-10 relative group  flex items-center justify-center transform hover:scale-110 transition-transform duration-300"
-          >
-            <img
-              src="/favicon.svg"
-              alt="Inicio de SaltoUruguayServer"
-              transition:name="salto-home-logo"
-              class="h-10 w-10 group-hover:saturate-200 group-hover:brightness-150 transition-all duration-300"
-            />
-
-            <img
-              src="/favicon.svg"
-              alt="Inicio de SaltoUruguayServer"
-              class="h-10 w-10 absolute inset-0 blur-md brightness-150 saturate-200 opacity-50 group-hover:opacity-100 transition-opacity duration-300"
-            />
-          </a>
-        </div>
-        <nav
-          id="header-nav"
-          class="col-span-full overflow-x-auto row-[2/3] grid grid-rows-[0fr] transition-[grid-template-rows] data-[open]:grid-rows-[1fr] md:justify-center md:flex group/nav"
-        >
-          <ul class="flex flex-col items-center overflow-x-hidden overflow-y-hidden md:flex-row gap-x-2">
-            {links.map((link) =>
+      <div class="flex items-center justify-between w-full relative">
+        <!-- Enlaces pares a la izquierda -->
+        <div class="items-center space-x-5 hidden md:flex">
+          {
+            evenLinks.map((link) => (
               link.soon ? (
-                <li class="flex font-teko opacity-70 tracking-wide items-center md:w-auto md:text-xl justify-center gap-2 md:px-4 md:py-2 rounded-2xl border border-transparent  px-5 py-4 text-xl duration-300 w-full relative h-full pointer-events-none text-brand-gray">
+                <li class="flex font-teko opacity-70 tracking-wide items-center md:w-auto md:text-xl justify-center gap-2 md:px-4 md:py-2 rounded-2xl border border-transparent px-5 py-4 text-xl duration-300 w-full relative h-full pointer-events-none text-brand-gray">
                   {link.label}
-
                   <span class="text-[10px] font-rubik text-center w-max md:absolute left-1/2 md:-translate-x-1/2 bottom-[6px] md:translate-y-1/2 md:opacity-80">
                     ¡Muy pronto!
                   </span>
                 </li>
               ) : (
-                <li class="flex justify-center w-full first:mt-5 md:first:mt-0 md:block md:w-auto">
+                <a
+                  href={link.url}
+                  class:list={currentPath === link.url ? activeClasses : ""}
+                  class="flex items-center font-teko tracking-wide md:w-auto justify-center gap-2 md:px-4 md:py-2 hover:bg-brand-gray/5 rounded-md border border-transparent hover:border-brand-gray/10 transition-all min-h-[50px] md:text-xl px-5 py-4 text-xl duration-300 w-full relative h-full"
+                >
+                  {link.label}
+                  {link.specialComment && (
+                    <span class="text-[10.5px] z-10 font-semibold whitespace-nowrap text-yellow-400 font-rubik text-center w-max md:absolute left-1/2 md:-translate-x-1/2 bottom-[6px] md:translate-y-1/2">
+                      {link.specialComment}
+                    </span>
+                  )}
+                </a>
+              )
+            ))
+          }
+        </div>
+
+        <!-- Logo al centro -->
+        <div class="flex items-center flex-1 md:flex-none md:absolute md:left-1/2 md:transform md:-translate-x-1/2">
+          <a
+            id="home-button"
+            href="/"
+            class="size-12 relative group flex items-center justify-center transform hover:scale-110 transition-transform duration-300"
+          >
+            <img
+              src="/favicon.svg"
+              alt="Inicio de SaltoUruguayServer"
+              transition:name="salto-home-logo"
+              class="size-12 group-hover:saturate-200 group-hover:brightness-150 transition-all duration-300"
+            />
+
+            <img
+              src="/favicon.svg"
+              alt="Inicio de SaltoUruguayServer"
+              class="size-12 absolute inset-0 blur-md brightness-150 saturate-200 opacity-50 group-hover:opacity-100 transition-opacity duration-300"
+            />
+          </a>
+        </div>
+
+        <!-- Derecha: enlaces impares + elementos -->
+        <div class="flex items-center md:gap-5">
+          <div class="items-center space-x-5 hidden md:flex">
+            {
+              oddLinks.map((link) => (
+                link.soon ? (
+                  <li class="flex font-teko opacity-70 tracking-wide items-center md:w-auto md:text-xl justify-center gap-2 md:px-4 md:py-2 rounded-2xl border border-transparent px-5 py-4 text-xl duration-300 w-full relative h-full pointer-events-none text-brand-gray">
+                    {link.label}
+                    <span class="text-[10px] font-rubik text-center w-max md:absolute left-1/2 md:-translate-x-1/2 bottom-[6px] md:translate-y-1/2 md:opacity-80">
+                      ¡Muy pronto!
+                    </span>
+                  </li>
+                ) : (
                   <a
                     href={link.url}
                     class:list={currentPath === link.url ? activeClasses : ""}
                     class="flex items-center font-teko tracking-wide md:w-auto justify-center gap-2 md:px-4 md:py-2 hover:bg-brand-gray/5 rounded-md border border-transparent hover:border-brand-gray/10 transition-all min-h-[50px] md:text-xl px-5 py-4 text-xl duration-300 w-full relative h-full"
                   >
                     {link.label}
-
                     {link.specialComment && (
                       <span class="text-[10.5px] z-10 font-semibold whitespace-nowrap text-yellow-400 font-rubik text-center w-max md:absolute left-1/2 md:-translate-x-1/2 bottom-[6px] md:translate-y-1/2">
                         {link.specialComment}
                       </span>
                     )}
                   </a>
-                </li>
-              )
-            )}
-          </ul>
-        </nav>
+                )
+              ))
+            }
+          </div>
 
-        <div class="flex md:flex-grow md:basis-0 items-center gap-2 mr-4 ml-auto md:ml-0 justify-end">
           <DiscordPresenceCount
             client:idle
             transition:name="discord-widget-count"
@@ -131,15 +161,97 @@ const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
             transition:name="current-user"
             transition:persist-props
           />
+        </div>
 
+        <!-- Botón menú móvil y elementos -->
+        <div class="flex md:hidden items-center gap-2">
           <button
-            id="toggle-nav"
+            id="mobile-menu-button"
             aria-label="Alternar menú de navegación"
-            class="flex items-center justify-center py-2 md:hidden group"
+            class="relative p-2 hover:bg-brand-gray/5 rounded-2xl border border-transparent hover:border-brand-gray/10 transition-all"
           >
             <MenuIcon class="w-6 h-6" />
           </button>
         </div>
+      </div>
+
+      <!-- Menú móvil -->
+      <div
+        id="mobile-menu"
+        class="fixed inset-0 h-screen w-full z-[1000] bg-black bg-opacity-90 hidden"
+      >
+        <header class="flex items-center justify-end w-full px-5 py-6">
+          <button
+            id="close-mobile-menu"
+            class="text-white focus:outline-none"
+            title="Close mobile menu"
+            aria-label="Close mobile menu"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </header>
+
+        <nav class="grid grid-rows-[auto_1fr] gap-6 w-full max-w-md mx-auto px-6">
+          <div class="pt-2">
+            <a
+              href="/"
+              class:list={[
+                "text-white",
+                "transition-all",
+                "duration-300",
+                "w-full",
+                "py-2",
+                "relative",
+                "px-3",
+                "hover:bg-white/20",
+                "hover:bg-opacity-10",
+                currentPath === "/" ? 'mobile-active' : null,
+              ]}
+            >
+              Inicio
+            </a>
+          </div>
+
+          <div class="flex flex-col w-full items-start space-y-2">
+            {
+              links.map((link) => (
+                <a
+                  href={link.url}
+                  class:list={[
+                    "text-white",
+                    "transition-all",
+                    "duration-300",
+                    "w-full",
+                    "py-2",
+                    "px-3",
+                    "hover:bg-white/20",
+                    "hover:bg-opacity-10",
+                    "relative",
+                    currentPath === link.url ? 'mobile-active' : null,
+                  ]}
+                >
+                  {link.label}
+                </a>
+              ))
+            }
+          </div>
+
+          <div class="pt-6">
+            <SiteFooter />
+          </div>
+        </nav>
       </div>
     </header>
   )
@@ -169,12 +281,16 @@ const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
   }
 </style>
 <script>
-  import { $ } from "@/lib/dom-selector";
+  import { $, $$ } from "@/lib/dom-selector";
 
   document.addEventListener("astro:page-load", () => {
     const $homeButton = $("#home-button");
-    const $headerNav = $("#header-nav");
-    const $toggleNav = $("#toggle-nav");
+    const $header = $("header");
+    const $mobileMenuButton = $("#mobile-menu-button");
+    const $closeMobileMenu = $("#close-mobile-menu");
+    const $mobileMenu = $("#mobile-menu");
+    const $body = $("body");
+
     if ($homeButton) {
       $homeButton.addEventListener("click", (event) => {
         if (location.pathname === "/") {
@@ -187,16 +303,26 @@ const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
       });
     }
 
-    if ($toggleNav) {
-      $toggleNav.addEventListener("click", () => {
-        if (!$headerNav) return;
-        // Remove attribute if exists
-        if ($headerNav.hasAttribute("data-open")) {
-          $headerNav.removeAttribute("data-open");
-        } else {
-          $headerNav.setAttribute("data-open", "");
-        }
-      });
-    }
+    const openMobileMenu = () => {
+      if (!$mobileMenu) return;
+      $mobileMenu.classList.remove("hidden");
+      // usar grid layout para el overlay del menú móvil
+      $mobileMenu.classList.add("grid", "grid-rows-[auto_1fr]", "items-start");
+      $body?.classList.add("overflow-hidden");
+    };
+
+    const closeMobileMenu = () => {
+      if (!$mobileMenu) return;
+      $mobileMenu.classList.add("hidden");
+      $mobileMenu.classList.remove("grid", "grid-rows-[auto_1fr]", "items-start");
+      $body?.classList.remove("overflow-hidden");
+    };
+
+    $mobileMenuButton?.addEventListener("click", () => {
+      if ($mobileMenu?.classList.contains("hidden")) openMobileMenu();
+      else closeMobileMenu();
+    });
+
+    $closeMobileMenu?.addEventListener("click", closeMobileMenu);
   });
 </script>

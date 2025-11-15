@@ -121,7 +121,7 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                             ¡Eres un nominado! 🎉
                         </strong>
                         <p class="text-white text-sm">
-                            Pronto recibirás el logro <strong>"Yo estuve ahí Ⅲ"</strong> por ser parte de los nominados de los Salto Awards 2024
+                            Pronto recibirás el logro <strong>"Yo estuve ahí Ⅲ"</strong> por ser parte de los nominados de los Salto Awards {new Date().getFullYear()}
                         </p>
 
                     </div>
@@ -155,7 +155,7 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                             })}
                         </ul>
 
-                        <footer class="flex gap-x-2 w-full overflow-x-scroll snap-x snap-center snap-mandatory">
+                        <footer class="flex gap-x-2 w-full overflow-x-scroll snap-x snap-center snap-mandatory scrollbar-hide">
                             {
                                 /* 
                                     Si no ha votado en una categoría, renderizar LucideCircleDashed en coloor text-gray-500

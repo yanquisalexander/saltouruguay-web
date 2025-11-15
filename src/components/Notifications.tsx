@@ -1,4 +1,6 @@
+import { FluentEmailAlert } from "@/icons/FluentEmailAlert";
 import { useState, useEffect, useRef } from "preact/hooks";
+
 
 const notifications = [
     {
@@ -65,20 +67,10 @@ export const Notifications = () => {
                 className="relative p-2 hover:bg-brand-gray/5 rounded-2xl border border-transparent hover:border-brand-gray/10 transition-all"
                 onClick={handleToggle}
             >
-                <svg
-                    width="24"
-                    height="24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                >
-                    <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
-                    <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
-                </svg>
+                <FluentEmailAlert />
+
                 {state.unread.length > 0 && (
-                    <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-2">
+                    <span className="absolute top-0 left-0 bg-gradient-to-br from-cyan-500 to-blue-800 text-white text-xs rounded-full px-2">
                         {state.unread.length}
                     </span>
                 )}
