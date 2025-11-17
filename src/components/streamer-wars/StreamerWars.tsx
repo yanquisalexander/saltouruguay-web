@@ -18,6 +18,8 @@ import { type Players } from "../admin/streamer-wars/Players";
 import { AutoElimination } from "./games/AutoElimination";
 import { WelcomeToStreamerWars } from "./WelcomeToStreamerWars";
 import { navigate } from "astro:transitions/client";
+import CurrentPlayer from "./CurrentPlayer";
+import { AdminChat } from "./AdminChat";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -186,6 +188,9 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             }
         });
 
+        globalChannel.current?.bind("hide-waiting-screen", () => {
+            setShowWaitingScreen(false);
+        });
 
         globalChannel.current?.bind("day-finished", () => {
             setShowingJourneyTransition(true);
@@ -275,6 +280,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             presenceChannel.current?.unbind_all();
             presenceChannel.current?.unsubscribe();
             globalChannel.current?.unbind('show-waiting-screen');
+            globalChannel.current?.unbind('hide-waiting-screen');
             globalChannel.current?.unbind('day-available');
             globalChannel.current?.unbind('day-finished');
             globalChannel.current?.unbind('new-version');
@@ -333,7 +339,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                                     !dayAvailable ? (
                                         <WaitForDayOpen session={session} players={players} />
                                     ) : (
-                                        gameState ? (
+                                        gameState && !showWaitingScreen ? (
                                             <GameComponent gameState={gameState} players={players} pusher={pusher} session={session} channel={globalChannel.current} />
                                         ) : (
                                             <WaitingRoom
@@ -348,6 +354,10 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                                 }
                             </>
                         )}
+
+                        <CurrentPlayer session={session} />
+
+                        <AdminChat session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
                     </>
                 )}
         </>

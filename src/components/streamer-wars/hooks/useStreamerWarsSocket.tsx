@@ -44,10 +44,12 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         const timeouts: number[] = [];
 
         const pusherInstance = new Pusher(PUSHER_KEY, {
+            wsHost: import.meta.env.DEV ? 'localhost' : 'soketi.saltouruguayserver.com',
+            wsPort: import.meta.env.DEV ? 6001 : 443,
             // wsHost: "soketi.saltouruguayserver.com",
             cluster: "us2",
             enabledTransports: ["ws", "wss"],
-            forceTLS: true,
+            forceTLS: !import.meta.env.DEV,
         });
         setPusher(pusherInstance);
 

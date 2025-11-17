@@ -1186,7 +1186,8 @@ export const beforeLaunchGame = async () => {
 
     const res = await pusher.get({ path: "/channels/presence-streamer-wars/users" });
     /* { users: [ { id: 1 } ] } */
-    const userIds: number[] = await res.json().then(({ users }) => users.map(({ id }: { id: number }) => id));
+    const { users } = await res.json();
+    const userIds: number[] = users ? users.map(({ id }: { id: number }) => id) : [];
 
     const playersNotConnected = players.filter(player => !userIds.includes(player.userId!)).map(player => player.playerNumber);
 
@@ -1328,4 +1329,68 @@ export const getTodayEliminatedPlayers = async () => {
 
     const cache = createCache();
     return await cache.get("streamer-wars-today-eliminateds") as number[] ?? [];
+}
+
+export const launchGame = async (game: string, props: any) => {
+    await beforeLaunchGame();
+    const cache = cacheService.create({ ttl: 60 * 60 * 24 });
+    await cache.set("streamer-wars-gamestate", { game, props });
+    await pusher.trigger("streamer-wars", "launch-game", { game, props });
+};
+
+export const executeAdminCommand = async (command: string, args: string[]): Promise<{ success: boolean, feedback?: string }> => {
+    try {
+        switch (command) {
+            case '/kill':
+                const playerNumbers = args.map(arg => parseInt(arg, 10)).filter(n => !isNaN(n));
+                if (playerNumbers.length === 0) {
+                    return { success: false, feedback: 'No se proporcionaron números de jugador válidos' };
+                }
+                if (playerNumbers.length === 1) {
+                    await eliminatePlayer(playerNumbers[0]);
+                } else {
+                    await massEliminatePlayers(playerNumbers);
+                }
+                return { success: true, feedback: `Jugador(es) ${playerNumbers.join(', ')} eliminados` };
+
+            case '/launch':
+                const gameId = args[0];
+                if (!gameId) {
+                    return { success: false, feedback: 'Se requiere un gameId para lanzar el juego' };
+                }
+                const props = args.length > 1 ? JSON.parse(args.slice(1).join(' ')) : {};
+                await launchGame(gameId, props);
+                return { success: true, feedback: `Juego ${gameId} lanzado` };
+
+            case '/team':
+                const teamColor = args[0];
+                if (!teamColor) {
+                    return { success: false, feedback: 'Se requiere un color de equipo' };
+                }
+                const { playersTeams } = await getPlayersTeams();
+                const teamPlayers = playersTeams[teamColor] || [];
+                const playerList = teamPlayers.map(p => `${p.playerNumber} (${p.displayName})`).join(', ');
+                return { success: true, feedback: `Equipo ${teamColor}: ${playerList || 'sin miembros'}` };
+
+            case '/waiting':
+                const show = args[0] === 'true';
+                const expected = parseInt(args[1], 10);
+                if (isNaN(expected)) {
+                    return { success: false, feedback: 'Expected debe ser un número' };
+                }
+                if (show) {
+                    await pusher.trigger("streamer-wars", "show-waiting-screen", { expectedPlayers: expected });
+                    return { success: true, feedback: `Pantalla de espera mostrada con ${expected} jugadores esperados` };
+                } else {
+                    await pusher.trigger("streamer-wars", "hide-waiting-screen", null);
+                    return { success: true, feedback: 'Pantalla de espera oculta' };
+                }
+
+            default:
+                return { success: false, feedback: 'Comando desconocido' };
+        }
+    } catch (error) {
+        console.error('Error executing admin command:', error);
+        return { success: false, feedback: 'Error al ejecutar el comando' };
+    }
 }

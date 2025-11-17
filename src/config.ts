@@ -27,4 +27,4 @@ export const SITEMAP_EXCLUDED_PATHS = [
     '/community/member-card',
 ]
 
-export const PUSHER_KEY = 'mieit3wxzvktfm7gbxeq';
+export const PUSHER_KEY = 'app-key';

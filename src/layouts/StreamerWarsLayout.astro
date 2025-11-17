@@ -37,7 +37,7 @@ const {
   preload,
   canonical,
   image,
-  mainClassname = "w-full",
+  mainClassname = "streamerwars-layout-base w-full",
 } = Astro.props;
 
 const session = await getSession(Astro.request);
@@ -95,7 +95,21 @@ preload?.push({
     class="bg-repeat text-white overflow-x-hidden font-sans bg-[url(https://www.alexitoo.dev/bg.svg)] bg-cover"
   >
     <main class={mainClassname}>
-      <slot />
+      <div class="appbar justify-center h-12" role="banner">
+        <h3
+          class="with-glyph flex relative w-max text-xl transform px-2 font-atomic tracking-wider font-bold text-neutral-600 mix-blend-screen"
+        >
+          <span class="select-none"> Guerra de Streamers </span>
+        </h3>
+      </div>
+
+      <aside class="sidebar" role="complementary">
+        <slot name="sidebar" />
+      </aside>
+
+      <section class="main-content" role="main">
+        <slot />
+      </section>
     </main>
     <SignInModal />
     <style is:global>
@@ -153,6 +167,58 @@ preload?.push({
         @starting-style {
           transform: translateY(-5%);
           opacity: 0;
+        }
+      }
+
+      /* StreamerWars layout grid -------------------------------------------------- */
+      .streamerwars-layout-base {
+        display: grid;
+        grid-template-areas:
+          "appbar appbar"
+          var(--grid-row-2, "sidebar main");
+        grid-template-columns: var(
+          --grid-columns,
+          [start] var(--sidebar-width, 280px) [sidebarEnd] 1fr [end]
+        );
+        grid-template-rows: [top] var(--app-top-bar-height, 72px) [topbarEnd] 1fr [end];
+        gap: var(--grid-gap, 0);
+        height: 100vh;
+      }
+
+      .streamerwars-layout-base .appbar {
+        grid-area: appbar;
+        align-items: center;
+        display: flex;
+        padding: var(--appbar-padding, 0);
+        background: var(--appbar-bg, transparent);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        z-index: 50;
+      }
+
+      .streamerwars-layout-base .sidebar {
+        grid-area: sidebar;
+        padding: var(--sidebar-padding, 1rem);
+        overflow: auto;
+        background: var(--sidebar-bg, rgba(0, 0, 0, 0.03));
+        min-width: 0;
+      }
+
+      .streamerwars-layout-base .main-content {
+        grid-area: main;
+        overflow: auto;
+        padding: var(--main-padding, 1.25rem);
+        min-width: 0;
+      }
+
+      /* Responsive: collapse sidebar under appbar on small screens */
+      @media (max-width: 768px) {
+        .streamerwars-layout-base {
+          grid-template-areas: "appbar" "main";
+          grid-template-columns: 1fr;
+          grid-template-rows: auto 1fr;
+        }
+        .streamerwars-layout-base .sidebar {
+          display: none;
         }
       }
     </style>
