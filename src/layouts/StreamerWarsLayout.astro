@@ -10,6 +10,7 @@ import "@/assets/styles/global.css";
 import "@fontsource/anton";
 import "@fontsource-variable/rubik";
 import "@fontsource-variable/teko";
+import "@fontsource/press-start-2p";
 
 import anton from "@fontsource/anton/files/anton-latin-400-normal.woff2";
 import teko from "@fontsource-variable/teko/files/teko-latin-wght-normal.woff2";
@@ -19,6 +20,7 @@ import SignInModal from "@/components/SignInModal.astro";
 import KonamiCode from "@/components/KonamiCode.astro";
 import { DebugInfo } from "@/components/DebugInfo";
 import { ClientRouter } from "astro:transitions";
+import CurrentPlayer from "@/components/streamer-wars/CurrentPlayer";
 
 interface Props {
   title?: string;
@@ -95,7 +97,7 @@ preload?.push({
     class="bg-repeat text-white overflow-x-hidden font-sans bg-[url(https://www.alexitoo.dev/bg.svg)] bg-cover"
   >
     <main class={mainClassname}>
-      <div class="appbar justify-center h-12" role="banner">
+      <div class="appbar justify-center" role="banner">
         <h3
           class="with-glyph flex relative w-max text-xl transform px-2 font-atomic tracking-wider font-bold text-neutral-600 mix-blend-screen"
         >
@@ -103,16 +105,29 @@ preload?.push({
         </h3>
       </div>
 
-      <aside class="sidebar" role="complementary">
-        <slot name="sidebar" />
+      <aside class="sidebar-left" role="complementary">
+        <slot name="sidebar-left" />
       </aside>
 
       <section class="main-content" role="main">
         <slot />
       </section>
+
+      <aside class="sidebar-right" role="complementary">
+        <slot name="sidebar-right" />
+      </aside>
+
+      <div class="bottom-bar" role="contentinfo">
+        <CurrentPlayer session={session!} client:load />
+      </div>
     </main>
     <SignInModal />
     <style is:global>
+      :root {
+        --app-top-bar-height: 48px;
+        --bottombar-height: 32px;
+      }
+
       @font-face {
         font-family: "Atomic Marker";
         font-style: normal;
@@ -174,13 +189,17 @@ preload?.push({
       .streamerwars-layout-base {
         display: grid;
         grid-template-areas:
-          "appbar appbar"
-          var(--grid-row-2, "sidebar main");
-        grid-template-columns: var(
-          --grid-columns,
-          [start] var(--sidebar-width, 280px) [sidebarEnd] 1fr [end]
-        );
-        grid-template-rows: [top] var(--app-top-bar-height, 72px) [topbarEnd] 1fr [end];
+          "appbar appbar appbar"
+          "sidebar-left main sidebar-right"
+          "bottom-bar bottom-bar bottom-bar";
+        grid-template-columns:
+          var(--sidebar-left-width, 64px)
+          1fr var(--sidebar-right-width, 64px);
+        grid-template-rows:
+          [top] var(--app-top-bar-height) [topbarEnd] 1fr [mainEnd] var(
+            --bottombar-height
+          )
+          [end];
         gap: var(--grid-gap, 0);
         height: 100vh;
       }
@@ -191,12 +210,19 @@ preload?.push({
         display: flex;
         padding: var(--appbar-padding, 0);
         background: var(--appbar-bg, transparent);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         z-index: 50;
       }
 
-      .streamerwars-layout-base .sidebar {
-        grid-area: sidebar;
+      .streamerwars-layout-base .sidebar-left {
+        grid-area: sidebar-left;
+        padding: var(--sidebar-padding, 1rem);
+        overflow: auto;
+        background: var(--sidebar-bg, rgba(0, 0, 0, 0.03));
+        min-width: 0;
+      }
+
+      .streamerwars-layout-base .sidebar-right {
+        grid-area: sidebar-right;
         padding: var(--sidebar-padding, 1rem);
         overflow: auto;
         background: var(--sidebar-bg, rgba(0, 0, 0, 0.03));
@@ -208,18 +234,18 @@ preload?.push({
         overflow: auto;
         padding: var(--main-padding, 1.25rem);
         min-width: 0;
+        @apply border border-neutral-800 rounded-md;
+
+        scrollbar-width: thin;
+        scrollbar-color: var(--scrollbar-thumb, #444)
+          var(--scrollbar-track, #222);
       }
 
-      /* Responsive: collapse sidebar under appbar on small screens */
-      @media (max-width: 768px) {
-        .streamerwars-layout-base {
-          grid-template-areas: "appbar" "main";
-          grid-template-columns: 1fr;
-          grid-template-rows: auto 1fr;
-        }
-        .streamerwars-layout-base .sidebar {
-          display: none;
-        }
+      .streamerwars-layout-base .bottom-bar {
+        grid-area: bottom-bar;
+        padding: var(--bottombar-padding, 0);
+        height: var(--bottombar-height, 32px);
+        background: var(--bottombar-bg, transparent);
       }
     </style>
 

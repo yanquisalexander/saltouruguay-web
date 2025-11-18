@@ -18,8 +18,8 @@ import { type Players } from "../admin/streamer-wars/Players";
 import { AutoElimination } from "./games/AutoElimination";
 import { WelcomeToStreamerWars } from "./WelcomeToStreamerWars";
 import { navigate } from "astro:transitions/client";
-import CurrentPlayer from "./CurrentPlayer";
 import { AdminChat } from "./AdminChat";
+import { StreamerWarsCinematicPlayer } from "./StreamerWarsCinematicPlayer";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -112,6 +112,14 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
         if (data.dayAvailable) {
             setDayAvailable(data.dayAvailable);
+        }
+
+        if (data.expectedPlayers !== undefined) {
+            setExpectedPlayers(data.expectedPlayers);
+        }
+
+        if (data.waitingScreenVisible !== undefined) {
+            setShowWaitingScreen(data.waitingScreenVisible);
         }
 
         if (data && data.gameState) {
@@ -293,27 +301,11 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     return (
         <>
             <SplashScreen onEnd={() => { }} />
+            {pusher && <StreamerWarsCinematicPlayer userId={session.user.id} pusher={pusher} />}
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
             {
                 splashEnded && (
                     <>
-                        <header class="flex justify-between items-center">
-                            <h2 class="text-xl  font-atomic text-[#b4cd02] hover:saturate-200 hover:scale-110 hover:rotate-3 transition-transform -skew-y-6">
-                                <span class="tracking-wider">Guerra de Streamers</span>
-                            </h2>
-
-                            <button class="flex gap-x-4 hover:scale-110 hover:saturate-150 hover:rotate-2 border-dashed border-2 border-white/20 hover:border-white transition-all rounded-md px-4 cursor-pointer py-1 items-center">
-                                <span class="text-[#b4cd02] font-atomic text-2xl">#{session.user.streamerWarsPlayerNumber?.toString().padStart(3, "0")}</span>
-                                <img src={session.user.image!}
-
-                                    alt={session.user.name!}
-                                    class="size-8 rounded-md"
-                                />
-
-
-                            </button>
-
-                        </header>
                         {
                             showingJourneyTransition && (
                                 // @ts-ignore
@@ -354,8 +346,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                                 }
                             </>
                         )}
-
-                        <CurrentPlayer session={session} />
 
                         <AdminChat session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
                     </>

@@ -103,7 +103,8 @@ export default {
 				playwrite: [
 					'Playwrite AU NSW Variable',
 					'cursive'
-				]
+				],
+				'press-start-2p': "\'Press Start 2P\', sans-serif"
 			},
 
 		}

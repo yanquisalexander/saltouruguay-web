@@ -62,6 +62,9 @@ importers:
       '@fontsource/anton':
         specifier: ^5.1.0
         version: 5.2.5
+      '@fontsource/press-start-2p':
+        specifier: ^5.2.7
+        version: 5.2.7
       '@midudev/tailwind-animations':
         specifier: ^0.1.0
         version: 0.1.0(tailwindcss@3.4.17)
@@ -179,6 +182,9 @@ importers:
       nodemailer:
         specifier: ^6.9.16
         version: 6.10.0
+      pako:
+        specifier: ^2.1.0
+        version: 2.1.0
       pg:
         specifier: ^8.13.1
         version: 8.14.1
@@ -246,6 +252,9 @@ importers:
       '@types/luxon':
         specifier: ^3.4.2
         version: 3.6.0
+      '@types/pako':
+        specifier: ^2.0.4
+        version: 2.0.4
       '@types/pg':
         specifier: ^8.11.10
         version: 8.11.11
@@ -1556,6 +1565,9 @@ packages:
   '@fontsource/anton@5.2.5':
     resolution: {integrity: sha512-nrydB9HkZiFN7VaFwSFnJW9BhrRmbt1/2sb7wm8pw0OQ3tWzfIKDG634qv6kX1047SCP/037qhWX+Eoh+oxLGA==}
 
+  '@fontsource/press-start-2p@5.2.7':
+    resolution: {integrity: sha512-ezSxYRchANoteja170ZHh2Tt4oejmVEvX42VFPOVVvERSZ68pcuZFjbhHfrK/sNjYmaGg656y7B3431ojO9PCQ==}
+
   '@img/colour@1.0.0':
     resolution: {integrity: sha512-A5P/LfWGFSl6nsckYtjw9da+19jB8hkJ6ACTGcDfEJ0aE+l2n2El7dsVM7UVHZQ9s2lmYMWlrS21YLy2IR1LUw==}
     engines: {node: '>=18'}
@@ -2061,6 +2073,9 @@ packages:
 
   '@types/nodemailer@6.4.17':
     resolution: {integrity: sha512-I9CCaIp6DTldEg7vyUTZi8+9Vo0hi1/T8gv3C89yk1rSAAzoKQ8H8ki/jBYJSFoH/BisgLP8tkZMlQ91CIquww==}
+
+  '@types/pako@2.0.4':
+    resolution: {integrity: sha512-VWDCbrLeVXJM9fihYodcLiIv0ku+AlOa/TQ1SvYOaBuyrSKgEcro95LJyIsJ4vSo6BXIxOKxiJAat04CmST9Fw==}
 
   '@types/pg@8.11.11':
     resolution: {integrity: sha512-kGT1qKM8wJQ5qlawUrEkXgvMSXoV213KfMGXcwfDwUIfUHXqXYXOfS1nE1LINRJVVVx5wCm70XnFlMHaIcQAfw==}
@@ -3899,6 +3914,9 @@ packages:
 
   pako@0.2.9:
     resolution: {integrity: sha512-NUcwaKxUxWrZLpDG+z/xZaCgQITkA/Dv4V/T6bw7VON6l1Xz/VnrBqrYjZQ12TamKHzITTfOEIYUj48y2KXImA==}
+
+  pako@2.1.0:
+    resolution: {integrity: sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==}
 
   parse-asn1@5.1.7:
     resolution: {integrity: sha512-CTM5kuWR3sx9IFamcl5ErfPl6ea/N8IYwiJ+vpeB2g+1iknv7zBl5uPwbMbRVznRVbrNY6lGuDoE5b30grmbqg==}
@@ -6491,6 +6509,8 @@ snapshots:
 
   '@fontsource/anton@5.2.5': {}
 
+  '@fontsource/press-start-2p@5.2.7': {}
+
   '@img/colour@1.0.0':
     optional: true
 
@@ -6999,6 +7019,8 @@ snapshots:
   '@types/nodemailer@6.4.17':
     dependencies:
       '@types/node': 22.13.16
+
+  '@types/pako@2.0.4': {}
 
   '@types/pg@8.11.11':
     dependencies:
@@ -9273,6 +9295,8 @@ snapshots:
   package-manager-detector@1.5.0: {}
 
   pako@0.2.9: {}
+
+  pako@2.1.0: {}
 
   parse-asn1@5.1.7:
     dependencies:

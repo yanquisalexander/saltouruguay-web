@@ -9,14 +9,14 @@ interface AdminChatProps {
 }
 
 const COMMANDS = [
-    { name: "/kick", description: "Kick a player", args: ["playerId"] },
-    { name: "/ban", description: "Ban a player", args: ["playerId", "reason?"] },
-    { name: "/mute", description: "Mute a player", args: ["playerId", "duration?"] },
     { name: "/announce", description: "Send an announcement", args: ["message"] },
     { name: "/kill", description: "Kill one or more players", args: ["playerNumber", "..."] },
     { name: "/launch", description: "Launch a game", args: ["gameId", "args?"] },
     { name: "/team", description: "View team members", args: ["color"] },
     { name: "/waiting", description: "Show or hide waiting screen", args: ["show", "expected"] },
+    { name: "/play-cinematic", description: "Play a cinematic", args: ["id"] },
+    { name: "/waiting-room", description: "Send players to waiting room", args: [] },
+    { name: "/chat", description: "Lock or unlock the chat", args: ["unlock|lock"] }
 ];
 
 export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
@@ -24,6 +24,8 @@ export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
     const [command, setCommand] = useState("");
     const [suggestions, setSuggestions] = useState<typeof COMMANDS>([]);
     const [history, setHistory] = useState<{ type: 'command' | 'response' | 'error', text: string }[]>([]);
+    const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number | null>(null);
+    const [commandHistory, setCommandHistory] = useState<string[]>([]);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -39,12 +41,23 @@ export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
                 setIsOpen(false);
                 setCommand("");
                 setSuggestions([]);
+                setCurrentHistoryIndex(null);
+            } else if (e.key === 'Tab' && isOpen && suggestions.length > 0) {
+                e.preventDefault();
+                setCommand(suggestions[0].name + ' ');
+                setSuggestions([]);
+            } else if (e.key === 'ArrowUp' && isOpen) {
+                e.preventDefault();
+                navigateHistory('up');
+            } else if (e.key === 'ArrowDown' && isOpen) {
+                e.preventDefault();
+                navigateHistory('down');
             }
         };
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen]);
+    }, [isOpen, suggestions, commandHistory, currentHistoryIndex]);
 
     useEffect(() => {
         if (isOpen && inputRef.current) {
@@ -92,9 +105,20 @@ export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
                     setHistory(prev => [...prev.slice(-9), { type: 'error', text: result.data.feedback || 'Execution failed' }]);
                 }
                 setCommand("");
+                setCurrentHistoryIndex(null);
+                // Add to command history
+                setCommandHistory(prev => {
+                    const newHistory = [...prev];
+                    if (command.trim() && (newHistory.length === 0 || newHistory[newHistory.length - 1] !== command.trim())) {
+                        newHistory.push(command.trim());
+                        if (newHistory.length > 10) newHistory.shift(); // Keep only last 10
+                    }
+                    return newHistory;
+                });
             }).catch(error => {
                 setHistory(prev => [...prev.slice(-9), { type: 'error', text: 'Error executing command' }]);
                 setCommand("");
+                setCurrentHistoryIndex(null);
             });
         }
     };
@@ -103,6 +127,30 @@ export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
         setCommand(cmd + ' ');
         setSuggestions([]);
         inputRef.current?.focus();
+    };
+
+    const navigateHistory = (direction: 'up' | 'down') => {
+        if (direction === 'up') {
+            if (currentHistoryIndex === null) {
+                if (commandHistory.length > 0) {
+                    setCurrentHistoryIndex(commandHistory.length - 1);
+                    setCommand(commandHistory[commandHistory.length - 1]);
+                }
+            } else if (currentHistoryIndex > 0) {
+                setCurrentHistoryIndex(currentHistoryIndex - 1);
+                setCommand(commandHistory[currentHistoryIndex - 1]);
+            }
+        } else {
+            if (currentHistoryIndex !== null) {
+                if (currentHistoryIndex < commandHistory.length - 1) {
+                    setCurrentHistoryIndex(currentHistoryIndex + 1);
+                    setCommand(commandHistory[currentHistoryIndex + 1]);
+                } else {
+                    setCurrentHistoryIndex(null);
+                    setCommand('');
+                }
+            }
+        }
     };
 
     if (!isAdmin || !isOpen) return null;

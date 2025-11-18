@@ -331,8 +331,10 @@ export const streamerWars = {
             const cache = cacheService.create({ ttl: 60 * 60 * 24 });
             const gameState = await cache.get("streamer-wars-gamestate") as any
             const dayAvailable = await cache.get("streamer-wars-day-available") as boolean;
+            const expectedPlayers = await cache.get("streamer-wars-expected-players") as number || 50;
+            const waitingScreenVisible = await cache.get("streamer-wars-waiting-screen-visible") as boolean || false;
 
-            return { gameState, dayAvailable }
+            return { gameState, dayAvailable, expectedPlayers, waitingScreenVisible }
         }
     }),
     setDayAsAvailable: defineAction({

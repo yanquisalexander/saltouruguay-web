@@ -9,6 +9,8 @@ import { SALTO_DISCORD_GUILD_ID } from "@/config";
 import { DISCORD_LOGS_WEBHOOK_TOKEN } from "astro:env/server";
 import { getTranslation } from "./translate";
 import { getLiveStreams } from "./twitch-runtime";
+import { CINEMATICS } from "@/consts/cinematics";
+import { encodeAudioForPusher } from "@/services/pako-compress";
 
 const PRESENCE_CHANNEL = "presence-streamer-wars";
 
@@ -354,10 +356,12 @@ export const eliminatePlayer = async (playerNumber: number) => {
         // Genera el audio.
         const audioBase64 = await tts(`Jugador, ${playerNumber}, eliminado`);
 
+        const audioPayload = encodeAudioForPusher(audioBase64!);
+
         // Envía el evento a Pusher con los datos actualizados.
         await pusher.trigger("streamer-wars", "player-eliminated", {
             playerNumber,
-            audioBase64,
+            audioBase64: audioPayload,
         });
 
         try {
@@ -378,16 +382,18 @@ export const eliminatePlayer = async (playerNumber: number) => {
 
 export const massEliminatePlayers = async (playerNumbers: number[]) => {
     try {
+        playerNumbers = Array.from(new Set(playerNumbers)); // Evitar duplicados
         if (playerNumbers.length === 0) return; // Si no hay jugadores, no hacer nada
 
-        // Intenta actualizar la base de datos, ignorando jugadores no encontrados
-        await client
-            .update(StreamerWarsPlayersTable)
-            .set({ eliminated: true })
-            .where(inArray(StreamerWarsPlayersTable.playerNumber, playerNumbers))
-            .execute()
-            .catch(() => { }); // Ignorar error si algún jugador no es encontrado
-
+        if (import.meta.env.PROD) {
+            // Intenta actualizar la base de datos, ignorando jugadores no encontrados
+            await client
+                .update(StreamerWarsPlayersTable)
+                .set({ eliminated: true })
+                .where(inArray(StreamerWarsPlayersTable.playerNumber, playerNumbers))
+                .execute()
+                .catch(() => { }); // Ignorar error si algún jugador no es encontrado
+        }
         // Genera el audio.
         const audioBase64 = await tts(
             `Los jugadores. ${new Intl.ListFormat("es-ES").format(
@@ -395,10 +401,12 @@ export const massEliminatePlayers = async (playerNumbers: number[]) => {
             )}. han sido eliminados`
         );
 
+        const audioPayload = encodeAudioForPusher(audioBase64!);
+
         // Envía el evento a Pusher con los datos actualizados.
         await pusher.trigger("streamer-wars", "players-eliminated", {
             playerNumbers,
-            audioBase64,
+            audioBase64: audioPayload,
         });
 
         // Envía el log al webhook de Discord.
@@ -500,7 +508,7 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
             };
         }
 
-        // Obtener el discordId del jugador desde una relación con playerNumber
+        // Obtener el discordId del
         const user = await client
             .select({
                 id: UsersTable.id,
@@ -1338,11 +1346,25 @@ export const launchGame = async (game: string, props: any) => {
     await pusher.trigger("streamer-wars", "launch-game", { game, props });
 };
 
+export const lockChat = async () => {
+    const cache = createCache();
+    await cache.set("streamer-wars-chat-locked", true);
+    await pusher.trigger("streamer-wars", "lock-chat", null);
+    return { success: true };
+};
+
+export const unlockChat = async () => {
+    const cache = createCache();
+    await cache.set("streamer-wars-chat-locked", false);
+    await pusher.trigger("streamer-wars", "unlock-chat", null);
+    return { success: true };
+};
+
 export const executeAdminCommand = async (command: string, args: string[]): Promise<{ success: boolean, feedback?: string }> => {
     try {
         switch (command) {
             case '/kill':
-                const playerNumbers = args.map(arg => parseInt(arg, 10)).filter(n => !isNaN(n));
+                const playerNumbers = Array.from(new Set(args.map(arg => parseInt(arg, 10)).filter(n => !isNaN(n))));
                 if (playerNumbers.length === 0) {
                     return { success: false, feedback: 'No se proporcionaron números de jugador válidos' };
                 }
@@ -1373,19 +1395,64 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                 return { success: true, feedback: `Equipo ${teamColor}: ${playerList || 'sin miembros'}` };
 
             case '/waiting':
-                const show = args[0] === 'true';
+                const waitingAction = args[0];
                 const expected = parseInt(args[1], 10);
-                if (isNaN(expected)) {
-                    return { success: false, feedback: 'Expected debe ser un número' };
-                }
-                if (show) {
+
+                if (waitingAction === 'show') {
+                    if (isNaN(expected)) {
+                        return { success: false, feedback: 'Expected debe ser un número' };
+                    }
+                    const cache = createCache();
+                    await cache.set("streamer-wars-expected-players", expected);
+                    await cache.set("streamer-wars-waiting-screen-visible", true);
                     await pusher.trigger("streamer-wars", "show-waiting-screen", { expectedPlayers: expected });
                     return { success: true, feedback: `Pantalla de espera mostrada con ${expected} jugadores esperados` };
-                } else {
+                } else if (waitingAction === 'hide') {
+                    const cache = createCache();
+                    await cache.set("streamer-wars-expected-players", 50); // Reset to default
+                    await cache.set("streamer-wars-waiting-screen-visible", false);
                     await pusher.trigger("streamer-wars", "hide-waiting-screen", null);
                     return { success: true, feedback: 'Pantalla de espera oculta' };
+                } else {
+                    return { success: false, feedback: 'Uso: /waiting show <número> o /waiting hide' };
                 }
 
+            case '/play-cinematic':
+                const cinematicId = args[0];
+                if (!cinematicId || !CINEMATICS[cinematicId as keyof typeof CINEMATICS]) {
+                    return { success: false, feedback: `Cinemática ${cinematicId} no encontrada` };
+                }
+                await pusher.trigger("streamer-wars-cinematic", "new-event", {
+                    targetUsers: 'everyone',
+                    videoUrl: CINEMATICS[cinematicId as keyof typeof CINEMATICS].url
+                });
+                return { success: true, feedback: `Cinemática ${cinematicId} reproducida` };
+
+            case '/waiting-room':
+                // Envía a todos los jugadores a la sala de espera
+                const cache = cacheService.create({ ttl: 60 * 60 * 24 });
+                await cache.set("streamer-wars-gamestate", null);
+
+                await pusher.trigger("streamer-wars", "send-to-waiting-room", null);
+                return { success: true, feedback: 'Todos los jugadores enviados a la sala de espera' };
+            case '/announce':
+                const message = args.join(' ');
+                if (!message) {
+                    return { success: false, feedback: 'Se requiere un mensaje para el anuncio' };
+                }
+                await pusher.trigger("streamer-wars", "new-announcement", { message });
+                return { success: true, feedback: 'Anuncio enviado' };
+            case '/chat':
+                const chatAction = args[0];
+                if (chatAction === 'lock') {
+                    await lockChat();
+                    return { success: true, feedback: 'Chat bloqueado' };
+                } else if (chatAction === 'unlock') {
+                    await unlockChat();
+                    return { success: true, feedback: 'Chat desbloqueado' };
+                } else {
+                    return { success: false, feedback: 'Uso: /chat lock o /chat unlock' };
+                }
             default:
                 return { success: false, feedback: 'Comando desconocido' };
         }

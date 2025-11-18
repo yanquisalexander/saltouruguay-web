@@ -1,6 +1,7 @@
 import type { Session } from "@auth/core/types";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
+import { toast as retroToast } from "@/components/ui/8bit/toast";
 import Pusher, { type Channel } from "pusher-js";
 import { PUSHER_KEY } from "@/config";
 import {
@@ -11,6 +12,7 @@ import {
 } from "@/consts/Sounds";
 import { LucideSiren } from "lucide-preact";
 import { navigate } from "astro/virtual-modules/transitions-router.js";
+import { decodeAudioFromPusher } from "@/services/pako-compress.client";
 
 export const useStreamerWarsSocket = (session: Session | null) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
@@ -66,11 +68,16 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         }) => {
             await playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.05 });
             setRecentlyEliminatedPlayer(playerNumber);
+
+            const audioBytes = decodeAudioFromPusher(audioBase64);
+
+            const blob = new Blob([new Uint8Array(audioBytes)], { type: "audio/mpeg" }); // o audio/wav
+            const url = URL.createObjectURL(blob);
             const timeoutId = setTimeout(() => {
                 playSoundWithReverb({
-                    sound: `data:audio/mp3;base64,${audioBase64}`,
+                    sound: url,
                     volume: 0.5,
-                    isBase64: true,
+                    isBase64: false,
                     reverbAmount: 0.7,
                 });
             }, 1000);
@@ -135,7 +142,9 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                 duration: 8000,
                 position: "top-center",
                 classNames: {
+                    title: 'font-bold font-mono',
                     icon: 'flex flex-col justify-center items-center p-5 rounded-full',
+                    description: 'font-mono text-sm',
                 }
             });
 

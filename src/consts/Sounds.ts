@@ -72,8 +72,13 @@ export const playSoundWithReverb = async ({
                 }
                 arrayBuffer = uint8Array.buffer;
             } else {
-                const response = await fetch(`${CDN_PREFIX}${sound}.mp3`);
-                arrayBuffer = await response.arrayBuffer();
+                if (sound.startsWith("blob:")) {
+                    const response = await fetch(sound);
+                    arrayBuffer = await response.arrayBuffer();
+                } else {
+                    const response = await fetch(`${CDN_PREFIX}${sound}.mp3`);
+                    arrayBuffer = await response.arrayBuffer();
+                }
             }
 
             const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
@@ -115,6 +120,9 @@ export const playSoundWithReverb = async ({
             // Cuando termine la reproducción, cerramos el audioContext
             source.onended = async () => {
                 await audioContext.close();
+                if (sound.startsWith("blob:")) {
+                    URL.revokeObjectURL(sound);
+                }
                 resolve();
             };
         } catch (error) {
