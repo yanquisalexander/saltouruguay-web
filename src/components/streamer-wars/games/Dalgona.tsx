@@ -2,6 +2,7 @@ import type { Session } from "@auth/core/types";
 import { useState, useEffect, useRef } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
+import { Instructions } from "../Instructions";
 
 interface DalgonaProps {
     session: Session;
@@ -20,48 +21,68 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
     const [tracePoints, setTracePoints] = useState<Point[]>([]);
     const [gameStatus, setGameStatus] = useState<'waiting' | 'playing' | 'completed' | 'failed'>('waiting');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+    const [showInstructions, setShowInstructions] = useState(true);
+
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const imageRef = useRef<HTMLImageElement>(null);
 
-    // Subscribe to private player channel
+    // Subscribe to streamer-wars channel
     useEffect(() => {
         if (!session.user?.id || !pusher) return;
 
-        const privateChannel = pusher.subscribe(`private-player-${session.user.id}`);
+        const channel = pusher.subscribe('streamer-wars');
 
         // Listen for game start event
-        privateChannel.bind('dalgona:start', (data: { imageUrl: string; attemptsLeft: number }) => {
-            setImageUrl(data.imageUrl);
-            setAttemptsLeft(data.attemptsLeft);
-            setGameStatus('playing');
-            setTracePoints([]);
-            toast.info('¡Traza la forma con cuidado!', { position: 'bottom-center' });
+        channel.bind('dalgona:start', (data: { userId: number; imageUrl: string; attemptsLeft: number }) => {
+            if (data.userId === session.user.id) {
+                setImageUrl(data.imageUrl);
+                setAttemptsLeft(data.attemptsLeft);
+                setGameStatus('playing');
+                setTracePoints([]);
+                toast.info('¡Traza la forma con cuidado!', { position: 'bottom-center' });
+            }
         });
 
         // Listen for success event
-        privateChannel.bind('dalgona:success', () => {
-            setGameStatus('completed');
-            toast.success('¡Has completado el desafío Dalgona!', { 
-                position: 'bottom-center',
-                duration: 5000,
-            });
+        channel.bind('dalgona:success', (data: { userId: number }) => {
+            if (data.userId === session.user.id) {
+                setGameStatus('completed');
+                toast.success('¡Has completado el desafío Dalgona!', {
+                    position: 'bottom-center',
+                    duration: 5000,
+                });
+            }
         });
 
         // Listen for attempt failed event
-        privateChannel.bind('dalgona:attempt-failed', (data: { attemptsLeft: number }) => {
-            setAttemptsLeft(data.attemptsLeft);
-            setTracePoints([]);
-            toast.error(`Intento fallido. Intentos restantes: ${data.attemptsLeft}`, { 
-                position: 'bottom-center',
-            });
+        channel.bind('dalgona:attempt-failed', (data: { userId: number; attemptsLeft: number }) => {
+            if (data.userId === session.user.id) {
+                setAttemptsLeft(data.attemptsLeft);
+                setTracePoints([]);
+                toast.error(`Intento fallido. Intentos restantes: ${data.attemptsLeft}`, {
+                    position: 'bottom-center',
+                });
+            }
         });
 
         return () => {
-            privateChannel.unbind_all();
-            privateChannel.unsubscribe();
+            channel.unbind_all();
+            channel.unsubscribe();
         };
     }, [session.user?.id, pusher]);
+
+    // Listen for instructions ended event
+    useEffect(() => {
+        const handleInstructionsEnded = () => {
+            setShowInstructions(false);
+        };
+
+        document.addEventListener('instructions-ended', handleInstructionsEnded);
+
+        return () => {
+            document.removeEventListener('instructions-ended', handleInstructionsEnded);
+        };
+    }, []);
 
     // Draw on canvas
     useEffect(() => {
@@ -187,7 +208,7 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
                 setGameStatus('completed');
             } else if (result.eliminated) {
                 setGameStatus('failed');
-                toast.error('Has sido eliminado', { 
+                toast.error('Has sido eliminado', {
                     position: 'bottom-center',
                     duration: 5000,
                 });
@@ -209,6 +230,24 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
             }
         }
     };
+
+    if (showInstructions) {
+        return (
+            <Instructions duration={12000}>
+                <p className="font-mono max-w-2xl text-left">
+                    Traza cuidadosamente la forma que aparece en la galleta. Debes seguir el contorno con precisión,
+                    manteniendo el tamaño y la posición correctos.
+                </p>
+                <p className="font-mono max-w-2xl text-left">
+                    Tendrás intentos limitados para completar el desafío.
+                    Si fallas todos los intentos, serás eliminado del juego.
+                </p>
+                <p className="font-mono max-w-2xl text-left text-yellow-300">
+                    💡 Consejo: Mantén presionado el mouse/botón y traza lentamente para mayor precisión.
+                </p>
+            </Instructions>
+        )
+    }
 
     if (gameStatus === 'waiting') {
         return (
@@ -284,11 +323,6 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
                 >
                     {isSubmitting ? 'Enviando...' : 'Enviar'}
                 </button>
-            </div>
-
-            <div className="mt-6 text-center text-white text-sm max-w-md">
-                <p>Traza cuidadosamente la forma que aparece en la galleta.</p>
-                <p className="mt-2">Si fallas dos veces, serás eliminado.</p>
             </div>
         </div>
     );

@@ -52,6 +52,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             cluster: "us2",
             enabledTransports: ["ws", "wss"],
             forceTLS: !import.meta.env.DEV,
+
         });
         setPusher(pusherInstance);
 

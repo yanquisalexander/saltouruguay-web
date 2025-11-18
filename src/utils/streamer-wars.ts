@@ -11,7 +11,7 @@ import { getTranslation } from "./translate";
 import { getLiveStreams } from "./twitch-runtime";
 import { CINEMATICS } from "@/consts/cinematics";
 import { encodeAudioForPusher } from "@/services/pako-compress";
-import { generateDalgonaImage, type DalgonaShape } from "@/services/dalgona-image-generator";
+import { DalgonaShape, DalgonaShapeData, createDalgonaShapeData, generateDalgonaImage } from "@/services/dalgona-image-generator";
 
 const PRESENCE_CHANNEL = "presence-streamer-wars";
 
@@ -32,7 +32,7 @@ export interface SimonSaysGameState {
     playerWhoAlreadyPlayed: number[]; // Jugadores que ya han jugado en rondas anteriores
 }
 
-const CACHE_KEY = "streamer-wars.simon-says:game-state";
+const CACHE_KEY = "streamer-wars.simon-says";
 const DALGONA_CACHE_KEY = "streamer-wars.dalgona:game-state";
 const COLORS = ["red", "blue", "green", "yellow"];
 
@@ -44,7 +44,7 @@ const createCache = () => cacheService.create({ ttl: 60 * 60 * 48 });
 export interface DalgonaPlayerState {
     playerNumber: number;
     teamId: number;
-    shape: DalgonaShape;
+    shape: DalgonaShapeData;
     imageUrl: string;
     attemptsLeft: number;
     status: 'playing' | 'completed' | 'failed';
@@ -58,10 +58,10 @@ export interface DalgonaGameState {
 
 // Team to shape mapping based on difficulty
 const TEAM_SHAPE_MAP: Record<number, DalgonaShape> = {
-    1: 'circle',    // Easy
-    2: 'triangle',  // Easy
-    3: 'star',      // Medium
-    4: 'umbrella',  // Hard
+    1: DalgonaShape.Circle,    // Easy
+    2: DalgonaShape.Triangle,  // Easy
+    3: DalgonaShape.Star,      // Medium
+    4: DalgonaShape.Umbrella,  // Hard
 };
 
 export const games = {
@@ -318,7 +318,7 @@ export const games = {
         },
 
     },
-    
+
     dalgona: {
         /**
          * Gets the current Dalgona game state from cache
@@ -339,7 +339,7 @@ export const games = {
          */
         startGame: async () => {
             const cache = createCache();
-            
+
             // Get all players with their teams
             const playersWithTeams = await client
                 .select({
@@ -364,17 +364,18 @@ export const games = {
 
             // Initialize player states
             const players: Record<number, DalgonaPlayerState> = {};
-            
+
             for (const player of playersWithTeams) {
                 // Assign shape based on team (default to circle if team not in map)
-                const shape = TEAM_SHAPE_MAP[player.teamId] || 'circle';
-                
+                const shapeType = TEAM_SHAPE_MAP[player.teamId] || DalgonaShape.Circle;
+                const shape = createDalgonaShapeData(shapeType);
+
                 // Generate the Dalgona cookie image
-                const imageUrl = generateDalgonaImage(shape);
-                
+                const imageUrl = generateDalgonaImage(shapeType);
+
                 // Store player state in Redis
-                await cache.set(`player:${player.playerNumber}:dalgona_shape`, shape);
-                
+                await cache.set(`player:${player.playerNumber}:dalgona_shape`, shapeType);
+
                 players[player.playerNumber] = {
                     playerNumber: player.playerNumber,
                     teamId: player.teamId,
@@ -383,13 +384,14 @@ export const games = {
                     attemptsLeft: 2,
                     status: 'playing',
                 };
-                
+
                 // Send individual event to each player via Pusher
                 if (player.userId) {
-                    await pusher.trigger(`private-player-${player.userId}`, 'dalgona:start', {
+                    await pusher.trigger('streamer-wars', 'dalgona:start', {
+                        userId: player.userId,
                         imageUrl,
                         attemptsLeft: 2,
-                        shape,
+                        shape: shapeType,
                     });
                 }
             }
@@ -402,7 +404,7 @@ export const games = {
             };
 
             await cache.set(DALGONA_CACHE_KEY, gameState);
-            
+
             // Broadcast game started to all players
             await pusher.trigger('streamer-wars', 'dalgona:game-started', {
                 totalPlayers: Object.keys(players).length,
@@ -435,9 +437,9 @@ export const games = {
         submitTrace: async (playerNumber: number, traceData: any) => {
             const cache = createCache();
             const gameState = await games.dalgona.getGameState();
-            
+
             const playerState = gameState.players[playerNumber];
-            
+
             if (!playerState) {
                 return {
                     success: false,
@@ -453,15 +455,15 @@ export const games = {
             }
 
             // Validate the trace (simplified - in production this would be more complex)
-            const isValid = validateTrace(playerState.shape, traceData);
+            const validation = validateTrace(playerState.shape, traceData);
 
-            if (isValid) {
+            if (validation) {
                 // Player succeeded
                 playerState.status = 'completed';
                 gameState.players[playerNumber] = playerState;
-                
+
                 await cache.set(DALGONA_CACHE_KEY, gameState);
-                
+
                 // Get player info for notification
                 const player = await client.query.StreamerWarsPlayersTable.findFirst({
                     where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber),
@@ -476,7 +478,8 @@ export const games = {
 
                 // Notify player of success
                 if (player?.user?.id) {
-                    await pusher.trigger(`private-player-${player.user.id}`, 'dalgona:success', {
+                    await pusher.trigger('streamer-wars', 'dalgona:success', {
+                        userId: player.user.id,
                         playerNumber,
                     });
                 }
@@ -513,9 +516,9 @@ export const games = {
                     // No more attempts - eliminate player
                     playerState.status = 'failed';
                     gameState.players[playerNumber] = playerState;
-                    
+
                     await cache.set(DALGONA_CACHE_KEY, gameState);
-                    
+
                     // Eliminate the player
                     await eliminatePlayer(playerNumber);
 
@@ -542,16 +545,16 @@ export const games = {
                     });
 
                     // Notify player of failure but with attempts remaining
-                    if (player?.user?.id) {
-                        await pusher.trigger(`private-player-${player.user.id}`, 'dalgona:attempt-failed', {
+                    if (player?.playerNumber && player?.user?.id) {
+                        await pusher.trigger('streamer-wars', 'dalgona:attempt-failed', {
+                            userId: player.user.id,
                             attemptsLeft: playerState.attemptsLeft,
                         });
                     }
 
                     return {
                         success: false,
-                        status: 'retry',
-                        attemptsLeft: playerState.attemptsLeft,
+                        status: 'retry'
                     };
                 }
             }
@@ -610,30 +613,126 @@ export const games = {
 };
 
 /**
- * Validates a trace against the expected shape
- * This is a simplified validation - in production, this would analyze the actual trace path
+ * Validación REAL del juego Dalgona.
+ * Compara el trazo contra la figura y devuelve true/false.
+ * Valida posición, escala y precisión del contorno.
  */
-function validateTrace(shape: DalgonaShape, traceData: any): boolean {
-    // Simplified validation logic
-    // In a real implementation, this would:
-    // 1. Compare the trace path with the expected shape
-    // 2. Check if the trace stays within acceptable bounds
-    // 3. Verify the trace is continuous and complete
-    
-    if (!traceData || !traceData.points || !Array.isArray(traceData.points)) {
+export function validateTrace(shape: DalgonaShapeData, traceData: any): boolean {
+    if (!traceData || !Array.isArray(traceData.points) || traceData.points.length < 10) {
+        console.log("Trace inválido: puntos insuficientes");
         return false;
     }
 
-    // Basic validation: check if enough points were traced
-    const minPoints = {
-        'circle': 30,
-        'triangle': 20,
-        'star': 40,
-        'umbrella': 35,
+    const tracePoints = traceData.points;
+    const shapePoints = shape.points;
+
+    // ---- Calcular centro y dimensiones ----
+    const getBounds = (pts: any[]) => {
+        const xs = pts.map(p => p.x);
+        const ys = pts.map(p => p.y);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const width = maxX - minX;
+        const height = maxY - minY;
+        return { minX, maxX, minY, maxY, centerX, centerY, width, height };
     };
 
-    return traceData.points.length >= minPoints[shape];
+    const shapeBounds = getBounds(shapePoints);
+    const traceBounds = getBounds(tracePoints);
+
+    // ---- VALIDACIÓN 1: Verificar que el centro del trazo esté cerca del centro de la forma ----
+    const centerDistanceX = Math.abs(traceBounds.centerX - shapeBounds.centerX);
+    const centerDistanceY = Math.abs(traceBounds.centerY - shapeBounds.centerY);
+    const maxCenterOffset = 50; // pixels de tolerancia
+
+    if (centerDistanceX > maxCenterOffset || centerDistanceY > maxCenterOffset) {
+        console.log(`Trazo fuera de posición: offsetX=${centerDistanceX.toFixed(1)}, offsetY=${centerDistanceY.toFixed(1)}`);
+        return false;
+    }
+
+    // ---- VALIDACIÓN 2: Verificar que la escala sea similar ----
+    const scaleX = traceBounds.width / shapeBounds.width;
+    const scaleY = traceBounds.height / shapeBounds.height;
+    const minScale = 0.7; // 70% del tamaño original
+    const maxScale = 1.3; // 130% del tamaño original
+
+    if (scaleX < minScale || scaleX > maxScale || scaleY < minScale || scaleY > maxScale) {
+        console.log(`Escala incorrecta: scaleX=${scaleX.toFixed(2)}, scaleY=${scaleY.toFixed(2)}`);
+        return false;
+    }
+
+    // ---- VALIDACIÓN 3: Calcular distancia promedio de cada punto del trazo al contorno ----
+    const distToShape = (px: number, py: number) => {
+        let min = Infinity;
+        for (let i = 0; i < shapePoints.length - 1; i++) {
+            const a = shapePoints[i];
+            const b = shapePoints[i + 1];
+
+            // Vector AB y AP
+            const ABx = b.x - a.x;
+            const ABy = b.y - a.y;
+            const APx = px - a.x;
+            const APy = py - a.y;
+
+            // Proyección punto-segmento
+            const ABdotAB = ABx * ABx + ABy * ABy;
+            if (ABdotAB === 0) {
+                // Punto a y b son iguales
+                const dx = px - a.x;
+                const dy = py - a.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < min) min = dist;
+                continue;
+            }
+
+            const t = Math.max(0, Math.min(1, (APx * ABx + APy * ABy) / ABdotAB));
+
+            const cx = a.x + ABx * t;
+            const cy = a.y + ABy * t;
+
+            const dx = px - cx;
+            const dy = py - cy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < min) min = dist;
+        }
+        return min;
+    };
+
+    // Calcular error promedio
+    let totalError = 0;
+    for (const p of tracePoints) {
+        totalError += distToShape(p.x, p.y);
+    }
+
+    const avgError = totalError / tracePoints.length;
+
+    // ---- Convertir error a accuracy (0–100%) ----
+    // La tolerancia es en pixels: 0 pixels = 100%, más pixels = menos accuracy
+    const maxAcceptableError = 30; // pixels
+    const accuracy = Math.max(0, 100 * (1 - avgError / maxAcceptableError));
+
+    console.log(`ACCURACY: ${accuracy.toFixed(2)}% | Error promedio: ${avgError.toFixed(2)}px | Centro: (${centerDistanceX.toFixed(1)}, ${centerDistanceY.toFixed(1)}) | Escala: (${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`);
+
+    // ---- Exigir precisión según la figura ----
+    const ACCURACY_REQUIRED: Record<DalgonaShape, number> = {
+        [DalgonaShape.Circle]: 75,     // Círculo es más fácil
+        [DalgonaShape.Triangle]: 70,   // Triángulo es fácil
+        [DalgonaShape.Umbrella]: 60,   // Paraguas es difícil
+        [DalgonaShape.Star]: 65,       // Estrella es medio
+    };
+
+    const required = ACCURACY_REQUIRED[shape.type];
+
+    return accuracy >= required;
 }
+
+
+
 
 
 
@@ -643,15 +742,13 @@ export const eliminatePlayer = async (playerNumber: number) => {
 
         if (import.meta.env.PROD) {
             await client
-                .update(StreamerWarsPlayersTable)
-                .set({ eliminated: true })
                 .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
                 .execute();
         }
 
         /* 
             ¿Se está jugando Simon Says?
-
+ 
             En ese caso, debemos quitarlo de la partida y establecer el estado de eliminado, y
             setear el estado de Simon Says a "waiting"
         */
@@ -881,7 +978,7 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
 
         /* 
             Check limit of players per team
-
+ 
             {
   "game": "ButtonBox",
   "props": {
@@ -1514,7 +1611,7 @@ export const beforeLaunchGame = async () => {
     /* 
         Obtiene los jugadores que no han sido eliminados y que no están aislados.
         Consulta a Pusher para obtener los jugadores conectados.
-
+ 
         Si hay jugadores que no están conectados, se los aisla.
     */
 
@@ -1616,7 +1713,7 @@ export const getNegativeVotes = async (): Promise<
             UsersTable.avatar
         )
         // Ordenamos por votos descendente (usa desc sobre la función count)
-        .orderBy(desc(count(NegativeVotesStreamersTable.id)))
+        .orderBy(desc(count(NegativeVotesStreammersTable.id)))
         .execute()
         .then(res => {
             console.log('Resultado raw:', res);
@@ -1793,6 +1890,19 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                     return { success: true, feedback: 'Chat desbloqueado' };
                 } else {
                     return { success: false, feedback: 'Uso: /chat lock o /chat unlock' };
+                }
+            case '/dalgona':
+                const dalgonaAction = args[0];
+                if (dalgonaAction === 'start') {
+                    const gameState = await games.dalgona.startGame();
+                    return { success: true, feedback: `Minijuego Dalgona iniciado con ${Object.keys(gameState.players).length} jugadores` };
+                } else if (dalgonaAction === 'end') {
+                    const result = await games.dalgona.endGame();
+                    const completedCount = result.gameState.players ? Object.values(result.gameState.players).filter(p => p.status === 'completed').length : 0;
+                    const eliminatedCount = result.gameState.players ? Object.values(result.gameState.players).filter(p => p.status === 'failed' || p.status === 'playing').length : 0;
+                    return { success: true, feedback: `Minijuego Dalgona finalizado. Completaron: ${completedCount}, Eliminados: ${eliminatedCount}` };
+                } else {
+                    return { success: false, feedback: 'Uso: /dalgona start o /dalgona end' };
                 }
             default:
                 return { success: false, feedback: 'Comando desconocido' };
