@@ -11,6 +11,7 @@ import { getTranslation } from "./translate";
 import { getLiveStreams } from "./twitch-runtime";
 import { CINEMATICS } from "@/consts/cinematics";
 import { encodeAudioForPusher } from "@/services/pako-compress";
+import { generateDalgonaImage, type DalgonaShape } from "@/services/dalgona-image-generator";
 
 const PRESENCE_CHANNEL = "presence-streamer-wars";
 
@@ -32,11 +33,36 @@ export interface SimonSaysGameState {
 }
 
 const CACHE_KEY = "streamer-wars.simon-says:game-state";
+const DALGONA_CACHE_KEY = "streamer-wars.dalgona:game-state";
 const COLORS = ["red", "blue", "green", "yellow"];
 
 const getRandomItem = <T>(array: T[]): T =>
     array[Math.floor(Math.random() * array.length)];
 const createCache = () => cacheService.create({ ttl: 60 * 60 * 48 });
+
+// Dalgona game types
+export interface DalgonaPlayerState {
+    playerNumber: number;
+    teamId: number;
+    shape: DalgonaShape;
+    imageUrl: string;
+    attemptsLeft: number;
+    status: 'playing' | 'completed' | 'failed';
+}
+
+export interface DalgonaGameState {
+    players: Record<number, DalgonaPlayerState>;
+    status: 'waiting' | 'active' | 'completed';
+    startedAt?: number;
+}
+
+// Team to shape mapping based on difficulty
+const TEAM_SHAPE_MAP: Record<number, DalgonaShape> = {
+    1: 'circle',    // Easy
+    2: 'triangle',  // Easy
+    3: 'star',      // Medium
+    4: 'umbrella',  // Hard
+};
 
 export const games = {
     simonSays: {
@@ -292,7 +318,322 @@ export const games = {
         },
 
     },
+    
+    dalgona: {
+        /**
+         * Gets the current Dalgona game state from cache
+         */
+        getGameState: async (): Promise<DalgonaGameState> => {
+            const cache = createCache();
+            return (
+                (await cache.get<DalgonaGameState>(DALGONA_CACHE_KEY)) ?? {
+                    players: {},
+                    status: 'waiting',
+                }
+            );
+        },
+
+        /**
+         * Starts the Dalgona minigame
+         * Assigns shapes to players based on their team and generates images
+         */
+        startGame: async () => {
+            const cache = createCache();
+            
+            // Get all players with their teams
+            const playersWithTeams = await client
+                .select({
+                    playerNumber: StreamerWarsPlayersTable.playerNumber,
+                    teamId: StreamerWarsTeamPlayersTable.teamId,
+                    eliminated: StreamerWarsPlayersTable.eliminated,
+                    aislated: StreamerWarsPlayersTable.aislated,
+                    userId: StreamerWarsPlayersTable.userId,
+                })
+                .from(StreamerWarsPlayersTable)
+                .innerJoin(
+                    StreamerWarsTeamPlayersTable,
+                    eq(StreamerWarsTeamPlayersTable.playerNumber, StreamerWarsPlayersTable.playerNumber)
+                )
+                .where(
+                    and(
+                        not(eq(StreamerWarsPlayersTable.eliminated, true)),
+                        not(eq(StreamerWarsPlayersTable.aislated, true))
+                    )
+                )
+                .execute();
+
+            // Initialize player states
+            const players: Record<number, DalgonaPlayerState> = {};
+            
+            for (const player of playersWithTeams) {
+                // Assign shape based on team (default to circle if team not in map)
+                const shape = TEAM_SHAPE_MAP[player.teamId] || 'circle';
+                
+                // Generate the Dalgona cookie image
+                const imageUrl = generateDalgonaImage(shape);
+                
+                // Store player state in Redis
+                await cache.set(`player:${player.playerNumber}:dalgona_shape`, shape);
+                
+                players[player.playerNumber] = {
+                    playerNumber: player.playerNumber,
+                    teamId: player.teamId,
+                    shape,
+                    imageUrl,
+                    attemptsLeft: 2,
+                    status: 'playing',
+                };
+                
+                // Send individual event to each player via Pusher
+                if (player.userId) {
+                    await pusher.trigger(`private-player-${player.userId}`, 'dalgona:start', {
+                        imageUrl,
+                        attemptsLeft: 2,
+                        shape,
+                    });
+                }
+            }
+
+            // Save game state
+            const gameState: DalgonaGameState = {
+                players,
+                status: 'active',
+                startedAt: Date.now(),
+            };
+
+            await cache.set(DALGONA_CACHE_KEY, gameState);
+            
+            // Broadcast game started to all players
+            await pusher.trigger('streamer-wars', 'dalgona:game-started', {
+                totalPlayers: Object.keys(players).length,
+            });
+
+            try {
+                await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                    content: null,
+                    embeds: [
+                        {
+                            title: "Dalgona - Juego iniciado",
+                            description: `Se ha iniciado el minijuego Dalgona con ${Object.keys(players).length} jugadores.`,
+                            color: 0xffa500,
+                        },
+                    ],
+                });
+            } catch (error) {
+                console.error("Error sending Discord webhook:", error);
+            }
+
+            return gameState;
+        },
+
+        /**
+         * Validates a player's trace submission
+         * @param playerNumber The player's number
+         * @param traceData The trace data from the client (simplified validation)
+         * @returns Success status and updated game state
+         */
+        submitTrace: async (playerNumber: number, traceData: any) => {
+            const cache = createCache();
+            const gameState = await games.dalgona.getGameState();
+            
+            const playerState = gameState.players[playerNumber];
+            
+            if (!playerState) {
+                return {
+                    success: false,
+                    error: 'Player not found in game',
+                };
+            }
+
+            if (playerState.status !== 'playing') {
+                return {
+                    success: false,
+                    error: 'Player is not in playing state',
+                };
+            }
+
+            // Validate the trace (simplified - in production this would be more complex)
+            const isValid = validateTrace(playerState.shape, traceData);
+
+            if (isValid) {
+                // Player succeeded
+                playerState.status = 'completed';
+                gameState.players[playerNumber] = playerState;
+                
+                await cache.set(DALGONA_CACHE_KEY, gameState);
+                
+                // Get player info for notification
+                const player = await client.query.StreamerWarsPlayersTable.findFirst({
+                    where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber),
+                    with: {
+                        user: {
+                            columns: {
+                                id: true,
+                            }
+                        }
+                    }
+                });
+
+                // Notify player of success
+                if (player?.user?.id) {
+                    await pusher.trigger(`private-player-${player.user.id}`, 'dalgona:success', {
+                        playerNumber,
+                    });
+                }
+
+                // Broadcast to all
+                await pusher.trigger('streamer-wars', 'dalgona:player-completed', {
+                    playerNumber,
+                });
+
+                try {
+                    await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                        content: null,
+                        embeds: [
+                            {
+                                title: "Dalgona - Desafío completado",
+                                description: `El jugador #${playerNumber} ha completado exitosamente el desafío Dalgona.`,
+                                color: 0x00ff00,
+                            },
+                        ],
+                    });
+                } catch (error) {
+                    console.error("Error sending Discord webhook:", error);
+                }
+
+                return {
+                    success: true,
+                    status: 'completed',
+                };
+            } else {
+                // Player failed this attempt
+                playerState.attemptsLeft -= 1;
+
+                if (playerState.attemptsLeft <= 0) {
+                    // No more attempts - eliminate player
+                    playerState.status = 'failed';
+                    gameState.players[playerNumber] = playerState;
+                    
+                    await cache.set(DALGONA_CACHE_KEY, gameState);
+                    
+                    // Eliminate the player
+                    await eliminatePlayer(playerNumber);
+
+                    return {
+                        success: false,
+                        status: 'failed',
+                        eliminated: true,
+                    };
+                } else {
+                    // Still has attempts left
+                    gameState.players[playerNumber] = playerState;
+                    await cache.set(DALGONA_CACHE_KEY, gameState);
+
+                    // Get player info for notification
+                    const player = await client.query.StreamerWarsPlayersTable.findFirst({
+                        where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber),
+                        with: {
+                            user: {
+                                columns: {
+                                    id: true,
+                                }
+                            }
+                        }
+                    });
+
+                    // Notify player of failure but with attempts remaining
+                    if (player?.user?.id) {
+                        await pusher.trigger(`private-player-${player.user.id}`, 'dalgona:attempt-failed', {
+                            attemptsLeft: playerState.attemptsLeft,
+                        });
+                    }
+
+                    return {
+                        success: false,
+                        status: 'retry',
+                        attemptsLeft: playerState.attemptsLeft,
+                    };
+                }
+            }
+        },
+
+        /**
+         * Ends the Dalgona game and eliminates players who didn't complete it
+         */
+        endGame: async () => {
+            const cache = createCache();
+            const gameState = await games.dalgona.getGameState();
+
+            // Find all players who didn't complete
+            const failedPlayers = Object.values(gameState.players)
+                .filter(p => p.status === 'playing' || p.status === 'failed')
+                .map(p => p.playerNumber);
+
+            // Eliminate all failed players
+            if (failedPlayers.length > 0) {
+                await massEliminatePlayers(failedPlayers);
+            }
+
+            // Update game state
+            gameState.status = 'completed';
+            await cache.set(DALGONA_CACHE_KEY, gameState);
+
+            // Broadcast game ended
+            await pusher.trigger('streamer-wars', 'dalgona:game-ended', {
+                completedPlayers: Object.values(gameState.players)
+                    .filter(p => p.status === 'completed')
+                    .map(p => p.playerNumber),
+                eliminatedPlayers: failedPlayers,
+            });
+
+            try {
+                await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                    content: null,
+                    embeds: [
+                        {
+                            title: "Dalgona - Juego finalizado",
+                            description: `El minijuego Dalgona ha finalizado. ${failedPlayers.length} jugadores fueron eliminados.`,
+                            color: 0xff0000,
+                        },
+                    ],
+                });
+            } catch (error) {
+                console.error("Error sending Discord webhook:", error);
+            }
+
+            return {
+                success: true,
+                gameState,
+            };
+        },
+    },
 };
+
+/**
+ * Validates a trace against the expected shape
+ * This is a simplified validation - in production, this would analyze the actual trace path
+ */
+function validateTrace(shape: DalgonaShape, traceData: any): boolean {
+    // Simplified validation logic
+    // In a real implementation, this would:
+    // 1. Compare the trace path with the expected shape
+    // 2. Check if the trace stays within acceptable bounds
+    // 3. Verify the trace is continuous and complete
+    
+    if (!traceData || !traceData.points || !Array.isArray(traceData.points)) {
+        return false;
+    }
+
+    // Basic validation: check if enough points were traced
+    const minPoints = {
+        'circle': 30,
+        'triangle': 20,
+        'star': 40,
+        'umbrella': 35,
+    };
+
+    return traceData.points.length >= minPoints[shape];
+}
 
 
 
