@@ -362,9 +362,9 @@ const GameComponent = ({ gameState, players, pusher, session, channel }: { gameS
     const props = { ...gameState.props, players, pusher, session, channel };
 
     if (!Component) return (
-        <div class="flex flex-col items-center">
-            <h1 class="text-2xl font-bold mb-4">Juego no encontrado</h1>
-            <p class="text-white text-center">El juego seleccionado no está disponible.</p>
+        <div class="flex flex-col items-center h-full justify-center">
+            <h1 class="text-2xl font-bold mb-4 font-squids">Juego no encontrado</h1>
+            <p class="text-white text-center font-press-start-2p">El juego seleccionado no está disponible.</p>
         </div>
 
     )
