@@ -20,6 +20,7 @@ import { WelcomeToStreamerWars } from "./WelcomeToStreamerWars";
 import { navigate } from "astro:transitions/client";
 import { AdminChat } from "./AdminChat";
 import { StreamerWarsCinematicPlayer } from "./StreamerWarsCinematicPlayer";
+import { Dalgona } from "./games/Dalgona";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -355,7 +356,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 }
 
 const GameComponent = ({ gameState, players, pusher, session, channel }: { gameState: any; players: any[]; pusher: Pusher; session: Session; channel: Channel }) => {
-    const GAME_CONFIG = useRef({ TeamSelector, SimonSays, CaptainBribery, AutoElimination });
+    const GAME_CONFIG = useRef({ TeamSelector, SimonSays, CaptainBribery, AutoElimination, Dalgona });
 
     const Component = GAME_CONFIG.current[gameState.component as keyof typeof GAME_CONFIG.current];
     const props = { ...gameState.props, players, pusher, session, channel };

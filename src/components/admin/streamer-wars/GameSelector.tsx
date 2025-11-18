@@ -43,6 +43,13 @@ export const GAMES = [
         icon: "🚫",
         classNames: "bg-gradient-to-r from-gray-500 to-gray-700",
         props: {}
+    },
+    {
+        id: "Dalgona",
+        name: "Dalgona (Ppopgi)",
+        icon: "🍪",
+        classNames: "bg-gradient-to-r from-orange-500 to-orange-700",
+        props: {}
     }
     // Más juegos pueden añadirse con sus propias props
 ];
