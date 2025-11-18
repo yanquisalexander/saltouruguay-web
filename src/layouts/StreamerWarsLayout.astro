@@ -20,7 +20,6 @@ import SignInModal from "@/components/SignInModal.astro";
 import KonamiCode from "@/components/KonamiCode.astro";
 import { DebugInfo } from "@/components/DebugInfo";
 import { ClientRouter } from "astro:transitions";
-import CurrentPlayer from "@/components/streamer-wars/CurrentPlayer";
 
 interface Props {
   title?: string;
@@ -118,7 +117,7 @@ preload?.push({
       </aside>
 
       <div class="bottom-bar" role="contentinfo">
-        <CurrentPlayer session={session!} client:load />
+        <slot name="bottom-bar" />
       </div>
     </main>
     <SignInModal />

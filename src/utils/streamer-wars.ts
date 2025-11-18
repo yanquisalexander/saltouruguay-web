@@ -1868,8 +1868,8 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
 
             case '/waiting-room':
                 // Envía a todos los jugadores a la sala de espera
-                const cache = cacheService.create({ ttl: 60 * 60 * 24 });
-                await cache.set("streamer-wars-gamestate", null);
+                const waitingCache = cacheService.create({ ttl: 60 * 60 * 24 });
+                await waitingCache.set("streamer-wars-gamestate", null);
 
                 await pusher.trigger("streamer-wars", "send-to-waiting-room", null);
                 return { success: true, feedback: 'Todos los jugadores enviados a la sala de espera' };
@@ -1904,6 +1904,15 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                 } else {
                     return { success: false, feedback: 'Uso: /dalgona start o /dalgona end' };
                 }
+            case '/timer':
+                const seconds = parseInt(args[0], 10);
+                if (isNaN(seconds) || seconds <= 0) {
+                    return { success: false, feedback: 'Se requiere un número de segundos válido mayor a 0' };
+                }
+                const timerCache = createCache();
+                await timerCache.set("streamer-wars-timer", { startedAt: Date.now(), duration: seconds });
+                await pusher.trigger("streamer-wars", "show-timer", { seconds });
+                return { success: true, feedback: `Temporizador mostrado por ${seconds} segundos` };
             default:
                 return { success: false, feedback: 'Comando desconocido' };
         }
@@ -1912,3 +1921,17 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
         return { success: false, feedback: 'Error al ejecutar el comando' };
     }
 }
+
+export const getCurrentTimer = async (): Promise<{ startedAt: number; duration: number } | null> => {
+    const cache = createCache();
+    const timerData = await cache.get<{ startedAt: number; duration: number }>("streamer-wars-timer");
+    if (!timerData) return null;
+    const elapsed = Date.now() - timerData.startedAt;
+    const totalDurationMs = timerData.duration * 1000;
+    if (elapsed >= totalDurationMs) {
+        // Timer expirado, limpiar
+        await cache.delete("streamer-wars-timer");
+        return null;
+    }
+    return timerData;
+};

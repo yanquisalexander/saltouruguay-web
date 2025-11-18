@@ -4,7 +4,7 @@ import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWa
 import Cache from "@/lib/Cache";
 import cacheService from "@/services/cache";
 import { pusher } from "@/utils/pusher";
-import { eliminatePlayer, removePlayer, addPlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles, acceptBribe, selfEliminate, aislatePlayer, unaislatePlayer, beforeLaunchGame, unaislateAllPlayers, getPlayersLiveOnTwitch, massEliminatePlayers, getAutoEliminatedPlayers, getTodayEliminatedPlayers, executeAdminCommand } from "@/utils/streamer-wars";
+import { eliminatePlayer, removePlayer, addPlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles, acceptBribe, selfEliminate, aislatePlayer, unaislatePlayer, beforeLaunchGame, unaislateAllPlayers, getPlayersLiveOnTwitch, massEliminatePlayers, getAutoEliminatedPlayers, getTodayEliminatedPlayers, executeAdminCommand, getCurrentTimer } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -981,6 +981,11 @@ export const streamerWars = {
 
             const result = await executeAdminCommand(command, args);
             return result;
+        }
+    }),
+    getCurrentTimer: defineAction({
+        handler: async () => {
+            return await getCurrentTimer();
         }
     }),
 }

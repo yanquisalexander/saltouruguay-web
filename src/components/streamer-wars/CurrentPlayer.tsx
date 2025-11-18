@@ -1,9 +1,27 @@
 import type { Session } from "@auth/core/types";
 import type { Players } from "../admin/streamer-wars/Players";
+import { Timer } from "./Timer";
 
 
-export default function CurrentPlayer({ session }: { session: Session }) {
+interface CurrentPlayerProps {
+    session: Session;
+    showTimer?: boolean;
+    timerSeconds?: number;
+    timerKey?: number;
+    onTimerEnd?: () => void;
+}
+
+export default function CurrentPlayer({ session, showTimer, timerSeconds, timerKey, onTimerEnd }: CurrentPlayerProps) {
     if (!session) return null;
+
+    if (showTimer && timerSeconds !== undefined && onTimerEnd) {
+        return (
+            <div class="absolute select-none overflow-hidden bottom-2 group hover:cursor-pointer transition hover:scale-105 items-center justify-center flex gap-x-2 left-1/2 transform max-w-xs w-full -translate-x-1/2 bg-black/30 backdrop-blur-sm px-2 py-2 rounded-md border border-white/10">
+                <Timer key={timerKey} seconds={timerSeconds} onEnd={onTimerEnd} />
+            </div>
+        );
+    }
+
     return (
         <div class="absolute select-none overflow-hidden bottom-2 group hover:cursor-pointer transition hover:scale-105 items-center justify-center flex gap-x-2 left-1/2 transform max-w-xs w-full -translate-x-1/2 bg-black/30 backdrop-blur-sm px-2 rounded-md border border-white/10">
             <div class="relative size-8 group-hover:opacity-0 transition bg-black/50 border border-white/10 rounded-sm overflow-hidden">

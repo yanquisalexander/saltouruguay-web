@@ -17,7 +17,8 @@ const COMMANDS = [
     { name: "/play-cinematic", description: "Play a cinematic", args: ["id"] },
     { name: "/waiting-room", description: "Send players to waiting room", args: [] },
     { name: "/chat", description: "Lock or unlock the chat", args: ["unlock|lock"] },
-    { name: "/dalgona", description: "Control Dalgona minigame", args: ["start|end"] }
+    { name: "/dalgona", description: "Control Dalgona minigame", args: ["start|end"] },
+    { name: "/timer", description: "Show a timer for the specified seconds", args: ["seconds"] }
 ];
 
 export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
