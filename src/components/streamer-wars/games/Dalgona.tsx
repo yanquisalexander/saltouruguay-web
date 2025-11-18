@@ -66,6 +66,17 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
             }
         });
 
+        // Escucha el evento de fin del juego
+        channel.bind('dalgona:game-ended', (data: { completedPlayers: number[], eliminatedPlayers: number[] }) => {
+            if (data.eliminatedPlayers.includes(session.user.streamerWarsPlayerNumber!)) {
+                setGameStatus('failed');
+                toast.error('Has sido eliminado del juego', {
+                    position: 'bottom-center',
+                    duration: 5000,
+                });
+            }
+        });
+
         return () => {
             channel.unbind_all();
             channel.unsubscribe();
