@@ -120,6 +120,27 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             );
         };
 
+        const handleMegaphony = async ({
+            audioBase64,
+        }: {
+            audioBase64: string;
+        }) => {
+            const audioBytes = decodeAudioFromPusher(audioBase64);
+
+            const blob = new Blob([new Uint8Array(audioBytes)], { type: "audio/mpeg" });
+            const url = URL.createObjectURL(blob);
+            const timeoutId = setTimeout(() => {
+                playSoundWithReverb({
+                    sound: url,
+                    volume: 0.8,
+                    isBase64: false,
+                    reverbAmount: 0.5,
+                });
+            }, 500);
+            // @ts-ignore
+            timeouts.push(timeoutId);
+        };
+
         document.addEventListener("welcome-dialog-closed", () => {
             // destroy audio
             bgAudio.current = null
@@ -129,6 +150,8 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         globalChannel.current.bind("players-eliminated", ({ playerNumbers, audioBase64 }: { playerNumbers: number | number[], audioBase64: string }) => {
             handlePlayerEliminated({ playerNumber: playerNumbers, audioBase64 });
         });
+        globalChannel.current.bind("megaphony", handleMegaphony);
+
         globalChannel.current.bind("reload-for-user", ({ playerNumber }: { playerNumber: number }) => {
             if (playerNumber === session?.user.streamerWarsPlayerNumber) {
                 location.reload();

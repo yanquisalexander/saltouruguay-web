@@ -384,16 +384,6 @@ export const games = {
                     attemptsLeft: 2,
                     status: 'playing',
                 };
-
-                // Send individual event to each player via Pusher
-                if (player.userId) {
-                    await pusher.trigger('streamer-wars', 'dalgona:start', {
-                        userId: player.userId,
-                        imageUrl,
-                        attemptsLeft: 2,
-                        shape: shapeType,
-                    });
-                }
             }
 
             // Save game state
@@ -405,10 +395,23 @@ export const games = {
 
             await cache.set(DALGONA_CACHE_KEY, gameState);
 
-            // Broadcast game started to all players
+            // Broadcast game started to all players FIRST
             await pusher.trigger('streamer-wars', 'dalgona:game-started', {
                 totalPlayers: Object.keys(players).length,
             });
+
+            // Then send individual events to each player
+            for (const player of playersWithTeams) {
+                if (player.userId) {
+                    const playerState = players[player.playerNumber];
+                    await pusher.trigger('streamer-wars', 'dalgona:start', {
+                        userId: player.userId,
+                        imageUrl: playerState.imageUrl,
+                        attemptsLeft: 2,
+                        shape: TEAM_SHAPE_MAP[player.teamId] || DalgonaShape.Circle,
+                    });
+                }
+            }
 
             try {
                 await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
@@ -488,6 +491,19 @@ export const games = {
                 await pusher.trigger('streamer-wars', 'dalgona:player-completed', {
                     playerNumber,
                 });
+
+                try {
+                    // Genera el audio.
+                    const audioBase64 = await tts(`Jugador, ${playerNumber}. pasa!`);
+
+                    const audioPayload = encodeAudioForPusher(audioBase64!);
+
+                    await pusher.trigger("streamer-wars", "megaphony", {
+                        audioBase64: audioPayload,
+                    });
+                } catch (error) {
+
+                }
 
                 try {
                     await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
@@ -572,11 +588,6 @@ export const games = {
                 .filter(p => p.status === 'playing' || p.status === 'failed')
                 .map(p => p.playerNumber);
 
-            // Eliminate all failed players
-            if (failedPlayers.length > 0) {
-                await massEliminatePlayers(failedPlayers);
-            }
-
             // Update game state
             gameState.status = 'completed';
             await cache.set(DALGONA_CACHE_KEY, gameState);
@@ -588,6 +599,42 @@ export const games = {
                     .map(p => p.playerNumber),
                 eliminatedPlayers: failedPlayers,
             });
+
+            // Send timer to zero
+            const timerCache = createCache();
+            await timerCache.set("streamer-wars-timer", {
+                startedAt: Date.now(),
+                duration: 0,
+            });
+            await pusher.trigger("streamer-wars", "show-timer", {
+                startedAt: Date.now(),
+                duration: 0,
+            });
+
+            // Anunciar por megáfono el fin del juego
+            try {
+                const audioBase64 = await tts(`Atención jugadores. El minijuego "Dalgona" ha finalizado. Los jugadores que no lograron superar el desafío serán eliminados.`);
+
+                const audioPayload = encodeAudioForPusher(audioBase64!);
+
+                await pusher.trigger("streamer-wars", "megaphony", {
+                    audioBase64: audioPayload,
+                });
+
+                // Esperar unos segundos para que se escuche el anuncio antes de eliminar jugadores
+                await new Promise((resolve) => setTimeout(resolve, 10000));
+            } catch (error) {
+                console.error("Error generating megaphone audio:", error);
+            }
+
+
+
+            // Eliminate all failed players
+            if (failedPlayers.length > 0) {
+                await massEliminatePlayers(failedPlayers);
+            }
+
+
 
             try {
                 await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {

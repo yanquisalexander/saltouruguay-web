@@ -12,6 +12,7 @@ import { eq } from 'drizzle-orm';
  * POST /api/dalgona?action=submit - Submit a trace attempt
  * POST /api/dalgona?action=end - End the game (admin only)
  * GET /api/dalgona?action=state - Get current game state
+ * GET /api/dalgona?action=player-state - Get current player's game state
  */
 export const POST: APIRoute = async ({ request, url }) => {
     const session = await getSession(request);
@@ -38,7 +39,7 @@ export const POST: APIRoute = async ({ request, url }) => {
 
                 const gameState = await games.dalgona.startGame();
 
-                return new Response(JSON.stringify({ 
+                return new Response(JSON.stringify({
                     success: true,
                     gameState,
                 }), {
@@ -54,7 +55,7 @@ export const POST: APIRoute = async ({ request, url }) => {
                 });
 
                 if (!player) {
-                    return new Response(JSON.stringify({ 
+                    return new Response(JSON.stringify({
                         error: 'Player not found',
                     }), {
                         status: 404,
@@ -66,7 +67,7 @@ export const POST: APIRoute = async ({ request, url }) => {
                 const { traceData } = body;
 
                 if (!traceData) {
-                    return new Response(JSON.stringify({ 
+                    return new Response(JSON.stringify({
                         error: 'Missing trace data',
                     }), {
                         status: 400,
@@ -100,7 +101,7 @@ export const POST: APIRoute = async ({ request, url }) => {
             }
 
             default:
-                return new Response(JSON.stringify({ 
+                return new Response(JSON.stringify({
                     error: 'Invalid action',
                 }), {
                     status: 400,
@@ -109,7 +110,7 @@ export const POST: APIRoute = async ({ request, url }) => {
         }
     } catch (error) {
         console.error('Dalgona API error:', error);
-        return new Response(JSON.stringify({ 
+        return new Response(JSON.stringify({
             error: 'Internal server error',
             message: error instanceof Error ? error.message : 'Unknown error',
         }), {
@@ -136,7 +137,7 @@ export const GET: APIRoute = async ({ request, url }) => {
             case 'state': {
                 const gameState = await games.dalgona.getGameState();
 
-                return new Response(JSON.stringify({ 
+                return new Response(JSON.stringify({
                     success: true,
                     gameState,
                 }), {
@@ -145,8 +146,36 @@ export const GET: APIRoute = async ({ request, url }) => {
                 });
             }
 
+            case 'player-state': {
+                // Get player number from user
+                const player = await client.query.StreamerWarsPlayersTable.findFirst({
+                    where: eq(StreamerWarsPlayersTable.userId, session.user.id),
+                });
+
+                if (!player) {
+                    return new Response(JSON.stringify({
+                        error: 'Player not found',
+                    }), {
+                        status: 404,
+                        headers: { 'Content-Type': 'application/json' },
+                    });
+                }
+
+                const gameState = await games.dalgona.getGameState();
+                const playerState = gameState.players[player.playerNumber];
+
+                return new Response(JSON.stringify({
+                    success: true,
+                    playerState: playerState || null,
+                    gameStatus: gameState.status,
+                }), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' },
+                });
+            }
+
             default:
-                return new Response(JSON.stringify({ 
+                return new Response(JSON.stringify({
                     error: 'Invalid action',
                 }), {
                     status: 400,
@@ -155,7 +184,7 @@ export const GET: APIRoute = async ({ request, url }) => {
         }
     } catch (error) {
         console.error('Dalgona API error:', error);
-        return new Response(JSON.stringify({ 
+        return new Response(JSON.stringify({
             error: 'Internal server error',
             message: error instanceof Error ? error.message : 'Unknown error',
         }), {

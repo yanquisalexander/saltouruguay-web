@@ -27,6 +27,39 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const imageRef = useRef<HTMLImageElement>(null);
 
+    // Fetch initial game state on component mount
+    useEffect(() => {
+        const fetchInitialState = async () => {
+            try {
+                const response = await fetch('/api/dalgona?action=player-state');
+                const result = await response.json();
+
+                console.log('Dalgona fetchInitialState result:', result);
+
+                if (result.success && result.gameStatus === 'active' && result.playerState) {
+                    console.log('Setting player state:', result.playerState);
+                    setImageUrl(result.playerState.imageUrl);
+                    setAttemptsLeft(result.playerState.attemptsLeft);
+                    setGameStatus(result.playerState.status === 'completed' ? 'completed' :
+                        result.playerState.status === 'failed' ? 'failed' : 'playing');
+                    setTracePoints([]);
+                } else {
+                    console.log('Not setting player state, conditions not met:', {
+                        success: result.success,
+                        gameStatus: result.gameStatus,
+                        hasPlayerState: !!result.playerState
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching initial game state:', error);
+            }
+        };
+
+        if (session.user?.id) {
+            fetchInitialState();
+        }
+    }, [session.user?.id]);
+
     // Subscribe to streamer-wars channel
     useEffect(() => {
         if (!session.user?.id || !pusher) return;
@@ -35,12 +68,29 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
 
         // Listen for game start event
         channel.bind('dalgona:start', (data: { userId: number; imageUrl: string; attemptsLeft: number }) => {
+            console.log('Received dalgona:start event:', data);
             if (data.userId === session.user.id) {
+                console.log('Setting game to playing state');
                 setImageUrl(data.imageUrl);
                 setAttemptsLeft(data.attemptsLeft);
                 setGameStatus('playing');
                 setTracePoints([]);
                 toast.info('¡Traza la forma con cuidado!', { position: 'bottom-center' });
+            }
+        });
+
+        // Listen for game started event (broadcast to all)
+        channel.bind('dalgona:game-started', (data: { totalPlayers: number }) => {
+            console.log('Received dalgona:game-started event:', data);
+            // Only reset if not already playing (to avoid resetting after individual start event)
+            if (gameStatus === 'waiting') {
+                console.log('Resetting to waiting state');
+                setImageUrl(null);
+                setAttemptsLeft(2);
+                setGameStatus('waiting');
+                setTracePoints([]);
+                setIsTracing(false);
+                setIsSubmitting(false);
             }
         });
 
