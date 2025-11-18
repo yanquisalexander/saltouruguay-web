@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
 import { Instructions } from "../Instructions";
+import { Button as RetroButton } from "@/components/ui/8bit/button";
 
 interface DalgonaProps {
     session: Session;
@@ -251,9 +252,9 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
 
     if (gameStatus === 'waiting') {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-orange-900 to-orange-950">
+            <div className="flex items-center justify-center h-full">
                 <div className="text-center text-white">
-                    <h2 className="text-4xl font-bold mb-4">Dalgona Challenge</h2>
+                    <h2 className="text-3xl font-squids mb-4 bg-gradient-to-br from-orange-600 to-yellow-200 text-transparent bg-clip-text">Dalgona</h2>
                     <p className="text-xl">Esperando que el juego comience...</p>
                 </div>
             </div>
@@ -283,16 +284,16 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-orange-900 to-orange-950 p-4">
+        <div className="h-full relative">
+            <h2 className="text-2xl font-squids mb-4 bg-gradient-to-br from-orange-600 to-yellow-200 text-transparent bg-clip-text">Dalgona</h2>
             <div className="text-center text-white mb-6">
-                <h2 className="text-4xl font-bold mb-2">Desafío Dalgona</h2>
                 <p className="text-xl mb-2">Traza la forma con cuidado</p>
                 <p className="text-lg">
                     Intentos restantes: <span className="font-bold text-yellow-300">{attemptsLeft}</span>
                 </p>
             </div>
 
-            <div className="relative bg-white rounded-lg shadow-2xl p-4 mb-6">
+            <div className="relative bg-white w-max mx-auto mb-6">
                 <canvas
                     ref={canvasRef}
                     onMouseDown={handleMouseDown}
@@ -308,21 +309,14 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
                 <img ref={imageRef} style={{ display: 'none' }} alt="Dalgona cookie" />
             </div>
 
-            <div className="flex gap-4">
-                <button
-                    onClick={clearTrace}
-                    disabled={isSubmitting || tracePoints.length === 0}
-                    className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                    Borrar
-                </button>
-                <button
+            <div className="flex gap-4 absolute top-4 right-4 transform">
+                <RetroButton
                     onClick={submitTrace}
                     disabled={isSubmitting || tracePoints.length === 0}
                     className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                     {isSubmitting ? 'Enviando...' : 'Enviar'}
-                </button>
+                </RetroButton>
             </div>
         </div>
     );
