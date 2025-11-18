@@ -21,6 +21,7 @@ import { navigate } from "astro:transitions/client";
 import { AdminChat } from "./AdminChat";
 import { StreamerWarsCinematicPlayer } from "./StreamerWarsCinematicPlayer";
 import { Dalgona } from "./games/Dalgona";
+import { StreamerWarsAudioManager } from "./StreamerWarsAudioManager";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -349,6 +350,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                         )}
 
                         <AdminChat session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
+                        <StreamerWarsAudioManager session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
                     </>
                 )}
         </>

@@ -13,6 +13,7 @@ import {
 import { LucideSiren } from "lucide-preact";
 import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { decodeAudioFromPusher } from "@/services/pako-compress.client";
+import { AVAILABLE_AUDIOS, type AudioState } from "@/types/audio";
 
 export const useStreamerWarsSocket = (session: Session | null) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
@@ -24,6 +25,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
 
     const [bgVolume, setBgVolume] = useState(0);
     const bgAudio = useRef<HTMLAudioElement | null>(null);
+    const audioInstances = useRef<Record<string, HTMLAudioElement>>({});
 
     // Se asume que si no hay gameState o no tiene componente, estamos en sala de espera
     const isOnWaitingRoom = (!gameState || !gameState.component) && dayAvailable;
@@ -198,6 +200,30 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             }
         })
 
+        globalChannel.current?.bind("audio-update", ({ audioId, action, data }: { audioId: string, action: string, data: any }) => {
+            console.log('audio-update', audioId, action, data);
+            if (!audioInstances.current[audioId]) {
+                audioInstances.current[audioId] = new Audio(`${CDN_PREFIX}${audioId}.mp3`);
+            }
+            const audio = audioInstances.current[audioId];
+            switch (action) {
+                case 'SET_VOLUME':
+                    audio.volume = data.volume;
+                    break;
+                case 'RESTART':
+                    audio.currentTime = 0;
+                    break;
+                case 'UPDATE_STATE':
+                    audio.loop = data.loop ?? audio.loop;
+                    if (data.playing && audio.paused) {
+                        audio.play();
+                    } else if (!data.playing && !audio.paused) {
+                        audio.pause();
+                    }
+                    break;
+            }
+        });
+
         return () => {
             // Limpieza: cancelamos timeouts, desbindamos eventos y desconectamos Pusher
             timeouts.forEach(clearTimeout);
@@ -208,6 +234,15 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             pusherInstance.disconnect();
         };
     }, [session]);
+
+    // Preload audio files
+    useEffect(() => {
+        AVAILABLE_AUDIOS.forEach(audio => {
+            const audioEl = new Audio(`${CDN_PREFIX}${audio.id}.mp3`);
+            audioEl.preload = 'auto'; // or 'auto'
+            audioInstances.current[audio.id] = audioEl;
+        });
+    }, []);
 
     return {
         pusher,
