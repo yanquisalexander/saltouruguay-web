@@ -37,4 +37,5 @@ export const AVAILABLE_AUDIOS: AudioItem[] = [
     { id: 'waiting-room-loop', name: 'Sala de Espera Loop', duration: 60 },
     { id: 'equipo-eliminado', name: 'Equipo Eliminado', duration: 5 },
     { id: 'golpe-cuerda', name: 'Golpe Cuerda', duration: 2 },
+    { id: 'juego-cuerda-fondo', name: 'Juego Cuerda Fondo', duration: -1 }
 ];

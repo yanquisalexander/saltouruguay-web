@@ -52,8 +52,8 @@ const IS_USER_INSCRIBED = await client
 ---
 
 <Layout
-  title="Inscripción SaltoCraft Extremo 3"
-  description="Inscripción para el evento SaltoCraft Extremo 3"
+  title="Inscripción SaltoCraft Extremo Express"
+  description="Inscripción para el evento SaltoCraft Extremo Express"
 >
   <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
     <header class="flex flex-col items-center justify-center space-y-4 mb-16">
@@ -105,7 +105,7 @@ const IS_USER_INSCRIBED = await client
           {IS_USER_INSCRIBED ? (
             <div class="flex flex-col items-center">
               <span class="text-center">
-                ¡Ya estás inscrito en SaltoCraft Extremo 3!
+                ¡Ya estás inscrito en SaltoCraft Extremo Express!
               </span>
               <span class="text-center">
                 Pronto te contactaremos para más información.
@@ -126,7 +126,7 @@ const IS_USER_INSCRIBED = await client
                     </strong>{" "}
                     vinculada!
                     <br />
-                    Ahora puedes inscribirte en SaltoCraft Extremo 3.
+                    Ahora puedes inscribirte en SaltoCraft Extremo Express.
                   </span>
                   <button
                     id="inscribirse"
@@ -182,7 +182,7 @@ const IS_USER_INSCRIBED = await client
     <div class="flex flex-col items-center space-y-4">
       <img src="/favicon.svg" class="aspect-square size-24" />
       <h2 class="text-2xl font-bold text-center">
-        Inscripción SaltoCraft Extremo 3
+        Inscripción SaltoCraft Extremo Express
       </h2>
     </div>
 
@@ -444,7 +444,11 @@ const IS_USER_INSCRIBED = await client
       });
 
       if (error) {
-        toast.error(typeof error === 'string' ? error : (error.message || JSON.stringify(error)));
+        toast.error(
+          typeof error === "string"
+            ? error
+            : error.message || JSON.stringify(error)
+        );
         return;
       }
 

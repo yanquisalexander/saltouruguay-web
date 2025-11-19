@@ -1018,6 +1018,14 @@ export const games = {
                 gameState,
             };
         },
+        clearGameState: async () => {
+            const cache = createCache();
+            await cache.delete(TUG_OF_WAR_CACHE_KEY);
+            await pusher.trigger('streamer-wars', 'tug-of-war:game-cleared', {});
+            return {
+                success: true,
+            };
+        }
     },
 };
 
@@ -2345,8 +2353,15 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                 } else if (cuerdaAction === 'next') {
                     const gameState = await games.tugOfWar.startGame();
                     return { success: true, feedback: `Siguiente ronda de la cuerda iniciada entre ${gameState.teams.teamA.name} y ${gameState.teams.teamB.name}` };
+                } else if (cuerdaAction === 'clear') {
+                    const result = await games.tugOfWar.clearGameState();
+                    if (result.success) {
+                        return { success: true, feedback: 'Estado del juego de la cuerda reseteado' };
+                    } else {
+                        return { success: false, feedback: 'Error al resetear el estado del juego de la cuerda' };
+                    }
                 } else {
-                    return { success: false, feedback: 'Uso: /cuerda start|end|next' };
+                    return { success: false, feedback: 'Uso: /cuerda start|end|next|clear' };
                 }
             default:
                 return { success: false, feedback: 'Comando desconocido' };

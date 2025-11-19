@@ -92,6 +92,17 @@ export const TugOfWar = ({
             toast.success(`¡El juego ha terminado! Ganador: ${data.winningTeam}`, { position: "bottom-center", duration: 5000 });
         });
 
+        // Subscribe to game cleared event
+        globalChannel?.bind("tug-of-war:game-cleared", () => {
+            setGameState(prev => ({
+                ...prev,
+                status: 'waiting',
+                progress: 0,
+                winner: undefined,
+            }));
+            toast.success("¡El estado del juego de la cuerda ha sido limpiado!", { position: "bottom-center", duration: 5000 });
+        });
+
         // Cleanup
         return () => {
             globalChannel?.unbind_all();
@@ -200,7 +211,7 @@ export const TugOfWar = ({
 
                 {gameState.status === 'waiting' && (
                     <div className="text-center">
-                        <p className="text-xl font-atomic">
+                        <p className="font-press-start-2p">
                             Esperando que el administrador inicie el juego...
                         </p>
                     </div>
