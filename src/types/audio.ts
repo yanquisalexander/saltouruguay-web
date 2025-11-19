@@ -7,10 +7,8 @@ export interface AudioItem {
 export interface AudioState {
     id: string;
     playing: boolean;
-    paused: boolean;
     volume: number; // 0 to 1
     loop: boolean;
-    currentTime: number;
 }
 
 export const AVAILABLE_AUDIOS: AudioItem[] = [

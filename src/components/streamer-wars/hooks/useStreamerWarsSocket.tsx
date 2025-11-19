@@ -229,35 +229,48 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                 audioInstances.current[audioId] = new Audio(`${CDN_PREFIX}${audioId}.mp3`);
             }
             const audio = audioInstances.current[audioId];
+            
             switch (action) {
-                case 'SET_VOLUME':
-                    audio.volume = data.volume;
-                    break;
-                case 'RESTART':
+                case 'PLAY':
+                    // Always start from the beginning
                     audio.currentTime = 0;
+                    audio.loop = data.loop;
+                    audio.volume = data.volume;
+                    audio.play().catch(err => console.error('Error playing audio:', err));
                     break;
-                case 'UPDATE_STATE':
-                    audio.loop = data.loop ?? audio.loop;
-                    if (data.playing && audio.paused) {
-                        audio.play();
-                    } else if (!data.playing && !audio.paused) {
-                        audio.pause();
-                    }
+                case 'PAUSE':
+                    audio.pause();
+                    audio.loop = data.loop;
+                    audio.volume = data.volume;
                     break;
                 case 'STOP':
                     audio.pause();
                     audio.currentTime = 0;
+                    audio.loop = data.loop;
+                    audio.volume = data.volume;
                     break;
-                case 'MUTE_ALL':
-                    Object.values(audioInstances.current).forEach(a => a.volume = 0);
+                case 'SET_VOLUME':
+                    audio.volume = data.volume;
+                    audio.loop = data.loop;
                     break;
-                case 'STOP_ALL':
-                    Object.values(audioInstances.current).forEach(a => {
-                        a.pause();
-                        a.currentTime = 0;
-                    });
+                case 'SET_LOOP':
+                    audio.loop = data.loop;
+                    audio.volume = data.volume;
                     break;
             }
+        });
+
+        globalChannel.current?.bind("audio-mute-all", () => {
+            Object.values(audioInstances.current).forEach(audio => {
+                audio.volume = 0;
+            });
+        });
+
+        globalChannel.current?.bind("audio-stop-all", () => {
+            Object.values(audioInstances.current).forEach(audio => {
+                audio.pause();
+                audio.currentTime = 0;
+            });
         });
 
         return () => {
@@ -271,13 +284,40 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         };
     }, [session]);
 
-    // Preload audio files
+    // Preload audio files and initialize with current state
     useEffect(() => {
-        AVAILABLE_AUDIOS.forEach(audio => {
-            const audioEl = new Audio(`${CDN_PREFIX}${audio.id}.mp3`);
-            audioEl.preload = 'auto'; // or 'auto'
-            audioInstances.current[audio.id] = audioEl;
-        });
+        const initAudio = async () => {
+            // Preload all audio files
+            AVAILABLE_AUDIOS.forEach(audio => {
+                const audioEl = new Audio(`${CDN_PREFIX}${audio.id}.mp3`);
+                audioEl.preload = 'auto';
+                audioInstances.current[audio.id] = audioEl;
+            });
+
+            // Get current audio state from server (if needed for syncing)
+            // This could be called to sync new clients with current state
+            try {
+                const response = await fetch('/api/audio/state');
+                if (response.ok) {
+                    const { states } = await response.json();
+                    // Apply current state to audio instances
+                    Object.entries(states).forEach(([audioId, state]: [string, any]) => {
+                        const audio = audioInstances.current[audioId];
+                        if (audio && state) {
+                            audio.volume = state.volume || 1;
+                            audio.loop = state.loop || false;
+                            if (state.playing) {
+                                audio.play().catch(err => console.error('Error auto-playing audio:', err));
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading audio state:', error);
+            }
+        };
+
+        initAudio();
     }, []);
 
     return {
