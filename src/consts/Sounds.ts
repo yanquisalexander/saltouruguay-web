@@ -26,6 +26,7 @@ export const STREAMER_WARS_SOUNDS = {
     WAITING_ROOM_LOOP: 'waiting-room-loop',
     EQUIPO_ELIMINADO: 'equipo-eliminado',
     GOLPE_CUERDA: 'golpe-cuerda',
+    DISPARO_COMIENZO: 'disparo-comienzo',
 }
 
 

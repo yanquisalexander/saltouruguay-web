@@ -34,6 +34,8 @@ export const TugOfWar = ({
 
     const [cooldownRemaining, setCooldownRemaining] = useState(0);
     const [isOnCooldown, setIsOnCooldown] = useState(false);
+    const [isStarting, setIsStarting] = useState(false);
+    const [countdownText, setCountdownText] = useState<string | null>(null);
 
     const playerNumber = session.user.streamerWarsPlayerNumber;
 
@@ -60,11 +62,23 @@ export const TugOfWar = ({
         const globalChannel = pusher?.subscribe("streamer-wars");
 
         globalChannel?.bind("tug-of-war:game-started", (newGameState: TugOfWarGameState) => {
-            setGameState(newGameState);
-            setCooldownRemaining(0);
-            setIsOnCooldown(false);
+            setIsStarting(true);
+            setCountdownText("Preparados");
             playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION });
-            toast.success("¡Ha comenzado Tug of War!", { position: "bottom-center" });
+            setTimeout(() => {
+                setCountdownText("Listos");
+                playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION });
+            }, 1000);
+            setTimeout(() => {
+                setCountdownText("¡YA!");
+                playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO_COMIENZO });
+            }, 2000);
+            setTimeout(() => {
+                setCountdownText(null);
+                setIsStarting(false);
+                setGameState(newGameState);
+                toast.success("¡Ha comenzado Tug of War!", { position: "bottom-center" });
+            }, 3000);
         });
 
         globalChannel?.bind("tug-of-war:state-update", (data: { progress: number; status: string; winner?: string }) => {
@@ -193,6 +207,13 @@ export const TugOfWar = ({
 
     return (
         <>
+            {isStarting && countdownText && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[10000]">
+                    <div className="text-4xl font-bold text-white font-press-start-2p">
+                        {countdownText}
+                    </div>
+                </div>
+            )}
             <Instructions duration={10000}>
                 <p class="font-mono max-w-2xl text-left">
                     Tira y Afloja es un juego de equipos donde dos equipos compiten tirando de una cuerda virtual.
