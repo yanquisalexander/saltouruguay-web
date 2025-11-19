@@ -11,7 +11,7 @@ import { getTranslation } from "./translate";
 import { getLiveStreams } from "./twitch-runtime";
 import { CINEMATICS } from "@/consts/cinematics";
 import { encodeAudioForPusher } from "@/services/pako-compress";
-import { DalgonaShape, DalgonaShapeData, createDalgonaShapeData, generateDalgonaImage } from "@/services/dalgona-image-generator";
+import { DalgonaShape, type DalgonaShapeData, createDalgonaShapeData, generateDalgonaImage } from "@/services/dalgona-image-generator";
 
 const PRESENCE_CHANNEL = "presence-streamer-wars";
 
@@ -34,6 +34,7 @@ export interface SimonSaysGameState {
 
 const CACHE_KEY = "streamer-wars.simon-says";
 const DALGONA_CACHE_KEY = "streamer-wars.dalgona:game-state";
+const TUG_OF_WAR_CACHE_KEY = "streamer-wars.tug-of-war:game-state";
 const COLORS = ["red", "blue", "green", "yellow"];
 
 const getRandomItem = <T>(array: T[]): T =>
@@ -63,6 +64,21 @@ const TEAM_SHAPE_MAP: Record<number, DalgonaShape> = {
     3: DalgonaShape.Star,      // Medium
     4: DalgonaShape.Umbrella,  // Hard
 };
+
+// Tug of War game types
+export interface TugOfWarGameState {
+    teams: {
+        teamA: { id: number; color: string; name: string; playerCount: number };
+        teamB: { id: number; color: string; name: string; playerCount: number };
+    };
+    progress: number; // -100 to +100 (-100 = Team B wins, +100 = Team A wins)
+    status: 'waiting' | 'playing' | 'finished';
+    winner?: 'teamA' | 'teamB';
+    playedTeams: number[]; // IDs of teams that have already played
+    playerCooldowns: Record<number, number>; // playerNumber -> timestamp when they can click again
+}
+
+const COOLDOWN_MS = 1500; // 1.5 seconds cooldown per player
 
 export const games = {
     simonSays: {
@@ -649,6 +665,345 @@ export const games = {
                 });
             } catch (error) {
                 console.error("Error sending Discord webhook:", error);
+            }
+
+            return {
+                success: true,
+                gameState,
+            };
+        },
+    },
+
+    tugOfWar: {
+        /**
+         * Gets the current Tug of War game state from cache
+         */
+        getGameState: async (): Promise<TugOfWarGameState> => {
+            const cache = createCache();
+            return (
+                (await cache.get<TugOfWarGameState>(TUG_OF_WAR_CACHE_KEY)) ?? {
+                    teams: {
+                        teamA: { id: 0, color: '', name: '', playerCount: 0 },
+                        teamB: { id: 0, color: '', name: '', playerCount: 0 },
+                    },
+                    progress: 0,
+                    status: 'waiting',
+                    playedTeams: [],
+                    playerCooldowns: {},
+                }
+            );
+        },
+
+        /**
+         * Starts a new Tug of War game with random team selection
+         * Selects 2 teams that haven't played yet
+         */
+        startGame: async () => {
+            const cache = createCache();
+
+            // Get all teams with their active (non-eliminated, non-isolated) players
+            const teamsData = await client
+                .select({
+                    teamId: StreamerWarsTeamsTable.id,
+                    teamColor: StreamerWarsTeamsTable.color,
+                    playerNumber: StreamerWarsPlayersTable.playerNumber,
+                })
+                .from(StreamerWarsTeamsTable)
+                .innerJoin(
+                    StreamerWarsTeamPlayersTable,
+                    eq(StreamerWarsTeamPlayersTable.teamId, StreamerWarsTeamsTable.id)
+                )
+                .innerJoin(
+                    StreamerWarsPlayersTable,
+                    eq(StreamerWarsPlayersTable.playerNumber, StreamerWarsTeamPlayersTable.playerNumber)
+                )
+                .where(
+                    and(
+                        not(eq(StreamerWarsPlayersTable.eliminated, true)),
+                        not(eq(StreamerWarsPlayersTable.aislated, true))
+                    )
+                )
+                .execute();
+
+            // Group players by team
+            const teamGroups = teamsData.reduce((acc, row) => {
+                if (row.teamId && row.playerNumber) {
+                    if (!acc[row.teamId]) {
+                        acc[row.teamId] = {
+                            id: row.teamId,
+                            color: row.teamColor,
+                            players: [],
+                        };
+                    }
+                    acc[row.teamId].players.push(row.playerNumber);
+                }
+                return acc;
+            }, {} as Record<number, { id: number; color: string; players: number[] }>);
+
+            // Get teams with at least 1 player
+            const availableTeams = Object.values(teamGroups).filter(t => t.players.length > 0);
+
+            if (availableTeams.length < 2) {
+                throw new Error('No hay suficientes equipos disponibles para jugar Tug of War');
+            }
+
+            // Get played teams from state
+            const currentState = await games.tugOfWar.getGameState();
+            let playedTeams = currentState.playedTeams || [];
+
+            // Filter out teams that have already played
+            let unplayedTeams = availableTeams.filter(t => !playedTeams.includes(t.id));
+
+            // If all teams have played or less than 2 unplayed teams, reset
+            if (unplayedTeams.length < 2) {
+                playedTeams = [];
+                unplayedTeams = availableTeams;
+            }
+
+            // Randomly select 2 teams
+            const selectedTeams = [];
+            const teamsCopy = [...unplayedTeams];
+            for (let i = 0; i < 2 && teamsCopy.length > 0; i++) {
+                const randomIndex = Math.floor(Math.random() * teamsCopy.length);
+                selectedTeams.push(teamsCopy.splice(randomIndex, 1)[0]);
+            }
+
+            if (selectedTeams.length < 2) {
+                throw new Error('No se pudieron seleccionar 2 equipos para el juego');
+            }
+
+            const [teamA, teamB] = selectedTeams;
+
+            // Update played teams
+            playedTeams.push(teamA.id, teamB.id);
+
+            const gameState: TugOfWarGameState = {
+                teams: {
+                    teamA: {
+                        id: teamA.id,
+                        color: teamA.color,
+                        name: getTranslation(teamA.color) || teamA.color,
+                        playerCount: teamA.players.length,
+                    },
+                    teamB: {
+                        id: teamB.id,
+                        color: teamB.color,
+                        name: getTranslation(teamB.color) || teamB.color,
+                        playerCount: teamB.players.length,
+                    },
+                },
+                progress: 0,
+                status: 'playing',
+                playedTeams,
+                playerCooldowns: {},
+            };
+
+            await cache.set(TUG_OF_WAR_CACHE_KEY, gameState);
+            await pusher.trigger('streamer-wars', 'tug-of-war:game-started', gameState);
+
+            try {
+                await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                    content: null,
+                    embeds: [
+                        {
+                            title: "Tug of War - Juego iniciado",
+                            description: `Se ha iniciado el minijuego Tug of War entre ${gameState.teams.teamA.name} y ${gameState.teams.teamB.name}.`,
+                            color: 0x00aaff,
+                            fields: [
+                                {
+                                    name: gameState.teams.teamA.name,
+                                    value: `${gameState.teams.teamA.playerCount} jugadores`,
+                                    inline: true,
+                                },
+                                {
+                                    name: gameState.teams.teamB.name,
+                                    value: `${gameState.teams.teamB.playerCount} jugadores`,
+                                    inline: true,
+                                },
+                            ],
+                        },
+                    ],
+                });
+            } catch (error) {
+                console.error("Error sending Discord webhook:", error);
+            }
+
+            return gameState;
+        },
+
+        /**
+         * Handles a player click/pull action
+         * Validates cooldown and updates progress
+         */
+        handlePlayerClick: async (playerNumber: number) => {
+            const cache = createCache();
+            const gameState = await games.tugOfWar.getGameState();
+
+            if (gameState.status !== 'playing') {
+                return {
+                    success: false,
+                    error: 'El juego no está activo',
+                };
+            }
+
+            // Check player cooldown
+            const now = Date.now();
+            const cooldownEnd = gameState.playerCooldowns[playerNumber] || 0;
+            if (now < cooldownEnd) {
+                return {
+                    success: false,
+                    error: 'Debes esperar antes de tirar de la cuerda nuevamente',
+                    cooldownRemaining: cooldownEnd - now,
+                };
+            }
+
+            // Get player's team
+            const playerTeam = await client
+                .select({
+                    teamId: StreamerWarsTeamPlayersTable.teamId,
+                })
+                .from(StreamerWarsTeamPlayersTable)
+                .where(eq(StreamerWarsTeamPlayersTable.playerNumber, playerNumber))
+                .execute()
+                .then(res => res[0]?.teamId);
+
+            if (!playerTeam) {
+                return {
+                    success: false,
+                    error: 'No perteneces a ningún equipo',
+                };
+            }
+
+            // Check if player is in one of the competing teams
+            const isTeamA = playerTeam === gameState.teams.teamA.id;
+            const isTeamB = playerTeam === gameState.teams.teamB.id;
+
+            if (!isTeamA && !isTeamB) {
+                return {
+                    success: false,
+                    error: 'Tu equipo no está jugando en esta ronda',
+                };
+            }
+
+            // Update progress
+            const delta = isTeamA ? 1 : -1;
+            gameState.progress = Math.max(-100, Math.min(100, gameState.progress + delta));
+
+            // Set cooldown for this player
+            gameState.playerCooldowns[playerNumber] = now + COOLDOWN_MS;
+
+            // Check win condition
+            if (gameState.progress >= 100) {
+                gameState.status = 'finished';
+                gameState.winner = 'teamA';
+            } else if (gameState.progress <= -100) {
+                gameState.status = 'finished';
+                gameState.winner = 'teamB';
+            }
+
+            await cache.set(TUG_OF_WAR_CACHE_KEY, gameState);
+
+            // Broadcast state update
+            await pusher.trigger('streamer-wars', 'tug-of-war:state-update', {
+                progress: gameState.progress,
+                status: gameState.status,
+                winner: gameState.winner,
+            });
+
+            // If game finished, announce winner
+            if (gameState.status === 'finished') {
+                const winningTeam = gameState.winner === 'teamA' ? gameState.teams.teamA : gameState.teams.teamB;
+                
+                try {
+                    const audioBase64 = await tts(`¡El equipo ${winningTeam.name} ha ganado la partida de Tug of War!`);
+                    const audioPayload = encodeAudioForPusher(audioBase64!);
+
+                    await pusher.trigger("streamer-wars", "megaphony", {
+                        audioBase64: audioPayload,
+                    });
+                } catch (error) {
+                    console.error("Error generating megaphone audio:", error);
+                }
+
+                try {
+                    await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                        content: null,
+                        embeds: [
+                            {
+                                title: "Tug of War - Juego finalizado",
+                                description: `¡El equipo ${winningTeam.name} ha ganado!`,
+                                color: 0x00ff00,
+                                fields: [
+                                    {
+                                        name: "Progreso final",
+                                        value: `${gameState.progress}`,
+                                        inline: true,
+                                    },
+                                ],
+                            },
+                        ],
+                    });
+                } catch (error) {
+                    console.error("Error sending Discord webhook:", error);
+                }
+            }
+
+            return {
+                success: true,
+                gameState,
+            };
+        },
+
+        /**
+         * Ends the game (admin command or timeout)
+         */
+        endGame: async () => {
+            const cache = createCache();
+            const gameState = await games.tugOfWar.getGameState();
+
+            if (gameState.status === 'waiting') {
+                return {
+                    success: false,
+                    error: 'No hay juego activo',
+                };
+            }
+
+            // Determine winner based on progress if not already set
+            if (!gameState.winner) {
+                if (gameState.progress > 0) {
+                    gameState.winner = 'teamA';
+                } else if (gameState.progress < 0) {
+                    gameState.winner = 'teamB';
+                }
+            }
+
+            gameState.status = 'finished';
+            await cache.set(TUG_OF_WAR_CACHE_KEY, gameState);
+
+            const winningTeam = gameState.winner === 'teamA' ? gameState.teams.teamA : 
+                                gameState.winner === 'teamB' ? gameState.teams.teamB : null;
+
+            await pusher.trigger('streamer-wars', 'tug-of-war:game-ended', {
+                winner: gameState.winner,
+                progress: gameState.progress,
+                winningTeam: winningTeam ? winningTeam.name : 'Empate',
+            });
+
+            if (winningTeam) {
+                try {
+                    await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                        content: null,
+                        embeds: [
+                            {
+                                title: "Tug of War - Juego finalizado",
+                                description: `El equipo ${winningTeam.name} ha ganado el Tug of War.`,
+                                color: 0xffaa00,
+                            },
+                        ],
+                    });
+                } catch (error) {
+                    console.error("Error sending Discord webhook:", error);
+                }
             }
 
             return {

@@ -50,6 +50,13 @@ export const GAMES = [
         icon: "🍪",
         classNames: "bg-gradient-to-r from-orange-500 to-orange-700",
         props: {}
+    },
+    {
+        id: "TugOfWar",
+        name: "Tug of War (Juego de la Cuerda)",
+        icon: "🪢",
+        classNames: "bg-gradient-to-r from-green-500 to-green-700",
+        props: {}
     }
     // Más juegos pueden añadirse con sus propias props
 ];
