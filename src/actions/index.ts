@@ -25,6 +25,7 @@ import { experimental_AstroContainer } from "astro/container";
 import InscripcionExtremo from "@/email/InscripcionExtremo.astro";
 import { addRoleToUserWithoutLogging } from "@/services/discord";
 import { audio } from "./audio";
+import { voice } from "./voice";
 export const server = {
     userEvents,
     sendVotes: defineAction({
@@ -609,6 +610,7 @@ export const server = {
         },
     }),
     audio,
+    voice,
     users: {
         oauth,
         twoFactor
