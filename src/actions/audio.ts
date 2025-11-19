@@ -133,9 +133,25 @@ export const audio = {
             }
 
             const states = await getAudioStates();
-            if (!states[audioId]) return { success: true };
-
-            states[audioId].volume = volume;
+            
+            // Initialize state if it doesn't exist
+            if (!states[audioId]) {
+                const audio = AVAILABLE_AUDIOS.find(a => a.id === audioId);
+                if (!audio) {
+                    throw new ActionError({
+                        code: "BAD_REQUEST",
+                        message: "Audio no encontrado"
+                    });
+                }
+                states[audioId] = {
+                    id: audioId,
+                    playing: false,
+                    volume: volume,
+                    loop: false,
+                };
+            } else {
+                states[audioId].volume = volume;
+            }
 
             await setAudioStates(states);
             await emitAudioUpdate(audioId, 'SET_VOLUME', { volume, playing: states[audioId].playing, loop: states[audioId].loop });
@@ -159,9 +175,25 @@ export const audio = {
             }
 
             const states = await getAudioStates();
-            if (!states[audioId]) return { success: true };
-
-            states[audioId].loop = enabled;
+            
+            // Initialize state if it doesn't exist
+            if (!states[audioId]) {
+                const audio = AVAILABLE_AUDIOS.find(a => a.id === audioId);
+                if (!audio) {
+                    throw new ActionError({
+                        code: "BAD_REQUEST",
+                        message: "Audio no encontrado"
+                    });
+                }
+                states[audioId] = {
+                    id: audioId,
+                    playing: false,
+                    volume: 1,
+                    loop: enabled,
+                };
+            } else {
+                states[audioId].loop = enabled;
+            }
 
             await setAudioStates(states);
             await emitAudioUpdate(audioId, 'SET_LOOP', { loop: enabled, playing: states[audioId].playing, volume: states[audioId].volume });

@@ -226,7 +226,12 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         globalChannel.current?.bind("audio-update", ({ audioId, action, data }: { audioId: string, action: string, data: any }) => {
             console.log('audio-update', audioId, action, data);
             if (!audioInstances.current[audioId]) {
-                audioInstances.current[audioId] = new Audio(`${CDN_PREFIX}${audioId}.mp3`);
+                const audioEl = new Audio(`${CDN_PREFIX}${audioId}.mp3`);
+                audioEl.preload = 'auto';
+                audioEl.addEventListener('ended', () => {
+                    console.log(`Audio ${audioId} ended naturally`);
+                });
+                audioInstances.current[audioId] = audioEl;
             }
             const audio = audioInstances.current[audioId];
             
@@ -291,7 +296,22 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             const audioEl = new Audio(`${CDN_PREFIX}${audio.id}.mp3`);
             audioEl.preload = 'auto';
             audioInstances.current[audio.id] = audioEl;
+            
+            // Add event listener for when audio ends naturally (not from stop/pause actions)
+            audioEl.addEventListener('ended', () => {
+                // Audio ended naturally - this happens when a non-looped audio finishes
+                // The state on the server should be updated via the admin UI if needed
+                console.log(`Audio ${audio.id} ended naturally`);
+            });
         });
+        
+        // Cleanup function
+        return () => {
+            Object.values(audioInstances.current).forEach(audio => {
+                audio.pause();
+                audio.currentTime = 0;
+            });
+        };
     }, []);
 
     return {
