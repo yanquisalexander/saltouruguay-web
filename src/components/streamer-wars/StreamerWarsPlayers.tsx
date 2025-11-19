@@ -20,7 +20,7 @@ export const StreamerWarsPlayers = ({ players }: { players: Players[] }) => {
 
                 <div class={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(15,_minmax(0,_1fr))]`}>
                     {
-                        multiplyArray(players, 50).map((player, index) => (
+                        players.map((player, index) => (
                             <div
                                 key={index}
                                 title={`Jugador #${player.playerNumber} - ${player.displayName}`}
