@@ -45,6 +45,7 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin }: VoiceChatProps) =
   const signalChannelRef = useRef<Channel | null>(null);
   const pttDebounceTimerRef = useRef<number | null>(null);
   const isInputFocusedRef = useRef(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // Update team ID when it changes
   useEffect(() => {
@@ -74,8 +75,18 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin }: VoiceChatProps) =
         });
         
         setLocalStream(stream);
+        setConnectionError(null);
       } catch (error) {
         console.error("Failed to get audio stream:", error);
+        if (error instanceof Error) {
+          if (error.name === "NotAllowedError") {
+            setConnectionError("Permiso de micrófono denegado");
+          } else if (error.name === "NotFoundError") {
+            setConnectionError("No se encontró micrófono");
+          } else {
+            setConnectionError("Error al acceder al micrófono");
+          }
+        }
       }
     };
 
@@ -251,6 +262,14 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin }: VoiceChatProps) =
       audioElement.play().catch(err => console.error("Error playing audio:", err));
     };
 
+    // Handle connection state changes
+    pc.onconnectionstatechange = () => {
+      console.log(`Peer ${peerId} connection state:`, pc.connectionState);
+      if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+        removePeerConnection(peerId);
+      }
+    };
+
     // Add local audio track (only if not admin spectator)
     if (localStream && !isAdminSpectator) {
       localStream.getTracks().forEach(track => {
@@ -391,12 +410,19 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin }: VoiceChatProps) =
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 p-4 bg-black/80 rounded-lg border border-gray-700">
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 p-4 bg-black/80 rounded-lg border border-gray-700 max-w-xs">
       {/* Voice enabled indicator */}
       <div className="flex items-center gap-2 text-xs text-gray-300">
         <LucideVolume2 className="w-4 h-4" />
         <span>Voice habilitado</span>
       </div>
+
+      {/* Error message */}
+      {connectionError && (
+        <div className="text-xs text-red-400 bg-red-900/20 p-2 rounded">
+          {connectionError}
+        </div>
+      )}
 
       {/* PTT indicator */}
       {!isAdminSpectator && (
