@@ -10,16 +10,23 @@ if (!session || !session.user.streamerWarsPlayerNumber) {
   return new Response(null, { status: 404 });
 }
 
+const IS_ADMIN = session.user.isAdmin || false;
+
 const playerIsEliminated = await isPlayerEliminated(
   session.user.streamerWarsPlayerNumber
 );
 
 const aislated = await isPlayerAislated(session.user.streamerWarsPlayerNumber);
+
+const shouldShowStreamerWars =
+  (!playerIsEliminated && !aislated) || (IS_ADMIN && import.meta.env.DEV);
 ---
 
 <StreamerWarsLayout title="Guerra de Streamers">
   {
-    playerIsEliminated ? (
+    shouldShowStreamerWars ? (
+      <StreamerWars session={session} client:idle />
+    ) : playerIsEliminated ? (
       <div class=" text-white p-4 flex justify-center flex-col items-center mt-16 rounded-lg">
         <p class="text-5xl font-atomic tracking-wider -skew-y-6 font-medium">
           ¡Has sido eliminado!
@@ -45,9 +52,7 @@ const aislated = await isPlayerAislated(session.user.streamerWarsPlayerNumber);
           puedes volver a jugar.
         </p>
       </div>
-    ) : (
-      <StreamerWars session={session} client:idle />
-    )
+    ) : null
   }
 </StreamerWarsLayout>
 

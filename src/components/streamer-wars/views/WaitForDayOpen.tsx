@@ -1,5 +1,5 @@
 import type { Session } from "@auth/core/types"
-import { ConnectedPlayers } from "../ConnectedPlayers"
+import { StreamerWarsPlayers } from "../StreamerWarsPlayers"
 
 const DAYS = [
     {
@@ -20,22 +20,10 @@ const DAYS = [
 ]
 export const WaitForDayOpen = ({ session, players }: { session: Session, players: any[] }) => {
     return (
-        <div class="flex flex-col items-center justify-center space-x-4 mt-8 text-center">
-            <header class="mb-8">
-                <h3 class="with-glyph flex relative w-max text-3xl transform px-2 font-atomic tracking-wider font-bold text-neutral-500">
-                    <span class="flex transform">Guerra de Streamers</span>
-                </h3>
+        <div class="flex flex-col items-center justify-center space-x-4 text-center">
 
-                <h2 class="text-4xl font-atomic text-[#b4cd02] -skew-y-6 mt-6">
-                    Bienvenido, <span class="text-[#b4cd02] tracking-wider">{session.user.name}</span>
-                </h2>
 
-                <p class="text-lg text-neutral-400 animate-pulse mt-4 font-anton" style={{ animationDuration: "4.5s" }}>
-                    Esperando a que la jornada comience
-                </p>
-            </header>
-
-            <ConnectedPlayers players={players} />
+            <StreamerWarsPlayers players={players} />
 
             <div>
                 <h3 class="text-xl tracking-widest flex mt-8 w-full justify-center mb-6 font-atomic text-neutral-300">

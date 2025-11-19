@@ -787,11 +787,10 @@ export const eliminatePlayer = async (playerNumber: number) => {
     try {
         // Actualiza el estado del jugador en la base de datos.
 
-        if (import.meta.env.PROD) {
-            await client
-                .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
-                .execute();
-        }
+        await client.update(StreamerWarsPlayersTable)
+            .set({ eliminated: true })
+            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+            .execute();
 
         /* 
             ¿Se está jugando Simon Says?
