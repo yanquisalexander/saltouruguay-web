@@ -11,7 +11,7 @@ import { WaitingRoom } from "./views/WaitingRoom";
 import { TeamSelector } from "./views/TeamSelector";
 import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 import { actions } from "astro:actions";
-import { LucideBug } from "lucide-preact";
+import { LucideBug, LucideVolume2 } from "lucide-preact";
 import { CURRENT_DAY, JourneyTransition } from "./JourneyTransition";
 import { CaptainBribery } from "./games/CaptainBribery";
 import { type Players } from "../admin/streamer-wars/Players";
@@ -99,6 +99,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
     const [showWaitingScreen, setShowWaitingScreen] = useState(true);
     const [expectedPlayers, setExpectedPlayers] = useState<number>(50);
+    const [showVoiceControls, setShowVoiceControls] = useState(false);
     const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -335,6 +336,13 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             {pusher && <StreamerWarsCinematicPlayer userId={session.user.id} pusher={pusher} />}
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
             <CurrentPlayer session={session} showTimer={showTimer} timerSeconds={timerSeconds} timerKey={timerKey} onTimerEnd={onTimerEnd} />
+            <div slot="sidebar-left">
+                {session.user.isAdmin && (
+                    <button onClick={() => setShowVoiceControls(!showVoiceControls)} className="fixed bottom-4 left-4 z-50 bg-black/90 p-2 rounded border border-gray-700">
+                        <LucideVolume2 className="w-4 h-4 text-white" />
+                    </button>
+                )}
+            </div>
             {
                 splashEnded && (
                     <>
@@ -381,12 +389,12 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
                         <AdminChat session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
                         <StreamerWarsAudioManager session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
-                        <VoiceControls isAdmin={session.user.isAdmin || false} />
-                        <VoiceChat 
-                            pusher={pusher} 
-                            userId={session.user.id} 
-                            teamId={currentTeamId} 
-                            isAdmin={session.user.isAdmin || false} 
+                        <VoiceControls isAdmin={session.user.isAdmin || false} show={showVoiceControls} />
+                        <VoiceChat
+                            pusher={pusher}
+                            userId={session.user.id}
+                            teamId={currentTeamId}
+                            isAdmin={session.user.isAdmin || false}
                         />
                     </>
                 )}

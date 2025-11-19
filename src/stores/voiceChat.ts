@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export interface VoiceGlobalState {
   currentTeamId?: string | null;
   voiceEnabledTeams: Record<string, boolean>; // teamId -> enabled
+  spectatingTeams: Record<string, boolean>; // teamId -> spectating
   peerConnections: Record<string, RTCPeerConnection>; // userId -> connection
   localStream: MediaStream | null;
   isLocalMicEnabled: boolean; // PTT state
@@ -14,6 +15,7 @@ export interface VoiceGlobalState {
 interface VoiceActions {
   setCurrentTeamId: (teamId: string | null) => void;
   setVoiceEnabled: (teamId: string, enabled: boolean) => void;
+  setSpectatingTeam: (teamId: string, spectating: boolean) => void;
   addPeerConnection: (userId: string, connection: RTCPeerConnection) => void;
   removePeerConnection: (userId: string) => void;
   setLocalStream: (stream: MediaStream | null) => void;
@@ -27,6 +29,7 @@ interface VoiceActions {
 const initialState: VoiceGlobalState = {
   currentTeamId: null,
   voiceEnabledTeams: {},
+  spectatingTeams: {},
   peerConnections: {},
   localStream: null,
   isLocalMicEnabled: false,
@@ -45,6 +48,14 @@ export const useVoiceChatStore = create<VoiceGlobalState & VoiceActions>((set, g
       voiceEnabledTeams: {
         ...state.voiceEnabledTeams,
         [teamId]: enabled,
+      },
+    })),
+
+  setSpectatingTeam: (teamId, spectating) =>
+    set((state) => ({
+      spectatingTeams: {
+        ...state.spectatingTeams,
+        [teamId]: spectating,
       },
     })),
 
@@ -75,13 +86,13 @@ export const useVoiceChatStore = create<VoiceGlobalState & VoiceActions>((set, g
 
   cleanup: () => {
     const state = get();
-    
+
     // Close all peer connections
     Object.values(state.peerConnections).forEach((pc) => pc.close());
-    
+
     // Stop local stream tracks
     state.localStream?.getTracks().forEach((track) => track.stop());
-    
+
     // Reset to initial state
     set(initialState);
   },

@@ -9,9 +9,9 @@ export const voice = {
       teamId: z.string(),
       event: z.enum(["signal:offer", "signal:answer", "signal:iceCandidate", "voice:user-joined"]),
       data: z.object({
-        fromUserId: z.string().optional(),
-        toUserId: z.string().optional(),
-        userId: z.string().optional(),
+        fromUserId: z.union([z.string(), z.number()]).optional(),
+        toUserId: z.union([z.string(), z.number()]).optional(),
+        userId: z.union([z.string(), z.number()]).optional(),
         sdp: z.any().optional(),
         candidate: z.any().optional()
       })
@@ -129,6 +129,40 @@ export const voice = {
         teamId,
         targetUserId,
         issuedBy: session.user.id,
+        timestamp: Date.now()
+      });
+
+      return { success: true };
+    }
+  }),
+
+  spectate: defineAction({
+    input: z.object({
+      teamId: z.string(),
+      enable: z.boolean(),
+    }),
+    handler: async ({ teamId, enable }, { request }) => {
+      const session = await getSession(request);
+
+      if (!session) {
+        throw new ActionError({
+          code: "UNAUTHORIZED",
+          message: "Debes iniciar sesión para spectear voice chat"
+        });
+      }
+
+      // Only admins can spectate
+      if (!session.user.isAdmin) {
+        throw new ActionError({
+          code: "FORBIDDEN",
+          message: "Solo administradores pueden spectear voice chat"
+        });
+      }
+
+      // Publish voice:spectate event to team voice signal channel
+      await pusher.trigger(`team-${teamId}-voice-signal`, enable ? "voice:spectator-joined" : "voice:spectator-left", {
+        teamId,
+        spectatorId: session.user.id,
         timestamp: Date.now()
       });
 
