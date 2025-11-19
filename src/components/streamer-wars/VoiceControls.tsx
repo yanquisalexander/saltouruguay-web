@@ -1,6 +1,6 @@
 import { useState } from "preact/hooks";
 import { actions } from "astro:actions";
-import { LucideVolume2, LucideVolumeX, LucideMicOff } from "lucide-preact";
+import { LucideVolume2, LucideVolumeX } from "lucide-preact";
 import { toast } from "sonner";
 
 interface VoiceControlsProps {
