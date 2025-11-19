@@ -16,10 +16,10 @@ export const WaitingScreen = ({ players, expectedPlayers = 50 }: WaitingScreenPr
 
     return (
         <div className="w-full h-full flex flex-col items-center justify-center text-center gap-6 z-50 bg-black p-4 absolute inset-0">
-            <h3 class="with-glyph flex relative w-max text-3xl transform px-2 font-atomic tracking-wider font-bold text-neutral-500"> <span class="flex  transform" >
+            <h3 class="with-glyph flex animate-pulse animate-duration-slower relative w-max text-3xl transform px-2 font-atomic tracking-wider font-bold text-neutral-500"> <span class="flex  transform" >
                 Guerra de Streamers
             </span> </h3>
-            <h2 className="text-lg font-anton text-white">Esperando jugadores...</h2>
+            <h2 className="text-lg font-mono text-neutral-700">Esperando jugadores...</h2>
 
 
             <div className="mt-6 text-white/90 font-mono text-2xl">

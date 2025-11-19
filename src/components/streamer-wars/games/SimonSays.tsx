@@ -37,6 +37,7 @@ export const SimonSays = ({
     const [activeButton, setActiveButton] = useState<string | null>(null);
     const [waitingNextRound, setWaitingNextRound] = useState(false);
     const [showingPattern, setShowingPattern] = useState(false);
+    const [rivalInputs, setRivalInputs] = useState<{ [key: number]: string[] }>({});
 
     // Variables derivadas
     const playerNumber = session.user.streamerWarsPlayerNumber;
@@ -96,6 +97,12 @@ export const SimonSays = ({
 
         simonSaysChannel?.bind("client-player-input", ({ playerNumber, color }: { playerNumber: number; color: string }) => {
             console.log(`Jugador #${playerNumber} ha seleccionado el color ${color}`);
+            setRivalInputs(prev => {
+                const newInputs = { ...prev };
+                if (!newInputs[playerNumber]) newInputs[playerNumber] = [];
+                newInputs[playerNumber].push(color);
+                return newInputs;
+            });
         });
 
         // Cleanup: desuscribir eventos al desmontar
@@ -140,6 +147,12 @@ export const SimonSays = ({
             toast.success("¡Correcto! Sigues en juego", { position: "bottom-center" });
             playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT });
             setWaitingNextRound(true);
+            // Añade un random delay antes de completar el patrón, ya que
+            // todos los jugadores podrían completarlo exactamente al mismo tiempo
+            // lo que podría causar problemas de sincronización
+            // Lo ideal es que sea entre 500ms y 2s
+            const randomDelay = Math.floor(Math.random() * 1500) + 500;
+            await sleep(randomDelay);
             await actions.games.simonSays.completePattern({ playerNumber: session.user.id });
             setPlayerPattern([]);
         }
@@ -160,6 +173,11 @@ export const SimonSays = ({
         }
     }, [gameState.pattern, gameIsPlaying, showPattern]);
 
+    // Reset rival inputs when pattern changes
+    useEffect(() => {
+        setRivalInputs({});
+    }, [gameState.pattern]);
+
     return (
         <>
             <Instructions duration={10000}>
@@ -173,11 +191,11 @@ export const SimonSays = ({
                 </p>
             </Instructions>
             <div
-                className="flex flex-col items-center justify-center min-h-screen bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]   
-          from-blue-600/70 via-transparent to-transparent text-white p-4"
+                className="flex relative flex-col items-center justify-center h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]   
+          from-blue-600/70 via-transparent to-transparent text-white"
             >
                 {!gameIsWaiting && (
-                    <div className="flex gap-2 mt-4">
+                    <div className="flex gap-2 absolute top-2 left-4">
                         {playerPattern.map((color, index) => (
                             <div
                                 key={index}
@@ -187,8 +205,8 @@ export const SimonSays = ({
                     </div>
                 )}
 
-                <h2 className="text-2xl text-[#b4cd02] font-bold mt-4 font-atomic">
-                    Simón dice
+                <h2 className="text-2xl  font-bold absolute right-4 top-4 font-squids">
+                    Simon dice
                 </h2>
 
                 {/* Mostrar avatares de jugadores */}
@@ -212,7 +230,7 @@ export const SimonSays = ({
                     if (!currentPlayer && validRivals.length === 0) return null;
 
                     return (
-                        <div className="flex items-center gap-x-4 mt-4">
+                        <div className="absolute right-4 top-16 flex flex-col items-center gap-y-2">
                             {isCurrentPlayerPlaying && currentPlayer && currentPlayer.avatar && (
                                 <div className="relative">
                                     <img
@@ -225,13 +243,6 @@ export const SimonSays = ({
                                     />
                                 </div>
                             )}
-
-                            {isCurrentPlayerPlaying &&
-                                currentPlayer &&
-                                currentPlayer.avatar &&
-                                validRivals.length > 0 && (
-                                    <span className="font-atomic">VS.</span>
-                                )}
 
                             {validRivals.map((rivalPlayer) => (
                                 <div key={rivalPlayer.playerNumber} className="relative">
@@ -256,11 +267,41 @@ export const SimonSays = ({
 
 
                 {/* Mensaje para jugadores que no están en turno */}
-                {gameIsPlaying && !isCurrentPlayerPlaying && (
-                    <div className="text-center mt-4">
-                        <p className="text-2xl font-teko">
-                            Tus compañeros están jugando en este momento
-                        </p>
+                {gameIsPlaying && !isCurrentPlayerPlaying && !isEliminated && (
+                    <div className="flex items-center gap-8 mt-4">
+                        <SimonSaysButtons
+                            activeButton={activeButton}
+                            showingPattern={showingPattern}
+                            onClick={() => { }}
+                        />
+                        <div className="flex flex-col gap-2">
+                            {(() => {
+                                const rivalsNumbers = Object.entries(gameState.currentPlayers)
+                                    .filter(([, num]) => num !== playerNumber)
+                                    .map(([, num]) => num);
+                                const validRivals = rivalsNumbers
+                                    .map((num) => players.find((p) => p.playerNumber === num))
+                                    .filter((p): p is typeof players[number] => Boolean(p && p.avatar));
+                                return validRivals.map(rival => (
+                                    <div key={rival.playerNumber} className="flex items-center gap-2">
+                                        <img
+                                            src={rival.avatar}
+                                            alt={`Avatar de ${rival.playerNumber}`}
+                                            className="w-8 h-8 rounded-full ring-2 ring-white/20"
+                                            onError={(e) => e.currentTarget.src = "/fallback.png"}
+                                        />
+                                        <div className="flex gap-1">
+                                            {rivalInputs[rival.playerNumber]?.map((color, i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`size-4 rounded-full bg-gradient-to-b ${colors.find(c => c.name === color)?.gradient}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ));
+                            })()}
+                        </div>
                     </div>
                 )}
 

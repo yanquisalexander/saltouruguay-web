@@ -345,7 +345,7 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
     }
 
     return (
-        <div className="h-full relative">
+        <div className="h-full relative p-5">
             <h2 className="text-2xl font-squids mb-4 bg-gradient-to-br from-orange-600 to-yellow-200 text-transparent bg-clip-text">Dalgona</h2>
             <div className="text-center text-white mb-6">
                 <p className="text-xl mb-2">Traza la forma con cuidado</p>
