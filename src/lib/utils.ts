@@ -21,12 +21,12 @@ export const showSignInDialog = () => {
 }
 
 export const createPusher = () => {
-  const host = /* import.meta.env.DEV ? 'localhost' :  */`soketi.saltouruguayserver.com`;
+  const host = import.meta.env.DEV ? 'localhost' : `soketi.saltouruguayserver.com`;
   return new Pusher(PUSHER_APP_KEY, {
     wsHost: host,
     cluster: "us2",
     enabledTransports: ['ws', 'wss'],
-    forceTLS: true
+    forceTLS: !import.meta.env.DEV,
   });
 }
 
