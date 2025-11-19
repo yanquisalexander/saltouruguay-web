@@ -281,7 +281,7 @@ export const server = {
             instagram: z.string().min(1),
             participated_sc: z.enum(["si", "no"]),
             minecraft_username: z.string().min(1),
-            team_status: z.enum(["tengo", "buscare"]),
+            team_status: z.enum(["tengo", "buscare"]).default("buscare").optional(),
             content_channel: z.string().url().optional().or(z.literal("").optional()),
         }),
         handler: async (
