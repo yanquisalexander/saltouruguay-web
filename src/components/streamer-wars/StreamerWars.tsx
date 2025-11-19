@@ -21,6 +21,7 @@ import { navigate } from "astro:transitions/client";
 import { AdminChat } from "./AdminChat";
 import { StreamerWarsCinematicPlayer } from "./StreamerWarsCinematicPlayer";
 import { Dalgona } from "./games/Dalgona";
+import { TugOfWar } from "./games/TugOfWar";
 import { StreamerWarsAudioManager } from "./StreamerWarsAudioManager";
 import { Timer } from "./Timer";
 import CurrentPlayer from "./CurrentPlayer";
@@ -378,7 +379,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 }
 
 const GameComponent = ({ gameState, players, pusher, session, channel }: { gameState: any; players: any[]; pusher: Pusher; session: Session; channel: Channel }) => {
-    const GAME_CONFIG = useRef({ TeamSelector, SimonSays, CaptainBribery, AutoElimination, Dalgona });
+    const GAME_CONFIG = useRef({ TeamSelector, SimonSays, CaptainBribery, AutoElimination, Dalgona, TugOfWar });
 
     const Component = GAME_CONFIG.current[gameState.component as keyof typeof GAME_CONFIG.current];
     const props = { ...gameState.props, players, pusher, session, channel };
