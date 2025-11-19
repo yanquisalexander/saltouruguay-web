@@ -86,6 +86,28 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
     useEffect(() => {
         if (channel) {
             channel.bind("audio-update", handleAudioUpdate);
+            
+            // Handle mute all event
+            channel.bind("audio-mute-all", () => {
+                setAudioStates(prev => {
+                    const updated = { ...prev };
+                    Object.keys(updated).forEach(audioId => {
+                        updated[audioId].volume = 0;
+                    });
+                    return updated;
+                });
+            });
+
+            // Handle stop all event
+            channel.bind("audio-stop-all", () => {
+                setAudioStates(prev => {
+                    const updated = { ...prev };
+                    Object.keys(updated).forEach(audioId => {
+                        updated[audioId].playing = false;
+                    });
+                    return updated;
+                });
+            });
         }
 
         // Load initial states
@@ -98,6 +120,8 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
         return () => {
             if (channel) {
                 channel.unbind("audio-update", handleAudioUpdate);
+                channel.unbind("audio-mute-all");
+                channel.unbind("audio-stop-all");
             }
         };
     }, [channel]);

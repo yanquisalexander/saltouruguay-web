@@ -284,40 +284,14 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         };
     }, [session]);
 
-    // Preload audio files and initialize with current state
+    // Preload audio files
     useEffect(() => {
-        const initAudio = async () => {
-            // Preload all audio files
-            AVAILABLE_AUDIOS.forEach(audio => {
-                const audioEl = new Audio(`${CDN_PREFIX}${audio.id}.mp3`);
-                audioEl.preload = 'auto';
-                audioInstances.current[audio.id] = audioEl;
-            });
-
-            // Get current audio state from server (if needed for syncing)
-            // This could be called to sync new clients with current state
-            try {
-                const response = await fetch('/api/audio/state');
-                if (response.ok) {
-                    const { states } = await response.json();
-                    // Apply current state to audio instances
-                    Object.entries(states).forEach(([audioId, state]: [string, any]) => {
-                        const audio = audioInstances.current[audioId];
-                        if (audio && state) {
-                            audio.volume = state.volume || 1;
-                            audio.loop = state.loop || false;
-                            if (state.playing) {
-                                audio.play().catch(err => console.error('Error auto-playing audio:', err));
-                            }
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading audio state:', error);
-            }
-        };
-
-        initAudio();
+        // Preload all audio files
+        AVAILABLE_AUDIOS.forEach(audio => {
+            const audioEl = new Audio(`${CDN_PREFIX}${audio.id}.mp3`);
+            audioEl.preload = 'auto';
+            audioInstances.current[audio.id] = audioEl;
+        });
     }, []);
 
     return {
