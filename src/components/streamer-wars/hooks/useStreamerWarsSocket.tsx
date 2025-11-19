@@ -229,35 +229,48 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                 audioInstances.current[audioId] = new Audio(`${CDN_PREFIX}${audioId}.mp3`);
             }
             const audio = audioInstances.current[audioId];
+            
             switch (action) {
-                case 'SET_VOLUME':
-                    audio.volume = data.volume;
-                    break;
-                case 'RESTART':
+                case 'PLAY':
+                    // Always start from the beginning
                     audio.currentTime = 0;
+                    audio.loop = data.loop;
+                    audio.volume = data.volume;
+                    audio.play().catch(err => console.error('Error playing audio:', err));
                     break;
-                case 'UPDATE_STATE':
-                    audio.loop = data.loop ?? audio.loop;
-                    if (data.playing && audio.paused) {
-                        audio.play();
-                    } else if (!data.playing && !audio.paused) {
-                        audio.pause();
-                    }
+                case 'PAUSE':
+                    audio.pause();
+                    audio.loop = data.loop;
+                    audio.volume = data.volume;
                     break;
                 case 'STOP':
                     audio.pause();
                     audio.currentTime = 0;
+                    audio.loop = data.loop;
+                    audio.volume = data.volume;
                     break;
-                case 'MUTE_ALL':
-                    Object.values(audioInstances.current).forEach(a => a.volume = 0);
+                case 'SET_VOLUME':
+                    audio.volume = data.volume;
+                    audio.loop = data.loop;
                     break;
-                case 'STOP_ALL':
-                    Object.values(audioInstances.current).forEach(a => {
-                        a.pause();
-                        a.currentTime = 0;
-                    });
+                case 'SET_LOOP':
+                    audio.loop = data.loop;
+                    audio.volume = data.volume;
                     break;
             }
+        });
+
+        globalChannel.current?.bind("audio-mute-all", () => {
+            Object.values(audioInstances.current).forEach(audio => {
+                audio.volume = 0;
+            });
+        });
+
+        globalChannel.current?.bind("audio-stop-all", () => {
+            Object.values(audioInstances.current).forEach(audio => {
+                audio.pause();
+                audio.currentTime = 0;
+            });
         });
 
         return () => {
@@ -273,9 +286,10 @@ export const useStreamerWarsSocket = (session: Session | null) => {
 
     // Preload audio files
     useEffect(() => {
+        // Preload all audio files
         AVAILABLE_AUDIOS.forEach(audio => {
             const audioEl = new Audio(`${CDN_PREFIX}${audio.id}.mp3`);
-            audioEl.preload = 'auto'; // or 'auto'
+            audioEl.preload = 'auto';
             audioInstances.current[audio.id] = audioEl;
         });
     }, []);

@@ -49,18 +49,34 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
 
     const handleAudioUpdate = ({ audioId, action, data }: { audioId: string, action: string, data: any }) => {
         setAudioStates(prev => {
-            const newState = { ...prev[audioId] };
+            const currentState = prev[audioId] || { id: audioId, playing: false, volume: 1, loop: false };
+            let newState = { ...currentState };
+            
             switch (action) {
-                case 'SET_VOLUME':
+                case 'PLAY':
+                    newState.playing = data.playing;
+                    newState.loop = data.loop;
                     newState.volume = data.volume;
                     break;
-                case 'RESTART':
-                    newState.currentTime = 0;
-                    break;
-                case 'UPDATE_STATE':
+                case 'PAUSE':
                     newState.playing = data.playing;
-                    newState.paused = data.paused;
                     newState.loop = data.loop;
+                    newState.volume = data.volume;
+                    break;
+                case 'STOP':
+                    newState.playing = false;
+                    newState.loop = data.loop;
+                    newState.volume = data.volume;
+                    break;
+                case 'SET_VOLUME':
+                    newState.volume = data.volume;
+                    newState.playing = data.playing;
+                    newState.loop = data.loop;
+                    break;
+                case 'SET_LOOP':
+                    newState.loop = data.loop;
+                    newState.playing = data.playing;
+                    newState.volume = data.volume;
                     break;
             }
             return { ...prev, [audioId]: newState };
@@ -70,6 +86,28 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
     useEffect(() => {
         if (channel) {
             channel.bind("audio-update", handleAudioUpdate);
+            
+            // Handle mute all event
+            channel.bind("audio-mute-all", () => {
+                setAudioStates(prev => {
+                    const updated = { ...prev };
+                    Object.keys(updated).forEach(audioId => {
+                        updated[audioId].volume = 0;
+                    });
+                    return updated;
+                });
+            });
+
+            // Handle stop all event
+            channel.bind("audio-stop-all", () => {
+                setAudioStates(prev => {
+                    const updated = { ...prev };
+                    Object.keys(updated).forEach(audioId => {
+                        updated[audioId].playing = false;
+                    });
+                    return updated;
+                });
+            });
         }
 
         // Load initial states
@@ -82,6 +120,8 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
         return () => {
             if (channel) {
                 channel.unbind("audio-update", handleAudioUpdate);
+                channel.unbind("audio-mute-all");
+                channel.unbind("audio-stop-all");
             }
         };
     }, [channel]);
@@ -105,10 +145,6 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
     const handleLoopToggle = (audioId: string) => {
         const current = audioStates[audioId]?.loop || false;
         actions.audio.setLoop({ audioId, enabled: !current });
-    };
-
-    const handleRestart = (audioId: string) => {
-        actions.audio.seek({ audioId, position: 0 });
     };
 
     const handleMuteAll = () => {
@@ -139,11 +175,22 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
 
             <div class="space-y-4">
                 {AVAILABLE_AUDIOS.map(audio => {
-                    const state = audioStates[audio.id] || { playing: false, paused: false, volume: 1, loop: false, currentTime: 0, duration: audio.duration };
+                    const state = audioStates[audio.id] || { id: audio.id, playing: false, volume: 1, loop: false };
                     return (
                         <div key={audio.id} class="bg-black/40 p-3 rounded border border-white/10">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-white font-semibold">{audio.name}</span>
+                                <div class="flex items-center space-x-2">
+                                    {state.playing && (
+                                        <span class="inline-flex items-center">
+                                            <span class="animate-pulse h-2 w-2 bg-green-500 rounded-full mr-1"></span>
+                                            <span class="text-green-500 text-xs">PLAYING</span>
+                                        </span>
+                                    )}
+                                    {state.loop && (
+                                        <span class="text-purple-400 text-xs">🔁 LOOP</span>
+                                    )}
+                                </div>
                             </div>
 
                             <div class="flex items-center space-x-2 mb-2">
@@ -151,30 +198,24 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
                                     onClick={() => state.playing ? handlePause(audio.id) : handlePlay(audio.id)}
                                     class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
                                 >
-                                    {state.playing ? 'Pause' : 'Play'}
+                                    {state.playing ? '⏸ Pause' : '▶ Play'}
                                 </button>
                                 <button
                                     onClick={() => handleStop(audio.id)}
-                                    class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
                                 >
-                                    Stop
-                                </button>
-                                <button
-                                    onClick={() => handleRestart(audio.id)}
-                                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
-                                >
-                                    Restart
+                                    ⏹ Stop
                                 </button>
                                 <button
                                     onClick={() => handleLoopToggle(audio.id)}
                                     class={`px-3 py-1 rounded text-sm ${state.loop ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-600 hover:bg-gray-700'} text-white`}
                                 >
-                                    Loop {state.loop ? 'ON' : 'OFF'}
+                                    🔁 Loop {state.loop ? 'ON' : 'OFF'}
                                 </button>
                             </div>
 
                             <div class="flex items-center space-x-2">
-                                <span class="text-white/70 text-sm">Vol:</span>
+                                <span class="text-white/70 text-sm">🔊</span>
                                 <input
                                     type="range"
                                     min="0"
@@ -183,11 +224,11 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
                                     onInput={(e) => handleVolumeChange(audio.id, parseInt((e.target as HTMLInputElement).value))}
                                     class="flex-1"
                                 />
-                                <span class="text-white/70 text-sm">{Math.round(state.volume * 100)}%</span>
+                                <span class="text-white/70 text-sm w-12 text-right">{Math.round(state.volume * 100)}%</span>
                             </div>
 
                             <div class="text-xs text-white/50 mt-1">
-                                Estado: {state.playing ? 'Reproduciendo' : state.paused ? 'Pausado' : 'Detenido'}
+                                Estado: {state.playing ? '▶ Reproduciendo' : '⏹ Detenido'}
                             </div>
                         </div>
                     );

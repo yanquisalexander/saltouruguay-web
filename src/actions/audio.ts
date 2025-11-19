@@ -9,7 +9,8 @@ const AUDIO_STATE_KEY = "streamer-wars-audio-states";
 
 const getAudioStates = async (): Promise<Record<string, AudioState>> => {
     try {
-        const states = await cacheService.create({}).get(AUDIO_STATE_KEY) as Record<string, AudioState> | null;
+        const cache = cacheService.create({ ttl: 60 * 60 * 24 }); // 24 hours TTL
+        const states = await cache.get(AUDIO_STATE_KEY) as Record<string, AudioState> | null;
         return states || {};
     } catch (error) {
         console.error("Error getting audio states:", error);
@@ -19,7 +20,8 @@ const getAudioStates = async (): Promise<Record<string, AudioState>> => {
 
 const setAudioStates = async (states: Record<string, AudioState>) => {
     try {
-        await cacheService.create({}).set(AUDIO_STATE_KEY, states);
+        const cache = cacheService.create({ ttl: 60 * 60 * 24 }); // 24 hours TTL
+        await cache.set(AUDIO_STATE_KEY, states);
     } catch (error) {
         console.error("Error setting audio states:", error);
     }
@@ -53,16 +55,14 @@ export const audio = {
             }
 
             states[audioId] = {
-                ...states[audioId],
                 id: audioId,
                 playing: true,
-                paused: false,
                 volume: states[audioId]?.volume ?? 1,
                 loop: states[audioId]?.loop ?? false,
             };
 
             await setAudioStates(states);
-            await emitAudioUpdate(audioId, 'UPDATE_STATE', { playing: true, paused: false, loop: states[audioId].loop });
+            await emitAudioUpdate(audioId, 'PLAY', { playing: true, loop: states[audioId].loop, volume: states[audioId].volume });
 
             return { success: true };
         }
@@ -85,10 +85,9 @@ export const audio = {
             if (!states[audioId]) return { success: true };
 
             states[audioId].playing = false;
-            states[audioId].paused = true;
 
             await setAudioStates(states);
-            await emitAudioUpdate(audioId, 'UPDATE_STATE', { playing: false, paused: true, loop: states[audioId].loop });
+            await emitAudioUpdate(audioId, 'PAUSE', { playing: false, loop: states[audioId].loop, volume: states[audioId].volume });
 
             return { success: true };
         }
@@ -111,11 +110,9 @@ export const audio = {
             if (!states[audioId]) return { success: true };
 
             states[audioId].playing = false;
-            states[audioId].paused = false;
-            states[audioId].currentTime = 0;
 
             await setAudioStates(states);
-            await emitAudioUpdate(audioId, 'UPDATE_STATE', { playing: false, paused: false, loop: states[audioId].loop });
+            await emitAudioUpdate(audioId, 'STOP', { playing: false, loop: states[audioId].loop, volume: states[audioId].volume });
 
             return { success: true };
         }
@@ -141,33 +138,7 @@ export const audio = {
             states[audioId].volume = volume;
 
             await setAudioStates(states);
-            await emitAudioUpdate(audioId, 'SET_VOLUME', { volume });
-
-            return { success: true };
-        }
-    }),
-
-    seek: defineAction({
-        input: z.object({
-            audioId: z.string(),
-            position: z.number().min(0),
-        }),
-        handler: async ({ audioId, position }, { request }) => {
-            const session = await getSession(request);
-            if (!session || !session.user.isAdmin) {
-                throw new ActionError({
-                    code: "UNAUTHORIZED",
-                    message: "Solo administradores pueden controlar audios"
-                });
-            }
-
-            const states = await getAudioStates();
-            if (!states[audioId]) return { success: true };
-
-            states[audioId].currentTime = position;
-
-            await setAudioStates(states);
-            await emitAudioUpdate(audioId, 'RESTART', {});
+            await emitAudioUpdate(audioId, 'SET_VOLUME', { volume, playing: states[audioId].playing, loop: states[audioId].loop });
 
             return { success: true };
         }
@@ -193,7 +164,7 @@ export const audio = {
             states[audioId].loop = enabled;
 
             await setAudioStates(states);
-            await emitAudioUpdate(audioId, 'UPDATE_STATE', { playing: states[audioId].playing, paused: states[audioId].paused, loop: enabled });
+            await emitAudioUpdate(audioId, 'SET_LOOP', { loop: enabled, playing: states[audioId].playing, volume: states[audioId].volume });
 
             return { success: true };
         }
@@ -217,10 +188,8 @@ export const audio = {
 
             await setAudioStates(states);
 
-            // Emit update for all
-            for (const audioId in states) {
-                await emitAudioUpdate(audioId, 'SET_VOLUME', { volume: 0 });
-            }
+            // Emit single update for all audios
+            await pusher.trigger("streamer-wars", "audio-mute-all", {});
 
             return { success: true };
         }
@@ -240,16 +209,12 @@ export const audio = {
             const states = await getAudioStates();
             for (const audioId in states) {
                 states[audioId].playing = false;
-                states[audioId].paused = false;
-                states[audioId].currentTime = 0;
             }
 
             await setAudioStates(states);
 
-            // Emit update for all
-            for (const audioId in states) {
-                await emitAudioUpdate(audioId, 'UPDATE_STATE', { playing: false, paused: false, loop: states[audioId].loop });
-            }
+            // Emit single update for all audios
+            await pusher.trigger("streamer-wars", "audio-stop-all", {});
 
             return { success: true };
         }
