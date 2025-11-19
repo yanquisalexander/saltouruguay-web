@@ -154,63 +154,68 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
     if (!isAdmin) return null;
 
     return (
-        <dialog ref={dialogRef} class="fixed bottom-20 left-4 z-[10000] bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-4 min-w-[400px] max-w-[600px] max-h-[80vh] overflow-y-auto">
+        <dialog ref={dialogRef} class="fixed bottom-20 left-4 z-[10000] bg-black/90 backdrop-blur-md border border-white/20 rounded-lg p-4 min-w-[400px] max-w-[600px] max-h-[80vh] overflow-y-auto shadow-2xl">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-white text-lg font-bold">Audio Manager</h2>
-                <button onClick={() => dialogRef.current?.close()} class="text-white/50 hover:text-white">✕</button>
+                <h2 class="text-white text-lg font-bold flex items-center gap-2">
+                    <span class="text-2xl">🎧</span>
+                    Audio Manager
+                </h2>
+                <button onClick={() => dialogRef.current?.close()} class="text-white/50 hover:text-white text-xl">✕</button>
             </div>
 
-            <button
-                onClick={handleMuteAll}
-                class="w-full mb-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded"
-            >
-                Silenciar Todo
-            </button>
-            <button
-                onClick={() => actions.audio.stopAll({})}
-                class="w-full mb-4 bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded"
-            >
-                Detener Todo
-            </button>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <button
+                    onClick={handleMuteAll}
+                    class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors"
+                >
+                    🔇 Silenciar Todo
+                </button>
+                <button
+                    onClick={() => actions.audio.stopAll({})}
+                    class="bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors"
+                >
+                    ⏹ Detener Todo
+                </button>
+            </div>
 
-            <div class="space-y-4">
+            <div class="space-y-3">
                 {AVAILABLE_AUDIOS.map(audio => {
                     const state = audioStates[audio.id] || { id: audio.id, playing: false, volume: 1, loop: false };
                     return (
-                        <div key={audio.id} class="bg-black/40 p-3 rounded border border-white/10">
+                        <div key={audio.id} class={`bg-black/40 p-3 rounded-lg border transition-all ${state.playing ? 'border-green-500/50 shadow-lg shadow-green-500/20' : 'border-white/10'}`}>
                             <div class="flex justify-between items-center mb-2">
-                                <span class="text-white font-semibold">{audio.name}</span>
+                                <span class="text-white font-semibold text-sm">{audio.name}</span>
                                 <div class="flex items-center space-x-2">
                                     {state.playing && (
                                         <span class="inline-flex items-center">
                                             <span class="animate-pulse h-2 w-2 bg-green-500 rounded-full mr-1"></span>
-                                            <span class="text-green-500 text-xs">PLAYING</span>
+                                            <span class="text-green-500 text-xs font-bold">PLAYING</span>
                                         </span>
                                     )}
                                     {state.loop && (
-                                        <span class="text-purple-400 text-xs">🔁 LOOP</span>
+                                        <span class="text-purple-400 text-xs font-semibold">🔁 LOOP</span>
                                     )}
                                 </div>
                             </div>
 
-                            <div class="flex items-center space-x-2 mb-2">
+                            <div class="flex items-center space-x-2 mb-2 flex-wrap gap-1">
                                 <button
                                     onClick={() => state.playing ? handlePause(audio.id) : handlePlay(audio.id)}
-                                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+                                    class={`${state.playing ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} text-white px-3 py-1 rounded text-sm font-medium transition-colors`}
                                 >
                                     {state.playing ? '⏸ Pause' : '▶ Play'}
                                 </button>
                                 <button
                                     onClick={() => handleStop(audio.id)}
-                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
                                 >
                                     ⏹ Stop
                                 </button>
                                 <button
                                     onClick={() => handleLoopToggle(audio.id)}
-                                    class={`px-3 py-1 rounded text-sm ${state.loop ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-600 hover:bg-gray-700'} text-white`}
+                                    class={`px-3 py-1 rounded text-sm font-medium transition-colors ${state.loop ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-600 hover:bg-gray-700'} text-white`}
                                 >
-                                    🔁 Loop {state.loop ? 'ON' : 'OFF'}
+                                    🔁 {state.loop ? 'ON' : 'OFF'}
                                 </button>
                             </div>
 
