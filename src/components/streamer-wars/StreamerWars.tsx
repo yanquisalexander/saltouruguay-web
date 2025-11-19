@@ -90,16 +90,13 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
 };
 export const StreamerWars = ({ session }: { session: Session }) => {
     const [players, setPlayers] = useState<Players[]>([]);
-    const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel, bgAudio, bgVolume, setBgVolume, setDayAvailable, dayAvailable } = useStreamerWarsSocket(session);
+    const { pusher, gameState, setGameState, recentlyEliminatedPlayer, globalChannel, presenceChannel, bgAudio, bgVolume, setBgVolume, setDayAvailable, dayAvailable, showTimer, timerSeconds, timerKey, onTimerEnd } = useStreamerWarsSocket(session);
     const [splashEnded, setSplashEnded] = useState(false);
     const [showingJourneyTransition, setShowingJourneyTransition] = useState(false);
     const [showedWelcomeDialog, setShowedWelcomeDialog] = useState(false);
     const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
     const [showWaitingScreen, setShowWaitingScreen] = useState(true);
     const [expectedPlayers, setExpectedPlayers] = useState<number>(50);
-    const [showTimer, setShowTimer] = useState(false);
-    const [timerSeconds, setTimerSeconds] = useState(0);
-    const [timerKey, setTimerKey] = useState(0);
 
     useEffect(() => {
         document.addEventListener("splash-screen-ended", () => {
@@ -208,12 +205,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             setShowWaitingScreen(false);
         });
 
-        globalChannel.current?.bind("show-timer", (data: { seconds: number }) => {
-            setTimerSeconds(data.seconds);
-            setShowTimer(true);
-            setTimerKey(prev => prev + 1);
-        });
-
         globalChannel.current?.bind("day-finished", () => {
             setShowingJourneyTransition(true);
             setJourneyTransitionProps({ phase: "finish", key: Math.random() });
@@ -298,19 +289,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             }
         });
 
-        // Restaurar timer si existe
-        actions.streamerWars.getCurrentTimer().then(({ data, error }) => {
-            if (!error && data) {
-                const elapsed = (Date.now() - data.startedAt) / 1000;
-                const remaining = data.duration - elapsed;
-                if (remaining > 0) {
-                    setTimerSeconds(Math.ceil(remaining));
-                    setShowTimer(true);
-                    setTimerKey(prev => prev + 1);
-                }
-            }
-        });
-
         return () => {
             presenceChannel.current?.unbind_all();
             presenceChannel.current?.unsubscribe();
@@ -325,7 +303,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             <SplashScreen onEnd={() => { }} />
             {pusher && <StreamerWarsCinematicPlayer userId={session.user.id} pusher={pusher} />}
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
-            <CurrentPlayer session={session} showTimer={showTimer} timerSeconds={timerSeconds} timerKey={timerKey} onTimerEnd={() => setShowTimer(false)} />
+            <CurrentPlayer session={session} showTimer={showTimer} timerSeconds={timerSeconds} timerKey={timerKey} onTimerEnd={onTimerEnd} />
             {
                 splashEnded && (
                     <>

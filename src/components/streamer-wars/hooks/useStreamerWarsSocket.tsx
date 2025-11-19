@@ -14,6 +14,7 @@ import { LucideSiren } from "lucide-preact";
 import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { decodeAudioFromPusher } from "@/services/pako-compress.client";
 import { AVAILABLE_AUDIOS, type AudioState } from "@/types/audio";
+import { actions } from "astro:actions";
 
 export const useStreamerWarsSocket = (session: Session | null) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
@@ -26,6 +27,10 @@ export const useStreamerWarsSocket = (session: Session | null) => {
     const [bgVolume, setBgVolume] = useState(0);
     const bgAudio = useRef<HTMLAudioElement | null>(null);
     const audioInstances = useRef<Record<string, HTMLAudioElement>>({});
+
+    const [showTimer, setShowTimer] = useState(false);
+    const [timerSeconds, setTimerSeconds] = useState(0);
+    const [timerKey, setTimerKey] = useState(0);
 
     // Se asume que si no hay gameState o no tiene componente, estamos en sala de espera
     const isOnWaitingRoom = (!gameState || !gameState.component) && dayAvailable;
@@ -234,7 +239,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                 audioInstances.current[audioId] = audioEl;
             }
             const audio = audioInstances.current[audioId];
-            
+
             switch (action) {
                 case 'PLAY':
                     // Always start from the beginning
@@ -278,6 +283,31 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             });
         });
 
+        globalChannel.current?.bind("show-timer", (data: any) => {
+            try {
+                const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+                const seconds = parsedData.seconds;
+                setTimerSeconds(seconds);
+                setShowTimer(true);
+                setTimerKey(prev => prev + 1);
+            } catch (e) {
+                console.warn('show-timer payload parse error', e, data);
+            }
+        });
+
+        // Restaurar timer si existe
+        actions.streamerWars.getCurrentTimer().then(({ data, error }) => {
+            if (!error && data) {
+                const elapsed = (Date.now() - data.startedAt) / 1000;
+                const remaining = data.duration - elapsed;
+                if (remaining > 0) {
+                    setTimerSeconds(Math.ceil(remaining));
+                    setShowTimer(true);
+                    setTimerKey(prev => prev + 1);
+                }
+            }
+        });
+
         return () => {
             // Limpieza: cancelamos timeouts, desbindamos eventos y desconectamos Pusher
             timeouts.forEach(clearTimeout);
@@ -296,7 +326,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             const audioEl = new Audio(`${CDN_PREFIX}${audio.id}.mp3`);
             audioEl.preload = 'auto';
             audioInstances.current[audio.id] = audioEl;
-            
+
             // Add event listener for when audio ends naturally (not from stop/pause actions)
             audioEl.addEventListener('ended', () => {
                 // Audio ended naturally - this happens when a non-looped audio finishes
@@ -304,7 +334,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                 console.log(`Audio ${audio.id} ended naturally`);
             });
         });
-        
+
         // Cleanup function
         return () => {
             Object.values(audioInstances.current).forEach(audio => {
@@ -326,5 +356,9 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         bgAudio,
         dayAvailable,
         setDayAvailable,
+        showTimer,
+        timerSeconds,
+        timerKey,
+        onTimerEnd: () => setShowTimer(false),
     };
 };
