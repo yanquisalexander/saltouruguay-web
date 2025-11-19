@@ -26,6 +26,7 @@ import { StreamerWarsAudioManager } from "./StreamerWarsAudioManager";
 import { Timer } from "./Timer";
 import CurrentPlayer from "./CurrentPlayer";
 import { VoiceChat } from "./VoiceChat";
+import { VoiceControls } from "./VoiceControls";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -380,6 +381,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
                         <AdminChat session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
                         <StreamerWarsAudioManager session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
+                        <VoiceControls isAdmin={session.user.isAdmin || false} />
                         <VoiceChat 
                             pusher={pusher} 
                             userId={session.user.id} 
