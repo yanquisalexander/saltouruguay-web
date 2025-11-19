@@ -1,29 +1,35 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-import type Pusher from "pusher-js";
+import clsx, { type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+import { $ } from "./dom-selector";
+import Pusher from "pusher-js";
+import { PUSHER_APP_ID, PUSHER_APP_KEY } from "astro:env/client";
+const toSlug = (await import("slugify")).default;
+
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export const showSignInDialog = () => {
 
-export const slugify = (text: string) => {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-") // Reemplaza espacios por guiones
-    .replace(/[^\w\-]+/g, "") // Elimina caracteres no alfanuméricos
-    .replace(/\-\-+/g, "-") // Reemplaza múltiples guiones por uno solo
+  const $signInDialog = $("#login-modal") as HTMLDialogElement;
+
+  if ($signInDialog) {
+    $signInDialog.showModal();
+    return;
+  }
 }
 
-export function createPusher(): Pusher {
-  const Pusher = require("pusher-js");
-
-  const pusher = new Pusher(import.meta.env.PUBLIC_PUSHER_APP_KEY, {
-    cluster: import.meta.env.PUBLIC_PUSHER_APP_CLUSTER,
-    authEndpoint: "/api/pusher/auth",
+export const createPusher = () => {
+  const host = /* import.meta.env.DEV ? 'localhost' :  */`soketi.saltouruguayserver.com`;
+  return new Pusher(PUSHER_APP_KEY, {
+    wsHost: host,
+    cluster: "us2",
+    enabledTransports: ['ws', 'wss'],
+    forceTLS: true
   });
+}
 
-  return pusher;
+export const slugify = (text: string) => {
+  return toSlug(text, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g });
 }
