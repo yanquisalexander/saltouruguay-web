@@ -35,7 +35,7 @@ const HINTS = [
 
 
 
-export const WaitingRoom = ({ session, channel, bgVolume, setBgVolume, bgAudio }: { session: Session; channel: Channel, bgVolume: number, setBgVolume: (volume: number) => void, bgAudio: HTMLAudioElement }) => {
+export const WaitingRoom = ({ session, channel, bgVolume, setBgVolume, bgAudio }: { session: Session; channel: Channel, bgVolume: number, setBgVolume: (volume: number) => void, bgAudio: HTMLAudioElement | null }) => {
     /* 
         Sala de chat/ espera de streamer wars
     */
@@ -62,7 +62,7 @@ export const WaitingRoom = ({ session, channel, bgVolume, setBgVolume, bgAudio }
                     <div class="flex gap-x-2 items-center">
                         <button onClick={() => {
                             if (bgVolume === 0) {
-                                bgAudio.play();
+                                bgAudio?.play();
                                 setBgVolume(1);
                             } else {
                                 setBgVolume(0);

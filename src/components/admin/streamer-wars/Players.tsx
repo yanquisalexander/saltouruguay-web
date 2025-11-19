@@ -16,6 +16,7 @@ export interface Players {
     eliminated: boolean;
     aislated?: boolean;
     isLiveOnTwitch?: boolean;
+    team?: string;
 }
 
 const CINEMATICS_LIST = Array.from({ length: 11 }, (_, i) => ({

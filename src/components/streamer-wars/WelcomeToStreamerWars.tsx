@@ -3,7 +3,7 @@ import { useEffect, useState } from "preact/hooks";
 
 export const WelcomeToStreamerWars = ({ session, bgAudio, isOpen, setIsOpen }: {
     session: Session,
-    bgAudio: HTMLAudioElement,
+    bgAudio: HTMLAudioElement | null,
     isOpen: boolean,
     setIsOpen: (isOpen: boolean) => void
 }) => {
@@ -15,6 +15,7 @@ export const WelcomeToStreamerWars = ({ session, bgAudio, isOpen, setIsOpen }: {
             bgAudio && (bgAudio.volume = 0.5);
             bgAudio && bgAudio.play();
         } else {
+            if (!bgAudio) return;
             let fadeOut = setInterval(() => {
                 if (bgAudio.volume > 0.1) {
                     bgAudio.volume = Math.max(bgAudio.volume - 0.1, 0);

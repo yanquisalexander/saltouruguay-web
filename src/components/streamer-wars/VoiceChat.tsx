@@ -1,504 +1,483 @@
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type Pusher from "pusher-js";
 import type { Channel } from "pusher-js";
 import { useVoiceChatStore } from "@/stores/voiceChat";
 import { LucideMic, LucideMicOff, LucideVolume2 } from "lucide-preact";
 import { actions } from "astro:actions";
+import { type Players } from "../admin/streamer-wars/Players";
+
+// --- CONFIG & CONSTANTS ---
+const ICE_SERVERS = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:3478" },
+    { urls: "stun:stun2.l.google.com:19302" }
+    // Reduje la lista, generalmente 2-3 STUN servers de Google son suficientes y más rápidos de negociar
+  ]
+};
+const PTT_KEY = 'v';
+const PTT_DEBOUNCE_MS = 80;
+
+// --- CUSTOM HOOK: Local Audio Management ---
+const useLocalAudio = (shouldInit: boolean) => {
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!shouldInit) return;
+
+    let localStream: MediaStream | null = null;
+
+    const init = async () => {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Iniciar muteado
+        localStream.getAudioTracks().forEach(track => (track.enabled = false));
+        setStream(localStream);
+        setError(null);
+      } catch (err: any) {
+        console.error("Error mic:", err);
+        if (err.name === "NotAllowedError") setError("Permiso denegado");
+        else if (err.name === "NotFoundError") setError("Micrófono no encontrado");
+        else setError("Error de micrófono");
+      }
+    };
+
+    init();
+
+    return () => {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [shouldInit]);
+
+  return { stream, error };
+};
+
+// --- CUSTOM HOOK: Push To Talk Logic ---
+const usePTT = (
+  localStream: MediaStream | null,
+  isActive: boolean,
+  setActive: (val: boolean) => void,
+  setMicEnabled: (val: boolean) => void
+) => {
+  const debounceRef = useRef<number | null>(null);
+  const isInputFocusedRef = useRef(false);
+
+  useEffect(() => {
+    const handleFocus = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      isInputFocusedRef.current = (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+    };
+
+    document.addEventListener('focusin', handleFocus);
+    document.addEventListener('focusout', handleFocus);
+    return () => {
+      document.removeEventListener('focusin', handleFocus);
+      document.removeEventListener('focusout', handleFocus);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!localStream) return;
+
+    const startTalking = () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = window.setTimeout(() => {
+        setActive(true);
+        localStream.getAudioTracks().forEach(t => (t.enabled = true));
+        setMicEnabled(true);
+      }, PTT_DEBOUNCE_MS);
+    };
+
+    const stopTalking = () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      setActive(false);
+      localStream.getAudioTracks().forEach(t => (t.enabled = false));
+      setMicEnabled(false);
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isInputFocusedRef.current) return;
+      if (e.key.toLowerCase() === PTT_KEY && !isActive) {
+        e.preventDefault();
+        startTalking();
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === PTT_KEY && isActive) {
+        e.preventDefault();
+        stopTalking();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [localStream, isActive, setActive, setMicEnabled]);
+};
+
+// --- MAIN COMPONENT ---
 
 interface VoiceChatProps {
   pusher: Pusher | null;
   userId: string;
   teamId: string | null;
   isAdmin: boolean;
+  players: Players[];
 }
 
-// STUN configuration
-const ICE_SERVERS = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" }
-  ]
-};
-
-const PTT_DEBOUNCE_MS = 80;
-
-export const VoiceChat = ({ pusher, userId, teamId, isAdmin }: VoiceChatProps) => {
+export const VoiceChat = ({ pusher, userId, teamId, isAdmin, players }: VoiceChatProps) => {
   const {
     currentTeamId,
     voiceEnabledTeams,
     spectatingTeams,
     peerConnections,
-    localStream,
+    // Eliminamos localStream del store si solo se usa aquí, o lo actualizamos
+    setLocalStream,
     isLocalMicEnabled,
     isPTTActive,
     isAdminSpectator,
     setCurrentTeamId,
     setVoiceEnabled,
-    setSpectatingTeam,
     addPeerConnection,
     removePeerConnection,
-    setLocalStream,
     setLocalMicEnabled,
     setPTTActive,
     setIsAdminSpectator,
     cleanup
   } = useVoiceChatStore();
 
-  const signalChannelRef = useRef<Channel | null>(null);
-  const pttDebounceTimerRef = useRef<number | null>(null);
-  const isInputFocusedRef = useRef(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [pendingCandidates, setPendingCandidates] = useState<Record<string, RTCIceCandidateInit[]>>({});
+  // Referencia para guardar elementos de audio y limpiarlos
+  const remoteAudiosRef = useRef<Record<string, HTMLAudioElement>>({});
 
-  // Update team ID when it changes
+  // 1. Sync Store State
   useEffect(() => {
     if (teamId !== currentTeamId) {
-      // Clean up old connections when team changes
-      if (currentTeamId) {
-        cleanup();
-      }
+      if (currentTeamId) cleanup();
       setCurrentTeamId(teamId);
     }
   }, [teamId, currentTeamId]);
 
-  // Set admin spectator mode
   useEffect(() => {
     setIsAdminSpectator(isAdmin);
   }, [isAdmin]);
 
-  // Initialize local audio stream
+  // 2. Init Audio (Usando el Hook)
+  const shouldInitAudio = !!(isAdmin || (teamId && voiceEnabledTeams[teamId]));
+  const { stream: localStream, error: connectionError } = useLocalAudio(shouldInitAudio);
+
+  // Sincronizar stream con el store global si es necesario
   useEffect(() => {
-    const initAudio = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    if (localStream) setLocalStream(localStream);
+  }, [localStream]);
 
-        // Start with mic disabled (PTT)
-        stream.getAudioTracks().forEach(track => {
-          track.enabled = false;
+  // 3. Init PTT (Usando el Hook)
+  // Solo activar PTT si NO es espectador admin y hay un equipo válido
+  usePTT(
+    !isAdminSpectator && teamId && voiceEnabledTeams[teamId] ? localStream : null,
+    isPTTActive,
+    setPTTActive,
+    setLocalMicEnabled
+  );
+
+  // --- WEBRTC HELPER FUNCTIONS ---
+
+  // Helper para enviar señales
+  const sendSignal = useCallback(async (targetTeamId: string, event: string, data: any) => {
+    try {
+      await actions.voice.signal({
+        teamId: targetTeamId,
+        event: event as any,
+        data: { fromUserId: userId, ...data }
+      });
+    } catch (err) {
+      console.error(`Error signaling ${event}:`, err);
+    }
+  }, [userId]);
+
+  // Setup Peer Connection
+  const createPeerConnection = useCallback((peerId: string, isSpectating: boolean, channelTeamId: string) => {
+    const pc = new RTCPeerConnection(ICE_SERVERS);
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        sendSignal(channelTeamId, "signal:iceCandidate", {
+          toUserId: peerId,
+          candidate: event.candidate.toJSON()
         });
+      }
+    };
 
-        setLocalStream(stream);
-        setConnectionError(null);
-      } catch (error) {
-        console.error("Failed to get audio stream:", error);
-        if (error instanceof Error) {
-          if (error.name === "NotAllowedError") {
-            setConnectionError("Permiso de micrófono denegado");
-          } else if (error.name === "NotFoundError") {
-            setConnectionError("No se encontró micrófono");
-          } else {
-            setConnectionError("Error al acceder al micrófono");
-          }
+    pc.ontrack = (event) => {
+      const audio = new Audio();
+      audio.srcObject = event.streams[0];
+      audio.volume = 1;
+      audio.autoplay = true; // Importante para navegadores modernos
+      audio.play().catch(e => console.warn("Autoplay blocked", e));
+      remoteAudiosRef.current[peerId] = audio;
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+        removePeerConnection(peerId);
+        // Limpiar audio
+        if (remoteAudiosRef.current[peerId]) {
+          remoteAudiosRef.current[peerId].pause();
+          delete remoteAudiosRef.current[peerId];
         }
       }
     };
 
-    if (!localStream && (!isAdmin || teamId)) {
-      initAudio();
+    // Añadir tracks locales
+    if (localStream && !isAdminSpectator && !isSpectating) {
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
     }
 
-    return () => {
-      // Cleanup on unmount
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [isAdminSpectator]);
+    return pc;
+  }, [localStream, isAdminSpectator, sendSignal, removePeerConnection]);
 
-  // Subscribe to team voice signal channel
+  // Manejo de Ofertas/Respuestas/ICE
+  const handleWebRTCMessage = useCallback(async (type: string, data: any, channelTeamId: string, isSpectating: boolean) => {
+    const { fromUserId, sdp, candidate } = data;
+    let pc = peerConnections[fromUserId];
+
+    try {
+      if (type === 'offer') {
+        if (!pc) {
+          pc = createPeerConnection(fromUserId, isSpectating, channelTeamId);
+          addPeerConnection(fromUserId, pc);
+        }
+        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+
+        // Procesar candidatos pendientes si existen
+        const pending = pendingCandidates[fromUserId];
+        if (pending) {
+          for (const cand of pending) await pc.addIceCandidate(new RTCIceCandidate(cand));
+          setPendingCandidates(prev => {
+            const next = { ...prev };
+            delete next[fromUserId];
+            return next;
+          });
+        }
+
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        sendSignal(channelTeamId, "signal:answer", { toUserId: fromUserId, sdp: answer });
+      }
+
+      else if (type === 'answer' && pc) {
+        if (pc.signalingState === 'have-local-offer') {
+          await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        }
+      }
+
+      else if (type === 'candidate') {
+        if (pc && pc.remoteDescription) {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } else {
+          setPendingCandidates(prev => ({
+            ...prev,
+            [fromUserId]: [...(prev[fromUserId] || []), candidate]
+          }));
+        }
+      }
+    } catch (err) {
+      console.error(`WebRTC Error (${type}):`, err);
+    }
+  }, [peerConnections, createPeerConnection, addPeerConnection, pendingCandidates, sendSignal]);
+
+
+  // 4. Pusher Subscriptions & Signaling
   useEffect(() => {
     if (!pusher) return;
 
     const channels: Channel[] = [];
+    const teamsToSubscribe = [];
 
-    // Subscribe to own team channel if not spectator or if teamId exists
-    if (teamId && !isAdminSpectator) {
-      const channelName = `team-${teamId}-voice-signal`;
+    // Determinar a qué equipos suscribirse
+    if (teamId && !isAdminSpectator) teamsToSubscribe.push({ id: teamId, isSpec: false });
+    if (isAdminSpectator) {
+      Object.keys(spectatingTeams)
+        .filter(id => spectatingTeams[id])
+        .forEach(id => teamsToSubscribe.push({ id, isSpec: true }));
+    }
+
+    teamsToSubscribe.forEach(({ id: currentChannelTeamId, isSpec }) => {
+      const channelName = `team-${currentChannelTeamId}-voice-signal`;
       const channel = pusher.subscribe(channelName);
       channels.push(channel);
 
-      // Bind events for own team
-      bindChannelEvents(channel, teamId, false);
-    }
-
-    // Subscribe to spectating team channels if admin spectator
-    if (isAdminSpectator) {
-      Object.keys(spectatingTeams).forEach(spectatingTeamId => {
-        if (spectatingTeams[spectatingTeamId]) {
-          const channelName = `team-${spectatingTeamId}-voice-signal`;
-          const channel = pusher.subscribe(channelName);
-          channels.push(channel);
-
-          // Bind events for spectating team
-          bindChannelEvents(channel, spectatingTeamId, true);
-        }
-      });
-    }
-
-    // Function to bind events to a channel
-    function bindChannelEvents(channel: Channel, channelTeamId: string, isSpectating: boolean) {
-      // Handle voice enabled event
+      // Bindings
       channel.bind("voice:enabled", (data: any) => {
-        console.log("Voice enabled for team:", data.teamId);
         setVoiceEnabled(data.teamId, true);
-
-        if (!isSpectating) {
-          // Announce presence to other peers
-          actions.voice.signal({
-            teamId: data.teamId,
-            event: "voice:user-joined" as any,
-            data: {
-              fromUserId: userId,
-              toUserId: "broadcast",
-              userId: userId
-            }
-          });
-        } else {
-          // As spectator, announce presence to receive offers
-          actions.voice.signal({
-            teamId: data.teamId,
-            event: "voice:user-joined" as any,
-            data: {
-              fromUserId: userId,
-              toUserId: "broadcast",
-              userId: userId
-            }
-          });
-        }
+        // Anunciar presencia
+        sendSignal(data.teamId, "voice:user-joined", { userId });
       });
 
-      // Handle voice disabled event
       channel.bind("voice:disabled", (data: any) => {
-        console.log("Voice disabled for team:", data.teamId);
         setVoiceEnabled(data.teamId, false);
-        if (!isSpectating) {
-          cleanup();
-        }
+        if (!isSpec) cleanup();
       });
 
-      // Handle force mute event
       channel.bind("voice:force-mute", (data: any) => {
-        if (data.targetUserId === userId && !isSpectating) {
-          console.log("Force muted by admin");
-          if (localStream) {
-            localStream.getAudioTracks().forEach(track => {
-              track.enabled = false;
-            });
-            setLocalMicEnabled(false);
-          }
+        if (data.targetUserId === userId && !isSpec && localStream) {
+          localStream.getAudioTracks().forEach(track => (track.enabled = false));
+          setLocalMicEnabled(false);
         }
       });
 
-      // Handle WebRTC signaling
-      channel.bind("signal:offer", async (data: any) => {
-        if (data.toUserId === userId) {
-          await handleOffer(data.fromUserId, data.sdp, channelTeamId, isSpectating);
+      // Señalización
+      channel.bind("signal:offer", (d: any) => {
+        if (d.toUserId === userId) handleWebRTCMessage('offer', d, currentChannelTeamId, isSpec);
+      });
+
+      channel.bind("signal:answer", (d: any) => {
+        if (d.toUserId === userId) handleWebRTCMessage('answer', d, currentChannelTeamId, isSpec);
+      });
+
+      channel.bind("signal:iceCandidate", (d: any) => {
+        if (d.toUserId === userId) handleWebRTCMessage('candidate', d, currentChannelTeamId, isSpec);
+      });
+
+      // Nuevos usuarios
+      channel.bind("voice:user-joined", async (d: any) => {
+        if (d.userId !== userId && !peerConnections[d.userId] && !isSpec) {
+          const pc = createPeerConnection(d.userId, false, currentChannelTeamId);
+          addPeerConnection(d.userId, pc);
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          sendSignal(currentChannelTeamId, "signal:offer", { toUserId: d.userId, sdp: offer });
         }
       });
 
-      channel.bind("signal:answer", async (data: any) => {
-        if (data.toUserId === userId) {
-          await handleAnswer(data.fromUserId, data.sdp);
+      // Espectadores
+      channel.bind('voice:spectator-joined', async (d: any) => {
+        if (!isSpec) {
+          const pc = createPeerConnection(d.spectatorId, false, currentChannelTeamId); // false porque YO no soy espectador
+          addPeerConnection(d.spectatorId, pc);
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          sendSignal(currentChannelTeamId, "signal:offer", { toUserId: d.spectatorId, sdp: offer });
         }
       });
 
-      channel.bind("signal:iceCandidate", async (data: any) => {
-        if (data.toUserId === userId) {
-          await handleIceCandidate(data.fromUserId, data.candidate);
-        }
+      channel.bind('voice:spectator-left', (d: any) => {
+        removePeerConnection(d.spectatorId);
       });
-
-      // Handle user joined - initiate connection
-      channel.bind("voice:user-joined", async (data: any) => {
-        if (data.userId !== userId && !peerConnections[data.userId]) {
-          if (!isSpectating) {
-            // Create offer to the new user
-            await createOffer(data.userId, channelTeamId);
-          } else {
-            // As spectator, wait for offer from others
-          }
-        }
-      });
-    }
+    });
 
     return () => {
-      channels.forEach(channel => {
-        channel.unbind_all();
-        channel.unsubscribe();
+      channels.forEach(c => {
+        c.unbind_all();
+        c.unsubscribe();
       });
     };
-  }, [pusher, teamId, userId, peerConnections, isAdminSpectator, spectatingTeams]);
+  }, [pusher, teamId, spectatingTeams, isAdminSpectator, localStream, handleWebRTCMessage]);
 
-  // Handle offer from peer
-  const handleOffer = async (fromUserId: string, sdp: RTCSessionDescriptionInit, channelTeamId: string, isSpectating: boolean) => {
-    try {
-      const pc = new RTCPeerConnection(ICE_SERVERS);
+  // Get team info
+  const teamName = teamId ? teamId.toUpperCase() : 'VOICE';
+  const teamColor = teamId || 'gray';
 
-      // Set up event handlers
-      setupPeerConnection(pc, fromUserId, isSpectating, channelTeamId);
+  // Color mapping for retro style
+  const colorClasses = {
+    red: 'border-red-500 bg-red-900/20 text-red-300',
+    blue: 'border-blue-500 bg-blue-900/20 text-blue-300',
+    yellow: 'border-yellow-500 bg-yellow-900/20 text-yellow-300',
+    purple: 'border-purple-500 bg-purple-900/20 text-purple-300',
+    green: 'border-green-500 bg-green-900/20 text-green-300',
+    white: 'border-white bg-white/10 text-white',
+    gray: 'border-gray-500 bg-gray-900/20 text-gray-300'
+  };
 
-      // Set remote description
-      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-
-      // Create answer
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-
-      // Send answer back via action only if not spectating
-      if (!isSpectating) {
-        await actions.voice.signal({
-          teamId: channelTeamId,
-          event: "signal:answer",
-          data: {
-            fromUserId: userId,
-            toUserId: fromUserId,
-            sdp: answer
-          }
-        });
-      }
-
-      addPeerConnection(fromUserId, pc);
-    } catch (error) {
-      console.error("Error handling offer:", error);
+  // Get team players
+  const getTeamPlayers = () => {
+    if (isAdminSpectator) {
+      // Para spectator, mostrar players de equipos specteados
+      const spectatingTeamIds = Object.keys(spectatingTeams).filter(id => spectatingTeams[id]);
+      return players.filter(p => spectatingTeamIds.includes(p.team || ''));
+    } else {
+      // Para equipo propio
+      return players.filter(p => p.team === teamId);
     }
   };
 
-  // Handle answer from peer
-  const handleAnswer = async (fromUserId: string, sdp: RTCSessionDescriptionInit) => {
-    try {
-      const pc = peerConnections[fromUserId];
-      if (pc) {
-        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-      }
-    } catch (error) {
-      console.error("Error handling answer:", error);
-    }
-  };
+  const teamPlayers = getTeamPlayers();
 
-  // Handle ICE candidate
-  const handleIceCandidate = async (fromUserId: string, candidate: RTCIceCandidateInit) => {
-    try {
-      const pc = peerConnections[fromUserId];
-      if (pc) {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
-      }
-    } catch (error) {
-      console.error("Error handling ICE candidate:", error);
-    }
-  };
-
-  // Setup peer connection event handlers
-  const setupPeerConnection = (pc: RTCPeerConnection, peerId: string, isSpectating: boolean = false, teamIdForSignal: string = '') => {
-    // Handle ICE candidates
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        actions.voice.signal({
-          teamId: teamIdForSignal,
-          event: "signal:iceCandidate",
-          data: {
-            fromUserId: userId,
-            toUserId: peerId,
-            candidate: event.candidate.toJSON()
-          }
-        });
-      }
-    };
-
-    // Handle incoming audio track
-    pc.ontrack = (event) => {
-      console.log("Received remote audio track from:", peerId);
-      const audioElement = new Audio();
-      audioElement.srcObject = event.streams[0];
-      audioElement.play().catch(err => console.error("Error playing audio:", err));
-    };
-
-    // Handle connection state changes
-    pc.onconnectionstatechange = () => {
-      console.log(`Peer ${peerId} connection state:`, pc.connectionState);
-      if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
-        removePeerConnection(peerId);
-      }
-    };
-
-    // Add local audio track (only if not admin spectator and not spectating this connection)
-    if (localStream && !isAdminSpectator && !isSpectating) {
-      localStream.getTracks().forEach(track => {
-        pc.addTrack(track, localStream);
-      });
-    }
-  };
-
-  // Create offer to peer
-  const createOffer = async (toUserId: string, channelTeamId: string) => {
-    try {
-      const pc = new RTCPeerConnection(ICE_SERVERS);
-
-      // Set up event handlers
-      setupPeerConnection(pc, toUserId, false, channelTeamId);
-
-      // Create offer
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-
-      // Send offer via action
-      await actions.voice.signal({
-        teamId: channelTeamId,
-        event: "signal:offer",
-        data: {
-          fromUserId: userId,
-          toUserId,
-          sdp: offer
-        }
-      });
-
-      addPeerConnection(toUserId, pc);
-    } catch (error) {
-      console.error("Error creating offer:", error);
-    }
-  };
-
-  // PTT key handlers
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't activate PTT if user is typing in input/textarea
-      if (isInputFocusedRef.current) return;
-
-      if (e.key.toLowerCase() === 'v' && !isPTTActive && localStream && teamId && voiceEnabledTeams[teamId]) {
-        e.preventDefault();
-
-        // Debounce PTT activation
-        if (pttDebounceTimerRef.current) {
-          clearTimeout(pttDebounceTimerRef.current);
-        }
-
-        pttDebounceTimerRef.current = window.setTimeout(() => {
-          setPTTActive(true);
-          localStream.getAudioTracks().forEach(track => {
-            track.enabled = true;
-          });
-          setLocalMicEnabled(true);
-        }, PTT_DEBOUNCE_MS);
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'v' && isPTTActive && localStream) {
-        e.preventDefault();
-
-        // Clear debounce timer if still pending
-        if (pttDebounceTimerRef.current) {
-          clearTimeout(pttDebounceTimerRef.current);
-          pttDebounceTimerRef.current = null;
-        }
-
-        setPTTActive(false);
-        localStream.getAudioTracks().forEach(track => {
-          track.enabled = false;
-        });
-        setLocalMicEnabled(false);
-      }
-    };
-
-    // Track focus on input/textarea elements
-    const handleFocusIn = (e: FocusEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-        isInputFocusedRef.current = true;
-      }
-    };
-
-    const handleFocusOut = (e: FocusEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-        isInputFocusedRef.current = false;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    document.addEventListener('focusin', handleFocusIn);
-    document.addEventListener('focusout', handleFocusOut);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      document.removeEventListener('focusin', handleFocusIn);
-      document.removeEventListener('focusout', handleFocusOut);
-
-      if (pttDebounceTimerRef.current) {
-        clearTimeout(pttDebounceTimerRef.current);
-      }
-    };
-  }, [isPTTActive, localStream, teamId, voiceEnabledTeams]);
-
-  // Cleanup on unmount and visibility change
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        cleanup();
-      }
-    };
-
-    const handleBeforeUnload = () => {
-      cleanup();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
-
-  // Don't render if no team or voice not enabled for team
-  if (!teamId || !voiceEnabledTeams[teamId]) {
-    return null;
-  }
+  // Render
+  if (!isAdminSpectator && (!teamId || !voiceEnabledTeams[teamId])) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 p-4 bg-black/80 rounded-lg border border-gray-700 max-w-xs">
-      {/* Voice enabled indicator */}
-      <div className="flex items-center gap-2 text-xs text-gray-300">
-        <LucideVolume2 className="w-4 h-4" />
-        <span>Voice habilitado</span>
+    <div className={`${isAdminSpectator ? 'fixed top-4 left-4 z-50' : 'fixed bottom-4 right-4 z-50'} flex flex-col ${isAdminSpectator ? 'gap-1 p-2' : 'gap-2 p-4'} bg-black/90 rounded-lg border-2 ${colorClasses[teamColor]} max-w-xs shadow-2xl ${isAdminSpectator ? 'text-xs max-w-[200px]' : ''}`}>
+      <div className={`flex items-center gap-2 ${isAdminSpectator ? 'text-[10px]' : 'text-xs'} font-press-start-2p uppercase tracking-wider`}>
+        <LucideVolume2 className={`${isAdminSpectator ? 'w-3 h-3' : 'w-4 h-4'}`} />
+        <span>VOICE - {teamName}</span>
       </div>
 
-      {/* Error message */}
-      {connectionError && (
-        <div className="text-xs text-red-400 bg-red-900/20 p-2 rounded">
+      {!isAdminSpectator && connectionError && (
+        <div className="text-xs text-red-200 bg-red-900/50 p-2 rounded border border-red-800 font-mono">
           {connectionError}
         </div>
       )}
 
-      {/* PTT indicator */}
       {!isAdminSpectator && (
-        <div className="flex items-center gap-2">
-          {isLocalMicEnabled ? (
-            <div className="flex items-center gap-2 text-green-500">
-              <LucideMic className="w-5 h-5 animate-pulse" />
-              <span className="text-sm font-medium">Transmitiendo</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-gray-400">
-              <LucideMicOff className="w-5 h-5" />
-              <span className="text-sm">Mantén V para hablar</span>
-            </div>
-          )}
+        <div className={`flex items-center gap-2 transition-colors duration-200 ${isLocalMicEnabled ? 'text-green-400' : 'text-gray-400'}`}>
+          {isLocalMicEnabled ? <LucideMic className="w-5 h-5 animate-pulse" /> : <LucideMicOff className="w-5 h-5" />}
+          <span className="text-sm font-press-start-2p">
+            {isLocalMicEnabled ? "TX..." : "PRESS V"}
+          </span>
         </div>
       )}
 
-      {/* Admin spectator indicator */}
       {isAdminSpectator && (
-        <div className="text-xs text-blue-400">
-          Modo espectador (solo escucha)
+        <div className="text-[10px] bg-blue-900/30 p-1 rounded text-center font-mono border border-blue-500">
+          SPECTATOR
         </div>
       )}
 
-      {/* Connection count */}
-      <div className="text-xs text-gray-500">
-        {Object.keys(peerConnections).length} conexión(es)
+      {isAdminSpectator && Object.keys(spectatingTeams).filter(id => spectatingTeams[id]).length > 0 && (
+        <div className="text-[10px] text-gray-400 font-mono">
+          TEAMS: {Object.keys(spectatingTeams).filter(id => spectatingTeams[id]).join(', ').toUpperCase()}
+        </div>
+      )}
+
+      <div className={`text-[10px] text-gray-500 flex justify-between mt-1 border-t border-gray-700 ${isAdminSpectator ? 'pt-1' : 'pt-2'} font-mono`}>
+        <span>PEERS:</span>
+        <span className="text-gray-300">{Object.keys(peerConnections).length}</span>
       </div>
+
+      {teamPlayers.length > 0 && (
+        <div className="mt-2 border-t border-gray-700 pt-2">
+          <div className="text-[10px] text-gray-400 font-mono mb-1">TEAM:</div>
+          <div className="flex gap-1 flex-wrap">
+            {teamPlayers.slice(0, 6).map(player => (
+              <img
+                key={player.id}
+                src={player.avatar}
+                alt={player.displayName}
+                className="w-6 h-6 rounded-full border border-gray-600"
+                onError={(e) => e.currentTarget.src = "/fallback.png"}
+              />
+            ))}
+            {teamPlayers.length > 6 && (
+              <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-[8px] font-mono text-gray-300">
+                +{teamPlayers.length - 6}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

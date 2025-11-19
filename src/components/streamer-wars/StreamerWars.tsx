@@ -99,7 +99,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
     const [showWaitingScreen, setShowWaitingScreen] = useState(true);
     const [expectedPlayers, setExpectedPlayers] = useState<number>(50);
-    const [showVoiceControls, setShowVoiceControls] = useState(false);
     const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -187,6 +186,19 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                     }
                 }
             }
+
+            // Update players with team info
+            setPlayers(prev => prev.map(player => {
+                for (const [teamColor, teamPlayers] of Object.entries(data.playersTeams)) {
+                    const playerInTeam = (teamPlayers as any[]).find(
+                        (p: any) => p.playerNumber === player.playerNumber
+                    );
+                    if (playerInTeam) {
+                        return { ...player, team: teamColor };
+                    }
+                }
+                return player;
+            }));
         });
     }, []);
 
@@ -337,11 +349,6 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
             <CurrentPlayer session={session} showTimer={showTimer} timerSeconds={timerSeconds} timerKey={timerKey} onTimerEnd={onTimerEnd} />
             <div slot="sidebar-left">
-                {session.user.isAdmin && (
-                    <button onClick={() => setShowVoiceControls(!showVoiceControls)} className="fixed bottom-4 left-4 z-50 bg-black/90 p-2 rounded border border-gray-700">
-                        <LucideVolume2 className="w-4 h-4 text-white" />
-                    </button>
-                )}
             </div>
             {
                 splashEnded && (
@@ -364,7 +371,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                                 <WaitingScreen players={players} expectedPlayers={expectedPlayers} />
                             )
                         }
-                        <WelcomeToStreamerWars session={session} bgAudio={bgAudio.current!} isOpen={showWelcomeDialog} setIsOpen={setShowWelcomeDialog} />
+                        <WelcomeToStreamerWars session={session} bgAudio={bgAudio.current} isOpen={showWelcomeDialog} setIsOpen={setShowWelcomeDialog} />
                         {pusher && globalChannel.current && presenceChannel.current && session && (
                             <>
                                 {
@@ -379,7 +386,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                                                 channel={globalChannel.current}
                                                 bgVolume={bgVolume}
                                                 setBgVolume={setBgVolume}
-                                                bgAudio={bgAudio.current!}
+                                                bgAudio={bgAudio.current}
                                             />
                                         )
                                     )
@@ -389,12 +396,13 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
                         <AdminChat session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
                         <StreamerWarsAudioManager session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
-                        <VoiceControls isAdmin={session.user.isAdmin || false} show={showVoiceControls} />
+                        <VoiceControls isAdmin={session.user.isAdmin || false} />
                         <VoiceChat
                             pusher={pusher}
                             userId={session.user.id}
                             teamId={currentTeamId}
                             isAdmin={session.user.isAdmin || false}
+                            players={players}
                         />
                     </>
                 )}
