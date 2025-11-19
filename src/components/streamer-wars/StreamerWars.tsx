@@ -25,6 +25,8 @@ import { TugOfWar } from "./games/TugOfWar";
 import { StreamerWarsAudioManager } from "./StreamerWarsAudioManager";
 import { Timer } from "./Timer";
 import CurrentPlayer from "./CurrentPlayer";
+import { VoiceChat } from "./VoiceChat";
+import { VoiceControls } from "./VoiceControls";
 
 const PRELOAD_SOUNDS = () => {
     Object.values(STREAMER_WARS_SOUNDS).forEach((sound) => {
@@ -97,6 +99,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
     const [showWaitingScreen, setShowWaitingScreen] = useState(true);
     const [expectedPlayers, setExpectedPlayers] = useState<number>(50);
+    const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
 
     useEffect(() => {
         document.addEventListener("splash-screen-ended", () => {
@@ -162,6 +165,27 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
                 return [...prev, ...newPlayers];
             });
+        });
+
+        // Get current player's team
+        actions.streamerWars.getPlayersTeams().then(({ error, data }) => {
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            // Find the team the current player belongs to
+            if (session.user.streamerWarsPlayerNumber) {
+                for (const [teamColor, teamPlayers] of Object.entries(data.playersTeams)) {
+                    const playerInTeam = (teamPlayers as any[]).find(
+                        (p: any) => p.playerNumber === session.user.streamerWarsPlayerNumber
+                    );
+                    if (playerInTeam) {
+                        setCurrentTeamId(teamColor);
+                        break;
+                    }
+                }
+            }
         });
     }, []);
 
@@ -252,6 +276,13 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                     title: 'font-rubik uppercase font-medium',
                 }
             })
+        })
+
+        // Listen for player joined team event to update current team
+        globalChannel.current?.bind('player-joined', ({ playerNumber, team }: { playerNumber: number; team: string }) => {
+            if (playerNumber === session.user.streamerWarsPlayerNumber) {
+                setCurrentTeamId(team);
+            }
         })
 
 
@@ -350,6 +381,13 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
                         <AdminChat session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
                         <StreamerWarsAudioManager session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
+                        <VoiceControls isAdmin={session.user.isAdmin || false} />
+                        <VoiceChat 
+                            pusher={pusher} 
+                            userId={session.user.id} 
+                            teamId={currentTeamId} 
+                            isAdmin={session.user.isAdmin || false} 
+                        />
                     </>
                 )}
         </>
