@@ -254,41 +254,6 @@ const IS_USER_INSCRIBED = await client
           >
         </div>
 
-        <!-- Equipo (oculto) -->
-        <!--
-        <div class="flex flex-col space-y-2">
-          <label class="font-rubik font-semibold">
-            Estado del equipo <span class="text-red-400">*</span>
-          </label>
-          <div class="flex flex-col gap-2">
-            <label class="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="radio"
-                name="team_status"
-                value="tengo"
-                required
-                class="text-[#FF4444]"
-              />
-              <span>Sí, ya tengo equipo</span>
-            </label>
-            <label class="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="radio"
-                name="team_status"
-                value="buscare"
-                required
-                class="text-[#FF4444]"
-              />
-              <span>Ok, trataré de buscar</span>
-            </label>
-          </div>
-          <small class="text-gray-400 text-sm"
-            >Recuerda que se podrán ayudar al comenzar el desafío (Todos deben
-            llenar el formulario)</small
-          >
-        </div>
-        -->
-
         <!-- Canal de contenido -->
         <div class="flex flex-col space-y-2">
           <label for="content_channel" class="font-rubik font-semibold">
@@ -302,102 +267,187 @@ const IS_USER_INSCRIBED = await client
             class="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-[#FF4444] focus:outline-none"
           />
           <small class="text-gray-400 text-sm"
-            >Si deseas, puedes compartir tu canal para que podamos conocerte
-            mejor.</small
+            >Si tienes un canal donde creas contenido, déjanos el link para
+            promocionarte</small
           >
         </div>
 
-        <!-- Aceptación de términos -->
-        <div class="flex flex-col space-y-2">
-          <label class="flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              id="accept_terms"
-              class="text-[#FF4444] focus:ring-0 rounded-md"
-              required
-            />
-            <span class="ml-2">
-              Acepto los{" "}
-              <a
-                href="#"
-                class="text-[#FF4444] underline"
-                onclick="document.getElementById('terms-modal').showModal()"
-                >términos y condiciones</a
-              >
-              .
-            </span>
-          </label>
-        </div>
-
-        <!-- Botón de inscripción -->
-        <div>
+        <div class="pt-4">
           <button
             type="submit"
-            class="w-full px-4 py-2 bg-[#FF4444] text-white rounded-md hover:bg-[#e63939] transition-colors"
+            class="w-full py-3 bg-[#FF4444] rounded-lg text-white font-semibold transition duration-300 hover:bg-[#e63939]"
           >
-            Inscribirme
+            Continuar
           </button>
         </div>
       </form>
     </div>
   </dialog>
 
-  <!-- Modal de términos y condiciones -->
+  <!-- Modal de confirmación -->
   <dialog
-    id="terms-modal"
-    class="max-w-[640px] w-full fixed inset-0 z-[99999998] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+    id="confirmation-modal"
+    class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
   >
-    <form id="terms-modal-close" class="absolute top-5 right-5">
+    <form id="confirmation-modal-close" class="absolute top-5 right-5">
       <button type="button" class="text-white">
         <LucideX class="w-6 h-6" />
       </button>
     </form>
 
-    <div class="prose max-w-full">
-      <h2 class="text-2xl font-bold text-center mb-4">
-        Términos y condiciones
-      </h2>
-      <div class="flex flex-col space-y-4">
-        <p>
-          Estos términos y condiciones rigen la participación en la serie de
-          Minecraft organizada por SaltoCraft. Al inscribirte, aceptas cumplir
-          con estos términos.
-        </p>
+    <div class="flex flex-col items-center space-y-4">
+      <img src="/favicon.svg" class="aspect-square size-24" />
+    </div>
 
-        <p>
-          La serie de Minecraft es un evento comunitario donde los jugadores
-          participan en desafíos y misiones en un entorno de Minecraft
-          colaborativo.
-        </p>
-
-        <p>
-          La ORGANIZACIÓN se reserva el derecho de modificar estos términos y
-          condiciones, así como la estructura y reglas de la serie, en cualquier
-          momento y sin previo aviso.
-        </p>
-
-        <p>
-          La participación en la serie es gratuita, pero puede requerir la
-          compra de productos o servicios relacionados con Minecraft.
-        </p>
-
-        <p>
-          La ORGANIZACIÓN no se hace responsable de ningún daño, pérdida o
-          inconveniente causado por la participación en la serie o por la
-          imposibilidad de participar.
-        </p>
-
-        <p>
-          Al inscribirte, aceptas recibir comunicaciones relacionadas con la
-          serie, incluyendo pero no limitado a actualizaciones, anuncios y
-          resultados.
-        </p>
-
-        <p>
-          Si tienes alguna pregunta o inquietud acerca de estos términos y
-          condiciones, por favor contáctanos antes de inscribirte.
-        </p>
+    <div class="flex flex-col space-y-4 mt-8">
+      <div class="prose prose-invert font-rubik text-sm">
+        <h2 class="text-2xl font-bold text-center">Términos y condiciones</h2>
+        <div
+          class="prose prose-invert font-rubik text-sm max-h-64 overflow-y-auto"
+          set:html={markdown(inscripcionTOS)}
+        />
+        <div
+          class="bg-yellow-900/30 border border-yellow-600 rounded-lg p-4 mt-4"
+        >
+          <p class="text-yellow-200 text-sm mb-2">
+            <strong>⚠️ Importante:</strong> Al entrar al DESAFIO SaltoCraft EXTREMO
+            3 lees y aceptas las reglas aclaradas en el DISCORD OFICIAL de SaltoUruguay
+            Server.
+          </p>
+        </div>
+        <form class="flex flex-col space-y-4 mt-8" id="accept-tos-form">
+          <button
+            type="submit"
+            class="accept w-full py-3 bg-electric-violet-500 rounded-lg text-white transition duration-300 hover:bg-electric-violet-600"
+          >
+            Aceptar términos e inscribirme
+          </button>
+        </form>
       </div>
     </div>
   </dialog>
 </Layout>
+
+<script>
+  import { $ } from "@/lib/dom-selector";
+  import { actions } from "astro:actions";
+  import { signOut } from "auth-astro/client";
+  import { toast } from "sonner";
+
+  document.addEventListener("astro:page-load", () => {
+    const $loginButton = $("#login");
+    const $signInModal = $("#login-modal") as HTMLDialogElement;
+
+    $loginButton?.addEventListener("click", () => {
+      $signInModal.showModal();
+    });
+
+    const $linkDiscordButton = $("#link-discord");
+
+    $linkDiscordButton?.addEventListener("click", () => {
+      window.location.href = `/api/discord/link`;
+    });
+
+    const $logoutButton = $("#logout");
+
+    $logoutButton?.addEventListener("click", (e) => {
+      e.preventDefault();
+      signOut();
+    });
+
+    const $inscribirseButton = $("#inscribirse");
+    const $inscripcionModal = $("#inscripcion-modal") as HTMLDialogElement;
+    const $confirmationModal = $("#confirmation-modal") as HTMLDialogElement;
+
+    const $closeInscripcionModal = $inscripcionModal.querySelector(
+      "#inscripcion-modal-close button"
+    );
+    const $closeConfirmationModal = $confirmationModal.querySelector(
+      "#confirmation-modal-close button"
+    );
+
+    $closeInscripcionModal?.addEventListener("click", () => {
+      $inscripcionModal.close();
+    });
+
+    $closeConfirmationModal?.addEventListener("click", () => {
+      $confirmationModal.close();
+    });
+
+    $inscribirseButton?.addEventListener("click", () => {
+      $inscripcionModal.showModal();
+    });
+
+    // Form data storage
+    let formData = {};
+
+    const $inscriptionForm = $("#inscription-form");
+
+    $inscriptionForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formDataObj = new FormData(e.target as HTMLFormElement);
+      formData = Object.fromEntries(formDataObj.entries());
+
+      $inscripcionModal.close();
+      $confirmationModal.showModal();
+    });
+
+    const $acceptTOSForm = $("#accept-tos-form");
+
+    $acceptTOSForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const $discordUsername = $("[data-discord-username]");
+
+      if (!$discordUsername || !$discordUsername.dataset.discordUsername) {
+        toast.error("No hemos podido obtener tu nombre de usuario de Discord.");
+        return;
+      }
+
+      // @ts-ignore
+      const { error } = await actions.inscribeToSaltoCraftExtremo3({
+        discordUsername: $discordUsername.dataset.discordUsername,
+        acceptedTerms: true,
+        ...formData,
+      });
+
+      if (error) {
+        toast.error(
+          typeof error === "string"
+            ? error
+            : error.message || JSON.stringify(error)
+        );
+        return;
+      }
+
+      toast.success("¡Te has inscrito correctamente a SaltoCraft Extremo 3!");
+      $confirmationModal.close();
+      window.location.reload();
+    });
+  });
+</script>
+
+<style>
+  h1.with-glyph:after {
+    content: "a";
+    @apply text-[80px] font-atomic-extras mt-10 absolute inset-x-0 text-center;
+    z-index: -1;
+  }
+
+  .mask {
+    -webkit-mask-composite: source-in;
+    mask-image: url(/images/mask.webp);
+    mask-position: 50%;
+    mask-size: cover;
+    mask-repeat: no-repeat;
+    mask-clip: content-box;
+    mask-origin: content-box;
+    mask-composite: source-in;
+    mask-mode: alpha;
+  }
+
+  @font-face {
+    font-family: "Minecraftia";
+    src: url("/fonts/Minecraftia.woff2") format("woff2");
+  }
+</style>
