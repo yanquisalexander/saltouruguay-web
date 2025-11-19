@@ -71,6 +71,7 @@ export interface TugOfWarGameState {
         teamA: { id: number; color: string; name: string; playerCount: number };
         teamB: { id: number; color: string; name: string; playerCount: number };
     };
+    players: { teamA: number[]; teamB: number[] };
     progress: number; // -100 to +100 (-100 = Team B wins, +100 = Team A wins)
     status: 'waiting' | 'playing' | 'finished';
     winner?: 'teamA' | 'teamB';
@@ -686,6 +687,7 @@ export const games = {
                         teamA: { id: 0, color: '', name: '', playerCount: 0 },
                         teamB: { id: 0, color: '', name: '', playerCount: 0 },
                     },
+                    players: { teamA: [], teamB: [] },
                     progress: 0,
                     status: 'waiting',
                     playedTeams: [],
@@ -743,6 +745,7 @@ export const games = {
             // Get teams with at least 1 player
             const availableTeams = Object.values(teamGroups).filter(t => t.players.length > 0);
 
+            console.log('Available teams for Tug of War:', availableTeams);
             if (availableTeams.length < 2) {
                 throw new Error('No hay suficientes equipos disponibles para jugar Tug of War');
             }
@@ -772,6 +775,9 @@ export const games = {
                 throw new Error('No se pudieron seleccionar 2 equipos para el juego');
             }
 
+            // Order selected teams deterministically so teamA is the left team (smaller id)
+            selectedTeams.sort((a, b) => a.id - b.id);
+
             const [teamA, teamB] = selectedTeams;
 
             // Update played teams
@@ -792,6 +798,7 @@ export const games = {
                         playerCount: teamB.players.length,
                     },
                 },
+                players: { teamA: teamA.players, teamB: teamB.players },
                 progress: 0,
                 status: 'playing',
                 playedTeams,
@@ -913,7 +920,7 @@ export const games = {
             // If game finished, announce winner
             if (gameState.status === 'finished') {
                 const winningTeam = gameState.winner === 'teamA' ? gameState.teams.teamA : gameState.teams.teamB;
-                
+
                 try {
                     const audioBase64 = await tts(`¡El equipo ${winningTeam.name} ha ganado la partida de Tug of War!`);
                     const audioPayload = encodeAudioForPusher(audioBase64!);
@@ -980,8 +987,8 @@ export const games = {
             gameState.status = 'finished';
             await cache.set(TUG_OF_WAR_CACHE_KEY, gameState);
 
-            const winningTeam = gameState.winner === 'teamA' ? gameState.teams.teamA : 
-                                gameState.winner === 'teamB' ? gameState.teams.teamB : null;
+            const winningTeam = gameState.winner === 'teamA' ? gameState.teams.teamA :
+                gameState.winner === 'teamB' ? gameState.teams.teamB : null;
 
             await pusher.trigger('streamer-wars', 'tug-of-war:game-ended', {
                 winner: gameState.winner,
@@ -1436,7 +1443,12 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
 
         if (roleId) {
             // Agregar rol al usuario en Discord
-            await addRoleToUser(SALTO_DISCORD_GUILD_ID, user.discordId, roleId);
+            try {
+                await addRoleToUser(SALTO_DISCORD_GUILD_ID, user.discordId, roleId);
+
+            } catch (error) {
+
+            }
         }
 
         // Notificar al canal mediante Pusher
@@ -1501,16 +1513,20 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
 
 
 
-        const guildMember = await getGuildMember(SALTO_DISCORD_GUILD_ID, user.discordId);
+        try {
+            const guildMember = await getGuildMember(SALTO_DISCORD_GUILD_ID, user.discordId);
 
-        const { roles } = guildMember as { roles: string[] };
+            const { roles } = guildMember as { roles: string[] };
 
-        for (const roleId of roles) {
-            if (roleId === DISCORD_ROLES.EQUIPO_AZUL || roleId === DISCORD_ROLES.EQUIPO_ROJO || roleId === DISCORD_ROLES.EQUIPO_AMARILLO || roleId === DISCORD_ROLES.EQUIPO_MORADO || roleId === DISCORD_ROLES.EQUIPO_BLANCO) {
-                await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId!, roleId);
+            for (const roleId of roles) {
+                if (roleId === DISCORD_ROLES.EQUIPO_AZUL || roleId === DISCORD_ROLES.EQUIPO_ROJO || roleId === DISCORD_ROLES.EQUIPO_AMARILLO || roleId === DISCORD_ROLES.EQUIPO_MORADO || roleId === DISCORD_ROLES.EQUIPO_BLANCO) {
+                    await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId!, roleId);
+                }
             }
-        }
 
+        } catch (error) {
+
+        }
 
 
 
@@ -2314,6 +2330,24 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                 await timerCache.set("streamer-wars-timer", { startedAt: Date.now(), duration: seconds });
                 await pusher.trigger("streamer-wars", "show-timer", { seconds });
                 return { success: true, feedback: `Temporizador mostrado por ${seconds} segundos` };
+            case '/cuerda':
+                const cuerdaAction = args[0];
+                if (cuerdaAction === 'start') {
+                    const gameState = await games.tugOfWar.startGame();
+                    return { success: true, feedback: `Juego de la cuerda iniciado entre ${gameState.teams.teamA.name} y ${gameState.teams.teamB.name}` };
+                } else if (cuerdaAction === 'end') {
+                    const result = await games.tugOfWar.endGame();
+                    if (result.success && result.gameState) {
+                        return { success: true, feedback: `Juego de la cuerda finalizado. Ganador: ${result.gameState.winner === 'teamA' ? result.gameState.teams.teamA.name : result.gameState.teams.teamB.name}` };
+                    } else {
+                        return { success: false, feedback: 'Error al finalizar el juego de la cuerda' };
+                    }
+                } else if (cuerdaAction === 'next') {
+                    const gameState = await games.tugOfWar.startGame();
+                    return { success: true, feedback: `Siguiente ronda de la cuerda iniciada entre ${gameState.teams.teamA.name} y ${gameState.teams.teamB.name}` };
+                } else {
+                    return { success: false, feedback: 'Uso: /cuerda start|end|next' };
+                }
             default:
                 return { success: false, feedback: 'Comando desconocido' };
         }

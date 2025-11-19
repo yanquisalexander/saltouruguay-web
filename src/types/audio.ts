@@ -14,10 +14,8 @@ export interface AudioState {
 }
 
 export const AVAILABLE_AUDIOS: AudioItem[] = [
-    { id: 'notification', name: 'Notificación', duration: 5 },
-    { id: 'atencion_jugadores', name: 'Atención Jugadores', duration: 10 },
-    { id: 'gun', name: 'Disparo', duration: 3 },
     { id: 'new-message', name: 'Nuevo Mensaje', duration: 2 },
+    { id: 'juego-cuerda-fondo', name: 'Tira y Afloja Fondo', duration: -1 },
     { id: 'button-click', name: 'Click Botón', duration: 1 },
     { id: 'que_comience_el_juego', name: 'Que Comience el Juego', duration: 15 },
     { id: 'es-hora-de-comenzar', name: 'Es Hora de Jugar', duration: 12 },

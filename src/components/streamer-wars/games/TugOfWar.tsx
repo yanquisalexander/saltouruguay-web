@@ -25,6 +25,7 @@ export const TugOfWar = ({
             teamA: { id: 0, color: '', name: '', playerCount: 0 },
             teamB: { id: 0, color: '', name: '', playerCount: 0 },
         },
+        players: { teamA: [], teamB: [] },
         progress: 0,
         status: 'waiting',
         playedTeams: [],
@@ -51,8 +52,8 @@ export const TugOfWar = ({
         checkPlayerTeam();
     }, [gameState.status, playerNumber]);
 
-    const isPlayerInGame = playerTeamId === gameState.teams.teamA.id || 
-                          playerTeamId === gameState.teams.teamB.id;
+    const isPlayerInGame = playerTeamId === gameState.teams.teamA.id ||
+        playerTeamId === gameState.teams.teamB.id;
 
     // Subscribe to Pusher events
     useEffect(() => {
@@ -109,7 +110,7 @@ export const TugOfWar = ({
                     }
                     return next;
                 });
-            }, 100);
+            }, 100) as any;
 
             return () => clearInterval(interval);
         }
@@ -135,11 +136,11 @@ export const TugOfWar = ({
         if (isOnCooldown || gameState.status !== 'playing') return;
 
         setIsOnCooldown(true);
-        playSound({ sound: STREAMER_WARS_SOUNDS.CLICK_SIMON_SAYS });
+        playSound({ sound: STREAMER_WARS_SOUNDS.GOLPE_CUERDA });
 
         try {
             const { error, data } = await actions.games.tugOfWar.handlePlayerClick();
-            
+
             if (error) {
                 toast.error(error.message || "No puedes tirar de la cuerda ahora", { position: "bottom-center" });
                 setIsOnCooldown(false);
@@ -183,7 +184,7 @@ export const TugOfWar = ({
         <>
             <Instructions duration={10000}>
                 <p class="font-mono max-w-2xl text-left">
-                    "Tug of War" (Juego de la Cuerda) es un juego de equipos donde dos equipos compiten tirando de una cuerda virtual.
+                    Tira y Afloja es un juego de equipos donde dos equipos compiten tirando de una cuerda virtual.
                     <br />
                     Cada clic mueve la bandera hacia tu lado. ¡El primer equipo que llegue al extremo gana!
                 </p>
@@ -192,9 +193,9 @@ export const TugOfWar = ({
                 </p>
             </Instructions>
 
-            <div className="flex relative flex-col items-center justify-center h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-green-600/70 via-transparent to-transparent text-white p-8">
+            <div className="flex relative flex-col items-center justify-center h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-600/70 via-transparent to-transparent text-white p-8">
                 <h2 className="text-3xl font-bold mb-8 font-squids">
-                    Tug of War
+                    Tira y Afloja
                 </h2>
 
                 {gameState.status === 'waiting' && (
@@ -217,30 +218,57 @@ export const TugOfWar = ({
 
                         <div className="flex gap-8 items-center">
                             <div className="text-center">
-                                <p className="text-sm font-atomic mb-2">{gameState.teams.teamA.name}</p>
-                                <p className="text-2xl font-bold">{gameState.teams.teamA.playerCount} jugadores</p>
+                                <p className="text-sm font-mono mb-2">{gameState.teams.teamA.name}</p>
+                                <div className="grid grid-cols-4 gap-1">
+                                    {gameState.players.teamA.map(playerNumber => {
+                                        const player = players.find(p => p.playerNumber === playerNumber);
+                                        return player ? (
+                                            <img
+                                                key={player.id}
+                                                src={player.avatar}
+                                                alt={player.name}
+                                                className="w-8 h-8 rounded-full ring-1 ring-white/20"
+                                                onError={(e) => e.currentTarget.src = "/fallback.png"}
+                                            />
+                                        ) : null;
+                                    })}
+                                </div>
                             </div>
                             <div className="text-4xl font-bold">VS</div>
                             <div className="text-center">
-                                <p className="text-sm font-atomic mb-2">{gameState.teams.teamB.name}</p>
-                                <p className="text-2xl font-bold">{gameState.teams.teamB.playerCount} jugadores</p>
+                                <p className="text-sm font-mono mb-2">{gameState.teams.teamB.name}</p>
+                                <div className="grid grid-cols-4 gap-1">
+                                    {gameState.players.teamB.map(playerNumber => {
+                                        const player = players.find(p => p.playerNumber === playerNumber);
+                                        return player ? (
+                                            <img
+                                                key={player.id}
+                                                src={player.avatar}
+                                                alt={player.name}
+                                                className="w-8 h-8 rounded-full ring-1 ring-white/20"
+                                                onError={(e) => e.currentTarget.src = "/fallback.png"}
+                                            />
+                                        ) : null;
+                                    })}
+                                </div>
                             </div>
                         </div>
 
                         <Button
                             onClick={handlePull}
                             disabled={isOnCooldown}
-                            className="text-2xl px-12 py-6 font-atomic"
+
+                            className={`px-12 py-6 font-press-start-2p ${isOnCooldown ? 'bg-gray-600 text-gray-300 cursor-not-allowed' : 'bg-yellow-400 text-black hover:bg-yellow-500'}`}
                             font="retro"
                         >
-                            {isOnCooldown 
-                                ? `Espera ${(cooldownRemaining / 1000).toFixed(1)}s` 
+                            {isOnCooldown
+                                ? `ESPERA ${(cooldownRemaining / 1000).toFixed(1)}s`
                                 : "¡TIRAR DE LA CUERDA!"}
                         </Button>
 
                         {isOnCooldown && (
-                            <div className="w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
-                                <div 
+                            <div className="w-64 h-2 absolute bottom-16 bg-gray-700 rounded-full overflow-hidden">
+                                <div
                                     className="h-full bg-yellow-400 transition-all duration-100"
                                     style={{ width: `${(cooldownRemaining / 1500) * 100}%` }}
                                 />
@@ -251,10 +279,10 @@ export const TugOfWar = ({
 
                 {gameState.status === 'finished' && (
                     <div className="text-center">
-                        <h3 className="text-4xl font-bold mb-4 font-atomic">
+                        <h3 className="text-2xl font-bold mb-4 font-mono">
                             ¡Juego Terminado!
                         </h3>
-                        <p className="text-2xl mb-4">
+                        <p className="text-xl mb-4 font-press-start-2p">
                             Ganador: {gameState.winner === 'teamA' ? gameState.teams.teamA.name : gameState.teams.teamB.name}
                         </p>
                         <Progress

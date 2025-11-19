@@ -12,6 +12,7 @@ interface StreamerWarsAudioManagerProps {
 export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: StreamerWarsAudioManagerProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [audioStates, setAudioStates] = useState<Record<string, AudioState>>({});
+    const dialogRef = useRef<HTMLDialogElement>(null);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -23,7 +24,7 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
                 e.preventDefault();
                 setIsOpen(true);
             } else if (e.key === 'Escape' && isOpen) {
-                setIsOpen(false);
+                dialogRef.current?.close();
             }
         };
 
@@ -32,26 +33,43 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
     }, [isOpen]);
 
     useEffect(() => {
+        const dialog = dialogRef.current;
+        if (dialog) {
+            const handleClose = () => setIsOpen(false);
+            dialog.addEventListener('close', handleClose);
+            return () => dialog.removeEventListener('close', handleClose);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isOpen) {
+            dialogRef.current?.show();
+        }
+    }, [isOpen]);
+
+    const handleAudioUpdate = ({ audioId, action, data }: { audioId: string, action: string, data: any }) => {
+        setAudioStates(prev => {
+            const newState = { ...prev[audioId] };
+            switch (action) {
+                case 'SET_VOLUME':
+                    newState.volume = data.volume;
+                    break;
+                case 'RESTART':
+                    newState.currentTime = 0;
+                    break;
+                case 'UPDATE_STATE':
+                    newState.playing = data.playing;
+                    newState.paused = data.paused;
+                    newState.loop = data.loop;
+                    break;
+            }
+            return { ...prev, [audioId]: newState };
+        });
+    };
+
+    useEffect(() => {
         if (channel) {
-            channel.bind("audio-update", ({ audioId, action, data }: { audioId: string, action: string, data: any }) => {
-                setAudioStates(prev => {
-                    const newState = { ...prev[audioId] };
-                    switch (action) {
-                        case 'SET_VOLUME':
-                            newState.volume = data.volume;
-                            break;
-                        case 'RESTART':
-                            newState.currentTime = 0;
-                            break;
-                        case 'UPDATE_STATE':
-                            newState.playing = data.playing;
-                            newState.paused = data.paused;
-                            newState.loop = data.loop;
-                            break;
-                    }
-                    return { ...prev, [audioId]: newState };
-                });
-            });
+            channel.bind("audio-update", handleAudioUpdate);
         }
 
         // Load initial states
@@ -63,7 +81,7 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
 
         return () => {
             if (channel) {
-                channel.unbind("audio-update");
+                channel.unbind("audio-update", handleAudioUpdate);
             }
         };
     }, [channel]);
@@ -97,13 +115,13 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
         actions.audio.muteAll({});
     };
 
-    if (!isAdmin || !isOpen) return null;
+    if (!isAdmin) return null;
 
     return (
-        <dialog open class="fixed bottom-20 left-4 z-[10000] bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-4 min-w-[400px] max-w-[600px] max-h-[80vh] overflow-y-auto">
+        <dialog ref={dialogRef} class="fixed bottom-20 left-4 z-[10000] bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-4 min-w-[400px] max-w-[600px] max-h-[80vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-white text-lg font-bold">Audio Manager</h2>
-                <button onClick={() => setIsOpen(false)} class="text-white/50 hover:text-white">✕</button>
+                <button onClick={() => dialogRef.current?.close()} class="text-white/50 hover:text-white">✕</button>
             </div>
 
             <button

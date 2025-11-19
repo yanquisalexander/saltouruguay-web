@@ -244,6 +244,19 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                         audio.pause();
                     }
                     break;
+                case 'STOP':
+                    audio.pause();
+                    audio.currentTime = 0;
+                    break;
+                case 'MUTE_ALL':
+                    Object.values(audioInstances.current).forEach(a => a.volume = 0);
+                    break;
+                case 'STOP_ALL':
+                    Object.values(audioInstances.current).forEach(a => {
+                        a.pause();
+                        a.currentTime = 0;
+                    });
+                    break;
             }
         });
 

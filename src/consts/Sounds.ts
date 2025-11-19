@@ -25,6 +25,7 @@ export const STREAMER_WARS_SOUNDS = {
     CUTE_NOTIFICATION: 'cute-notification',
     WAITING_ROOM_LOOP: 'waiting-room-loop',
     EQUIPO_ELIMINADO: 'equipo-eliminado',
+    GOLPE_CUERDA: 'golpe-cuerda',
 }
 
 
