@@ -3,6 +3,7 @@ import type Pusher from "pusher-js";
 import type { Channel } from "pusher-js";
 import { useVoiceChatStore } from "@/stores/voiceChat";
 import { LucideMic, LucideMicOff, LucideVolume2 } from "lucide-preact";
+import { actions } from "astro:actions";
 
 interface VoiceChatProps {
   pusher: Pusher | null;
@@ -101,6 +102,17 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin }: VoiceChatProps) =
     signalChannelRef.current.bind("voice:enabled", (data: any) => {
       console.log("Voice enabled for team:", data.teamId);
       setVoiceEnabled(data.teamId, true);
+      
+      // Announce presence to other peers
+      actions.voice.signal({
+        teamId: data.teamId,
+        event: "voice:user-joined" as any,
+        data: {
+          fromUserId: userId,
+          toUserId: "broadcast",
+          userId: userId
+        }
+      });
     });
 
     // Handle voice disabled event
@@ -142,11 +154,19 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin }: VoiceChatProps) =
       }
     });
 
+    // Handle user joined - initiate connection
+    signalChannelRef.current.bind("voice:user-joined", async (data: any) => {
+      if (data.userId !== userId && !peerConnections[data.userId]) {
+        // Create offer to the new user
+        await createOffer(data.userId);
+      }
+    });
+
     return () => {
       signalChannelRef.current?.unbind_all();
       signalChannelRef.current?.unsubscribe();
     };
-  }, [pusher, teamId, userId]);
+  }, [pusher, teamId, userId, peerConnections]);
 
   // Handle offer from peer
   const handleOffer = async (fromUserId: string, sdp: RTCSessionDescriptionInit) => {
@@ -163,12 +183,18 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin }: VoiceChatProps) =
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       
-      // Send answer back
-      signalChannelRef.current?.trigger("signal:answer", {
-        fromUserId: userId,
-        toUserId: fromUserId,
-        sdp: answer
-      });
+      // Send answer back via action
+      if (teamId) {
+        await actions.voice.signal({
+          teamId,
+          event: "signal:answer",
+          data: {
+            fromUserId: userId,
+            toUserId: fromUserId,
+            sdp: answer
+          }
+        });
+      }
       
       addPeerConnection(fromUserId, pc);
     } catch (error) {
@@ -204,11 +230,15 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin }: VoiceChatProps) =
   const setupPeerConnection = (pc: RTCPeerConnection, peerId: string) => {
     // Handle ICE candidates
     pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        signalChannelRef.current?.trigger("signal:iceCandidate", {
-          fromUserId: userId,
-          toUserId: peerId,
-          candidate: event.candidate.toJSON()
+      if (event.candidate && teamId) {
+        actions.voice.signal({
+          teamId,
+          event: "signal:iceCandidate",
+          data: {
+            fromUserId: userId,
+            toUserId: peerId,
+            candidate: event.candidate.toJSON()
+          }
         });
       }
     };
@@ -241,12 +271,18 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin }: VoiceChatProps) =
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       
-      // Send offer
-      signalChannelRef.current?.trigger("signal:offer", {
-        fromUserId: userId,
-        toUserId,
-        sdp: offer
-      });
+      // Send offer via action
+      if (teamId) {
+        await actions.voice.signal({
+          teamId,
+          event: "signal:offer",
+          data: {
+            fromUserId: userId,
+            toUserId,
+            sdp: offer
+          }
+        });
+      }
       
       addPeerConnection(toUserId, pc);
     } catch (error) {
