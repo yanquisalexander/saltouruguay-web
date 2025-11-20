@@ -81,6 +81,211 @@ export interface TugOfWarGameState {
 
 const COOLDOWN_MS = 1500; // 1.5 seconds cooldown per player
 
+// Bomb game types
+export type BombChallengeType = 'math' | 'logic' | 'word' | 'sequence';
+
+export interface BombChallenge {
+    type: BombChallengeType;
+    question: string;
+    correctAnswer: string;
+    options?: string[]; // For multiple choice
+}
+
+export interface BombPlayerState {
+    playerNumber: number;
+    userId: number;
+    challengesCompleted: number;
+    errorsCount: number;
+    status: 'playing' | 'completed' | 'failed';
+    currentChallenge?: BombChallenge;
+    challenges: BombChallenge[]; // All 5 challenges
+}
+
+export interface BombGameState {
+    players: Record<number, BombPlayerState>;
+    status: 'waiting' | 'active' | 'completed';
+    startedAt?: number;
+}
+
+const BOMB_CACHE_KEY = "streamer-wars.bomb:game-state";
+const MAX_CHALLENGES = 5;
+const MAX_ERRORS = 3;
+
+// Challenge generators for the bomb game
+const generateMathChallenge = (): BombChallenge => {
+    const operations = [
+        { type: 'sum', symbol: '+' },
+        { type: 'sub', symbol: '-' },
+        { type: 'mul', symbol: '×' }
+    ];
+    const op = getRandomItem(operations);
+    
+    let num1: number, num2: number, answer: number;
+    
+    if (op.type === 'sum') {
+        num1 = Math.floor(Math.random() * 50) + 10;
+        num2 = Math.floor(Math.random() * 50) + 10;
+        answer = num1 + num2;
+    } else if (op.type === 'sub') {
+        num1 = Math.floor(Math.random() * 50) + 20;
+        num2 = Math.floor(Math.random() * (num1 - 10)) + 5;
+        answer = num1 - num2;
+    } else {
+        num1 = Math.floor(Math.random() * 12) + 2;
+        num2 = Math.floor(Math.random() * 12) + 2;
+        answer = num1 * num2;
+    }
+    
+    return {
+        type: 'math',
+        question: `¿Cuánto es ${num1} ${op.symbol} ${num2}?`,
+        correctAnswer: answer.toString(),
+    };
+};
+
+const generateLogicChallenge = (): BombChallenge => {
+    const challenges = [
+        {
+            question: "¿Qué viene primero, el huevo o la gallina?",
+            answer: "huevo"
+        },
+        {
+            question: "Si un tren eléctrico va hacia el norte, ¿hacia dónde va el humo?",
+            answer: "no hay humo"
+        },
+        {
+            question: "¿Cuántos meses tienen 28 días?",
+            answer: "todos"
+        },
+        {
+            question: "¿Qué es lo que se rompe sin tocarlo?",
+            answer: "promesa"
+        },
+        {
+            question: "¿Qué pesa más, un kilo de plumas o un kilo de hierro?",
+            answer: "igual"
+        }
+    ];
+    
+    const selected = getRandomItem(challenges);
+    return {
+        type: 'logic',
+        question: selected.question,
+        correctAnswer: selected.answer.toLowerCase(),
+    };
+};
+
+const generateWordChallenge = (): BombChallenge => {
+    const words = [
+        { word: "PROGRAMAR", hint: "Escribir código" },
+        { word: "STREAMER", hint: "Persona que transmite en vivo" },
+        { word: "DESAFIO", hint: "Reto o prueba" },
+        { word: "VICTORIA", hint: "Ganar una competencia" },
+        { word: "BOMBA", hint: "Dispositivo explosivo" }
+    ];
+    
+    const selected = getRandomItem(words);
+    const word = selected.word;
+    
+    // Remove 2-3 random letters
+    const lettersToRemove = Math.floor(Math.random() * 2) + 2;
+    let incomplete = word;
+    const removedIndices = new Set<number>();
+    
+    while (removedIndices.size < lettersToRemove) {
+        const idx = Math.floor(Math.random() * word.length);
+        removedIndices.add(idx);
+    }
+    
+    incomplete = word.split('').map((letter, idx) => 
+        removedIndices.has(idx) ? '_' : letter
+    ).join('');
+    
+    return {
+        type: 'word',
+        question: `Completa la palabra: ${incomplete} (Pista: ${selected.hint})`,
+        correctAnswer: word.toLowerCase(),
+    };
+};
+
+const generateSequenceChallenge = (): BombChallenge => {
+    const sequences = [
+        {
+            sequence: [2, 4, 6, 8],
+            next: 10,
+            rule: "números pares"
+        },
+        {
+            sequence: [1, 3, 5, 7],
+            next: 9,
+            rule: "números impares"
+        },
+        {
+            sequence: [5, 10, 15, 20],
+            next: 25,
+            rule: "múltiplos de 5"
+        },
+        {
+            sequence: [1, 2, 4, 8],
+            next: 16,
+            rule: "potencias de 2"
+        },
+        {
+            sequence: [10, 20, 30, 40],
+            next: 50,
+            rule: "múltiplos de 10"
+        }
+    ];
+    
+    const selected = getRandomItem(sequences);
+    return {
+        type: 'sequence',
+        question: `¿Qué número sigue en la secuencia: ${selected.sequence.join(', ')}, ?`,
+        correctAnswer: selected.next.toString(),
+    };
+};
+
+const generateChallenge = (type?: BombChallengeType): BombChallenge => {
+    if (!type) {
+        const types: BombChallengeType[] = ['math', 'logic', 'word', 'sequence'];
+        type = getRandomItem(types);
+    }
+    
+    switch (type) {
+        case 'math':
+            return generateMathChallenge();
+        case 'logic':
+            return generateLogicChallenge();
+        case 'word':
+            return generateWordChallenge();
+        case 'sequence':
+            return generateSequenceChallenge();
+        default:
+            return generateMathChallenge();
+    }
+};
+
+const generatePlayerChallenges = (): BombChallenge[] => {
+    const challenges: BombChallenge[] = [];
+    const types: BombChallengeType[] = ['math', 'logic', 'word', 'sequence'];
+    
+    // Ensure at least one of each type
+    for (const type of types) {
+        challenges.push(generateChallenge(type));
+    }
+    
+    // Add one more random challenge to make 5
+    challenges.push(generateChallenge());
+    
+    // Shuffle challenges
+    for (let i = challenges.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [challenges[i], challenges[j]] = [challenges[j], challenges[i]];
+    }
+    
+    return challenges;
+};
+
 export const games = {
     simonSays: {
         getGameState: async (): Promise<SimonSaysGameState> => {
@@ -1026,6 +1231,410 @@ export const games = {
                 success: true,
             };
         }
+    },
+
+    bomb: {
+        /**
+         * Gets the current Bomb game state from cache
+         */
+        getGameState: async (): Promise<BombGameState> => {
+            const cache = createCache();
+            return (
+                (await cache.get<BombGameState>(BOMB_CACHE_KEY)) ?? {
+                    players: {},
+                    status: 'waiting',
+                }
+            );
+        },
+
+        /**
+         * Starts the Bomb minigame
+         * Generates 5 unique challenges for each player
+         */
+        startGame: async () => {
+            const cache = createCache();
+
+            // Get all active players
+            const playersData = await client
+                .select({
+                    playerNumber: StreamerWarsPlayersTable.playerNumber,
+                    userId: StreamerWarsPlayersTable.userId,
+                    eliminated: StreamerWarsPlayersTable.eliminated,
+                    aislated: StreamerWarsPlayersTable.aislated,
+                })
+                .from(StreamerWarsPlayersTable)
+                .where(
+                    and(
+                        not(eq(StreamerWarsPlayersTable.eliminated, true)),
+                        not(eq(StreamerWarsPlayersTable.aislated, true))
+                    )
+                )
+                .execute();
+
+            // Initialize player states
+            const players: Record<number, BombPlayerState> = {};
+
+            for (const player of playersData) {
+                if (!player.userId) continue;
+
+                // Generate 5 challenges for this player
+                const challenges = generatePlayerChallenges();
+
+                // Store challenges in Redis for validation
+                await cache.set(`player:${player.playerNumber}:bomb_challenges`, challenges);
+
+                players[player.playerNumber] = {
+                    playerNumber: player.playerNumber,
+                    userId: player.userId,
+                    challengesCompleted: 0,
+                    errorsCount: 0,
+                    status: 'playing',
+                    currentChallenge: challenges[0],
+                    challenges,
+                };
+            }
+
+            // Save game state
+            const gameState: BombGameState = {
+                players,
+                status: 'active',
+                startedAt: Date.now(),
+            };
+
+            await cache.set(BOMB_CACHE_KEY, gameState);
+
+            // Broadcast game started to all players
+            await pusher.trigger('streamer-wars', 'bomb:game-started', {
+                totalPlayers: Object.keys(players).length,
+            });
+
+            // Send individual events to each player with their first challenge
+            for (const player of playersData) {
+                if (player.userId && players[player.playerNumber]) {
+                    const playerState = players[player.playerNumber];
+                    await pusher.trigger('streamer-wars', 'bomb:start', {
+                        userId: player.userId,
+                        challenge: playerState.currentChallenge,
+                        challengesCompleted: 0,
+                        errorsCount: 0,
+                    });
+                }
+            }
+
+            try {
+                await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                    content: null,
+                    embeds: [
+                        {
+                            title: "Bomba - Juego iniciado",
+                            description: `Se ha iniciado el minijuego "Desactivar la Bomba" con ${Object.keys(players).length} jugadores.`,
+                            color: 0xff4500,
+                        },
+                    ],
+                });
+            } catch (error) {
+                console.error("Error sending Discord webhook:", error);
+            }
+
+            return gameState;
+        },
+
+        /**
+         * Validates a player's answer submission
+         * @param playerNumber The player's number
+         * @param answer The player's answer
+         * @returns Success status and updated state
+         */
+        submitAnswer: async (playerNumber: number, answer: string) => {
+            const cache = createCache();
+            const gameState = await games.bomb.getGameState();
+
+            const playerState = gameState.players[playerNumber];
+
+            if (!playerState) {
+                return {
+                    success: false,
+                    error: 'Jugador no encontrado en el juego',
+                };
+            }
+
+            if (playerState.status !== 'playing') {
+                return {
+                    success: false,
+                    error: 'El jugador no está en estado de juego',
+                };
+            }
+
+            if (!playerState.currentChallenge) {
+                return {
+                    success: false,
+                    error: 'No hay desafío actual',
+                };
+            }
+
+            // Normalize answer for comparison
+            const normalizedAnswer = answer.toLowerCase().trim();
+            const normalizedCorrect = playerState.currentChallenge.correctAnswer.toLowerCase().trim();
+
+            const isCorrect = normalizedAnswer === normalizedCorrect;
+
+            if (isCorrect) {
+                // Player answered correctly
+                playerState.challengesCompleted += 1;
+
+                // Check if player completed all challenges
+                if (playerState.challengesCompleted >= MAX_CHALLENGES) {
+                    playerState.status = 'completed';
+                    playerState.currentChallenge = undefined;
+
+                    gameState.players[playerNumber] = playerState;
+                    await cache.set(BOMB_CACHE_KEY, gameState);
+
+                    // Get player info for notification
+                    const player = await client.query.StreamerWarsPlayersTable.findFirst({
+                        where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber),
+                        with: {
+                            user: {
+                                columns: {
+                                    id: true,
+                                }
+                            }
+                        }
+                    });
+
+                    // Notify player of success
+                    if (player?.user?.id) {
+                        await pusher.trigger('streamer-wars', 'bomb:success', {
+                            userId: player.user.id,
+                            playerNumber,
+                        });
+                    }
+
+                    // Broadcast to all
+                    await pusher.trigger('streamer-wars', 'bomb:player-completed', {
+                        playerNumber,
+                    });
+
+                    try {
+                        const audioBase64 = await tts(`Jugador ${playerNumber} desactivó la bomba!`);
+                        const audioPayload = encodeAudioForPusher(audioBase64!);
+
+                        await pusher.trigger("streamer-wars", "megaphony", {
+                            audioBase64: audioPayload,
+                        });
+                    } catch (error) {
+                        console.error("Error generating TTS:", error);
+                    }
+
+                    try {
+                        await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                            content: null,
+                            embeds: [
+                                {
+                                    title: "Bomba - Desafío completado",
+                                    description: `El jugador #${playerNumber} ha desactivado la bomba exitosamente.`,
+                                    color: 0x00ff00,
+                                },
+                            ],
+                        });
+                    } catch (error) {
+                        console.error("Error sending Discord webhook:", error);
+                    }
+
+                    return {
+                        success: true,
+                        status: 'completed',
+                        isCorrect: true,
+                    };
+                } else {
+                    // Move to next challenge
+                    playerState.currentChallenge = playerState.challenges[playerState.challengesCompleted];
+                    gameState.players[playerNumber] = playerState;
+                    await cache.set(BOMB_CACHE_KEY, gameState);
+
+                    // Get player info for notification
+                    const player = await client.query.StreamerWarsPlayersTable.findFirst({
+                        where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber),
+                        with: {
+                            user: {
+                                columns: {
+                                    id: true,
+                                }
+                            }
+                        }
+                    });
+
+                    // Send next challenge
+                    if (player?.user?.id) {
+                        await pusher.trigger('streamer-wars', 'bomb:next-challenge', {
+                            userId: player.user.id,
+                            challenge: playerState.currentChallenge,
+                            challengesCompleted: playerState.challengesCompleted,
+                            errorsCount: playerState.errorsCount,
+                        });
+                    }
+
+                    return {
+                        success: true,
+                        status: 'playing',
+                        isCorrect: true,
+                        nextChallenge: playerState.currentChallenge,
+                        challengesCompleted: playerState.challengesCompleted,
+                        errorsCount: playerState.errorsCount,
+                    };
+                }
+            } else {
+                // Player answered incorrectly
+                playerState.errorsCount += 1;
+
+                if (playerState.errorsCount >= MAX_ERRORS) {
+                    // Too many errors - player fails
+                    playerState.status = 'failed';
+                    gameState.players[playerNumber] = playerState;
+                    await cache.set(BOMB_CACHE_KEY, gameState);
+
+                    // Get player info for notification
+                    const player = await client.query.StreamerWarsPlayersTable.findFirst({
+                        where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber),
+                        with: {
+                            user: {
+                                columns: {
+                                    id: true,
+                                }
+                            }
+                        }
+                    });
+
+                    // Notify player of failure
+                    if (player?.user?.id) {
+                        await pusher.trigger('streamer-wars', 'bomb:failed', {
+                            userId: player.user.id,
+                            playerNumber,
+                        });
+                    }
+
+                    try {
+                        await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                            content: null,
+                            embeds: [
+                                {
+                                    title: "Bomba - Jugador eliminado",
+                                    description: `El jugador #${playerNumber} ha cometido ${MAX_ERRORS} errores y ha sido eliminado.`,
+                                    color: 0xff0000,
+                                },
+                            ],
+                        });
+                    } catch (error) {
+                        console.error("Error sending Discord webhook:", error);
+                    }
+
+                    await eliminatePlayer(playerNumber);
+
+                    return {
+                        success: true,
+                        status: 'failed',
+                        isCorrect: false,
+                    };
+                } else {
+                    // Still has attempts left
+                    gameState.players[playerNumber] = playerState;
+                    await cache.set(BOMB_CACHE_KEY, gameState);
+
+                    // Get player info for notification
+                    const player = await client.query.StreamerWarsPlayersTable.findFirst({
+                        where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber),
+                        with: {
+                            user: {
+                                columns: {
+                                    id: true,
+                                }
+                            }
+                        }
+                    });
+
+                    // Notify player of error
+                    if (player?.user?.id) {
+                        await pusher.trigger('streamer-wars', 'bomb:error', {
+                            userId: player.user.id,
+                            errorsCount: playerState.errorsCount,
+                            errorsRemaining: MAX_ERRORS - playerState.errorsCount,
+                        });
+                    }
+
+                    return {
+                        success: true,
+                        status: 'playing',
+                        isCorrect: false,
+                        errorsCount: playerState.errorsCount,
+                        errorsRemaining: MAX_ERRORS - playerState.errorsCount,
+                    };
+                }
+            }
+        },
+
+        /**
+         * Ends the game manually (admin command)
+         */
+        endGame: async () => {
+            const cache = createCache();
+            const gameState = await games.bomb.getGameState();
+
+            if (gameState.status === 'waiting') {
+                return {
+                    success: false,
+                    error: 'No hay juego activo',
+                };
+            }
+
+            // Mark game as completed
+            gameState.status = 'completed';
+            await cache.set(BOMB_CACHE_KEY, gameState);
+
+            // Broadcast game ended
+            await pusher.trigger('streamer-wars', 'bomb:game-ended', {});
+
+            // Eliminate players who didn't complete
+            for (const [playerNumber, playerState] of Object.entries(gameState.players)) {
+                if (playerState.status === 'playing') {
+                    await eliminatePlayer(parseInt(playerNumber));
+                }
+            }
+
+            const completedCount = Object.values(gameState.players).filter(p => p.status === 'completed').length;
+            const failedCount = Object.values(gameState.players).filter(p => p.status !== 'completed').length;
+
+            try {
+                await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                    content: null,
+                    embeds: [
+                        {
+                            title: "Bomba - Juego finalizado",
+                            description: `El minijuego "Desactivar la Bomba" ha finalizado.`,
+                            color: 0xffaa00,
+                            fields: [
+                                {
+                                    name: "Completaron",
+                                    value: completedCount.toString(),
+                                    inline: true,
+                                },
+                                {
+                                    name: "Eliminados",
+                                    value: failedCount.toString(),
+                                    inline: true,
+                                },
+                            ],
+                        },
+                    ],
+                });
+            } catch (error) {
+                console.error("Error sending Discord webhook:", error);
+            }
+
+            return {
+                success: true,
+                gameState,
+            };
+        },
     },
 };
 
@@ -2362,6 +2971,29 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                     }
                 } else {
                     return { success: false, feedback: 'Uso: /cuerda start|end|next|clear' };
+                }
+            case '/bomb':
+                const bombAction = args[0];
+                if (bombAction === 'start') {
+                    const gameState = await games.bomb.startGame();
+                    return { success: true, feedback: `Minijuego "Desactivar la Bomba" iniciado con ${Object.keys(gameState.players).length} jugadores` };
+                } else if (bombAction === 'end') {
+                    const result = await games.bomb.endGame();
+                    const completedCount = result.gameState.players ? Object.values(result.gameState.players).filter(p => p.status === 'completed').length : 0;
+                    const failedCount = result.gameState.players ? Object.values(result.gameState.players).filter(p => p.status !== 'completed').length : 0;
+                    return { success: true, feedback: `Minijuego "Desactivar la Bomba" finalizado. Completaron: ${completedCount}, Eliminados: ${failedCount}` };
+                } else if (bombAction === 'status') {
+                    const gameState = await games.bomb.getGameState();
+                    if (gameState.status === 'waiting') {
+                        return { success: true, feedback: 'No hay juego de bomba activo' };
+                    }
+                    const totalPlayers = Object.keys(gameState.players).length;
+                    const completedCount = Object.values(gameState.players).filter(p => p.status === 'completed').length;
+                    const playingCount = Object.values(gameState.players).filter(p => p.status === 'playing').length;
+                    const failedCount = Object.values(gameState.players).filter(p => p.status === 'failed').length;
+                    return { success: true, feedback: `Estado: ${totalPlayers} jugadores - Completaron: ${completedCount}, Jugando: ${playingCount}, Eliminados: ${failedCount}` };
+                } else {
+                    return { success: false, feedback: 'Uso: /bomb start|end|status' };
                 }
             default:
                 return { success: false, feedback: 'Comando desconocido' };
