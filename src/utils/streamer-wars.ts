@@ -119,9 +119,9 @@ const generateMathChallenge = (): BombChallenge => {
         { type: 'mul', symbol: '×' }
     ];
     const op = getRandomItem(operations);
-    
+
     let num1: number, num2: number, answer: number;
-    
+
     if (op.type === 'sum') {
         num1 = Math.floor(Math.random() * 50) + 10;
         num2 = Math.floor(Math.random() * 50) + 10;
@@ -135,7 +135,7 @@ const generateMathChallenge = (): BombChallenge => {
         num2 = Math.floor(Math.random() * 12) + 2;
         answer = num1 * num2;
     }
-    
+
     return {
         type: 'math',
         question: `¿Cuánto es ${num1} ${op.symbol} ${num2}?`,
@@ -150,10 +150,6 @@ const generateLogicChallenge = (): BombChallenge => {
             answer: "huevo"
         },
         {
-            question: "Si un tren eléctrico va hacia el norte, ¿hacia dónde va el humo?",
-            answer: "no hay humo"
-        },
-        {
             question: "¿Cuántos meses tienen 28 días?",
             answer: "todos"
         },
@@ -166,7 +162,7 @@ const generateLogicChallenge = (): BombChallenge => {
             answer: "igual"
         }
     ];
-    
+
     const selected = getRandomItem(challenges);
     return {
         type: 'logic',
@@ -183,24 +179,24 @@ const generateWordChallenge = (): BombChallenge => {
         { word: "VICTORIA", hint: "Ganar una competencia" },
         { word: "BOMBA", hint: "Dispositivo explosivo" }
     ];
-    
+
     const selected = getRandomItem(words);
     const word = selected.word;
-    
+
     // Remove 2-3 random letters
     const lettersToRemove = Math.floor(Math.random() * 2) + 2;
     let incomplete = word;
     const removedIndices = new Set<number>();
-    
+
     while (removedIndices.size < lettersToRemove) {
         const idx = Math.floor(Math.random() * word.length);
         removedIndices.add(idx);
     }
-    
-    incomplete = word.split('').map((letter, idx) => 
+
+    incomplete = word.split('').map((letter, idx) =>
         removedIndices.has(idx) ? '_' : letter
     ).join('');
-    
+
     return {
         type: 'word',
         question: `Completa la palabra: ${incomplete} (Pista: ${selected.hint})`,
@@ -236,7 +232,7 @@ const generateSequenceChallenge = (): BombChallenge => {
             rule: "múltiplos de 10"
         }
     ];
-    
+
     const selected = getRandomItem(sequences);
     return {
         type: 'sequence',
@@ -250,7 +246,7 @@ const generateChallenge = (type?: BombChallengeType): BombChallenge => {
         const types: BombChallengeType[] = ['math', 'logic', 'word', 'sequence'];
         type = getRandomItem(types);
     }
-    
+
     switch (type) {
         case 'math':
             return generateMathChallenge();
@@ -268,21 +264,21 @@ const generateChallenge = (type?: BombChallengeType): BombChallenge => {
 const generatePlayerChallenges = (): BombChallenge[] => {
     const challenges: BombChallenge[] = [];
     const types: BombChallengeType[] = ['math', 'logic', 'word', 'sequence'];
-    
+
     // Ensure at least one of each type
     for (const type of types) {
         challenges.push(generateChallenge(type));
     }
-    
+
     // Add one more random challenge to make 5
     challenges.push(generateChallenge());
-    
+
     // Shuffle challenges
     for (let i = challenges.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [challenges[i], challenges[j]] = [challenges[j], challenges[i]];
     }
-    
+
     return challenges;
 };
 
@@ -1313,7 +1309,7 @@ export const games = {
                 if (player.userId && players[player.playerNumber]) {
                     const playerState = players[player.playerNumber];
                     await pusher.trigger('streamer-wars', 'bomb:start', {
-                        userId: player.userId,
+                        playerNumber: player.playerNumber,
                         challenge: playerState.currentChallenge,
                         challengesCompleted: 0,
                         errorsCount: 0,
@@ -1405,7 +1401,6 @@ export const games = {
                     // Notify player of success
                     if (player?.user?.id) {
                         await pusher.trigger('streamer-wars', 'bomb:success', {
-                            userId: player.user.id,
                             playerNumber,
                         });
                     }
@@ -1467,7 +1462,7 @@ export const games = {
                     // Send next challenge
                     if (player?.user?.id) {
                         await pusher.trigger('streamer-wars', 'bomb:next-challenge', {
-                            userId: player.user.id,
+                            playerNumber,
                             challenge: playerState.currentChallenge,
                             challengesCompleted: playerState.challengesCompleted,
                             errorsCount: playerState.errorsCount,
@@ -1508,7 +1503,6 @@ export const games = {
                     // Notify player of failure
                     if (player?.user?.id) {
                         await pusher.trigger('streamer-wars', 'bomb:failed', {
-                            userId: player.user.id,
                             playerNumber,
                         });
                     }
@@ -1555,7 +1549,7 @@ export const games = {
                     // Notify player of error
                     if (player?.user?.id) {
                         await pusher.trigger('streamer-wars', 'bomb:error', {
-                            userId: player.user.id,
+                            playerNumber,
                             errorsCount: playerState.errorsCount,
                             errorsRemaining: MAX_ERRORS - playerState.errorsCount,
                         });
@@ -2089,7 +2083,7 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
         const playerTeam = await client
             .select()
             .from(StreamerWarsTeamPlayersTable)
-            .where(eq(StreamerWarsTeamPlayersTable.playerNumber, playerNumber))
+            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
             .execute()
             .then((res) => res[0]);
 
@@ -2103,7 +2097,7 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
         // Eliminar al jugador del equipo
         await client
             .delete(StreamerWarsTeamPlayersTable)
-            .where(eq(StreamerWarsTeamPlayersTable.playerNumber, playerNumber))
+            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
             .execute();
 
         // Obtener el discordId del jugador desde una relación con playerNumber
@@ -2263,6 +2257,7 @@ export const resetRoles = async () => {
 export const getExpulsionVotes = async () => {
     const votes = await client
         .select({
+
             playerNumber: NegativeVotesStreamersTable.playerNumber,
             votes: count(),
         })

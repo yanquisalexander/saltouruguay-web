@@ -3,7 +3,7 @@ import { useState, useEffect } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
 import { Instructions } from "../Instructions";
-import { Button as RetroButton } from "@/components/ui/8bit/button";
+import { Button } from "@/components/ui/8bit/button";
 
 interface BombProps {
     session: Session;
@@ -26,8 +26,12 @@ export const Bomb = ({ session, pusher }: BombProps) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showInstructions, setShowInstructions] = useState(true);
 
+    const playerNumber = session.user.streamerWarsPlayerNumber;
+
     // Fetch initial game state on component mount
     useEffect(() => {
+        if (!playerNumber) return;
+
         const fetchInitialState = async () => {
             try {
                 const response = await fetch('/api/bomb?action=player-state');
@@ -42,6 +46,7 @@ export const Bomb = ({ session, pusher }: BombProps) => {
                     setErrorsCount(result.playerState.errorsCount);
                     setGameStatus(result.playerState.status === 'completed' ? 'completed' :
                         result.playerState.status === 'failed' ? 'failed' : 'playing');
+                    setShowInstructions(false); // Hide instructions when reconnecting to active game
                 } else {
                     console.log('Not setting player state, conditions not met:', {
                         success: result.success,
@@ -54,27 +59,28 @@ export const Bomb = ({ session, pusher }: BombProps) => {
             }
         };
 
-        if (session.user?.id) {
+        if (session.user?.id && playerNumber) {
             fetchInitialState();
         }
-    }, [session.user?.id]);
+    }, [session.user?.id, playerNumber]);
 
     // Subscribe to streamer-wars channel
     useEffect(() => {
-        if (!session.user?.id || !pusher) return;
+        if (!session.user?.id || !pusher || !playerNumber) return;
 
         const channel = pusher.subscribe('streamer-wars');
 
         // Listen for game start event
-        channel.bind('bomb:start', (data: { userId: number; challenge: BombChallenge; challengesCompleted: number; errorsCount: number }) => {
+        channel.bind('bomb:start', (data: { playerNumber: number; challenge: BombChallenge; challengesCompleted: number; errorsCount: number }) => {
             console.log('Received bomb:start event:', data);
-            if (data.userId === session.user.id) {
+            if (data.playerNumber === playerNumber) {
                 console.log('Setting game to playing state');
                 setCurrentChallenge(data.challenge);
                 setChallengesCompleted(data.challengesCompleted);
                 setErrorsCount(data.errorsCount);
                 setGameStatus('playing');
                 setAnswer('');
+                setShowInstructions(false); // Hide instructions when game starts
                 toast.info('¡La bomba está activada! Responde correctamente para desactivarla.', { position: 'bottom-center' });
             }
         });
@@ -95,9 +101,9 @@ export const Bomb = ({ session, pusher }: BombProps) => {
         });
 
         // Listen for next challenge event
-        channel.bind('bomb:next-challenge', (data: { userId: number; challenge: BombChallenge; challengesCompleted: number; errorsCount: number }) => {
+        channel.bind('bomb:next-challenge', (data: { playerNumber: number; challenge: BombChallenge; challengesCompleted: number; errorsCount: number }) => {
             console.log('Received bomb:next-challenge event:', data);
-            if (data.userId === session.user.id) {
+            if (data.playerNumber === playerNumber) {
                 setCurrentChallenge(data.challenge);
                 setChallengesCompleted(data.challengesCompleted);
                 setErrorsCount(data.errorsCount);
@@ -108,9 +114,9 @@ export const Bomb = ({ session, pusher }: BombProps) => {
         });
 
         // Listen for error event
-        channel.bind('bomb:error', (data: { userId: number; errorsCount: number; errorsRemaining: number }) => {
+        channel.bind('bomb:error', (data: { playerNumber: number; errorsCount: number; errorsRemaining: number }) => {
             console.log('Received bomb:error event:', data);
-            if (data.userId === session.user.id) {
+            if (data.playerNumber === playerNumber) {
                 setErrorsCount(data.errorsCount);
                 setIsSubmitting(false);
                 toast.error(`¡Incorrecto! Te quedan ${data.errorsRemaining} intentos.`, { position: 'bottom-center' });
@@ -118,9 +124,9 @@ export const Bomb = ({ session, pusher }: BombProps) => {
         });
 
         // Listen for success event
-        channel.bind('bomb:success', (data: { userId: number }) => {
+        channel.bind('bomb:success', (data: { playerNumber: number }) => {
             console.log('Received bomb:success event:', data);
-            if (data.userId === session.user.id) {
+            if (data.playerNumber === playerNumber) {
                 setGameStatus('completed');
                 setCurrentChallenge(null);
                 toast.success('¡Felicitaciones! Desactivaste la bomba.', { position: 'bottom-center' });
@@ -128,9 +134,9 @@ export const Bomb = ({ session, pusher }: BombProps) => {
         });
 
         // Listen for failed event
-        channel.bind('bomb:failed', (data: { userId: number }) => {
+        channel.bind('bomb:failed', (data: { playerNumber: number }) => {
             console.log('Received bomb:failed event:', data);
-            if (data.userId === session.user.id) {
+            if (data.playerNumber === playerNumber) {
                 setGameStatus('failed');
                 setCurrentChallenge(null);
                 toast.error('¡La bomba explotó! Has sido eliminado.', { position: 'bottom-center' });
@@ -151,7 +157,7 @@ export const Bomb = ({ session, pusher }: BombProps) => {
             channel.unbind_all();
             pusher.unsubscribe('streamer-wars');
         };
-    }, [session.user?.id, pusher, gameStatus]);
+    }, [session.user?.id, pusher, gameStatus, playerNumber]);
 
     const handleSubmit = async (e: Event) => {
         e.preventDefault();
@@ -186,21 +192,23 @@ export const Bomb = ({ session, pusher }: BombProps) => {
     const renderGameStatus = () => {
         if (gameStatus === 'waiting') {
             return (
-                <div class="text-center">
-                    <h2 class="text-2xl font-bold mb-4">Esperando inicio del juego...</h2>
-                    <div class="animate-pulse text-6xl mb-4">💣</div>
-                    <p class="text-gray-400">El administrador iniciará el juego pronto.</p>
-                </div>
+                <>
+                    <div class="text-center">
+                        <h2 class="text-2xl font-bold mb-4 font-squids">Esperando inicio del juego...</h2>
+                        <div class="animate-pulse text-6xl mb-4">💣</div>
+                        <p class="text-gray-400 font-mono">El administrador iniciará el juego pronto.</p>
+                    </div>
+                </>
             );
         }
 
         if (gameStatus === 'completed') {
             return (
                 <div class="text-center">
-                    <h2 class="text-3xl font-bold mb-4 text-green-500">¡Bomba Desactivada!</h2>
+                    <h2 class="text-3xl font-bold mb-4 text-green-500 font-squids">¡Bomba Desactivada!</h2>
                     <div class="text-8xl mb-4">✅</div>
-                    <p class="text-xl text-gray-300">Has completado todos los desafíos exitosamente.</p>
-                    <p class="text-lg text-gray-400 mt-2">Desafíos completados: {challengesCompleted}/5</p>
+                    <p class="text-xl text-gray-300 font-press-start-2p">Has completado todos los desafíos exitosamente.</p>
+                    <p class="text-lg text-gray-400 mt-2 font-mono">Desafíos completados: {challengesCompleted}/5</p>
                 </div>
             );
         }
@@ -208,11 +216,11 @@ export const Bomb = ({ session, pusher }: BombProps) => {
         if (gameStatus === 'failed') {
             return (
                 <div class="text-center">
-                    <h2 class="text-3xl font-bold mb-4 text-red-500">¡Boom! 💥</h2>
+                    <h2 class="text-3xl font-bold mb-4 text-red-500 font-squids">¡Boom! 💥</h2>
                     <div class="text-8xl mb-4">❌</div>
-                    <p class="text-xl text-gray-300">La bomba explotó. Has sido eliminado.</p>
-                    <p class="text-lg text-gray-400 mt-2">Desafíos completados: {challengesCompleted}/5</p>
-                    <p class="text-lg text-gray-400">Errores cometidos: {errorsCount}/3</p>
+                    <p class="text-xl text-gray-300 font-press-start-2p">La bomba explotó. Has sido eliminado.</p>
+                    <p class="text-lg text-gray-400 mt-2 font-mono">Desafíos completados: {challengesCompleted}/5</p>
+                    <p class="text-lg text-gray-400 font-mono">Errores cometidos: {errorsCount}/3</p>
                 </div>
             );
         }
@@ -222,86 +230,106 @@ export const Bomb = ({ session, pusher }: BombProps) => {
 
     if (gameStatus !== 'playing') {
         return (
-            <div class="flex flex-col items-center justify-center min-h-screen p-4">
+            <div class="flex flex-col items-center justify-center h-full p-4 text-white">
                 {renderGameStatus()}
             </div>
         );
     }
 
     return (
-        <div class="flex flex-col items-center justify-center min-h-screen p-4">
+        <>
             {showInstructions && (
-                <Instructions
-                    description="Desactiva la bomba respondiendo correctamente 5 desafíos. Tienes un máximo de 3 errores. ¡Piensa bien antes de responder!"
-                    onContinue={() => setShowInstructions(false)}
-                />
+                <Instructions duration={10000}>
+                    <p class="font-mono max-w-2xl text-left">
+                        ¡Atención, {session.user?.name}! Estás en una misión crítica para desactivar una bomba.
+                        <br />
+                        Se te presentarán 5 desafíos de diferentes tipos: matemáticas, lógica, completar palabras y secuencias.
+                        <br />
+                        Cada desafío debe ser respondido correctamente para avanzar al siguiente.
+                        <br />
+                        Tienes un máximo de 3 errores permitidos. Si cometes 3 errores, la bomba explotará y serás eliminado del juego.
+                        <br />
+                        ¡Buena suerte!
+                    </p>
+
+                </Instructions>
             )}
+            <div class="flex flex-col items-center justify-center h-full p-4 text-white bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-600/70 via-transparent to-transparent">
 
-            {!showInstructions && (
-                <div class="w-full max-w-2xl bg-neutral-900 rounded-lg shadow-2xl p-8 border-4 border-red-600">
-                    {/* Header with stats */}
-                    <div class="flex justify-between items-center mb-6">
-                        <div class="text-center flex-1">
-                            <p class="text-sm text-gray-400">Desafíos Completados</p>
-                            <p class="text-3xl font-bold text-green-500">{challengesCompleted}/5</p>
-                        </div>
-                        <div class="text-6xl animate-pulse">💣</div>
-                        <div class="text-center flex-1">
-                            <p class="text-sm text-gray-400">Errores</p>
-                            <p class="text-3xl font-bold text-red-500">{errorsCount}/3</p>
-                        </div>
-                    </div>
 
-                    {/* Progress bar */}
-                    <div class="w-full bg-gray-700 rounded-full h-4 mb-6">
-                        <div 
-                            class="bg-green-500 h-4 rounded-full transition-all duration-500"
-                            style={{ width: `${(challengesCompleted / 5) * 100}%` }}
-                        ></div>
-                    </div>
-
-                    {/* Challenge */}
-                    {currentChallenge && (
-                        <div class="mb-8">
-                            <div class="bg-neutral-800 rounded-lg p-6 mb-4 border-2 border-yellow-500">
-                                <p class="text-sm text-yellow-500 mb-2 uppercase tracking-wide">
-                                    {currentChallenge.type === 'math' && '📊 Matemáticas'}
-                                    {currentChallenge.type === 'logic' && '🧩 Lógica'}
-                                    {currentChallenge.type === 'word' && '📝 Completar Palabra'}
-                                    {currentChallenge.type === 'sequence' && '🔢 Secuencia'}
-                                </p>
-                                <h3 class="text-2xl font-bold text-white mb-2">{currentChallenge.question}</h3>
+                {!showInstructions && gameStatus === 'playing' && (
+                    <>
+                        <h2 class="text-3xl font-bold mb-8 font-squids text-center">
+                            La Bomba
+                        </h2>
+                        <div class="w-full max-w-2xl bg-neutral-900 rounded-lg shadow-2xl p-8 border-4 border-red-600">
+                            {/* Header with stats */}
+                            <div class="flex justify-between items-center mb-6">
+                                <div class="text-center flex-1">
+                                    <p class="text-sm text-gray-400 font-mono">Desafíos Completados</p>
+                                    <p class="text-3xl font-bold text-green-500 font-squids">{challengesCompleted}/5</p>
+                                </div>
+                                <div class="text-6xl animate-pulse">💣</div>
+                                <div class="text-center flex-1">
+                                    <p class="text-sm text-gray-400 font-mono">Errores</p>
+                                    <p class="text-3xl font-bold text-red-500 font-squids">{errorsCount}/3</p>
+                                </div>
                             </div>
 
-                            <form onSubmit={handleSubmit} class="space-y-4">
-                                <input
-                                    type="text"
-                                    value={answer}
-                                    onInput={(e) => setAnswer((e.target as HTMLInputElement).value)}
-                                    placeholder="Escribe tu respuesta aquí..."
-                                    class="w-full px-4 py-3 bg-neutral-800 border-2 border-gray-600 rounded-lg text-white text-lg focus:border-blue-500 focus:outline-none"
-                                    disabled={isSubmitting}
-                                    autoFocus
-                                />
+                            {/* Progress bar */}
+                            <div class="w-full bg-gray-700 rounded-full h-4 mb-6">
+                                <div
+                                    class="bg-green-500 h-4 rounded-full transition-all duration-500"
+                                    style={{ width: `${(challengesCompleted / 5) * 100}%` }}
+                                ></div>
+                            </div>
 
-                                <RetroButton
-                                    type="submit"
-                                    disabled={!answer.trim() || isSubmitting}
-                                    class="w-full text-lg py-4"
-                                >
-                                    {isSubmitting ? 'Enviando...' : 'Enviar Respuesta'}
-                                </RetroButton>
-                            </form>
+                            {/* Challenge */}
+                            {currentChallenge && (
+                                <div class="mb-8">
+                                    <div class="bg-neutral-800 rounded-lg p-6 mb-4 border-2 border-yellow-500">
+                                        <p class="text-sm text-yellow-500 mb-2 uppercase tracking-wide font-mono">
+                                            {currentChallenge.type === 'math' && '📊 Matemáticas'}
+                                            {currentChallenge.type === 'logic' && '🧩 Lógica'}
+                                            {currentChallenge.type === 'word' && '📝 Completar Palabra'}
+                                            {currentChallenge.type === 'sequence' && '🔢 Secuencia'}
+                                        </p>
+                                        <h3 class="text-2xl font-bold text-white mb-2 font-press-start-2p">{currentChallenge.question}</h3>
+                                    </div>
+
+                                    <form onSubmit={handleSubmit} class="space-y-4">
+                                        <input
+                                            type="text"
+                                            value={answer}
+                                            onInput={(e) => setAnswer((e.target as HTMLInputElement).value)}
+                                            placeholder="Escribe tu respuesta aquí..."
+                                            class="w-full px-4 py-3 bg-neutral-800 border-2 border-gray-600 rounded-lg text-white text-lg focus:border-blue-500 focus:outline-none font-mono"
+                                            disabled={isSubmitting}
+                                            autoFocus
+                                        />
+
+                                        <Button
+                                            type="submit"
+                                            disabled={!answer.trim() || isSubmitting}
+                                            className="w-full text-lg py-4 font-press-start-2p disabled:bg-gray-600 disabled:text-gray-300 bg-red-600 hover:bg-red-700"
+                                            font="retro"
+                                        >
+                                            {isSubmitting ? 'Enviando...' : 'Enviar Respuesta'}
+                                        </Button>
+                                    </form>
+                                </div>
+                            )}
+
+                            {/* Help text */}
+                            <div class="text-center text-sm text-gray-400 mt-6 font-mono">
+                                <p>⚠️ Lee cuidadosamente cada pregunta antes de responder</p>
+                                <p class="mt-2">Las respuestas no distinguen entre mayúsculas y minúsculas</p>
+                            </div>
                         </div>
-                    )}
+                    </>
+                )}
 
-                    {/* Help text */}
-                    <div class="text-center text-sm text-gray-400 mt-6">
-                        <p>⚠️ Lee cuidadosamente cada pregunta antes de responder</p>
-                        <p class="mt-2">Las respuestas no distinguen entre mayúsculas y minúsculas</p>
-                    </div>
-                </div>
-            )}
-        </div>
+            </div>
+        </>
     );
 };

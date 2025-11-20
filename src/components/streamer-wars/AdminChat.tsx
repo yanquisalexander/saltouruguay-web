@@ -19,7 +19,8 @@ const COMMANDS = [
     { name: "/chat", description: "Lock or unlock the chat", args: ["unlock|lock"] },
     { name: "/dalgona", description: "Control Dalgona minigame", args: ["start|end"] },
     { name: "/timer", description: "Show a timer for the specified seconds", args: ["seconds"] },
-    { name: "/cuerda", description: "Control Tug of War game", args: ["start|end|next|clear"] }
+    { name: "/cuerda", description: "Control Tug of War game", args: ["start|end|next|clear"] },
+    { name: "/bomb", description: "Control Bomb minigame", args: ["start|end|status"] }
 ];
 
 export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
