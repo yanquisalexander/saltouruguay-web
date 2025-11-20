@@ -387,7 +387,8 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin, players }: VoiceCha
   }, [pusher, teamId, spectatingTeams, isAdminSpectator, localStream, handleWebRTCMessage]);
 
   // Get team info
-  const teamName = teamId ? teamId.toUpperCase() : 'VOICE';
+  const spectatingTeamNames = Object.keys(spectatingTeams).filter(id => spectatingTeams[id]);
+  const teamName = teamId ? teamId.toUpperCase() : (spectatingTeamNames.length > 0 ? 'SPECTATOR' : 'VOICE');
   const teamColor = teamId || 'gray';
 
   // Color mapping for retro style
@@ -416,12 +417,12 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin, players }: VoiceCha
   const teamPlayers = getTeamPlayers();
 
   // Render
-  if (!isAdminSpectator && (!teamId || !voiceEnabledTeams[teamId])) return null;
+  if (!teamId || !voiceEnabledTeams[teamId]) return null;
 
   return (
-    <div className={`${isAdminSpectator ? 'fixed top-4 left-4 z-50' : 'fixed bottom-4 right-4 z-50'} flex flex-col ${isAdminSpectator ? 'gap-1 p-2' : 'gap-2 p-4'} bg-black/90 rounded-lg border-2 ${colorClasses[teamColor]} max-w-xs shadow-2xl ${isAdminSpectator ? 'text-xs max-w-[200px]' : ''}`}>
-      <div className={`flex items-center gap-2 ${isAdminSpectator ? 'text-[10px]' : 'text-xs'} font-press-start-2p uppercase tracking-wider`}>
-        <LucideVolume2 className={`${isAdminSpectator ? 'w-3 h-3' : 'w-4 h-4'}`} />
+    <div className={`${isAdminSpectator && !teamId ? 'fixed top-4 left-4 z-50' : 'fixed bottom-4 right-4 z-50'} flex flex-col ${isAdminSpectator && !teamId ? 'gap-1 p-2' : 'gap-2 p-4'} bg-black/90 rounded-lg border-2 ${colorClasses[teamColor]} max-w-xs shadow-2xl ${isAdminSpectator && !teamId ? 'text-xs max-w-[200px]' : ''}`}>
+      <div className={`flex items-center gap-2 ${isAdminSpectator && !teamId ? 'text-[10px]' : 'text-xs'} font-press-start-2p uppercase tracking-wider`}>
+        <LucideVolume2 className={`${isAdminSpectator && !teamId ? 'w-3 h-3' : 'w-4 h-4'}`} />
         <span>VOICE - {teamName}</span>
       </div>
 
@@ -437,12 +438,6 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin, players }: VoiceCha
           <span className="text-sm font-press-start-2p">
             {isLocalMicEnabled ? "TX..." : "PRESS V"}
           </span>
-        </div>
-      )}
-
-      {isAdminSpectator && (
-        <div className="text-[10px] bg-blue-900/30 p-1 rounded text-center font-mono border border-blue-500">
-          SPECTATOR
         </div>
       )}
 

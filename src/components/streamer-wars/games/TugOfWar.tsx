@@ -200,7 +200,7 @@ export const TugOfWar = ({
             'blue': 'bg-blue-500',
             'yellow': 'bg-yellow-500',
             'purple': 'bg-purple-500',
-            'green': 'bg-green-500',
+            'white': 'bg-white text-black',
         };
         return colorMap[gameState.teams.teamB.color] || 'bg-red-500';
     };

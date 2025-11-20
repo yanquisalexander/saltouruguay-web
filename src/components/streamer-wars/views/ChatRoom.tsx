@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, useMemo } from "preact/hooks";
+import { useEffect, useRef, useState, useMemo, useCallback } from "preact/hooks";
+import { memo } from "preact/compat";
 import { toast } from "sonner";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { actions } from "astro:actions";
@@ -10,7 +11,6 @@ import {
     LucideSend,
     LucideSmilePlus,
     LucideSwords,
-    LucideVerified,
     LucideX,
 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
@@ -20,584 +20,402 @@ import { GLOBAL_CDN_PREFIX } from "@/config";
 import { Popover } from "@/components/Popover";
 import { Tooltip } from "@/components/Tooltip";
 
-const EmotePicker = ({
-    onSelect,
-    setSendAsReaction,
-    isOpen,
-}: {
-    onSelect: (emote: keyof typeof EMOTES) => void;
-    setSendAsReaction?: (sendAsReaction: boolean) => void;
-    isOpen?: boolean;
-}) => {
+// --- CONSTANTES Y UTILIDADES ---
+const MAX_MESSAGES = 100; // Límite para evitar lag en el DOM
+
+// Estilos reutilizables estilo 8-bit
+const RETRO_BOX = "border-2 border-white bg-neutral-900 shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)]";
+const RETRO_BTN = "active:translate-y-1 active:shadow-none transition-all border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]";
+
+const parseLinks = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.replace(
+        urlRegex,
+        (url) => `<a href="${url}" target="_blank" class="text-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors underline decoration-dashed decoration-2">${url}</a>`
+    );
+};
+
+const parseEmotesToHTML = (text: string) => {
+    return text
+        .replace(/</g, "&lt;").replace(/>/g, "&gt;") // Sanitize basic HTML
+        .replace(/\n/g, '<br>')
+        .replace(/:([a-zA-Z0-9_]+):/g, (match, emote) => {
+            const src = EMOTES[emote as keyof typeof EMOTES];
+            return src
+                ? `<img src="${GLOBAL_CDN_PREFIX}${src}" alt="${emote}" class="inline-block w-6 h-6 align-middle hover:scale-125 transition-transform" />`
+                : match;
+        });
+};
+
+// --- COMPONENTES ---
+
+const EmotePicker = ({ onSelect }: { onSelect: (emote: keyof typeof EMOTES) => void }) => {
     return (
-        <div class="flex flex-col gap-2">
-            <div class="grid grid-cols-6 gap-2">
-                {Object.keys(EMOTES).map((emote) => (
-                    <button
-                        class="w-12 h-12 bg-black/20 rounded-md flex items-center justify-center"
-                        onClick={() => onSelect(emote as keyof typeof EMOTES)}
-                    >
-                        <img
-                            src={`${GLOBAL_CDN_PREFIX}${EMOTES[emote as keyof typeof EMOTES]}`}
-                            alt={emote}
-                            class="w-8 h-8"
-                        />
-                    </button>
-                ))}
-            </div>
+        <div class={`grid grid-cols-5 gap-2 p-2 bg-neutral-800 w-64 max-h-64 overflow-y-auto ${RETRO_BOX}`}>
+            {Object.keys(EMOTES).map((emote) => (
+                <button
+                    key={emote}
+                    class="w-10 h-10 bg-black/40 hover:bg-lime-500/20 border border-transparent hover:border-lime-500 flex items-center justify-center image-pixelated"
+                    onClick={() => onSelect(emote as keyof typeof EMOTES)}
+                    title={`:${emote}:`}
+                >
+                    <img
+                        src={`${GLOBAL_CDN_PREFIX}${EMOTES[emote as keyof typeof EMOTES]}`}
+                        alt={emote}
+                        class="w-6 h-6"
+                    />
+                </button>
+            ))}
         </div>
     );
 };
 
-interface ChatMessage {
+interface ChatMessageProps {
     id: number;
     user?: string;
     admin?: boolean;
     message: string;
     isAnnouncement?: boolean;
     showModeration?: boolean;
-    removeMessage?: () => void;
+    removeMessage: () => void;
+}
+
+// Define a type for stored messages (server data without UI props)
+interface StoredChatMessage {
+    id: number;
+    user?: string;
+    admin?: boolean;
+    message: string;
+    isAnnouncement?: boolean;
     deleted?: boolean;
 }
 
-interface ChatProps {
-    session: Session;
-    channel: Channel;
-}
-
-const parseEmotesToHTML = (text: string) => {
-    return text
-        .replace(/\n/g, '<br>')
-        .replace(/:([a-zA-Z0-9_]+):/g, (match, emote) => {
-            const src = EMOTES[emote as keyof typeof EMOTES];
-            return src
-                ? `<img src="${GLOBAL_CDN_PREFIX}${src}" alt="${emote}" class="inline-block w-6 h-6" />`
-                : match;
-        });
-};
-
-const ChatMessageComponent = ({
-    id,
+// Memoizamos el mensaje para evitar re-renders masivos
+const ChatMessageItem = memo(({
     user,
     message,
     isAnnouncement,
     admin,
     showModeration,
     removeMessage,
-}: ChatMessage) => {
-    // Función para transformar cadenas tipo ":emote:" en imágenes
-    const parsedMessage = parseEmotesToHTML(message);
+}: ChatMessageProps) => {
+    const parsedMessage = useMemo(() => {
+        const withLinks = parseLinks(message);
+        return parseEmotesToHTML(withLinks);
+    }, [message]);
+
+    if (isAnnouncement) {
+        return (
+            <div class="bg-blue-900/80 text-cyan-300 p-3 border-2 border-cyan-500 shadow-[4px_4px_0px_0px_#06b6d4] mb-2 font-mono text-sm">
+                <div class="flex items-center gap-2 mb-1 border-b border-cyan-500/50 pb-1">
+                    <LucideMegaphone size={16} />
+                    <span class="font-bold uppercase tracking-widest">Sistema</span>
+                </div>
+                <span dangerouslySetInnerHTML={{ __html: parsedMessage }} />
+            </div>
+        );
+    }
+
     return (
-        <div class="flex gap-x-2 w-full bg-white/5 p-2 items-start relative">
+        <div class="group relative flex gap-x-3 w-full hover:bg-white/5 p-2 items-start font-mono text-sm transition-colors border-l-2 border-transparent hover:border-lime-500/50">
             {showModeration && (
                 <button
-                    class="absolute right-2 top-2 text-white bg-red-500 p-1 rounded-md hover:bg-red-600 transition"
+                    class="absolute right-2 -top-2 opacity-0 group-hover:opacity-100 text-white bg-red-600 border-2 border-black p-1 hover:bg-red-500 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] z-10"
                     onClick={removeMessage}
+                    title="Eliminar Mensaje"
                 >
-                    <LucideX size={16} />
+                    <LucideX size={12} />
                 </button>
             )}
-            <div class="flex flex-col w-full gap-y-2 break-words grow flex-1">
-                <span class="font-bold w-max flex items-center gap-x-2">
+            <div class="flex flex-col w-full break-words min-w-0">
+                <span class={`font-bold w-max flex items-center gap-x-2 text-xs uppercase tracking-wide ${admin ? 'text-yellow-400 drop-shadow-md' : 'text-lime-400'}`}>
                     {admin && (
-                        <Tooltip tooltipPosition="top" text="Este usuario es un moderador">
-                            <LucideSwords size={16} class="text-sky-500" />
+                        <Tooltip tooltipPosition="top" text="ADMIN / MOD">
+                            <LucideSwords size={14} class="text-yellow-400 animate-pulse" />
                         </Tooltip>
                     )}
                     {user}
+                    <span class="text-neutral-600 text-[10px] select-none">
+                        {admin ? " MOD" : "Jugador"}
+                    </span>
                 </span>
                 <span
-                    class="w-full break-words text-wrap overflow-hidden"
+                    class="text-neutral-200 leading-relaxed break-words"
                     dangerouslySetInnerHTML={{ __html: parsedMessage }}
                 />
             </div>
         </div>
     );
-};
+});
 
-const getCaretCharacterOffsetWithin = (element: Node): number => {
-    let caretOffset = 0;
-    const sel = window.getSelection();
-    if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        const preCaretRange = range.cloneRange();
-        preCaretRange.selectNodeContents(element);
-        preCaretRange.setEnd(range.endContainer, range.endOffset);
-        caretOffset = preCaretRange.toString().length;
-    }
-    return caretOffset;
-};
-
-
-const placeCaretAtEnd = (element: HTMLElement) => {
-    const range = document.createRange();
-    const sel = window.getSelection()!;
-    range.selectNodeContents(element);
-    range.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(range);
-};
-
-
-
-const setCaretPosition = (element: Node, offset: number) => {
-    const range = document.createRange();
-    let currentOffset = offset;
-    let nodeStack: Node[] = [element];
-    let found = false;
-
-    while (nodeStack.length && !found) {
-        const node = nodeStack.shift()!;
-        if (node.nodeType === Node.TEXT_NODE) {
-            const textLength = node.textContent?.length || 0;
-            if (currentOffset > textLength) {
-                currentOffset -= textLength;
-            } else {
-                range.setStart(node, currentOffset);
-                range.collapse(true);
-                found = true;
-                break;
-            }
-        } else {
-            nodeStack = [...node.childNodes, ...nodeStack];
-        }
-    }
-
-    if (!found) {
-        // Si no se encontró, ubica el caret al final
-        range.selectNodeContents(element);
-        range.collapse(false);
-    }
-
-    const sel = window.getSelection();
-    if (sel) {
-        sel.removeAllRanges();
-        sel.addRange(range);
-    }
-};
-
-// Función que obtiene el contenido "plano" del editor, convirtiendo imágenes en su código de emote
-const getEditableContent = (element: HTMLElement): string => {
-    let result = "";
-    element.childNodes.forEach((node) => {
-        if (node.nodeType === Node.TEXT_NODE) {
-            result += node.textContent;
-        } else if (node.nodeName === "BR") {
-            result += "\n";
-        } else if (node.nodeName === "IMG") {
-            // Suponemos que el alt contiene el nombre del emote
-            const img = node as HTMLImageElement;
-            result += `:${img.alt}:`;
-        } else if (node instanceof HTMLElement) {
-            result += getEditableContent(node);
-        }
-    });
-    return result;
-};
-
-
+interface ChatProps {
+    session: Session;
+    channel: Channel;
+}
 
 export const ChatRoom = ({ session, channel }: ChatProps) => {
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [message, setMessage] = useState<string>("");
-    const [sending, setSending] = useState<boolean>(false);
-    const messagesContainer = useRef<HTMLDivElement>(null);
-    // Estado que indica si el usuario está en el fondo del chat
+    const [messages, setMessages] = useState<StoredChatMessage[]>([]);
+    const [textInput, setTextInput] = useState("");
+    const [sending, setSending] = useState(false);
     const [isUserAtBottom, setIsUserAtBottom] = useState(true);
-    const [emotePickerOpen, setEmotePickerOpen] = useState<boolean>(false);
     const [usersTyping, setUsersTyping] = useState<Set<string>>(new Set());
+    const [chatLocked, setChatLocked] = useState(false);
+    const [emotePickerOpen, setEmotePickerOpen] = useState(false);
 
-    const editableRef = useRef<HTMLDivElement>(null);
-    const [showPlaceholder, setShowPlaceholder] = useState(true);
-    const [chatLocked, setChatLocked] = useState<boolean>(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const fetchLockStatus = async () => {
-        const { data: locked } = await actions.streamerWars.getChatLockStatus();
-        if (locked !== undefined) {
-            setChatLocked(locked);
-        }
-    }
+    const userIsAdmin = session.user?.isAdmin;
 
-    const handleInput = (e: Event) => {
-        if (!editableRef.current || chatLocked) return;
-        const target = e.currentTarget as HTMLElement;
-        let rawText = getEditableContent(target);
+    // --- LÓGICA DE SCROLL Y CARGA ---
 
-        // Validar longitud máxima
-        if (rawText.length > 200) {
-            rawText = rawText.substring(0, 200);
-            // Actualizamos manualmente el contenido si se excede la longitud
-            target.innerHTML = parseEmotesToHTML(rawText);
-            placeCaretAtEnd(target);
-        }
+    const scrollToBottom = useCallback(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, []);
 
-        setMessage(rawText);
-        setShowPlaceholder(rawText === '');
+    useEffect(() => {
+        if (isUserAtBottom) scrollToBottom();
+    }, [messages, isUserAtBottom, scrollToBottom]);
+
+    const handleScroll = () => {
+        if (!scrollContainerRef.current) return;
+        const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+        // Tolerancia de 50px
+        setIsUserAtBottom(scrollHeight - scrollTop - clientHeight <= 50);
     };
 
+    // --- LÓGICA DE SOCKETS ---
+
+    useEffect(() => {
+        actions.streamerWars.getChatLockStatus().then(({ data }) => setChatLocked(!!data));
+
+        actions.streamerWars.getAllMessages().then(({ data }) => {
+            if (data?.messages) setMessages(data.messages.slice(-MAX_MESSAGES)); // Carga inicial limitada
+            setTimeout(scrollToBottom, 100);
+        });
+
+        const handleNewMessage = (data: any) => {
+            setMessages((prev) => {
+                const next = [...prev, { ...data, isAnnouncement: data.type === "announcement" }];
+                return next.length > MAX_MESSAGES ? next.slice(next.length - MAX_MESSAGES) : next;
+            });
+
+            if (!data.suppressAudio && data.type !== "announcement") {
+                playSound({ sound: STREAMER_WARS_SOUNDS.NUEVO_MENSAJE, volume: 0.12 });
+            }
+        };
+
+        channel.bind("new-message", handleNewMessage);
+        channel.bind("clear-chat", () => {
+            setMessages([]);
+            toast.info("CHAT LIMPIADO");
+        });
+        channel.bind("lock-chat", () => {
+            setChatLocked(true);
+        });
+        channel.bind("unlock-chat", () => setChatLocked(false));
+        channel.bind("message-deleted", ({ messageId }: { messageId: number }) => {
+            setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, deleted: true } : m));
+        });
+        channel.bind("client-typing", ({ user }: { user: string }) => {
+            setUsersTyping((prev) => new Set(prev).add(user));
+            // Limpieza automática
+            setTimeout(() => {
+                setUsersTyping((prev) => {
+                    const next = new Set(prev);
+                    next.delete(user);
+                    return next;
+                });
+            }, 2000);
+        });
+
+        return () => {
+            channel.unbind_all();
+        };
+    }, [channel, scrollToBottom]);
+
+    // --- HANDLERS DE INPUT ---
+
+    const handleTyping = (e: any) => {
+        const val = e.target.value;
+        if (val.length > 200) return; // Límite duro de caracteres
+        setTextInput(val);
+
+        if (val.length > 0 && !typingTimeoutRef.current) {
+            channel.trigger("client-typing", { user: session.user?.name });
+            typingTimeoutRef.current = setTimeout(() => {
+                typingTimeoutRef.current = null;
+            }, 2000);
+        }
+    };
+
+    const sendMessage = async () => {
+        if (!textInput.trim() || sending) return;
+        setSending(true);
+        setEmotePickerOpen(false);
+
+        const { error } = await actions.streamerWars.sendMessage({ message: textInput });
+
+        if (error) toast.error("ERROR: SEND_FAILED");
+        else {
+            setTextInput("");
+            // Re-focus textarea
+            if (!/Mobi|Android/i.test(navigator.userAgent)) {
+                textareaRef.current?.focus();
+            }
+        }
+        setSending(false);
+    };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
         }
     };
 
-    const userIsAdmin = session.user?.isAdmin;
+    // Inserta el emote en la posición del cursor del textarea
+    const insertEmote = (emote: keyof typeof EMOTES) => {
+        const code = `:${emote}:`;
+        const input = textareaRef.current;
+        if (!input) return;
 
-    // Se utiliza un ref para almacenar el timeout del "typing"
-    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const SCROLL_THRESHOLD = 50;
-    const caretAfterEmoteRef = useRef<boolean>(false);
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
 
-    useEffect(() => {
-        if (!editableRef.current) return;
+        const newText = text.substring(0, start) + code + text.substring(end);
 
-        // Guarda el offset actual del caret (si no se insertó un emote, se usará este valor)
-        const caretOffset = getCaretCharacterOffsetWithin(editableRef.current);
-        const parsed = parseEmotesToHTML(message);
-
-        if (editableRef.current.innerHTML !== parsed) {
-            editableRef.current.innerHTML = parsed;
-        }
-
-        setShowPlaceholder(message === '');
-
-        if (caretAfterEmoteRef.current) {
-            // Si se acaba de insertar un emote, forzamos el caret al final
-            const range = document.createRange();
-            range.selectNodeContents(editableRef.current);
-            range.collapse(false);
-            const sel = window.getSelection();
-            if (sel) {
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }
-            caretAfterEmoteRef.current = false;
-        } else {
-            // Si no, se restaura la posición original
-            setCaretPosition(editableRef.current, caretOffset);
-        }
-    }, [message]);
-
-    // Función para hacer scroll hasta el fondo del contenedor
-    const scrollToBottom = () => {
-        if (messagesContainer.current) {
-            messagesContainer.current.scrollTo({
-                top: messagesContainer.current.scrollHeight,
-                behavior: "smooth",
+        if (newText.length <= 200) {
+            setTextInput(newText);
+            // Defer focus update
+            requestAnimationFrame(() => {
+                input.selectionStart = input.selectionEnd = start + code.length;
+                input.focus();
             });
         }
     };
 
-    useEffect(() => {
-        fetchLockStatus();
-    }, []);
-
-    // Función que muestra quién está escribiendo
-    const usersTypingMessage = useMemo(() => {
-        const typingArray = Array.from(usersTyping);
-        if (typingArray.length === 1) {
-            return `${typingArray[0]} está escribiendo...`;
-        } else if (typingArray.length === 2) {
-            return `${typingArray.join(" y ")} están escribiendo...`;
-        } else if (typingArray.length > 2) {
-            return `${typingArray.slice(0, 2).join(", ")} y otros están escribiendo...`;
-        }
-        return "&nbsp;";
+    const usersTypingText = useMemo(() => {
+        const arr = Array.from(usersTyping);
+        if (arr.length === 0) return "&nbsp;";
+        if (arr.length < 3) return `${arr.join(" y ")} escribiendo...`;
+        return "Varios usuarios escribiendo...";
     }, [usersTyping]);
 
-    const handleRemoveMessage = async (id: number) => {
-        await actions.streamerWars.deleteMessage({ messageId: id });
-    }
-
-    // Se actualiza el flag según la posición actual del scroll
-    const handleScroll = () => {
-        const container = messagesContainer.current;
-        if (!container) return;
-        const { scrollTop, scrollHeight, clientHeight } = container;
-        const atBottom = scrollHeight - (scrollTop + clientHeight) <= SCROLL_THRESHOLD;
-        setIsUserAtBottom(atBottom);
-    };
-
-    useEffect(() => {
-        // Cargar mensajes existentes y hacer scroll inicial
-        actions.streamerWars.getAllMessages().then(({ data }) => {
-            if (data?.messages) {
-                setMessages(data.messages);
-            }
-            scrollToBottom();
-        });
-
-        // Vincular eventos del canal
-        channel.bind("clear-chat", () => {
-            setMessages([]);
-            toast.info("Un moderador ha limpiado el chat");
-        });
-
-        channel.bind("unlock-chat", () => {
-            setChatLocked(false);
-            toast.success("El chat ha sido desbloqueado");
-        })
-
-        channel.bind("lock-chat", () => {
-            setChatLocked(true);
-            toast.error("El chat ha sido bloqueado por un moderador");
-        })
-
-        channel.bind("message-deleted", ({ messageId }: { messageId: number }) => {
-            setMessages((prev) =>
-                prev.map((msg) => {
-                    if (msg.id === messageId) {
-                        return { ...msg, deleted: true };
-                    }
-                    return msg;
-                })
-            );
-        });
-
-        channel.bind("client-typing", ({ user }: { user: string }) => {
-            setUsersTyping((prev) => new Set([...prev, user]));
-            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-            typingTimeoutRef.current = setTimeout(() => {
-                setUsersTyping((prev) => {
-                    const newSet = new Set(prev);
-                    newSet.delete(user);
-                    return newSet;
-                });
-            }, 2000);
-        });
-
-        channel.bind(
-            "new-message",
-            ({
-                id,
-                user,
-                message,
-                type,
-                suppressAudio,
-                admin,
-            }: {
-                id: number;
-                user: string;
-                message: string;
-                type: string;
-                suppressAudio?: boolean;
-                admin?: boolean;
-            }) => {
-                setMessages((prev) => [
-                    ...prev,
-                    { id, user, message, isAnnouncement: type === "announcement", admin },
-                ]);
-
-                // Reproducir sonidos según el tipo de mensaje
-                const emoteOnlyMatch = message.match(/^:([a-zA-Z0-9_]+):$/);
-                const isReaction =
-                    emoteOnlyMatch && EMOTES[emoteOnlyMatch[1] as keyof typeof EMOTES];
-
-                if (!suppressAudio) {
-                    if (type !== "announcement") {
-                        playSound({ sound: STREAMER_WARS_SOUNDS.NUEVO_MENSAJE, volume: 0.12 });
-                    }
-                }
-            }
-        );
-
-        // Cleanup: Desvincular los eventos al desmontar
-        return () => {
-            channel.unbind("new-message");
-            channel.unbind("client-typing");
-            channel.unbind("clear-chat");
-        };
-    }, [channel]);
-
-    // Auto-scroll solo si el usuario está en el fondo
-    useEffect(() => {
-        if (isUserAtBottom) {
-            scrollToBottom();
-        }
-    }, [messages, isUserAtBottom]);
-
-    // Función para transformar URLs en enlaces clicables
-    const parseLinks = (text: string) => {
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        return text.replace(
-            urlRegex,
-            (url) =>
-                `<a href="${url}" target="_blank" class="text-lime-500 hover:underline">${url}</a>`
-        );
-    };
-
-    const sendMessage = async () => {
-        if (message.trim()) {
-            setSending(true);
-            setEmotePickerOpen(false);
-            const { error } = await actions.streamerWars.sendMessage({ message });
-            if (error) {
-                toast.error(error.message || "Error al enviar mensaje");
-                setSending(false);
-                return;
-            }
-            setMessage("");
-            setSending(false);
-        }
-    };
-
-    useEffect(() => {
-        if (message.trim().length > 0) {
-            channel.trigger("client-typing", { user: session.user?.name });
-        }
-    }, [message]);
-
-    const onEmoteSelect = (emote: keyof typeof EMOTES) => {
-        if (!editableRef.current) return;
-
-        const emoteCode = `:${emote}:`;
-
-        /* 
-            Inserta el emote al final del contenido
-            y marca el flag para forzar el caret al final
-        */
-
-        editableRef.current.innerHTML += parseEmotesToHTML(emoteCode);
-        caretAfterEmoteRef.current = true;
-        setMessage(`${message}${emoteCode}`);
-        editableRef.current.focus();
-
-    };
-
-
-
-
     return (
-        <div class="flex flex-col w-full h-full bg-neutral-950 border border-lime-500 border-dashed relative rounded-md px-4 py-3">
-            <h3 class="text-2xl font-teko py-2">
-                <LucideMessageCircle size={24} class="inline-block mr-2" />
-                Chat de participantes
-            </h3>
-            <div
-                class="h-[320px] w-full overflow-y-auto flex flex-col gap-2 p-2 relative"
-                style={{
-                    scrollbarWidth: "thin",
-                    scrollbarColor: "#4B5563 #E5E7EB",
-                }}
-            >
-                {
-                    chatLocked && (
-                        <div class="bg-neutral-800 z-10 h-full items-center justify-center absolute bottom-0 text-white flex p-2 border border-dashed border-neutral-500">
-                            <div class="w-full flex-col flex justify-center items-center gap-y-4">
-                                <LucideLock size={24} />
-                                <span class="w-full break-words text-wrap text-center overflow-hidden italic">
-                                    El chat ha sido bloqueado por un moderador
-                                </span>
-                            </div>
-                        </div>
-                    )
-                }
-                <div
-                    onScroll={handleScroll}
-                    ref={messagesContainer}
-                    class="flex flex-col flex-1 overflow-y-auto gap-y-2 w-full h-full scroll-smooth"
-                >
-                    {messages.map(({ id, message, user, isAnnouncement, admin, deleted }, index) => {
-
-                        return deleted ? (
-                            <div
-                                key={index}
-                                class="bg-red-500/10 text-white flex p-2 border border-dashed border-red-500"
-                            >
-                                <div class="w-full flex-col flex gap-x-2">
-                                    <span class="font-bold">{user}</span>
-                                    <span class="w-full break-words text-wrap overflow-hidden italic">
-                                        Mensaje eliminado por un moderador
-                                    </span>
-                                </div>
-                            </div>
-                        ) :
-
-                            isAnnouncement ? (
-                                <div
-                                    key={index}
-                                    class="bg-blue-500/30 text-white p-2 border border-dashed border-blue-500"
-                                >
-                                    <LucideMegaphone size={24} />
-                                    <span
-                                        class="w-full break-words text-wrap overflow-hidden"
-                                        dangerouslySetInnerHTML={{ __html: parseLinks(message) }}
-                                    />
-                                </div>
-                            ) : (
-                                <ChatMessageComponent
-                                    key={index}
-                                    id={id}
-                                    user={user}
-                                    message={message}
-                                    admin={admin}
-                                    showModeration={userIsAdmin && !admin}
-                                    removeMessage={() => handleRemoveMessage(id)}
-                                />
-                            );
-                    })}
-                    {/* Se muestra el botón solo si el usuario NO está en el fondo */}
-                    {!isUserAtBottom && (
-                        <button
-                            class="z-[999] sticky mx-auto bottom-4 bg-neutral-700 transition hover:bg-neutral-800 text-white p-2 rounded-md text-center shadow-lg"
-                            onClick={() => {
-                                scrollToBottom();
-                                setIsUserAtBottom(true);
-                            }}
-                        >
-                            Ver mensajes nuevos{" "}
-                            <LucideChevronDown size={24} class="inline-block" />
-                        </button>
-                    )}
+        <div class={`flex flex-col w-full h-full bg-neutral-950 relative p-1 ${RETRO_BOX}`}>
+            {/* HEADER RETRO */}
+            <div class="bg-neutral-800 border-b-2 border-white/20 p-2 flex items-center justify-between select-none">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2 tracking-wider">
+                    <LucideMessageCircle class="text-lime-500" size={20} />
+                    CHAT_ROOM_V1
+                </h3>
+                <div class="flex gap-1">
+                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
                 </div>
             </div>
 
+            {/* AREA DE MENSAJES */}
             <div
-                class="text-white text-xs opacity-50"
-                dangerouslySetInnerHTML={{ __html: usersTypingMessage }}
-            />
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                class="flex-1 overflow-y-auto max-h-[400px] p-4 flex flex-col gap-y-1 relative scrollbar-retro"
+                style={{ imageRendering: "pixelated" }}
+            >
+                {/* Overlay de Bloqueo */}
+                {chatLocked && (
+                    <div class="absolute inset-0 bg-black/80 z-20 flex flex-col items-center justify-center text-red-500 font-mono p-4 text-center backdrop-blur-sm">
+                        <LucideLock size={48} class="mb-2 animate-bounce" />
+                        <span class="text-xl font-bold border-2 border-red-500 p-2 bg-black uppercase">
+                            SYSTEM_LOCK: ACTIVO
+                        </span>
+                    </div>
+                )}
 
-            <footer class="grid mt-4 grid-cols-8 gap-x-2">
-                <div class="relative col-span-5 w-full flex min-h-12 bg-black/20 rounded-md border mr-2 resize-none">
-                    <div
-                        ref={editableRef}
-                        contentEditable={!chatLocked}
-                        onInput={handleInput}
-                        onKeyDown={handleKeyDown}
-                        disabled={chatLocked}
-                        class="p-2 text-white overflow-hidden whitespace-pre-wrap outline-none empty:before:content-[attr(placeholder)] empty:before:text-gray-400 disabled:cursor-not-allowed"
-                        placeholder="Escribe un mensaje..."
-                    />
-                    {showPlaceholder && (
-                        <div class="absolute top-2 left-2 text-gray-400 pointer-events-none">
-                            Escribe un mensaje...
+                {messages.map((msg) => (
+                    msg.deleted ? (
+                        <div key={msg.id} class="opacity-50 text-xs text-red-400 font-mono pl-2 border-l-2 border-red-900 italic py-1">
+                            &lt;Mensaje eliminado por protocolo de seguridad&gt;
                         </div>
-                    )}
-                </div>
-                <div class="flex gap-x-2 col-span-3 items-start justify-end">
-                    <Popover
-                        className="bg-neutral-500 rounded-md p-4"
-                        activator={
-                            <button
-                                disabled={chatLocked}
-                                class="bg-neutral-700 px-4 py-2 rounded-md text-white hover:bg-neutral-500 transition disabled:bg-white/20 disabled:text-white/40 disabled:cursor-not-allowed">
-                                <LucideSmilePlus size={24} />
-                            </button>
-                        }
-                    >
-                        <EmotePicker onSelect={onEmoteSelect} isOpen={emotePickerOpen} />
-                    </Popover>
+                    ) : (
+                        <ChatMessageItem
+                            key={msg.id}
+                            {...msg}
+                            showModeration={userIsAdmin && !msg.admin}
+                            removeMessage={() => actions.streamerWars.deleteMessage({ messageId: msg.id })}
+                        />
+                    )
+                ))}
+                <div ref={messagesEndRef} />
+            </div>
+
+            {/* BOTÓN DE NUEVOS MENSAJES */}
+            {!isUserAtBottom && (
+                <div class="absolute bottom-20 left-0 right-0 flex justify-center z-10">
                     <button
-                        disabled={sending || !message.trim()}
-                        class="bg-lime-500 px-4 py-2 transition hover:bg-lime-600 rounded-md disabled:bg-white/20 disabled:text-white/40 text-black disabled:cursor-not-allowed"
-                        onClick={sendMessage}
+                        onClick={scrollToBottom}
+                        class={`bg-lime-500 text-black font-bold px-4 py-1 text-xs uppercase flex items-center gap-2 animate-bounce ${RETRO_BTN}`}
                     >
-                        <LucideSend size={24} />
+                        New Msg <LucideChevronDown size={16} />
                     </button>
                 </div>
-            </footer>
-        </div >
+            )}
+
+            {/* AREA DE ESCRITURA */}
+            <div class="bg-neutral-900 p-2 border-t-2 border-white/20">
+                <div
+                    class="text-lime-500 text-[10px] font-mono h-4 overflow-hidden mb-1 animate-pulse"
+                    dangerouslySetInnerHTML={{ __html: usersTypingText }}
+                />
+
+                <div class="flex gap-2 items-stretch">
+                    <div class="relative flex-1">
+                        <textarea
+                            ref={textareaRef}
+                            value={textInput}
+                            onInput={handleTyping}
+                            onKeyDown={handleKeyDown}
+                            disabled={chatLocked}
+                            maxLength={200}
+                            rows={1}
+                            class="w-full h-12 bg-black text-white font-mono text-sm p-2 pr-10 resize-none outline-none border-2 border-neutral-700 focus:border-lime-500 transition-colors placeholder:text-neutral-700"
+                            placeholder={chatLocked ? "TRANSMISIÓN DE DATOS DETENIDA..." : "Insertar comando..."}
+                        />
+                        <span class={`absolute right-2 bottom-2 text-[10px] ${textInput.length > 180 ? 'text-red-500' : 'text-neutral-600'}`}>
+                            {textInput.length}/200
+                        </span>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <Popover
+                            activator={
+                                <button
+                                    disabled={chatLocked}
+                                    class={`bg-neutral-700 text-white p-2 h-full flex items-center justify-center hover:bg-neutral-600 disabled:opacity-50 ${RETRO_BTN}`}
+                                >
+                                    <LucideSmilePlus size={20} />
+                                </button>
+                            }
+                            className="mb-2"
+                        >
+                            <EmotePicker onSelect={insertEmote} />
+                        </Popover>
+                    </div>
+
+                    <button
+                        disabled={sending || !textInput.trim() || chatLocked}
+                        onClick={sendMessage}
+                        class={`bg-lime-600 text-white p-3 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-lime-500 ${RETRO_BTN}`}
+                    >
+                        <LucideSend size={20} />
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 };
