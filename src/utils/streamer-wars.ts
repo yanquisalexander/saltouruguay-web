@@ -13,51 +13,46 @@ import { CINEMATICS } from "@/consts/cinematics";
 import { encodeAudioForPusher } from "@/services/pako-compress";
 import { DalgonaShape, type DalgonaShapeData, createDalgonaShapeData, generateDalgonaImage } from "@/services/dalgona-image-generator";
 
+// Import from modular structure
+import { generatePlayerChallenges } from "./streamer-wars/minigames/bomb-challenges";
+import { createCache } from "./streamer-wars/cache";
+import { getRandomItem } from "./streamer-wars/utils";
+import type {
+    SimonSaysGameState,
+    DalgonaPlayerState,
+    DalgonaGameState,
+    TugOfWarGameState,
+    BombChallengeType,
+    BombChallenge,
+    BombPlayerState,
+    BombGameState
+} from "./streamer-wars/types";
+
+// Re-export types for backward compatibility
+export type {
+    SimonSaysGameState,
+    DalgonaPlayerState,
+    DalgonaGameState,
+    TugOfWarGameState,
+    BombChallengeType,
+    BombChallenge,
+    BombPlayerState,
+    BombGameState
+};
+
 const PRESENCE_CHANNEL = "presence-streamer-wars";
 
-
-export interface SimonSaysGameState {
-    teams: Record<
-        string,
-        {
-            players: number[];
-        }
-    >;
-    currentRound: number;
-    currentPlayers: Record<string, number | null>; // null si no hay jugador disponible
-    completedPlayers: number[]; // Jugadores que han completado el patrón actual
-    pattern: string[];
-    eliminatedPlayers: number[]; // Jugadores eliminados
-    status: "playing" | "waiting";
-    playerWhoAlreadyPlayed: number[]; // Jugadores que ya han jugado en rondas anteriores
-}
-
+// Local constants for backward compatibility (these reference the modular structure)
 const CACHE_KEY = "streamer-wars.simon-says";
 const DALGONA_CACHE_KEY = "streamer-wars.dalgona:game-state";
 const TUG_OF_WAR_CACHE_KEY = "streamer-wars.tug-of-war:game-state";
 const COLORS = ["red", "blue", "green", "yellow"];
+const COOLDOWN_MS = 1500; // 1.5 seconds cooldown per player
+const BOMB_CACHE_KEY = "streamer-wars.bomb:game-state";
+const MAX_CHALLENGES = 5;
+const MAX_ERRORS = 3;
 
-const getRandomItem = <T>(array: T[]): T =>
-    array[Math.floor(Math.random() * array.length)];
-const createCache = () => cacheService.create({ ttl: 60 * 60 * 48 });
-
-// Dalgona game types
-export interface DalgonaPlayerState {
-    playerNumber: number;
-    teamId: number;
-    shape: DalgonaShapeData;
-    imageUrl: string;
-    attemptsLeft: number;
-    status: 'playing' | 'completed' | 'failed';
-}
-
-export interface DalgonaGameState {
-    players: Record<number, DalgonaPlayerState>;
-    status: 'waiting' | 'active' | 'completed';
-    startedAt?: number;
-}
-
-// Team to shape mapping based on difficulty
+// Team to shape mapping for Dalgona game
 const TEAM_SHAPE_MAP: Record<number, DalgonaShape> = {
     1: DalgonaShape.Circle,    // Easy
     2: DalgonaShape.Triangle,  // Easy
@@ -65,222 +60,7 @@ const TEAM_SHAPE_MAP: Record<number, DalgonaShape> = {
     4: DalgonaShape.Umbrella,  // Hard
 };
 
-// Tug of War game types
-export interface TugOfWarGameState {
-    teams: {
-        teamA: { id: number; color: string; name: string; playerCount: number };
-        teamB: { id: number; color: string; name: string; playerCount: number };
-    };
-    players: { teamA: number[]; teamB: number[] };
-    progress: number; // -100 to +100 (-100 = Team B wins, +100 = Team A wins)
-    status: 'waiting' | 'playing' | 'finished';
-    winner?: 'teamA' | 'teamB';
-    playedTeams: number[]; // IDs of teams that have already played
-    playerCooldowns: Record<number, number>; // playerNumber -> timestamp when they can click again
-}
-
-const COOLDOWN_MS = 1500; // 1.5 seconds cooldown per player
-
-// Bomb game types
-export type BombChallengeType = 'math' | 'logic' | 'word' | 'sequence';
-
-export interface BombChallenge {
-    type: BombChallengeType;
-    question: string;
-    correctAnswer: string;
-    options?: string[]; // For multiple choice
-}
-
-export interface BombPlayerState {
-    playerNumber: number;
-    userId: number;
-    challengesCompleted: number;
-    errorsCount: number;
-    status: 'playing' | 'completed' | 'failed';
-    currentChallenge?: BombChallenge;
-    challenges: BombChallenge[]; // All 5 challenges
-}
-
-export interface BombGameState {
-    players: Record<number, BombPlayerState>;
-    status: 'waiting' | 'active' | 'completed';
-    startedAt?: number;
-}
-
-const BOMB_CACHE_KEY = "streamer-wars.bomb:game-state";
-const MAX_CHALLENGES = 5;
-const MAX_ERRORS = 3;
-
-// Challenge generators for the bomb game
-const generateMathChallenge = (): BombChallenge => {
-    const operations = [
-        { type: 'sum', symbol: '+' },
-        { type: 'sub', symbol: '-' },
-        { type: 'mul', symbol: '×' }
-    ];
-    const op = getRandomItem(operations);
-
-    let num1: number, num2: number, answer: number;
-
-    if (op.type === 'sum') {
-        num1 = Math.floor(Math.random() * 50) + 10;
-        num2 = Math.floor(Math.random() * 50) + 10;
-        answer = num1 + num2;
-    } else if (op.type === 'sub') {
-        num1 = Math.floor(Math.random() * 50) + 20;
-        num2 = Math.floor(Math.random() * (num1 - 10)) + 5;
-        answer = num1 - num2;
-    } else {
-        num1 = Math.floor(Math.random() * 12) + 2;
-        num2 = Math.floor(Math.random() * 12) + 2;
-        answer = num1 * num2;
-    }
-
-    return {
-        type: 'math',
-        question: `¿Cuánto es ${num1} ${op.symbol} ${num2}?`,
-        correctAnswer: answer.toString(),
-    };
-};
-
-const generateLogicChallenge = (): BombChallenge => {
-    const challenges = [
-        {
-            question: "¿Qué viene primero, el huevo o la gallina?",
-            answer: "huevo"
-        },
-        {
-            question: "¿Cuántos meses tienen 28 días?",
-            answer: "todos"
-        },
-        {
-            question: "¿Qué es lo que se rompe sin tocarlo?",
-            answer: "promesa"
-        },
-        {
-            question: "¿Qué pesa más, un kilo de plumas o un kilo de hierro?",
-            answer: "igual"
-        }
-    ];
-
-    const selected = getRandomItem(challenges);
-    return {
-        type: 'logic',
-        question: selected.question,
-        correctAnswer: selected.answer.toLowerCase(),
-    };
-};
-
-const generateWordChallenge = (): BombChallenge => {
-    const words = [
-        { word: "PROGRAMAR", hint: "Escribir código" },
-        { word: "STREAMER", hint: "Persona que transmite en vivo" },
-        { word: "DESAFIO", hint: "Reto o prueba" },
-        { word: "VICTORIA", hint: "Ganar una competencia" },
-        { word: "BOMBA", hint: "Dispositivo explosivo" }
-    ];
-
-    const selected = getRandomItem(words);
-    const word = selected.word;
-
-    // Remove 2-3 random letters
-    const lettersToRemove = Math.floor(Math.random() * 2) + 2;
-    let incomplete = word;
-    const removedIndices = new Set<number>();
-
-    while (removedIndices.size < lettersToRemove) {
-        const idx = Math.floor(Math.random() * word.length);
-        removedIndices.add(idx);
-    }
-
-    incomplete = word.split('').map((letter, idx) =>
-        removedIndices.has(idx) ? '_' : letter
-    ).join('');
-
-    return {
-        type: 'word',
-        question: `Completa la palabra: ${incomplete} (Pista: ${selected.hint})`,
-        correctAnswer: word.toLowerCase(),
-    };
-};
-
-const generateSequenceChallenge = (): BombChallenge => {
-    const sequences = [
-        {
-            sequence: [2, 4, 6, 8],
-            next: 10,
-            rule: "números pares"
-        },
-        {
-            sequence: [1, 3, 5, 7],
-            next: 9,
-            rule: "números impares"
-        },
-        {
-            sequence: [5, 10, 15, 20],
-            next: 25,
-            rule: "múltiplos de 5"
-        },
-        {
-            sequence: [1, 2, 4, 8],
-            next: 16,
-            rule: "potencias de 2"
-        },
-        {
-            sequence: [10, 20, 30, 40],
-            next: 50,
-            rule: "múltiplos de 10"
-        }
-    ];
-
-    const selected = getRandomItem(sequences);
-    return {
-        type: 'sequence',
-        question: `¿Qué número sigue en la secuencia: ${selected.sequence.join(', ')}, ?`,
-        correctAnswer: selected.next.toString(),
-    };
-};
-
-const generateChallenge = (type?: BombChallengeType): BombChallenge => {
-    if (!type) {
-        const types: BombChallengeType[] = ['math', 'logic', 'word', 'sequence'];
-        type = getRandomItem(types);
-    }
-
-    switch (type) {
-        case 'math':
-            return generateMathChallenge();
-        case 'logic':
-            return generateLogicChallenge();
-        case 'word':
-            return generateWordChallenge();
-        case 'sequence':
-            return generateSequenceChallenge();
-        default:
-            return generateMathChallenge();
-    }
-};
-
-const generatePlayerChallenges = (): BombChallenge[] => {
-    const challenges: BombChallenge[] = [];
-    const types: BombChallengeType[] = ['math', 'logic', 'word', 'sequence'];
-
-    // Ensure at least one of each type
-    for (const type of types) {
-        challenges.push(generateChallenge(type));
-    }
-
-    // Add one more random challenge to make 5
-    challenges.push(generateChallenge());
-
-    // Shuffle challenges
-    for (let i = challenges.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [challenges[i], challenges[j]] = [challenges[j], challenges[i]];
-    }
-
-    return challenges;
-};
+// Note: Types and challenge generators are now imported from modular structure
 
 export const games = {
     simonSays: {
