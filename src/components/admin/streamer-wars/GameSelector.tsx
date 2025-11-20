@@ -57,6 +57,13 @@ export const GAMES = [
         icon: "🪢",
         classNames: "bg-gradient-to-r from-green-500 to-green-700",
         props: {}
+    },
+    {
+        id: "Bomb",
+        name: "Desactivar la Bomba",
+        icon: "💣",
+        classNames: "bg-gradient-to-r from-red-500 to-red-700",
+        props: {}
     }
     // Más juegos pueden añadirse con sus propias props
 ];
