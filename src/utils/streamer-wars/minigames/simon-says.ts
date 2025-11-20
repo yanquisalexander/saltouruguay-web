@@ -3,10 +3,8 @@
  * Complete logic for the Simon Says minigame
  */
 
-import { client } from "@/db/client";
 import { pusher } from "@/utils/pusher";
 import { LOGS_CHANNEL_WEBHOOK_ID, sendWebhookMessage } from "@/services/discord";
-import { SALTO_DISCORD_GUILD_ID } from "@/config";
 import { DISCORD_LOGS_WEBHOOK_TOKEN } from "astro:env/server";
 import { getTranslation } from "@/utils/translate";
 
