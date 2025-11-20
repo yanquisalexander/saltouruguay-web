@@ -12,6 +12,7 @@ const COMMANDS = [
     { name: "/announce", description: "Send an announcement", args: ["message"] },
     { name: "/kill", description: "Kill one or more players", args: ["playerNumber", "..."] },
     { name: "/launch", description: "Launch a game", args: ["gameId", "args?"] },
+    { name: "/episode", description: "Show episode title", args: ["number"] },
     { name: "/team", description: "View team members", args: ["color"] },
     { name: "/waiting", description: "Show or hide waiting screen", args: ["show", "expected"] },
     { name: "/play-cinematic", description: "Play a cinematic", args: ["id"] },

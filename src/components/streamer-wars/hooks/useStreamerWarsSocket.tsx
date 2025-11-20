@@ -1,7 +1,6 @@
 import type { Session } from "@auth/core/types";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState, useMemo } from "preact/hooks";
 import { toast } from "sonner";
-import { toast as retroToast } from "@/components/ui/8bit/toast";
 import Pusher, { type Channel } from "pusher-js";
 import { PUSHER_KEY } from "@/config";
 import {
@@ -13,158 +12,231 @@ import {
 import { LucideSiren } from "lucide-preact";
 import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { decodeAudioFromPusher } from "@/services/pako-compress.client";
-import { AVAILABLE_AUDIOS, type AudioState } from "@/types/audio";
+import { AVAILABLE_AUDIOS } from "@/types/audio";
 import { actions } from "astro:actions";
 
 export const useStreamerWarsSocket = (session: Session | null) => {
     const [pusher, setPusher] = useState<Pusher | null>(null);
     const [gameState, setGameState] = useState<{ component: string; props: any } | null>(null);
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | number[] | null>(null);
-    const globalChannel = useRef<Channel | null>(null);
-    const presenceChannel = useRef<Channel | null>(null);
     const [dayAvailable, setDayAvailable] = useState(false);
 
-    const [bgVolume, setBgVolume] = useState(0);
-    const bgAudio = useRef<HTMLAudioElement | null>(null);
-    const audioInstances = useRef<Record<string, HTMLAudioElement>>({});
-
+    // Timer states
     const [showTimer, setShowTimer] = useState(false);
     const [timerSeconds, setTimerSeconds] = useState(0);
     const [timerKey, setTimerKey] = useState(0);
 
+    // Refs para mantener persistencia sin re-renders
+    const globalChannel = useRef<Channel | null>(null);
+    const presenceChannel = useRef<Channel | null>(null);
+
+    // Audio Refs
+    const [bgVolume, setBgVolume] = useState(0);
+    const bgAudio = useRef<HTMLAudioElement | null>(null);
+    const audioInstances = useRef<Record<string, HTMLAudioElement>>({});
+
+    // ID estable para evitar reconexiones si el objeto session cambia pero el usuario es el mismo
+    const userId = useMemo(() => session?.user?.email || session?.user?.name || "anonymous", [session?.user?.email, session?.user?.name]);
+    const playerNumber = session?.user?.streamerWarsPlayerNumber;
+
     // Se asume que si no hay gameState o no tiene componente, estamos en sala de espera
     const isOnWaitingRoom = (!gameState || !gameState.component) && dayAvailable;
 
-    // Inicializa el audio de fondo (sala de espera)
+    // ---------------------------------------------------------------------------
+    // 1. GESTIÓN DE AUDIO DE FONDO (WAITING ROOM)
+    // ---------------------------------------------------------------------------
     useEffect(() => {
-        bgAudio.current = new Audio(`${CDN_PREFIX}${STREAMER_WARS_SOUNDS.WAITING_ROOM_LOOP}.mp3`);
-        bgAudio.current.loop = true;
+        // Solo inicializar si no existe
+        if (!bgAudio.current) {
+            bgAudio.current = new Audio(`${CDN_PREFIX}${STREAMER_WARS_SOUNDS.WAITING_ROOM_LOOP}.mp3`);
+            bgAudio.current.loop = true;
+            bgAudio.current.preload = "auto";
+        }
+
+        const audio = bgAudio.current;
+
+        if (isOnWaitingRoom) {
+            // Intentar reproducir solo si está pausado para evitar excepciones
+            if (audio.paused) {
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch((error) => {
+                        console.warn("Autoplay prevented or interrupted:", error);
+                    });
+                }
+            }
+        } else {
+            if (!audio.paused) {
+                audio.pause();
+                audio.currentTime = 0; // Resetear al salir
+            }
+        }
+
+        // Limpieza al desmontar hook completo
+        return () => {
+            if (bgAudio.current) {
+                bgAudio.current.pause();
+            }
+        };
     }, [isOnWaitingRoom]);
 
-    // Actualiza el volumen y controla play/pause según el estado de la sala de espera
+    // Efecto separado para volumen para evitar reiniciar el audio
     useEffect(() => {
-        if (!bgAudio.current) return;
-        bgAudio.current.volume = bgVolume;
-    }, [bgVolume, isOnWaitingRoom]);
+        if (bgAudio.current) {
+            bgAudio.current.volume = bgVolume;
+        }
+    }, [bgVolume]);
 
-    // Configuración y eventos de Pusher
+    // ---------------------------------------------------------------------------
+    // 2. PRECARGA DE AUDIOS (Efecto único)
+    // ---------------------------------------------------------------------------
     useEffect(() => {
-        // Array para almacenar los IDs de los timeouts y limpiarlos al desmontar
+        AVAILABLE_AUDIOS.forEach((audio) => {
+            if (!audioInstances.current[audio.id]) {
+                const audioEl = new Audio(`${CDN_PREFIX}${audio.id}.mp3`);
+                audioEl.preload = 'auto';
+                audioEl.addEventListener('ended', () => {
+                    console.debug(`Audio ${audio.id} ended naturally`);
+                });
+                audioInstances.current[audio.id] = audioEl;
+            }
+        });
+
+        return () => {
+            Object.values(audioInstances.current).forEach((audio) => {
+                audio.pause();
+                audio.currentTime = 0;
+            });
+        };
+    }, []);
+
+    // ---------------------------------------------------------------------------
+    // 3. CONEXIÓN PUSHER (Socket)
+    // ---------------------------------------------------------------------------
+    useEffect(() => {
+        if (!session) return;
+
         const timeouts: number[] = [];
 
+        // Configuración optimizada para evitar desconexiones
         const pusherInstance = new Pusher(PUSHER_KEY, {
             wsHost: import.meta.env.DEV ? 'localhost' : 'soketi.saltouruguayserver.com',
             wsPort: import.meta.env.DEV ? 6001 : 443,
-            // wsHost: "soketi.saltouruguayserver.com",
             cluster: "us2",
             enabledTransports: ["ws", "wss"],
             forceTLS: !import.meta.env.DEV,
-
+            // Mantener la conexión viva
+            activityTimeout: 60000,  // Aumentado de 15000 a 60000
+            pongTimeout: 30000,      // Aumentado de 6000 a 30000
+            disableStats: true, // Ahorra ancho de banda si no usas analytics de Pusher
         });
+
+        // Debug de conexión
+        pusherInstance.connection.bind("state_change", (states: any) => {
+            console.log("Pusher state change:", states.current);
+        });
+
+        pusherInstance.connection.bind("error", (err: any) => {
+            console.error("Pusher connection error:", err);
+        });
+
         setPusher(pusherInstance);
 
+        // Suscripciones
         globalChannel.current = pusherInstance.subscribe("streamer-wars");
         presenceChannel.current = pusherInstance.subscribe("presence-streamer-wars");
 
-        // Manejadores de eventos
-        const handlePlayerEliminated = async ({
-            playerNumber,
-            audioBase64,
-        }: {
-            playerNumber: number | number[];
-            audioBase64: string;
-        }) => {
+        // --- HANDLERS ---
+
+        const handleAudioBlob = (audioBase64: string, volume = 0.5, reverb = 0.0) => {
+            try {
+                const audioBytes = decodeAudioFromPusher(audioBase64);
+                const blob = new Blob([new Uint8Array(audioBytes)], { type: "audio/mpeg" });
+                const url = URL.createObjectURL(blob);
+
+                // Delay pequeño para decodificación y sync
+                const timeoutId = window.setTimeout(() => {
+                    playSoundWithReverb({
+                        sound: url,
+                        volume: volume,
+                        isBase64: false,
+                        reverbAmount: reverb,
+                    });
+
+                    // Limpieza de memoria: Revocar URL después de que probablemente haya terminado
+                    // Asumimos 10 segundos como máximo para un clip de audio de este tipo
+                    setTimeout(() => URL.revokeObjectURL(url), 10000);
+                }, 500);
+
+                timeouts.push(timeoutId);
+            } catch (e) {
+                console.error("Error decoding audio blob", e);
+            }
+        };
+
+        const handlePlayerEliminated = async ({ playerNumber: pNum, audioBase64 }: { playerNumber: number | number[]; audioBase64: string }) => {
             await playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.05 });
-            setRecentlyEliminatedPlayer(playerNumber);
+            setRecentlyEliminatedPlayer(pNum);
 
-            const audioBytes = decodeAudioFromPusher(audioBase64);
-
-            const blob = new Blob([new Uint8Array(audioBytes)], { type: "audio/mpeg" }); // o audio/wav
-            const url = URL.createObjectURL(blob);
-            const timeoutId = setTimeout(() => {
-                playSoundWithReverb({
-                    sound: url,
-                    volume: 0.5,
-                    isBase64: false,
-                    reverbAmount: 0.7,
-                });
-            }, 1000);
-            // @ts-ignore
-            timeouts.push(timeoutId);
+            // 1000ms delay específico para eliminación
+            setTimeout(() => handleAudioBlob(audioBase64, 0.5, 0.7), 500);
         };
 
-        const handleSendToWaitingRoom = () => {
-            setGameState(null);
-            toast("Todos los jugadores han sido enviados a la sala de espera");
+        const handleMegaphony = ({ audioBase64 }: { audioBase64: string }) => {
+            handleAudioBlob(audioBase64, 0.8, 0.5);
         };
 
-        const handleLaunchGame = ({
-            game,
-            props,
-        }: {
-            game: string;
-            props: any;
-        }) => {
+        // --- BINDING EVENTOS ---
+
+        const channel = globalChannel.current;
+
+        // Gameplay Events
+        channel.bind("launch-game", ({ game, props }: any) => {
+            console.log("Launch game received:", game, props);
             bgAudio.current?.pause();
             setGameState({
                 component: game,
                 props: { session, pusher: pusherInstance, ...props },
             });
-            document.addEventListener(
-                "instructions-ended",
-                () => {
-                    const START_GAME_SOUNDS = [
-                        STREAMER_WARS_SOUNDS.ES_HORA_DE_JUGAR,
-                        STREAMER_WARS_SOUNDS.QUE_COMIENCE_EL_JUEGO,
-                    ];
-                    const randomSound =
-                        START_GAME_SOUNDS[Math.floor(Math.random() * START_GAME_SOUNDS.length)];
-                    playSound({ sound: randomSound });
-                },
-                { once: true }
-            );
-        };
 
-        const handleMegaphony = async ({
-            audioBase64,
-        }: {
-            audioBase64: string;
-        }) => {
-            const audioBytes = decodeAudioFromPusher(audioBase64);
+            // Esperar instrucciones
+            const onInstructionsEnded = () => {
+                const START_GAME_SOUNDS = [
+                    STREAMER_WARS_SOUNDS.ES_HORA_DE_JUGAR,
+                    STREAMER_WARS_SOUNDS.QUE_COMIENCE_EL_JUEGO,
+                ];
+                const randomSound = START_GAME_SOUNDS[Math.floor(Math.random() * START_GAME_SOUNDS.length)];
+                playSound({ sound: randomSound });
+            };
+            document.addEventListener("instructions-ended", onInstructionsEnded, { once: true });
+        });
 
-            const blob = new Blob([new Uint8Array(audioBytes)], { type: "audio/mpeg" });
-            const url = URL.createObjectURL(blob);
-            const timeoutId = setTimeout(() => {
-                playSoundWithReverb({
-                    sound: url,
-                    volume: 0.8,
-                    isBase64: false,
-                    reverbAmount: 0.5,
-                });
-            }, 500);
-            // @ts-ignore
-            timeouts.push(timeoutId);
-        };
+        channel.bind("send-to-waiting-room", () => {
+            console.log("Send to waiting room received");
+            setGameState(null);
+            toast("Todos los jugadores han sido enviados a la sala de espera");
+        });
 
-        document.addEventListener("welcome-dialog-closed", () => {
-            // destroy audio
-            bgAudio.current = null
-        }, { once: true });
-        // Bind de eventos a Pusher
-        globalChannel.current.bind("player-eliminated", handlePlayerEliminated);
-        globalChannel.current.bind("players-eliminated", ({ playerNumbers, audioBase64 }: { playerNumbers: number | number[], audioBase64: string }) => {
+        channel.bind("episode-title", ({ episode }: { episode: number }) => {
+            console.log("Episode title received:", episode);
+            // Aquí podríamos setear un estado para mostrar JourneyTitle
+            // Pero como es similar a JourneyTransition, quizás usar un estado global
+            // Por ahora, asumimos que se maneja en StreamerWars
+        });
+
+        // Player Status Events
+        channel.bind("player-eliminated", handlePlayerEliminated);
+        channel.bind("players-eliminated", ({ playerNumbers, audioBase64 }: { playerNumbers: number | number[], audioBase64: string }) => {
             handlePlayerEliminated({ playerNumber: playerNumbers, audioBase64 });
         });
-        globalChannel.current.bind("megaphony", handleMegaphony);
 
-        globalChannel.current.bind("reload-for-user", ({ playerNumber }: { playerNumber: number }) => {
-            if (playerNumber === session?.user.streamerWarsPlayerNumber) {
-                location.reload();
-            }
+        channel.bind("megaphony", handleMegaphony);
+
+        channel.bind("reload-for-user", ({ playerNumber: pNum }: { playerNumber: number }) => {
+            if (pNum === playerNumber) location.reload();
         });
-        globalChannel.current.bind("send-to-waiting-room", handleSendToWaitingRoom);
-        globalChannel.current.bind("launch-game", handleLaunchGame);
-        globalChannel.current.bind("new-announcement", ({ message }: { message: string }) => {
+
+        channel.bind("new-announcement", ({ message }: { message: string }) => {
             playSound({ sound: STREAMER_WARS_SOUNDS.ATENCION_JUGADORES, volume: 1 });
             toast.warning("Nuevo anuncio", {
                 icon: <LucideSiren />,
@@ -178,124 +250,86 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                     description: 'font-mono text-sm',
                 }
             });
-
-
         });
 
-        globalChannel.current?.bind("player-aislated", ({ playerNumber }: { playerNumber: number }) => {
-            if (playerNumber === session?.user.streamerWarsPlayerNumber) {
+        // Isolation Logic
+        const handleIsolation = (targetNumbers: number | number[]) => {
+            const targets = Array.isArray(targetNumbers) ? targetNumbers : [targetNumbers];
+            if (playerNumber && targets.includes(playerNumber)) {
                 setDayAvailable(false);
                 playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
                 toast.error("¡Has sido aislado!", {
                     icon: <LucideSiren />,
-                    description: "Un moderador analizará tu caso y te informará si puedes volver a jugar.",
+                    description: "Un moderador analizará tu caso.",
                     richColors: true,
                     duration: 10000,
                     position: "bottom-center",
                     dismissible: true,
-                    classNames: {
-                        icon: 'flex flex-col justify-center items-center p-5 rounded-full',
-                    }
                 });
-
-                setTimeout(() => {
-                    navigate('/guerra-streamers');
-                }, 5000);
+                setTimeout(() => navigate('/guerra-streamers'), 5000);
             }
-        })
+        };
 
-        globalChannel.current?.bind("players-aislated", ({ playerNumbers }: { playerNumbers: number[] }) => {
-            if (!session?.user.streamerWarsPlayerNumber) return;
-            if (playerNumbers.includes(session?.user.streamerWarsPlayerNumber)) {
+        channel.bind("player-aislated", ({ playerNumber }: { playerNumber: number }) => handleIsolation(playerNumber));
+        channel.bind("players-aislated", ({ playerNumbers }: { playerNumbers: number[] }) => handleIsolation(playerNumbers));
 
-                setDayAvailable(false);
-                playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
-                toast.error("¡Has sido aislado!", {
-                    icon: <LucideSiren />,
-                    description: "Un moderador analizará tu caso y te informará si puedes volver a jugar.",
-                    richColors: true,
-                    duration: 10000,
-                    position: "bottom-center",
-                    dismissible: true,
-                    classNames: {
-                        icon: 'flex flex-col justify-center items-center p-5 rounded-full',
-                    }
-                });
-
-                setTimeout(() => {
-                    navigate('/guerra-streamers');
-                }, 5000);
-            }
-        })
-
-        globalChannel.current?.bind("audio-update", ({ audioId, action, data }: { audioId: string, action: string, data: any }) => {
-            console.log('audio-update', audioId, action, data);
+        // Audio Control Events
+        channel.bind("audio-update", ({ audioId, action, data }: { audioId: string, action: string, data: any }) => {
+            // Asegurar que el audio existe, si no, crearlo al vuelo
             if (!audioInstances.current[audioId]) {
-                const audioEl = new Audio(`${CDN_PREFIX}${audioId}.mp3`);
-                audioEl.preload = 'auto';
-                audioEl.addEventListener('ended', () => {
-                    console.log(`Audio ${audioId} ended naturally`);
-                });
-                audioInstances.current[audioId] = audioEl;
+                audioInstances.current[audioId] = new Audio(`${CDN_PREFIX}${audioId}.mp3`);
             }
+
             const audio = audioInstances.current[audioId];
+            if (!audio) return;
 
-            switch (action) {
-                case 'PLAY':
-                    // Always start from the beginning
-                    audio.currentTime = 0;
-                    audio.loop = data.loop;
-                    audio.volume = data.volume;
-                    audio.play().catch(err => console.error('Error playing audio:', err));
-                    break;
-                case 'PAUSE':
-                    audio.pause();
-                    audio.loop = data.loop;
-                    audio.volume = data.volume;
-                    break;
-                case 'STOP':
-                    audio.pause();
-                    audio.currentTime = 0;
-                    audio.loop = data.loop;
-                    audio.volume = data.volume;
-                    break;
-                case 'SET_VOLUME':
-                    audio.volume = data.volume;
-                    audio.loop = data.loop;
-                    break;
-                case 'SET_LOOP':
-                    audio.loop = data.loop;
-                    audio.volume = data.volume;
-                    break;
+            // Aplicar props comunes
+            if (data?.volume !== undefined) audio.volume = data.volume;
+            if (data?.loop !== undefined) audio.loop = data.loop;
+
+            try {
+                switch (action) {
+                    case 'PLAY':
+                        audio.currentTime = 0;
+                        audio.play().catch(e => console.error(`Error playing ${audioId}`, e));
+                        break;
+                    case 'PAUSE':
+                        audio.pause();
+                        break;
+                    case 'STOP':
+                        audio.pause();
+                        audio.currentTime = 0;
+                        break;
+                }
+            } catch (err) {
+                console.warn(`Audio action ${action} failed for ${audioId}`, err);
             }
         });
 
-        globalChannel.current?.bind("audio-mute-all", () => {
-            Object.values(audioInstances.current).forEach(audio => {
-                audio.volume = 0;
+        channel.bind("audio-mute-all", () => {
+            Object.values(audioInstances.current).forEach(a => a.volume = 0);
+        });
+
+        channel.bind("audio-stop-all", () => {
+            Object.values(audioInstances.current).forEach(a => {
+                a.pause();
+                a.currentTime = 0;
             });
         });
 
-        globalChannel.current?.bind("audio-stop-all", () => {
-            Object.values(audioInstances.current).forEach(audio => {
-                audio.pause();
-                audio.currentTime = 0;
-            });
-        });
-
-        globalChannel.current?.bind("show-timer", (data: any) => {
+        // Timer Events
+        channel.bind("show-timer", (data: any) => {
             try {
                 const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-                const seconds = parsedData.seconds;
-                setTimerSeconds(seconds);
+                setTimerSeconds(parsedData.seconds);
                 setShowTimer(true);
                 setTimerKey(prev => prev + 1);
             } catch (e) {
-                console.warn('show-timer payload parse error', e, data);
+                console.warn('Error parsing timer data', e);
             }
         });
 
-        // Restaurar timer si existe
+        // Inicializar Timer si ya existe en servidor
         actions.streamerWars.getCurrentTimer().then(({ data, error }) => {
             if (!error && data) {
                 const elapsed = (Date.now() - data.startedAt) / 1000;
@@ -308,41 +342,24 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             }
         });
 
+        // Limpieza de Welcome Dialog
+        const welcomeHandler = () => { bgAudio.current = null; };
+        document.addEventListener("welcome-dialog-closed", welcomeHandler, { once: true });
+
         return () => {
-            // Limpieza: cancelamos timeouts, desbindamos eventos y desconectamos Pusher
-            timeouts.forEach(clearTimeout);
-            globalChannel.current?.unbind_all();
-            globalChannel.current?.unsubscribe();
+            console.log("Cleanup useStreamerWarsSocket");
+            timeouts.forEach(window.clearTimeout);
+            document.removeEventListener("welcome-dialog-closed", welcomeHandler);
+
+            // Desvincular y desconectar
+            channel.unbind_all();
+            channel.unsubscribe();
             presenceChannel.current?.unbind_all();
             presenceChannel.current?.unsubscribe();
+
             pusherInstance.disconnect();
         };
-    }, [session]);
-
-    // Preload audio files
-    useEffect(() => {
-        // Preload all audio files
-        AVAILABLE_AUDIOS.forEach(audio => {
-            const audioEl = new Audio(`${CDN_PREFIX}${audio.id}.mp3`);
-            audioEl.preload = 'auto';
-            audioInstances.current[audio.id] = audioEl;
-
-            // Add event listener for when audio ends naturally (not from stop/pause actions)
-            audioEl.addEventListener('ended', () => {
-                // Audio ended naturally - this happens when a non-looped audio finishes
-                // The state on the server should be updated via the admin UI if needed
-                console.log(`Audio ${audio.id} ended naturally`);
-            });
-        });
-
-        // Cleanup function
-        return () => {
-            Object.values(audioInstances.current).forEach(audio => {
-                audio.pause();
-                audio.currentTime = 0;
-            });
-        };
-    }, []);
+    }, [userId]); // <--- DEPENDENCY CRÍTICA: Solo reconectar si cambia el ID de usuario, no el objeto session entero.
 
     return {
         pusher,

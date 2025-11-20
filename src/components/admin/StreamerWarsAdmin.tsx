@@ -201,6 +201,8 @@ export const StreamerWarsAdmin = ({ session }: { session: Session }) => {
             cluster: "us2",
             enabledTransports: ['ws', 'wss'],
             forceTLS: !import.meta.env.DEV, // Usa TLS solo en producción
+            activityTimeout: 60000,
+            pongTimeout: 30000,
         });
 
         setPusher(pusherInstance);

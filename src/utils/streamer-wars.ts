@@ -2631,6 +2631,14 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                 await launchGame(gameId, props);
                 return { success: true, feedback: `Juego ${gameId} lanzado` };
 
+            case '/episode':
+                const episodeNum = parseInt(args[0], 10);
+                if (isNaN(episodeNum) || episodeNum < 1 || episodeNum > 3) {
+                    return { success: false, feedback: 'Se requiere un número de episodio válido (1, 2 o 3)' };
+                }
+                await pusher.trigger("streamer-wars", "episode-title", { episode: episodeNum });
+                return { success: true, feedback: `Episodio ${episodeNum} mostrado` };
+
             case '/team':
                 const teamColor = args[0];
                 if (!teamColor) {

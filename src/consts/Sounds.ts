@@ -27,6 +27,9 @@ export const STREAMER_WARS_SOUNDS = {
     EQUIPO_ELIMINADO: 'equipo-eliminado',
     GOLPE_CUERDA: 'golpe-cuerda',
     DISPARO_COMIENZO: 'disparo-comienzo',
+    EPISODE_1: 'episode-1',
+    EPISODE_2: 'episode-2',
+    EPISODE_3: 'episode-3',
 }
 
 

@@ -239,11 +239,38 @@ preload?.push({
           var(--scrollbar-track, #222);
       }
 
-      .streamerwars-layout-base .bottom-bar {
-        grid-area: bottom-bar;
-        padding: var(--bottombar-padding, 0);
-        height: var(--bottombar-height, 32px);
-        background: var(--bottombar-bg, transparent);
+      @keyframes reveal-up {
+        from {
+          transform: translateY(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes reveal-down {
+        from {
+          transform: translateY(-100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .animate-reveal-up {
+        animation: reveal-up 1s ease-out;
+      }
+
+      .animate-reveal-down {
+        animation: reveal-down 1s ease-out 0.5s both;
+      }
+
+      .animate-reveal-hr {
+        animation: reveal-up 1s ease-out 0.3s both;
       }
     </style>
 
