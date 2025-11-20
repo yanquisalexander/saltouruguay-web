@@ -254,12 +254,12 @@ export const Bomb = ({ session, pusher }: BombProps) => {
 
                 </Instructions>
             )}
-            <div class="flex flex-col items-center justify-center h-full p-4 text-white bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-600/70 via-transparent to-transparent">
+            <div class="flex flex-col items-center justify-center relative h-full p-4 text-white bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-600/70 via-transparent to-transparent">
 
 
                 {!showInstructions && gameStatus === 'playing' && (
                     <>
-                        <h2 class="text-3xl font-bold mb-8 font-squids text-center">
+                        <h2 class="text-3xl font-bold mb-8 absolute top-4 left-4 font-squids text-center">
                             La Bomba
                         </h2>
                         <div class="w-full max-w-2xl bg-neutral-900 rounded-lg shadow-2xl p-8 border-4 border-red-600">
