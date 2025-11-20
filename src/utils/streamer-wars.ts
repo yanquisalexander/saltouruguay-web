@@ -2979,8 +2979,8 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                     return { success: true, feedback: `Minijuego "Desactivar la Bomba" iniciado con ${Object.keys(gameState.players).length} jugadores` };
                 } else if (bombAction === 'end') {
                     const result = await games.bomb.endGame();
-                    const completedCount = result.gameState.players ? Object.values(result.gameState.players).filter(p => p.status === 'completed').length : 0;
-                    const failedCount = result.gameState.players ? Object.values(result.gameState.players).filter(p => p.status !== 'completed').length : 0;
+                    const completedCount = result.gameState?.players ? Object.values(result.gameState.players).filter(p => p.status === 'completed').length : 0;
+                    const failedCount = result.gameState?.players ? Object.values(result.gameState.players).filter(p => p.status !== 'completed').length : 0;
                     return { success: true, feedback: `Minijuego "Desactivar la Bomba" finalizado. Completaron: ${completedCount}, Eliminados: ${failedCount}` };
                 } else if (bombAction === 'status') {
                     const gameState = await games.bomb.getGameState();
