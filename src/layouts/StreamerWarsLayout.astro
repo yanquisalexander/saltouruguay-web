@@ -272,6 +272,19 @@ preload?.push({
       .animate-reveal-hr {
         animation: reveal-up 1s ease-out 0.3s both;
       }
+
+      @keyframes spin-y {
+        from {
+          transform: rotateY(0deg);
+        }
+        to {
+          transform: rotateY(360deg);
+        }
+      }
+
+      .with-360-y-spin {
+        animation: spin-y var(--spin-duration, 2s) linear infinite;
+      }
     </style>
 
     <Toaster

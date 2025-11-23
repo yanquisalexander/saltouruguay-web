@@ -1,6 +1,7 @@
 import type { Session } from "@auth/core/types";
 import { useState, useEffect, useRef } from "preact/hooks";
 import type Pusher from "pusher-js";
+import type { Channel } from "pusher-js";
 import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { Button as RetroButton } from "@/components/ui/8bit/button";
@@ -8,6 +9,7 @@ import { Button as RetroButton } from "@/components/ui/8bit/button";
 interface DalgonaProps {
     session: Session;
     pusher: Pusher;
+    channel: Channel;
 }
 
 interface Point {
@@ -15,7 +17,7 @@ interface Point {
     y: number;
 }
 
-export const Dalgona = ({ session, pusher }: DalgonaProps) => {
+export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [attemptsLeft, setAttemptsLeft] = useState(2);
     const [isTracing, setIsTracing] = useState(false);
@@ -63,8 +65,6 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
     // Subscribe to streamer-wars channel
     useEffect(() => {
         if (!session.user?.id || !pusher) return;
-
-        const channel = pusher.subscribe('streamer-wars');
 
         // Listen for game start event
         channel.bind('dalgona:start', (data: { userId: number; imageUrl: string; attemptsLeft: number }) => {
@@ -128,8 +128,11 @@ export const Dalgona = ({ session, pusher }: DalgonaProps) => {
         });
 
         return () => {
-            channel.unbind_all();
-            channel.unsubscribe();
+            channel.unbind('dalgona:start');
+            channel.unbind('dalgona:game-started');
+            channel.unbind('dalgona:success');
+            channel.unbind('dalgona:attempt-failed');
+            channel.unbind('dalgona:game-ended');
         };
     }, [session.user?.id, pusher]);
 

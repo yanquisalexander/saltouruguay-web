@@ -1,4 +1,4 @@
-import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { playSound, playSoundWithReverb, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { useEffect, useState } from "preact/hooks";
 import { ShimmeringText } from "../ui/shadcn-io/shimmering-text";
 
@@ -12,9 +12,16 @@ export interface Episode {
 
 export const EPISODES: Episode[] = [
     {
+        episode: 0,
+        title: "Episodio 0",
+        subtitle: "¡Probemos esta cosa!",
+        sound: STREAMER_WARS_SOUNDS.EPISODE_0,
+        duration: 5000
+    },
+    {
         episode: 1,
         title: "Episodio 1",
-        subtitle: "¡Este truco solo puede hacerse una vez!",
+        subtitle: "¡Sigan las instrucciones!",
         sound: STREAMER_WARS_SOUNDS.EPISODE_1,
         duration: 5000
     },
@@ -52,7 +59,7 @@ export const JourneyTitle = ({ episode, onEnd }: JourneyTitleProps) => {
         }
 
         // Reproducir sonido
-        playSound({ sound: episodeData.sound, volume: 1 });
+        playSoundWithReverb({ sound: episodeData.sound, volume: 1, reverbAmount: 0.09 });
 
         // Duración del título
         const duration = episodeData.duration;
@@ -71,7 +78,7 @@ export const JourneyTitle = ({ episode, onEnd }: JourneyTitleProps) => {
     if (!isVisible || !episodeData) return null;
 
     return (
-        <div className={`fixed inset-0 bg-black/90 flex flex-col justify-center items-center z-[9000] transition-opacity duration-500 ${fadeClass}`}>
+        <div className={`fixed inset-0 bg-black/95 flex flex-col justify-center items-center z-[9000] transition-opacity duration-500 ${fadeClass}`}>
             <ShimmeringText
                 wave
                 duration={1}

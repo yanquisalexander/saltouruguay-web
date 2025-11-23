@@ -13,6 +13,18 @@ const COMMANDS = [
     { name: "/kill", description: "Kill one or more players", args: ["playerNumber", "..."] },
     { name: "/launch", description: "Launch a game", args: ["gameId", "args?"] },
     { name: "/episode", description: "Show episode title", args: ["number"] },
+    {
+        name: "/journey", description: "Lock or unlock the journey", args: ["unlock|lock"], useAction: async (args: string[]) => {
+            const action = args[0];
+            if (action === 'unlock') {
+                return actions.streamerWars.setDayAsAvailable();
+            } else if (action === 'lock') {
+                return actions.streamerWars.finishDay();
+            } else {
+                throw new Error('Invalid action. Use "unlock" or "lock"');
+            }
+        }
+    },
     { name: "/team", description: "View team members", args: ["color"] },
     { name: "/waiting", description: "Show or hide waiting screen", args: ["show", "expected"] },
     { name: "/play-cinematic", description: "Play a cinematic", args: ["id"] },
@@ -21,7 +33,8 @@ const COMMANDS = [
     { name: "/dalgona", description: "Control Dalgona minigame", args: ["start|end"] },
     { name: "/timer", description: "Show a timer for the specified seconds", args: ["seconds"] },
     { name: "/cuerda", description: "Control Tug of War game", args: ["start|end|next|clear"] },
-    { name: "/bomb", description: "Control Bomb minigame", args: ["start|end|status"] }
+    { name: "/bomb", description: "Control Bomb minigame", args: ["start|end|status"] },
+    { name: "/revive", description: "Revive a player", args: ["playerNumber"] }
 ];
 
 export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
@@ -32,6 +45,7 @@ export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number | null>(null);
     const [commandHistory, setCommandHistory] = useState<string[]>([]);
     const inputRef = useRef<HTMLInputElement>(null);
+    const historyEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -64,6 +78,13 @@ export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, suggestions, commandHistory, currentHistoryIndex]);
 
+    // Auto-scroll to bottom of history
+    useEffect(() => {
+        if (historyEndRef.current) {
+            historyEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [history, isOpen]);
+
     useEffect(() => {
         if (isOpen && inputRef.current) {
             inputRef.current.focus();
@@ -84,7 +105,7 @@ export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
         e.preventDefault();
         if (command.trim()) {
             if (!command.startsWith('/')) {
-                setHistory(prev => [...prev.slice(-9), { type: 'error', text: 'Error: Commands must start with /' }]);
+                setHistory(prev => [...prev.slice(-19), { type: 'error', text: 'Error: Commands must start with /' }]);
                 setCommand("");
                 return;
             }
@@ -95,33 +116,40 @@ export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
 
             const commandExists = COMMANDS.some(c => c.name === cmd);
             if (!commandExists) {
-                setHistory(prev => [...prev.slice(-9), { type: 'error', text: `Error: Command ${cmd} does not exist` }]);
+                setHistory(prev => [...prev.slice(-19), { type: 'error', text: `Error: Command ${cmd} not found` }]);
                 setCommand("");
                 return;
             }
 
+            const commandObj = COMMANDS.find(c => c.name === cmd)!;
+
             // Call the action
-            actions.streamerWars.executeAdminCommand({ command: cmd, args }).then(result => {
+            const actionPromise = commandObj.useAction
+                ? commandObj.useAction(args)
+                : actions.streamerWars.executeAdminCommand({ command: cmd, args });
+
+            actionPromise.then(result => {
                 if (result.error) {
-                    setHistory(prev => [...prev.slice(-9), { type: 'error', text: result.error.message || 'Error executing command' }]);
-                } else if (result.data.success) {
-                    setHistory(prev => [...prev.slice(-9), { type: 'command', text: `> ${command.trim()}` }, { type: 'response', text: result.data.feedback || 'Executed successfully' }]);
+                    setHistory(prev => [...prev.slice(-19), { type: 'error', text: result.error.message || 'EXECUTION FAILED' }]);
+                } else if (commandObj.useAction) {
+                    setHistory(prev => [...prev.slice(-19), { type: 'command', text: `> ${cmd.trim()}` }, { type: 'response', text: 'SUCCESS' }]);
+                } else if (result.data?.success) {
+                    setHistory(prev => [...prev.slice(-19), { type: 'command', text: `> ${cmd.trim()}` }, { type: 'response', text: 'SUCCESS' }]);
                 } else {
-                    setHistory(prev => [...prev.slice(-9), { type: 'error', text: result.data.feedback || 'Execution failed' }]);
+                    setHistory(prev => [...prev.slice(-19), { type: 'error', text: 'EXECUTION FAILED' }]);
                 }
                 setCommand("");
                 setCurrentHistoryIndex(null);
-                // Add to command history
                 setCommandHistory(prev => {
                     const newHistory = [...prev];
                     if (command.trim() && (newHistory.length === 0 || newHistory[newHistory.length - 1] !== command.trim())) {
                         newHistory.push(command.trim());
-                        if (newHistory.length > 10) newHistory.shift(); // Keep only last 10
+                        if (newHistory.length > 20) newHistory.shift();
                     }
                     return newHistory;
                 });
             }).catch(error => {
-                setHistory(prev => [...prev.slice(-9), { type: 'error', text: 'Error executing command' }]);
+                setHistory(prev => [...prev.slice(-19), { type: 'error', text: 'SYSTEM ERROR' }]);
                 setCommand("");
                 setCurrentHistoryIndex(null);
             });
@@ -161,43 +189,91 @@ export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {
     if (!isAdmin || !isOpen) return null;
 
     return (
-        <div class="fixed bottom-20 left-4 z-[10000] bg-black/80 backdrop-blur-md border border-white/20 rounded-lg p-4 min-w-[300px] max-w-[400px]">
-            {history.length > 0 && (
-                <div class="mb-4 max-h-32 overflow-y-auto text-xs">
+        <div class="fixed bottom-20 left-4 z-[10000] w-[400px] max-w-[90vw] flex flex-col font-mono">
+            {/* Main Container */}
+            <div class="bg-slate-900 border-4 border-slate-600 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden">
+
+                {/* Retro Header */}
+                <div class="bg-slate-800 p-2 border-b-4 border-slate-600 flex justify-between items-center select-none">
+                    <h2 class="text-yellow-400 text-xs font-bold flex items-center gap-2 font-press-start-2p uppercase tracking-widest">
+                        <span class="animate-pulse text-green-500">_</span>CMD.EXE
+                    </h2>
+                    <div class="flex gap-2 text-[10px]">
+                        <span class="text-slate-400">ADMIN</span>
+                        <span class="text-slate-600">|</span>
+                        <span class="text-slate-400">v1.0</span>
+                    </div>
+                </div>
+
+                {/* Terminal Output Window */}
+                <div class="bg-black p-3 min-h-[200px] max-h-[300px] overflow-y-auto font-mono text-xs border-b-4 border-slate-700">
+                    {history.length === 0 && (
+                        <div class="text-slate-600 italic mb-2">System ready... Waiting for input.</div>
+                    )}
                     {history.map((msg, i) => (
-                        <div key={i} class={`mb-1 ${msg.type === 'error' ? 'text-red-500' : msg.type === 'command' ? 'text-white' : 'text-white/70'}`}>
+                        <div key={i} class={`mb-1 break-all ${msg.type === 'error' ? 'text-red-500 bg-red-950/30' :
+                            msg.type === 'command' ? 'text-yellow-300 font-bold mt-2' :
+                                'text-green-400 pl-2 border-l-2 border-green-900'
+                            }`}>
                             {msg.text}
                         </div>
                     ))}
+                    <div ref={historyEndRef} />
                 </div>
-            )}
-            <form onSubmit={handleSubmit}>
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={command}
-                    onInput={(e) => setCommand((e.target as HTMLInputElement).value)}
-                    placeholder="Enter admin command..."
-                    class="w-full bg-transparent text-white placeholder-white/50 outline-none"
-                    autoComplete="off"
-                />
-            </form>
-            {suggestions.length > 0 && (
-                <ul class="mt-2 bg-black/60 rounded-md border border-white/10 max-h-32 overflow-y-auto">
-                    {suggestions.map((sug) => (
-                        <li
-                            key={sug.name}
-                            class="px-3 py-2 hover:bg-white/10 cursor-pointer text-white/80"
-                            onClick={() => selectSuggestion(sug.name)}
-                        >
-                            <div class="font-semibold">{sug.name}</div>
-                            <div class="text-xs text-white/50">{sug.description} - Args: {sug.args.join(', ')}</div>
-                        </li>
-                    ))}
-                </ul>
-            )}
-            <div class="text-xs text-white/50 mt-2">
-                Press Enter to send, Escape to cancel
+
+                {/* Input Area */}
+                <div class="bg-slate-800 p-2 relative">
+                    <form onSubmit={handleSubmit} class="flex items-center gap-2 bg-slate-900 border-2 border-slate-600 p-2 shadow-inner focus-within:border-green-500 transition-colors">
+                        <span class="text-green-500 font-bold animate-pulse">{'>'}</span>
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={command}
+                            onInput={(e) => setCommand((e.target as HTMLInputElement).value)}
+                            placeholder="Enter command..."
+                            class="w-full bg-transparent text-white placeholder-slate-600 outline-none font-mono text-sm"
+                            autoComplete="off"
+                        />
+                    </form>
+
+                    {/* Suggestions Popover - Retro Style */}
+                    {suggestions.length > 0 && (
+                        <div class="absolute bottom-full left-0 w-full mb-1 px-2 z-20">
+                            <ul class="bg-slate-900 border-2 border-slate-500 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] max-h-48 overflow-y-auto">
+                                <li class="bg-slate-800 text-yellow-400 px-2 py-1 text-[10px] border-b border-slate-700 font-press-start-2p uppercase">
+                                    SUGGESTIONS ({suggestions.length})
+                                </li>
+                                {suggestions.map((sug, idx) => (
+                                    <li
+                                        key={sug.name}
+                                        class="px-3 py-2 hover:bg-green-900/50 cursor-pointer border-b border-slate-800 last:border-0 group transition-colors"
+                                        onClick={() => selectSuggestion(sug.name)}
+                                    >
+                                        <div class="flex justify-between items-center">
+                                            <span class="font-bold text-white group-hover:text-green-400">{sug.name}</span>
+                                            <span class="text-[10px] text-slate-500 font-mono bg-slate-950 px-1 rounded border border-slate-800">
+                                                TAB
+                                            </span>
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 mt-1 flex gap-2">
+                                            <span>{sug.description}</span>
+                                            {sug.args.length > 0 && (
+                                                <span class="text-yellow-600 font-mono">
+                                                    [{sug.args.join('] [')}]
+                                                </span>
+                                            )}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer Hint */}
+                <div class="bg-slate-800 px-2 pb-1 text-[10px] text-slate-500 text-center font-mono uppercase">
+                    [ESC] Close • [↑/↓] History • [TAB] Auto
+                </div>
             </div>
         </div>
     );

@@ -51,14 +51,12 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
         setAudioStates(prev => {
             const currentState = prev[audioId] || { id: audioId, playing: false, volume: 1, loop: false };
             let newState = { ...currentState };
-            
+
             switch (action) {
                 case 'PLAY':
-                    newState.playing = data.playing;
-                    newState.loop = data.loop;
-                    newState.volume = data.volume;
-                    break;
                 case 'PAUSE':
+                case 'SET_VOLUME':
+                case 'SET_LOOP':
                     newState.playing = data.playing;
                     newState.loop = data.loop;
                     newState.volume = data.volume;
@@ -66,16 +64,6 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
                 case 'STOP':
                     newState.playing = false;
                     newState.loop = data.loop;
-                    newState.volume = data.volume;
-                    break;
-                case 'SET_VOLUME':
-                    newState.volume = data.volume;
-                    newState.playing = data.playing;
-                    newState.loop = data.loop;
-                    break;
-                case 'SET_LOOP':
-                    newState.loop = data.loop;
-                    newState.playing = data.playing;
                     newState.volume = data.volume;
                     break;
             }
@@ -86,35 +74,24 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
     useEffect(() => {
         if (channel) {
             channel.bind("audio-update", handleAudioUpdate);
-            
-            // Handle mute all event
             channel.bind("audio-mute-all", () => {
                 setAudioStates(prev => {
                     const updated = { ...prev };
-                    Object.keys(updated).forEach(audioId => {
-                        updated[audioId].volume = 0;
-                    });
+                    Object.keys(updated).forEach(id => updated[id].volume = 0);
                     return updated;
                 });
             });
-
-            // Handle stop all event
             channel.bind("audio-stop-all", () => {
                 setAudioStates(prev => {
                     const updated = { ...prev };
-                    Object.keys(updated).forEach(audioId => {
-                        updated[audioId].playing = false;
-                    });
+                    Object.keys(updated).forEach(id => updated[id].playing = false);
                     return updated;
                 });
             });
         }
 
-        // Load initial states
         actions.audio.getCurrentAudioState({}).then(result => {
-            if (result.data) {
-                setAudioStates(result.data.states);
-            }
+            if (result.data) setAudioStates(result.data.states);
         });
 
         return () => {
@@ -126,122 +103,135 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
         };
     }, [channel]);
 
-    const handlePlay = (audioId: string) => {
-        actions.audio.play({ audioId });
-    };
-
-    const handlePause = (audioId: string) => {
-        actions.audio.pause({ audioId });
-    };
-
-    const handleStop = (audioId: string) => {
-        actions.audio.stop({ audioId });
-    };
-
-    const handleVolumeChange = (audioId: string, volume: number) => {
-        actions.audio.setVolume({ audioId, volume: volume / 100 });
-    };
-
+    const handlePlay = (audioId: string) => actions.audio.play({ audioId });
+    const handlePause = (audioId: string) => actions.audio.pause({ audioId });
+    const handleStop = (audioId: string) => actions.audio.stop({ audioId });
+    const handleVolumeChange = (audioId: string, volume: number) => actions.audio.setVolume({ audioId, volume: volume / 100 });
     const handleLoopToggle = (audioId: string) => {
         const current = audioStates[audioId]?.loop || false;
         actions.audio.setLoop({ audioId, enabled: !current });
     };
 
-    const handleMuteAll = () => {
-        actions.audio.muteAll({});
-    };
-
     if (!isAdmin) return null;
 
     return (
-        <dialog ref={dialogRef} class="fixed bottom-20 left-4 z-[10000] bg-black/90 backdrop-blur-md border border-white/20 rounded-lg p-4 min-w-[400px] max-w-[600px] max-h-[80vh] overflow-y-auto shadow-2xl">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-white text-lg font-bold flex items-center gap-2">
-                    <span class="text-2xl">🎧</span>
-                    Audio Manager
+        <dialog
+            ref={dialogRef}
+            class="fixed bottom-20 left-4 z-[10000] bg-slate-900 text-white border-4 border-slate-600 p-0 min-w-[400px] max-w-[600px] w-full max-h-[80vh] overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] rounded-sm backdrop:bg-black/50"
+        >
+            {/* Retro Header */}
+            <div class="bg-slate-800 p-3 border-b-4 border-slate-600 flex justify-between items-center sticky top-0 z-10">
+                <h2 class="text-yellow-400 text-sm font-bold flex items-center gap-2 font-press-start-2p uppercase tracking-widest">
+                    <span class="animate-pulse">●</span> Audio Deck
                 </h2>
-                <button onClick={() => dialogRef.current?.close()} class="text-white/50 hover:text-white text-xl">✕</button>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 mb-4">
                 <button
-                    onClick={handleMuteAll}
-                    class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors"
+                    onClick={() => dialogRef.current?.close()}
+                    class="text-slate-400 hover:text-white hover:bg-red-500 px-2 font-mono border-2 border-transparent hover:border-white transition-all"
                 >
-                    🔇 Silenciar Todo
-                </button>
-                <button
-                    onClick={() => actions.audio.stopAll({})}
-                    class="bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors"
-                >
-                    ⏹ Detener Todo
+                    [X]
                 </button>
             </div>
 
-            <div class="space-y-3">
-                {AVAILABLE_AUDIOS.map(audio => {
-                    const state = audioStates[audio.id] || { id: audio.id, playing: false, volume: 1, loop: false };
-                    return (
-                        <div key={audio.id} class={`bg-black/40 p-3 rounded-lg border transition-all ${state.playing ? 'border-green-500/50 shadow-lg shadow-green-500/20' : 'border-white/10'}`}>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-white font-semibold text-sm">{audio.name}</span>
-                                <div class="flex items-center space-x-2">
-                                    {state.playing && (
-                                        <span class="inline-flex items-center">
-                                            <span class="animate-pulse h-2 w-2 bg-green-500 rounded-full mr-1"></span>
-                                            <span class="text-green-500 text-xs font-bold">PLAYING</span>
+            <div class="p-4 overflow-y-auto max-h-[calc(80vh-60px)] bg-slate-900">
+                {/* Global Controls */}
+                <div class="grid grid-cols-2 gap-4 mb-6 pb-6 border-b-2 border-dashed border-slate-700">
+                    <button
+                        onClick={() => actions.audio.muteAll({})}
+                        class="bg-red-900 hover:bg-red-600 text-white py-3 px-4 border-b-4 border-r-4 border-red-950 active:border-0 active:translate-y-1 font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 group"
+                    >
+                        <span class="group-hover:animate-ping">🔇</span> SILENCE ALL
+                    </button>
+                    <button
+                        onClick={() => actions.audio.stopAll({})}
+                        class="bg-orange-900 hover:bg-orange-600 text-white py-3 px-4 border-b-4 border-r-4 border-orange-950 active:border-0 active:translate-y-1 font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 group"
+                    >
+                        <span class="group-hover:animate-spin">⏹</span> STOP ALL
+                    </button>
+                </div>
+
+                {/* Audio Grid */}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {AVAILABLE_AUDIOS.map(audio => {
+                        const state = audioStates[audio.id] || { id: audio.id, playing: false, volume: 1, loop: false };
+                        const isPlaying = state.playing;
+
+                        return (
+                            <div
+                                key={audio.id}
+                                class={`
+                                    relative p-3 border-2 transition-all bg-slate-950
+                                    ${isPlaying
+                                        ? 'border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.2)]'
+                                        : 'border-slate-700 hover:border-slate-500'}
+                                `}
+                            >
+                                {/* Status Indicator Light */}
+                                <div class={`absolute top-2 right-2 w-2 h-2 rounded-sm ${isPlaying ? 'bg-green-500 animate-pulse shadow-[0_0_5px_#22c55e]' : 'bg-slate-800'}`} />
+
+                                <div class="flex flex-col gap-2">
+                                    <span class="text-xs font-press-start-2p text-slate-300 truncate pr-4" title={audio.name}>
+                                        {audio.name}
+                                    </span>
+
+                                    {/* Control Row */}
+                                    <div class="flex gap-1 mt-1">
+                                        <button
+                                            onClick={() => isPlaying ? handlePause(audio.id) : handlePlay(audio.id)}
+                                            class={`
+                                                flex-1 py-1 px-2 text-[10px] font-mono font-bold border-b-2 border-r-2 active:border-0 active:translate-y-[2px] transition-colors
+                                                ${isPlaying
+                                                    ? 'bg-yellow-600 border-yellow-800 text-white hover:bg-yellow-500'
+                                                    : 'bg-green-700 border-green-900 text-white hover:bg-green-600'}
+                                            `}
+                                        >
+                                            {isPlaying ? 'PAUSE' : 'PLAY'}
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleStop(audio.id)}
+                                            class="px-2 bg-slate-700 border-slate-900 border-b-2 border-r-2 active:border-0 active:translate-y-[2px] hover:bg-red-600 text-white text-[10px]"
+                                        >
+                                            ⏹
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleLoopToggle(audio.id)}
+                                            class={`
+                                                px-2 border-b-2 border-r-2 active:border-0 active:translate-y-[2px] text-[10px] transition-colors
+                                                ${state.loop
+                                                    ? 'bg-purple-600 border-purple-900 text-white'
+                                                    : 'bg-slate-800 border-slate-950 text-slate-500 hover:text-white'}
+                                            `}
+                                            title="Toggle Loop"
+                                        >
+                                            🔁
+                                        </button>
+                                    </div>
+
+                                    {/* Volume Slider */}
+                                    <div class="flex items-center gap-2 mt-1 bg-slate-900/50 p-1 rounded border border-white/5">
+                                        <span class="text-[10px] text-slate-500">VOL</span>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100"
+                                            value={state.volume * 100}
+                                            onInput={(e) => handleVolumeChange(audio.id, parseInt((e.target as HTMLInputElement).value))}
+                                            class="flex-1 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-500 hover:accent-green-400"
+                                        />
+                                        <span class="text-[10px] font-mono w-8 text-right text-green-400">
+                                            {Math.round(state.volume * 100)}%
                                         </span>
-                                    )}
-                                    {state.loop && (
-                                        <span class="text-purple-400 text-xs font-semibold">🔁 LOOP</span>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
+                        );
+                    })}
+                </div>
 
-                            <div class="flex items-center space-x-2 mb-2 flex-wrap gap-1">
-                                <button
-                                    onClick={() => state.playing ? handlePause(audio.id) : handlePlay(audio.id)}
-                                    class={`${state.playing ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} text-white px-3 py-1 rounded text-sm font-medium transition-colors`}
-                                >
-                                    {state.playing ? '⏸ Pause' : '▶ Play'}
-                                </button>
-                                <button
-                                    onClick={() => handleStop(audio.id)}
-                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
-                                >
-                                    ⏹ Stop
-                                </button>
-                                <button
-                                    onClick={() => handleLoopToggle(audio.id)}
-                                    class={`px-3 py-1 rounded text-sm font-medium transition-colors ${state.loop ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-600 hover:bg-gray-700'} text-white`}
-                                >
-                                    🔁 {state.loop ? 'ON' : 'OFF'}
-                                </button>
-                            </div>
-
-                            <div class="flex items-center space-x-2">
-                                <span class="text-white/70 text-sm">🔊</span>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="100"
-                                    value={state.volume * 100}
-                                    onInput={(e) => handleVolumeChange(audio.id, parseInt((e.target as HTMLInputElement).value))}
-                                    class="flex-1"
-                                />
-                                <span class="text-white/70 text-sm w-12 text-right">{Math.round(state.volume * 100)}%</span>
-                            </div>
-
-                            <div class="text-xs text-white/50 mt-1">
-                                Estado: {state.playing ? '▶ Reproduciendo' : '⏹ Detenido'}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            <div class="text-xs text-white/50 mt-4">
-                Presiona 'A' para abrir/cerrar, Escape para cerrar
+                <div class="text-[10px] text-slate-500 mt-6 text-center font-mono border-t border-slate-800 pt-2">
+                    PRESS 'A' TO TOGGLE // ESC TO EXIT
+                </div>
             </div>
         </dialog>
     );

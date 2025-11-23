@@ -187,7 +187,7 @@ export const TeamSelector = ({
 
     return (
         <div className="flex flex-col items-center justify-start w-full min-h-screen p-4 space-y-8">
-            <Instructions duration={15000}>
+            <Instructions duration={15000} controls={[{ keys: [""], label: "Este juego no posee controles especiales" }]}>
                 <p class="font-mono max-w-2xl text-left">
                     Para unirte a un equipo, debes seleccionar uno de los botones de abajo. Una vez que te unas, no podrás cambiar de equipo.
                 </p>

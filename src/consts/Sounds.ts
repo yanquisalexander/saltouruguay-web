@@ -27,9 +27,11 @@ export const STREAMER_WARS_SOUNDS = {
     EQUIPO_ELIMINADO: 'equipo-eliminado',
     GOLPE_CUERDA: 'golpe-cuerda',
     DISPARO_COMIENZO: 'disparo-comienzo',
+    EPISODE_0: 'episode-0',
     EPISODE_1: 'episode-1',
     EPISODE_2: 'episode-2',
     EPISODE_3: 'episode-3',
+    INSTRUCTIONS_BG_MUSIC: 'instructions-bg',
 }
 
 
@@ -44,23 +46,34 @@ export const playSound = ({ sound, volume = 1 }: { sound: string; volume?: numbe
 
 
 
-export const playSoundWithReverb = async ({
-    sound,
-    volume = 1,
-    reverbAmount = 0.5,
-    isBase64 = false,
-}: {
-    sound: string;
+type PlaySoundWithReverbOptions = {
+    sound?: string;
+    arrayBuffer?: ArrayBuffer;
     volume?: number;
     reverbAmount?: number;
     isBase64?: boolean;
-}): Promise<void> => {
+};
+
+export const playSoundWithReverb = async ({
+    sound,
+    arrayBuffer,
+    volume = 1,
+    reverbAmount = 0.5,
+    isBase64 = false,
+}: PlaySoundWithReverbOptions): Promise<void> => {
     return new Promise(async (resolve, reject) => {
         try {
-            const audioContext = new AudioContext();
-            let arrayBuffer: ArrayBuffer;
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioCtx) {
+                throw new Error("AudioContext is not supported in this browser");
+            }
 
-            if (isBase64) {
+            const audioContext = new AudioCtx();
+            let bufferToDecode: ArrayBuffer;
+
+            if (arrayBuffer) {
+                bufferToDecode = arrayBuffer;
+            } else if (isBase64 && sound) {
                 let base64Data: string;
                 // Si el string contiene coma, se asume formato "data:audio/mp3;base64,..."
                 if (sound.includes(',')) {
@@ -75,18 +88,28 @@ export const playSoundWithReverb = async ({
                 for (let i = 0; i < len; i++) {
                     uint8Array[i] = binaryString.charCodeAt(i);
                 }
-                arrayBuffer = uint8Array.buffer;
-            } else {
+                bufferToDecode = uint8Array.buffer;
+            } else if (sound) {
                 if (sound.startsWith("blob:")) {
                     const response = await fetch(sound);
-                    arrayBuffer = await response.arrayBuffer();
+                    bufferToDecode = await response.arrayBuffer();
                 } else {
                     const response = await fetch(`${CDN_PREFIX}${sound}.mp3`);
-                    arrayBuffer = await response.arrayBuffer();
+                    bufferToDecode = await response.arrayBuffer();
+                }
+            } else {
+                throw new Error("playSoundWithReverb requires either sound or arrayBuffer");
+            }
+
+            if (audioContext.state === 'suspended') {
+                try {
+                    await audioContext.resume();
+                } catch (resumeError) {
+                    console.warn('AudioContext resume failed', resumeError);
                 }
             }
 
-            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            const audioBuffer = await audioContext.decodeAudioData(bufferToDecode.slice(0));
             const source = audioContext.createBufferSource();
             source.buffer = audioBuffer;
 
@@ -122,13 +145,30 @@ export const playSoundWithReverb = async ({
             // Inicia la reproducción
             source.start();
 
-            // Cuando termine la reproducción, cerramos el audioContext
-            source.onended = async () => {
-                await audioContext.close();
-                if (sound.startsWith("blob:")) {
-                    URL.revokeObjectURL(sound);
-                }
-                resolve();
+            source.onended = () => {
+                // 1. Obtenemos la duración del "impulso" del reverb (la cola)
+                // Si no hay buffer, asumimos 0.
+                const reverbTailDuration = convolver.buffer ? convolver.buffer.duration : 0;
+
+                // 2. Convertimos a milisegundos
+                // Agregamos un pequeño margen de seguridad (ej. 200ms) para evitar clics al final
+                const timeToWait = (reverbTailDuration * 1000) + 200;
+
+                setTimeout(async () => {
+                    // 3. Cerramos el contexto SOLO cuando el reverb haya terminado
+                    try {
+                        if (audioContext.state !== 'closed') {
+                            await audioContext.close();
+                        }
+                    } catch (e) {
+                        console.warn("El contexto ya estaba cerrado", e);
+                    }
+
+                    if (sound && sound.startsWith("blob:")) {
+                        URL.revokeObjectURL(sound);
+                    }
+                    resolve();
+                }, timeToWait);
             };
         } catch (error) {
             console.error("Error al reproducir el sonido:", error);

@@ -1191,7 +1191,7 @@ export const games = {
                     });
 
                     try {
-                        const audioBase64 = await tts(`Jugador ${playerNumber} desactivó la bomba!`);
+                        const audioBase64 = await tts(`Jugador ${playerNumber}, pasa!`);
                         const audioPayload = encodeAudioForPusher(audioBase64!);
 
                         await pusher.trigger("streamer-wars", "megaphony", {
@@ -2522,7 +2522,7 @@ export const getNegativeVotes = async (): Promise<
             UsersTable.avatar
         )
         // Ordenamos por votos descendente (usa desc sobre la función count)
-        .orderBy(desc(count(NegativeVotesStreammersTable.id)))
+        .orderBy(desc(count(NegativeVotesStreamersTable.id)))
         .execute()
         .then(res => {
             console.log('Resultado raw:', res);
@@ -2633,9 +2633,11 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
 
             case '/episode':
                 const episodeNum = parseInt(args[0], 10);
-                if (isNaN(episodeNum) || episodeNum < 1 || episodeNum > 3) {
-                    return { success: false, feedback: 'Se requiere un número de episodio válido (1, 2 o 3)' };
+
+                if (isNaN(episodeNum) || episodeNum < 0 || episodeNum > 3) {
+                    return { success: false, feedback: 'Se requiere un número de episodio válido (0, 1, 2 o 3)' };
                 }
+
                 await pusher.trigger("streamer-wars", "episode-title", { episode: episodeNum });
                 return { success: true, feedback: `Episodio ${episodeNum} mostrado` };
 
@@ -2778,6 +2780,13 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                 } else {
                     return { success: false, feedback: 'Uso: /bomb start|end|status' };
                 }
+            case '/revive':
+                const playerNumber = parseInt(args[0], 10);
+                if (isNaN(playerNumber)) {
+                    return { success: false, feedback: 'Número de jugador inválido' };
+                }
+                await revivePlayer(playerNumber);
+                return { success: true, feedback: `Jugador ${playerNumber} revivido` };
             default:
                 return { success: false, feedback: 'Comando desconocido' };
         }

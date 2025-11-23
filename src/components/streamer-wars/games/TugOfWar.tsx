@@ -119,8 +119,10 @@ export const TugOfWar = ({
 
         // Cleanup
         return () => {
-            globalChannel?.unbind_all();
-            globalChannel?.unsubscribe();
+            globalChannel?.unbind("tug-of-war:game-started");
+            globalChannel?.unbind("tug-of-war:state-update");
+            globalChannel?.unbind("tug-of-war:game-ended");
+            globalChannel?.unbind("tug-of-war:game-cleared");
         };
     }, [pusher, gameState.teams]);
 

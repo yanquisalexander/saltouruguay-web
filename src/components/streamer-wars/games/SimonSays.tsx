@@ -107,7 +107,10 @@ export const SimonSays = ({
 
         // Cleanup: desuscribir eventos al desmontar
         return () => {
-            simonSaysChannel?.unbind_all();
+            simonSaysChannel?.unbind("game-state");
+            simonSaysChannel?.unbind("pattern-failed");
+            simonSaysChannel?.unbind("completed-pattern");
+            simonSaysChannel?.unbind("client-player-input");
             simonSaysChannel?.unsubscribe();
         };
     }, [simonSaysChannel, session.user.streamerWarsPlayerNumber]);
