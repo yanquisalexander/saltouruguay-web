@@ -167,6 +167,9 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
             maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
 
             // Extract shape from SVG (darker area in the center)
+            // Note: This processes all pixels sequentially. For very large images,
+            // consider using Web Workers or processing in chunks. The current
+            // implementation is acceptable for standard Dalgona cookie sizes (400x400)
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const pixels = imageData.data;
             
@@ -246,8 +249,10 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         };
         setCracks(prev => [...prev, newCrack]);
 
-        // Play cracking sound
-        playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR, volume: 0.5 });
+        // Play error sound (using generic error sound for now)
+        playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR, volume: 0.5 }).catch(() => {
+            // Silent fail if sound doesn't load
+        });
 
         // Call damage API
         try {

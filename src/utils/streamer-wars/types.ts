@@ -80,8 +80,8 @@ export interface BombGameState {
 
 // Team to shape mapping based on difficulty
 export const TEAM_SHAPE_MAP: Record<number, DalgonaShape> = {
-    1: 'circle' as DalgonaShape,    // Circle (Easy)
-    2: 'triangle' as DalgonaShape,  // Triangle (Easy)
-    3: 'star' as DalgonaShape,      // Star (Medium)
-    4: 'umbrella' as DalgonaShape,  // Umbrella (Hard)
+    1: DalgonaShape.Circle,    // Circle (Easy)
+    2: DalgonaShape.Triangle,  // Triangle (Easy)
+    3: DalgonaShape.Star,      // Star (Medium)
+    4: DalgonaShape.Umbrella,  // Umbrella (Hard)
 };

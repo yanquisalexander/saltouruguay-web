@@ -462,7 +462,21 @@ export const games = {
                 const MAX_TIME_MS = 300000; // 5 minutes maximum
                 
                 if (timeElapsed < MIN_TIME_MS) {
-                    console.warn(`Anti-cheat: Player ${playerNumber} completed too quickly (${timeElapsed}ms)`);
+                    // Log to server logs only (not console) for anti-cheat monitoring
+                    try {
+                        await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                            content: null,
+                            embeds: [
+                                {
+                                    title: "Dalgona - Anti-cheat Alert",
+                                    description: `Player #${playerNumber} completed suspiciously fast: ${timeElapsed}ms`,
+                                    color: 0xff0000,
+                                },
+                            ],
+                        });
+                    } catch (error) {
+                        // Silent fail - don't expose errors to client
+                    }
                     return {
                         success: false,
                         error: 'Completion time is suspiciously fast',
@@ -489,11 +503,9 @@ export const games = {
                 };
             }
 
-            // Validation passed - player succeeded
-            const validation = true;
+            // All validations passed
 
-            if (validation) {
-                // Player succeeded
+            // Player succeeded
                 playerState.status = 'completed';
                 gameState.players[playerNumber] = playerState;
 
@@ -556,58 +568,6 @@ export const games = {
                     success: true,
                     status: 'completed',
                 };
-            } else {
-                // Player failed this attempt - lose a life
-                playerState.lives -= 1;
-
-                if (playerState.lives <= 0) {
-                    // No more lives - eliminate player
-                    playerState.status = 'failed';
-                    gameState.players[playerNumber] = playerState;
-
-                    await cache.set(DALGONA_CACHE_KEY, gameState);
-
-                    // Eliminate the player
-                    await eliminatePlayer(playerNumber);
-
-                    return {
-                        success: false,
-                        status: 'failed',
-                        eliminated: true,
-                    };
-                } else {
-                    // Still has lives left
-                    gameState.players[playerNumber] = playerState;
-                    await cache.set(DALGONA_CACHE_KEY, gameState);
-
-                    // Get player info for notification
-                    const player = await client.query.StreamerWarsPlayersTable.findFirst({
-                        where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber),
-                        with: {
-                            user: {
-                                columns: {
-                                    id: true,
-                                }
-                            }
-                        }
-                    });
-
-                    // Notify player of damage (lost a life)
-                    if (player?.playerNumber && player?.user?.id) {
-                        await pusher.trigger('streamer-wars', 'dalgona:damage', {
-                            userId: player.user.id,
-                            lives: playerState.lives,
-                            playerNumber: playerNumber,
-                        });
-                    }
-
-                    return {
-                        success: false,
-                        status: 'retry',
-                        lives: playerState.lives,
-                    };
-                }
-            }
         },
 
         /**
