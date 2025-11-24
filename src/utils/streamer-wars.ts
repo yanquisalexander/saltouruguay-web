@@ -379,7 +379,7 @@ export const games = {
                     teamId: player.teamId,
                     shape,
                     imageUrl,
-                    attemptsLeft: 2,
+                    attemptsLeft: 3,
                     status: 'playing',
                 };
             }
@@ -405,7 +405,7 @@ export const games = {
                     await pusher.trigger('streamer-wars', 'dalgona:start', {
                         userId: player.userId,
                         imageUrl: playerState.imageUrl,
-                        attemptsLeft: 2,
+                        attemptsLeft: 3,
                         shape: TEAM_SHAPE_MAP[player.teamId] || DalgonaShape.Circle,
                     });
                 }
@@ -1418,117 +1418,31 @@ export const games = {
  * Valida posición, escala y precisión del contorno.
  */
 export function validateTrace(shape: DalgonaShapeData, traceData: any): boolean {
-    if (!traceData || !Array.isArray(traceData.points) || traceData.points.length < 10) {
-        console.log("Trace inválido: puntos insuficientes");
-        return false;
+    // New simplified validation for pixel-removal mechanic
+    // Success is based on shape difficulty
+    
+    // Determine difficulty based on shape type
+    let successChance = 0.5; // default 50%
+    
+    switch (shape.type) {
+        case DalgonaShape.Circle:
+        case DalgonaShape.Triangle:
+            successChance = 0.60; // Easy shapes: 60% success
+            break;
+        case DalgonaShape.Star:
+            successChance = 0.50; // Medium shape: 50% success
+            break;
+        case DalgonaShape.Umbrella:
+            successChance = 0.40; // Hard shape: 40% success
+            break;
     }
+    
+    // Random success based on difficulty
+    const success = Math.random() < successChance;
+    console.log(`Dalgona attempt: shape=${shape.type}, successChance=${successChance}, result=${success ? 'SUCCESS' : 'FAIL'}`);
+    
+    return success;
 
-    const tracePoints = traceData.points;
-    const shapePoints = shape.points;
-
-    // ---- Calcular centro y dimensiones ----
-    const getBounds = (pts: any[]) => {
-        const xs = pts.map(p => p.x);
-        const ys = pts.map(p => p.y);
-        const minX = Math.min(...xs);
-        const maxX = Math.max(...xs);
-        const minY = Math.min(...ys);
-        const maxY = Math.max(...ys);
-        const centerX = (minX + maxX) / 2;
-        const centerY = (minY + maxY) / 2;
-        const width = maxX - minX;
-        const height = maxY - minY;
-        return { minX, maxX, minY, maxY, centerX, centerY, width, height };
-    };
-
-    const shapeBounds = getBounds(shapePoints);
-    const traceBounds = getBounds(tracePoints);
-
-    // ---- VALIDACIÓN 1: Verificar que el centro del trazo esté cerca del centro de la forma ----
-    const centerDistanceX = Math.abs(traceBounds.centerX - shapeBounds.centerX);
-    const centerDistanceY = Math.abs(traceBounds.centerY - shapeBounds.centerY);
-    const maxCenterOffset = 50; // pixels de tolerancia
-
-    if (centerDistanceX > maxCenterOffset || centerDistanceY > maxCenterOffset) {
-        console.log(`Trazo fuera de posición: offsetX=${centerDistanceX.toFixed(1)}, offsetY=${centerDistanceY.toFixed(1)}`);
-        return false;
-    }
-
-    // ---- VALIDACIÓN 2: Verificar que la escala sea similar ----
-    const scaleX = traceBounds.width / shapeBounds.width;
-    const scaleY = traceBounds.height / shapeBounds.height;
-    const minScale = 0.7; // 70% del tamaño original
-    const maxScale = 1.3; // 130% del tamaño original
-
-    if (scaleX < minScale || scaleX > maxScale || scaleY < minScale || scaleY > maxScale) {
-        console.log(`Escala incorrecta: scaleX=${scaleX.toFixed(2)}, scaleY=${scaleY.toFixed(2)}`);
-        return false;
-    }
-
-    // ---- VALIDACIÓN 3: Calcular distancia promedio de cada punto del trazo al contorno ----
-    const distToShape = (px: number, py: number) => {
-        let min = Infinity;
-        for (let i = 0; i < shapePoints.length - 1; i++) {
-            const a = shapePoints[i];
-            const b = shapePoints[i + 1];
-
-            // Vector AB y AP
-            const ABx = b.x - a.x;
-            const ABy = b.y - a.y;
-            const APx = px - a.x;
-            const APy = py - a.y;
-
-            // Proyección punto-segmento
-            const ABdotAB = ABx * ABx + ABy * ABy;
-            if (ABdotAB === 0) {
-                // Punto a y b son iguales
-                const dx = px - a.x;
-                const dy = py - a.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < min) min = dist;
-                continue;
-            }
-
-            const t = Math.max(0, Math.min(1, (APx * ABx + APy * ABy) / ABdotAB));
-
-            const cx = a.x + ABx * t;
-            const cy = a.y + ABy * t;
-
-            const dx = px - cx;
-            const dy = py - cy;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-
-            if (dist < min) min = dist;
-        }
-        return min;
-    };
-
-    // Calcular error promedio
-    let totalError = 0;
-    for (const p of tracePoints) {
-        totalError += distToShape(p.x, p.y);
-    }
-
-    const avgError = totalError / tracePoints.length;
-
-    // ---- Convertir error a accuracy (0–100%) ----
-    // La tolerancia es en pixels: 0 pixels = 100%, más pixels = menos accuracy
-    const maxAcceptableError = 30; // pixels
-    const accuracy = Math.max(0, 100 * (1 - avgError / maxAcceptableError));
-
-    console.log(`ACCURACY: ${accuracy.toFixed(2)}% | Error promedio: ${avgError.toFixed(2)}px | Centro: (${centerDistanceX.toFixed(1)}, ${centerDistanceY.toFixed(1)}) | Escala: (${scaleX.toFixed(2)}, ${scaleY.toFixed(2)})`);
-
-    // ---- Exigir precisión según la figura ----
-    const ACCURACY_REQUIRED: Record<DalgonaShape, number> = {
-        [DalgonaShape.Circle]: 75,     // Círculo es más fácil
-        [DalgonaShape.Triangle]: 70,   // Triángulo es fácil
-        [DalgonaShape.Umbrella]: 60,   // Paraguas es difícil
-        [DalgonaShape.Star]: 65,       // Estrella es medio
-    };
-
-    const required = ACCURACY_REQUIRED[shape.type];
-
-    return accuracy >= required;
 }
 
 

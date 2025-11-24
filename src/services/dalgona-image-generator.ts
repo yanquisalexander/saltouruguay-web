@@ -21,85 +21,91 @@ interface DalgonaImageOptions {
 }
 
 /**
- * Generates an SVG representation of a Dalgona cookie with the specified shape
+ * Generates an 8-bit styled SVG representation of a Dalgona cookie with the specified shape
  */
 export function generateDalgonaSVG(options: DalgonaImageOptions): string {
     const { shape, size = 400 } = options;
 
-    // Cookie background color - caramel/honey color
-    const cookieColor = `hsl(30, 70%, 60%)`;
+    // 8-bit color palette - limited colors for pixel art aesthetic
+    const cookieColor = `#d4a574`; // Caramel cookie color
+    const cookieShadow = `#a67c52`; // Darker shade for depth
+    const shapeColor = `#8b5a3c`; // Dark brown for the shape outline
+    const highlightColor = `#e8c4a0`; // Light highlight
 
-    // Darker outline for the shape
-    const shapeColor = `hsl(30, 60%, 45%)`;
-
-    // Generate shape path based on type
-    const shapePath = getShapePath(shape, size);
+    // Generate pixelated shape path
+    const shapePath = getPixelatedShapePath(shape, size);
 
     return `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges;">
     <defs>
-        <!-- Cookie texture -->
-        <filter id="cookieTexture">
-            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" result="noise"/>
-            <feColorMatrix in="noise" type="saturate" values="0.3"/>
-            <feComponentTransfer>
-                <feFuncA type="discrete" tableValues="0.5"/>
-            </feComponentTransfer>
-            <feBlend in="SourceGraphic" in2="noise" mode="multiply"/>
-        </filter>
-        
-        <!-- Inner shadow for shape -->
-        <filter id="innerShadow">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-            <feOffset dx="2" dy="2" result="offsetblur"/>
-            <feFlood flood-color="#000000" flood-opacity="0.3"/>
-            <feComposite in2="offsetblur" operator="in"/>
-            <feMerge>
-                <feMergeNode/>
-                <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-        </filter>
+        <!-- 8-bit pixel pattern -->
+        <pattern id="pixelPattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+            <rect width="4" height="4" fill="${cookieColor}"/>
+            <rect x="4" y="4" width="4" height="4" fill="${cookieColor}"/>
+            <rect x="4" y="0" width="4" height="4" fill="${cookieShadow}"/>
+            <rect x="0" y="4" width="4" height="4" fill="${highlightColor}"/>
+        </pattern>
     </defs>
     
-    <!-- Cookie background circle -->
+    <!-- Pixelated cookie background circle -->
     <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 10}" 
-            fill="${cookieColor}" 
-            filter="url(#cookieTexture)"
+            fill="url(#pixelPattern)" 
             stroke="${shapeColor}" 
-            stroke-width="2"/>
+            stroke-width="4"/>
     
-    <!-- Shape outline (pressed into the cookie) -->
+    <!-- Highlight pixels for 8-bit effect -->
+    <circle cx="${size / 2 - 40}" cy="${size / 2 - 40}" r="20" 
+            fill="${highlightColor}" 
+            opacity="0.4"/>
+    
+    <!-- Shadow pixels -->
+    <circle cx="${size / 2 + 50}" cy="${size / 2 + 50}" r="30" 
+            fill="${cookieShadow}" 
+            opacity="0.3"/>
+    
+    <!-- Shape outline (pixelated) -->
     <g transform="translate(${size / 2}, ${size / 2})">
         <path d="${shapePath}" 
               fill="none" 
               stroke="${shapeColor}" 
-              stroke-width="4" 
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              filter="url(#innerShadow)"/>
+              stroke-width="6" 
+              stroke-linecap="square"
+              stroke-linejoin="miter"/>
     </g>
 </svg>`;
 }
 
 /**
- * Generates the SVG path for different shapes
+ * Generates pixelated (8-bit style) path for shapes
  */
-function getShapePath(shape: DalgonaShape, size: number): string {
-    const scale = size / 400; // Base scale
+function getPixelatedShapePath(shape: DalgonaShape, size: number): string {
+    const scale = size / 400;
+    const pixelSize = 8; // 8-bit pixel size
 
     switch (shape) {
         case DalgonaShape.Circle:
+            // Create octagon instead of perfect circle for 8-bit effect
             const radius = 80 * scale;
-            return `M ${radius},0 
-                    A ${radius},${radius} 0 1,1 ${-radius},0 
-                    A ${radius},${radius} 0 1,1 ${radius},0`;
+            const sides = 8;
+            let path = '';
+            for (let i = 0; i <= sides; i++) {
+                const angle = (i / sides) * 2 * Math.PI - Math.PI / 2;
+                const x = Math.round(radius * Math.cos(angle) / pixelSize) * pixelSize;
+                const y = Math.round(radius * Math.sin(angle) / pixelSize) * pixelSize;
+                path += `${i === 0 ? 'M' : 'L'} ${x},${y} `;
+            }
+            return path + 'Z';
 
         case DalgonaShape.Triangle:
             const triSize = 100 * scale;
-            return `M ${0},${-triSize * 0.7} 
-                    L ${triSize},${triSize * 0.5} 
-                    L ${-triSize},${triSize * 0.5} 
-                    Z`;
+            // Snap to pixel grid
+            const t1x = 0;
+            const t1y = Math.round(-triSize * 0.7 / pixelSize) * pixelSize;
+            const t2x = Math.round(triSize / pixelSize) * pixelSize;
+            const t2y = Math.round(triSize * 0.5 / pixelSize) * pixelSize;
+            const t3x = Math.round(-triSize / pixelSize) * pixelSize;
+            const t3y = Math.round(triSize * 0.5 / pixelSize) * pixelSize;
+            return `M ${t1x},${t1y} L ${t2x},${t2y} L ${t3x},${t3y} Z`;
 
         case DalgonaShape.Star:
             const starPoints = 5;
@@ -110,22 +116,27 @@ function getShapePath(shape: DalgonaShape, size: number): string {
             for (let i = 0; i < starPoints * 2; i++) {
                 const radius = i % 2 === 0 ? outerRadius : innerRadius;
                 const angle = (Math.PI / starPoints) * i - Math.PI / 2;
-                const x = radius * Math.cos(angle);
-                const y = radius * Math.sin(angle);
+                const x = Math.round(radius * Math.cos(angle) / pixelSize) * pixelSize;
+                const y = Math.round(radius * Math.sin(angle) / pixelSize) * pixelSize;
                 starPath += `${i === 0 ? 'M' : 'L'} ${x},${y} `;
             }
-            starPath += 'Z';
-            return starPath;
+            return starPath + 'Z';
 
         case DalgonaShape.Umbrella:
             const umbSize = 90 * scale;
-            // Umbrella canopy (arc)
-            return `M ${-umbSize},${-20 * scale}
-                    Q ${-umbSize},${-umbSize} ${0},${-umbSize}
-                    Q ${umbSize},${-umbSize} ${umbSize},${-20 * scale}
-                    M ${0},${-umbSize}
-                    L ${0},${umbSize}
-                    Q ${0},${umbSize + 20 * scale} ${15 * scale},${umbSize + 20 * scale}`;
+            // Simplified umbrella with straight lines for 8-bit effect
+            const ux1 = Math.round(-umbSize / pixelSize) * pixelSize;
+            const uy1 = Math.round(-20 * scale / pixelSize) * pixelSize;
+            const ux2 = 0;
+            const uy2 = Math.round(-umbSize / pixelSize) * pixelSize;
+            const ux3 = Math.round(umbSize / pixelSize) * pixelSize;
+            const uy3 = Math.round(-20 * scale / pixelSize) * pixelSize;
+            const ux4 = 0;
+            const uy4 = Math.round(umbSize / pixelSize) * pixelSize;
+            const ux5 = Math.round(15 * scale / pixelSize) * pixelSize;
+            const uy5 = Math.round((umbSize + 20 * scale) / pixelSize) * pixelSize;
+            
+            return `M ${ux1},${uy1} L ${ux2},${uy2} L ${ux3},${uy3} M ${ux2},${uy2} L ${ux4},${uy4} L ${ux5},${uy5}`;
 
         default:
             return '';
