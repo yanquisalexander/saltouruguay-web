@@ -149,19 +149,21 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
-            // Set canvas dimensions
-            canvas.width = img.width;
-            canvas.height = img.height;
-            maskCanvas.width = img.width;
-            maskCanvas.height = img.height;
-            shapeCanvas.width = img.width;
-            shapeCanvas.height = img.height;
+            // Set canvas dimensions - scale up for better pixel art effect
+            const scale = 1;
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            maskCanvas.width = img.width * scale;
+            maskCanvas.height = img.height * scale;
+            shapeCanvas.width = img.width * scale;
+            shapeCanvas.height = img.height * scale;
 
-            // Draw base image
-            ctx.drawImage(img, 0, 0);
+            // Draw base image with pixel perfect rendering
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-            // Create mask (white = removable, transparent = shape)
-            maskCtx.fillStyle = '#FFD700'; // Cookie color
+            // Create mask - full cookie color with shape cut out
+            maskCtx.fillStyle = '#D2691E'; // Chocolate/caramel cookie color (8-bit style)
             maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
 
             // Extract shape from SVG (darker area in the center)
@@ -173,17 +175,21 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                 const r = pixels[i];
                 const g = pixels[i + 1];
                 const b = pixels[i + 2];
+                const a = pixels[i + 3];
+                
+                // Skip transparent pixels
+                if (a < 10) continue;
                 
                 // Check if pixel is part of the shape (darker color)
                 const brightness = (r + g + b) / 3;
-                if (brightness < 180) { // Shape pixels are darker
+                if (brightness < 170) { // Shape pixels are darker
                     // Mark as shape (clear from mask)
                     const x = (i / 4) % canvas.width;
                     const y = Math.floor((i / 4) / canvas.width);
                     maskCtx.clearRect(x, y, 1, 1);
                     
-                    // Draw shape on shape canvas
-                    shapeCtx.fillStyle = '#8B4513';
+                    // Draw shape on shape canvas (bright color for detection)
+                    shapeCtx.fillStyle = '#FF0000'; // Red for easy detection
                     shapeCtx.fillRect(x, y, 1, 1);
                 } else {
                     removableCount++;
@@ -192,9 +198,35 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
             
             setTotalRemovablePixels(removableCount);
 
-            // Redraw base with pixelated effect
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(img, 0, 0);
+            // Redraw base canvas with cookie texture
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#D2691E';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add simple texture noise (8-bit style)
+            for (let i = 0; i < canvas.width * canvas.height / 50; i++) {
+                const x = Math.floor(Math.random() * canvas.width);
+                const y = Math.floor(Math.random() * canvas.height);
+                const brightness = Math.random() > 0.5 ? 1.1 : 0.9;
+                ctx.fillStyle = `rgba(210, 105, 30, ${brightness})`;
+                ctx.fillRect(x, y, 2, 2);
+            }
+            
+            // Draw shape outline on top
+            ctx.strokeStyle = '#8B4513'; // Darker brown for shape outline
+            ctx.lineWidth = 4;
+            const shapeImageData = shapeCtx.getImageData(0, 0, shapeCanvas.width, shapeCanvas.height);
+            const shapePixels = shapeImageData.data;
+            
+            // Draw shape pixels darker
+            for (let i = 0; i < shapePixels.length; i += 4) {
+                if (shapePixels[i + 3] > 0) {
+                    const x = (i / 4) % shapeCanvas.width;
+                    const y = Math.floor((i / 4) / shapeCanvas.width);
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
         };
         img.src = imageUrl;
         imageRef.current = img;
@@ -329,20 +361,34 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         ctx.drawImage(maskCanvas, 0, 0);
         ctx.globalCompositeOperation = 'source-over';
 
-        // Draw cracks
-        ctx.fillStyle = '#8B0000';
+        // Draw cracks (8-bit pixel art style)
         cracks.forEach(crack => {
             ctx.save();
             ctx.translate(crack.x, crack.y);
             ctx.rotate((crack.rotation * Math.PI) / 180);
             
-            // Draw pixelated crack
+            // Draw pixelated crack with multiple colors for depth
+            // Dark crack lines
+            ctx.fillStyle = '#4A0000';
+            ctx.fillRect(-10, -2, 20, 4);
+            ctx.fillRect(-2, -10, 4, 20);
+            
+            // Medium crack lines
+            ctx.fillStyle = '#8B0000';
             ctx.fillRect(-8, -1, 16, 2);
             ctx.fillRect(-1, -8, 2, 16);
-            ctx.fillRect(-6, -6, 2, 2);
-            ctx.fillRect(4, -6, 2, 2);
-            ctx.fillRect(-6, 4, 2, 2);
-            ctx.fillRect(4, 4, 2, 2);
+            
+            // Crack branches (8-bit style)
+            ctx.fillStyle = '#8B0000';
+            ctx.fillRect(-8, -8, 3, 3);
+            ctx.fillRect(5, -8, 3, 3);
+            ctx.fillRect(-8, 5, 3, 3);
+            ctx.fillRect(5, 5, 3, 3);
+            
+            // Add highlight for 3D effect
+            ctx.fillStyle = '#FF6B6B';
+            ctx.fillRect(-9, -1, 2, 2);
+            ctx.fillRect(-1, -9, 2, 2);
             
             ctx.restore();
         });
@@ -428,15 +474,22 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
     if (showInstructions) {
         return (
             <Instructions duration={12000}>
-                <p className="font-mono max-w-2xl text-left">
-                    Talla cuidadosamente la galleta removiendo todo el material alrededor de la figura.
-                    Usa el cursor (aguja) para raspar píxel por píxel.
+                <p className="font-mono max-w-2xl text-left text-xl">
+                    🍪 <strong>DALGONA - Tallado de Píxeles</strong>
                 </p>
                 <p className="font-mono max-w-2xl text-left">
-                    ⚠️ Si tocas la figura central, perderás una vida. Tienes 3 vidas en total.
+                    Talla cuidadosamente la galleta removiendo todo el material alrededor de la figura central.
+                    Mantén presionado el mouse/dedo y arrastra para raspar píxel por píxel.
+                </p>
+                <p className="font-mono max-w-2xl text-left">
+                    ⚠️ <strong>¡CUIDADO!</strong> Si tocas la figura central (área oscura), perderás una vida.
+                    Tienes 3 vidas en total. Al perder todas, serás eliminado.
+                </p>
+                <p className="font-mono max-w-2xl text-left">
+                    🎯 <strong>Objetivo:</strong> Remover al menos el 95% del material removible sin romper la figura.
                 </p>
                 <p className="font-mono max-w-2xl text-left text-yellow-300">
-                    💡 Consejo: Mantén presionado y muévete lentamente cerca de los bordes de la figura.
+                    💡 Consejo: Trabaja desde los bordes hacia el centro. Muévete lentamente cerca de la figura.
                 </p>
             </Instructions>
         )
@@ -444,10 +497,13 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
     if (gameStatus === 'waiting') {
         return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center text-white">
-                    <h2 className="text-3xl font-squids mb-4 bg-gradient-to-br from-orange-600 to-yellow-200 text-transparent bg-clip-text">Dalgona</h2>
-                    <p className="text-xl">Esperando que el juego comience...</p>
+            <div className="flex items-center justify-center h-full bg-gradient-to-b from-amber-900 to-amber-950">
+                <div className="text-center text-white p-8 bg-black/50 border-8 border-yellow-600">
+                    <h2 className="text-3xl font-bold mb-4 text-yellow-300" style={{ fontFamily: '"Press Start 2P", monospace', textShadow: '4px 4px 0px #000' }}>
+                        DALGONA
+                    </h2>
+                    <p className="text-xl font-mono">Esperando inicio...</p>
+                    <div className="mt-4 animate-pulse text-yellow-300 text-4xl">...</div>
                 </div>
             </div>
         );
@@ -456,9 +512,13 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
     if (gameStatus === 'completed') {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-green-900 to-green-950">
-                <div className="text-center text-white">
-                    <h2 className="text-4xl font-bold mb-4">¡Completado! ✓</h2>
-                    <p className="text-xl">Has superado el desafío Dalgona</p>
+                <div className="text-center text-white p-12 bg-black/70 border-8 border-green-400">
+                    <h2 className="text-5xl font-bold mb-6 text-green-400 animate-pulse" style={{ fontFamily: '"Press Start 2P", monospace', textShadow: '4px 4px 0px #000' }}>
+                        ¡EXITO!
+                    </h2>
+                    <div className="text-8xl mb-4">✓</div>
+                    <p className="text-2xl font-mono">Has superado el</p>
+                    <p className="text-2xl font-mono">desafío Dalgona</p>
                 </div>
             </div>
         );
@@ -467,9 +527,13 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
     if (gameStatus === 'failed') {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-red-900 to-red-950">
-                <div className="text-center text-white">
-                    <h2 className="text-4xl font-bold mb-4">Eliminado ✗</h2>
-                    <p className="text-xl">No lograste completar el desafío</p>
+                <div className="text-center text-white p-12 bg-black/70 border-8 border-red-600">
+                    <h2 className="text-5xl font-bold mb-6 text-red-500" style={{ fontFamily: '"Press Start 2P", monospace', textShadow: '4px 4px 0px #000' }}>
+                        ELIMINADO
+                    </h2>
+                    <div className="text-8xl mb-4">✗</div>
+                    <p className="text-2xl font-mono">No completaste</p>
+                    <p className="text-2xl font-mono">el desafío</p>
                 </div>
             </div>
         );
@@ -478,37 +542,57 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
     const percentageRemoved = totalRemovablePixels > 0 ? (pixelsRemoved / totalRemovablePixels) * 100 : 0;
 
     return (
-        <div className="h-full relative p-5" style={{ cursor: 'crosshair' }}>
-            <h2 className="text-2xl font-squids mb-4 bg-gradient-to-br from-orange-600 to-yellow-200 text-transparent bg-clip-text">Dalgona</h2>
+        <div className="h-full relative p-5 bg-gradient-to-b from-amber-900 to-amber-950" style={{ cursor: 'crosshair' }}>
+            <h2 className="text-3xl font-bold mb-4 text-center text-yellow-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]" style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '1.5rem', textShadow: '4px 4px 0px #000' }}>
+                DALGONA
+            </h2>
             
             {/* Lives Display - 8-bit pixel hearts */}
-            <div className="absolute top-4 left-4 flex gap-2">
+            <div className="absolute top-4 left-4 flex gap-3 bg-black/50 p-3 rounded-none border-4 border-yellow-600">
+                <span className="text-yellow-300 font-bold mr-2" style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '0.8rem' }}>
+                    VIDAS:
+                </span>
                 {Array.from({ length: 3 }).map((_, i) => (
                     <img
                         key={i}
                         src="/images/vida.webp"
                         alt="vida"
-                        className={`w-12 h-12 pixelated ${i >= lives ? 'opacity-30 grayscale' : ''}`}
+                        className={`w-10 h-10 ${i >= lives ? 'opacity-20 grayscale' : ''}`}
                         style={{ imageRendering: 'pixelated' }}
                     />
                 ))}
             </div>
 
-            {/* Progress Bar */}
-            <div className="absolute top-20 left-4 right-4 bg-gray-800 border-4 border-white p-2">
-                <div className="text-white text-sm mb-1 font-mono">
-                    Progreso: {percentageRemoved.toFixed(1)}% / 95%
+            {/* Progress Bar - 8-bit style */}
+            <div className="absolute top-4 right-4 bg-black/70 border-4 border-yellow-600 p-4 min-w-[300px]">
+                <div className="text-yellow-300 text-xs mb-2 font-bold" style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '0.7rem' }}>
+                    PROGRESO
                 </div>
-                <div className="w-full bg-gray-700 h-6 relative overflow-hidden border-2 border-white">
+                <div className="text-white text-sm mb-2 font-mono font-bold">
+                    {percentageRemoved.toFixed(1)}% / 95%
+                </div>
+                <div className="w-full bg-gray-900 h-8 relative overflow-hidden border-4 border-gray-700">
                     <div 
-                        className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-300"
+                        className={`h-full transition-all duration-300 ${
+                            percentageRemoved >= 95 ? 'bg-green-500' : 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                        }`}
                         style={{ width: `${Math.min(percentageRemoved, 100)}%` }}
                     />
+                    {/* Pixel art style lines */}
+                    <div className="absolute inset-0 pointer-events-none">
+                        {Array.from({ length: 10 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="absolute top-0 bottom-0 w-1 bg-black/20"
+                                style={{ left: `${i * 10}%` }}
+                            />
+                        ))}
+                    </div>
                 </div>
             </div>
 
             {/* Canvas */}
-            <div className="relative bg-gray-900 w-max mx-auto mb-6 mt-32 border-8 border-amber-800" style={{ imageRendering: 'pixelated' }}>
+            <div className="relative bg-amber-900 w-max mx-auto mb-6 mt-32 border-8 border-yellow-900 shadow-2xl" style={{ imageRendering: 'pixelated' }}>
                 <canvas
                     ref={canvasRef}
                     onMouseDown={handleMouseDown}
@@ -531,12 +615,13 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
             {/* Submit Button */}
             {percentageRemoved >= 95 && (
-                <div className="flex justify-center">
+                <div className="flex justify-center animate-pulse">
                     <RetroButton
                         onClick={submitCompletion}
-                        className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-bold text-xl"
+                        className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-bold text-xl border-4 border-green-400"
+                        style={{ fontFamily: '"Press Start 2P", monospace' }}
                     >
-                        ¡Completar!
+                        ¡COMPLETAR!
                     </RetroButton>
                 </div>
             )}

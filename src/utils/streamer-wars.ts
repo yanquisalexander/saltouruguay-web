@@ -432,7 +432,7 @@ export const games = {
         /**
          * Validates a player's trace submission
          * @param playerNumber The player's number
-         * @param traceData The trace data from the client (simplified validation)
+         * @param traceData The trace data from the client (includes percentage completed and timing)
          * @returns Success status and updated game state
          */
         submitTrace: async (playerNumber: number, traceData: any) => {
@@ -455,8 +455,42 @@ export const games = {
                 };
             }
 
-            // Validate the trace (simplified - in production this would be more complex)
-            const validation = validateTrace(playerState.shape, traceData);
+            // Anti-cheat: Validate timing (must take at least 10 seconds to complete)
+            if (gameState.startedAt) {
+                const timeElapsed = Date.now() - gameState.startedAt;
+                const MIN_TIME_MS = 10000; // 10 seconds minimum
+                const MAX_TIME_MS = 300000; // 5 minutes maximum
+                
+                if (timeElapsed < MIN_TIME_MS) {
+                    console.warn(`Anti-cheat: Player ${playerNumber} completed too quickly (${timeElapsed}ms)`);
+                    return {
+                        success: false,
+                        error: 'Completion time is suspiciously fast',
+                        eliminated: false,
+                    };
+                }
+                
+                if (timeElapsed > MAX_TIME_MS) {
+                    return {
+                        success: false,
+                        error: 'Time limit exceeded',
+                        eliminated: false,
+                    };
+                }
+            }
+
+            // Validate completion percentage (must be at least 95%)
+            const percentageRemoved = traceData.percentageRemoved || 0;
+            if (percentageRemoved < 95) {
+                return {
+                    success: false,
+                    error: 'Not enough pixels removed',
+                    eliminated: false,
+                };
+            }
+
+            // Validation passed - player succeeded
+            const validation = true;
 
             if (validation) {
                 // Player succeeded
