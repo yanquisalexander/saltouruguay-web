@@ -394,7 +394,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     return (
         <>
             <SplashScreen onEnd={() => { }} />
-            {pusher && <StreamerWarsCinematicPlayer userId={session.user.id} pusher={pusher} />}
+            {pusher && <StreamerWarsCinematicPlayer userId={session.user.id} />}
 
             <PlayerEliminated session={session} playerNumber={recentlyEliminatedPlayer} />
             <CurrentPlayer session={session} showTimer={showTimer} timerSeconds={timerSeconds} timerKey={timerKey} onTimerEnd={onTimerEnd} />
@@ -428,7 +428,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                     <AdminChat session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
                     <StreamerWarsAudioManager session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
                     <VoiceControls isAdmin={session.user.isAdmin || false} />
-                    <VoiceChat pusher={pusher} userId={session.user.id} teamId={currentTeamId} isAdmin={session.user.isAdmin || false} players={players} />
+                    <VoiceChat userId={session.user.id} teamId={currentTeamId} isAdmin={session.user.isAdmin || false} players={players} />
                 </>
             )}
         </>

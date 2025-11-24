@@ -1,12 +1,11 @@
-import { PUSHER_KEY } from "@/config";
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
-import Pusher from "pusher-js";
 import { StreamerWarsPlayers } from "./streamer-wars/Players";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
 import { LucideBellRing, LucideCoffee, LucideFlag, LucideGavel, LucideLockKeyholeOpen, LucideMessageSquareLock, LucideRefreshCw, LucideTrash2 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
+import { usePusher } from "@/hooks/usePusher";
 
 
 let GENERAL_ACTIONS = [
@@ -168,8 +167,7 @@ let GENERAL_ACTIONS = [
 
 
 export const StreamerWarsAdmin = ({ session }: { session: Session }) => {
-    const [pusher, setPusher] = useState<Pusher | null>(null);
-
+    const { pusher } = usePusher();
     const [announcementText, setAnnouncementText] = useState<string>("");
 
     useEffect(() => {
@@ -193,27 +191,7 @@ export const StreamerWarsAdmin = ({ session }: { session: Session }) => {
     }, []);
 
 
-    useEffect(() => {
-        const host = 'soketi.saltouruguayserver.com';
 
-        const pusherInstance = new Pusher(PUSHER_KEY, {
-            //  wsHost: host,
-            cluster: "us2",
-            enabledTransports: ['ws', 'wss'],
-            forceTLS: !import.meta.env.DEV, // Usa TLS solo en producción
-            activityTimeout: 60000,
-            pongTimeout: 30000,
-        });
-
-        setPusher(pusherInstance);
-
-
-
-        return () => {
-            // Limpia la instancia de Pusher al desmontar el componente
-            pusherInstance.disconnect();
-        };
-    }, []);
 
 
     return (

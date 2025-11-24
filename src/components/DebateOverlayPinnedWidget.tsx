@@ -1,35 +1,27 @@
-import { createPusher } from "@/lib/utils";
 import { actions } from "astro:actions";
-import { useEffect, useState } from "preact/hooks";
-import type Pusher from "pusher-js";
+import { useState } from "preact/hooks";
+import { usePusherChannel } from "@/hooks/usePusherChannel";
 
 export const DebateOverlayPinneWidget = () => {
     const [currentOpinion, setCurrentOpinion] = useState<Awaited<ReturnType<typeof actions.getDebateMessageById>> | null>(null);
-    const [pusher, setPusher] = useState<Pusher | null>(null);
     const [isVisible, setIsVisible] = useState(false);
 
-    useEffect(() => {
-        const pusher = createPusher();
-        setPusher(pusher);
+    usePusherChannel({
+        channelName: "debate",
+        events: {
+            "pin-debate-message": ({ opinionId }: { opinionId: number }) => {
+                actions.getDebateMessageById({ opinionId }).then((opinion) => {
+                    setCurrentOpinion(opinion);
+                    setIsVisible(true);
 
-        const channel = pusher.subscribe("debate");
-
-        channel.bind("pin-debate-message", ({ opinionId }: { opinionId: number }) => {
-            actions.getDebateMessageById({ opinionId }).then((opinion) => {
-                setCurrentOpinion(opinion);
-                setIsVisible(true);
-
-                setTimeout(() => {
-                    setIsVisible(false);
-                    setTimeout(() => setCurrentOpinion(null), 300); // Tiempo para completar la animación de salida
-                }, 10000);
-            });
-        });
-
-        return () => {
-            pusher.disconnect();
-        };
-    }, []);
+                    setTimeout(() => {
+                        setIsVisible(false);
+                        setTimeout(() => setCurrentOpinion(null), 300); // Tiempo para completar la animación de salida
+                    }, 10000);
+                });
+            }
+        }
+    });
 
     return (
         <div class="flex items-center justify-center fixed inset-0 pointer-events-none">

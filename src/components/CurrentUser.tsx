@@ -6,9 +6,7 @@ import { useState, useEffect, useRef } from "preact/hooks";
 import { toast } from "sonner";
 import { AchievementsNotifier } from "./AchievementsNotifier";
 import { CinematicPlayer } from "./CinematicPlayer";
-import Pusher from "pusher-js";
-import { PUSHER_KEY } from "@/config";
-import { PUSHER_APP_CLUSTER } from "astro:env/client";
+import { usePusher } from "@/hooks/usePusher";
 import { navigate } from "astro:transitions/client";
 
 
@@ -19,7 +17,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [signingIn, setSigningIn] = useState(false);
     const [user, setUser] = useState<Session['user'] | null>(initialUser);
-    const [pusher, setPusher] = useState<Pusher | null>(null);
+    const { pusher } = usePusher();
 
     const fetchUserFromServer = async () => {
         setLoading(true);
@@ -91,20 +89,6 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [dropdownOpen]);
-
-    if (!pusher) {
-        const host = /* import.meta.env.DEV ? 'localhost' :  */`soketi.saltouruguayserver.com`;
-        setPusher(new Pusher(PUSHER_KEY, {
-            // wsHost: host,
-            cluster: "us2",
-            enabledTransports: ['ws', 'wss'],
-            forceTLS: true
-        }));
-
-    }
-
-
-
 
 
 
@@ -227,8 +211,8 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                     {
                         pusher && (
                             <>
-                                <AchievementsNotifier userId={user.id} pusher={pusher} />
-                                <CinematicPlayer userId={user.id} pusher={pusher} />
+                                <AchievementsNotifier userId={user.id} />
+                                <CinematicPlayer userId={user.id} />
                             </>
                         )
                     }

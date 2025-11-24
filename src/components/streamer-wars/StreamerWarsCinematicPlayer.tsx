@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import clsx from 'clsx';
-import Pusher from 'pusher-js';
 import { $ } from "@/lib/dom-selector";
 import { LucideVolume2, LucideVolumeX, LucideX } from "lucide-preact";
 import { toast } from "sonner";
+import { usePusherChannel } from '@/hooks/usePusherChannel';
 
 interface StreamerWarsCinematicPlayerProps {
     userId: string; // Identificador único del usuario actual
-    pusher: Pusher; // Instancia de Pusher
 }
 
-export const StreamerWarsCinematicPlayer = ({ userId, pusher }: StreamerWarsCinematicPlayerProps) => {
+export const StreamerWarsCinematicPlayer = ({ userId }: StreamerWarsCinematicPlayerProps) => {
     const [isVisible, setIsVisible] = useState(false);
     const [mute, setMute] = useState(false);
     const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -19,25 +18,21 @@ export const StreamerWarsCinematicPlayer = ({ userId, pusher }: StreamerWarsCine
     const [timeLeft, setTimeLeft] = useState(0);
     const prevSecondRef = useRef<number | null>(null);
 
-    useEffect(() => {
-        const channel = pusher.subscribe('streamer-wars-cinematic');
-
-        channel.bind('new-event', (data: { targetUsers: string[] | 'everyone'; videoUrl: string }) => {
-            if (window.location.pathname.includes('admin')) {
-                console.warn("Se ha recibido una cinemática, pero no se mostrará en la vista de administrador");
-                return;
+    usePusherChannel({
+        channelName: 'streamer-wars-cinematic',
+        events: {
+            'new-event': (data: { targetUsers: string[] | 'everyone'; videoUrl: string }) => {
+                if (window.location.pathname.includes('admin')) {
+                    console.warn("Se ha recibido una cinemática, pero no se mostrará en la vista de administrador");
+                    return;
+                }
+                if (data.targetUsers === 'everyone' || data.targetUsers.includes(userId)) {
+                    setVideoUrl(data.videoUrl);
+                    setIsVisible(true);
+                }
             }
-            if (data.targetUsers === 'everyone' || data.targetUsers.includes(userId)) {
-                setVideoUrl(data.videoUrl);
-                setIsVisible(true);
-            }
-        });
-
-        return () => {
-            channel.unbind('new-event');
-            pusher.unsubscribe('streamer-wars-cinematic');
-        };
-    }, [userId, pusher]);
+        }
+    });
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
