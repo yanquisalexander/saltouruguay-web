@@ -402,9 +402,6 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                 channel.unbind("show-timer");
             }
 
-            globalChannel.current = null;
-            presenceChannel.current = null;
-
             pusherInstance.disconnect();
         };
     }, [userId]);
