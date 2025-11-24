@@ -5,6 +5,12 @@ import type { Channel } from "pusher-js";
 import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { Button as RetroButton } from "@/components/ui/8bit/button";
+import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+
+// Constants
+const DAMAGE_THROTTLE_MS = 500; // Minimum time between damage events
+const SHAPE_BRIGHTNESS_THRESHOLD = 170; // Brightness threshold for shape detection
+const HEART_IMAGE_PATH = "/images/vida.webp"; // Path to heart/life icon
 
 interface DalgonaProps {
     session: Session;
@@ -12,22 +18,21 @@ interface DalgonaProps {
     channel: Channel;
 }
 
-interface Point {
-    x: number;
-    y: number;
-}
-
 export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [attemptsLeft, setAttemptsLeft] = useState(2);
-    const [isTracing, setIsTracing] = useState(false);
-    const [tracePoints, setTracePoints] = useState<Point[]>([]);
+    const [lives, setLives] = useState(3);
     const [gameStatus, setGameStatus] = useState<'waiting' | 'playing' | 'completed' | 'failed'>('waiting');
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [showInstructions, setShowInstructions] = useState(true);
-
+    const [pixelsRemoved, setPixelsRemoved] = useState(0);
+    const [totalRemovablePixels, setTotalRemovablePixels] = useState(0);
+    const [cracks, setCracks] = useState<Array<{ x: number; y: number; rotation: number }>>([]);
+    
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const maskCanvasRef = useRef<HTMLCanvasElement>(null);
+    const shapeCanvasRef = useRef<HTMLCanvasElement>(null);
     const imageRef = useRef<HTMLImageElement>(null);
+    const isCarving = useRef(false);
+    const lastDamageTime = useRef(0);
 
     // Fetch initial game state on component mount
     useEffect(() => {
@@ -36,21 +41,11 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                 const response = await fetch('/api/dalgona?action=player-state');
                 const result = await response.json();
 
-                console.log('Dalgona fetchInitialState result:', result);
-
                 if (result.success && result.gameStatus === 'active' && result.playerState) {
-                    console.log('Setting player state:', result.playerState);
                     setImageUrl(result.playerState.imageUrl);
-                    setAttemptsLeft(result.playerState.attemptsLeft);
+                    setLives(result.playerState.lives);
                     setGameStatus(result.playerState.status === 'completed' ? 'completed' :
                         result.playerState.status === 'failed' ? 'failed' : 'playing');
-                    setTracePoints([]);
-                } else {
-                    console.log('Not setting player state, conditions not met:', {
-                        success: result.success,
-                        gameStatus: result.gameStatus,
-                        hasPlayerState: !!result.playerState
-                    });
                 }
             } catch (error) {
                 console.error('Error fetching initial game state:', error);
@@ -67,30 +62,25 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         if (!session.user?.id || !pusher) return;
 
         // Listen for game start event
-        channel.bind('dalgona:start', (data: { userId: number; imageUrl: string; attemptsLeft: number }) => {
-            console.log('Received dalgona:start event:', data);
+        channel.bind('dalgona:start', (data: { userId: number; imageUrl: string; lives: number }) => {
             if (data.userId === session.user.id) {
-                console.log('Setting game to playing state');
                 setImageUrl(data.imageUrl);
-                setAttemptsLeft(data.attemptsLeft);
+                setLives(data.lives);
                 setGameStatus('playing');
-                setTracePoints([]);
-                toast.info('¡Traza la forma con cuidado!', { position: 'bottom-center' });
+                setPixelsRemoved(0);
+                setCracks([]);
+                toast.info('¡Talla la galleta con cuidado!', { position: 'bottom-center' });
             }
         });
 
         // Listen for game started event (broadcast to all)
         channel.bind('dalgona:game-started', (data: { totalPlayers: number }) => {
-            console.log('Received dalgona:game-started event:', data);
-            // Only reset if not already playing (to avoid resetting after individual start event)
             if (gameStatus === 'waiting') {
-                console.log('Resetting to waiting state');
                 setImageUrl(null);
-                setAttemptsLeft(2);
+                setLives(3);
                 setGameStatus('waiting');
-                setTracePoints([]);
-                setIsTracing(false);
-                setIsSubmitting(false);
+                setPixelsRemoved(0);
+                setCracks([]);
             }
         });
 
@@ -105,18 +95,17 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
             }
         });
 
-        // Listen for attempt failed event
-        channel.bind('dalgona:attempt-failed', (data: { userId: number; attemptsLeft: number }) => {
+        // Listen for damage event
+        channel.bind('dalgona:damage', (data: { userId: number; lives: number }) => {
             if (data.userId === session.user.id) {
-                setAttemptsLeft(data.attemptsLeft);
-                setTracePoints([]);
-                toast.error(`Intento fallido. Intentos restantes: ${data.attemptsLeft}`, {
+                setLives(data.lives);
+                toast.error(`¡Cuidado! Vidas restantes: ${data.lives}`, {
                     position: 'bottom-center',
                 });
             }
         });
 
-        // Escucha el evento de fin del juego
+        // Listen for game ended event
         channel.bind('dalgona:game-ended', (data: { completedPlayers: number[], eliminatedPlayers: number[] }) => {
             if (data.eliminatedPlayers.includes(session.user.streamerWarsPlayerNumber!)) {
                 setGameStatus('failed');
@@ -131,10 +120,10 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
             channel.unbind('dalgona:start');
             channel.unbind('dalgona:game-started');
             channel.unbind('dalgona:success');
-            channel.unbind('dalgona:attempt-failed');
+            channel.unbind('dalgona:damage');
             channel.unbind('dalgona:game-ended');
         };
-    }, [session.user?.id, pusher]);
+    }, [session.user?.id, pusher, gameStatus]);
 
     // Listen for instructions ended event
     useEffect(() => {
@@ -149,119 +138,330 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         };
     }, []);
 
-    // Draw on canvas
+    // Initialize canvas layers when image loads
     useEffect(() => {
-        if (!canvasRef.current || !imageRef.current || !imageUrl) return;
+        if (!canvasRef.current || !maskCanvasRef.current || !shapeCanvasRef.current || !imageUrl) return;
 
         const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        const maskCanvas = maskCanvasRef.current;
+        const shapeCanvas = shapeCanvasRef.current;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const maskCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
+        const shapeCtx = shapeCanvas.getContext('2d', { willReadFrequently: true });
+        
+        if (!ctx || !maskCtx || !shapeCtx) return;
 
-        const img = imageRef.current;
+        const img = new Image();
+        img.crossOrigin = "anonymous";
         img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+            // Set canvas dimensions - scale up for better pixel art effect
+            const scale = 1;
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            maskCanvas.width = img.width * scale;
+            maskCanvas.height = img.height * scale;
+            shapeCanvas.width = img.width * scale;
+            shapeCanvas.height = img.height * scale;
+
+            // Draw base image with pixel perfect rendering
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // Create mask - full cookie color with shape cut out
+            maskCtx.fillStyle = '#D2691E'; // Chocolate/caramel cookie color (8-bit style)
+            maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+
+            // Extract shape from SVG (darker area in the center)
+            // Note: This processes all pixels sequentially. For very large images,
+            // consider using Web Workers or processing in chunks. The current
+            // implementation is acceptable for standard Dalgona cookie sizes (400x400)
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            
+            let removableCount = 0;
+            for (let i = 0; i < pixels.length; i += 4) {
+                const r = pixels[i];
+                const g = pixels[i + 1];
+                const b = pixels[i + 2];
+                const a = pixels[i + 3];
+                
+                // Skip transparent pixels
+                if (a < 10) continue;
+                
+                // Check if pixel is part of the shape (darker color)
+                const brightness = (r + g + b) / 3;
+                if (brightness < SHAPE_BRIGHTNESS_THRESHOLD) { // Shape pixels are darker
+                    // Mark as shape (clear from mask)
+                    const x = (i / 4) % canvas.width;
+                    const y = Math.floor((i / 4) / canvas.width);
+                    maskCtx.clearRect(x, y, 1, 1);
+                    
+                    // Draw shape on shape canvas (bright color for detection)
+                    shapeCtx.fillStyle = '#FF0000'; // Red for easy detection
+                    shapeCtx.fillRect(x, y, 1, 1);
+                } else {
+                    removableCount++;
+                }
+            }
+            
+            setTotalRemovablePixels(removableCount);
+
+            // Redraw base canvas with cookie texture
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#D2691E';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add simple texture noise (8-bit style)
+            for (let i = 0; i < canvas.width * canvas.height / 50; i++) {
+                const x = Math.floor(Math.random() * canvas.width);
+                const y = Math.floor(Math.random() * canvas.height);
+                const brightness = Math.random() > 0.5 ? 1.1 : 0.9;
+                ctx.fillStyle = `rgba(210, 105, 30, ${brightness})`;
+                ctx.fillRect(x, y, 2, 2);
+            }
+            
+            // Draw shape outline on top
+            ctx.strokeStyle = '#8B4513'; // Darker brown for shape outline
+            ctx.lineWidth = 4;
+            const shapeImageData = shapeCtx.getImageData(0, 0, shapeCanvas.width, shapeCanvas.height);
+            const shapePixels = shapeImageData.data;
+            
+            // Draw shape pixels darker
+            for (let i = 0; i < shapePixels.length; i += 4) {
+                if (shapePixels[i + 3] > 0) {
+                    const x = (i / 4) % shapeCanvas.width;
+                    const y = Math.floor((i / 4) / shapeCanvas.width);
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
         };
         img.src = imageUrl;
+        imageRef.current = img;
     }, [imageUrl]);
 
-    // Draw trace points
-    useEffect(() => {
-        if (!canvasRef.current || tracePoints.length === 0) return;
+    const handleDamage = async (x: number, y: number) => {
+        // Prevent rapid damage calls
+        const now = Date.now();
+        if (now - lastDamageTime.current < DAMAGE_THROTTLE_MS) return;
+        lastDamageTime.current = now;
+
+        // Add crack at position
+        const newCrack = {
+            x,
+            y,
+            rotation: Math.random() * 360,
+        };
+        setCracks(prev => [...prev, newCrack]);
+
+        // Play error sound (using generic error sound for now)
+        playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR, volume: 0.5 }).catch(() => {
+            // Silent fail if sound doesn't load
+        });
+
+        // Call damage API
+        try {
+            const response = await fetch('/api/dalgona?action=damage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                setLives(result.lives);
+                
+                if (result.eliminated) {
+                    setGameStatus('failed');
+                }
+            }
+        } catch (error) {
+            console.error('Error reporting damage:', error);
+        }
+    };
+
+    const carvePixel = (x: number, y: number) => {
+        if (!canvasRef.current || !maskCanvasRef.current || !shapeCanvasRef.current) return;
 
         const canvas = canvasRef.current;
+        const maskCanvas = maskCanvasRef.current;
+        const shapeCanvas = shapeCanvasRef.current;
         const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        const maskCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
+        const shapeCtx = shapeCanvas.getContext('2d', { willReadFrequently: true });
+        
+        if (!ctx || !maskCtx || !shapeCtx) return;
 
-        // Redraw image first
-        if (imageRef.current) {
-            ctx.drawImage(imageRef.current, 0, 0);
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const canvasX = (x - rect.left) * scaleX;
+        const canvasY = (y - rect.top) * scaleY;
+
+        const brushSize = 8;
+
+        // Check if carving hits the shape
+        const shapeData = shapeCtx.getImageData(
+            Math.max(0, canvasX - brushSize / 2),
+            Math.max(0, canvasY - brushSize / 2),
+            brushSize,
+            brushSize
+        );
+
+        let hitShape = false;
+        for (let i = 3; i < shapeData.data.length; i += 4) {
+            if (shapeData.data[i] > 0) {
+                hitShape = true;
+                break;
+            }
         }
 
-        // Draw trace
-        ctx.strokeStyle = '#ff0000';
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
+        if (hitShape) {
+            // Damage! Hit the shape
+            handleDamage(canvasX, canvasY);
+        } else {
+            // Check if there's mask to remove
+            const maskData = maskCtx.getImageData(
+                Math.max(0, canvasX - brushSize / 2),
+                Math.max(0, canvasY - brushSize / 2),
+                brushSize,
+                brushSize
+            );
 
-        ctx.beginPath();
-        tracePoints.forEach((point, index) => {
-            if (index === 0) {
-                ctx.moveTo(point.x, point.y);
-            } else {
-                ctx.lineTo(point.x, point.y);
+            let removedCount = 0;
+            for (let i = 3; i < maskData.data.length; i += 4) {
+                if (maskData.data[i] > 0) {
+                    removedCount++;
+                }
             }
+
+            if (removedCount > 0) {
+                // Remove from mask
+                maskCtx.globalCompositeOperation = 'destination-out';
+                maskCtx.beginPath();
+                maskCtx.arc(canvasX, canvasY, brushSize / 2, 0, Math.PI * 2);
+                maskCtx.fill();
+                maskCtx.globalCompositeOperation = 'source-over';
+
+                // Update pixels removed count
+                setPixelsRemoved(prev => prev + removedCount);
+
+                // Redraw canvas
+                redrawCanvas();
+            }
+        }
+    };
+
+    const redrawCanvas = () => {
+        if (!canvasRef.current || !maskCanvasRef.current || !imageRef.current) return;
+
+        const canvas = canvasRef.current;
+        const maskCanvas = maskCanvasRef.current;
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) return;
+
+        // Clear and redraw base
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(imageRef.current, 0, 0);
+
+        // Apply mask (remove carved areas)
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.drawImage(maskCanvas, 0, 0);
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Draw cracks (8-bit pixel art style)
+        cracks.forEach(crack => {
+            ctx.save();
+            ctx.translate(crack.x, crack.y);
+            ctx.rotate((crack.rotation * Math.PI) / 180);
+            
+            // Draw pixelated crack with multiple colors for depth
+            // Dark crack lines
+            ctx.fillStyle = '#4A0000';
+            ctx.fillRect(-10, -2, 20, 4);
+            ctx.fillRect(-2, -10, 4, 20);
+            
+            // Medium crack lines
+            ctx.fillStyle = '#8B0000';
+            ctx.fillRect(-8, -1, 16, 2);
+            ctx.fillRect(-1, -8, 2, 16);
+            
+            // Crack branches (8-bit style)
+            ctx.fillStyle = '#8B0000';
+            ctx.fillRect(-8, -8, 3, 3);
+            ctx.fillRect(5, -8, 3, 3);
+            ctx.fillRect(-8, 5, 3, 3);
+            ctx.fillRect(5, 5, 3, 3);
+            
+            // Add highlight for 3D effect
+            ctx.fillStyle = '#FF6B6B';
+            ctx.fillRect(-9, -1, 2, 2);
+            ctx.fillRect(-1, -9, 2, 2);
+            
+            ctx.restore();
         });
-        ctx.stroke();
-    }, [tracePoints]);
+    };
+
+    useEffect(() => {
+        redrawCanvas();
+    }, [cracks]);
 
     const handleMouseDown = (e: MouseEvent) => {
-        if (gameStatus !== 'playing' || isSubmitting) return;
-        setIsTracing(true);
-        const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        setTracePoints([{ x, y }]);
+        if (gameStatus !== 'playing') return;
+        isCarving.current = true;
+        carvePixel(e.clientX, e.clientY);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-        if (!isTracing || gameStatus !== 'playing' || isSubmitting) return;
-        const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        setTracePoints(prev => [...prev, { x, y }]);
+        if (!isCarving.current || gameStatus !== 'playing') return;
+        carvePixel(e.clientX, e.clientY);
     };
 
     const handleMouseUp = () => {
-        if (!isTracing) return;
-        setIsTracing(false);
+        isCarving.current = false;
     };
 
     const handleTouchStart = (e: TouchEvent) => {
-        if (gameStatus !== 'playing' || isSubmitting) return;
+        if (gameStatus !== 'playing') return;
         e.preventDefault();
-        setIsTracing(true);
-        const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
+        isCarving.current = true;
         const touch = e.touches[0];
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        setTracePoints([{ x, y }]);
+        carvePixel(touch.clientX, touch.clientY);
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-        if (!isTracing || gameStatus !== 'playing' || isSubmitting) return;
+        if (!isCarving.current || gameStatus !== 'playing') return;
         e.preventDefault();
-        const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
         const touch = e.touches[0];
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        setTracePoints(prev => [...prev, { x, y }]);
+        carvePixel(touch.clientX, touch.clientY);
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-        if (!isTracing) return;
         e.preventDefault();
-        setIsTracing(false);
+        isCarving.current = false;
     };
 
-    const submitTrace = async () => {
-        if (tracePoints.length === 0) {
-            toast.error('Debes trazar algo antes de enviar', { position: 'bottom-center' });
+    const submitCompletion = async () => {
+        const percentageRemoved = (pixelsRemoved / totalRemovablePixels) * 100;
+        
+        if (percentageRemoved < 95) {
+            toast.error(`Necesitas remover al menos el 95% (actual: ${percentageRemoved.toFixed(1)}%)`, {
+                position: 'bottom-center',
+            });
             return;
         }
-
-        setIsSubmitting(true);
 
         try {
             const response = await fetch('/api/dalgona?action=submit', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     traceData: {
-                        points: tracePoints,
+                        pixelsRemoved,
+                        totalRemovablePixels,
+                        percentageRemoved,
                         timestamp: Date.now(),
                     },
                 }),
@@ -271,44 +471,35 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
             if (result.success) {
                 setGameStatus('completed');
+                playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT });
             } else if (result.eliminated) {
                 setGameStatus('failed');
-                toast.error('Has sido eliminado', {
-                    position: 'bottom-center',
-                    duration: 5000,
-                });
             }
         } catch (error) {
-            console.error('Error submitting trace:', error);
-            toast.error('Error al enviar el trazado', { position: 'bottom-center' });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const clearTrace = () => {
-        setTracePoints([]);
-        if (canvasRef.current && imageRef.current) {
-            const ctx = canvasRef.current.getContext('2d');
-            if (ctx) {
-                ctx.drawImage(imageRef.current, 0, 0);
-            }
+            console.error('Error submitting completion:', error);
+            toast.error('Error al enviar la completación', { position: 'bottom-center' });
         }
     };
 
     if (showInstructions) {
         return (
             <Instructions duration={12000}>
-                <p className="font-mono max-w-2xl text-left">
-                    Traza cuidadosamente la forma que aparece en la galleta. Debes seguir el contorno con precisión,
-                    manteniendo el tamaño y la posición correctos.
+                <p className="font-mono max-w-2xl text-left text-xl">
+                    🍪 <strong>DALGONA - Tallado de Píxeles</strong>
                 </p>
                 <p className="font-mono max-w-2xl text-left">
-                    Tendrás intentos limitados para completar el desafío.
-                    Si fallas todos los intentos, serás eliminado del juego.
+                    Talla cuidadosamente la galleta removiendo todo el material alrededor de la figura central.
+                    Mantén presionado el mouse/dedo y arrastra para raspar píxel por píxel.
+                </p>
+                <p className="font-mono max-w-2xl text-left">
+                    ⚠️ <strong>¡CUIDADO!</strong> Si tocas la figura central (área oscura), perderás una vida.
+                    Tienes 3 vidas en total. Al perder todas, serás eliminado.
+                </p>
+                <p className="font-mono max-w-2xl text-left">
+                    🎯 <strong>Objetivo:</strong> Remover al menos el 95% del material removible sin romper la figura.
                 </p>
                 <p className="font-mono max-w-2xl text-left text-yellow-300">
-                    💡 Consejo: Mantén presionado el mouse/botón y traza lentamente para mayor precisión.
+                    💡 Consejo: Trabaja desde los bordes hacia el centro. Muévete lentamente cerca de la figura.
                 </p>
             </Instructions>
         )
@@ -316,10 +507,13 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
     if (gameStatus === 'waiting') {
         return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center text-white">
-                    <h2 className="text-3xl font-squids mb-4 bg-gradient-to-br from-orange-600 to-yellow-200 text-transparent bg-clip-text">Dalgona</h2>
-                    <p className="text-xl">Esperando que el juego comience...</p>
+            <div className="flex items-center justify-center h-full bg-gradient-to-b from-amber-900 to-amber-950">
+                <div className="text-center text-white p-8 bg-black/50 border-8 border-yellow-600">
+                    <h2 className="text-3xl font-bold mb-4 text-yellow-300" style={{ fontFamily: '"Press Start 2P", monospace', textShadow: '4px 4px 0px #000' }}>
+                        DALGONA
+                    </h2>
+                    <p className="text-xl font-mono">Esperando inicio...</p>
+                    <div className="mt-4 animate-pulse text-yellow-300 text-4xl">...</div>
                 </div>
             </div>
         );
@@ -328,9 +522,13 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
     if (gameStatus === 'completed') {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-green-900 to-green-950">
-                <div className="text-center text-white">
-                    <h2 className="text-4xl font-bold mb-4">¡Completado! ✓</h2>
-                    <p className="text-xl">Has superado el desafío Dalgona</p>
+                <div className="text-center text-white p-12 bg-black/70 border-8 border-green-400">
+                    <h2 className="text-5xl font-bold mb-6 text-green-400 animate-pulse" style={{ fontFamily: '"Press Start 2P", monospace', textShadow: '4px 4px 0px #000' }}>
+                        ¡EXITO!
+                    </h2>
+                    <div className="text-8xl mb-4">✓</div>
+                    <p className="text-2xl font-mono">Has superado el</p>
+                    <p className="text-2xl font-mono">desafío Dalgona</p>
                 </div>
             </div>
         );
@@ -339,25 +537,76 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
     if (gameStatus === 'failed') {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-red-900 to-red-950">
-                <div className="text-center text-white">
-                    <h2 className="text-4xl font-bold mb-4">Eliminado ✗</h2>
-                    <p className="text-xl">No lograste completar el desafío</p>
+                <div className="text-center text-white p-12 bg-black/70 border-8 border-red-600">
+                    <h2 className="text-5xl font-bold mb-6 text-red-500" style={{ fontFamily: '"Press Start 2P", monospace', textShadow: '4px 4px 0px #000' }}>
+                        ELIMINADO
+                    </h2>
+                    <div className="text-8xl mb-4">✗</div>
+                    <p className="text-2xl font-mono">No completaste</p>
+                    <p className="text-2xl font-mono">el desafío</p>
                 </div>
             </div>
         );
     }
 
+    const percentageRemoved = totalRemovablePixels > 0 ? (pixelsRemoved / totalRemovablePixels) * 100 : 0;
+
     return (
-        <div className="h-full relative p-5">
-            <h2 className="text-2xl font-squids mb-4 bg-gradient-to-br from-orange-600 to-yellow-200 text-transparent bg-clip-text">Dalgona</h2>
-            <div className="text-center text-white mb-6">
-                <p className="text-xl mb-2">Traza la forma con cuidado</p>
-                <p className="text-lg">
-                    Intentos restantes: <span className="font-bold text-yellow-300">{attemptsLeft}</span>
-                </p>
+        <div className="h-full relative p-5 bg-gradient-to-b from-amber-900 to-amber-950" style={{ cursor: 'crosshair' }}>
+            <h2 className="text-3xl font-bold mb-4 text-center text-yellow-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]" style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '1.5rem', textShadow: '4px 4px 0px #000' }}>
+                DALGONA
+            </h2>
+            
+            {/* Lives Display - 8-bit pixel hearts */}
+            <div className="absolute top-4 left-4 flex gap-3 bg-black/50 p-3 rounded-none border-4 border-yellow-600">
+                <span className="text-yellow-300 font-bold mr-2" style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '0.8rem' }}>
+                    VIDAS:
+                </span>
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <img
+                        key={i}
+                        src={HEART_IMAGE_PATH}
+                        alt="vida"
+                        className={`w-10 h-10 ${i >= lives ? 'opacity-20 grayscale' : ''}`}
+                        style={{ imageRendering: 'pixelated' }}
+                        onError={(e) => {
+                            // Fallback to heart emoji if image fails to load
+                            (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                    />
+                ))}
             </div>
 
-            <div className="relative bg-white w-max mx-auto mb-6">
+            {/* Progress Bar - 8-bit style */}
+            <div className="absolute top-4 right-4 bg-black/70 border-4 border-yellow-600 p-4 min-w-[300px]">
+                <div className="text-yellow-300 text-xs mb-2 font-bold" style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '0.7rem' }}>
+                    PROGRESO
+                </div>
+                <div className="text-white text-sm mb-2 font-mono font-bold">
+                    {percentageRemoved.toFixed(1)}% / 95%
+                </div>
+                <div className="w-full bg-gray-900 h-8 relative overflow-hidden border-4 border-gray-700">
+                    <div 
+                        className={`h-full transition-all duration-300 ${
+                            percentageRemoved >= 95 ? 'bg-green-500' : 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                        }`}
+                        style={{ width: `${Math.min(percentageRemoved, 100)}%` }}
+                    />
+                    {/* Pixel art style lines */}
+                    <div className="absolute inset-0 pointer-events-none">
+                        {Array.from({ length: 10 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="absolute top-0 bottom-0 w-1 bg-black/20"
+                                style={{ left: `${i * 10}%` }}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Canvas */}
+            <div className="relative bg-amber-900 w-max mx-auto mb-6 mt-32 border-8 border-yellow-900 shadow-2xl" style={{ imageRendering: 'pixelated' }}>
                 <canvas
                     ref={canvasRef}
                     onMouseDown={handleMouseDown}
@@ -367,21 +616,29 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
-                    className="cursor-crosshair touch-none max-w-full h-auto"
-                    style={{ touchAction: 'none' }}
+                    className="touch-none max-w-full h-auto"
+                    style={{ 
+                        touchAction: 'none',
+                        imageRendering: 'pixelated',
+                        cursor: 'crosshair'
+                    }}
                 />
-                <img ref={imageRef} style={{ display: 'none' }} alt="Dalgona cookie" />
+                <canvas ref={maskCanvasRef} style={{ display: 'none' }} />
+                <canvas ref={shapeCanvasRef} style={{ display: 'none' }} />
             </div>
 
-            <div className="flex gap-4 absolute top-4 right-4 transform">
-                <RetroButton
-                    onClick={submitTrace}
-                    disabled={isSubmitting || tracePoints.length === 0}
-                    className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                    {isSubmitting ? 'Enviando...' : 'Enviar'}
-                </RetroButton>
-            </div>
+            {/* Submit Button */}
+            {percentageRemoved >= 95 && (
+                <div className="flex justify-center animate-pulse">
+                    <RetroButton
+                        onClick={submitCompletion}
+                        className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white font-bold text-xl border-4 border-green-400"
+                        style={{ fontFamily: '"Press Start 2P", monospace' }}
+                    >
+                        ¡COMPLETAR!
+                    </RetroButton>
+                </div>
+            )}
         </div>
     );
 };

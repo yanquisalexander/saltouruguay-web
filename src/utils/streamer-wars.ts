@@ -52,6 +52,11 @@ const BOMB_CACHE_KEY = "streamer-wars.bomb:game-state";
 const MAX_CHALLENGES = 5;
 const MAX_ERRORS = 3;
 
+// Dalgona game constants
+const DALGONA_MIN_COMPLETION_TIME_MS = 10000; // 10 seconds minimum
+const DALGONA_MAX_COMPLETION_TIME_MS = 300000; // 5 minutes maximum
+const DALGONA_MIN_COMPLETION_PERCENTAGE = 95; // Minimum 95% removal required
+
 // Team to shape mapping for Dalgona game
 const TEAM_SHAPE_MAP: Record<number, DalgonaShape> = {
     1: DalgonaShape.Circle,    // Easy
@@ -379,7 +384,7 @@ export const games = {
                     teamId: player.teamId,
                     shape,
                     imageUrl,
-                    attemptsLeft: 2,
+                    lives: 3, // Changed from attemptsLeft: 2 to lives: 3
                     status: 'playing',
                 };
             }
@@ -405,7 +410,7 @@ export const games = {
                     await pusher.trigger('streamer-wars', 'dalgona:start', {
                         userId: player.userId,
                         imageUrl: playerState.imageUrl,
-                        attemptsLeft: 2,
+                        lives: 3, // Changed from attemptsLeft: 2 to lives: 3
                         shape: TEAM_SHAPE_MAP[player.teamId] || DalgonaShape.Circle,
                     });
                 }
@@ -432,7 +437,7 @@ export const games = {
         /**
          * Validates a player's trace submission
          * @param playerNumber The player's number
-         * @param traceData The trace data from the client (simplified validation)
+         * @param traceData The trace data from the client (includes percentage completed and timing)
          * @returns Success status and updated game state
          */
         submitTrace: async (playerNumber: number, traceData: any) => {
@@ -455,11 +460,57 @@ export const games = {
                 };
             }
 
-            // Validate the trace (simplified - in production this would be more complex)
-            const validation = validateTrace(playerState.shape, traceData);
+            // Anti-cheat: Validate timing
+            if (gameState.startedAt) {
+                const timeElapsed = Date.now() - gameState.startedAt;
+                
+                if (timeElapsed < DALGONA_MIN_COMPLETION_TIME_MS) {
+                    // Log to server logs only (not console) for anti-cheat monitoring
+                    try {
+                        await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                            content: null,
+                            embeds: [
+                                {
+                                    title: "Dalgona - Anti-cheat Alert",
+                                    description: `Player #${playerNumber} completed suspiciously fast: ${timeElapsed}ms`,
+                                    color: 0xff0000,
+                                },
+                            ],
+                        });
+                    } catch (error) {
+                        // Silent fail - don't expose errors to client
+                    }
+                    return {
+                        success: false,
+                        error: 'Completion time is suspiciously fast',
+                        eliminated: false,
+                    };
+                }
+                
+                if (timeElapsed > DALGONA_MAX_COMPLETION_TIME_MS) {
+                    return {
+                        success: false,
+                        error: 'Time limit exceeded',
+                        eliminated: false,
+                    };
+                }
+            }
 
-            if (validation) {
-                // Player succeeded
+            // Validate completion percentage
+            // Note: percentageRemoved comes from client. For production, consider
+            // server-side validation by having client send mask data for verification
+            const percentageRemoved = traceData.percentageRemoved || 0;
+            if (percentageRemoved < DALGONA_MIN_COMPLETION_PERCENTAGE) {
+                return {
+                    success: false,
+                    error: 'Not enough pixels removed',
+                    eliminated: false,
+                };
+            }
+
+            // All validations passed
+
+            // Player succeeded
                 playerState.status = 'completed';
                 gameState.players[playerNumber] = playerState;
 
@@ -522,55 +573,61 @@ export const games = {
                     success: true,
                     status: 'completed',
                 };
+        },
+
+        /**
+         * Handles damage event when player makes an error
+         * @param playerNumber The player's number
+         * @returns Updated lives count and status
+         */
+        handleDamage: async (playerNumber: number) => {
+            const cache = createCache();
+            const gameState = await games.dalgona.getGameState();
+
+            const playerState = gameState.players[playerNumber];
+
+            if (!playerState) {
+                return {
+                    success: false,
+                    error: 'Player not found in game',
+                };
+            }
+
+            if (playerState.status !== 'playing') {
+                return {
+                    success: false,
+                    error: 'Player is not in playing state',
+                };
+            }
+
+            // Reduce lives
+            playerState.lives -= 1;
+
+            if (playerState.lives <= 0) {
+                // No more lives - eliminate player
+                playerState.status = 'failed';
+                gameState.players[playerNumber] = playerState;
+
+                await cache.set(DALGONA_CACHE_KEY, gameState);
+
+                // Eliminate the player
+                await eliminatePlayer(playerNumber);
+
+                return {
+                    success: true,
+                    lives: 0,
+                    eliminated: true,
+                };
             } else {
-                // Player failed this attempt
-                playerState.attemptsLeft -= 1;
+                // Still has lives left
+                gameState.players[playerNumber] = playerState;
+                await cache.set(DALGONA_CACHE_KEY, gameState);
 
-                if (playerState.attemptsLeft <= 0) {
-                    // No more attempts - eliminate player
-                    playerState.status = 'failed';
-                    gameState.players[playerNumber] = playerState;
-
-                    await cache.set(DALGONA_CACHE_KEY, gameState);
-
-                    // Eliminate the player
-                    await eliminatePlayer(playerNumber);
-
-                    return {
-                        success: false,
-                        status: 'failed',
-                        eliminated: true,
-                    };
-                } else {
-                    // Still has attempts left
-                    gameState.players[playerNumber] = playerState;
-                    await cache.set(DALGONA_CACHE_KEY, gameState);
-
-                    // Get player info for notification
-                    const player = await client.query.StreamerWarsPlayersTable.findFirst({
-                        where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber),
-                        with: {
-                            user: {
-                                columns: {
-                                    id: true,
-                                }
-                            }
-                        }
-                    });
-
-                    // Notify player of failure but with attempts remaining
-                    if (player?.playerNumber && player?.user?.id) {
-                        await pusher.trigger('streamer-wars', 'dalgona:attempt-failed', {
-                            userId: player.user.id,
-                            attemptsLeft: playerState.attemptsLeft,
-                        });
-                    }
-
-                    return {
-                        success: false,
-                        status: 'retry'
-                    };
-                }
+                return {
+                    success: true,
+                    lives: playerState.lives,
+                    eliminated: false,
+                };
             }
         },
 
