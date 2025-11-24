@@ -222,7 +222,8 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         if (!ctx) return;
 
         const img = imageRef.current;
-        img.onload = () => {
+        
+        const drawCookie = () => {
             canvas.width = img.width;
             canvas.height = img.height;
             
@@ -250,8 +251,9 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         };
         
         if (img.complete) {
-            img.onload(null as any);
+            drawCookie();
         } else {
+            img.onload = drawCookie;
             img.src = imageUrl;
         }
     }, [imageUrl, damageLevel, particles]);
@@ -269,8 +271,9 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                 },
                 body: JSON.stringify({
                     traceData: {
-                        // Simplified - just send a timestamp for now
-                        // The server will randomly decide if it's successful
+                        // TODO: This is simplified for the pixel-removal mechanic.
+                        // The server now uses random success based on shape difficulty.
+                        // In the future, we might add more interactive mechanics here.
                         timestamp: Date.now(),
                     },
                 }),
@@ -435,10 +438,8 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                     ref={canvasRef}
                     className="max-w-full h-auto"
                     style={{ 
-                        imageRendering: 'pixelated',
-                        imageRendering: '-moz-crisp-edges' as any,
-                        imageRendering: 'crisp-edges' as any
-                    }}
+                        imageRendering: 'pixelated'
+                    } as React.CSSProperties}
                 />
                 <img ref={imageRef} style={{ display: 'none' }} alt="Dalgona cookie" />
             </div>

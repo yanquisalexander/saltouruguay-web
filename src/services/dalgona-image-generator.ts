@@ -144,57 +144,6 @@ function getPixelatedShapePath(shape: DalgonaShape, size: number): string {
 }
 
 /**
- * Generates the SVG path for different shapes
- */
-function getShapePath(shape: DalgonaShape, size: number): string {
-    const scale = size / 400; // Base scale
-
-    switch (shape) {
-        case DalgonaShape.Circle:
-            const radius = 80 * scale;
-            return `M ${radius},0 
-                    A ${radius},${radius} 0 1,1 ${-radius},0 
-                    A ${radius},${radius} 0 1,1 ${radius},0`;
-
-        case DalgonaShape.Triangle:
-            const triSize = 100 * scale;
-            return `M ${0},${-triSize * 0.7} 
-                    L ${triSize},${triSize * 0.5} 
-                    L ${-triSize},${triSize * 0.5} 
-                    Z`;
-
-        case DalgonaShape.Star:
-            const starPoints = 5;
-            const outerRadius = 100 * scale;
-            const innerRadius = 40 * scale;
-            let starPath = '';
-
-            for (let i = 0; i < starPoints * 2; i++) {
-                const radius = i % 2 === 0 ? outerRadius : innerRadius;
-                const angle = (Math.PI / starPoints) * i - Math.PI / 2;
-                const x = radius * Math.cos(angle);
-                const y = radius * Math.sin(angle);
-                starPath += `${i === 0 ? 'M' : 'L'} ${x},${y} `;
-            }
-            starPath += 'Z';
-            return starPath;
-
-        case DalgonaShape.Umbrella:
-            const umbSize = 90 * scale;
-            // Umbrella canopy (arc)
-            return `M ${-umbSize},${-20 * scale}
-                    Q ${-umbSize},${-umbSize} ${0},${-umbSize}
-                    Q ${umbSize},${-umbSize} ${umbSize},${-20 * scale}
-                    M ${0},${-umbSize}
-                    L ${0},${umbSize}
-                    Q ${0},${umbSize + 20 * scale} ${15 * scale},${umbSize + 20 * scale}`;
-
-        default:
-            return '';
-    }
-}
-
-/**
  * Generates cartesian points for shape validation
  */
 function getShapePoints(shape: DalgonaShape, size: number = 400): { x: number; y: number }[] {
