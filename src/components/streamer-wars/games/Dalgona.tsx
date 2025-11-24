@@ -315,10 +315,17 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
     if (gameStatus === 'waiting') {
         return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center text-white">
-                    <h2 className="text-3xl font-squids mb-4 bg-gradient-to-br from-orange-600 to-yellow-200 text-transparent bg-clip-text">Dalgona</h2>
-                    <p className="text-xl">Esperando que el juego comience...</p>
+            <div className="flex items-center justify-center h-full bg-gradient-to-b from-slate-900 to-slate-800">
+                <div className="text-center text-white" style={{
+                    fontFamily: "'Press Start 2P', monospace"
+                }}>
+                    <h2 className="text-3xl mb-6" style={{
+                        color: '#d4a574',
+                        textShadow: '4px 4px 0px #8b5a3c'
+                    }}>
+                        DALGONA
+                    </h2>
+                    <p className="text-sm">Esperando inicio...</p>
                 </div>
             </div>
         );

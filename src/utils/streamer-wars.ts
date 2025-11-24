@@ -1418,6 +1418,33 @@ export const games = {
  * Valida posición, escala y precisión del contorno.
  */
 export function validateTrace(shape: DalgonaShapeData, traceData: any): boolean {
+    // New simplified validation for pixel-removal mechanic
+    // Success is based on shape difficulty
+    
+    // Determine difficulty based on shape type
+    let successChance = 0.5; // default 50%
+    
+    switch (shape.type) {
+        case DalgonaShape.Circle:
+        case DalgonaShape.Triangle:
+            successChance = 0.60; // Easy shapes: 60% success
+            break;
+        case DalgonaShape.Star:
+            successChance = 0.50; // Medium shape: 50% success
+            break;
+        case DalgonaShape.Umbrella:
+            successChance = 0.40; // Hard shape: 40% success
+            break;
+    }
+    
+    // Random success based on difficulty
+    const success = Math.random() < successChance;
+    console.log(`Dalgona attempt: shape=${shape.type}, successChance=${successChance}, result=${success ? 'SUCCESS' : 'FAIL'}`);
+    
+    return success;
+
+    // OLD VALIDATION CODE (kept for reference if needed)
+    /*
     if (!traceData || !Array.isArray(traceData.points) || traceData.points.length < 10) {
         console.log("Trace inválido: puntos insuficientes");
         return false;
@@ -1529,6 +1556,7 @@ export function validateTrace(shape: DalgonaShapeData, traceData: any): boolean 
     const required = ACCURACY_REQUIRED[shape.type];
 
     return accuracy >= required;
+    */
 }
 
 
