@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { Progress } from "@/components/ui/8bit/progress";
 import { Button } from "@/components/ui/8bit/button";
+import { IS_DEV } from "@/lib/utils";
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -216,15 +217,34 @@ export const TugOfWar = ({
                     </div>
                 </div>
             )}
-            <Instructions duration={10000}>
+            <Instructions duration={IS_DEV ? 90000 : 90000}
+                controls={[
+                    {
+                        keys: ["LEFT_CLICK"],
+                        label: "Tirar de la cuerda"
+                    }
+                ]}
+            >
                 <p class="font-mono max-w-2xl text-left">
-                    Tira y Afloja es un juego de equipos donde dos equipos compiten tirando de una cuerda virtual.
+                    En equipos, deberán trabajar juntos para tirar de la cuerda y hacer que el equipo contrario caiga.
                     <br />
-                    Cada clic mueve la bandera hacia tu lado. ¡El primer equipo que llegue al extremo gana!
+                    Para hacerlo, solo tienes que hacer Click izquierdo sobre el botón <strong>"¡TIRAR DE LA CUERDA!"</strong>. Cada clic suma <strong>1 punto</strong> para tu equipo.
                 </p>
+                <br />
+
                 <p class="font-mono max-w-2xl text-left">
-                    Ten en cuenta que hay un tiempo de espera de 1.5 segundos entre clics. ¡Coordina con tu equipo para ganar!
+                    <strong>¡Importante!</strong> Hay un tiempo de espera de 1.5 segundos entre cada clic. Esto quiere decir que no podrás presionar el botón sin parar, así que necesitarás coordinarte con tu equipo y mantener un buen ritmo.
+                    <br />
+                    Si el equipo contrario hace clic, podrán ir ganando puntos ellos también y la barra se moverá hacia su lado. Cada clic puede cambiar el resultado.
                 </p>
+                <br />
+
+                <p class="font-mono max-w-2xl text-left">
+                    El juego termina cuando uno de los equipos llena su lado de la barra y llega a los <strong>100 puntos</strong>. El primer equipo en lograrlo será el ganador.
+                    <br />
+                    ¡Coordinen sus clics, mantengan el esfuerzo y no se rindan!
+                </p>
+
             </Instructions>
 
             <div className="flex relative flex-col items-center justify-center h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-600/70 via-transparent to-transparent text-white p-8">

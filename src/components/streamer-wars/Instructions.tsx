@@ -3,9 +3,10 @@ import type { ComponentChildren } from "preact";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { cn } from "@/lib/utils";
 
+
 // Definimos la estructura de un control individual
 export interface ControlItem {
-    keys: string[]; // Ejemplo: ["W", "A", "S", "D"] o ["SPACE"]
+    keys: (keyof typeof keyToImage)[]; // Ejemplo: ["W", "A", "S", "D"] o ["SPACE"]
     label: string;  // Ejemplo: "Avanzar a la meta"
 }
 
@@ -18,6 +19,50 @@ interface InstructionsProps {
     customClockClasses?: string;
     controls?: ControlItem[]; // Nueva prop para los controles
 }
+
+// Mapeo de teclas a imágenes
+const keyToImage: Record<string, string> = {
+    "A": "/images/streamerwars-textures/keyboard/a.png",
+    "B": "/images/streamerwars-textures/keyboard/b.png",
+    "C": "/images/streamerwars-textures/keyboard/c.png",
+    "D": "/images/streamerwars-textures/keyboard/d.png",
+    "E": "/images/streamerwars-textures/keyboard/e.png",
+    "F": "/images/streamerwars-textures/keyboard/f.png",
+    "G": "/images/streamerwars-textures/keyboard/g.png",
+    "H": "/images/streamerwars-textures/keyboard/h.png",
+    "I": "/images/streamerwars-textures/keyboard/i.png",
+    "J": "/images/streamerwars-textures/keyboard/j.png",
+    "K": "/images/streamerwars-textures/keyboard/k.png",
+    "L": "/images/streamerwars-textures/keyboard/l.png",
+    "M": "/images/streamerwars-textures/keyboard/m.png",
+    "N": "/images/streamerwars-textures/keyboard/n.png",
+    "O": "/images/streamerwars-textures/keyboard/o.png",
+    "P": "/images/streamerwars-textures/keyboard/p.png",
+    "Q": "/images/streamerwars-textures/keyboard/q.png",
+    "R": "/images/streamerwars-textures/keyboard/r.png",
+    "S": "/images/streamerwars-textures/keyboard/s.png",
+    "T": "/images/streamerwars-textures/keyboard/t.png",
+    "U": "/images/streamerwars-textures/keyboard/u.png",
+    "V": "/images/streamerwars-textures/keyboard/v.png",
+    "W": "/images/streamerwars-textures/keyboard/w.png",
+    "X": "/images/streamerwars-textures/keyboard/x.png",
+    "Y": "/images/streamerwars-textures/keyboard/y.png",
+    "Z": "/images/streamerwars-textures/keyboard/z.png",
+    "UP": "/images/streamerwars-textures/keyboard/up.png",
+    "DOWN": "/images/streamerwars-textures/keyboard/down.png",
+    "LEFT": "/images/streamerwars-textures/keyboard/left.png",
+    "RIGHT": "/images/streamerwars-textures/keyboard/right.png",
+    "SPACE": "/images/streamerwars-textures/keyboard/space.png",
+    "LEFT_CLICK": "/images/streamerwars-textures/keyboard/left_click.png",
+    "RIGHT_CLICK": "/images/streamerwars-textures/keyboard/right_click.png",
+    "MOUSE": "/images/streamerwars-textures/keyboard/mouse.png",
+    "CTRL": "/images/streamerwars-textures/keyboard/special/ctrl.png",
+    "SHIFT": "/images/streamerwars-textures/keyboard/special/shift.png",
+    "ESC": "/images/streamerwars-textures/keyboard/special/esc.png",
+    "GENERIC": "/images/streamerwars-textures/keyboard/special/generic.png",
+    "KEYBOARD": "/images/streamerwars-textures/keyboard/special/keyboard.png",
+    "KEY-ARROW-UP": "/images/streamerwars-textures/keyboard/up.png",
+};
 
 export const Instructions = ({
     duration = 10000,
@@ -115,24 +160,43 @@ export const Instructions = ({
                         {/* SECCIÓN CONTROLES (Izquierda) */}
                         {controls && (
                             <div className="p-6 flex flex-col gap-8 overflow-y-auto bg-black">
-                                <h2 className="text-2xl md:text-3xl font-bold mb-2 border-b-2 border-gray-700 pb-2 inline-block w-full">
+                                <h2 className="text-2xl md:text-3xl font-bold mb-2 inline-block w-full">
                                     Controles Especiales
                                 </h2>
                                 <ul className="space-y-6">
                                     {controls.map((ctrl, idx) => (
-                                        <li key={idx} className="flex flex-col gap-2">
-                                            <span className="text-lg text-gray-300 font-semibold uppercase">
-                                                {ctrl.label}
-                                            </span>
-                                            <div className="flex flex-wrap gap-2">
-                                                {ctrl.keys.map((k, kIdx) => (
-                                                    <kbd
-                                                        key={kIdx}
-                                                        className="bg-white text-black font-black text-xl px-3 py-1 rounded min-w-[40px] text-center border-b-4 border-gray-400 active:border-b-0 active:translate-y-1 transition-all select-none"
-                                                    >
-                                                        {k === "key-arrow-up" ? "↑" : k}
-                                                    </kbd>
-                                                ))}
+                                        <li key={idx} className="flex items-start gap-4">
+                                            <div className="w-4 h-4 rounded-full bg-white mt-2 shrink-0" />
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                                <span className="text-lg text-gray-300 font-semibold uppercase">
+                                                    {ctrl.label}
+                                                </span>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {ctrl.keys.map((k, kIdx) => {
+                                                        const upperK = k.toUpperCase();
+                                                        const imageSrc = keyToImage[upperK];
+                                                        return (
+                                                            <div
+                                                                key={kIdx}
+                                                                className={cn(
+                                                                    "flex items-center justify-center select-none",
+                                                                    !imageSrc && "bg-white text-black font-black text-xl px-3 py-1 rounded min-w-[40px] text-center border-b-4 border-gray-400 active:border-b-0 active:translate-y-1"
+                                                                )}
+                                                            >
+                                                                {imageSrc ? (
+                                                                    <img
+                                                                        draggable={false}
+                                                                        src={imageSrc}
+                                                                        alt={k}
+                                                                        className="h-12 object-contain drop-shadow-md"
+                                                                    />
+                                                                ) : (
+                                                                    k === "key-arrow-up" ? "↑" : k
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         </li>
                                     ))}

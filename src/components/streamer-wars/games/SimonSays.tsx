@@ -1,13 +1,12 @@
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import type { SimonSaysGameState } from "@/utils/streamer-wars";
-import { getTranslation } from "@/utils/translate";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
 import { useState, useEffect, useCallback } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
 import { Instructions } from "../Instructions";
-import { SimonSaysButtons, colors } from "./SimonSaysButtons"; // Asegúrate de ajustar la ruta según tu estructura
+import { SimonSaysButtons, colors } from "./SimonSaysButtons";
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -20,7 +19,6 @@ export const SimonSays = ({
     pusher: Pusher;
     players: { id: number; name: string; avatar: string; playerNumber: number }[];
 }) => {
-
 
     const [gameState, setGameState] = useState<SimonSaysGameState>({
         teams: {},
@@ -51,9 +49,8 @@ export const SimonSays = ({
 
     const gameIsWaiting = gameState.status === "waiting";
     const gameIsPlaying = gameState.status === "playing";
-    const gameRivals = Object.values(gameState.currentPlayers).filter(p => p !== playerNumber);
 
-    // Recuperar estado inicial tras finalizar las instrucciones
+    // Recuperar estado inicial
     useEffect(() => {
         const onInstructionsEnded = async () => {
             await sleep(2000);
@@ -82,7 +79,7 @@ export const SimonSays = ({
 
         simonSaysChannel?.bind("pattern-failed", ({ playerNumber }: { playerNumber: number }) => {
             toast.error(
-                `Jugador #${playerNumber.toString().padStart(3, "0")} ha sido eliminado`,
+                `Jugador #${playerNumber.toString().padStart(3, "0")} eliminado`,
                 { position: "bottom-center" }
             );
         });
@@ -90,13 +87,12 @@ export const SimonSays = ({
         simonSaysChannel?.bind("completed-pattern", ({ playerNumber }: { playerNumber: number }) => {
             if (playerNumber === session.user.streamerWarsPlayerNumber!) return;
             toast.success(
-                `Jugador #${playerNumber.toString().padStart(3, "0")} ha completado el patrón`,
+                `Jugador #${playerNumber.toString().padStart(3, "0")} completó el patrón`,
                 { position: "bottom-center" }
             );
         });
 
         simonSaysChannel?.bind("client-player-input", ({ playerNumber, color }: { playerNumber: number; color: string }) => {
-            console.log(`Jugador #${playerNumber} ha seleccionado el color ${color}`);
             setRivalInputs(prev => {
                 const newInputs = { ...prev };
                 if (!newInputs[playerNumber]) newInputs[playerNumber] = [];
@@ -105,7 +101,6 @@ export const SimonSays = ({
             });
         });
 
-        // Cleanup: desuscribir eventos al desmontar
         return () => {
             simonSaysChannel?.unbind("game-state");
             simonSaysChannel?.unbind("pattern-failed");
@@ -140,20 +135,14 @@ export const SimonSays = ({
         });
 
         if (color !== gameState.pattern[updatedPattern.length - 1]) {
-            toast.error("¡Incorrecto! Has sido eliminado");
             playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
             await actions.games.simonSays.patternFailed({ playerNumber: session.user.id });
             return;
         }
 
         if (updatedPattern.length === gameState.pattern.length) {
-            toast.success("¡Correcto! Sigues en juego", { position: "bottom-center" });
             playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT });
             setWaitingNextRound(true);
-            // Añade un random delay antes de completar el patrón, ya que
-            // todos los jugadores podrían completarlo exactamente al mismo tiempo
-            // lo que podría causar problemas de sincronización
-            // Lo ideal es que sea entre 500ms y 2s
             const randomDelay = Math.floor(Math.random() * 1500) + 500;
             await sleep(randomDelay);
             await actions.games.simonSays.completePattern({ playerNumber: session.user.id });
@@ -162,191 +151,233 @@ export const SimonSays = ({
     };
 
     const getStatusMessage = () => {
-        if (gameIsWaiting) return "Esperando que el administrador comience el juego";
+        if (gameIsWaiting) return "Esperando inicio...";
         if (isEliminated) return "¡Has sido eliminado!";
-        if (waitingNextRound) return "Esperando al siguiente patrón";
-        if (showingPattern) return "Simon dice...";
-        return "Tu turno";
+        if (waitingNextRound) return "Ronda completada, espera...";
+        if (showingPattern) return "Memoriza el patrón";
+        return "¡Tu turno!";
     };
 
-    // Mostrar el patrón al iniciar la ronda
     useEffect(() => {
         if (gameIsPlaying && gameState.pattern.length > 0) {
             showPattern(gameState.pattern);
         }
     }, [gameState.pattern, gameIsPlaying, showPattern]);
 
-    // Reset rival inputs when pattern changes
     useEffect(() => {
         setRivalInputs({});
     }, [gameState.pattern]);
 
+    // Render Helpers
+    const renderRivals = () => {
+        const rivalsNumbers = Object.entries(gameState.currentPlayers)
+            .filter(([, num]) => num !== playerNumber)
+            .map(([, num]) => num);
+
+        const validRivals = rivalsNumbers
+            .map((num) => players.find((p) => p.playerNumber === num))
+            .filter((p): p is typeof players[number] => Boolean(p && p.avatar));
+
+        if (validRivals.length === 0) return null;
+
+        return validRivals.map((rivalPlayer) => (
+            <div key={rivalPlayer.playerNumber} className="relative group">
+                {/* Avatar cuadrado con estilo pixelado */}
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-neutral-800 border-2 border-white shadow-[2px_2px_0_0_rgba(0,0,0,0.5)]">
+                    <img
+                        src={rivalPlayer.avatar}
+                        alt={`Rival #${rivalPlayer.playerNumber}`}
+                        className="w-full h-full object-cover pixelated-img opacity-90"
+                        style={{ imageRendering: "pixelated" }}
+                        onError={(e) => { e.currentTarget.src = "/fallback.png"; }}
+                    />
+                </div>
+                {/* Etiqueta simple */}
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-mono font-bold px-1 border border-white whitespace-nowrap z-10">
+                    #{rivalPlayer.playerNumber}
+                </div>
+            </div>
+        ));
+    };
+
     return (
         <>
-            <Instructions duration={10000}>
-                <p class="font-mono max-w-2xl text-left">
-                    "Simon dice" es un juego de memoria en el que se muestra un patrón de colores que los jugadores deben repetir en el mismo orden.
-                    <br />
-                    Si un jugador se equivoca, será eliminado del juego.
-                </p>
-                <p class="font-mono max-w-2xl text-left">
-                    Los jugadores irán rotando a medida que avanza el juego. Cuando sea tu turno, haz clic en los colores para repetir el patrón.
-                </p>
-            </Instructions>
-            <div
-                className="flex relative flex-col items-center justify-center h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]   
-          from-blue-600/70 via-transparent to-transparent text-white"
+            <style>{`
+                .bg-grid-pattern {
+                    background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+                    background-size: 30px 30px;
+                }
+                .scanlines {
+                    background: linear-gradient(
+                        to bottom,
+                        rgba(255,255,255,0),
+                        rgba(255,255,255,0) 50%,
+                        rgba(0,0,0,0.1) 50%,
+                        rgba(0,0,0,0.1)
+                    );
+                    background-size: 100% 4px;
+                }
+                .pixelated-img {
+                    image-rendering: pixelated;
+                }
+            `}</style>
+
+            <Instructions duration={10000}
+                controls={[
+                    {
+                        keys: ["LEFT_CLICK"],
+                        label: "Haz clic en los colores para repetir el patrón"
+                    }
+                ]}
             >
+                <p class="font-mono max-w-2xl text-left">
+                    "Simon dice" es un juego de memoria donde aparecerá una secuencia de colores. Tu tarea es repetir esa misma secuencia, siguiendo el mismo orden sin equivocarte.
+                    <br />
+                    Si un jugador se equivoca en algún color, quedará eliminado del juego.
+                </p>
+                <br />
+                <p class="font-mono max-w-2xl text-left">
+                    Los jugadores irán tomando turnos uno después del otro. Cuando llegue tu turno, haz clic en los colores en el orden correcto para repetir el patrón que se mostró.
+                    <br />
+                    <br />
+                    A medida que el juego avanza, la secuencia se hará más larga y tendrás que concentrarte para seguirla. ¡Pon atención y demuestra tu memoria!
+                </p>
+
+            </Instructions>
+
+            {/* CONTENEDOR PRINCIPAL */}
+            <div className="flex relative flex-col items-center justify-center w-full h-full bg-slate-900 text-white overflow-hidden">
+
+                {/* Fondos sutiles para dar textura sin molestar */}
+                <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(30,41,59,0.5)_0%,_rgba(0,0,0,0.8)_100%)] pointer-events-none"></div>
+                <div className="absolute inset-0 scanlines pointer-events-none z-50 opacity-10"></div>
+
+                {/* --- UI SUPERIOR: PATRÓN DEL JUGADOR (Estilo barra de estado) --- */}
                 {!gameIsWaiting && (
-                    <div className="flex gap-2 absolute top-2 left-4">
-                        {playerPattern.map((color, index) => (
-                            <div
-                                key={index}
-                                className={`size-4 rounded-full bg-gradient-to-b ${colors.find(c => c.name === color)?.gradient}`}
-                            />
-                        ))}
+                    <div className="absolute top-4 left-4 z-20 bg-black/60 p-2 border border-white/20 backdrop-blur-md rounded-none shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
+                        <p className="text-[10px] font-mono text-gray-400 mb-1 uppercase tracking-wider">Tu Secuencia:</p>
+                        <div className="flex gap-2 h-6 min-w-[100px] items-center">
+                            {playerPattern.map((color, index) => {
+                                const colDef = colors.find(c => c.name === color);
+                                const swatchClass = colDef?.gradient
+                                    ? colDef.gradient.split(' ')[0].replace('from-', 'bg-')
+                                    : 'bg-gray-500';
+
+                                return (
+                                    <div
+                                        key={index}
+                                        className={`w-3 h-3 md:w-4 md:h-4 border border-black shadow-sm ${swatchClass}`}
+                                        style={{ backgroundColor: color === 'yellow' ? '#facc15' : color }}
+                                    />
+                                );
+                            })}
+                            {playerPattern.length === 0 && <span className="text-gray-600 text-xs font-mono">esperando entrada...</span>}
+                        </div>
                     </div>
                 )}
 
-                <h2 className="text-2xl  font-bold absolute right-4 top-4 font-squids">
-                    Simon dice
-                </h2>
+                {/* --- UI SUPERIOR DERECHA: TÍTULO Y RIVALES --- */}
+                <div className="absolute top-4 right-4 flex flex-col items-end gap-6 z-20">
+                    {/* Título original solicitado */}
+                    <h2 className="text-2xl md:text-3xl font-bold font-squids text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                        Simon dice
+                    </h2>
 
-                {/* Mostrar avatares de jugadores */}
-                {gameIsPlaying && (() => {
-                    // Obtén el jugador actual (si participa)
-                    const currentPlayer = isCurrentPlayerPlaying
-                        ? players.find((p) => p.playerNumber === playerNumber)
-                        : null;
-
-                    // Itera sobre currentPlayers, obteniendo solo los números de jugadores (excluyendo el actual)
-                    const rivalsNumbers = Object.entries(gameState.currentPlayers)
-                        .filter(([, num]) => num !== playerNumber)
-                        .map(([, num]) => num);
-
-                    // Busca en el array de players aquellos rivales que coincidan con los números obtenidos
-                    const validRivals = rivalsNumbers
-                        .map((num) => players.find((p) => p.playerNumber === num))
-                        .filter((p): p is typeof players[number] => Boolean(p && p.avatar));
-
-                    // Si no hay nada para mostrar, no renderiza nada
-                    if (!currentPlayer && validRivals.length === 0) return null;
-
-                    return (
-                        <div className="absolute right-4 top-16 flex flex-col items-center gap-y-2">
-                            {isCurrentPlayerPlaying && currentPlayer && currentPlayer.avatar && (
-                                <div className="relative">
-                                    <img
-                                        src={currentPlayer.avatar}
-                                        alt="Tu avatar"
-                                        className="w-10 h-10 rounded-full ring-2 ring-white/20"
-                                        onError={(e) => {
-                                            e.currentTarget.src = "/fallback.png"; // Ajusta la ruta del fallback según corresponda
-                                        }}
-                                    />
-                                </div>
-                            )}
-
-                            {validRivals.map((rivalPlayer) => (
-                                <div key={rivalPlayer.playerNumber} className="relative">
-                                    <img
-                                        src={rivalPlayer.avatar}
-                                        alt={`Avatar de jugador #${rivalPlayer.playerNumber
-                                            .toString()
-                                            .padStart(3, "0")}`}
-                                        className="w-10 h-10 rounded-full ring-2 ring-white/20"
-                                        onError={(e) => {
-                                            e.currentTarget.src = "/fallback.png";
-                                        }}
-                                    />
-                                    <span className="absolute -bottom-4 inset-x-0 bg-white font-atomic text-black text-md rounded-full px-1">
-                                        #{rivalPlayer.playerNumber.toString().padStart(3, "0")}
-                                    </span>
-                                </div>
-                            ))}
+                    {/* Lista vertical de rivales en juego */}
+                    {gameIsPlaying && (
+                        <div className="flex flex-col gap-3 p-3 bg-black/30 border-l border-white/10">
+                            {renderRivals()}
                         </div>
-                    );
-                })()}
+                    )}
+                </div>
 
 
-                {/* Mensaje para jugadores que no están en turno */}
-                {gameIsPlaying && !isCurrentPlayerPlaying && !isEliminated && (
-                    <div className="flex items-center gap-8 mt-4">
-                        <SimonSaysButtons
-                            activeButton={activeButton}
-                            showingPattern={showingPattern}
-                            onClick={() => { }}
-                        />
-                        <div className="flex flex-col gap-2">
-                            {(() => {
-                                const rivalsNumbers = Object.entries(gameState.currentPlayers)
-                                    .filter(([, num]) => num !== playerNumber)
-                                    .map(([, num]) => num);
-                                const validRivals = rivalsNumbers
-                                    .map((num) => players.find((p) => p.playerNumber === num))
-                                    .filter((p): p is typeof players[number] => Boolean(p && p.avatar));
-                                return validRivals.map(rival => (
-                                    <div key={rival.playerNumber} className="flex items-center gap-2">
-                                        <img
-                                            src={rival.avatar}
-                                            alt={`Avatar de ${rival.playerNumber}`}
-                                            className="w-8 h-8 rounded-full ring-2 ring-white/20"
-                                            onError={(e) => e.currentTarget.src = "/fallback.png"}
-                                        />
-                                        <div className="flex gap-1">
-                                            {rivalInputs[rival.playerNumber]?.map((color, i) => (
-                                                <div
-                                                    key={i}
-                                                    className={`size-4 rounded-full bg-gradient-to-b ${colors.find(c => c.name === color)?.gradient}`}
-                                                />
-                                            ))}
+                {/* --- ÁREA CENTRAL DE JUEGO --- */}
+                <div className="relative z-10 flex flex-col items-center justify-center p-4 w-full max-w-4xl">
+
+                    {/* MENSAJES DE ESTADO */}
+                    {isCurrentPlayerPlaying && (
+                        <div className={`mb-8 px-8 py-3 bg-neutral-900 border-l-4 ${isEliminated ? 'border-red-600' : 'border-blue-500'} shadow-[8px_8px_0_0_rgba(0,0,0,0.4)]`}>
+                            <h3 className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${isEliminated ? 'text-red-500' : 'text-blue-400'}`}>
+                                {getStatusMessage()}
+                            </h3>
+                        </div>
+                    )}
+
+                    {!isCurrentPlayerPlaying && !isEliminated && gameIsPlaying && (
+                        <div className="mb-8 flex flex-col items-center w-full">
+                            <div className="bg-neutral-800/80 px-4 py-2 border border-white/20 mb-4 backdrop-blur-sm shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
+                                <span className="text-sm font-mono text-gray-300">Esperando a otros jugadores...</span>
+                            </div>
+
+                            {/* Visualización de lo que hacen los otros */}
+                            <div className="flex gap-4 flex-wrap justify-center max-w-2xl">
+                                {(() => {
+                                    const rivalsNumbers = Object.entries(gameState.currentPlayers)
+                                        .filter(([, num]) => num !== playerNumber)
+                                        .map(([, num]) => num);
+
+                                    const validRivals = rivalsNumbers
+                                        .map((num) => players.find((p) => p.playerNumber === num))
+                                        .filter((p): p is typeof players[number] => Boolean(p && p.avatar));
+
+                                    return validRivals.map(rival => (
+                                        <div key={rival.playerNumber} className="flex flex-col items-center bg-black/40 p-2 border border-white/10 shadow-lg">
+                                            <div className="flex gap-1 mb-1 min-h-[12px]">
+                                                {rivalInputs[rival.playerNumber]?.map((color, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="w-2 h-2 border border-white/30"
+                                                        style={{ backgroundColor: color }}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <span className="text-[10px] font-mono font-bold text-gray-400">#{rival.playerNumber}</span>
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* JUEGO PRINCIPAL - CONSOLA FÍSICA */}
+                    {gameIsPlaying && (
+                        <>
+                            {isEliminated ? (
+                                <div className="flex flex-col items-center justify-center p-12 bg-neutral-900 border border-red-900 shadow-[10px_10px_0_0_rgba(0,0,0,0.5)]">
+                                    <p className="text-4xl font-bold font-mono text-red-500 mb-4">
+                                        ELIMINADO
+                                    </p>
+                                    <p className="text-sm font-mono text-gray-500">Más suerte la próxima vez</p>
+                                </div>
+                            ) : (
+                                <div className={`transition-all duration-300 ${!isCurrentPlayerPlaying ? 'opacity-50 scale-95 grayscale' : 'scale-100'}`}>
+                                    {/* Carcasa del dispositivo */}
+                                    <div className="bg-neutral-800 p-3 md:p-6 rounded-none border-t border-l border-white/10 border-b-4 border-r-4 border-black/50 shadow-[20px_20px_0_0_rgba(0,0,0,0.4)]">
+                                        {/* Panel interno oscuro */}
+                                        <div className="bg-black/40 p-4 border border-black/30 shadow-inner">
+                                            <SimonSaysButtons
+                                                activeButton={activeButton}
+                                                showingPattern={showingPattern}
+                                                onClick={isCurrentPlayerPlaying && !isCompleted ? handlePlayerInput : () => { }}
+                                            />
                                         </div>
                                     </div>
-                                ));
-                            })()}
-                        </div>
-                    </div>
-                )}
 
-                {isCurrentPlayerPlaying && (
-                    <div className="mt-4 text-3xl font-medium font-teko italic">
-                        {getStatusMessage()}
-                    </div>
-                )}
-
-                {gameIsPlaying && (
-                    <>
-                        {isEliminated ? (
-                            <div className="text-center mt-4">
-                                <p className="text-lg font-bold font-atomic">
-                                    ¡Has sido eliminado del juego!
-                                </p>
-                            </div>
-                        ) : isCurrentPlayerPlaying ? (
-                            !isCompleted ? (
-                                <SimonSaysButtons
-                                    activeButton={activeButton}
-                                    showingPattern={showingPattern}
-                                    onClick={handlePlayerInput}
-                                />
-                            ) : (
-                                <div className="text-center mt-4">
-                                    <p className="text-lg font-bold font-atomic">
-                                        ¡Felicidades!<br />
-                                        Continúas en el desafío
-                                    </p>
+                                    {isCompleted && (
+                                        <div className="mt-6 text-center bg-green-900/20 border-l-4 border-green-500 p-3 backdrop-blur-sm">
+                                            <p className="text-lg font-bold font-mono text-green-400">
+                                                ¡Nivel Completado!
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
-                            )
-                        ) : !isEliminated && (
-                            <div className="text-center mt-4">
-                                <p className="text-2xl font-teko">
-                                    ¡Espera tu turno!<br />
-                                    Pronto será tu oportunidad
-                                </p>
-                            </div>
-                        )}
-                    </>
-                )}
+                            )}
+                        </>
+                    )}
+                </div>
             </div>
         </>
     );

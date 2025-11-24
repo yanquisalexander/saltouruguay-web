@@ -33,3 +33,5 @@ export const createPusher = () => {
 export const slugify = (text: string) => {
   return toSlug(text, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g });
 }
+
+export const IS_DEV = import.meta.env.DEV;

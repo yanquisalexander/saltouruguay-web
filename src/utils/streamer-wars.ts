@@ -1863,7 +1863,7 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
         const playerTeam = await client
             .select()
             .from(StreamerWarsTeamPlayersTable)
-            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+            .where(eq(StreamerWarsTeamPlayersTable.playerNumber, playerNumber))
             .execute()
             .then((res) => res[0]);
 
@@ -1877,7 +1877,7 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
         // Eliminar al jugador del equipo
         await client
             .delete(StreamerWarsTeamPlayersTable)
-            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+            .where(eq(StreamerWarsTeamPlayersTable.playerNumber, playerNumber))
             .execute();
 
         // Obtener el discordId del jugador desde una relación con playerNumber
