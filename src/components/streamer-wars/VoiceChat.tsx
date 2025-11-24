@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
-import type Pusher from "pusher-js";
 import type { Channel } from "pusher-js";
 import { useVoiceChatStore } from "@/stores/voiceChat";
 import { LucideMic, LucideMicOff, LucideVolume2 } from "lucide-preact";
 import { actions } from "astro:actions";
 import { type Players } from "../admin/streamer-wars/Players";
+import { usePusher } from "@/hooks/usePusher";
+import { pusherService } from "@/services/pusher.client";
 
 // --- CONFIG & CONSTANTS ---
 const ICE_SERVERS = {
@@ -130,14 +131,14 @@ const usePTT = (
 // --- MAIN COMPONENT ---
 
 interface VoiceChatProps {
-  pusher: Pusher | null;
   userId: string;
   teamId: string | null;
   isAdmin: boolean;
   players: Players[];
 }
 
-export const VoiceChat = ({ pusher, userId, teamId, isAdmin, players }: VoiceChatProps) => {
+export const VoiceChat = ({ userId, teamId, isAdmin, players }: VoiceChatProps) => {
+  const { pusher } = usePusher();
   const {
     currentTeamId,
     voiceEnabledTeams,
@@ -304,6 +305,7 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin, players }: VoiceCha
     if (!pusher) return;
 
     const channels: Channel[] = [];
+    const channelHandlers = new Map<string, Record<string, (data: any) => void>>();
     const teamsToSubscribe = [];
 
     // Determinar a qué equipos suscribirse
@@ -316,43 +318,40 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin, players }: VoiceCha
 
     teamsToSubscribe.forEach(({ id: currentChannelTeamId, isSpec }) => {
       const channelName = `team-${currentChannelTeamId}-voice-signal`;
-      const channel = pusher.subscribe(channelName);
+      const channel = pusherService.subscribe(channelName);
       channels.push(channel);
 
-      // Bindings
-      channel.bind("voice:enabled", (data: any) => {
+      // Define handlers for this channel
+      const handleVoiceEnabled = (data: any) => {
         setVoiceEnabled(data.teamId, true);
-        // Anunciar presencia
         sendSignal(data.teamId, "voice:user-joined", { userId });
-      });
+      };
 
-      channel.bind("voice:disabled", (data: any) => {
+      const handleVoiceDisabled = (data: any) => {
         setVoiceEnabled(data.teamId, false);
         if (!isSpec) cleanup();
-      });
+      };
 
-      channel.bind("voice:force-mute", (data: any) => {
+      const handleForceMute = (data: any) => {
         if (data.targetUserId === userId && !isSpec && localStream) {
           localStream.getAudioTracks().forEach(track => (track.enabled = false));
           setLocalMicEnabled(false);
         }
-      });
+      };
 
-      // Señalización
-      channel.bind("signal:offer", (d: any) => {
+      const handleSignalOffer = (d: any) => {
         if (d.toUserId === userId) handleWebRTCMessage('offer', d, currentChannelTeamId, isSpec);
-      });
+      };
 
-      channel.bind("signal:answer", (d: any) => {
+      const handleSignalAnswer = (d: any) => {
         if (d.toUserId === userId) handleWebRTCMessage('answer', d, currentChannelTeamId, isSpec);
-      });
+      };
 
-      channel.bind("signal:iceCandidate", (d: any) => {
+      const handleSignalIceCandidate = (d: any) => {
         if (d.toUserId === userId) handleWebRTCMessage('candidate', d, currentChannelTeamId, isSpec);
-      });
+      };
 
-      // Nuevos usuarios
-      channel.bind("voice:user-joined", async (d: any) => {
+      const handleUserJoined = async (d: any) => {
         if (d.userId !== userId && !peerConnections[d.userId] && !isSpec) {
           const pc = createPeerConnection(d.userId, false, currentChannelTeamId);
           addPeerConnection(d.userId, pc);
@@ -360,29 +359,55 @@ export const VoiceChat = ({ pusher, userId, teamId, isAdmin, players }: VoiceCha
           await pc.setLocalDescription(offer);
           sendSignal(currentChannelTeamId, "signal:offer", { toUserId: d.userId, sdp: offer });
         }
-      });
+      };
 
-      // Espectadores
-      channel.bind('voice:spectator-joined', async (d: any) => {
+      const handleSpectatorJoined = async (d: any) => {
         if (!isSpec) {
-          const pc = createPeerConnection(d.spectatorId, false, currentChannelTeamId); // false porque YO no soy espectador
+          const pc = createPeerConnection(d.spectatorId, false, currentChannelTeamId);
           addPeerConnection(d.spectatorId, pc);
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           sendSignal(currentChannelTeamId, "signal:offer", { toUserId: d.spectatorId, sdp: offer });
         }
-      });
+      };
 
-      channel.bind('voice:spectator-left', (d: any) => {
+      const handleSpectatorLeft = (d: any) => {
         removePeerConnection(d.spectatorId);
+      };
+
+      // Bind all handlers using the service
+      pusherService.bind(channelName, "voice:enabled", handleVoiceEnabled);
+      pusherService.bind(channelName, "voice:disabled", handleVoiceDisabled);
+      pusherService.bind(channelName, "voice:force-mute", handleForceMute);
+      pusherService.bind(channelName, "signal:offer", handleSignalOffer);
+      pusherService.bind(channelName, "signal:answer", handleSignalAnswer);
+      pusherService.bind(channelName, "signal:iceCandidate", handleSignalIceCandidate);
+      pusherService.bind(channelName, "voice:user-joined", handleUserJoined);
+      pusherService.bind(channelName, "voice:spectator-joined", handleSpectatorJoined);
+      pusherService.bind(channelName, "voice:spectator-left", handleSpectatorLeft);
+
+      // Store handlers for cleanup
+      channelHandlers.set(channelName, {
+        "voice:enabled": handleVoiceEnabled,
+        "voice:disabled": handleVoiceDisabled,
+        "voice:force-mute": handleForceMute,
+        "signal:offer": handleSignalOffer,
+        "signal:answer": handleSignalAnswer,
+        "signal:iceCandidate": handleSignalIceCandidate,
+        "voice:user-joined": handleUserJoined,
+        "voice:spectator-joined": handleSpectatorJoined,
+        "voice:spectator-left": handleSpectatorLeft,
       });
     });
 
     return () => {
-      channels.forEach(c => {
-        c.unbind_all();
-        c.unsubscribe();
+      // Unbind all handlers properly
+      channelHandlers.forEach((handlers, channelName) => {
+        Object.entries(handlers).forEach(([eventName, handler]) => {
+          pusherService.unbind(channelName, eventName, handler);
+        });
       });
+      channelHandlers.clear();
     };
   }, [pusher, teamId, spectatingTeams, isAdminSpectator, localStream, handleWebRTCMessage]);
 

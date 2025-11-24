@@ -1,8 +1,7 @@
 import type { Session } from "@auth/core/types";
 import { useEffect, useRef, useState, useMemo } from "preact/hooks";
 import { toast } from "sonner";
-import Pusher, { type Channel } from "pusher-js";
-import { PUSHER_KEY } from "@/config";
+import type { Channel } from "pusher-js";
 import {
     CDN_PREFIX,
     playSound,
@@ -14,9 +13,11 @@ import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { decodeAudioFromPusher } from "@/services/pako-compress.client";
 import { AVAILABLE_AUDIOS, type AudioState } from "@/types/audio";
 import { actions } from "astro:actions";
+import { usePusher } from "@/hooks/usePusher";
+import { pusherService } from "@/services/pusher.client";
 
 export const useStreamerWarsSocket = (session: Session | null) => {
-    const [pusher, setPusher] = useState<Pusher | null>(null);
+    const { pusher } = usePusher();
     const [gameState, setGameState] = useState<{ component: string; props: any } | null>(null);
     const [recentlyEliminatedPlayer, setRecentlyEliminatedPlayer] = useState<number | number[] | null>(null);
     const [dayAvailable, setDayAvailable] = useState(false);
@@ -165,42 +166,19 @@ export const useStreamerWarsSocket = (session: Session | null) => {
     // 3. CONEXIÓN PUSHER (Socket)
     // ---------------------------------------------------------------------------
     useEffect(() => {
-        if (!session) return;
+        if (!session || !pusher) return;
 
         const timeouts: number[] = [];
         let timersActive = true;
 
-
-
-        const pusherInstance = new Pusher(PUSHER_KEY, {
-            wsHost: import.meta.env.DEV ? 'localhost' : 'soketi.saltouruguayserver.com',
-            wsPort: import.meta.env.DEV ? 6001 : 443,
-            cluster: "us2",
-            enabledTransports: ["ws", "wss"],
-            forceTLS: !import.meta.env.DEV,
-            activityTimeout: 60000,
-            pongTimeout: 30000,
-            disableStats: true,
-        });
-
-        // Dentro de tu useEffect, justo después de crear la instancia
-
-
-        pusherInstance.connection.bind("state_change", (states: any) => {
-            console.log("Pusher state change:", states.current);
-        });
-
-        pusherInstance.connection.bind("error", (err: any) => {
-            console.error("Pusher connection error:", err);
-        });
-
-        setPusher(pusherInstance);
-
-        const channel = pusherInstance.subscribe("streamer-wars");
-        const presence = pusherInstance.subscribe("presence-streamer-wars");
+        // Use the singleton service to get channels
+        const channel = pusherService.subscribe("streamer-wars");
+        const presence = pusherService.subscribe("presence-streamer-wars");
         globalChannel.current = channel;
         presenceChannel.current = presence;
 
+        // Store handler references for cleanup
+        const handlers = new Map<string, (data: any) => void>();
 
         const handleAudioBlob = (audioBase64: string, volume = 0.5, reverb = 0.0) => {
             try {
@@ -254,12 +232,12 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         };
 
         const bindChannelHandlers = (targetChannel: Channel) => {
-            targetChannel.bind("launch-game", ({ game, props }: any) => {
+            const handleLaunchGame = ({ game, props }: any) => {
                 console.log("Launch game received:", game, props);
                 bgAudio.current?.pause();
                 setGameState({
                     component: game,
-                    props: { session: sessionRef.current, pusher: pusherInstance, ...props },
+                    props: { session: sessionRef.current, pusher, ...props },
                 });
 
                 const onInstructionsEnded = () => {
@@ -271,30 +249,29 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                     playSound({ sound: randomSound });
                 };
                 document.addEventListener("instructions-ended", onInstructionsEnded, { once: true });
-            });
+            };
+            handlers.set("launch-game", handleLaunchGame);
+            pusherService.bind("streamer-wars", "launch-game", handleLaunchGame);
 
-            targetChannel.bind("send-to-waiting-room", () => {
+            const handleSendToWaitingRoom = () => {
                 console.log("Send to waiting room received");
                 setGameState(null);
                 toast("Todos los jugadores han sido enviados a la sala de espera");
-            });
+            };
 
-            targetChannel.bind("episode-title", ({ episode }: { episode: number }) => {
+            const handleEpisodeTitle = ({ episode }: { episode: number }) => {
                 console.log("Episode title received:", episode);
-            });
+            };
 
-            targetChannel.bind("player-eliminated", handlePlayerEliminated);
-            targetChannel.bind("players-eliminated", ({ playerNumbers, audioBase64 }: { playerNumbers: number | number[], audioBase64: string }) => {
+            const handlePlayersEliminated = ({ playerNumbers, audioBase64 }: { playerNumbers: number | number[], audioBase64: string }) => {
                 handlePlayerEliminated({ playerNumber: playerNumbers, audioBase64 });
-            });
+            };
 
-            targetChannel.bind("megaphony", handleMegaphony);
-
-            targetChannel.bind("reload-for-user", ({ playerNumber: pNum }: { playerNumber: number }) => {
+            const handleReloadForUser = ({ playerNumber: pNum }: { playerNumber: number }) => {
                 if (playerNumberRef.current === pNum) location.reload();
-            });
+            };
 
-            targetChannel.bind("new-announcement", ({ message }: { message: string }) => {
+            const handleNewAnnouncement = ({ message }: { message: string }) => {
                 playSound({ sound: STREAMER_WARS_SOUNDS.ATENCION_JUGADORES, volume: 1 });
                 toast.warning("Nuevo anuncio", {
                     icon: <LucideSiren />,
@@ -308,12 +285,12 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                         description: 'font-mono text-sm',
                     }
                 });
-            });
+            };
 
-            targetChannel.bind("player-aislated", ({ playerNumber }: { playerNumber: number }) => handleIsolation(playerNumber));
-            targetChannel.bind("players-aislated", ({ playerNumbers }: { playerNumbers: number[] }) => handleIsolation(playerNumbers));
+            const handlePlayerAislated = ({ playerNumber }: { playerNumber: number }) => handleIsolation(playerNumber);
+            const handlePlayersAislated = ({ playerNumbers }: { playerNumbers: number[] }) => handleIsolation(playerNumbers);
 
-            targetChannel.bind("audio-update", ({ audioId, action, data }: { audioId: string, action: string, data: any }) => {
+            const handleAudioUpdate = ({ audioId, action, data }: { audioId: string, action: string, data: any }) => {
                 const audio = ensureAudioInstance(audioId);
                 if (!audio) return;
 
@@ -337,20 +314,20 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                 } catch (err) {
                     console.warn(`Audio action ${action} failed for ${audioId}`, err);
                 }
-            });
+            };
 
-            targetChannel.bind("audio-mute-all", () => {
+            const handleAudioMuteAll = () => {
                 Object.values(audioInstances.current).forEach(a => a.volume = 0);
-            });
+            };
 
-            targetChannel.bind("audio-stop-all", () => {
+            const handleAudioStopAll = () => {
                 Object.values(audioInstances.current).forEach(a => {
                     a.pause();
                     a.currentTime = 0;
                 });
-            });
+            };
 
-            targetChannel.bind("show-timer", (data: any) => {
+            const handleShowTimer = (data: any) => {
                 try {
                     const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
                     setTimerSeconds(parsedData.seconds);
@@ -359,7 +336,36 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                 } catch (e) {
                     console.warn('Error parsing timer data', e);
                 }
-            });
+            };
+
+            // Bind all events using the service and store references
+            handlers.set("send-to-waiting-room", handleSendToWaitingRoom);
+            handlers.set("episode-title", handleEpisodeTitle);
+            handlers.set("player-eliminated", handlePlayerEliminated);
+            handlers.set("players-eliminated", handlePlayersEliminated);
+            handlers.set("megaphony", handleMegaphony);
+            handlers.set("reload-for-user", handleReloadForUser);
+            handlers.set("new-announcement", handleNewAnnouncement);
+            handlers.set("player-aislated", handlePlayerAislated);
+            handlers.set("players-aislated", handlePlayersAislated);
+            handlers.set("audio-update", handleAudioUpdate);
+            handlers.set("audio-mute-all", handleAudioMuteAll);
+            handlers.set("audio-stop-all", handleAudioStopAll);
+            handlers.set("show-timer", handleShowTimer);
+
+            pusherService.bind("streamer-wars", "send-to-waiting-room", handleSendToWaitingRoom);
+            pusherService.bind("streamer-wars", "episode-title", handleEpisodeTitle);
+            pusherService.bind("streamer-wars", "player-eliminated", handlePlayerEliminated);
+            pusherService.bind("streamer-wars", "players-eliminated", handlePlayersEliminated);
+            pusherService.bind("streamer-wars", "megaphony", handleMegaphony);
+            pusherService.bind("streamer-wars", "reload-for-user", handleReloadForUser);
+            pusherService.bind("streamer-wars", "new-announcement", handleNewAnnouncement);
+            pusherService.bind("streamer-wars", "player-aislated", handlePlayerAislated);
+            pusherService.bind("streamer-wars", "players-aislated", handlePlayersAislated);
+            pusherService.bind("streamer-wars", "audio-update", handleAudioUpdate);
+            pusherService.bind("streamer-wars", "audio-mute-all", handleAudioMuteAll);
+            pusherService.bind("streamer-wars", "audio-stop-all", handleAudioStopAll);
+            pusherService.bind("streamer-wars", "show-timer", handleShowTimer);
         };
 
         bindChannelHandlers(channel);
@@ -384,27 +390,15 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             timeouts.forEach(window.clearTimeout);
             document.removeEventListener("welcome-dialog-closed", welcomeHandler);
 
-            // Unbind specific events instead of all to avoid removing binds from other hooks
-            if (channel) {
-                channel.unbind("launch-game");
-                channel.unbind("send-to-waiting-room");
-                channel.unbind("episode-title");
-                channel.unbind("player-eliminated");
-                channel.unbind("players-eliminated");
-                channel.unbind("megaphony");
-                channel.unbind("reload-for-user");
-                channel.unbind("new-announcement");
-                channel.unbind("player-aislated");
-                channel.unbind("players-aislated");
-                channel.unbind("audio-update");
-                channel.unbind("audio-mute-all");
-                channel.unbind("audio-stop-all");
-                channel.unbind("show-timer");
-            }
+            // Unbind all events from this hook using stored handler references
+            handlers.forEach((handler, eventName) => {
+                pusherService.unbind("streamer-wars", eventName, handler);
+            });
+            handlers.clear();
 
-            pusherInstance.disconnect();
+            // Don't disconnect pusher - it's shared across the app
         };
-    }, [userId]);
+    }, [userId, pusher]);
 
     return {
         pusher,

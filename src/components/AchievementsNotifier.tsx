@@ -1,30 +1,25 @@
 import confetti from "canvas-confetti";
 import { LucideTrophy } from "lucide-preact";
-import { useEffect } from "preact/hooks";
-import type Pusher from "pusher-js";
 import { toast } from "sonner";
+import { usePusherChannel } from "@/hooks/usePusherChannel";
+import { useMemo } from "preact/hooks";
 
 interface AchievementsNotifierProps {
     userId: string; // ID del usuario para identificar eventos específicos
 }
 
-export function AchievementsNotifier({ userId, pusher }: AchievementsNotifierProps & { pusher: Pusher }) {
-    useEffect(() => {
-        if (!userId) {
-            console.error("No userId provided to AchievementsNotifier");
-            return;
-        }
+export function AchievementsNotifier({ userId }: AchievementsNotifierProps) {
+    if (!userId) {
+        console.error("No userId provided to AchievementsNotifier");
+        return null;
+    }
 
+    // Genera dinámicamente el nombre del canal basado en el userId
+    const channelName = `user-${userId}-achievements`;
 
-        // Genera dinámicamente el nombre del canal basado en el userId
-        const channelName = `user-${userId}-achievements`;
-
-        // Suscríbete al canal correspondiente
-        const channel = pusher.subscribe(channelName);
-
-
-        // Escucha eventos de logros específicos
-        channel.bind("achievement-unlocked", (data: any) => {
+    // Memoize events to prevent re-binding on every render
+    const events = useMemo(() => ({
+        "achievement-unlocked": (data: any) => {
             console.log(`Logro desbloqueado para el usuario ${userId}:`, data);
             // Aquí puedes implementar la lógica adicional, como notificaciones o actualizaciones
             const audio = new Audio("/sounds/logro-desbloqueado.mp3");
@@ -47,18 +42,14 @@ export function AchievementsNotifier({ userId, pusher }: AchievementsNotifierPro
                     y: 0.6
                 }
             });
+        }
+    }), [userId]);
 
-        });
-
-
-
-        // Limpia la conexión cuando el componente se desmonta
-        return () => {
-            channel.unbind_all();
-            pusher.unsubscribe(channelName);
-            pusher.disconnect();
-        };
-    }, [userId]);
+    // Use the new hook to manage channel subscription
+    usePusherChannel({
+        channelName,
+        events
+    });
 
     // No renderiza nada
     return null;
