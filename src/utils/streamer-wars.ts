@@ -379,7 +379,7 @@ export const games = {
                     teamId: player.teamId,
                     shape,
                     imageUrl,
-                    attemptsLeft: 2,
+                    lives: 3, // Changed from attemptsLeft: 2 to lives: 3
                     status: 'playing',
                 };
             }
@@ -405,7 +405,7 @@ export const games = {
                     await pusher.trigger('streamer-wars', 'dalgona:start', {
                         userId: player.userId,
                         imageUrl: playerState.imageUrl,
-                        attemptsLeft: 2,
+                        lives: 3, // Changed from attemptsLeft: 2 to lives: 3
                         shape: TEAM_SHAPE_MAP[player.teamId] || DalgonaShape.Circle,
                     });
                 }
@@ -523,11 +523,11 @@ export const games = {
                     status: 'completed',
                 };
             } else {
-                // Player failed this attempt
-                playerState.attemptsLeft -= 1;
+                // Player failed this attempt - lose a life
+                playerState.lives -= 1;
 
-                if (playerState.attemptsLeft <= 0) {
-                    // No more attempts - eliminate player
+                if (playerState.lives <= 0) {
+                    // No more lives - eliminate player
                     playerState.status = 'failed';
                     gameState.players[playerNumber] = playerState;
 
@@ -542,7 +542,7 @@ export const games = {
                         eliminated: true,
                     };
                 } else {
-                    // Still has attempts left
+                    // Still has lives left
                     gameState.players[playerNumber] = playerState;
                     await cache.set(DALGONA_CACHE_KEY, gameState);
 
@@ -558,19 +558,77 @@ export const games = {
                         }
                     });
 
-                    // Notify player of failure but with attempts remaining
+                    // Notify player of damage (lost a life)
                     if (player?.playerNumber && player?.user?.id) {
-                        await pusher.trigger('streamer-wars', 'dalgona:attempt-failed', {
+                        await pusher.trigger('streamer-wars', 'dalgona:damage', {
                             userId: player.user.id,
-                            attemptsLeft: playerState.attemptsLeft,
+                            lives: playerState.lives,
+                            playerNumber: playerNumber,
                         });
                     }
 
                     return {
                         success: false,
-                        status: 'retry'
+                        status: 'retry',
+                        lives: playerState.lives,
                     };
                 }
+            }
+        },
+
+        /**
+         * Handles damage event when player makes an error
+         * @param playerNumber The player's number
+         * @returns Updated lives count and status
+         */
+        handleDamage: async (playerNumber: number) => {
+            const cache = createCache();
+            const gameState = await games.dalgona.getGameState();
+
+            const playerState = gameState.players[playerNumber];
+
+            if (!playerState) {
+                return {
+                    success: false,
+                    error: 'Player not found in game',
+                };
+            }
+
+            if (playerState.status !== 'playing') {
+                return {
+                    success: false,
+                    error: 'Player is not in playing state',
+                };
+            }
+
+            // Reduce lives
+            playerState.lives -= 1;
+
+            if (playerState.lives <= 0) {
+                // No more lives - eliminate player
+                playerState.status = 'failed';
+                gameState.players[playerNumber] = playerState;
+
+                await cache.set(DALGONA_CACHE_KEY, gameState);
+
+                // Eliminate the player
+                await eliminatePlayer(playerNumber);
+
+                return {
+                    success: true,
+                    lives: 0,
+                    eliminated: true,
+                };
+            } else {
+                // Still has lives left
+                gameState.players[playerNumber] = playerState;
+                await cache.set(DALGONA_CACHE_KEY, gameState);
+
+                return {
+                    success: true,
+                    lives: playerState.lives,
+                    eliminated: false,
+                };
             }
         },
 

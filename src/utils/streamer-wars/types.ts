@@ -28,7 +28,7 @@ export interface DalgonaPlayerState {
     teamId: number;
     shape: DalgonaShapeData;
     imageUrl: string;
-    attemptsLeft: number;
+    lives: number; // Changed from attemptsLeft to lives (3 lives system)
     status: 'playing' | 'completed' | 'failed';
 }
 
@@ -80,8 +80,8 @@ export interface BombGameState {
 
 // Team to shape mapping based on difficulty
 export const TEAM_SHAPE_MAP: Record<number, DalgonaShape> = {
-    1: 1,    // Circle (Easy)
-    2: 2,    // Triangle (Easy)
-    3: 3,    // Star (Medium)
-    4: 4,    // Umbrella (Hard)
+    1: 'circle' as DalgonaShape,    // Circle (Easy)
+    2: 'triangle' as DalgonaShape,  // Triangle (Easy)
+    3: 'star' as DalgonaShape,      // Star (Medium)
+    4: 'umbrella' as DalgonaShape,  // Umbrella (Hard)
 };
