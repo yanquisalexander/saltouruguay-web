@@ -379,7 +379,7 @@ export const games = {
                     teamId: player.teamId,
                     shape,
                     imageUrl,
-                    attemptsLeft: 2,
+                    attemptsLeft: 3,
                     status: 'playing',
                 };
             }
@@ -405,7 +405,7 @@ export const games = {
                     await pusher.trigger('streamer-wars', 'dalgona:start', {
                         userId: player.userId,
                         imageUrl: playerState.imageUrl,
-                        attemptsLeft: 2,
+                        attemptsLeft: 3,
                         shape: TEAM_SHAPE_MAP[player.teamId] || DalgonaShape.Circle,
                     });
                 }
