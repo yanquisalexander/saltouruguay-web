@@ -52,6 +52,11 @@ const BOMB_CACHE_KEY = "streamer-wars.bomb:game-state";
 const MAX_CHALLENGES = 5;
 const MAX_ERRORS = 3;
 
+// Dalgona game constants
+const DALGONA_MIN_COMPLETION_TIME_MS = 10000; // 10 seconds minimum
+const DALGONA_MAX_COMPLETION_TIME_MS = 300000; // 5 minutes maximum
+const DALGONA_MIN_COMPLETION_PERCENTAGE = 95; // Minimum 95% removal required
+
 // Team to shape mapping for Dalgona game
 const TEAM_SHAPE_MAP: Record<number, DalgonaShape> = {
     1: DalgonaShape.Circle,    // Easy
@@ -455,13 +460,11 @@ export const games = {
                 };
             }
 
-            // Anti-cheat: Validate timing (must take at least 10 seconds to complete)
+            // Anti-cheat: Validate timing
             if (gameState.startedAt) {
                 const timeElapsed = Date.now() - gameState.startedAt;
-                const MIN_TIME_MS = 10000; // 10 seconds minimum
-                const MAX_TIME_MS = 300000; // 5 minutes maximum
                 
-                if (timeElapsed < MIN_TIME_MS) {
+                if (timeElapsed < DALGONA_MIN_COMPLETION_TIME_MS) {
                     // Log to server logs only (not console) for anti-cheat monitoring
                     try {
                         await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
@@ -484,7 +487,7 @@ export const games = {
                     };
                 }
                 
-                if (timeElapsed > MAX_TIME_MS) {
+                if (timeElapsed > DALGONA_MAX_COMPLETION_TIME_MS) {
                     return {
                         success: false,
                         error: 'Time limit exceeded',
@@ -493,9 +496,11 @@ export const games = {
                 }
             }
 
-            // Validate completion percentage (must be at least 95%)
+            // Validate completion percentage
+            // Note: percentageRemoved comes from client. For production, consider
+            // server-side validation by having client send mask data for verification
             const percentageRemoved = traceData.percentageRemoved || 0;
-            if (percentageRemoved < 95) {
+            if (percentageRemoved < DALGONA_MIN_COMPLETION_PERCENTAGE) {
                 return {
                     success: false,
                     error: 'Not enough pixels removed',

@@ -7,6 +7,11 @@ import { Instructions } from "../Instructions";
 import { Button as RetroButton } from "@/components/ui/8bit/button";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
+// Constants
+const DAMAGE_THROTTLE_MS = 500; // Minimum time between damage events
+const SHAPE_BRIGHTNESS_THRESHOLD = 170; // Brightness threshold for shape detection
+const HEART_IMAGE_PATH = "/images/vida.webp"; // Path to heart/life icon
+
 interface DalgonaProps {
     session: Session;
     pusher: Pusher;
@@ -185,7 +190,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                 
                 // Check if pixel is part of the shape (darker color)
                 const brightness = (r + g + b) / 3;
-                if (brightness < 170) { // Shape pixels are darker
+                if (brightness < SHAPE_BRIGHTNESS_THRESHOLD) { // Shape pixels are darker
                     // Mark as shape (clear from mask)
                     const x = (i / 4) % canvas.width;
                     const y = Math.floor((i / 4) / canvas.width);
@@ -238,7 +243,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
     const handleDamage = async (x: number, y: number) => {
         // Prevent rapid damage calls
         const now = Date.now();
-        if (now - lastDamageTime.current < 500) return;
+        if (now - lastDamageTime.current < DAMAGE_THROTTLE_MS) return;
         lastDamageTime.current = now;
 
         // Add crack at position
@@ -560,10 +565,14 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                 {Array.from({ length: 3 }).map((_, i) => (
                     <img
                         key={i}
-                        src="/images/vida.webp"
+                        src={HEART_IMAGE_PATH}
                         alt="vida"
                         className={`w-10 h-10 ${i >= lives ? 'opacity-20 grayscale' : ''}`}
                         style={{ imageRendering: 'pixelated' }}
+                        onError={(e) => {
+                            // Fallback to heart emoji if image fails to load
+                            (e.target as HTMLImageElement).style.display = 'none';
+                        }}
                     />
                 ))}
             </div>
