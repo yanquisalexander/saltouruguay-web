@@ -393,35 +393,28 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                             imageRendering: 'pixelated'
                         }}
                     >
-                        {heart <= attemptsLeft ? (
-                            // Full heart (8-bit pixel art style)
-                            <div className="w-full h-full" style={{
-                                background: `
-                                    conic-gradient(from 0deg at 8px 8px, #ff0000 0deg, #ff0000 360deg),
-                                    conic-gradient(from 0deg at 24px 8px, #ff0000 0deg, #ff0000 360deg)
-                                `,
-                                clipPath: 'polygon(0 25%, 50% 100%, 100% 25%, 100% 0, 75% 0, 50% 25%, 25% 0, 0 0)'
-                            }}>
-                                <svg viewBox="0 0 32 32" className="w-full h-full">
+                        {/* 8-bit pixel art heart using SVG */}
+                        <svg viewBox="0 0 32 32" className="w-full h-full">
+                            {heart <= attemptsLeft ? (
+                                // Full heart
+                                <>
                                     <rect x="8" y="8" width="8" height="8" fill="#ff0000"/>
                                     <rect x="16" y="8" width="8" height="8" fill="#ff0000"/>
                                     <rect x="4" y="12" width="24" height="8" fill="#ff0000"/>
                                     <rect x="8" y="20" width="16" height="4" fill="#ff0000"/>
                                     <rect x="12" y="24" width="8" height="4" fill="#ff0000"/>
-                                </svg>
-                            </div>
-                        ) : (
-                            // Empty heart
-                            <div className="w-full h-full opacity-30">
-                                <svg viewBox="0 0 32 32" className="w-full h-full">
+                                </>
+                            ) : (
+                                // Empty heart (darker)
+                                <>
                                     <rect x="8" y="8" width="8" height="8" fill="#444"/>
                                     <rect x="16" y="8" width="8" height="8" fill="#444"/>
                                     <rect x="4" y="12" width="24" height="8" fill="#444"/>
                                     <rect x="8" y="20" width="16" height="4" fill="#444"/>
                                     <rect x="12" y="24" width="8" height="4" fill="#444"/>
-                                </svg>
-                            </div>
-                        )}
+                                </>
+                            )}
+                        </svg>
                     </div>
                 ))}
             </div>
