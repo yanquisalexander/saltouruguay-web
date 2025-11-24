@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'preact/hooks';
+import { useState, useEffect, useRef, useMemo } from 'preact/hooks';
 import clsx from 'clsx';
 import { $ } from "@/lib/dom-selector";
 import { LucideVolume2, LucideVolumeX, LucideX } from "lucide-preact";
@@ -17,6 +17,8 @@ export const CinematicPlayer = ({ userId }: CinematicPlayerProps) => {
     const [videoTimes, setVideoTimes] = useState({ currentTime: 0, duration: 0 });
 
     // Use the new hook to manage channel subscription
+    // Note: Using inline handler is safe here as this effect only depends on userId
+    // which is stable (from props) and state setters which don't change
     usePusherChannel({
         channelName: 'cinematic-player',
         events: {

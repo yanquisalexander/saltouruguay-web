@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'preact/hooks';
+import { useState, useEffect, useRef, useMemo } from 'preact/hooks';
 import clsx from 'clsx';
 import { $ } from "@/lib/dom-selector";
 import { LucideVolume2, LucideVolumeX, LucideX } from "lucide-preact";
@@ -18,20 +18,23 @@ export const StreamerWarsCinematicPlayer = ({ userId }: StreamerWarsCinematicPla
     const [timeLeft, setTimeLeft] = useState(0);
     const prevSecondRef = useRef<number | null>(null);
 
-    usePusherChannel({
-        channelName: 'streamer-wars-cinematic',
-        events: {
-            'new-event': (data: { targetUsers: string[] | 'everyone'; videoUrl: string }) => {
-                if (window.location.pathname.includes('admin')) {
-                    console.warn("Se ha recibido una cinemática, pero no se mostrará en la vista de administrador");
-                    return;
-                }
-                if (data.targetUsers === 'everyone' || data.targetUsers.includes(userId)) {
-                    setVideoUrl(data.videoUrl);
-                    setIsVisible(true);
-                }
+    // Memoize events to prevent re-binding
+    const events = useMemo(() => ({
+        'new-event': (data: { targetUsers: string[] | 'everyone'; videoUrl: string }) => {
+            if (window.location.pathname.includes('admin')) {
+                console.warn("Se ha recibido una cinemática, pero no se mostrará en la vista de administrador");
+                return;
+            }
+            if (data.targetUsers === 'everyone' || data.targetUsers.includes(userId)) {
+                setVideoUrl(data.videoUrl);
+                setIsVisible(true);
             }
         }
+    }), [userId]);
+
+    usePusherChannel({
+        channelName: 'streamer-wars-cinematic',
+        events
     });
 
     useEffect(() => {

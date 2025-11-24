@@ -5,7 +5,7 @@
  * Automatically handles cleanup when the component unmounts.
  */
 
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useMemo } from 'preact/hooks';
 import type { Channel } from 'pusher-js';
 import { pusherService } from '@/services/pusher.client';
 
@@ -66,6 +66,9 @@ export function usePusherChannel({
         };
     }, [channelName, enabled]);
 
+    // Create stable event key for comparison
+    const eventKeys = useMemo(() => Object.keys(events).sort().join(','), [events]);
+
     // Update event bindings when they change
     useEffect(() => {
         if (!enabled || !channelName) {
@@ -103,7 +106,7 @@ export function usePusherChannel({
                 currentEvents.set(eventName, callback);
             }
         });
-    }, [channelName, events, enabled]);
+    }, [channelName, enabled, eventKeys, events]);
 
     return {
         channel: channelRef.current,

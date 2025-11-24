@@ -84,8 +84,11 @@ class PusherService {
     public getPusher(): Pusher {
         if (!this.pusher) {
             this.initializePusher();
+            if (!this.pusher) {
+                throw new Error('[Pusher] Failed to initialize Pusher instance');
+            }
         }
-        return this.pusher!;
+        return this.pusher;
     }
 
     /**
@@ -95,6 +98,9 @@ class PusherService {
     public subscribe(channelName: string): Channel {
         if (!this.pusher) {
             this.initializePusher();
+            if (!this.pusher) {
+                throw new Error('[Pusher] Cannot subscribe: Pusher instance not initialized');
+            }
         }
 
         // Return existing channel if already subscribed
@@ -103,7 +109,7 @@ class PusherService {
         }
 
         // Subscribe to new channel
-        const channel = this.pusher!.subscribe(channelName);
+        const channel = this.pusher.subscribe(channelName);
         this.channels.set(channelName, channel);
         this.eventListeners.set(channelName, new Map());
 
