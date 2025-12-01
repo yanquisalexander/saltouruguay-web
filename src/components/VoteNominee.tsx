@@ -54,23 +54,27 @@ export const VoteNominee = ({ nominee, category, onVote, isVoted,
                         </span>
                     )
                 }
-                <img class={`group-hover:mix-blend-normal aspect-square object-cover size-16 transition-all rounded mix-blend-luminosity
+                <img class={`group-hover:mix-blend-normal object-cover transition-all rounded mix-blend-luminosity
+                    ${category.isEventsCategory ? 'aspect-video w-28' : 'aspect-square size-16'}
                     ${isVoted && '!mix-blend-normal'}
                 `} src={avatar} alt={nomineeInConst?.displayName} onError={(e) => {
                         e.currentTarget.src = placeholderAvatar
                     }} />
                 <span class="text-2xl font-anton">{nomineeInConst?.displayName || nominee.id}</span>
                 <span class="text-sm">{category.name}</span>
+                {
+                    !category.isEventsCategory && (
 
-                <a href={`https://www.twitch.tv/${nominee.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    disabled={disabled}
-                    aria-disabled={disabled}
-                    title={`Ver a ${nomineeInConst?.displayName} en Twitch`}
-                    class="absolute bottom-0 hover:bg-white hover:text-electric-violet-600 transition rounded-none rounded-tr-md flex items-center gap-x-2 left-0  bg-electric-violet-500 text-white text-sm p-1.5 text-center">
-                    <MdiTwitch class="size-6" />
-                </a>
+                        <a href={`https://www.twitch.tv/${nominee.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-disabled={disabled}
+                            title={`Ver a ${nomineeInConst?.displayName} en Twitch`}
+                            class="absolute bottom-0 hover:bg-white hover:text-electric-violet-600 transition rounded-none rounded-tr-md flex items-center gap-x-2 left-0  bg-electric-violet-500 text-white text-sm p-1.5 text-center">
+                            <MdiTwitch class="size-6" />
+                        </a>
+                    )
+                }
 
             </button>
 

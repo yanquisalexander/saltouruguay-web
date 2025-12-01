@@ -3020,6 +3020,13 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                 }
                 await revivePlayer(playerNumber);
                 return { success: true, feedback: `Jugador ${playerNumber} revivido` };
+            case '/instructions':
+                const id = args[0];
+                if (!id) {
+                    return { success: false, feedback: 'Se requiere un ID para las instrucciones' };
+                }
+                await pusher.trigger("streamer-wars", "inmersive-instructions", { id });
+                return { success: true, feedback: `Instrucciones inmersivas enviadas con ID: ${id}` };
             default:
                 return { success: false, feedback: 'Comando desconocido' };
         }

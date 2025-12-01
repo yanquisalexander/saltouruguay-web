@@ -1,8 +1,6 @@
 import type { Category } from "@/types/Awards";
 import { NOMINEES } from "./Nominees";
 
-
-
 export const CATEGORIES: Category[] = [
     {
         id: "mas-generoso",
@@ -18,51 +16,23 @@ export const CATEGORIES: Category[] = [
                 id: NOMINEES.nzerrikuy.username,
             },
             {
-                id: NOMINEES.elderoscuro_8.username,
-            },
-            {
-                id: NOMINEES.mandijp.username,
-            },
-            {
-                id: NOMINEES.keoma_hn.username,
-            },
-            {
                 id: NOMINEES.shadowmaxuy.username,
             },
             {
                 id: NOMINEES.javimei_.username,
             },
-        ]
-    },
-    {
-        id: "mas-fieles",
-        name: "Más fieles",
-        nominees: [
             {
-                id: NOMINEES.ronaldoelcubanoo.username,
+                id: NOMINEES.facutoloza_.username,
             },
             {
-                id: NOMINEES.hayafoxuy.username,
+                id: NOMINEES.the_darkmoon.username,
             },
             {
-                id: NOMINEES.nellyuru.username,
+                id: NOMINEES.omeguinhagg.username,
             },
             {
-                id: NOMINEES.tlari_.username,
+                id: NOMINEES.el_almacenero.username,
             },
-            {
-                id: NOMINEES.kruguertw.username,
-            },
-            {
-                id: NOMINEES.yoruguachannel.username,
-            },
-            {
-                id: NOMINEES.acucala_pinki.username,
-            },
-            {
-                id: NOMINEES.inmguerrero.username,
-            },
-
         ]
     },
     {
@@ -70,25 +40,22 @@ export const CATEGORIES: Category[] = [
         name: "Más censurado",
         nominees: [
             {
-                id: NOMINEES.itspapidraku.username,
+                id: NOMINEES.iiiiiiikingiiiiiii.username,
             },
             {
-                id: NOMINEES.csilveira10.username,
+                id: NOMINEES.vitocorleone.username,
             },
             {
-                id: NOMINEES.elrubiusruso.username,
+                id: NOMINEES.elderoscuro_8.username,
             },
             {
-                id: NOMINEES.fixner.username,
+                id: NOMINEES.pena_juan.username,
             },
             {
-                id: NOMINEES.mativa_12.username,
+                id: NOMINEES.juniordxzx.username,
             },
             {
-                id: NOMINEES.bypolaquito.username,
-            },
-            {
-                id: NOMINEES.persona_activa.username,
+                id: NOMINEES.little_muside18.username,
             },
         ]
     },
@@ -96,37 +63,32 @@ export const CATEGORIES: Category[] = [
         id: "mas-activos",
         name: "Más activos",
         nominees: [
-            /* nono javi
-Queen_Judith
-claudio25uru
-syscrak10
-eligil19
-Tapitabal
-little_muside18
-Gusarz */
-            {
-                id: NOMINEES.el_nono_javi.username,
-            },
-            {
-                id: NOMINEES.queen_judith.username,
-            },
-            {
-                id: NOMINEES.claudio25uru.username,
-            },
             {
                 id: NOMINEES.syscrak10.username,
-            },
-            {
-                id: NOMINEES.eligil19.username,
-            },
-            {
-                id: NOMINEES.tapitabal.username,
             },
             {
                 id: NOMINEES.little_muside18.username,
             },
             {
-                id: NOMINEES.gusarz130.username,
+                id: NOMINEES.mfernandap18.username,
+            },
+            {
+                id: NOMINEES.vitocorleone.username,
+            },
+            {
+                id: NOMINEES.Ville064.username,
+            },
+            {
+                id: NOMINEES.vewiittv.username,
+            },
+            {
+                id: NOMINEES.hayafoxuy.username,
+            },
+            {
+                id: NOMINEES.lockoco.username,
+            },
+            {
+                id: NOMINEES.omeguinhagg.username,
             },
         ]
     },
@@ -134,24 +96,26 @@ Gusarz */
         id: "streamer-destacado",
         name: "Streamer destacado",
         nominees: [
-
-            {
-                id: NOMINEES.tellier50.username,
-            },
-            {
-                id: NOMINEES.mun1one.username,
-            },
-            {
-                id: NOMINEES.labarista_.username,
-            },
             {
                 id: NOMINEES.yonivoy.username,
             },
             {
-                id: NOMINEES.fabricape.username,
+                id: NOMINEES.julianmartinr.username,
             },
             {
-                id: NOMINEES.julianmartinr.username,
+                id: NOMINEES.guadatostado.username,
+            },
+            {
+                id: NOMINEES["4lexin"].username,
+            },
+            {
+                id: NOMINEES.ChibitacanTV.username,
+            },
+            {
+                id: NOMINEES.AgustinaUy.username,
+            },
+            {
+                id: NOMINEES.Valeriamjj.username,
             },
         ]
     },
@@ -159,10 +123,6 @@ Gusarz */
         id: "mejor-moderador",
         name: "Mejor moderador",
         nominees: [
-
-            {
-                id: NOMINEES.valenshia.username,
-            },
             {
                 id: NOMINEES.bradterra.username,
             },
@@ -178,33 +138,29 @@ Gusarz */
             {
                 id: NOMINEES.queen_judith.username,
             },
+            {
+                id: NOMINEES.alexitoo_uy.username,
+            },
         ]
     },
     {
         id: "joven-promesa",
-        name: "Jóven promesa",
+        name: "Joven promesa",
         nominees: [
-
             {
-                id: NOMINEES.luixmaidden.username,
+                id: NOMINEES.neo_emanuel.username,
             },
             {
-                id: NOMINEES.romisdraws.username,
+                id: NOMINEES.little_muside18.username,
             },
             {
-                id: NOMINEES.alexitoo_uy.username,
+                id: NOMINEES.csilveira10.username,
             },
             {
-                id: NOMINEES.yosoysecond.username,
+                id: NOMINEES.alexdevargas777.username,
             },
             {
-                id: NOMINEES.matdol_.username,
-            },
-            {
-                id: NOMINEES.dunk1to.username,
-            },
-            {
-                id: NOMINEES.jamoa7w7.username,
+                id: NOMINEES.TOTCamper.username,
             },
         ]
     },
@@ -212,27 +168,38 @@ Gusarz */
         id: "mas-alegre-del-chat",
         name: "Más alegre del chat",
         nominees: [
-
             {
-                id: NOMINEES.florrdeluna.username,
+                id: NOMINEES.turbanteuy.username,
             },
             {
-                id: NOMINEES.andruxnorris.username,
+                id: NOMINEES.Don_mostacho.username,
             },
             {
-                id: NOMINEES.dimanacho.username,
+                id: NOMINEES.Alfita_uwu.username,
             },
             {
-                id: NOMINEES.gordoyorugua.username,
+                id: NOMINEES.Chavaza.username,
             },
             {
-                id: NOMINEES.conejomalvado435.username,
+                id: NOMINEES.queen_judith.username,
             },
             {
-                id: NOMINEES.chunninja.username,
+                id: NOMINEES.Capibaramaster01.username,
             },
             {
-                id: NOMINEES.viejokamikazi.username,
+                id: NOMINEES.charruabudico.username,
+            },
+            {
+                id: NOMINEES.TheGonzuuS.username,
+            },
+            {
+                id: NOMINEES.LeilaN11.username,
+            },
+            {
+                id: NOMINEES.vitocorleonejr33.username,
+            },
+            {
+                id: NOMINEES.yosoysecond.username,
             },
         ]
     },
@@ -241,25 +208,25 @@ Gusarz */
         name: "Más creativo",
         nominees: [
             {
-                id: NOMINEES.vickyskyger.username,
+                id: NOMINEES.girl_gamer.username,
             },
             {
-                id: NOMINEES.ssebasensei08.username,
+                id: NOMINEES.labarista_.username,
             },
             {
-                id: NOMINEES.raika_frost.username,
+                id: NOMINEES.alexitoo_uy.username,
             },
             {
-                id: NOMINEES.leuhan_ssj.username,
+                id: NOMINEES.xqt_rodri.username,
             },
             {
-                id: NOMINEES.unicorniio25.username,
+                id: NOMINEES.dimanacho.username,
             },
             {
-                id: NOMINEES.gameoveruy.username,
+                id: NOMINEES.denver17.username,
             },
             {
-                id: NOMINEES.julianmartinr.username,
+                id: NOMINEES.gowak.username,
             },
         ]
     },
@@ -267,16 +234,8 @@ Gusarz */
         id: "mas-fachero",
         name: "Más fachero",
         nominees: [
-
-
-            {
-                id: NOMINEES.guadatostado.username,
-            },
             {
                 id: NOMINEES.maarizzz.username,
-            },
-            {
-                id: NOMINEES.cabezagames.username,
             },
             {
                 id: NOMINEES.solbela__.username,
@@ -285,39 +244,52 @@ Gusarz */
                 id: NOMINEES.labarista_.username,
             },
             {
-                id: NOMINEES.the_darkmoon.username,
+                id: NOMINEES.everexpro.username,
             },
             {
-                id: NOMINEES.everexpro.username,
+                id: NOMINEES.guadatostado.username,
+            },
+            {
+                id: NOMINEES.romisdraws.username,
+            },
+            {
+                id: NOMINEES.AgustinaUy.username,
+            },
+            {
+                id: NOMINEES.Valeriamjj.username,
+            },
+            {
+                id: NOMINEES.Airinsita.username,
             },
         ]
     },
     {
-        id: "mas-hater",
-        name: "Más hater",
+        id: "mas-companero",
+        name: "Más compañero",
         nominees: [
-
-
             {
-                id: NOMINEES.maarizzz.username,
+                id: NOMINEES.pazalvarez33.username,
             },
             {
-                id: NOMINEES.coroneljuan.username,
+                id: NOMINEES["21diagog"].username,
             },
             {
-                id: NOMINEES.mailoduy7w7.username,
+                id: NOMINEES.elbarre_.username,
             },
             {
-                id: NOMINEES.criiiisss__19.username,
+                id: NOMINEES.KhalikUY.username,
             },
             {
-                id: NOMINEES.groopsy.username,
+                id: NOMINEES.titertv.username,
             },
             {
-                id: NOMINEES.persona_activa.username,
+                id: NOMINEES.Drea2819.username,
             },
             {
-                id: NOMINEES.nzerrikuy.username,
+                id: NOMINEES.Frutillosa_.username,
+            },
+            {
+                id: NOMINEES.mativa_12.username,
             },
         ]
     },
@@ -325,59 +297,27 @@ Gusarz */
         id: "mas-querido",
         name: "Más querido",
         nominees: [
-            /* Eldeadpooluruguayo
-Goldenplay
-sirplace
-MundounoUy
-Nile_cx
-TurbanteUy
-Faku Zárate */
             {
                 id: NOMINEES.eldeadpool_uruguayo.username,
-            },
-            {
-                id: NOMINEES.goldenplayyt1.username,
-            },
-            {
-                id: NOMINEES.sirplace.username,
-            },
-            {
-                id: NOMINEES.h_angrygirl.username,
             },
             {
                 id: NOMINEES.mundounouy.username,
             },
             {
-                id: NOMINEES.nile_cx.username,
+                id: NOMINEES.raika_frost.username,
             },
             {
-                id: NOMINEES.turbanteuy.username,
+                id: NOMINEES.unicorniio25.username,
             },
             {
-                id: NOMINEES.faku_zarate.username,
-            },
-        ]
-    },
-    {
-        id: "mas-suertudo",
-        name: "Más suertudo",
-        nominees: [
-            {
-                id: NOMINEES.titoleproso.username,
+                id: NOMINEES.DiCajes.username,
             },
             {
-                id: NOMINEES.xdiegouy.username,
+                id: NOMINEES.t4kima.username,
             },
             {
-                id: NOMINEES.h0ru5_.username,
+                id: NOMINEES.elbrillanteca.username,
             },
-            {
-                id: NOMINEES.caewolf_5.username,
-            },
-            {
-                id: NOMINEES.mch__.username,
-            },
-
         ]
     },
     {
@@ -385,7 +325,7 @@ Faku Zárate */
         name: "Más Tryhard",
         nominees: [
             {
-                id: NOMINEES.iiiiiiikingiiiiiii.username,
+                id: NOMINEES.itzherlan.username,
             },
             {
                 id: NOMINEES.tommysl18.username,
@@ -394,53 +334,84 @@ Faku Zárate */
                 id: NOMINEES.mun1one.username,
             },
             {
-                id: NOMINEES.cianuro1503.username,
+                id: NOMINEES.goldenplayyt1.username,
             },
             {
-                id: NOMINEES.elbrillanteca.username,
+                id: NOMINEES.Magarrita.username,
             },
             {
-                id: NOMINEES.malaso.username,
+                id: NOMINEES.Manijarastas.username,
             },
             {
-                id: NOMINEES.luiz.username,
+                id: NOMINEES.Anditwm.username,
             },
             {
-                id: NOMINEES.ville064.username,
+                id: NOMINEES.fedegimenezOC.username,
             },
         ]
-
     },
     {
         id: "mas-dispuesto",
         name: "Más dispuesto",
         nominees: [
-
             {
-                id: NOMINEES.fabi_guille.username,
+                id: NOMINEES.SrDresh.username,
             },
             {
-                id: NOMINEES.calderitadelata.username,
+                id: NOMINEES.ItsVortexUY.username,
             },
             {
-                id: NOMINEES.maurimax96.username,
+                id: NOMINEES.fakkita2m.username,
             },
             {
-                id: NOMINEES.tranquiencasa.username,
+                id: NOMINEES.JotaN8.username,
             },
             {
-                id: NOMINEES.titertv.username,
+                id: NOMINEES.tellier50.username,
             },
             {
-                id: NOMINEES.genaarox.username,
+                id: NOMINEES.TinchoXP22.username,
             },
             {
-                id: NOMINEES.astilla09.username,
+                id: NOMINEES.iKombak.username,
             },
             {
-                id: NOMINEES.zombita_renegada.username,
-            }
+                id: NOMINEES.h0ru5_.username,
+            },
         ]
-
-    }
-]
+    },
+    {
+        id: "mejor-evento",
+        name: "Mejor evento",
+        isEventsCategory: true,
+        nominees: [
+            {
+                id: NOMINEES["100_saltanos_dicen"].username,
+            },
+            {
+                id: NOMINEES.liga_fortnite.username,
+            },
+            {
+                id: NOMINEES.saltocraft_iii.username,
+            },
+            {
+                id: NOMINEES.tongoark.username,
+            },
+            {
+                id: NOMINEES.saltocraft_extremo_3.username,
+            },
+            {
+                id: NOMINEES.rustico_6.username,
+            },
+            {
+                id: NOMINEES.vuelta_al_ark_2.username,
+            },
+            {
+                id: NOMINEES.guerra_de_streamers.username,
+            },
+            {
+                id: NOMINEES.ark_of_armor.username,
+            },
+        ]
+    },
+];

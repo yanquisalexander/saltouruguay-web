@@ -1,224 +1,11 @@
 export const NOMINEES = {
     sakkarot: {
         username: "sakkarot",
-        displayName: "Sakkarot"
-    },
-    shadowmaxuy: {
-        username: "shadowmaxuy",
-        displayName: "ShadowMaxUY"
-    },
-    genaarox: {
-        username: "genaarox",
-        displayName: "Genaarox"
-    },
-    malaso: {
-        username: "malaso",
-        displayName: "Malaso"
-    },
-    turbanteuy: {
-        username: "turbanteuy",
-        displayName: "TurbanteUY"
-    },
-    the_darkmoon: {
-        username: "the_darkmoon",
-        displayName: "the_darkmoon"
-    },
-    chunninja: {
-        username: "chunninja",
-        displayName: "chunninja"
-    },
-    gameoveruy: {
-        username: "gameoveruy",
-        displayName: "GameOverUY"
-    },
-    dunk1to: {
-        username: "dunk1to",
-        displayName: "Dunk1to"
-    },
-
-    little_muside18: {
-        username: "little_muside18",
-        displayName: "Little_Muside18"
-    },
-    acucala_pinki: {
-        username: "acucala_pinki",
-        displayName: "acucala_pinki"
-    },
-    ronaldoelcubanoo: {
-        username: "ronaldoelcubanoo",
-        displayName: "ronaldoelcubanoo"
-    },
-    itspapidraku: {
-        username: "itspapidraku",
-        displayName: "ItsPapiDraku"
-    },
-    el_nono_javi: {
-        username: "el_nono_javi",
-        displayName: "El_Nono_Javi"
-    },
-    tellier50: {
-        username: "tellier50",
-        displayName: "Tellier50"
-    },
-    valenshia: {
-        username: "valenshia",
-        displayName: "Valenshia"
-    },
-    luixmaidden: {
-        username: "luixmaidden",
-        displayName: "Luix Maidden"
-    },
-    florrdeluna: {
-        username: "florrdeluna",
-        displayName: "florrdeluna"
-    },
-    vickyskyger: {
-        username: "vickyskyger",
-        displayName: "VickySkyger"
-    },
-    guadatostado: {
-        username: "guadatostado",
-        displayName: "Guada Tostado"
-    },
-    maarizzz: {
-        username: "maarizzz",
-        displayName: "maarizzz"
-    },
-    eldeadpool_uruguayo: {
-        username: "eldeadpool_uruguayo",
-        displayName: "El Deadpool Uruguayo"
-    },
-    titoleproso: {
-        username: "titoleproso",
-        displayName: "TitoLeproso"
+        displayName: "sakkarot"
     },
     iiiiiiikingiiiiiii: {
         username: "iiiiiiikingiiiiiii",
         displayName: "iiiiiiikingiiiiiii"
-    },
-    fabi_guille: {
-        username: "fabi_guille",
-        displayName: "Fabi & Guille"
-    },
-    hayafoxuy: {
-        username: "hayafoxuy",
-        displayName: "hayafoxUy"
-    },
-    csilveira10: {
-        username: "csilveira10",
-        displayName: "csilveira10"
-    },
-    queen_judith: {
-        username: "queen_judith",
-        displayName: "Queen Judith"
-    },
-    mun1one: {
-        username: "mun1one",
-        displayName: "mun1one"
-    },
-    bradterra: {
-        username: "bradterra",
-        displayName: "BradTerra"
-    },
-    romisdraws: {
-        username: "romisdraws",
-        displayName: "RomisDraws"
-    },
-    andruxnorris: {
-        username: "andruxnorris",
-        displayName: "Andruxnorris"
-    },
-    ssebasensei08: {
-        username: "ssebasensei08",
-        displayName: "SsebaSensei08"
-    },
-    coroneljuan: {
-        username: "coroneljuan",
-        displayName: "coroneljuan"
-    },
-    goldenplayyt1: {
-        username: "goldenplayyt1",
-        displayName: "GoldenPlayYT1"
-    },
-    xdiegouy: {
-        username: "xdiegouy",
-        displayName: "xDiegoUy"
-    },
-    tommysl18: {
-        username: "tommysl18",
-        displayName: "tommysl18"
-    },
-    calderitadelata: {
-        username: "calderitadelata",
-        displayName: "CalderitaDeLata"
-    },
-    nzerrikuy: {
-        username: "nzerrikuy",
-        displayName: "NZerrikUy"
-    },
-    nellyuru: {
-        username: "nellyuru",
-        displayName: "NellyURU"
-    },
-    elrubiusruso: {
-        username: "elrubiusruso",
-        displayName: "elrubiusruso"
-    },
-    claudio25uru: {
-        username: "claudio25uru",
-        displayName: "claudio25uru"
-    },
-    labarista_: {
-        username: "labarista_",
-        displayName: "La Barista"
-    },
-    charly7: {
-        username: "charly7",
-        displayName: "Charly7"
-    },
-    alexitoo_uy: {
-        username: "alexitoo_uy",
-        displayName: "Alexitoo_UY"
-    },
-    dimanacho: {
-        username: "dimanacho",
-        displayName: "DiMaNacho"
-    },
-    raika_frost: {
-        username: "raika_frost",
-        displayName: "Raika_Frost"
-    },
-    cabezagames: {
-        username: "cabezagames",
-        displayName: "CabezaGames"
-    },
-    mailoduy7w7: {
-        username: "mailoduy7w7",
-        displayName: "mailoduy7w7"
-    },
-    sirplace: {
-        username: "sirplace",
-        displayName: "sirplace"
-    },
-    h0ru5_: {
-        username: "h0ru5_",
-        displayName: "H0ru5_"
-    },
-    maurimax96: {
-        username: "maurimax96",
-        displayName: "maurimax96"
-    },
-    elderoscuro_8: {
-        username: "elderoscuro_8",
-        displayName: "ElderOscuro_8"
-    },
-    tlari_: {
-        username: "tlari_",
-        displayName: "tlari_"
-    },
-    fixner: {
-        username: "fixner",
-        displayName: "Fixner"
     },
     syscrak10: {
         username: "syscrak10",
@@ -228,165 +15,380 @@ export const NOMINEES = {
         username: "yonivoy",
         displayName: "yonivoy"
     },
-    yosoysecond: {
-        username: "yosoysecond",
-        displayName: "YoSoySecond"
+    bradterra: {
+        username: "bradterra",
+        displayName: "bradterra"
     },
-    gordoyorugua: {
-        username: "gordoyorugua",
-        displayName: "gordoyorugua"
+    neo_emanuel: {
+        username: "neo_emanuel",
+        displayName: "neo_emanuel"
     },
-    leuhan_ssj: {
-        username: "leuhan_ssj",
-        displayName: "Leuhan_SSJ"
+    turbanteuy: {
+        username: "turbanteuy",
+        displayName: "turbanteuy"
     },
-    solbela__: {
-        username: "solbela__",
-        displayName: "Solbela__"
+    girl_gamer: {
+        username: "girl_gamer",
+        displayName: "girl_gamer"
     },
-    criiiisss__19: {
-        username: "criiiisss__19",
-        displayName: "criiiisss__19"
+    maarizzz: {
+        username: "maarizzz",
+        displayName: "maarizzz"
     },
-    mundounouy: {
-        username: "mundounouy",
-        displayName: "MundoUnoUy"
+    pazalvarez33: {
+        username: "pazalvarez33",
+        displayName: "pazalvarez33"
     },
-    caewolf_5: {
-        username: "caewolf_5",
-        displayName: "CaeWolf_5"
+    eldeadpool_uruguayo: {
+        username: "eldeadpool_uruguayo",
+        displayName: "eldeadpool_uruguayo"
     },
-    cianuro1503: {
-        username: "cianuro1503",
-        displayName: "Cianuro1503"
+    itzherlan: {
+        username: "itzherlan",
+        displayName: "itzherlan"
     },
-    tranquiencasa: {
-        username: "tranquiencasa",
-        displayName: "Tranquiencasa"
+    SrDresh: {
+        username: "SrDresh",
+        displayName: "SrDresh"
     },
-    mandijp: {
-        username: "mandijp",
-        displayName: "MandiJP"
+    "100_saltanos_dicen": {
+        username: "100_saltanos_dicen",
+        displayName: "100 Saltanos Dicen"
     },
-    kruguertw: {
-        username: "kruguertw",
-        displayName: "kruguertw"
+    titoleproso: {
+        username: "titoleproso",
+        displayName: "titoleproso"
     },
-    mativa_12: {
-        username: "mativa_12",
-        displayName: "Mativa_12"
+    vitocorleone: {
+        username: "vitocorleone",
+        displayName: "vitocorleone"
     },
-    eligil19: {
-        username: "eligil19",
-        displayName: "eligil19"
-    },
-    fabricape: {
-        username: "fabricape",
-        displayName: "FabriCape"
-    },
-    matdol_: {
-        username: "matdol_",
-        displayName: "MatDol_"
-    },
-    conejomalvado435: {
-        username: "conejomalvado435",
-        displayName: "conejomalvado435"
-    },
-    unicorniio25: {
-        username: "unicorniio25",
-        displayName: "Unicorniio25"
-    },
-    groopsy: {
-        username: "groopsy",
-        displayName: "Groopsy"
-    },
-    nile_cx: {
-        username: "nile_cx",
-        displayName: "Nile_Cx"
-    },
-    mch__: {
-        username: "mch__",
-        displayName: "mch__"
-    },
-    elbrillanteca: {
-        username: "elbrillanteca",
-        displayName: "elbrillanteca"
-    },
-    titertv: {
-        username: "titertv",
-        displayName: "TiterTv"
-    },
-    keoma_hn: {
-        username: "keoma_hn",
-        displayName: "Keoma_hn"
-    },
-    yoruguachannel: {
-        username: "yoruguachannel",
-        displayName: "yoruguachannel"
-    },
-    persona_activa: {
-        username: "persona_activa",
-        displayName: "persona_activa"
-    },
-    tapitabal: {
-        username: "tapitabal",
-        displayName: "tapitabal"
+    little_muside18: {
+        username: "little_muside18",
+        displayName: "little_muside18"
     },
     julianmartinr: {
         username: "julianmartinr",
-        displayName: "JulianMartinr"
+        displayName: "julianmartinr"
     },
-    jamoa7w7: {
-        username: "jamoa7w7",
-        displayName: "jamoa7w7"
+    charly7: {
+        username: "charly7",
+        displayName: "charly7"
     },
-    viejokamikazi: {
-        username: "viejokamikazi",
-        displayName: "viejokamikazi"
+    Don_mostacho: {
+        username: "Don_mostacho",
+        displayName: "Don_mostacho"
+    },
+    labarista_: {
+        username: "labarista_",
+        displayName: "labarista_"
+    },
+    solbela__: {
+        username: "solbela__",
+        displayName: "solbela__"
+    },
+    "21diagog": {
+        username: "21diagog",
+        displayName: "21diagog"
+    },
+    mundounouy: {
+        username: "mundounouy",
+        displayName: "mundounouy"
+    },
+    tommysl18: {
+        username: "tommysl18",
+        displayName: "tommysl18"
+    },
+    ItsVortexUY: {
+        username: "ItsVortexUY",
+        displayName: "ItsVortexUY"
+    },
+    liga_fortnite: {
+        username: "liga_fortnite",
+        displayName: "Liga Fortnite"
+    },
+    nzerrikuy: {
+        username: "nzerrikuy",
+        displayName: "nzerrikuy"
+    },
+    elderoscuro_8: {
+        username: "elderoscuro_8",
+        displayName: "elderoscuro_8"
+    },
+    mfernandap18: {
+        username: "mfernandap18",
+        displayName: "mfernandap18"
+    },
+    guadatostado: {
+        username: "guadatostado",
+        displayName: "guadatostado"
+    },
+    csilveira10: {
+        username: "csilveira10",
+        displayName: "csilveira10"
+    },
+    Alfita_uwu: {
+        username: "Alfita_uwu",
+        displayName: "Alfita_uwu"
+    },
+    alexitoo_uy: {
+        username: "alexitoo_uy",
+        displayName: "alexitoo_uy"
+    },
+    elbarre_: {
+        username: "elbarre_",
+        displayName: "elbarre_"
+    },
+    raika_frost: {
+        username: "raika_frost",
+        displayName: "raika_frost"
+    },
+    mun1one: {
+        username: "mun1one",
+        displayName: "mun1one"
+    },
+    fakkita2m: {
+        username: "fakkita2m",
+        displayName: "fakkita2m"
+    },
+    saltocraft_iii: {
+        username: "saltocraft_iii",
+        displayName: "SaltoCraft III"
+    },
+    shadowmaxuy: {
+        username: "shadowmaxuy",
+        displayName: "shadowmaxuy"
+    },
+    pena_juan: {
+        username: "pena_juan",
+        displayName: "pena_juan"
+    },
+    "4lexin": {
+        username: "4lexin",
+        displayName: "4lexin"
+    },
+    xdiegouy: {
+        username: "xdiegouy",
+        displayName: "xdiegouy"
+    },
+    alexdevargas777: {
+        username: "alexdevargas777",
+        displayName: "alexdevargas777"
+    },
+    Chavaza: {
+        username: "Chavaza",
+        displayName: "Chavaza"
+    },
+    xqt_rodri: {
+        username: "xqt_rodri",
+        displayName: "xqt_rodri"
     },
     everexpro: {
         username: "everexpro",
-        displayName: "Everexpro"
+        displayName: "everexpro"
     },
-    faku_zarate: {
-        username: "faku_zarate",
-        displayName: "Faku Zarate"
+    KhalikUY: {
+        username: "KhalikUY",
+        displayName: "KhalikUY"
     },
-    luiz: {
-        username: "luiz",
-        displayName: "Luiz"
+    unicorniio25: {
+        username: "unicorniio25",
+        displayName: "unicorniio25"
     },
-    astilla09: {
-        username: "astilla09",
-        displayName: "astilla09"
+    goldenplayyt1: {
+        username: "goldenplayyt1",
+        displayName: "goldenplayyt1"
+    },
+    JotaN8: {
+        username: "JotaN8",
+        displayName: "JotaN8"
+    },
+    tongoark: {
+        username: "tongoark",
+        displayName: "TongoARK"
     },
     javimei_: {
         username: "javimei_",
         displayName: "javimei_"
     },
-    inmguerrero: {
-        username: "inmguerrero",
-        displayName: "inmguerrero"
+    juniordxzx: {
+        username: "juniordxzx",
+        displayName: "juniordxzx"
     },
-    gusarz130: {
-        username: "gusarz130",
-        displayName: "gusarz130"
-    },
-    ville064: {
-        username: "ville064",
+    Ville064: {
+        username: "Ville064",
         displayName: "Ville064"
     },
-    h_angrygirl: {
-        username: "h_angrygirl",
-        displayName: "H_angryGirl"
+    ChibitacanTV: {
+        username: "ChibitacanTV",
+        displayName: "ChibitacanTV"
     },
-    zombita_renegada: {
-        username: "zombita_renegada",
-        displayName: "Zombita Renegada"
+    queen_judith: {
+        username: "queen_judith",
+        displayName: "queen_judith"
     },
-    bypolaquito: {
-        username: "bypolaquito",
-        displayName: "ByPolaquito"
+    TOTCamper: {
+        username: "TOTCamper",
+        displayName: "TOTCamper"
+    },
+    dimanacho: {
+        username: "dimanacho",
+        displayName: "dimanacho"
+    },
+    titertv: {
+        username: "titertv",
+        displayName: "titertv"
+    },
+    DiCajes: {
+        username: "DiCajes",
+        displayName: "DiCajes"
+    },
+    Magarrita: {
+        username: "Magarrita",
+        displayName: "Magarrita"
+    },
+    tellier50: {
+        username: "tellier50",
+        displayName: "tellier50"
+    },
+    saltocraft_extremo_3: {
+        username: "saltocraft_extremo_3",
+        displayName: "SaltoCraft EXTREMO 3"
+    },
+    facutoloza_: {
+        username: "facutoloza_",
+        displayName: "facutoloza_"
+    },
+    vewiittv: {
+        username: "vewiittv",
+        displayName: "vewiittv"
+    },
+    AgustinaUy: {
+        username: "AgustinaUy",
+        displayName: "AgustinaUy"
+    },
+    Capibaramaster01: {
+        username: "Capibaramaster01",
+        displayName: "Capibaramaster01"
+    },
+    denver17: {
+        username: "denver17",
+        displayName: "denver17"
+    },
+    romisdraws: {
+        username: "romisdraws",
+        displayName: "romisdraws"
+    },
+    Drea2819: {
+        username: "Drea2819",
+        displayName: "Drea2819"
+    },
+    t4kima: {
+        username: "t4kima",
+        displayName: "t4kima"
+    },
+    Manijarastas: {
+        username: "Manijarastas",
+        displayName: "Manijarastas"
+    },
+    TinchoXP22: {
+        username: "TinchoXP22",
+        displayName: "TinchoXP22"
+    },
+    rustico_6: {
+        username: "rustico_6",
+        displayName: "RUSTico 6"
+    },
+    the_darkmoon: {
+        username: "the_darkmoon",
+        displayName: "the_darkmoon"
+    },
+    hayafoxuy: {
+        username: "hayafoxuy",
+        displayName: "hayafoxuy"
+    },
+    Valeriamjj: {
+        username: "Valeriamjj",
+        displayName: "Valeriamjj"
+    },
+    charruabudico: {
+        username: "charruabudico",
+        displayName: "charruabudico"
+    },
+    gowak: {
+        username: "gowak",
+        displayName: "gowak"
+    },
+    Frutillosa_: {
+        username: "Frutillosa_",
+        displayName: "Frutillosa_"
+    },
+    elbrillanteca: {
+        username: "elbrillanteca",
+        displayName: "elbrillanteca"
+    },
+    Anditwm: {
+        username: "Anditwm",
+        displayName: "Anditwm"
+    },
+    iKombak: {
+        username: "iKombak",
+        displayName: "iKombak"
+    },
+    vuelta_al_ark_2: {
+        username: "vuelta_al_ark_2",
+        displayName: "Vuelta al ARK 2"
+    },
+    omeguinhagg: {
+        username: "omeguinhagg",
+        displayName: "omeguinhagg"
+    },
+    lockoco: {
+        username: "lockoco",
+        displayName: "lockoco"
+    },
+    TheGonzuuS: {
+        username: "TheGonzuuS",
+        displayName: "TheGonzuuS"
+    },
+    mativa_12: {
+        username: "mativa_12",
+        displayName: "mativa_12"
+    },
+    fedegimenezOC: {
+        username: "fedegimenezOC",
+        displayName: "fedegimenezOC"
+    },
+    h0ru5_: {
+        username: "h0ru5_",
+        displayName: "h0ru5_"
+    },
+    guerra_de_streamers: {
+        username: "guerra_de_streamers",
+        displayName: "Guerra de Streamers"
+    },
+    el_almacenero: {
+        username: "el_almacenero",
+        displayName: "el_almacenero"
+    },
+    LeilaN11: {
+        username: "LeilaN11",
+        displayName: "LeilaN11"
+    },
+    Airinsita: {
+        username: "Airinsita",
+        displayName: "Airinsita"
+    },
+    ark_of_armor: {
+        username: "ark_of_armor",
+        displayName: "Ark of Armor"
+    },
+    vitocorleonejr33: {
+        username: "vitocorleonejr33",
+        displayName: "vitocorleonejr33"
+    },
+    yosoysecond: {
+        username: "yosoysecond",
+        displayName: "yosoysecond"
     },
 };
-

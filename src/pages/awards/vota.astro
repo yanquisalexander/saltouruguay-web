@@ -46,7 +46,7 @@ if (session?.user) {
         <h1
           class="text-3xl animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen"
         >
-          #SaltoAwards2024
+          #SaltoAwards2025
         </h1>
       </div>
 
@@ -131,12 +131,4 @@ if (session?.user) {
       showSignInDialog();
     });
   });
-</script>
-
-<script data-astro-rerun>
-  (async () => {
-    try {
-      await fetch("/api/cinematics?name=awards");
-    } catch (error) {}
-  })();
 </script>

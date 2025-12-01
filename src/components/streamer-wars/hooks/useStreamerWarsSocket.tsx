@@ -72,26 +72,11 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             bgAudio.current = new Audio(`${CDN_PREFIX}${STREAMER_WARS_SOUNDS.WAITING_ROOM_LOOP}.mp3`);
             bgAudio.current.loop = true;
             bgAudio.current.preload = "auto";
+            bgAudio.current.pause();
         }
 
-        const audio = bgAudio.current;
 
-        if (isOnWaitingRoom) {
-            // Intentar reproducir solo si está pausado para evitar excepciones
-            if (audio.paused) {
-                const playPromise = audio.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch((error) => {
-                        console.warn("Autoplay prevented or interrupted:", error);
-                    });
-                }
-            }
-        } else {
-            if (!audio.paused) {
-                audio.pause();
-                audio.currentTime = 0; // Resetear al salir
-            }
-        }
+
 
         // Limpieza al desmontar hook completo
         return () => {

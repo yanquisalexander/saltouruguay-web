@@ -60,15 +60,7 @@ interface WaitingRoomProps {
 
 export const WaitingRoom = ({ session, channel, bgVolume, setBgVolume, bgAudio }: WaitingRoomProps) => {
 
-    const toggleAudio = () => {
-        if (!bgAudio) return;
-        if (bgVolume === 0) {
-            bgAudio.play().catch(() => { });
-            setBgVolume(0.5);
-        } else {
-            setBgVolume(0);
-        }
-    };
+
 
     return (
         <div class="grid p-4 gap-y-6 md:gap-y-0 md:gap-x-4 grid-cols-1 md:grid-cols-12 h-full">

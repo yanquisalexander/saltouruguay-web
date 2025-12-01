@@ -6,6 +6,7 @@ export interface CategoryNominee {
 export interface Category {
     id: string;
     name: string;
+    isEventsCategory?: boolean;
     nominees: CategoryNominee[];
 }
 

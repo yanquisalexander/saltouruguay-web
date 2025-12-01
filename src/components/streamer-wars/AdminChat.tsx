@@ -35,7 +35,8 @@ const COMMANDS = [
     { name: "/cuerda", description: "Control Tug of War game", args: ["start|end|next|clear"] },
     { name: "/bomb", description: "Control Bomb minigame", args: ["start|end|status"] },
     { name: "/fishing", description: "Control Fishing minigame", args: ["start|end|reset"] },
-    { name: "/revive", description: "Revive a player", args: ["playerNumber"] }
+    { name: "/revive", description: "Revive a player", args: ["playerNumber"] },
+    { name: "/instructions", description: "Send immersive instructions by ID", args: ["id"] }
 ];
 
 export const AdminChat = ({ session, channel, isAdmin }: AdminChatProps) => {

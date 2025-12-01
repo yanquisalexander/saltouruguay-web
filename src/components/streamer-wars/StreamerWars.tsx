@@ -33,6 +33,7 @@ import { JourneyTitle } from "./JourneyTitle";
 // Hooks
 import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 import type { Players } from "../admin/streamer-wars/Players";
+import { InmersiveInstructions } from "./InmersiveInstructions";
 
 const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
     const [progress, setProgress] = useState(0);
@@ -417,6 +418,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                     {dayAvailable && uiState.showWaitingScreen && (
                         <WaitingScreen players={players} expectedPlayers={expectedPlayers} />
                     )}
+
+                    <InmersiveInstructions />
 
                     <WelcomeToStreamerWars
                         session={session}

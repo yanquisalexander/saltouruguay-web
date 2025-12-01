@@ -12,6 +12,7 @@ import { NOMINEES } from "@/awards/Nominees"
 */
 
 import { DateTime } from "luxon";
+import { AwardsInmersiveIntro } from "./streamer-wars/AwardsInmersiveIntro"
 
 
 const MAX_VOTES_PER_CATEGORY = 2;
@@ -121,7 +122,7 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                             ¡Eres un nominado! 🎉
                         </strong>
                         <p class="text-white text-sm">
-                            Pronto recibirás el logro <strong>"Yo estuve ahí Ⅲ"</strong> por ser parte de los nominados de los Salto Awards {new Date().getFullYear()}
+                            Pronto recibirás el logro <strong>"Yo estuve ahi IV"</strong> por ser parte de los nominados de los Salto Awards {new Date().getFullYear()}
                         </p>
 
                     </div>
@@ -133,6 +134,7 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                     <VoteFinal user={user} categories={categories} votes={votesByCategory} onReturn={returnToVoting} />
                 ) : (
                     <>
+                        <AwardsInmersiveIntro />
                         <div class="flex gap-x-2">
                             <LucideMinus class="w-8 h-8 text-yellow-500" />
                             <h1 class="text-3xl font-anton">{currentCategory.name}</h1>
