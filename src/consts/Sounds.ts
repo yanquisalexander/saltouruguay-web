@@ -32,6 +32,12 @@ export const STREAMER_WARS_SOUNDS = {
     EPISODE_2: 'episode-2',
     EPISODE_3: 'episode-3',
     INSTRUCTIONS_BG_MUSIC: 'instructions-bg',
+    // Fishing minigame sounds
+    FISHING_KEY_PRESS: 'button-click',
+    FISHING_KEY_WRONG: 'simon-says-error',
+    FISHING_ROUND_COMPLETE: 'simon-says-correct',
+    FISHING_ELIMINATED: 'equipo-eliminado',
+    FISHING_WARNING: 'effect_tick',
 }
 
 

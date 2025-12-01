@@ -23,6 +23,7 @@ import { StreamerWarsCinematicPlayer } from "./StreamerWarsCinematicPlayer";
 import { Dalgona } from "./games/Dalgona";
 import { TugOfWar } from "./games/TugOfWar";
 import { Bomb } from "./games/Bomb";
+import { Fishing } from "./games/Fishing";
 import { StreamerWarsAudioManager } from "./StreamerWarsAudioManager";
 import { VoiceChat } from "./VoiceChat";
 import { VoiceControls } from "./VoiceControls";
@@ -98,7 +99,8 @@ const GAME_CONFIG = {
     AutoElimination,
     Dalgona,
     TugOfWar,
-    Bomb
+    Bomb,
+    Fishing
 };
 
 // --- HOOK PERSONALIZADO: Lógica de Eventos del Juego ---

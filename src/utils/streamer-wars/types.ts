@@ -85,3 +85,10 @@ export const TEAM_SHAPE_MAP: Record<number, DalgonaShape> = {
     3: DalgonaShape.Star,      // Star (Medium)
     4: DalgonaShape.Umbrella,  // Umbrella (Hard)
 };
+
+// Fishing Game Types
+export interface FishingGameState {
+    status: 'waiting' | 'active' | 'ended';
+    eliminatedPlayers: number[]; // Player numbers that have been eliminated
+    startedAt?: number;
+}
