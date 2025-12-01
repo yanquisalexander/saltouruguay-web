@@ -288,9 +288,9 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
         if (currentRound > 1 && gameStatus === 'round-complete') {
             setTimeout(() => {
                 startRound();
-            }, 500);
+            }, ROUND_TRANSITION_DELAY / 4); // Short delay before starting next round
         }
-    }, [currentRound]);
+    }, [currentRound, gameStatus, startRound]);
 
     // ============= PUSHER EVENTS =============
 
@@ -340,26 +340,27 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
         };
     }, [pusher, startRound]);
 
-    // Load initial state
-    useEffect(() => {
-        const loadInitialState = async () => {
-            const { error, data } = await actions.games.fishing.getGameState();
-            if (!error && data?.gameState) {
-                if (data.gameState.status === 'active') {
-                    // Check if player is already eliminated
-                    const elimResult = await actions.games.fishing.isEliminated();
-                    if (elimResult.data?.eliminated) {
-                        setGameStatus('eliminated');
-                    }
+    // Load initial state callback
+    const loadInitialState = useCallback(async () => {
+        const { error, data } = await actions.games.fishing.getGameState();
+        if (!error && data?.gameState) {
+            if (data.gameState.status === 'active') {
+                // Check if player is already eliminated
+                const elimResult = await actions.games.fishing.isEliminated();
+                if (elimResult.data?.eliminated) {
+                    setGameStatus('eliminated');
                 }
             }
-        };
+        }
+    }, []);
 
+    // Load initial state on instructions end
+    useEffect(() => {
         document.addEventListener("instructions-ended", loadInitialState, { once: true });
         return () => {
             document.removeEventListener("instructions-ended", loadInitialState);
         };
-    }, []);
+    }, [loadInitialState]);
 
     // ============= RENDER HELPERS =============
 

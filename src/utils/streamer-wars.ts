@@ -17,6 +17,10 @@ import { DalgonaShape, type DalgonaShapeData, createDalgonaShapeData, generateDa
 import { generatePlayerChallenges } from "./streamer-wars/minigames/bomb-challenges";
 import { createCache } from "./streamer-wars/cache";
 import { getRandomItem } from "./streamer-wars/utils";
+import { 
+    CACHE_KEY_FISHING, 
+    CACHE_KEY_FISHING_ELIMINATED 
+} from "./streamer-wars/constants";
 import type {
     SimonSaysGameState,
     DalgonaPlayerState,
@@ -53,8 +57,7 @@ const COOLDOWN_MS = 1500; // 1.5 seconds cooldown per player
 const BOMB_CACHE_KEY = "streamer-wars.bomb:game-state";
 const MAX_CHALLENGES = 5;
 const MAX_ERRORS = 3;
-const FISHING_CACHE_KEY = "streamer-wars.fishing:game-state";
-const FISHING_ELIMINATED_KEY = "fishing:eliminated-players";
+// Using imported constants: CACHE_KEY_FISHING, CACHE_KEY_FISHING_ELIMINATED
 
 // Dalgona game constants
 const DALGONA_MIN_COMPLETION_TIME_MS = 10000; // 10 seconds minimum
@@ -1479,7 +1482,7 @@ export const games = {
         getGameState: async (): Promise<FishingGameState> => {
             const cache = createCache();
             return (
-                (await cache.get<FishingGameState>(FISHING_CACHE_KEY)) ?? {
+                (await cache.get<FishingGameState>(CACHE_KEY_FISHING)) ?? {
                     status: 'waiting',
                     eliminatedPlayers: [],
                 }
@@ -1498,8 +1501,8 @@ export const games = {
                 startedAt: Date.now(),
             };
 
-            await cache.set(FISHING_CACHE_KEY, newGameState);
-            await cache.set(FISHING_ELIMINATED_KEY, []);
+            await cache.set(CACHE_KEY_FISHING, newGameState);
+            await cache.set(CACHE_KEY_FISHING_ELIMINATED, []);
             
             await pusher.trigger("streamer-wars", "fishing:game-started", newGameState);
             
@@ -1518,7 +1521,7 @@ export const games = {
             }
 
             // Get current eliminated players array
-            let eliminatedPlayers = await cache.get<number[]>(FISHING_ELIMINATED_KEY) ?? [];
+            let eliminatedPlayers = await cache.get<number[]>(CACHE_KEY_FISHING_ELIMINATED) ?? [];
             
             // Check if player is already eliminated
             if (eliminatedPlayers.includes(playerNumber)) {
@@ -1527,14 +1530,14 @@ export const games = {
 
             // Add player to eliminated list
             eliminatedPlayers = [...eliminatedPlayers, playerNumber];
-            await cache.set(FISHING_ELIMINATED_KEY, eliminatedPlayers);
+            await cache.set(CACHE_KEY_FISHING_ELIMINATED, eliminatedPlayers);
 
             // Update game state
             const newGameState: FishingGameState = {
                 ...gameState,
                 eliminatedPlayers,
             };
-            await cache.set(FISHING_CACHE_KEY, newGameState);
+            await cache.set(CACHE_KEY_FISHING, newGameState);
 
             // Notify about elimination
             await pusher.trigger("streamer-wars", "fishing:player-eliminated", {
@@ -1556,7 +1559,7 @@ export const games = {
             }
 
             // Get all eliminated players
-            const eliminatedPlayers = await cache.get<number[]>(FISHING_ELIMINATED_KEY) ?? [];
+            const eliminatedPlayers = await cache.get<number[]>(CACHE_KEY_FISHING_ELIMINATED) ?? [];
 
             // Update game state to ended
             const newGameState: FishingGameState = {
@@ -1564,7 +1567,7 @@ export const games = {
                 status: 'ended',
                 eliminatedPlayers,
             };
-            await cache.set(FISHING_CACHE_KEY, newGameState);
+            await cache.set(CACHE_KEY_FISHING, newGameState);
 
             // Broadcast game end
             await pusher.trigger("streamer-wars", "fishing:game-ended", {
@@ -1588,7 +1591,7 @@ export const games = {
          */
         getEliminatedPlayers: async (): Promise<number[]> => {
             const cache = createCache();
-            return await cache.get<number[]>(FISHING_ELIMINATED_KEY) ?? [];
+            return await cache.get<number[]>(CACHE_KEY_FISHING_ELIMINATED) ?? [];
         },
 
         /**
@@ -1610,8 +1613,8 @@ export const games = {
                 eliminatedPlayers: [],
             };
 
-            await cache.set(FISHING_CACHE_KEY, newGameState);
-            await cache.set(FISHING_ELIMINATED_KEY, []);
+            await cache.set(CACHE_KEY_FISHING, newGameState);
+            await cache.set(CACHE_KEY_FISHING_ELIMINATED, []);
             
             await pusher.trigger("streamer-wars", "fishing:game-reset", {});
             
