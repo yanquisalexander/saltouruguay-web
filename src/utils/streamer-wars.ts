@@ -17,9 +17,9 @@ import { DalgonaShape, type DalgonaShapeData, createDalgonaShapeData, generateDa
 import { generatePlayerChallenges } from "./streamer-wars/minigames/bomb-challenges";
 import { createCache } from "./streamer-wars/cache";
 import { getRandomItem } from "./streamer-wars/utils";
-import { 
-    CACHE_KEY_FISHING, 
-    CACHE_KEY_FISHING_ELIMINATED 
+import {
+    CACHE_KEY_FISHING,
+    CACHE_KEY_FISHING_ELIMINATED
 } from "./streamer-wars/constants";
 import type {
     SimonSaysGameState,
@@ -470,7 +470,7 @@ export const games = {
             // Anti-cheat: Validate timing
             if (gameState.startedAt) {
                 const timeElapsed = Date.now() - gameState.startedAt;
-                
+
                 if (timeElapsed < DALGONA_MIN_COMPLETION_TIME_MS) {
                     // Log to server logs only (not console) for anti-cheat monitoring
                     try {
@@ -493,7 +493,7 @@ export const games = {
                         eliminated: false,
                     };
                 }
-                
+
                 if (timeElapsed > DALGONA_MAX_COMPLETION_TIME_MS) {
                     return {
                         success: false,
@@ -518,68 +518,68 @@ export const games = {
             // All validations passed
 
             // Player succeeded
-                playerState.status = 'completed';
-                gameState.players[playerNumber] = playerState;
+            playerState.status = 'completed';
+            gameState.players[playerNumber] = playerState;
 
-                await cache.set(DALGONA_CACHE_KEY, gameState);
+            await cache.set(DALGONA_CACHE_KEY, gameState);
 
-                // Get player info for notification
-                const player = await client.query.StreamerWarsPlayersTable.findFirst({
-                    where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber),
-                    with: {
-                        user: {
-                            columns: {
-                                id: true,
-                            }
+            // Get player info for notification
+            const player = await client.query.StreamerWarsPlayersTable.findFirst({
+                where: eq(StreamerWarsPlayersTable.playerNumber, playerNumber),
+                with: {
+                    user: {
+                        columns: {
+                            id: true,
                         }
                     }
-                });
-
-                // Notify player of success
-                if (player?.user?.id) {
-                    await pusher.trigger('streamer-wars', 'dalgona:success', {
-                        userId: player.user.id,
-                        playerNumber,
-                    });
                 }
+            });
 
-                // Broadcast to all
-                await pusher.trigger('streamer-wars', 'dalgona:player-completed', {
+            // Notify player of success
+            if (player?.user?.id) {
+                await pusher.trigger('streamer-wars', 'dalgona:success', {
+                    userId: player.user.id,
                     playerNumber,
                 });
+            }
 
-                try {
-                    // Genera el audio.
-                    const audioBase64 = await tts(`Jugador, ${playerNumber}. pasa!`);
+            // Broadcast to all
+            await pusher.trigger('streamer-wars', 'dalgona:player-completed', {
+                playerNumber,
+            });
 
-                    const audioPayload = encodeAudioForPusher(audioBase64!);
+            try {
+                // Genera el audio.
+                const audioBase64 = await tts(`Jugador, ${playerNumber}. pasa!`);
 
-                    await pusher.trigger("streamer-wars", "megaphony", {
-                        audioBase64: audioPayload,
-                    });
-                } catch (error) {
+                const audioPayload = encodeAudioForPusher(audioBase64!);
 
-                }
+                await pusher.trigger("streamer-wars", "megaphony", {
+                    audioBase64: audioPayload,
+                });
+            } catch (error) {
 
-                try {
-                    await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
-                        content: null,
-                        embeds: [
-                            {
-                                title: "Dalgona - Desafío completado",
-                                description: `El jugador #${playerNumber} ha completado exitosamente el desafío Dalgona.`,
-                                color: 0x00ff00,
-                            },
-                        ],
-                    });
-                } catch (error) {
-                    console.error("Error sending Discord webhook:", error);
-                }
+            }
 
-                return {
-                    success: true,
-                    status: 'completed',
-                };
+            try {
+                await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                    content: null,
+                    embeds: [
+                        {
+                            title: "Dalgona - Desafío completado",
+                            description: `El jugador #${playerNumber} ha completado exitosamente el desafío Dalgona.`,
+                            color: 0x00ff00,
+                        },
+                    ],
+                });
+            } catch (error) {
+                console.error("Error sending Discord webhook:", error);
+            }
+
+            return {
+                success: true,
+                status: 'completed',
+            };
         },
 
         /**
@@ -1494,7 +1494,7 @@ export const games = {
          */
         startGame: async (): Promise<FishingGameState> => {
             const cache = createCache();
-            
+
             const newGameState: FishingGameState = {
                 status: 'active',
                 eliminatedPlayers: [],
@@ -1503,9 +1503,9 @@ export const games = {
 
             await cache.set(CACHE_KEY_FISHING, newGameState);
             await cache.set(CACHE_KEY_FISHING_ELIMINATED, []);
-            
+
             await pusher.trigger("streamer-wars", "fishing:game-started", newGameState);
-            
+
             return newGameState;
         },
 
@@ -1522,7 +1522,7 @@ export const games = {
 
             // Get current eliminated players array
             let eliminatedPlayers = await cache.get<number[]>(CACHE_KEY_FISHING_ELIMINATED) ?? [];
-            
+
             // Check if player is already eliminated
             if (eliminatedPlayers.includes(playerNumber)) {
                 return { success: false, error: 'Ya estás eliminado' };
@@ -1574,13 +1574,17 @@ export const games = {
                 eliminatedPlayers,
             });
 
+            await broadcastToMegaphone(`El juego ha terminado. Se ha alcanzado el número máximo de eliminaciones.`);
+
+            await new Promise(resolve => setTimeout(resolve, 5000));
+
+
+
             // Process eliminations through the elimination system
-            for (const playerNum of eliminatedPlayers) {
-                try {
-                    await eliminatePlayer(playerNum);
-                } catch (error) {
-                    console.error(`Error eliminating player ${playerNum}:`, error);
-                }
+            try {
+                await massEliminatePlayers(eliminatedPlayers);
+            } catch (error) {
+                console.error(`Error eliminating players:`, error);
             }
 
             return { success: true, eliminatedPlayers };
@@ -1607,7 +1611,7 @@ export const games = {
          */
         resetGame: async (): Promise<FishingGameState> => {
             const cache = createCache();
-            
+
             const newGameState: FishingGameState = {
                 status: 'waiting',
                 eliminatedPlayers: [],
@@ -1615,9 +1619,9 @@ export const games = {
 
             await cache.set(CACHE_KEY_FISHING, newGameState);
             await cache.set(CACHE_KEY_FISHING_ELIMINATED, []);
-            
+
             await pusher.trigger("streamer-wars", "fishing:game-reset", {});
-            
+
             return newGameState;
         },
     },
@@ -2991,6 +2995,24 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                 } else {
                     return { success: false, feedback: 'Uso: /bomb start|end|status' };
                 }
+            case '/fishing':
+                const fishingAction = args[0];
+                if (fishingAction === 'start') {
+                    const gameState = await games.fishing.startGame();
+                    return { success: true, feedback: `Minijuego Fishing iniciado` };
+                } else if (fishingAction === 'end') {
+                    const result = await games.fishing.endGame();
+                    if (result.success) {
+                        return { success: true, feedback: `Minijuego Fishing finalizado. Eliminados: ${result.eliminatedPlayers.join(', ')}` };
+                    } else {
+                        return { success: false, feedback: result.error || 'Error al finalizar Fishing' };
+                    }
+                } else if (fishingAction === 'reset') {
+                    const gameState = await games.fishing.resetGame();
+                    return { success: true, feedback: `Minijuego Fishing reseteado` };
+                } else {
+                    return { success: false, feedback: 'Uso: /fishing start|end|reset' };
+                }
             case '/revive':
                 const playerNumber = parseInt(args[0], 10);
                 if (isNaN(playerNumber)) {
@@ -3019,4 +3041,23 @@ export const getCurrentTimer = async (): Promise<{ startedAt: number; duration: 
         return null;
     }
     return timerData;
+};
+
+export const broadcastToMegaphone = async (message: string) => {
+    /* 
+        Genera un audio con el mensaje usando una TTS API
+    */
+
+    try {
+        // Genera el audio.
+        const audioBase64 = await tts(message)
+
+        const audioPayload = encodeAudioForPusher(audioBase64!);
+
+        await pusher.trigger("streamer-wars", "megaphony", {
+            audioBase64: audioPayload,
+        });
+    } catch (error) {
+        console.error("Error broadcasting to megaphone:", error);
+    }
 };

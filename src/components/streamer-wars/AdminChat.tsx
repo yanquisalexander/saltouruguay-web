@@ -34,6 +34,7 @@ const COMMANDS = [
     { name: "/timer", description: "Show a timer for the specified seconds", args: ["seconds"] },
     { name: "/cuerda", description: "Control Tug of War game", args: ["start|end|next|clear"] },
     { name: "/bomb", description: "Control Bomb minigame", args: ["start|end|status"] },
+    { name: "/fishing", description: "Control Fishing minigame", args: ["start|end|reset"] },
     { name: "/revive", description: "Revive a player", args: ["playerNumber"] }
 ];
 
