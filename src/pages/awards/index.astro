@@ -77,7 +77,22 @@ console.log({ IS_VOTES_OPEN: IS_VOTES_OPEN() });
         </section>
       ) : (
         <>
-          <LastEditionWinners />
+          {/* Contador con la cuenta regresiva */}
+
+          <p class="text-white text-center max-w-xl mx-auto">
+            Las votaciones para los{" "}
+            <span class="text-yellow-500 font-bold">#SaltoAwards2025</span> aún
+            no han comenzado. ¡Prepárate para elegir a tus favoritos y ser parte
+            de esta celebración única!
+          </p>
+          <LaunchCountdown
+            timestamp={VOTES_OPEN_TIMESTAMP}
+            showCalendarButton={false}
+            classNames={{ timeDisplay: "text-yellow-400" }}
+            client:idle
+          />
+
+          <LastEditionWinners class:list={"mt-16"} />
 
           <section class="mt-10 w-full max-w-5xl mx-auto">
             <h3 class="text-lg font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen text-center mb-4">

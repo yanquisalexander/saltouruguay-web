@@ -40,7 +40,7 @@ const INTRO_SCRIPT: ScriptItem[] = [
         text: "Prepárense para celebrar los logros más destacados de nuestra comunidad."
     },
     {
-        duration: 5000,
+        duration: 7000,
         audioPath: "scripts/bienvenida-awards-3",
         component: (
             <div className="flex flex-col items-center">

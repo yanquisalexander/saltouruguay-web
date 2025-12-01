@@ -2,7 +2,7 @@ import { DateTime } from 'luxon';
 
 
 
-export const VOTES_OPEN_TIMESTAMP = import.meta.env.DEV ? 1761001200000 : 1764633600000;
+export const VOTES_OPEN_TIMESTAMP = 1764633600000;
 
 export const VOTES_CLOSE_TIMESTAMP = 1766199600000;
 
