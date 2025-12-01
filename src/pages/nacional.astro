@@ -1,0 +1,50 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+const preload = [
+  {
+    as: "image",
+    href: "/images/404-salto.webp",
+    type: "image/webp",
+  },
+];
+
+const title = "Página no disponible";
+---
+
+<Layout title={title} preload={preload} hideHeader>
+  <div class="min-h-screen flex flex-col justify-center items-center h-full">
+    <header
+      class="flex items-center justify-center max-w-md w-full gap-x-14 gap-y-6 flex-col"
+    >
+      <div class="relative">
+        <img
+          draggable="false"
+          src="/images/500.webp"
+          alt="This is fine"
+          class="h-48 sm:h-56 w-auto object-contain"
+        />
+      </div>
+      <h1 class="text-4xl font-bold text-center flex-wrap text-red-500">
+        LA PÁGINA NO ESTÁ DISPONIBLE
+      </h1>
+      <h2 class="text-2xl font-bold text-center flex-wrap text-yellow-500">
+        POR SER HINCHA DE NACIONAL
+      </h2>
+    </header>
+
+    <p
+      class="font-rubik uppercase text-lg text-balance text-center mt-6 max-w-xl"
+    >
+      <span class="font-bold text-blue-500"> ¡Error 403! </span>
+      <br />
+      Acceso denegado. Esta página está bloqueada para hinchas de Nacional. <br
+      />
+      ¡Viva Peñarol! ⚽
+    </p>
+
+    <small class="mt-4 text-sm text-center text-gray-500">
+      Es broma, en breve podrás volver a la página que intentaste visitar.
+    </small>
+  </div>
+</Layout>

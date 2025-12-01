@@ -50,6 +50,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
         return redirect("/suspended", 302);
     }
 
+    // Bromita para hinchas de Nacional
+    if (user.username === 'saltouruguayserver' && currentPath !== "/nacional") {
+        return redirect("/nacional", 302);
+    }
+
     /* 
         User has 2fa and is not on the 2fa page
         Redirect to the 2fa page (if they don't unlocked yet)
