@@ -25,7 +25,8 @@ import type {
     BombChallengeType,
     BombChallenge,
     BombPlayerState,
-    BombGameState
+    BombGameState,
+    FishingGameState
 } from "./streamer-wars/types";
 
 // Re-export types for backward compatibility
@@ -37,7 +38,8 @@ export type {
     BombChallengeType,
     BombChallenge,
     BombPlayerState,
-    BombGameState
+    BombGameState,
+    FishingGameState
 };
 
 const PRESENCE_CHANNEL = "presence-streamer-wars";
@@ -51,6 +53,8 @@ const COOLDOWN_MS = 1500; // 1.5 seconds cooldown per player
 const BOMB_CACHE_KEY = "streamer-wars.bomb:game-state";
 const MAX_CHALLENGES = 5;
 const MAX_ERRORS = 3;
+const FISHING_CACHE_KEY = "streamer-wars.fishing:game-state";
+const FISHING_ELIMINATED_KEY = "fishing:eliminated-players";
 
 // Dalgona game constants
 const DALGONA_MIN_COMPLETION_TIME_MS = 10000; // 10 seconds minimum
@@ -1465,6 +1469,153 @@ export const games = {
                 success: true,
                 gameState,
             };
+        },
+    },
+
+    fishing: {
+        /**
+         * Get the current Fishing game state
+         */
+        getGameState: async (): Promise<FishingGameState> => {
+            const cache = createCache();
+            return (
+                (await cache.get<FishingGameState>(FISHING_CACHE_KEY)) ?? {
+                    status: 'waiting',
+                    eliminatedPlayers: [],
+                }
+            );
+        },
+
+        /**
+         * Start the fishing game
+         */
+        startGame: async (): Promise<FishingGameState> => {
+            const cache = createCache();
+            
+            const newGameState: FishingGameState = {
+                status: 'active',
+                eliminatedPlayers: [],
+                startedAt: Date.now(),
+            };
+
+            await cache.set(FISHING_CACHE_KEY, newGameState);
+            await cache.set(FISHING_ELIMINATED_KEY, []);
+            
+            await pusher.trigger("streamer-wars", "fishing:game-started", newGameState);
+            
+            return newGameState;
+        },
+
+        /**
+         * Record a player elimination (called when a player fails)
+         */
+        recordElimination: async (playerNumber: number): Promise<{ success: boolean; error?: string }> => {
+            const cache = createCache();
+            const gameState = await games.fishing.getGameState();
+
+            if (gameState.status !== 'active') {
+                return { success: false, error: 'El juego no está activo' };
+            }
+
+            // Get current eliminated players array
+            let eliminatedPlayers = await cache.get<number[]>(FISHING_ELIMINATED_KEY) ?? [];
+            
+            // Check if player is already eliminated
+            if (eliminatedPlayers.includes(playerNumber)) {
+                return { success: false, error: 'Ya estás eliminado' };
+            }
+
+            // Add player to eliminated list
+            eliminatedPlayers = [...eliminatedPlayers, playerNumber];
+            await cache.set(FISHING_ELIMINATED_KEY, eliminatedPlayers);
+
+            // Update game state
+            const newGameState: FishingGameState = {
+                ...gameState,
+                eliminatedPlayers,
+            };
+            await cache.set(FISHING_CACHE_KEY, newGameState);
+
+            // Notify about elimination
+            await pusher.trigger("streamer-wars", "fishing:player-eliminated", {
+                playerNumber,
+            });
+
+            return { success: true };
+        },
+
+        /**
+         * End the fishing game and process eliminations
+         */
+        endGame: async (): Promise<{ success: boolean; eliminatedPlayers: number[]; error?: string }> => {
+            const cache = createCache();
+            const gameState = await games.fishing.getGameState();
+
+            if (gameState.status !== 'active') {
+                return { success: false, eliminatedPlayers: [], error: 'El juego no está activo' };
+            }
+
+            // Get all eliminated players
+            const eliminatedPlayers = await cache.get<number[]>(FISHING_ELIMINATED_KEY) ?? [];
+
+            // Update game state to ended
+            const newGameState: FishingGameState = {
+                ...gameState,
+                status: 'ended',
+                eliminatedPlayers,
+            };
+            await cache.set(FISHING_CACHE_KEY, newGameState);
+
+            // Broadcast game end
+            await pusher.trigger("streamer-wars", "fishing:game-ended", {
+                eliminatedPlayers,
+            });
+
+            // Process eliminations through the elimination system
+            for (const playerNum of eliminatedPlayers) {
+                try {
+                    await eliminatePlayer(playerNum);
+                } catch (error) {
+                    console.error(`Error eliminating player ${playerNum}:`, error);
+                }
+            }
+
+            return { success: true, eliminatedPlayers };
+        },
+
+        /**
+         * Get the list of eliminated players
+         */
+        getEliminatedPlayers: async (): Promise<number[]> => {
+            const cache = createCache();
+            return await cache.get<number[]>(FISHING_ELIMINATED_KEY) ?? [];
+        },
+
+        /**
+         * Check if a player is eliminated
+         */
+        isPlayerEliminated: async (playerNumber: number): Promise<boolean> => {
+            const eliminatedPlayers = await games.fishing.getEliminatedPlayers();
+            return eliminatedPlayers.includes(playerNumber);
+        },
+
+        /**
+         * Reset the game state (for admin use)
+         */
+        resetGame: async (): Promise<FishingGameState> => {
+            const cache = createCache();
+            
+            const newGameState: FishingGameState = {
+                status: 'waiting',
+                eliminatedPlayers: [],
+            };
+
+            await cache.set(FISHING_CACHE_KEY, newGameState);
+            await cache.set(FISHING_ELIMINATED_KEY, []);
+            
+            await pusher.trigger("streamer-wars", "fishing:game-reset", {});
+            
+            return newGameState;
         },
     },
 };

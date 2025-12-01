@@ -1,11 +1,11 @@
-import { fishing } from "@/utils/streamer-wars/minigames";
+import { games } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { getSession } from "auth-astro/server";
 
 export const fishingGame = {
     getGameState: defineAction({
         async handler() {
-            const gameState = await fishing.getGameState();
+            const gameState = await games.fishing.getGameState();
             return { gameState };
         },
     }),
@@ -21,7 +21,7 @@ export const fishingGame = {
                 });
             }
 
-            const gameState = await fishing.startGame();
+            const gameState = await games.fishing.startGame();
             return { gameState };
         },
     }),
@@ -38,7 +38,7 @@ export const fishingGame = {
             }
 
             const playerNumber = session.user.streamerWarsPlayerNumber;
-            const result = await fishing.recordElimination(playerNumber);
+            const result = await games.fishing.recordElimination(playerNumber);
 
             if (!result.success) {
                 throw new ActionError({
@@ -62,7 +62,7 @@ export const fishingGame = {
                 });
             }
 
-            const result = await fishing.endGame();
+            const result = await games.fishing.endGame();
 
             if (!result.success) {
                 throw new ActionError({
@@ -86,7 +86,7 @@ export const fishingGame = {
                 });
             }
 
-            const gameState = await fishing.resetGame();
+            const gameState = await games.fishing.resetGame();
             return { gameState };
         },
     }),
@@ -100,7 +100,7 @@ export const fishingGame = {
             }
 
             const playerNumber = session.user.streamerWarsPlayerNumber;
-            const eliminated = await fishing.isPlayerEliminated(playerNumber);
+            const eliminated = await games.fishing.isPlayerEliminated(playerNumber);
             return { eliminated };
         },
     }),
