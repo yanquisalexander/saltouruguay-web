@@ -12,5 +12,5 @@ export * from './bomb-challenges';
 // Export namespaced minigame APIs
 export const simonSays = simonSaysGame;
 
-// Note: Other minigames (dalgona, tugOfWar, bomb) will be added here
-// as they are extracted from the main file
+// Note: Other minigames (dalgona, tugOfWar, bomb, fishing) are defined in the main 
+// streamer-wars.ts file for backward compatibility

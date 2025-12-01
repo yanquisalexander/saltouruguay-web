@@ -11,9 +11,17 @@ export const CACHE_KEY_SIMON_SAYS = "streamer-wars.simon-says";
 export const CACHE_KEY_DALGONA = "streamer-wars.dalgona:game-state";
 export const CACHE_KEY_TUG_OF_WAR = "streamer-wars.tug-of-war:game-state";
 export const CACHE_KEY_BOMB = "streamer-wars.bomb:game-state";
+export const CACHE_KEY_FISHING = "streamer-wars.fishing:game-state";
+export const CACHE_KEY_FISHING_ELIMINATED = "fishing:eliminated-players";
 
 // Game settings
 export const COLORS = ["red", "blue", "green", "yellow"];
 export const COOLDOWN_MS = 1500; // 1.5 seconds cooldown per player
 export const MAX_CHALLENGES = 5;
 export const MAX_ERRORS = 3;
+
+// Fishing game valid keys (letters that can be used for the minigame)
+export const FISHING_VALID_KEYS = [
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+];
