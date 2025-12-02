@@ -44,7 +44,7 @@ const INTRO_SCRIPT: ScriptItem[] = [
         audioPath: "scripts/bienvenida-awards-3",
         component: (
             <div className="flex flex-col items-center">
-                <p className="text-4xl md:text-5xl font-teko text-yellow-400 uppercase animate-pulse">
+                <p className="text-4xl md:text-5xl font-teko text-yellow-400 uppercase">
                     ¡Que comience la votación!
                 </p>
                 <p className="text-sm md:text-base font-mono text-white mt-4 max-w-xl">
