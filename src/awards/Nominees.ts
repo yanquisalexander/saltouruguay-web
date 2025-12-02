@@ -17,11 +17,11 @@ export const NOMINEES = {
     },
     bradterra: {
         username: "bradterra",
-        displayName: "bradterra"
+        displayName: "Brad Terra"
     },
     neo_emanuel: {
         username: "neo_emanuel",
-        displayName: "neo_emanuel"
+        displayName: "Neo Emanuel"
     },
     turbanteuy: {
         username: "turbanteuy",
@@ -41,11 +41,11 @@ export const NOMINEES = {
     },
     eldeadpool_uruguayo: {
         username: "eldeadpool_uruguayo",
-        displayName: "eldeadpool_uruguayo"
+        displayName: "El Deadpool Uruguayo"
     },
     itzherlan: {
         username: "itzherlan",
-        displayName: "itzherlan"
+        displayName: "Itzherlan"
     },
     SrDresh: {
         username: "SrDresh",
@@ -65,23 +65,23 @@ export const NOMINEES = {
     },
     little_muside18: {
         username: "little_muside18",
-        displayName: "little_muside18"
+        displayName: "Little Muside"
     },
     julianmartinr: {
         username: "julianmartinr",
-        displayName: "julianmartinr"
+        displayName: "Julian Martin"
     },
     charly7: {
         username: "charly7",
-        displayName: "charly7"
+        displayName: "Charly"
     },
     Don_mostacho: {
         username: "Don_mostacho",
-        displayName: "Don_mostacho"
+        displayName: "Don Mostacho"
     },
     labarista_: {
         username: "labarista_",
-        displayName: "labarista_"
+        displayName: "La Barista"
     },
     solbela__: {
         username: "solbela__",
@@ -93,11 +93,11 @@ export const NOMINEES = {
     },
     mundounouy: {
         username: "mundounouy",
-        displayName: "mundounouy"
+        displayName: "MundoUnoUY"
     },
     tommysl18: {
         username: "tommysl18",
-        displayName: "tommysl18"
+        displayName: "Tommysl18"
     },
     ItsVortexUY: {
         username: "ItsVortexUY",
@@ -121,7 +121,7 @@ export const NOMINEES = {
     },
     guadatostado: {
         username: "guadatostado",
-        displayName: "guadatostado"
+        displayName: "Guada Tostado"
     },
     csilveira10: {
         username: "csilveira10",
