@@ -1,4 +1,5 @@
 import { getTranslation } from "@/utils/translate";
+import { useEffect } from "preact/hooks";
 
 
 
@@ -6,6 +7,7 @@ interface SimonSaysButtonsProps {
     activeButton: string | null;
     showingPattern: boolean;
     onClick: (color: string) => void;
+    onColorShowed?: (color: string) => void;
 }
 
 export const colors = [
@@ -18,8 +20,16 @@ export const colors = [
 export const SimonSaysButtons = ({
     activeButton,
     showingPattern,
-    onClick
+    onClick,
+    onColorShowed
 }: SimonSaysButtonsProps) => {
+
+    useEffect(() => {
+        if (onColorShowed && activeButton) {
+            onColorShowed(activeButton);
+        }
+    }, [activeButton]);
+
     return (
         <div className="grid grid-cols-2 gap-4 mt-8">
             {colors.map(({ name, gradient }) => (

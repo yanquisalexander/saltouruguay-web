@@ -57,12 +57,18 @@ export const CATEGORIES: Category[] = [
             {
                 id: NOMINEES.little_muside18.username,
             },
+            {
+                id: NOMINEES.Dexter_Quan.username,
+            }
         ]
     },
     {
         id: "mas-activos",
         name: "Más activos",
         nominees: [
+            {
+                id: NOMINEES.claudio25uru.username,
+            },
             {
                 id: NOMINEES.syscrak10.username,
             },
@@ -147,6 +153,9 @@ export const CATEGORIES: Category[] = [
         id: "joven-promesa",
         name: "Joven promesa",
         nominees: [
+            {
+                id: NOMINEES.alexbritos47.username,
+            },
             {
                 id: NOMINEES.neo_emanuel.username,
             },

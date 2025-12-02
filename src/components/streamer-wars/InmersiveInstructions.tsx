@@ -128,7 +128,7 @@ export const InmersiveInstructions = () => {
 
     return (
         <div
-            className={`fixed inset-0 bg-black/90 flex min-h-screen h-full flex-col justify-center items-center z-[9000] transition-opacity duration-500 ${fadeClass}`}
+            className={`fixed inset-0 bg-black/90 flex min-h-dvh h-full w-full flex-col justify-center items-center z-[9000] transition-opacity duration-500 ${fadeClass}`}
         >
             {/* Timer en la esquina superior derecha */}
             <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-500 z-[10001]">
@@ -160,20 +160,17 @@ export const InmersiveInstructions = () => {
                     )}
                 </div>
 
-                {/* Texto de subtítulo/instrucción */}
-                {currentItem?.text && (
-                    <div className="mt-12 bg-neutral-900/80 border-l-4 border-lime-500 p-6 max-w-2xl w-full mx-auto shadow-2xl shadow-lime-900/10">
-                        <p className="font-mono text-center text-white text-xl md:text-2xl leading-relaxed">
-                            {currentItem.text}
-                        </p>
-                    </div>
-                )}
             </div>
+            {/* Texto de subtítulo/instrucción */}
+            {currentItem?.text && (
+                <div className="mt-12 fixed bottom-16 bg-neutral-900/40 px-2 py-1 max-w-2xl w-full mx-auto">
+                    <p className="font-mono text-center text-white text-md leading-relaxed">
+                        {currentItem.text}
+                    </p>
+                </div>
+            )}
 
-            {/* Footer fijo */}
-            <h2 className="z-[9998!important] text-xl fixed bottom-12 inset-x-0 font-atomic text-center mx-auto text-neutral-600 select-none">
-                <span className="tracking-widest">SISTEMA DE CONTROL</span>
-            </h2>
+
         </div>
     );
 };

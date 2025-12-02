@@ -1,6 +1,7 @@
 import { type JSX } from "preact";
 import { useEffect, useState, useRef } from "preact/hooks";
 import { SimonSaysButtons } from "./games/SimonSaysButtons";
+import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
 // Reutilizamos la interfaz ScriptItem (si está exportada, sino redfínela)
 export interface ScriptItem {
@@ -55,6 +56,7 @@ const SimonSaysExample = () => {
             <SimonSaysButtons
                 activeButton={activeButton}
                 showingPattern={true}
+                onColorShowed={(color: string) => { void playSound({ sound: STREAMER_WARS_SOUNDS.CLICK_SIMON_SAYS }); }}
                 onClick={() => { }} // No hacer nada en el ejemplo
             />
         </div>

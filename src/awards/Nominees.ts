@@ -391,4 +391,16 @@ export const NOMINEES = {
         username: "yosoysecond",
         displayName: "YoSoySecond"
     },
+    claudio25uru: {
+        username: "claudio25uru",
+        displayName: "claudio25uru"
+    },
+    Dexter_Quan: {
+        username: "Dexter_Quan",
+        displayName: "Dexter_Quan"
+    },
+    alexbritos47: {
+        username: "alexbritos47",
+        displayName: "alexbritos47"
+    }
 };
