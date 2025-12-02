@@ -305,7 +305,7 @@ export const NOMINEES = {
     },
     hayafoxuy: {
         username: "hayafoxuy",
-        displayName: "hayafoxuy"
+        displayName: "HayaFoxUY"
     },
     Valeriamjj: {
         username: "Valeriamjj",
