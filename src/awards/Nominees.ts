@@ -57,7 +57,7 @@ export const NOMINEES = {
     },
     titoleproso: {
         username: "titoleproso",
-        displayName: "titoleproso"
+        displayName: "Tito Leproso"
     },
     vitocorleone: {
         username: "vitocorleone",
@@ -133,7 +133,7 @@ export const NOMINEES = {
     },
     alexitoo_uy: {
         username: "alexitoo_uy",
-        displayName: "alexitoo_uy"
+        displayName: "Alexitoo"
     },
     elbarre_: {
         username: "elbarre_",
@@ -169,7 +169,7 @@ export const NOMINEES = {
     },
     xdiegouy: {
         username: "xdiegouy",
-        displayName: "xdiegouy"
+        displayName: "xDiegoUY"
     },
     alexdevargas777: {
         username: "alexdevargas777",
@@ -197,7 +197,7 @@ export const NOMINEES = {
     },
     goldenplayyt1: {
         username: "goldenplayyt1",
-        displayName: "goldenplayyt1"
+        displayName: "GoldenPlay"
     },
     JotaN8: {
         username: "JotaN8",
@@ -225,7 +225,7 @@ export const NOMINEES = {
     },
     queen_judith: {
         username: "queen_judith",
-        displayName: "queen_judith"
+        displayName: "Queen Judith"
     },
     TOTCamper: {
         username: "TOTCamper",
@@ -249,15 +249,15 @@ export const NOMINEES = {
     },
     tellier50: {
         username: "tellier50",
-        displayName: "tellier50"
+        displayName: "Tellier50"
     },
     saltocraft_extremo_3: {
         username: "saltocraft_extremo_3",
-        displayName: "SaltoCraft EXTREMO 3"
+        displayName: "SaltoCraft Extremo 3"
     },
     facutoloza_: {
         username: "facutoloza_",
-        displayName: "facutoloza_"
+        displayName: "Facu Toloza"
     },
     vewiittv: {
         username: "vewiittv",
@@ -265,7 +265,7 @@ export const NOMINEES = {
     },
     AgustinaUy: {
         username: "AgustinaUy",
-        displayName: "AgustinaUy"
+        displayName: "Agustina UY"
     },
     Capibaramaster01: {
         username: "Capibaramaster01",
@@ -277,7 +277,7 @@ export const NOMINEES = {
     },
     romisdraws: {
         username: "romisdraws",
-        displayName: "romisdraws"
+        displayName: "RomisDraws"
     },
     Drea2819: {
         username: "Drea2819",
@@ -309,15 +309,15 @@ export const NOMINEES = {
     },
     Valeriamjj: {
         username: "Valeriamjj",
-        displayName: "Valeriamjj"
+        displayName: "Valeria"
     },
     charruabudico: {
         username: "charruabudico",
-        displayName: "charruabudico"
+        displayName: "Charrúa Budico"
     },
     gowak: {
         username: "gowak",
-        displayName: "gowak"
+        displayName: "Gowak"
     },
     Frutillosa_: {
         username: "Frutillosa_",
@@ -325,7 +325,7 @@ export const NOMINEES = {
     },
     elbrillanteca: {
         username: "elbrillanteca",
-        displayName: "elbrillanteca"
+        displayName: "El Brillanteca"
     },
     Anditwm: {
         username: "Anditwm",
@@ -369,7 +369,7 @@ export const NOMINEES = {
     },
     el_almacenero: {
         username: "el_almacenero",
-        displayName: "el_almacenero"
+        displayName: "El Almacenero"
     },
     LeilaN11: {
         username: "LeilaN11",
@@ -389,6 +389,6 @@ export const NOMINEES = {
     },
     yosoysecond: {
         username: "yosoysecond",
-        displayName: "yosoysecond"
+        displayName: "YoSoySecond"
     },
 };
