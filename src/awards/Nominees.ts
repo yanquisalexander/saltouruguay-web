@@ -5,7 +5,7 @@ export const NOMINEES = {
     },
     iiiiiiikingiiiiiii: {
         username: "iiiiiiikingiiiiiii",
-        displayName: "iiiiiiikingiiiiiii"
+        displayName: "King"
     },
     syscrak10: {
         username: "syscrak10",
