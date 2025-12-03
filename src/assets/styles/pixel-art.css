@@ -1,0 +1,415 @@
+/*
+  Pixel Art Design System
+  Subtle pixel aesthetic inspired by modern retro games
+  Based on SaltoUruguay branding
+*/
+
+:root {
+  /* Pixel Art Color Palette */
+  --pixel-primary: #9146ff;
+  --pixel-primary-light: #b085ff;
+  --pixel-primary-dark: #7f1ee3;
+  --pixel-secondary: #facc15; /* yellow-400 */
+  --pixel-accent: #10b981; /* green-500 */
+  --pixel-danger: #ef4444; /* red-500 */
+  
+  /* Background colors */
+  --pixel-bg-dark: #0b1422;
+  --pixel-bg-darker: #070d16;
+  --pixel-bg-card: #1a1f2e;
+  --pixel-bg-hover: #252b3b;
+  
+  /* Border and shadow */
+  --pixel-border: #374151;
+  --pixel-shadow: rgba(0, 0, 0, 0.5);
+  
+  /* Pixel sizes */
+  --pixel-border-width: 2px;
+  --pixel-corner-size: 4px;
+}
+
+/* Pixel Art Base Classes */
+
+.pixel-container {
+  background: var(--pixel-bg-card);
+  border: var(--pixel-border-width) solid var(--pixel-border);
+  border-radius: var(--pixel-corner-size);
+  box-shadow: 
+    0 2px 0 0 rgba(0, 0, 0, 0.2),
+    inset 0 -2px 0 0 rgba(255, 255, 255, 0.05);
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-panel {
+  @apply pixel-container;
+  padding: 1rem;
+  position: relative;
+}
+
+.pixel-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    transparent 100%
+  );
+}
+
+/* Pixel Buttons */
+
+.pixel-btn {
+  @apply pixel-container;
+  padding: 0.5rem 1rem;
+  font-family: 'Rubik Variable', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+}
+
+.pixel-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 0 0 rgba(0, 0, 0, 0.3),
+    inset 0 -2px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.pixel-btn:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 1px 0 0 rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+}
+
+.pixel-btn-primary {
+  @apply pixel-btn;
+  background: linear-gradient(180deg, var(--pixel-primary-light) 0%, var(--pixel-primary) 100%);
+  color: white;
+  border-color: var(--pixel-primary-dark);
+}
+
+.pixel-btn-secondary {
+  @apply pixel-btn;
+  background: linear-gradient(180deg, #fde047 0%, var(--pixel-secondary) 100%);
+  color: #1a1f2e;
+  border-color: #ca8a04;
+}
+
+.pixel-btn-success {
+  @apply pixel-btn;
+  background: linear-gradient(180deg, #34d399 0%, var(--pixel-accent) 100%);
+  color: white;
+  border-color: #059669;
+}
+
+.pixel-btn-danger {
+  @apply pixel-btn;
+  background: linear-gradient(180deg, #f87171 0%, var(--pixel-danger) 100%);
+  color: white;
+  border-color: #dc2626;
+}
+
+/* Pixel Cards */
+
+.pixel-card {
+  @apply pixel-panel;
+  overflow: hidden;
+}
+
+.pixel-card-hover {
+  @apply pixel-card;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.pixel-card-hover:hover {
+  transform: translateY(-4px);
+  background: var(--pixel-bg-hover);
+  box-shadow: 
+    0 6px 0 0 rgba(0, 0, 0, 0.3),
+    0 8px 16px 0 rgba(0, 0, 0, 0.4),
+    inset 0 -2px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Pixel Badges */
+
+.pixel-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border: var(--pixel-border-width) solid;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pixel-badge-primary {
+  @apply pixel-badge;
+  background: var(--pixel-primary);
+  border-color: var(--pixel-primary-dark);
+  color: white;
+}
+
+.pixel-badge-secondary {
+  @apply pixel-badge;
+  background: var(--pixel-secondary);
+  border-color: #ca8a04;
+  color: #1a1f2e;
+}
+
+.pixel-badge-success {
+  @apply pixel-badge;
+  background: var(--pixel-accent);
+  border-color: #059669;
+  color: white;
+}
+
+/* Pixel Progress Bar */
+
+.pixel-progress {
+  @apply pixel-container;
+  height: 24px;
+  position: relative;
+  overflow: hidden;
+  background: var(--pixel-bg-darker);
+}
+
+.pixel-progress-bar {
+  height: 100%;
+  background: linear-gradient(180deg, var(--pixel-primary-light) 0%, var(--pixel-primary) 100%);
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.pixel-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 8px,
+      rgba(255, 255, 255, 0.1) 8px,
+      rgba(255, 255, 255, 0.1) 10px
+    );
+  animation: pixelProgressSlide 0.5s linear infinite;
+}
+
+@keyframes pixelProgressSlide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(10px); }
+}
+
+/* Pixel Coin Display */
+
+.pixel-coin-display {
+  @apply pixel-container;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, var(--pixel-bg-card) 0%, var(--pixel-bg-darker) 100%);
+}
+
+.pixel-coin-icon {
+  width: 24px;
+  height: 24px;
+  animation: pixelCoinFloat 2s ease-in-out infinite;
+}
+
+@keyframes pixelCoinFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* Pixel Tooltips */
+
+.pixel-tooltip {
+  @apply pixel-container;
+  position: absolute;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  background: var(--pixel-bg-darker);
+  color: white;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.pixel-tooltip-visible {
+  opacity: 1;
+}
+
+/* Pixel Modal/Dialog */
+
+.pixel-modal {
+  @apply pixel-panel;
+  min-width: 300px;
+  max-width: 90vw;
+  background: var(--pixel-bg-dark);
+  box-shadow: 
+    0 8px 0 0 rgba(0, 0, 0, 0.3),
+    0 16px 32px 0 rgba(0, 0, 0, 0.6);
+}
+
+.pixel-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: var(--pixel-border-width) solid var(--pixel-border);
+}
+
+.pixel-modal-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1rem;
+  text-transform: uppercase;
+  color: var(--pixel-secondary);
+}
+
+/* Pixel Input Fields */
+
+.pixel-input {
+  @apply pixel-container;
+  padding: 0.75rem;
+  background: var(--pixel-bg-darker);
+  color: white;
+  font-family: 'Rubik Variable', sans-serif;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.pixel-input:focus {
+  outline: none;
+  border-color: var(--pixel-primary);
+  box-shadow: 
+    0 0 0 3px rgba(145, 70, 255, 0.2),
+    0 2px 0 0 rgba(0, 0, 0, 0.2),
+    inset 0 -2px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Pixel Animations */
+
+@keyframes pixelPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes pixelShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes pixelGlow {
+  0%, 100% {
+    box-shadow: 
+      0 0 5px var(--pixel-primary),
+      0 0 10px var(--pixel-primary),
+      inset 0 0 5px var(--pixel-primary);
+  }
+  50% {
+    box-shadow: 
+      0 0 10px var(--pixel-primary),
+      0 0 20px var(--pixel-primary),
+      inset 0 0 10px var(--pixel-primary);
+  }
+}
+
+.pixel-pulse {
+  animation: pixelPulse 2s ease-in-out infinite;
+}
+
+.pixel-shake {
+  animation: pixelShake 0.5s ease-in-out;
+}
+
+.pixel-glow {
+  animation: pixelGlow 2s ease-in-out infinite;
+}
+
+/* Pixel Typography */
+
+.pixel-heading {
+  font-family: 'Press Start 2P', monospace;
+  text-transform: uppercase;
+  line-height: 1.6;
+  letter-spacing: 0.05em;
+}
+
+.pixel-text {
+  font-family: 'Rubik Variable', sans-serif;
+}
+
+.pixel-text-primary {
+  color: var(--pixel-primary-light);
+}
+
+.pixel-text-secondary {
+  color: var(--pixel-secondary);
+}
+
+.pixel-text-success {
+  color: var(--pixel-accent);
+}
+
+/* Pixel Divider */
+
+.pixel-divider {
+  height: var(--pixel-border-width);
+  background: var(--pixel-border);
+  margin: 1rem 0;
+  position: relative;
+}
+
+.pixel-divider::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: var(--pixel-secondary);
+  border: var(--pixel-border-width) solid var(--pixel-border);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .pixel-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .pixel-modal-title {
+    font-size: 0.75rem;
+  }
+}

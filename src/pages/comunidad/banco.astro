@@ -1,85 +1,15 @@
 ---
-import EarnSaltoCoinsModal from "@/components/EarnSaltoCoinsModal.astro";
+import BancoSaltanoApp from "@/components/banco/BancoSaltanoApp";
 import CommunityLayout from "@/layouts/CommunityLayout.astro";
 import { getSession } from "auth-astro/server";
-import { LucidePiggyBank } from "lucide-preact";
 
 const session = await getSession(Astro.request);
 
 if (!session) {
-  return new Response(null, { status: 404 });
+  return Astro.redirect("/signin?redirect=/comunidad/banco");
 }
 ---
 
 <CommunityLayout title="Banco Saltano">
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
-    <header class="relative z-10 flex flex-col h-full">
-      <div class="flex items-center gap-x-8 flex-col md:flex-row gap-y-6">
-        <div
-          class="relative animate-fade-in-up"
-          style="--floating-duration: 5000ms"
-        >
-          <img
-            src="/images/banco.webp"
-            alt="Banco Saltano"
-            class="aspect-video h-32 md:h-48 rounded-lg shadow-lg animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)]"
-          />
-          <img
-            src="/images/banco.webp"
-            alt="Banco Saltano"
-            class="absolute blur-md brightness-125 -z-10 saturate-200 inset-0 aspect-video h-32 md:h-48 rounded-lg shadow-lg animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)]"
-          />
-        </div>
-        <div class="flex flex-col">
-          <h1
-            class="text-4xl font-bold font-rubik uppercase text-center md:text-left"
-          >
-            Banco Saltano
-          </h1>
-          <p class="text-lg text-center md:text-left font-rubik">
-            Administra tus <span class="text-yellow-400 font-medium"
-              >SaltoCoins</span
-            > y realiza transacciones.
-          </p>
-        </div>
-      </div>
-    </header>
-
-    <div class="flex flex-col gap-8 mt-8">
-      <div class="flex flex-col gap-4">
-        <h2 class="text-2xl font-bold font-rubik">Saldo actual</h2>
-        <div
-          class="flex items-center gap-x-2 bg-zinc-800 p-2 px-4 w-max rounded-full"
-        >
-          <LucidePiggyBank size={28} class="text-yellow-400 inline-block" />
-          <span class="text-md font-medium font-rubik">
-            {Number(session.user?.coins).toLocaleString()}{" "}
-            <span class="text-yellow-400">SaltoCoins</span>
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <button
-      id="how-to-earn-more-coins"
-      class="fixed bottom-4 right-4 z-20 flex items-center gap-2 p-2 px-4 rounded-full bg-yellow-600 text-white font-rubik font-medium shadow-lg hover:bg-yellow-800 transition-all duration-300"
-    >
-      <span> ¿Cómo ganar más SaltoCoins? </span>
-      <LucidePiggyBank size={24} />
-    </button>
-
-    <EarnSaltoCoinsModal />
-  </div>
+  <BancoSaltanoApp client:only="preact" />
 </CommunityLayout>
-
-<script>
-  import { $ } from "@/lib/dom-selector";
-
-  document.addEventListener("astro:page-load", () => {
-    const $earnCoinsModal = $("#earn-coins-modal") as HTMLDialogElement;
-
-    $("#how-to-earn-more-coins")?.addEventListener("click", () => {
-      $earnCoinsModal?.showModal();
-    });
-  });
-</script>
