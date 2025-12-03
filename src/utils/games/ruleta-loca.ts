@@ -163,8 +163,10 @@ export async function guessLetter(sessionId: number, letter: string, wheelValue:
         // Add points for each occurrence of the letter
         newScore += wheelValue * positions.length;
         
-        // Add revealed letters
-        newRevealedLetters = [...newRevealedLetters, ...positions.map(pos => normalizedLetter)];
+        // Note: revealedLetters is not actually used in the current implementation
+        // The puzzle state is determined by comparing guessedLetters with the phrase
+        // Keeping this for potential future use
+        newRevealedLetters = [...newRevealedLetters, normalizedLetter];
     }
 
     // Update session
@@ -191,6 +193,7 @@ export async function guessLetter(sessionId: number, letter: string, wheelValue:
 
 /**
  * Check if the puzzle is solved
+ * Note: guessedLetters are already normalized when stored
  */
 export function isPuzzleSolved(phrase: string, guessedLetters: string[]): boolean {
     const normalizedPhrase = normalizeLetter(phrase);
@@ -199,7 +202,8 @@ export function isPuzzleSolved(phrase: string, guessedLetters: string[]): boolea
         const char = normalizedPhrase[i];
         // Skip spaces and punctuation
         if (/[A-Z]/.test(char)) {
-            if (!guessedLetters.some(letter => normalizeLetter(letter) === char)) {
+            // guessedLetters are already normalized, so we don't normalize them again
+            if (!guessedLetters.includes(char)) {
                 return false;
             }
         }
