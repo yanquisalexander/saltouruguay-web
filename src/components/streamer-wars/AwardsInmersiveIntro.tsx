@@ -1,5 +1,6 @@
 import { CDN_PREFIX, playSound, playSoundWithReverb } from "@/consts/Sounds";
 import { useEffect, useState } from "preact/hooks";
+import { LucideCheckCircle2, LucideClock, LucideHash } from "lucide-preact";
 
 interface ScriptItem {
     text?: string;
@@ -38,6 +39,27 @@ const INTRO_SCRIPT: ScriptItem[] = [
         duration: 5000,
         audioPath: "scripts/bienvenida-awards-2",
         text: "Prepárense para celebrar los logros más destacados de nuestra comunidad."
+    },
+    {
+        duration: 6000,
+        audioPath: "scripts/bienvenida-awards-reglas",
+        component: (
+            <div className="flex flex-col">
+                <h3 className="text-5xl font-teko text-yellow-500 uppercase mb-8">Reglas de Votación</h3>
+                <div className="flex items-center gap-6 mb-4">
+                    <LucideCheckCircle2 className="size-12 text-green-500" />
+                    <p className="text-2xl font-rubik text-white">Puedes votar hasta 2 nominados por categoría</p>
+                </div>
+                <div className="flex items-center  gap-6 mb-4">
+                    <LucideClock className="size-12 text-blue-500" />
+                    <p className="text-2xl font-rubik text-white">Tómate tu tiempo, una vez enviados no podrás modificar tus votos</p>
+                </div>
+                <div className="flex items-center  gap-6">
+                    <LucideHash className="size-12 text-yellow-500" />
+                    <p className="text-2xl font-rubik text-white">El número en la tarjeta indica el puntaje: 1 o 0.5 puntos</p>
+                </div>
+            </div>
+        )
     },
     {
         duration: 7000,
@@ -87,20 +109,15 @@ export const AwardsInmersiveIntro = () => {
 
     useEffect(() => {
         PRELOAD_SOUNDS();
-        const checkIntroStatus = async () => {
-            try {
-                const response = await fetch('/api/awards-intro?check=awards-2025-inmersive');
-                const data = await response.json();
+        const checkIntroStatus = () => {
+            const shown = localStorage.getItem('awards-2025-inmersive-shown');
+            if (!shown) {
 
-                if (data.shown === false) {
-                    setIsVisible(true);
-                    setIsPlaying(true);
-                }
-            } catch (error) {
-                console.error('Error checking awards intro status:', error);
-            } finally {
-                setIsLoading(false);
+                setIsVisible(true);
+                setIsPlaying(true);
+
             }
+            setIsLoading(false);
         };
 
         checkIntroStatus();
@@ -135,19 +152,11 @@ export const AwardsInmersiveIntro = () => {
         return () => clearTimeout(timeoutId);
     }, [isPlaying]);
 
-    const handleFinish = async () => {
+    const handleFinish = () => {
         setIsFadingOut(true);
         setTimeout(() => setIsVisible(false), 500);
 
-        try {
-            await fetch('/api/awards-intro', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: 'awards-2025-inmersive' })
-            });
-        } catch (error) {
-            console.error('Error marking awards intro as seen:', error);
-        }
+        localStorage.setItem('awards-2025-inmersive-shown', 'true');
     };
 
     if (isLoading || !isVisible) return null;
