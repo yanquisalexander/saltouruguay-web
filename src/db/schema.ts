@@ -881,3 +881,61 @@ export const NegativeVotesStreamersTable = pgTable('negative_votes_streamers', {
 }, (t) => ({
     uniqueUserIdPlayerNumber: unique().on(t.userId, t.playerNumber)
 }))
+
+/* 
+    Ruleta Loca Game Tables
+*/
+
+export const RuletaLocaPhrasesTable = pgTable('ruleta_loca_phrases', {
+    id: serial('id').primaryKey(),
+    phrase: text('phrase').notNull(),
+    category: varchar('category', { length: 100 }).notNull(),
+    difficulty: varchar('difficulty', { enum: ['easy', 'medium', 'hard'] }).notNull().default('medium'),
+    active: boolean('active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+})
+
+export const RuletaLocaGameSessionsTable = pgTable('ruleta_loca_game_sessions', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => UsersTable.id, { onDelete: 'cascade' }),
+    phraseId: integer('phrase_id').notNull().references(() => RuletaLocaPhrasesTable.id),
+    currentScore: integer('current_score').notNull().default(0),
+    wheelValue: integer('wheel_value').notNull().default(0),
+    revealedLetters: text('revealed_letters').array().default([]),
+    guessedLetters: text('guessed_letters').array().default([]),
+    status: varchar('status', { enum: ['playing', 'won', 'lost'] }).notNull().default('playing'),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+})
+
+export const RuletaLocaPlayerStatsTable = pgTable('ruleta_loca_player_stats', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().unique().references(() => UsersTable.id, { onDelete: 'cascade' }),
+    gamesPlayed: integer('games_played').notNull().default(0),
+    gamesWon: integer('games_won').notNull().default(0),
+    totalCoinsEarned: integer('total_coins_earned').notNull().default(0),
+    totalScore: integer('total_score').notNull().default(0),
+    highestScore: integer('highest_score').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+})
+
+export const ruletaLocaGameSessionsRelations = relations(RuletaLocaGameSessionsTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [RuletaLocaGameSessionsTable.userId],
+        references: [UsersTable.id],
+    }),
+    phrase: one(RuletaLocaPhrasesTable, {
+        fields: [RuletaLocaGameSessionsTable.phraseId],
+        references: [RuletaLocaPhrasesTable.id],
+    }),
+}))
+
+export const ruletaLocaPlayerStatsRelations = relations(RuletaLocaPlayerStatsTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [RuletaLocaPlayerStatsTable.userId],
+        references: [UsersTable.id],
+    }),
+}))

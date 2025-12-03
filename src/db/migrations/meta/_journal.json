@@ -309,6 +309,13 @@
       "when": 1759865250958,
       "tag": "0043_hard_marten_broadcloak",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1764776896480,
+      "tag": "0044_giant_power_pack",
+      "breakpoints": true
     }
   ]
 }
