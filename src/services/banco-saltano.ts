@@ -1,9 +1,9 @@
-import { db } from '@/db';
-import { 
-    BancoSaltanoAccountsTable, 
+import { client as db } from '@/db/client';
+import {
+    BancoSaltanoAccountsTable,
     BancoSaltanoTransactionsTable,
     BancoSaltanoDailyRewardsTable,
-    UsersTable 
+    UsersTable
 } from '@/db/schema';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 
@@ -174,7 +174,7 @@ export class BancoSaltanoService {
      * Get transaction history with optional filters
      */
     static async getTransactionHistory(
-        userId: number, 
+        userId: number,
         filters?: {
             type?: TransactionType;
             limit?: number;

@@ -1,6 +1,7 @@
 import { ActionError, defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 import { BancoSaltanoService } from '@/services/banco-saltano';
+import { getSession } from "auth-astro/server";
 
 export const banco = {
     /**
@@ -8,7 +9,7 @@ export const banco = {
      */
     getAccountSummary: defineAction({
         handler: async (_, context) => {
-            const session = context.locals.session;
+            const session = await getSession(context.request);
             if (!session?.user?.id) {
                 throw new ActionError({
                     code: 'UNAUTHORIZED',
@@ -38,7 +39,7 @@ export const banco = {
             offset: z.number().min(0).default(0).optional(),
         }),
         handler: async (input, context) => {
-            const session = context.locals.session;
+            const session = await getSession(context.request);
             if (!session?.user?.id) {
                 throw new ActionError({
                     code: 'UNAUTHORIZED',
@@ -66,7 +67,7 @@ export const banco = {
      */
     claimDailyBonus: defineAction({
         handler: async (_, context) => {
-            const session = context.locals.session;
+            const session = await getSession(context.request);
             if (!session?.user?.id) {
                 throw new ActionError({
                     code: 'UNAUTHORIZED',
@@ -102,7 +103,7 @@ export const banco = {
      */
     checkDailyBonus: defineAction({
         handler: async (_, context) => {
-            const session = context.locals.session;
+            const session = await getSession(context.request);
             if (!session?.user?.id) {
                 throw new ActionError({
                     code: 'UNAUTHORIZED',
