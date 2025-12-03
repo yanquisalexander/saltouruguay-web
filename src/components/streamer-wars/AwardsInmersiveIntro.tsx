@@ -13,7 +13,7 @@ interface ScriptItem {
 const INTRO_SCRIPT: ScriptItem[] = [
     {
         duration: 4000,
-        audioPath: "scripts/awards-intro",
+        audioPath: "scripts/awards-intro?t=1",
         audioVolume: 0.08,
         component: (
 
