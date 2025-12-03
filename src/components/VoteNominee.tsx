@@ -25,7 +25,7 @@ export const VoteNominee = ({ nominee, category, onVote, isVoted,
 
     const nomineeInConst = Object.values(NOMINEES).find(n => n.username === nominee.id)
 
-    const avatar = `/images/nominees/${nomineeInConst?.username}.webp`
+    const avatar = `/images/nominees/${nomineeInConst?.username.toLowerCase()}.webp`
 
     const placeholderAvatar = `https://ui-avatars.com/api/?name=${nomineeInConst?.displayName}&background=random&color=fff`
 
