@@ -38,6 +38,8 @@ export const STREAMER_WARS_SOUNDS = {
     FISHING_ROUND_COMPLETE: 'simon-says-correct',
     FISHING_ELIMINATED: 'equipo-eliminado',
     FISHING_WARNING: 'effect_tick',
+    RULETA_LOCA_GIRAR: 'juegos/giro-ruleta',
+    RULETA_LOCA_GIRANDO: 'juegos/ruleta-spin',
 }
 
 

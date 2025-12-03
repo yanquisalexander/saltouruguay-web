@@ -2,6 +2,7 @@ import { TEAMS } from "../consts/Teams";
 import { ACHIEVEMENTS } from "../consts/Achievements";
 import { client } from "./client";
 import { AchievementsTable, StreamerWarsTeamsTable } from "./schema";
+import { seedRuletaLocaPhrases } from "./seeds/ruleta-loca-phrases";
 
 export const seed = async () => {
     console.log('Seeding database...');
@@ -26,6 +27,13 @@ export const seed = async () => {
             })
             .onConflictDoNothing();
     }
+
+    try {
+        await seedRuletaLocaPhrases();
+    } catch (error) {
+        console.error("Error seeding Ruleta Loca phrases:", error)
+    }
+
 
 
 }

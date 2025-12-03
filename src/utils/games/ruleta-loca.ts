@@ -1,20 +1,7 @@
 import { client } from "@/db/client";
 import { RuletaLocaGameSessionsTable, RuletaLocaPhrasesTable, RuletaLocaPlayerStatsTable, UsersTable } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
-
-// Wheel segment values (inspired by classic Wheel of Fortune)
-export const WHEEL_SEGMENTS = [
-    { value: 100, label: "100", type: "coins" },
-    { value: 200, label: "200", type: "coins" },
-    { value: 300, label: "300", type: "coins" },
-    { value: 500, label: "500", type: "coins" },
-    { value: 750, label: "750", type: "coins" },
-    { value: 1000, label: "1000", type: "coins" },
-    { value: 0, label: "Pierde Turno", type: "lose_turn" },
-    { value: 0, label: "Bancarrota", type: "bankrupt" },
-] as const;
-
-export type WheelSegment = typeof WHEEL_SEGMENTS[number];
+import { WHEEL_SEGMENTS, type WheelSegment } from "./wheel-segments";
 
 /**
  * Spin the wheel and return a random segment
@@ -162,7 +149,7 @@ export async function guessLetter(sessionId: number, letter: string, wheelValue:
     if (found) {
         // Add points for each occurrence of the letter
         newScore += wheelValue * positions.length;
-        
+
         // Note: revealedLetters is not actually used in the current implementation
         // The puzzle state is determined by comparing guessedLetters with the phrase
         // Keeping this for potential future use
@@ -197,7 +184,7 @@ export async function guessLetter(sessionId: number, letter: string, wheelValue:
  */
 export function isPuzzleSolved(phrase: string, guessedLetters: string[]): boolean {
     const normalizedPhrase = normalizeLetter(phrase);
-    
+
     for (let i = 0; i < normalizedPhrase.length; i++) {
         const char = normalizedPhrase[i];
         // Skip spaces and punctuation
@@ -208,7 +195,7 @@ export function isPuzzleSolved(phrase: string, guessedLetters: string[]): boolea
             }
         }
     }
-    
+
     return true;
 }
 

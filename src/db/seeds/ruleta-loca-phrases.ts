@@ -2,49 +2,47 @@ import { client } from "../client";
 import { RuletaLocaPhrasesTable } from "../schema";
 
 export const INITIAL_PHRASES = [
-    // Fácil
-    { phrase: "URUGUAY", category: "País", difficulty: "easy" as const },
-    { phrase: "SALTO", category: "Ciudad", difficulty: "easy" as const },
-    { phrase: "MATE", category: "Bebida", difficulty: "easy" as const },
-    { phrase: "MONTEVIDEO", category: "Capital", difficulty: "easy" as const },
-    { phrase: "TANGO", category: "Música", difficulty: "easy" as const },
-    { phrase: "FUTBOL", category: "Deporte", difficulty: "easy" as const },
-    { phrase: "CHIVITO", category: "Comida", difficulty: "easy" as const },
-    { phrase: "DULCE DE LECHE", category: "Postre", difficulty: "easy" as const },
+    // --- NIVEL FÁCIL (Palabras sueltas o frases muy cortas) ---
+    { phrase: "MATE AMARGO", category: "Tradición", difficulty: "easy" as const },
+    { phrase: "TORTA FRITA", category: "Comida", difficulty: "easy" as const },
+    { phrase: "GARDEL ES URUGUAYO", category: "Verdad Absoluta", difficulty: "easy" as const },
+    { phrase: "TERMAS DEL DAYMAN", category: "Lugar en Salto", difficulty: "easy" as const },
+    { phrase: "COSTANERA NORTE", category: "Lugar", difficulty: "easy" as const },
+    { phrase: "NARANJA DE SALTO", category: "Orgullo Local", difficulty: "easy" as const },
+    { phrase: "CORTITA Y AL PIE", category: "Fútbol", difficulty: "easy" as const },
+    { phrase: "ALFAJOR DE MAICENA", category: "Postre", difficulty: "easy" as const },
+    { phrase: "SALTO COINS", category: "Moneda Virtual", difficulty: "easy" as const }, // Manteniendo la tuya
 
-    // Medio
-    { phrase: "RIO DE LA PLATA", category: "Geografía", difficulty: "medium" as const },
-    { phrase: "MATE CON TORTAS FRITAS", category: "Tradición", difficulty: "medium" as const },
-    { phrase: "COLONIA DEL SACRAMENTO", category: "Patrimonio", difficulty: "medium" as const },
-    { phrase: "CERRO DE MONTEVIDEO", category: "Lugar", difficulty: "medium" as const },
-    { phrase: "CARNAVAL MAS LARGO DEL MUNDO", category: "Cultura", difficulty: "medium" as const },
-    { phrase: "PUNTA DEL ESTE", category: "Turismo", difficulty: "medium" as const },
-    { phrase: "ASADO CON AMIGOS", category: "Costumbre", difficulty: "medium" as const },
-    { phrase: "ESTADIO CENTENARIO", category: "Deporte", difficulty: "medium" as const },
-
-    // Difícil
-    { phrase: "LA CELESTE OLÍMPICA", category: "Historia Deportiva", difficulty: "hard" as const },
-    { phrase: "JOSE GERVASIO ARTIGAS", category: "Prócer", difficulty: "hard" as const },
-    { phrase: "GAUCHO EN LA PAMPA", category: "Tradición", difficulty: "hard" as const },
-    { phrase: "CANDOMBE AFRO URUGUAYO", category: "Patrimonio Cultural", difficulty: "hard" as const },
-    { phrase: "PIZZA Y FAINÁ EN LA RAMBLA", category: "Gastronomía", difficulty: "hard" as const },
-    { phrase: "TERMAS DE SALTO GRANDE", category: "Turismo", difficulty: "hard" as const },
-    { phrase: "CABO POLONIO", category: "Reserva Natural", difficulty: "hard" as const },
-    { phrase: "TABLADO DE CARNAVAL", category: "Cultura Popular", difficulty: "hard" as const },
-
-    // Frases de la comunidad SaltoUruguayServer
-    { phrase: "SALTOURUGUAYSERVER", category: "Comunidad", difficulty: "medium" as const },
-    { phrase: "STREAMER WARS", category: "Evento", difficulty: "medium" as const },
-    { phrase: "SALTO COINS", category: "Moneda Virtual", difficulty: "easy" as const },
+    // --- NIVEL MEDIO (Lugares compuestos, títulos de canciones, comidas complejas) ---
+    { phrase: "CHIVITO CANADIENSE AL PLATO", category: "Gastronomía", difficulty: "medium" as const },
+    { phrase: "TRANQUILO COMO AGUA DE TANQUE", category: "Dicho Popular", difficulty: "medium" as const },
+    { phrase: "UN APLAUSO PARA EL ASADOR", category: "Costumbre", difficulty: "medium" as const },
+    { phrase: "NO TE VA GUSTAR", category: "Música", difficulty: "medium" as const },
+    { phrase: "REPRESA DE SALTO GRANDE", category: "Ingeniería", difficulty: "medium" as const },
+    { phrase: "PARQUE DEL LAGO", category: "Paseo", difficulty: "medium" as const },
+    { phrase: "LA CUEVA DEL SAN ANTONIO", category: "Lugar en Salto", difficulty: "medium" as const },
     { phrase: "MEMBER CARD SALTANO", category: "Comunidad", difficulty: "medium" as const },
-    { phrase: "BANCO SALTANO", category: "Economía", difficulty: "easy" as const },
+    { phrase: "BO SACA LA FOTO", category: "Expresión", difficulty: "medium" as const },
+    { phrase: "NO ES COCA ES FANTA", category: "Humor", difficulty: "medium" as const },
+    { phrase: "EL QUE NO SALTA ES CANGURO", category: "Cántico", difficulty: "medium" as const },
 
-    // Frases divertidas
-    { phrase: "BO QUE CALOR", category: "Expresión Uruguaya", difficulty: "easy" as const },
-    { phrase: "TA TODO BIEN", category: "Expresión", difficulty: "easy" as const },
-    { phrase: "CAMPEONES DEL MUNDO", category: "Orgullo Nacional", difficulty: "medium" as const },
-    { phrase: "GARRA CHARRUA", category: "Identidad", difficulty: "easy" as const },
-    { phrase: "NO HAY MEJOR QUE URUGUAY", category: "Orgullo", difficulty: "medium" as const },
+    // --- NIVEL DIFÍCIL (Refranes largos, frases de culto, jerga cerrada) ---
+    { phrase: "A CABALLO REGALADO NO SE LE MIRAN LOS DIENTES", category: "Refrán", difficulty: "hard" as const },
+    { phrase: "NO HAY QUE TIRAR MANTECA AL TECHO", category: "Consejo Financiero", difficulty: "hard" as const },
+    { phrase: "COCAMBOLA EN EL SURUBI", category: "Evento Local", difficulty: "hard" as const }, // Referencia muy local (si aplica)
+    { phrase: "MAS PERDIDO QUE PERRO EN CANCHA DE BOCHAS", category: "Dicho Popular", difficulty: "hard" as const },
+    { phrase: "EL CUARTETO DE NOS", category: "Música", difficulty: "hard" as const },
+    { phrase: "MONUMENTO A LA GAVIOTA", category: "Arquitectura Salteña", difficulty: "hard" as const }, // La famosa gaviota de Dieste
+    { phrase: "NO DEJES PARA MAÑANA LO QUE PUEDES HACER HOY", category: "Refrán", difficulty: "hard" as const },
+    { phrase: "CAMARON QUE SE DUERME SE LO LLEVA LA CORRIENTE", category: "Refrán", difficulty: "hard" as const },
+    { phrase: "STREAMER WARS SEASON DOS", category: "Evento", difficulty: "hard" as const }, // Anticipando futuro
+    { phrase: "LA GARRA CHARRUA NO SE COMPRA", category: "Filosofía", difficulty: "hard" as const },
+
+    // --- NIVEL "INSANE" (Frases muy largas o complicadas para adivinar letra por letra) ---
+    { phrase: "SIEMPRE QUE LLOVIO PARO", category: "Optimismo", difficulty: "hard" as const },
+    { phrase: "NO ESTOY GORDO ESTOY LLENO DE AMOR", category: "Humor", difficulty: "hard" as const },
+    { phrase: "AGARRATE CATALINA QUE VAMOS A GALOPAR", category: "Murga / Dicho", difficulty: "hard" as const },
+    { phrase: "EN CASA DE HERRERO CUCHILLO DE PALO", category: "Ironía", difficulty: "hard" as const },
 ];
 
 export async function seedRuletaLocaPhrases() {
@@ -52,15 +50,17 @@ export async function seedRuletaLocaPhrases() {
 
     try {
         // Insert all phrases
+        let count = 0;
         for (const phrase of INITIAL_PHRASES) {
             await client
                 .insert(RuletaLocaPhrasesTable)
                 .values(phrase)
-                .onConflictDoNothing()
+                .onConflictDoNothing() // Importante para no duplicar si corres el seed varias veces
                 .execute();
+            count++;
         }
 
-        console.log(`✓ Successfully seeded ${INITIAL_PHRASES.length} phrases`);
+        console.log(`✓ Successfully seeded/checked ${count} phrases`);
     } catch (error) {
         console.error("Error seeding phrases:", error);
         throw error;
