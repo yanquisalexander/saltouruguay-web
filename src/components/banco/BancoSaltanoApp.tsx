@@ -29,9 +29,16 @@ interface Transaction {
     amount: number;
     balanceBefore: number;
     balanceAfter: number;
-    description: string;
-    metadata: any;
+    description: string | null;
+    metadata: Record<string, unknown> | null;
     createdAt: Date;
+}
+
+interface ClaimBonusResult {
+    success: boolean;
+    amount: number;
+    streak: number;
+    transaction: unknown;
 }
 
 type ViewMode = 'summary' | 'transactions' | 'daily-bonus';
@@ -53,7 +60,7 @@ export default function BancoSaltanoApp() {
             setLoading(true);
             const result = await actions.banco.getAccountSummary();
             if (result.data) {
-                setAccountSummary(result.data as any);
+                setAccountSummary(result.data as AccountSummary);
             }
         } catch (error: any) {
             toast.error(error.message || 'Error al cargar los datos');
@@ -65,11 +72,11 @@ export default function BancoSaltanoApp() {
     const loadTransactions = async (filter?: string) => {
         try {
             const result = await actions.banco.getTransactionHistory({
-                type: filter as any,
+                type: filter as 'deposit' | 'withdrawal' | 'transfer' | 'game_reward' | 'daily_bonus' | 'purchase' | 'refund' | undefined,
                 limit: 50,
             });
             if (result.data) {
-                setTransactions(result.data as any);
+                setTransactions(result.data as Transaction[]);
             }
         } catch (error: any) {
             toast.error(error.message || 'Error al cargar el historial');
@@ -81,7 +88,8 @@ export default function BancoSaltanoApp() {
             setClaimingBonus(true);
             const result = await actions.banco.claimDailyBonus();
             if (result.data) {
-                toast.success(`¡Bonus reclamado! +${result.data.amount} SaltoCoins (Racha: ${result.data.streak} días)`);
+                const bonusData = result.data as ClaimBonusResult;
+                toast.success(`¡Bonus reclamado! +${bonusData.amount} SaltoCoins (Racha: ${bonusData.streak} días)`);
                 await loadAccountData();
             }
         } catch (error: any) {

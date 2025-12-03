@@ -184,24 +184,21 @@ export class BancoSaltanoService {
         try {
             const { type, limit = 50, offset = 0 } = filters || {};
 
-            let query = db
+            const whereConditions = type
+                ? and(
+                    eq(BancoSaltanoTransactionsTable.userId, userId),
+                    eq(BancoSaltanoTransactionsTable.type, type)
+                )
+                : eq(BancoSaltanoTransactionsTable.userId, userId);
+
+            const transactions = await db
                 .select()
                 .from(BancoSaltanoTransactionsTable)
-                .where(eq(BancoSaltanoTransactionsTable.userId, userId))
+                .where(whereConditions)
                 .orderBy(desc(BancoSaltanoTransactionsTable.createdAt))
                 .limit(limit)
                 .offset(offset);
 
-            if (type) {
-                query = query.where(
-                    and(
-                        eq(BancoSaltanoTransactionsTable.userId, userId),
-                        eq(BancoSaltanoTransactionsTable.type, type)
-                    )
-                );
-            }
-
-            const transactions = await query;
             return transactions;
         } catch (error) {
             console.error('Error getting transaction history:', error);
@@ -261,24 +258,38 @@ export class BancoSaltanoService {
                     streak,
                 });
 
-                // Create transaction
-                const transaction = await this.createTransaction({
+                // Create transaction inline (within same transaction context)
+                const balanceBefore = account.balance;
+                const balanceAfter = balanceBefore + bonusAmount;
+
+                const [transaction] = await tx.insert(BancoSaltanoTransactionsTable).values({
                     userId,
                     type: 'daily_bonus',
+                    status: 'completed',
                     amount: bonusAmount,
+                    balanceBefore,
+                    balanceAfter,
                     description: `Bonus diario (Racha: ${streak} días)`,
-                    metadata: {
-                        streak,
-                        baseReward,
-                    },
-                });
+                    metadata: { streak, baseReward },
+                }).returning();
 
-                // Update account last daily bonus
+                // Update account balance and stats
                 await tx.update(BancoSaltanoAccountsTable)
                     .set({
+                        balance: balanceAfter,
+                        totalDeposits: sql`${BancoSaltanoAccountsTable.totalDeposits} + ${bonusAmount}`,
                         lastDailyBonus: sql`current_timestamp`,
+                        updatedAt: sql`current_timestamp`,
                     })
                     .where(eq(BancoSaltanoAccountsTable.userId, userId));
+
+                // Sync with users table coins
+                await tx.update(UsersTable)
+                    .set({
+                        coins: balanceAfter,
+                        updatedAt: sql`current_timestamp`,
+                    })
+                    .where(eq(UsersTable.id, userId));
 
                 return {
                     transaction,
