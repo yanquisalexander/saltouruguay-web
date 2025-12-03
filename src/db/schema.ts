@@ -939,3 +939,101 @@ export const ruletaLocaPlayerStatsRelations = relations(RuletaLocaPlayerStatsTab
         references: [UsersTable.id],
     }),
 }))
+
+/*
+    Banco Saltano Tables
+    Virtual economy system for the community
+*/
+
+// Transaction types enum
+export const transactionTypeEnum = pgEnum('transaction_type', [
+    'deposit',
+    'withdrawal', 
+    'transfer',
+    'game_reward',
+    'daily_bonus',
+    'purchase',
+    'refund'
+]);
+
+// Transaction status enum
+export const transactionStatusEnum = pgEnum('transaction_status', [
+    'pending',
+    'completed',
+    'failed',
+    'cancelled'
+]);
+
+// User bank accounts - automatically created for each user
+export const BancoSaltanoAccountsTable = pgTable('banco_saltano_accounts', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().unique().references(() => UsersTable.id, { onDelete: 'cascade' }),
+    balance: integer('balance').notNull().default(0), // Current balance (synced with users.coins)
+    totalDeposits: integer('total_deposits').notNull().default(0),
+    totalWithdrawals: integer('total_withdrawals').notNull().default(0),
+    totalTransfers: integer('total_transfers').notNull().default(0),
+    lastDailyBonus: timestamp('last_daily_bonus'),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+});
+
+// Transaction history
+export const BancoSaltanoTransactionsTable = pgTable('banco_saltano_transactions', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => UsersTable.id, { onDelete: 'cascade' }),
+    type: transactionTypeEnum('type').notNull(),
+    status: transactionStatusEnum('status').notNull().default('completed'),
+    amount: integer('amount').notNull(),
+    balanceBefore: integer('balance_before').notNull(),
+    balanceAfter: integer('balance_after').notNull(),
+    description: text('description'),
+    metadata: jsonb('metadata').default({}), // For storing game info, source, etc.
+    fromUserId: integer('from_user_id').references(() => UsersTable.id),
+    toUserId: integer('to_user_id').references(() => UsersTable.id),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+});
+
+// Daily rewards tracking
+export const BancoSaltanoDailyRewardsTable = pgTable('banco_saltano_daily_rewards', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => UsersTable.id, { onDelete: 'cascade' }),
+    rewardDate: timestamp('reward_date').notNull().default(sql`current_date`),
+    amount: integer('amount').notNull(),
+    streak: integer('streak').notNull().default(1), // Consecutive days
+    claimed: boolean('claimed').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueUserDate: unique('user_reward_date_idx').on(t.userId, t.rewardDate),
+}));
+
+// Relations
+export const bancoSaltanoAccountsRelations = relations(BancoSaltanoAccountsTable, ({ one, many }) => ({
+    user: one(UsersTable, {
+        fields: [BancoSaltanoAccountsTable.userId],
+        references: [UsersTable.id],
+    }),
+    transactions: many(BancoSaltanoTransactionsTable),
+    dailyRewards: many(BancoSaltanoDailyRewardsTable),
+}));
+
+export const bancoSaltanoTransactionsRelations = relations(BancoSaltanoTransactionsTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [BancoSaltanoTransactionsTable.userId],
+        references: [UsersTable.id],
+    }),
+    fromUser: one(UsersTable, {
+        fields: [BancoSaltanoTransactionsTable.fromUserId],
+        references: [UsersTable.id],
+    }),
+    toUser: one(UsersTable, {
+        fields: [BancoSaltanoTransactionsTable.toUserId],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const bancoSaltanoDailyRewardsRelations = relations(BancoSaltanoDailyRewardsTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [BancoSaltanoDailyRewardsTable.userId],
+        references: [UsersTable.id],
+    }),
+}));

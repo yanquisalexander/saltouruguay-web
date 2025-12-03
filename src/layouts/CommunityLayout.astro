@@ -2,6 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import CommunitySidebar from "@/components/CommunitySidebar";
 import "@/assets/styles/community-layout.css";
+import "@/assets/styles/pixel-art.css";
 
 interface Props {
   title?: string;
@@ -19,10 +20,10 @@ const { title, description, hideSidebar = false } = Astro.props;
   hideHeader
   hideFooter
 >
-  <div class={`s-ui-layout-base ${hideSidebar ? "no-sidebar" : ""}`}>
-    <header class="appbar flex justify-center font-rubik">
-      <img src="/favicon.svg" alt="Salto Uruguay" class="size-6 mr-4" />
-      {title}
+  <div class={`s-ui-layout-base pixel-container ${hideSidebar ? "no-sidebar" : ""}`}>
+    <header class="appbar flex justify-center items-center font-rubik pixel-panel">
+      <img src="/favicon.svg" alt="Salto Uruguay" class="size-6 mr-4 pixel-coin-icon" />
+      <span class="pixel-heading text-sm">{title}</span>
     </header>
     {
       !hideSidebar && (
