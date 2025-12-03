@@ -1,6 +1,6 @@
 ---
 import { ACHIEVEMENTS, ACHIEVEMENTS_TEXTS } from "@/consts/Achievements";
-import Layout from "@/layouts/Layout.astro";
+import CommunityLayout from "@/layouts/CommunityLayout.astro";
 import { getUserAchievements } from "@/utils/user";
 import { getSession } from "auth-astro/server";
 import { LucideLockKeyhole } from "lucide-preact";
@@ -16,7 +16,7 @@ if (!session) {
 const userAchievements = await getUserAchievements(session.user.id);
 ---
 
-<Layout
+<CommunityLayout
   title="Mis Logros"
   description="Descubre los logros que has desbloqueado."
 >
@@ -118,4 +118,4 @@ const userAchievements = await getUserAchievements(session.user.id);
       </ul>
     </div>
   </div>
-</Layout>
+</CommunityLayout>

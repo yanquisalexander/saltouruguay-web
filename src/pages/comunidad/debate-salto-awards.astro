@@ -1,6 +1,6 @@
 ---
 import { SALTO_BROADCASTER_ID } from "@/config";
-import Layout from "@/layouts/Layout.astro";
+import CommunityLayout from "@/layouts/CommunityLayout.astro";
 import { getDebateMessages } from "@/utils/user";
 import { getSession } from "auth-astro/server";
 import { LucideMessageSquareDiff, LucidePin, LucideX } from "lucide-preact";
@@ -17,7 +17,7 @@ const pendingMessages = messageBoard.filter(
 );
 ---
 
-<Layout title="Debate Salto Awards">
+<CommunityLayout title="Debate Salto Awards">
   <meta
     id="current-user-data"
     data-user={JSON.stringify({ user: session?.user || null })}
@@ -165,7 +165,7 @@ const pendingMessages = messageBoard.filter(
       ) : null
     }
   </div>
-</Layout>
+</CommunityLayout>
 
 <script>
   import { $, $$ } from "@/lib/dom-selector";

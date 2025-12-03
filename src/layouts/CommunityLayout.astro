@@ -1,0 +1,41 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import CommunitySidebar from "@/components/CommunitySidebar";
+import "@/assets/styles/community-layout.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  hideSidebar?: boolean;
+}
+
+const { title, description, hideSidebar = false } = Astro.props;
+---
+
+<Layout
+  title={title}
+  description={description}
+  mainClassname=""
+  hideHeader
+  hideFooter
+>
+  <div class={`s-ui-layout-base ${hideSidebar ? "no-sidebar" : ""}`}>
+    <header class="appbar flex justify-center font-rubik">
+      <img src="/favicon.svg" alt="Salto Uruguay" class="size-6 mr-4" />
+      {title}
+    </header>
+    {
+      !hideSidebar && (
+        <aside class="sidebar">
+          <CommunitySidebar client:load />
+        </aside>
+      )
+    }
+    <main
+      class={`overflow-y-auto h-full border-t relative  ${!hideSidebar ? "rounded-tl-md border-l border-zinc-800" : "border-l-transparent"}`}
+      style={{ gridArea: "main" }}
+    >
+      <slot />
+    </main>
+  </div>
+</Layout>

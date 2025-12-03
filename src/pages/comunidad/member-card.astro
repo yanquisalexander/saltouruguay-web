@@ -1,7 +1,7 @@
 ---
 import { MyMemberCard } from "@/components/MyMemberCard";
 import type { MemberCardSkins } from "@/consts/MemberCardSkins";
-import Layout from "@/layouts/Layout.astro";
+import CommunityLayout from "@/layouts/CommunityLayout.astro";
 import { getMemberCardData } from "@/utils/user";
 import { getSession } from "auth-astro/server";
 
@@ -18,7 +18,7 @@ let dbMemberCard: Awaited<ReturnType<typeof getMemberCardData>> | null = null;
 dbMemberCard = await getMemberCardData(parseInt(session?.user?.id as string));
 ---
 
-<Layout title={`Member Card - ${session.user.name}`}>
+<CommunityLayout title={`Member Card - ${session.user.name}`}>
   <p class="font-rubik uppercase text-lg text-center mt-8">
     ¡Bienvenido a tu Member Card, <span class="text-purple-400 font-semibold"
       >{session.user.name}</span
@@ -43,4 +43,4 @@ dbMemberCard = await getMemberCardData(parseInt(session?.user?.id as string));
       )
     }
   </section>
-</Layout>
+</CommunityLayout>

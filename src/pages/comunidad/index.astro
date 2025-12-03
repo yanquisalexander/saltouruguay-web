@@ -1,5 +1,5 @@
 ---
-import Layout from "@/layouts/Layout.astro";
+import CommunityLayout from "@/layouts/CommunityLayout.astro";
 import cacheService from "@/services/cache";
 
 import { getTotalOfMemberCards } from "@/utils/user";
@@ -57,7 +57,7 @@ if (!totalOfMemberCards) {
 }
 ---
 
-<Layout title="Comunidad">
+<CommunityLayout title="Comunidad">
   <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
     <header
       class="relative z-10 flex flex-col items-center justify-center h-full max-w-4xl mx-auto"
@@ -184,7 +184,7 @@ if (!totalOfMemberCards) {
       </Container3D>
     </div> -->
   </div>
-</Layout>
+</CommunityLayout>
 
 <script>
   import { showSignInDialog } from "@/lib/utils";

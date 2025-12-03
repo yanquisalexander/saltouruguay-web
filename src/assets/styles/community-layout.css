@@ -1,0 +1,78 @@
+:root {
+  --sidebar-width: 64px;
+  --app-top-bar-height: 36px;
+}
+
+.s-ui-layout-base {
+  display: grid;
+  grid-template-areas: 
+    "appbar appbar"
+    var(--grid-row-2, "sidebar main");
+  grid-template-columns: var(--grid-columns, [start] var(--sidebar-width) [sidebarEnd] 1fr [end]);
+  grid-template-rows: [top] var(--app-top-bar-height) [topbarEnd] 1fr [end];
+  height: 100vh;
+}
+
+.s-ui-layout-base.no-sidebar {
+  grid-template-areas: 
+    "appbar appbar"
+    "main main";
+  grid-template-columns: [start] 1fr [end];
+}
+
+.s-ui-layout-content {
+    display: grid;
+    grid-column: start / end;     /* ocupa toda la fila de contenido */
+    grid-row: topbarEnd / end;    /* debajo del topbar */
+    grid-template-columns: subgrid;
+    grid-template-rows: subgrid;
+}
+
+.appbar {
+  grid-area: appbar;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+.sidebar {
+  grid-area: sidebar;
+}
+
+.main {
+  grid-area: main;
+  overflow: auto;
+}
+
+.s-ui-sidebar {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.s-ui-sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.s-ui-sidebar a {
+  color: #ccc;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.s-ui-sidebar a:hover {
+  background-color: #374151;
+  color: #fff;
+}

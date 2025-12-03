@@ -1,6 +1,6 @@
 ---
 import EarnSaltoCoinsModal from "@/components/EarnSaltoCoinsModal.astro";
-import Layout from "@/layouts/Layout.astro";
+import CommunityLayout from "@/layouts/CommunityLayout.astro";
 import { getSession } from "auth-astro/server";
 import { LucidePiggyBank } from "lucide-preact";
 
@@ -11,7 +11,7 @@ if (!session) {
 }
 ---
 
-<Layout title="Banco Saltano">
+<CommunityLayout title="Banco Saltano">
   <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
     <header class="relative z-10 flex flex-col h-full">
       <div class="flex items-center gap-x-8 flex-col md:flex-row gap-y-6">
@@ -70,7 +70,7 @@ if (!session) {
 
     <EarnSaltoCoinsModal />
   </div>
-</Layout>
+</CommunityLayout>
 
 <script>
   import { $ } from "@/lib/dom-selector";
