@@ -31,7 +31,7 @@ export const VoteNominee = ({ nominee, category, onVote, isVoted,
 
 
     return (
-        <li key={nominee.id} class={`overflow-hidden group hover:shadow-lg transition-transform transform  flex w-full h-40 aspect-video animate-fade-in-up ${!disabled && 'hover:scale-105'} `} style={delay}>
+        <li key={nominee.id} class={`overflow-hidden group hover:shadow-lg transition-transform transform  flex w-full h-40 aspect-video animate-fade-in-up ${!disabled && 'hover:scale-110 hover:drop-shadow-[0_0px_30px_rgba(8,_112,_184,1)]'} `} style={delay}>
             <button
                 disabled={disabled}
                 class={`
@@ -39,7 +39,7 @@ export const VoteNominee = ({ nominee, category, onVote, isVoted,
     z-0 group relative
     w-full flex flex-col gap-2 justify-center items-center
     transition-all p-1 
-    hover:drop-shadow-[0_0px_20px_rgba(8,_112,_184,_0.9)]
+    hover:drop-shadow-[0_0px_30px_rgba(8,_112,_184,1)]
     disabled:opacity-50 disabled:cursor-not-allowed
     ${isVoted
                         ? 'bg-yellow-500 text-white'
