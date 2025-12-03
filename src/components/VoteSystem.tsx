@@ -13,6 +13,7 @@ import { NOMINEES } from "@/awards/Nominees"
 
 import { DateTime } from "luxon";
 import { AwardsInmersiveIntro } from "./streamer-wars/AwardsInmersiveIntro"
+import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds"
 
 
 const MAX_VOTES_PER_CATEGORY = 2;
@@ -22,6 +23,7 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
     const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0)
     const [votesByCategory, setVotesByCategory] = useState<{ [key: string]: Vote[] }>({})
     const [isVotingFinished, setIsVotingFinished] = useState(false)
+    const [hasShownFirstVoteToast, setHasShownFirstVoteToast] = useState(false)
 
     const currentCategory = categories[currentCategoryIndex]
     const currentVotesCategory = currentCategory ? votesByCategory[currentCategory.id] || [] : []
@@ -46,7 +48,7 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
             if (Object.keys(parsedVotes).length === 0) return
             setVotesByCategory(parsedVotes)
 
-            toast.success("Se han cargado tus votos guardados en borrador")
+            // toast.success("Se han cargado tus votos guardados en borrador")
         }
     }, [])
 
@@ -95,6 +97,15 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
         localStorage.setItem(storageDraftKey, JSON.stringify(votesByCategory))
     }, [votesByCategory])
 
+    useEffect(() => {
+        const totalVotes = Object.values(votesByCategory).flat().length
+        if (!hasShownFirstVoteToast && totalVotes > 0) {
+            playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION })
+            toast.success("¡Primer voto registrado! Recuerda que puedes votar hasta dos nominados por categoría.", { position: 'bottom-center', richColors: true })
+            setHasShownFirstVoteToast(true)
+        }
+    }, [votesByCategory, hasShownFirstVoteToast])
+
     const handleNextCategory = () => {
         if (isLastCategory) {
             console.log("Voting finished")
@@ -139,6 +150,10 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                             <LucideMinus class="w-8 h-8 text-yellow-500" />
                             <h1 class="text-3xl font-anton">{currentCategory.name}</h1>
                             <LucideMinus class="w-8 h-8 text-yellow-500" />
+                        </div>
+                        <div class="flex items-center justify-center gap-2 text-white font-rubik text-sm">
+                            <LucideTrophy class="w-4 h-4 text-yellow-500" />
+                            <strong class="font-semibold">Recuerda:</strong> Puedes votar hasta dos nominados por categoría 🗳️
                         </div>
                         <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {currentCategory.nominees.map((nominee, index) => {
