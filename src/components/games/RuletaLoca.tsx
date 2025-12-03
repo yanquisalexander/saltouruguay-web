@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "preact/hooks";
 import { toast } from "sonner";
 import { motion, useMotionValue, animate } from "motion/react";
 import { WHEEL_SEGMENTS, type WheelSegment } from "@/utils/games/wheel-segments";
+import { GameHUD, GameReward } from "./GameHUD";
 
 interface RuletaLocaProps {
     initialSession?: any;
@@ -20,6 +21,8 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
     const [currentSegment, setCurrentSegment] = useState<WheelSegment | null>(null);
     const [isSpinning, setIsSpinning] = useState(false);
     const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
+    const [showReward, setShowReward] = useState(false);
+    const [rewardAmount, setRewardAmount] = useState(0);
     const wheelRotation = useMotionValue(0);
     const lastTickCountRef = useRef(Math.floor(0 / 45));
 
@@ -158,9 +161,12 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                 setSession(result.data.session);
 
                 if (result.data.puzzleSolved) {
-                    toast.success(`¡Felicidades! Ganaste ${result.data.coinsEarned} SaltoCoins`);
+                    setRewardAmount(result.data.coinsEarned);
+                    setShowReward(true);
                     playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION, volume: 0.8, reverbAmount: 0.4 });
-                    setGameState("won");
+                    setTimeout(() => {
+                        setGameState("won");
+                    }, 3000);
                 } else if (result.data.found) {
                     toast.success(`¡Correcto! La letra "${letter}" está en la frase.`);
                     playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT, volume: 0.6, reverbAmount: 0.1 });
@@ -325,8 +331,10 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
     if (gameState === "loading") {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900">
-                <div className="text-white text-2xl font-press-start-2p animate-pulse">
-                    Cargando...
+                <div className="pixel-panel text-center pixel-pulse">
+                    <div className="text-white pixel-heading text-xl">
+                        Cargando...
+                    </div>
                 </div>
             </div>
         );
@@ -335,19 +343,20 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
     if (!session || !phrase) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900 text-white p-4">
-                <h1 className="text-4xl font-bold font-press-start-2p mb-8 text-yellow-400">
-                    Ruleta Loca
-                </h1>
-                <p className="text-xl mb-8 text-center max-w-2xl">
-                    ¡Bienvenido a Ruleta Loca! Gira la ruleta, adivina las letras y resuelve la frase para ganar SaltoCoins.
-                </p>
-                <button
-                    onClick={startNewGame}
-                    className="px-8 py-4 bg-yellow-400 text-black font-bold font-press-start-2p rounded-lg border-4 border-black hover:bg-yellow-300 transition-all duration-200 hover:scale-110 active:scale-95"
-                    style={{ boxShadow: "6px 6px 0px 0px rgba(0,0,0,1)" }}
-                >
-                    Iniciar Juego
-                </button>
+                <div className="pixel-panel max-w-2xl text-center">
+                    <h1 className="pixel-heading text-3xl mb-6 pixel-text-secondary">
+                        Ruleta Loca
+                    </h1>
+                    <p className="pixel-text text-lg mb-8">
+                        ¡Bienvenido a Ruleta Loca! Gira la ruleta, adivina las letras y resuelve la frase para ganar SaltoCoins.
+                    </p>
+                    <button
+                        onClick={startNewGame}
+                        className="pixel-btn-primary text-lg"
+                    >
+                        Iniciar Juego
+                    </button>
+                </div>
             </div>
         );
     }
@@ -355,18 +364,19 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
     if (gameState === "won") {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900 text-white p-4">
-                <h1 className="text-4xl font-bold font-press-start-2p mb-8 text-yellow-400 animate-bounce">
-                    ¡Ganaste!
-                </h1>
-                <p className="text-2xl mb-4">Puntuación final: {session.currentScore}</p>
-                <p className="text-xl mb-8">La frase era: "{phrase.phrase}"</p>
-                <button
-                    onClick={startNewGame}
-                    className="px-8 py-4 bg-yellow-400 text-black font-bold font-press-start-2p rounded-lg border-4 border-black hover:bg-yellow-300 transition-all duration-200 hover:scale-110 active:scale-95"
-                    style={{ boxShadow: "6px 6px 0px 0px rgba(0,0,0,1)" }}
-                >
-                    Jugar de Nuevo
-                </button>
+                <div className="pixel-panel max-w-2xl text-center pixel-glow">
+                    <h1 className="pixel-heading text-3xl mb-6 pixel-text-secondary animate-bounce">
+                        ¡Ganaste!
+                    </h1>
+                    <p className="pixel-text text-2xl mb-4">Puntuación final: {session.currentScore}</p>
+                    <p className="pixel-text text-lg mb-8 text-white/80">La frase era: "{phrase.phrase}"</p>
+                    <button
+                        onClick={startNewGame}
+                        className="pixel-btn-success text-lg"
+                    >
+                        Jugar de Nuevo
+                    </button>
+                </div>
             </div>
         );
     }
@@ -374,17 +384,18 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
     if (gameState === "lost") {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900 text-white p-4">
-                <h1 className="text-4xl font-bold font-press-start-2p mb-8 text-red-400">
-                    Fin del Juego
-                </h1>
-                <p className="text-xl mb-8">La frase era: "{phrase.phrase}"</p>
-                <button
-                    onClick={startNewGame}
-                    className="px-8 py-4 bg-yellow-400 text-black font-bold font-press-start-2p rounded-lg border-4 border-black hover:bg-yellow-300 transition-all duration-200 hover:scale-110 active:scale-95"
-                    style={{ boxShadow: "6px 6px 0px 0px rgba(0,0,0,1)" }}
-                >
-                    Jugar de Nuevo
-                </button>
+                <div className="pixel-panel max-w-2xl text-center">
+                    <h1 className="pixel-heading text-3xl mb-6 text-red-400">
+                        Fin del Juego
+                    </h1>
+                    <p className="pixel-text text-lg mb-8 text-white/80">La frase era: "{phrase.phrase}"</p>
+                    <button
+                        onClick={startNewGame}
+                        className="pixel-btn-secondary text-lg"
+                    >
+                        Jugar de Nuevo
+                    </button>
+                </div>
             </div>
         );
     }
@@ -397,15 +408,17 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                     <h1 className="text-4xl md:text-5xl font-bold font-press-start-2p mb-4 text-yellow-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">
                         🎡 Ruleta Loca 🎡
                     </h1>
-                    <div className="flex justify-center gap-8 text-xl">
-                        <div className="bg-black/50 px-4 py-2 rounded-lg border-2 border-yellow-500/50">
-                            <span className="text-yellow-300">Categoría:</span> {phrase.category}
-                        </div>
-                        <div className="bg-black/50 px-4 py-2 rounded-lg border-2 border-yellow-500/50">
-                            <span className="text-yellow-300">Puntos:</span> {session.currentScore}
-                        </div>
-                    </div>
                 </div>
+
+                {/* Game HUD */}
+                <GameHUD
+                    score={session.currentScore}
+                    showCoins={false}
+                    additionalInfo={{
+                        label: "Categoría",
+                        value: phrase.category,
+                    }}
+                />
 
                 {/* Phrase Panel */}
                 {renderPhrasePanel()}
@@ -422,17 +435,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                         <button
                             onClick={handleSpinWheel}
                             disabled={isSpinning || gameState === "guessing"}
-                            className={`
-                                px-8 py-4 font-bold font-press-start-2p rounded-lg border-4 border-black
-                                transition-all duration-200
-                                ${isSpinning || gameState === "guessing"
-                                    ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                                    : "bg-yellow-400 text-black hover:bg-yellow-300 hover:scale-110 active:scale-95"
-                                }
-                            `}
-                            style={{
-                                boxShadow: isSpinning || gameState === "guessing" ? "2px 2px 0px 0px rgba(0,0,0,0.5)" : "6px 6px 0px 0px rgba(0,0,0,1)",
-                            }}
+                            className={`${isSpinning || gameState === "guessing" ? "pixel-btn opacity-50 cursor-not-allowed" : "pixel-btn-secondary"}`}
                         >
                             {isSpinning ? "Girando..." : gameState === "guessing" ? "Elige una letra" : "Girar Ruleta"}
                         </button>
@@ -446,13 +449,19 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                 <div className="text-center">
                     <button
                         onClick={handleForfeit}
-                        className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg border-4 border-black hover:bg-red-500 transition-all duration-200"
-                        style={{ boxShadow: "4px 4px 0px 0px rgba(0,0,0,1)" }}
+                        className="pixel-btn-danger"
                     >
                         Rendirse
                     </button>
                 </div>
             </div>
+
+            {/* Reward Modal */}
+            <GameReward
+                coins={rewardAmount}
+                visible={showReward}
+                onComplete={() => setShowReward(false)}
+            />
         </div>
     );
 };

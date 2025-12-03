@@ -261,16 +261,25 @@ export async function completeGame(sessionId: number, status: "won" | "lost") {
             .execute();
     }
 
-    // Update user coins if won
+    // Update user coins and create transaction in Banco Saltano if won
     if (status === "won" && coinsEarned > 0) {
-        await client
-            .update(UsersTable)
-            .set({
-                coins: sql`${UsersTable.coins} + ${coinsEarned}`,
-                updatedAt: new Date(),
-            })
-            .where(eq(UsersTable.id, session.userId))
-            .execute();
+        // Import BancoSaltano service dynamically to avoid circular dependencies
+        const { BancoSaltanoService } = await import("@/services/banco-saltano");
+        
+        // Ensure account exists
+        await BancoSaltanoService.getOrCreateAccount(session.userId);
+        
+        // Create game reward transaction
+        await BancoSaltanoService.addGameReward(
+            session.userId,
+            coinsEarned,
+            "Ruleta Loca",
+            {
+                sessionId: session.id,
+                score: session.currentScore,
+                phraseId: session.phraseId,
+            }
+        );
     }
 
     return { session: updatedSession, coinsEarned };
