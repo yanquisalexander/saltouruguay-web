@@ -24,9 +24,13 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
     const [showReward, setShowReward] = useState(false);
     const [rewardAmount, setRewardAmount] = useState(0);
     const [showSolveInput, setShowSolveInput] = useState(false);
+    const [showLetterDialog, setShowLetterDialog] = useState(false);
+    const [showWheelDialog, setShowWheelDialog] = useState(false);
     const [solveGuess, setSolveGuess] = useState("");
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const wheelRotation = useMotionValue(0);
     const lastTickCountRef = useRef(Math.floor(0 / 45));
+    const gameContainerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         loadGameState();
@@ -44,6 +48,32 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
             unsubscribe();
         };
     }, []);
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(document.fullscreenElement === gameContainerRef.current);
+        };
+
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+        return () => {
+            document.removeEventListener("fullscreenchange", handleFullscreenChange);
+        };
+    }, []);
+
+    const toggleFullscreen = async () => {
+        if (!gameContainerRef.current) return;
+
+        try {
+            if (!document.fullscreenElement) {
+                await gameContainerRef.current.requestFullscreen();
+            } else {
+                await document.exitFullscreen();
+            }
+        } catch (error) {
+            console.error("Error toggling fullscreen:", error);
+            toast.error("No se pudo cambiar a pantalla completa");
+        }
+    };
 
     const loadGameState = async () => {
         try {
@@ -149,14 +179,18 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                         setSession(result.data.session);
                     }
                     setGameState("idle");
+                    setTimeout(() => setShowWheelDialog(false), 2000);
                 } else if (segment.type === "lose_turn") {
                     toast.warning("¡Pierdes el turno!");
                     playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.EQUIPO_ELIMINADO, volume: 0.5, reverbAmount: 0.3 });
                     setGameState("idle");
+                    setTimeout(() => setShowWheelDialog(false), 2000);
                 } else {
                     toast.success(`¡Giraste ${segment.label} puntos!`);
-                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT, volume: 0.7, reverbAmount: 0.1 });
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_ELIJE_CONSONANTE, volume: 0.7, reverbAmount: 0.1 });
                     setGameState("guessing");
+                    setShowWheelDialog(false);
+                    setShowLetterDialog(true);
                 }
             }
         } catch (error: any) {
@@ -182,13 +216,15 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                     setRewardAmount(result.data.coinsEarned);
                     setShowReward(true);
                     setShowSolveInput(false);
-                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION, volume: 0.8, reverbAmount: 0.4 });
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_GANAR, volume: 0.8, reverbAmount: 0.4 });
                     setTimeout(() => {
                         setGameState("won");
                     }, 3000);
                 } else {
                     toast.error("¡Incorrecto! Esa no es la frase.");
-                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR, volume: 0.6, reverbAmount: 0.2 });
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_ERROR_LETRA, volume: 0.6, reverbAmount: 0.2 });
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    playSound({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_ERROR_FRASE_VOCERA, volume: 0.5, });
                     setShowSolveInput(false);
                     setSolveGuess("");
                 }
@@ -211,13 +247,15 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                 wheelValue: currentWheelValue,
             });
 
+            setShowLetterDialog(false);
+
             if (result.data) {
                 setSession(result.data.session);
 
                 if (result.data.puzzleSolved) {
                     setRewardAmount(result.data.coinsEarned);
                     setShowReward(true);
-                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION, volume: 0.8, reverbAmount: 0.4 });
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_GANAR, volume: 0.8, reverbAmount: 0.4 });
                     setTimeout(() => {
                         setGameState("won");
                     }, 3000);
@@ -227,7 +265,9 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                     setGameState("idle");
                 } else {
                     toast.error(`La letra "${letter}" no está en la frase.`);
-                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR, volume: 0.5, reverbAmount: 0.2 });
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_ERROR_LETRA, volume: 0.5, reverbAmount: 0.2 });
+                    await new Promise(resolve => setTimeout(resolve, 1200));
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_ERROR_LETRA_VOCERA, volume: 0.5, reverbAmount: 0.1 });
                     setGameState("idle");
                 }
             }
@@ -301,34 +341,37 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
 
     const renderWheel = () => {
         return (
-            <div className="relative flex items-center justify-center mb-8">
+            <div className="relative flex items-center justify-center">
                 <motion.div
-                    className="relative w-64 h-64 rounded-full border-8 border-yellow-500 overflow-hidden"
+                    className={`relative rounded-full border-8 border-yellow-500 overflow-hidden shadow-2xl w-[18rem] h-[18rem] md:w-[32rem] md:h-[32rem]`}
                     style={{
                         rotate: wheelRotation,
                         background: "conic-gradient(from 0deg, #ff6b6b 0deg 45deg, #4ecdc4 45deg 90deg, #45b7d1 90deg 135deg, #f9ca24 135deg 180deg, #6c5ce7 180deg 225deg, #fd79a8 225deg 270deg, #2d3436 270deg 315deg, #e17055 315deg 360deg)"
                     }}
                 >
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-16 h-16 bg-yellow-500 rounded-full border-4 border-black"></div>
+                        <div className="w-20 h-20 bg-yellow-500 rounded-full border-4 border-black z-10 shadow-inner"></div>
                     </div>
                     {/* Segment labels */}
                     {WHEEL_SEGMENTS.map((segment, index) => {
                         const angle = (index * 45) + 22.5;
                         const radian = (angle * Math.PI) / 180;
-                        const radius = 100; // Distance from center
+                        const radius = 120; // Distance from center adjusted for size
                         const x = Math.cos(radian) * radius;
                         const y = Math.sin(radian) * radius;
 
                         return (
                             <div
                                 key={index}
-                                className="absolute text-white font-bold text-sm"
+                                className={`absolute text-white font-bold font-mono tabular-nums tracking-tight drop-shadow-md text-lg md:text-xl`}
                                 style={{
                                     left: '50%',
                                     top: '50%',
                                     transform: `translate(-50%, -50%) translate(${x}px, ${y}px) rotate(${angle + 90}deg)`,
+                                    writingMode: 'vertical-rl',
+                                    textOrientation: 'upright',
                                     transformOrigin: 'center',
+                                    overflow: 'visible',
                                 }}
                             >
                                 {segment.label}
@@ -337,54 +380,20 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                     })}
                 </motion.div>
                 <div
-                    className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 w-0 h-0"
+                    className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 w-0 h-0 z-20 drop-shadow-lg"
                     style={{
-                        borderLeft: "15px solid transparent",
-                        borderRight: "15px solid transparent",
-                        borderTop: "30px solid #000",
+                        borderLeft: "20px solid transparent",
+                        borderRight: "20px solid transparent",
+                        borderTop: "40px solid #ef4444", // Red pointer
                     }}
                 />
             </div>
         );
     };
 
-    const renderLetterPad = () => {
-        return (
-            <div className="grid grid-cols-7 gap-2 max-w-2xl mx-auto mb-8">
-                {ALPHABET.map((letter) => {
-                    const isGuessed = session?.guessedLetters?.includes(letter);
-                    const isDisabled = isGuessed || gameState !== "guessing";
-
-                    return (
-                        <button
-                            key={letter}
-                            onClick={() => handleGuessLetter(letter)}
-                            disabled={isDisabled}
-                            className={`
-                                w-12 h-12 flex items-center justify-center
-                                text-xl font-bold font-press-start-2p
-                                border-4 border-black rounded-lg
-                                transition-all duration-200
-                                ${isDisabled
-                                    ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                                    : "bg-yellow-400 text-black hover:bg-yellow-300 hover:scale-110 active:scale-95"
-                                }
-                            `}
-                            style={{
-                                boxShadow: !isDisabled ? "4px 4px 0px 0px rgba(0,0,0,1)" : "2px 2px 0px 0px rgba(0,0,0,0.5)",
-                            }}
-                        >
-                            {letter}
-                        </button>
-                    );
-                })}
-            </div>
-        );
-    };
-
     if (gameState === "loading") {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900">
+            <div className="flex items-center justify-center min-h-dvh bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900">
                 <div className="pixel-panel text-center pixel-pulse">
                     <div className="text-white pixel-heading text-xl">
                         Cargando...
@@ -396,7 +405,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
 
     if (!session || !phrase) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900 text-white p-4">
+            <div className="flex flex-col items-center justify-center h-full bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900 text-white p-4">
                 <div className="pixel-panel max-w-2xl text-center">
                     <h1 className="pixel-heading text-3xl mb-6 pixel-text-secondary">
                         Ruleta Loca
@@ -417,7 +426,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
 
     if (gameState === "won") {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900 text-white p-4">
+            <div className="flex flex-col items-center justify-center h-full bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900 text-white p-4">
                 <div className="pixel-panel max-w-2xl text-center pixel-glow">
                     <h1 className="pixel-heading text-3xl mb-6 pixel-text-secondary animate-bounce">
                         ¡Ganaste!
@@ -437,7 +446,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
 
     if (gameState === "lost") {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900 text-white p-4">
+            <div className="flex flex-col items-center justify-center h-full bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900 text-white p-4">
                 <div className="pixel-panel max-w-2xl text-center">
                     <h1 className="pixel-heading text-3xl mb-6 text-red-400">
                         Fin del Juego
@@ -455,13 +464,22 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900 text-white p-4">
+        <div
+            ref={gameContainerRef}
+            className={`h-full bg-gradient-to-b from-purple-900 via-blue-900 to-cyan-900 text-white ${isFullscreen ? "p-2 md:p-6 overflow-y-auto" : "p-4"}`}
+        >
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
-                <div className="text-center mb-8 pt-8">
-                    <h1 className="text-4xl md:text-5xl font-bold font-press-start-2p mb-4 text-yellow-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">
+                <div className="flex flex-col gap-4 items-center mb-8 pt-8 md:flex-row md:items-center md:justify-between">
+                    <h1 className="text-4xl md:text-5xl font-bold font-press-start-2p text-center text-yellow-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">
                         🎡 Ruleta Loca 🎡
                     </h1>
+                    <button
+                        onClick={toggleFullscreen}
+                        className="pixel-btn-secondary whitespace-nowrap"
+                    >
+                        {isFullscreen ? "Salir pantalla completa" : "Pantalla completa"}
+                    </button>
                 </div>
 
                 {/* Game HUD */}
@@ -477,27 +495,16 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                 {/* Phrase Panel */}
                 {renderPhrasePanel()}
 
-                {/* Wheel */}
-                <div className="mb-8">
-                    {renderWheel()}
-                    <div className="text-center">
-                        {currentSegment && !isSpinning && (
-                            <div className="text-2xl font-bold mb-4 animate-pulse">
-                                {currentSegment.label}
-                            </div>
-                        )}
-                        <button
-                            onClick={handleSpinWheel}
-                            disabled={isSpinning || gameState === "guessing"}
-                            className={`${isSpinning || gameState === "guessing" ? "pixel-btn opacity-50 cursor-not-allowed" : "pixel-btn-secondary"}`}
-                        >
-                            {isSpinning ? "Girando..." : gameState === "guessing" ? "Elige una letra" : "Girar Ruleta"}
-                        </button>
-                    </div>
+                {/* Wheel Button */}
+                <div className="mb-8 text-center">
+                    <button
+                        onClick={() => setShowWheelDialog(true)}
+                        disabled={isSpinning || gameState === "guessing"}
+                        className={`${isSpinning || gameState === "guessing" ? "pixel-btn opacity-50 cursor-not-allowed" : "pixel-btn-secondary text-xl px-8 py-4"}`}
+                    >
+                        {isSpinning ? "Girando..." : gameState === "guessing" ? "¡Elige Letra!" : "ABRIR RULETA"}
+                    </button>
                 </div>
-
-                {/* Letter Pad */}
-                {renderLetterPad()}
 
                 {/* Actions */}
                 <div className="text-center flex justify-center gap-4">
@@ -516,6 +523,78 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                     </button>
                 </div>
             </div>
+
+            {/* Wheel Dialog */}
+            {showWheelDialog && (
+                <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+                    <div className="relative w-full h-full flex flex-col items-center justify-center">
+                        <h2 className="pixel-heading text-3xl mb-8 text-center text-yellow-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">
+                            ¡GIRA LA RULETA!
+                        </h2>
+
+                        <div className="scale-75 md:scale-100 transform transition-transform">
+                            {renderWheel()}
+                        </div>
+
+                        <div className="text-center mt-8">
+                            {currentSegment && !isSpinning && (
+                                <div className="text-4xl font-bold mb-6 animate-pulse text-yellow-300 drop-shadow-md font-press-start-2p">
+                                    {currentSegment.label}
+                                </div>
+                            )}
+                            <button
+                                onClick={handleSpinWheel}
+                                disabled={isSpinning}
+                                className={`
+                                    pixel-btn-secondary text-2xl px-12 py-6
+                                    ${isSpinning ? "opacity-50 cursor-not-allowed" : "hover:scale-105 active:scale-95"}
+                                `}
+                            >
+                                {isSpinning ? "GIRANDO..." : "¡GIRAR!"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Letter Selection Dialog */}
+            {showLetterDialog && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+                    <div className="pixel-panel max-w-4xl w-full p-6 relative">
+                        <h2 className="pixel-heading text-2xl mb-6 text-center text-yellow-400">ELIGE UNA CONSONANTE</h2>
+
+                        <div className="grid grid-cols-7 gap-3 md:gap-4 mx-auto justify-items-center">
+                            {ALPHABET.map((letter) => {
+                                const isGuessed = session?.guessedLetters?.includes(letter);
+                                const isDisabled = isGuessed;
+
+                                return (
+                                    <button
+                                        key={letter}
+                                        onClick={() => handleGuessLetter(letter)}
+                                        disabled={isDisabled}
+                                        className={`
+                                            w-10 h-10 md:w-16 md:h-16 flex items-center justify-center
+                                            text-xl md:text-3xl font-bold font-press-start-2p
+                                            border-4 border-black rounded-lg
+                                            transition-all duration-200
+                                            ${isDisabled
+                                                ? "bg-gray-700 text-gray-500 cursor-not-allowed opacity-50"
+                                                : "bg-yellow-400 text-black hover:bg-yellow-300 hover:scale-110 active:scale-95 hover:shadow-[0_0_15px_rgba(250,204,21,0.6)]"
+                                            }
+                                        `}
+                                        style={{
+                                            boxShadow: !isDisabled ? "4px 4px 0px 0px rgba(0,0,0,1)" : "none",
+                                        }}
+                                    >
+                                        {letter}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Solve Input Modal */}
             {showSolveInput && (

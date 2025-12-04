@@ -55,9 +55,7 @@ const session = await getSession(Astro.request);
     }
 
     <main class="main" style={{ gridArea: "main" }}>
-      <div
-        class="h-full w-full pixel-panel pixel-inset overflow-y-auto p-6 text-gray-300"
-      >
+      <div class="h-full w-full pixel-inset overflow-y-auto text-gray-300">
         <slot />
       </div>
     </main>

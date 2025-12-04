@@ -40,6 +40,12 @@ export const STREAMER_WARS_SOUNDS = {
     FISHING_WARNING: 'effect_tick',
     RULETA_LOCA_GIRAR: 'juegos/giro-ruleta',
     RULETA_LOCA_GIRANDO: 'juegos/ruleta-spin',
+    RULETA_LOCA_GANAR: 'juegos/ruleta-ganar',
+    RULETA_LOCA_ELIJE_CONSONANTE: 'juegos/ruleta-elije-consonante',
+    RULETA_LOCA_ERROR_LETRA: 'juegos/ruleta-error',
+    RULETA_LOCA_ERROR_LETRA_VOCERA: 'juegos/ruleta-error-letra-vocera',
+    RULETA_LOCA_ERROR_FRASE_VOCERA: 'juegos/ruleta-error-frase-vocera',
+
 }
 
 
