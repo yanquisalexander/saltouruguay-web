@@ -20,16 +20,16 @@ const userAchievements = await getUserAchievements(session.user.id);
   title="Mis Logros"
   description="Descubre los logros que has desbloqueado."
 >
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
-    <header class="relative z-10 flex flex-col h-full">
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-8">
+    <header class="relative z-10 flex flex-col h-full mb-8">
       <div class="flex items-center gap-x-8 flex-col md:flex-row gap-y-6">
-        <div class="flex flex-col">
+        <div class="flex flex-col w-full">
           <h1
-            class="text-4xl font-bold font-rubik uppercase text-center md:text-left"
+            class="text-2xl md:text-4xl font-press-start-2p uppercase text-center md:text-left text-white mb-4"
           >
             Mis Logros
           </h1>
-          <p class="text-center md:text-left">
+          <p class="text-center md:text-left font-vt323 text-xl text-gray-400">
             Aquí encontrarás todos los logros que has desbloqueado
           </p>
         </div>
@@ -37,16 +37,16 @@ const userAchievements = await getUserAchievements(session.user.id);
     </header>
 
     <div class="flex flex-col pb-16">
-      <div class="block max-w-xs mt-6">
-        <div class="block pb-2 text-xs font-medium">
+      <div class="block max-w-md mt-2 mb-8 pixel-panel p-4">
+        <div class="block pb-2 text-lg font-vt323 text-white">
           Desbloqueaste
-          <span class="font-bold">{userAchievements.length}</span> de {
-            Object.keys(ACHIEVEMENTS).length
-          } logros. ¡Seguí así!
+          <span class="font-bold text-yellow-400"
+            >{userAchievements.length}</span
+          > de {Object.keys(ACHIEVEMENTS).length} logros. ¡Seguí así!
         </div>
-        <div class="relative w-full h-1 mb-4 bg-gray-700 rounded-full">
+        <div class="relative w-full h-4 bg-black border-2 border-gray-700">
           <div
-            class="h-1 rounded-full duration-300 bg-green-400"
+            class="h-full bg-green-500 transition-all duration-500"
             style={{
               width: `${(userAchievements.length / Object.keys(ACHIEVEMENTS).length) * 100}%`,
             }}
@@ -56,7 +56,7 @@ const userAchievements = await getUserAchievements(session.user.id);
       </div>
 
       <ul
-        class="grid grid-cols-1 gap-8 mt-12 sm:grid-cols-2 md:grid-cols-3 max-w-2xl mx-auto mb-16"
+        class="grid grid-cols-1 gap-8 mt-4 sm:grid-cols-2 md:grid-cols-3 max-w-4xl mx-auto mb-16"
       >
         {
           Object.keys(ACHIEVEMENTS).map((key) => {
@@ -74,31 +74,39 @@ const userAchievements = await getUserAchievements(session.user.id);
             const iconUrl = `/images/achievements/${achievement}.svg`;
 
             return (
-              <li class="flex flex-col text-center transition hover:scale-105 hover:contrast-125  group">
-                <picture class="block mb-2 p-2 w-full aspect-square bg-white/10 rounded-lg border-4 relative border-yellow-300">
+              <li
+                class={`pixel-card p-4 flex flex-col text-center transition hover:scale-105 group bg-[#1f2937] ${!unlockedAt ? "grayscale opacity-75 hover:grayscale-0 hover:opacity-100" : ""}`}
+              >
+                <picture class="block mb-4 w-full aspect-square bg-black/20 border-4 border-black relative">
                   <img
                     src={iconUrl}
                     alt={`Ilustración de ${achievementText?.title}`}
                     class="block w-full aspect-square"
+                    style="image-rendering: pixelated;"
                   />
                   {!unlockedAt && (
-                    <div class="absolute inset-0 flex items-center justify-center bg-black/70 rounded-lg flex-col">
-                      <LucideLockKeyhole
-                        size={64}
-                        className="text-yellow-300"
-                      />
-                      <span class="block mt-2 text-yellow-300">Bloqueado</span>
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/80 flex-col">
+                      <LucideLockKeyhole size={48} className="text-gray-500" />
+                      <span class="block mt-2 text-gray-500 font-press-start-2p text-xs">
+                        Bloqueado
+                      </span>
                     </div>
                   )}
                 </picture>
-                <div
-                  class={`group-hover:opacity-100 transition-opacity ${unlockedAt ? "opacity-100" : "opacity-70"}`}
-                >
-                  <h2 class="text-xl font-rubik text-blue-300">
-                    {achievementText?.title}
-                  </h2>
+                <div class={`flex flex-col flex-1 justify-between`}>
+                  <div>
+                    <h2 class="text-xs md:text-sm font-press-start-2p text-yellow-400 mb-3 leading-relaxed min-h-[3em] flex items-center justify-center">
+                      {achievementText?.title}
+                    </h2>
+                    {achievementText && (
+                      <p class="text-lg font-vt323 text-gray-300 leading-tight mb-2">
+                        {achievementText.description}
+                      </p>
+                    )}
+                  </div>
+
                   {unlockedAt && (
-                    <span class="text-xs opacity-70 font-medium">
+                    <span class="text-sm text-green-400 font-vt323 mt-2 border-t-2 border-gray-700 pt-2">
                       Desbloqueado el{" "}
                       {new Date(unlockedAt).toLocaleDateString("es-ES", {
                         day: "numeric",
@@ -106,9 +114,6 @@ const userAchievements = await getUserAchievements(session.user.id);
                         year: "numeric",
                       })}
                     </span>
-                  )}
-                  {achievementText && (
-                    <p class="text-sm">{achievementText.description}</p>
                   )}
                 </div>
               </li>

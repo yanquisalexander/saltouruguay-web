@@ -265,10 +265,10 @@ export async function completeGame(sessionId: number, status: "won" | "lost") {
     if (status === "won" && coinsEarned > 0) {
         // Import BancoSaltano service dynamically to avoid circular dependencies
         const { BancoSaltanoService } = await import("@/services/banco-saltano");
-        
+
         // Ensure account exists
         await BancoSaltanoService.getOrCreateAccount(session.userId);
-        
+
         // Create game reward transaction
         await BancoSaltanoService.addGameReward(
             session.userId,
@@ -302,4 +302,65 @@ export async function getPlayerStats(userId: number) {
         totalScore: 0,
         highestScore: 0,
     };
+}
+
+/**
+ * Reset the current score of a session (e.g. Bankrupt)
+ */
+export async function resetSessionScore(sessionId: number) {
+    const [updatedSession] = await client
+        .update(RuletaLocaGameSessionsTable)
+        .set({
+            currentScore: 0,
+            updatedAt: new Date(),
+        })
+        .where(eq(RuletaLocaGameSessionsTable.id, sessionId))
+        .returning()
+        .execute();
+
+    return updatedSession;
+}
+
+/**
+ * Attempt to solve the puzzle directly
+ */
+export async function solvePuzzle(sessionId: number, guess: string) {
+    const [session] = await client
+        .select()
+        .from(RuletaLocaGameSessionsTable)
+        .where(eq(RuletaLocaGameSessionsTable.id, sessionId))
+        .execute();
+
+    if (!session || session.status !== "playing") {
+        throw new Error("Sesión de juego inválida");
+    }
+
+    const [phrase] = await client
+        .select()
+        .from(RuletaLocaPhrasesTable)
+        .where(eq(RuletaLocaPhrasesTable.id, session.phraseId))
+        .execute();
+
+    const normalizedPhrase = normalizeLetter(phrase.phrase);
+    const normalizedGuess = normalizeLetter(guess);
+
+    // Remove spaces from both for comparison to be lenient
+    const cleanPhrase = normalizedPhrase.replace(/\s/g, "");
+    const cleanGuess = normalizedGuess.replace(/\s/g, "");
+
+    if (cleanPhrase === cleanGuess) {
+        // Correct!
+        const { coinsEarned, session: completedSession } = await completeGame(sessionId, "won");
+        return {
+            success: true,
+            coinsEarned,
+            session: completedSession,
+        };
+    } else {
+        // Incorrect
+        return {
+            success: false,
+            session,
+        };
+    }
 }

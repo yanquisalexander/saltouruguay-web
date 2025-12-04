@@ -1,6 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import CommunitySidebar from "@/components/CommunitySidebar";
+import PixelCurrentUser from "@/components/PixelCurrentUser";
+import { getSession } from "auth-astro/server";
 import "@/assets/styles/community-layout.css";
 import "@/assets/styles/pixel-art.css";
 
@@ -11,6 +13,7 @@ interface Props {
 }
 
 const { title, description, hideSidebar = false } = Astro.props;
+const session = await getSession(Astro.request);
 ---
 
 <Layout
@@ -20,11 +23,29 @@ const { title, description, hideSidebar = false } = Astro.props;
   hideHeader
   hideFooter
 >
-  <div class={`s-ui-layout-base pixel-container ${hideSidebar ? "no-sidebar" : ""}`}>
-    <header class="appbar flex justify-center items-center font-rubik pixel-panel">
-      <img src="/favicon.svg" alt="Salto Uruguay" class="size-6 mr-4 pixel-coin-icon" />
-      <span class="pixel-heading text-sm">{title}</span>
+  <div class={`s-ui-layout-base ${hideSidebar ? "no-sidebar" : ""}`}>
+    <header class="appbar justify-between">
+      <div class="flex items-center gap-4">
+        <div
+          class="w-10 h-10 bg-blue-600 border-4 border-blue-800 flex items-center justify-center shadow-lg"
+        >
+          <img
+            src="/favicon.svg"
+            alt="Icon"
+            class="size-6 image-pixelated"
+            style="image-rendering: pixelated;"
+          />
+        </div>
+        <span class="pixel-heading text-xl text-white drop-shadow-md"
+          >{title}</span
+        >
+      </div>
+
+      <div class="flex gap-4 items-center">
+        <PixelCurrentUser client:load user={session?.user || null} />
+      </div>
     </header>
+
     {
       !hideSidebar && (
         <aside class="sidebar">
@@ -32,11 +53,13 @@ const { title, description, hideSidebar = false } = Astro.props;
         </aside>
       )
     }
-    <main
-      class={`overflow-y-auto h-full border-t relative  ${!hideSidebar ? "rounded-tl-md border-l border-zinc-800" : "border-l-transparent"}`}
-      style={{ gridArea: "main" }}
-    >
-      <slot />
+
+    <main class="main" style={{ gridArea: "main" }}>
+      <div
+        class="h-full w-full pixel-panel pixel-inset overflow-y-auto p-6 text-gray-300"
+      >
+        <slot />
+      </div>
     </main>
   </div>
 </Layout>

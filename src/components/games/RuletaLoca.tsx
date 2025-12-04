@@ -23,6 +23,8 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
     const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
     const [showReward, setShowReward] = useState(false);
     const [rewardAmount, setRewardAmount] = useState(0);
+    const [showSolveInput, setShowSolveInput] = useState(false);
+    const [solveGuess, setSolveGuess] = useState("");
     const wheelRotation = useMotionValue(0);
     const lastTickCountRef = useRef(Math.floor(0 / 45));
 
@@ -85,6 +87,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
             setIsSpinning(true);
             setGameState("spinning");
             playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_GIRAR, volume: 0.5, reverbAmount: 0.3 });
+
             const result = await actions.games.ruletaLoca.spinWheel();
 
             if (result.data) {
@@ -92,40 +95,59 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                 setCurrentSegment(segment);
                 setCurrentWheelValue(segment.value);
 
-                // Find segment index
+                // 1. Encontrar el índice (Asegúrate de que no haya etiquetas duplicadas en WHEEL_SEGMENTS)
                 const segmentIndex = WHEEL_SEGMENTS.findIndex(s => s.label === segment.label);
-                const targetAngle = (segmentIndex * 45) + 22.5; // Center of segment
 
-                // Calculate the rotation needed to reach targetAngle
-                const currentAngle = wheelRotation.get() % 360;
-                let delta = targetAngle - currentAngle;
-                if (delta < 0) delta += 360;
+                // 2. Calcular la posición objetivo absoluta
+                // El puntero está en 0 grados (arriba).
+                // El centro del segmento está en: (index * 45) + 22.5
+                const segmentAngle = (segmentIndex * 45) + 22.5;
 
-                // Animate wheel spin
-                const spins = 5 + Math.random() * 3; // 5-8 full rotations
-                const finalRotation = wheelRotation.get() + (360 * spins) + delta;
+                // El ángulo visual en el círculo (0-360) donde debe terminar la ruleta
+                // para que el segmento quede arriba.
+                const pointerOffset = 90; // El indicador está en 12 en punto mientras que el gradiente inicia en las 3 en punto
+                const targetVisualAngle = (360 - segmentAngle - pointerOffset + 360) % 360;
 
-                // Reset tick counter
+                // 3. Calcular la rotación final basada en la rotación acumulada actual
+                const currentRotation = wheelRotation.get();
+
+                // Obtenemos cuántas vueltas completas ha dado ya la ruleta
+                const currentFullRotations = Math.floor(currentRotation / 360);
+
+                // Calculamos el siguiente punto de parada válido
+                let targetRotation = (currentFullRotations * 360) + targetVisualAngle;
+
+                // Si el objetivo calculado está atrás o es igual al actual, sumamos 360 para avanzar
+                if (targetRotation <= currentRotation) {
+                    targetRotation += 360;
+                }
+
+                // 4. Añadir giros extra ALEATORIOS PERO ENTEROS
+                // Math.floor es crucial aquí. Si usas decimales, desalineas el objetivo.
+                const randomSpins = 5 + Math.floor(Math.random() * 4); // Entre 5 y 8 vueltas enteras
+                const finalRotation = targetRotation + (randomSpins * 360);
+
+                // Reiniciar contador de ticks para el sonido
                 lastTickCountRef.current = Math.floor(wheelRotation.get() / 45);
 
-                // Animate with Framer Motion
-                animate(wheelRotation, finalRotation, {
-                    duration: 3,
-                    ease: [0.25, 0.1, 0.25, 1], // Custom cubic-bezier for ease-out
+                // Animar
+                await new Promise<void>(resolve => {
+                    animate(wheelRotation, finalRotation, {
+                        duration: 4, // Un poco más largo para el dramatismo
+                        ease: [0.25, 0.1, 0.25, 1],
+                        onComplete: () => resolve()
+                    });
                 });
 
-                // Wait for animation
-                await new Promise(resolve => setTimeout(resolve, 3000));
-
-                // Update the motion value to the normalized angle
-                wheelRotation.set(finalRotation % 360);
                 setIsSpinning(false);
 
-                // Handle special segments
+                // Handle special segments logic (igual que antes)
                 if (segment.type === "bankrupt") {
                     toast.error("¡Bancarrota! Pierdes todos tus puntos.");
                     playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR, volume: 0.6, reverbAmount: 0.2 });
-                    // Reset score logic would go here
+                    if (result.data.session) {
+                        setSession(result.data.session);
+                    }
                     setGameState("idle");
                 } else if (segment.type === "lose_turn") {
                     toast.warning("¡Pierdes el turno!");
@@ -142,6 +164,38 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
             toast.error(error.message || "Error al girar la ruleta");
             setIsSpinning(false);
             setGameState("idle");
+        }
+    };
+
+    const handleSolvePuzzle = async () => {
+        if (!session || !solveGuess.trim()) return;
+
+        try {
+            const result = await actions.games.ruletaLoca.solvePuzzle({
+                sessionId: session.id,
+                guess: solveGuess,
+            });
+
+            if (result.data) {
+                if (result.data.success) {
+                    setSession(result.data.session);
+                    setRewardAmount(result.data.coinsEarned);
+                    setShowReward(true);
+                    setShowSolveInput(false);
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION, volume: 0.8, reverbAmount: 0.4 });
+                    setTimeout(() => {
+                        setGameState("won");
+                    }, 3000);
+                } else {
+                    toast.error("¡Incorrecto! Esa no es la frase.");
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR, volume: 0.6, reverbAmount: 0.2 });
+                    setShowSolveInput(false);
+                    setSolveGuess("");
+                }
+            }
+        } catch (error: any) {
+            console.error("Error solving puzzle:", error);
+            toast.error(error.message || "Error al resolver el panel");
         }
     };
 
@@ -446,7 +500,14 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                 {renderLetterPad()}
 
                 {/* Actions */}
-                <div className="text-center">
+                <div className="text-center flex justify-center gap-4">
+                    <button
+                        onClick={() => setShowSolveInput(true)}
+                        className="pixel-btn-primary"
+                        disabled={isSpinning || gameState === "loading" || gameState === "won" || gameState === "lost"}
+                    >
+                        Resolver Panel
+                    </button>
                     <button
                         onClick={handleForfeit}
                         className="pixel-btn-danger"
@@ -455,6 +516,41 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                     </button>
                 </div>
             </div>
+
+            {/* Solve Input Modal */}
+            {showSolveInput && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="pixel-panel max-w-md w-full p-6">
+                        <h2 className="pixel-heading text-xl mb-4 text-center">Resolver Panel</h2>
+                        <p className="pixel-text text-sm mb-4 text-center text-white/70">
+                            Escribe la frase completa. ¡Cuidado con la ortografía!
+                        </p>
+                        <input
+                            type="text"
+                            value={solveGuess}
+                            onInput={(e) => setSolveGuess((e.target as HTMLInputElement).value)}
+                            className="pixel-input w-full mb-6 uppercase text-center"
+                            placeholder="ESCRIBE LA FRASE..."
+                            autoFocus
+                        />
+                        <div className="flex justify-center gap-4">
+                            <button
+                                onClick={() => setShowSolveInput(false)}
+                                className="pixel-btn-secondary"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSolvePuzzle}
+                                className="pixel-btn-success"
+                                disabled={!solveGuess.trim()}
+                            >
+                                Resolver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Reward Modal */}
             <GameReward

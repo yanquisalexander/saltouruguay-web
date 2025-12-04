@@ -8,7 +8,17 @@ import { LucideLock, LucidePencilRuler } from "lucide-preact";
 
 const session = await getSession(Astro.request);
 
-const COMMUNITY_GRID_CARDS = [
+interface CommunityCard {
+  path: string;
+  requiresLogin: boolean;
+  title: string;
+  description: string;
+  image: string;
+  soon: boolean;
+  soonCustomText?: string;
+}
+
+const COMMUNITY_GRID_CARDS: CommunityCard[] = [
   {
     path: "/comunidad/member-card",
     requiresLogin: true,
@@ -65,9 +75,9 @@ if (!totalOfMemberCards) {
 ---
 
 <CommunityLayout title="Comunidad">
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-8">
     <header
-      class="relative z-10 flex flex-col items-center justify-center h-full max-w-4xl mx-auto"
+      class="relative z-10 flex flex-col items-center justify-center h-full max-w-4xl mx-auto mb-12"
     >
       <div class="flex items-center justify-center gap-x-4">
         <div
@@ -78,22 +88,18 @@ if (!totalOfMemberCards) {
             src="/images/logo_salto.webp"
             alt="SaltoUruguayServer"
             class="size-20 md:size-24 w-auto object-contain aspect-square animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)] saturate-150"
-          />
-          <img
-            src="/images/logo_salto.webp"
-            alt="SaltoUruguayServer"
-            class="absolute blur-md brightness-125 saturate-200 inset-0 size-20 md:size-24 w-auto object-contain aspect-square z-[-1] animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)]"
+            style="image-rendering: pixelated;"
           />
         </div>
         <h1
-          class="text-3xl animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen"
+          class="text-2xl md:text-4xl animate-fade-in-up animate-delay-150 font-press-start-2p tracking-wider uppercase text-white drop-shadow-md"
         >
           Comunidad
         </h1>
       </div>
 
       <h2
-        class="text-xl animate-fade-in-up animate-delay-300 font-rubik uppercase text-white mix-blend-screen my-5 sm:pb-10"
+        class="text-xl md:text-2xl animate-fade-in-up animate-delay-300 font-vt323 uppercase text-gray-300 my-5 text-center"
       >
         ¡Te damos la bienvenida a la <span class="text-yellow-400"
           >comunidad Saltana</span
@@ -103,8 +109,8 @@ if (!totalOfMemberCards) {
 
     {
       totalOfMemberCards ? (
-        <div class="flex justify-center flex-col items-center mb-8 sm:w-max font-rubik px-2 sm:px-6 uppercase font-medium text-sm text-white/70 mx-auto text-center py-1.5 rounded-full bg-violet-500/20 gap-1 hover:bg-violet-500/30 transition-all duration-300 hover:scale-105">
-          <p class="text-white font-rubik text-md">
+        <div class="flex justify-center flex-col items-center mb-12 sm:w-max font-vt323 px-4 sm:px-8 uppercase text-lg text-white mx-auto text-center py-2 border-2 border-violet-500 bg-violet-900/50 shadow-[4px_4px_0px_0px_rgba(139,92,246,1)] hover:translate-y-1 hover:shadow-none transition-all duration-200 cursor-default">
+          <p class="text-white">
             🔥
             <span class="text-yellow-400 font-bold">{totalOfMemberCards}</span>
             saltanos ya tienen su{" "}
@@ -115,7 +121,7 @@ if (!totalOfMemberCards) {
       ) : null
     }
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 p-4">
       {
         COMMUNITY_GRID_CARDS.map((card) => {
           const isDisabled = (card.requiresLogin && !session) || card.soon;
@@ -124,8 +130,8 @@ if (!totalOfMemberCards) {
           return (
             <Tag
               href={isDisabled ? "#" : card.path}
-              class={`pixel-card-hover group relative overflow-hidden ${
-                isDisabled ? "cursor-not-allowed opacity-75" : ""
+              class={`pixel-card group relative overflow-hidden flex flex-col ${
+                isDisabled ? "cursor-not-allowed opacity-75 grayscale" : ""
               }`}
               {...(!card.soon &&
                 card.requiresLogin &&
@@ -139,58 +145,39 @@ if (!totalOfMemberCards) {
                     : ""
               }
             >
-              <img
-                src={card.image}
-                alt={card.title}
-                class="w-full h-48 object-cover object-center group-hover:scale-105 transition-all duration-300 saturate-[.9] group-hover:saturate-150"
-                style="image-rendering: pixelated;"
-              />
-              <div class="p-4">
-                <h3 class="text-xl font-teko uppercase font-bold pixel-text-secondary group-hover:pixel-glow transition-all duration-300">
+              <div class="relative h-48 overflow-hidden border-b-4 border-black">
+                <img
+                  src={card.image}
+                  alt={card.title}
+                  class="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
+                  style="image-rendering: pixelated;"
+                />
+                {isDisabled && (
+                  <div class="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <LucideLock className="text-white w-12 h-12" />
+                  </div>
+                )}
+              </div>
+
+              <div class="p-6 flex-1 flex flex-col bg-[#1f2937]">
+                <h3 class="text-sm md:text-base font-press-start-2p uppercase text-white mb-4 leading-relaxed group-hover:text-yellow-400 transition-colors">
                   {card.title}
                 </h3>
-                <p class="text-sm text-white/70 font-rubik pixel-text">
+                <p class="text-lg text-gray-400 font-vt323 leading-tight">
                   {card.description}
                 </p>
+
+                {card.soon && (
+                  <div class="mt-4 inline-block bg-red-600 text-white text-xs font-press-start-2p px-2 py-1 self-start">
+                    SOON
+                  </div>
+                )}
               </div>
-              {card.soon && (
-                <div class="absolute inset-0 flex bg-black/80 items-center justify-center text-white font-bold text-lg pixel-panel">
-                  <span class="flex items-center flex-col gap-y-2">
-                    <LucidePencilRuler size={24} />
-                    <span class="pixel-heading text-xs">{card.soonCustomText || "Próximamente"}</span>
-                  </span>
-                </div>
-              )}
-              {card.requiresLogin && !session && !card.soon && (
-                <div class="absolute inset-0 flex bg-black/80 items-center justify-center text-white font-bold text-lg pixel-panel">
-                  <span class="flex items-center flex-col gap-y-2">
-                    <LucideLock size={24} />
-                    <span class="pixel-heading text-xs">Requiere sesión</span>
-                  </span>
-                </div>
-              )}
             </Tag>
           );
         })
       }
     </div>
-
-    <!--  <div class="max-w-3xl">
-      <Container3D client:only>
-        <MemberCard
-          client:idle
-          user={{
-            username: "Alexitoo_UY",
-            avatar: "https://www.alexitoo.dev/images/me.webp",
-          }}
-          number={1}
-          selectedStickers={{
-            limit: 2,
-            list: ["saltoSorpresa", "saltoBaile"],
-          }}
-        />
-      </Container3D>
-    </div> -->
   </div>
 </CommunityLayout>
 

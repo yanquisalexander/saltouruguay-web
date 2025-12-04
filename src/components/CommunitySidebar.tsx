@@ -6,23 +6,23 @@ export default function CommunitySidebar() {
         <nav className="s-ui-sidebar">
             <ul className="flex flex-col gap-4">
                 <li>
-                    <a href="/" className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-electric-violet-700 transition-all pixel-container" title="Inicio">
-                        <LucideHome size={20} />
+                    <a href="/" className="pixel-btn-chunky variant-home" title="Inicio">
+                        <LucideHome size={24} />
                     </a>
                 </li>
                 <li>
-                    <a href="/comunidad" className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-electric-violet-700 transition-all pixel-container" title="Comunidad">
-                        <LucideUsers size={20} />
+                    <a href="/comunidad" className="pixel-btn-chunky variant-violet" title="Comunidad">
+                        <LucideUsers size={24} />
                     </a>
                 </li>
                 <li>
-                    <a href="/comunidad/banco" className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-yellow-600 transition-all pixel-container" title="Banco Saltano">
-                        <LucidePiggyBank size={20} />
+                    <a href="/comunidad/banco" className="pixel-btn-chunky variant-yellow" title="Banco Saltano">
+                        <LucidePiggyBank size={24} />
                     </a>
                 </li>
                 <li>
-                    <a href="/comunidad/logros" className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-green-600 transition-all pixel-container" title="Logros">
-                        <LucideTrophy size={20} />
+                    <a href="/comunidad/logros" className="pixel-btn-chunky variant-green" title="Logros">
+                        <LucideTrophy size={24} />
                     </a>
                 </li>
             </ul>

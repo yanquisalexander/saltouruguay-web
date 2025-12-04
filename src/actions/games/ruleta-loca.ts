@@ -9,6 +9,8 @@ import {
     isPuzzleSolved,
     completeGame,
     getPlayerStats,
+    resetSessionScore,
+    solvePuzzle,
 } from "@/utils/games/ruleta-loca";
 
 export const ruletaLoca = {
@@ -99,9 +101,15 @@ export const ruletaLoca = {
             }
 
             const segment = spinWheel();
+            let updatedSession = currentGame.session;
+
+            if (segment.type === "bankrupt") {
+                updatedSession = await resetSessionScore(currentGame.session.id);
+            }
 
             return {
                 segment,
+                session: updatedSession,
             };
         },
     }),
@@ -156,6 +164,30 @@ export const ruletaLoca = {
                 ...result,
                 puzzleSolved: false,
             };
+        },
+    }),
+
+    /**
+     * Solve the puzzle directly
+     */
+    solvePuzzle: defineAction({
+        input: z.object({
+            sessionId: z.number(),
+            guess: z.string(),
+        }),
+        handler: async ({ sessionId, guess }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "Debes iniciar sesión para resolver el panel",
+                });
+            }
+
+            const result = await solvePuzzle(sessionId, guess);
+
+            return result;
         },
     }),
 
