@@ -1,199 +1,229 @@
 ---
 export const prerender = false;
 import LastEditionWinners from "@/components/LastEditionWinners.astro";
-import VerticalVideoPlayer from "@/components/VerticalVideoPlayer.astro";
 import Layout from "@/layouts/Layout.astro";
 import { AWARDS_VOTES_RESULT } from "@/data/awards-winners";
 import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
 import LaunchCountdown from "@/components/LaunchCountdown";
+import {
+  LucideTrophy,
+  LucideVote,
+  LucideHistory,
+  LucideCalendarClock,
+  LucideSparkles,
+} from "lucide-preact";
 
-console.log({ IS_VOTES_OPEN: IS_VOTES_OPEN() });
+const votesOpen = IS_VOTES_OPEN();
+
+// Helper para tarjetas glass
+const cardClass =
+  "relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 backdrop-blur-md p-8 shadow-2xl transition-all hover:border-yellow-500/30";
 ---
 
 <Layout title="SaltoAwards">
-  <div id="backdrop-awards" class="-mt-28 min-h-screen absolute inset-0 -z-10">
-  </div>
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
-    <header
-      class="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-4xl mx-auto"
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      id="backdrop-awards"
+      class="absolute inset-0 bg-center bg-cover opacity-40"
     >
-      <div class="relative animate-fade-in-up">
+    </div>
+    <div
+      class="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent"
+    >
+    </div>
+    <div
+      class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-yellow-500/10 blur-[120px] rounded-full pointer-events-none"
+    >
+    </div>
+  </div>
+
+  <div class="flex flex-col max-w-6xl mx-auto min-h-screen pt-24 px-4 pb-20">
+    {/* --- HERO SECTION --- */}
+    <header
+      class="flex flex-col items-center justify-center text-center mb-16 relative z-10"
+    >
+      <div class="relative group cursor-default">
+        <div
+          class="absolute inset-0 bg-yellow-500/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+        >
+        </div>
         <img
-          src="/images/logo_salto.webp"
+          src="/images/trofeo-awards.webp"
           alt="SaltoUruguayServer"
-          class="h-24 sm:h-32 md:h-40 w-auto object-contain aspect-square"
-        />
-        <img
-          src="/images/logo_salto.webp"
-          alt="SaltoUruguayServer"
-          class="absolute blur-md transform scale-110 animate-pulsing animate-iteration-count-infinite animate-duration-[3000ms] saturate-150 z-[-1] top-0 left-0 h-24 sm:h-32 md:h-40 w-auto object-contain aspect-square"
+          class="relative h-32 saturate-125 md:h-40 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-transform duration-500 hover:scale-105"
         />
       </div>
-      <h1
-        class="text-4xl animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen mt-8"
-        data-astro-cid-x5yigsle=""
-      >
-        #SaltoAwards
-      </h1>
-      <h2
-        class="text-xl animate-fade-in-up animate-delay-300 font-rubik tracking-wider uppercase font-medium text-white mix-blend-screen my-5 pb-10"
-        data-astro-cid-x5yigsle=""
-      >
-        ¡La entrega de premios <span class="text-yellow-500">más esperada</span>
-        del año!
-      </h2>
+
+      <div class="mt-8 space-y-2">
+        <div
+          class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 text-xs font-bold uppercase tracking-widest backdrop-blur-md mb-2"
+        >
+          <LucideSparkles size={14} />
+          <span> Evento especial </span>
+        </div>
+        <h1
+          class="text-6xl md:text-8xl font-anton text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-yellow-500 to-yellow-700 drop-shadow-sm tracking-tight uppercase"
+        >
+          SaltoAwards
+        </h1>
+        <h2
+          class="text-xl md:text-2xl font-rubik text-white/80 max-w-2xl mx-auto font-light"
+        >
+          Celebrando lo mejor de nuestra comunidad
+        </h2>
+      </div>
     </header>
 
-    {
-      IS_VOTES_OPEN() ? (
-        <section
-          id="active-edition"
-          class="flex flex-col items-center justify-center mt-8"
-        >
-          <h2 class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen my-5">
-            Edición en curso
-          </h2>
-          <p class="text-white">
-            ¡La votación está abierta! Participa y elige a tus favoritos.
-          </p>
-          {/*  <LaunchCountdown
-            timestamp={VOTES_OPEN_TIMESTAMP}
-            showCalendarButton={false}
-            classNames={{ timeDisplay: "text-yellow-400" }}
-          /> */}
-          <div class="mt-6">
-            <a
-              href="/awards/vota"
-              class="px-4 py-2 bg-yellow-500 text-black rounded font-bold"
+    {/* --- MAIN GRID --- */}
+    <main class="w-full">
+      {
+        votesOpen ? (
+          /* --- ESTADO: VOTACIÓN ABIERTA --- */
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Tarjeta Principal de Votación (Ocupa 2 columnas) */}
+            <section
+              class={`${cardClass} md:col-span-2 lg:col-span-2 flex flex-col justify-center items-start text-left group border-yellow-500/50 bg-gradient-to-br from-yellow-900/20 to-black`}
             >
-              Votar ahora
-            </a>
+              <div class="absolute right-0 top-0 p-12 opacity-10 group-hover:opacity-20 transition-opacity">
+                <LucideVote size={200} />
+              </div>
+
+              <div class="relative z-10">
+                <h2 class="text-4xl md:text-5xl font-anton text-white uppercase mb-4">
+                  ¡La votación{" "}
+                  <span class="text-yellow-400">está abierta!</span>
+                </h2>
+                <p class="text-lg text-gray-300 mb-8 max-w-md">
+                  Es tu momento de decidir. Elige a tus favoritos y haz que su
+                  esfuerzo sea reconocido.
+                </p>
+                <a
+                  href="/awards/vota"
+                  class="inline-flex items-center gap-3 px-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-xl uppercase rounded-xl transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(234,179,8,0.4)]"
+                >
+                  <LucideVote /> Ir a Votar
+                </a>
+              </div>
+            </section>
+
+            {/* Tarjeta Informativa Lateral */}
+            <section
+              class={`${cardClass} flex flex-col justify-center items-center text-center`}
+            >
+              <div class="p-4 rounded-full bg-white/5 mb-4 text-yellow-400">
+                <LucideHistory size={32} />
+              </div>
+              <h3 class="text-2xl font-anton text-white uppercase mb-2">
+                El Legado
+              </h3>
+              <p class="text-white/60 text-sm mb-6">
+                Repasa la historia de los premios antes de emitir tu voto.
+              </p>
+              <a
+                href="#history"
+                class="text-yellow-400 hover:text-white underline underline-offset-4 decoration-yellow-500/50 hover:decoration-white transition-all"
+              >
+                Ver ganadores anteriores
+              </a>
+            </section>
           </div>
-          <div class="mt-12 w-full text-center">
-            <a href="/awards/" class="text-white underline">
-              Ver ediciones anteriores
-            </a>
+        ) : (
+          /* --- ESTADO: VOTACIÓN CERRADA / COUNTDOWN --- */
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* 1. Countdown Card (Top Center - Full Width or Highlighted) */}
+            <section
+              class={`${cardClass} lg:col-span-12 flex flex-col items-center justify-center text-center py-12`}
+            >
+              <div class="mb-6 flex items-center gap-3 text-yellow-500/80">
+                <LucideCalendarClock size={24} />
+                <span class="font-bold tracking-widest uppercase text-sm">
+                  Próxima Edición
+                </span>
+              </div>
+
+              <h3 class="text-3xl md:text-4xl font-rubik font-bold text-white mb-8 max-w-3xl">
+                Prepárate para los{" "}
+                <span class="text-yellow-500">#SaltoAwards2025</span>
+              </h3>
+
+              <div class="w-full max-w-4xl scale-90 md:scale-100">
+                <LaunchCountdown
+                  timestamp={VOTES_OPEN_TIMESTAMP}
+                  showCalendarButton={true}
+                  classNames={{
+                    container: "justify-center gap-4 md:gap-8",
+                    block:
+                      "bg-black/50 border border-white/10 rounded-xl p-4 md:p-6 min-w-[80px] md:min-w-[120px]",
+                    timeDisplay:
+                      "text-4xl md:text-6xl font-anton text-yellow-400",
+                    label:
+                      "text-xs md:text-sm font-rubik text-white/50 uppercase tracking-widest mt-2",
+                  }}
+                  client:idle
+                />
+              </div>
+            </section>
+
+            {/* 2. Last Winners (Main Content Area) */}
+            <section class="lg:col-span-8 space-y-6">
+              <div class="flex items-center gap-4 mb-4">
+                <div class="h-px flex-1 bg-white/10" />
+                <h3 class="text-xl font-anton uppercase text-white tracking-wider flex items-center gap-2">
+                  <LucideTrophy class="text-yellow-500" /> Campeones Vigentes
+                </h3>
+                <div class="h-px flex-1 bg-white/10" />
+              </div>
+
+              {/* Wrapper para el componente existente para darle estilo */}
+              <div class="bg-white/5 border border-white/10 rounded-3xl p-6 md:p-8">
+                <LastEditionWinners />
+              </div>
+            </section>
+
+            {/* 3. Archive / History (Sidebar) */}
+            <aside id="history" class="lg:col-span-4 space-y-6">
+              <div class={`${cardClass} h-full`}>
+                <h3 class="text-2xl font-anton text-white uppercase mb-6 flex items-center gap-2">
+                  <LucideHistory class="text-white/50" /> Historial
+                </h3>
+
+                <div class="grid grid-cols-2 gap-3">
+                  {Object.keys(AWARDS_VOTES_RESULT)
+                    .sort((a, b) => Number(b) - Number(a))
+                    .map((y) => {
+                      const year = Number(y);
+                      return (
+                        <a
+                          href={`/awards/${year}`}
+                          class="group relative flex flex-col items-center justify-center py-6 px-4 bg-white/5 hover:bg-yellow-500/10 border border-white/10 hover:border-yellow-500/50 rounded-xl transition-all duration-300"
+                        >
+                          <span class="text-2xl font-anton text-white group-hover:text-yellow-400 transition-colors">
+                            {year}
+                          </span>
+                          <span class="text-[10px] uppercase tracking-widest text-white/40 group-hover:text-yellow-500/60 mt-1">
+                            Ver Ganadores
+                          </span>
+                        </a>
+                      );
+                    })}
+                </div>
+
+                <div class="mt-8 pt-8 border-t border-white/10 text-center">
+                  <p class="text-sm text-white/40 italic">
+                    "La historia la escriben los que se atreven a saltar."
+                  </p>
+                </div>
+              </div>
+            </aside>
           </div>
-        </section>
-      ) : (
-        <>
-          {/* Contador con la cuenta regresiva */}
-
-          <p class="text-white text-center max-w-xl mx-auto">
-            Las votaciones para los{" "}
-            <span class="text-yellow-500 font-bold">#SaltoAwards2025</span> aún
-            no han comenzado. ¡Prepárate para elegir a tus favoritos y ser parte
-            de esta celebración única!
-          </p>
-          <LaunchCountdown
-            timestamp={VOTES_OPEN_TIMESTAMP}
-            showCalendarButton={false}
-            classNames={{ timeDisplay: "text-yellow-400" }}
-            client:idle
-          />
-
-          <LastEditionWinners class:list={"mt-16"} />
-
-          <section class="mt-10 w-full max-w-5xl mx-auto">
-            <h3 class="text-lg font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen text-center mb-4">
-              Ediciones anteriores
-            </h3>
-            <div class="flex flex-wrap justify-center gap-3">
-              {Object.keys(AWARDS_VOTES_RESULT).map((y) => {
-                const year = Number(y);
-                return (
-                  <a
-                    href={`/awards/${year}`}
-                    class="px-3 py-2 bg-white/5 hover:bg-white/10 rounded text-white"
-                  >
-                    {year}
-                  </a>
-                );
-              })}
-            </div>
-          </section>
-        </>
-      )
-    }
-
-    <!--  <section
-      id="casters"
-      class="flex flex-col items-center justify-center h-full text-center max-w-4xl mx-auto mt-16"
-    >
-      <h2
-        class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen my-5"
-      >
-        ¡Conoce a los presentadores!
-      </h2>
-      <p
-        class="text-white text-lg font-rubik uppercase text-balance tracking-wider sm:pb-10 pb-4"
-      >
-        <span class="text-yellow-500">#SaltoAwards</span> no sería lo mismo sin nuestros
-        presentadores.<br />¡Conócelos!
-      </p>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="flex flex-col items-center justify-center gap-2">
-          <img
-            src="/images/casters/salto.webp"
-            alt="Salto Uruguay"
-            class="w-24 h-24 rounded-full object-cover"
-          />
-          <h3
-            class="text-lg font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen"
-          >
-            Salto Uruguay
-          </h3>
-        </div>
-        <div class="flex flex-col items-center justify-center gap-2">
-          <img
-            src="/images/casters/julianmartin.webp"
-            alt="Julian Martin"
-            class="w-24 h-24 rounded-full object-cover"
-          />
-          <h3
-            class="text-lg font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen"
-          >
-            Julian Martin
-          </h3>
-        </div>
-      </div>
-    </section>
-
-    <section
-      id="live-show"
-      class="flex flex-col items-center justify-center h-full text-center max-w-4xl mx-auto mt-16"
-    >
-      <h2
-        class="text-2xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen my-5"
-      >
-        Contaremos con un show en vivo
-      </h2>
-      <p
-        class="text-white text-lg font-rubik uppercase text-balance tracking-wider sm:pb-10 pb-4"
-      >
-        Por parte del ganador de <span class="text-yellow-500"
-          >#LaVozArgentina2018</span
-        > ¡No te lo pierdas!
-      </p>
-
-      <VerticalVideoPlayer
-        videoSrc="https://cdn.saltouruguayserver.com/braulio.webm"
-        placeholder="/images/braulio.webp"
-      />
-    </section> -->
+        )
+      }
+    </main>
   </div>
+
   <style>
     #backdrop-awards {
       background-image: url("/images/awards-fondo.webp");
-      @apply saturate-150 opacity-55;
-      mask-image: linear-gradient(
-        black 0%,
-        rgba(0, 0, 0, 0.5) 30%,
-        rgba(0, 0, 0, 0.1) 50%,
-        transparent
-      );
-      background-size: cover;
-      background-position: center;
     }
   </style>
 
