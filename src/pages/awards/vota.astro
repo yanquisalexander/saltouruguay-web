@@ -44,7 +44,7 @@ const glassPanel =
   </div>
 
   <div
-    class="flex flex-col max-w-6xl mx-auto min-h-screen pt-24 px-4 pb-20"
+    class="flex flex-col max-w-6xl mx-auto min-h-screen pt-24 pb-20"
     id="awards-voting-page"
   >
     {/* --- HEADER --- */}
@@ -86,7 +86,7 @@ const glassPanel =
     </header>
 
     <main
-      class="mx-auto flex flex-col items-center justify-center flex-1 animate-fade-in-up"
+      class="mx-auto flex flex-col items-center justify-center flex-1 animate-fade-in-up w-full"
     >
       {
         /* CASO 1: VOTACIÓN CERRADA
@@ -150,9 +150,9 @@ const glassPanel =
             </div>
           ) : (
             /* SUB-CASO: USUARIO LISTO PARA VOTAR (Formulario) */
-            <div class="w-full">
+            <div class="mx-auto w-full flex flex-col items-center">
               <div class="mb-8 text-center">
-                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm font-bold animate-pulse">
+                <div class="inline-flex items-center gap-2 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm font-bold animate-pulse">
                   <LucideSparkles size={16} /> <span>Votación Activa </span>
                 </div>
               </div>
