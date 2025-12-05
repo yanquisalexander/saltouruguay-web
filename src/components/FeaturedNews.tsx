@@ -1,289 +1,232 @@
 import { useEffect, useRef, useState } from "preact/compat";
 import { gsap } from "gsap";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { navigate } from "astro:transitions/client";
+import { LucideArrowRight, LucideExternalLink, LucideClock } from "lucide-preact";
+
+gsap.registerPlugin(ScrollToPlugin);
 
 const NEWS = [
-
     {
-        title: "Bienvenido a la nueva web",
-        description: `
-        ¡SaltoUruguayServer tiene una nueva web! 🎉
-        Entérate de todas las novedades, eventos y torneos en un solo lugar.
-    `,
-        tags: ["Web"],
-        background: {
-            img: "/og.webp",
-        },
+        title: "Nueva Web Oficial",
+        description: `Entérate de todas las novedades, eventos y torneos en un solo lugar centralizado.`,
+        tags: ["Lanzamiento"],
+        background: { img: "/og.webp" },
         navImage: "/og.webp",
-        ctaLink: {
-            text: "🎉 Descubre más",
-            url: "/",
-            newTab: false,
-        },
+        ctaLink: { text: "Ver detalles", url: "/", newTab: false },
+        date: "-"
     },
+    // Datos dummy para visualizar el diseño de lista
 
-].map((news, index) => {
-    return {
-        ...news,
-        description: news.description.trim(),
-        id: index,
-    };
-});
+].map((news, index) => ({
+    ...news,
+    description: news.description.trim(),
+    id: index,
+}));
 
-export const FeaturedNews = ({ newsItems = NEWS, duration = 10000 }: { newsItems?: typeof NEWS, duration?: number }) => {
+export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?: typeof NEWS, duration?: number }) => {
     const [selectedIndex, setSelectedIndex] = useState<number>(0);
-    const [intervalId, setIntervalId] = useState<number | null>(null);
-    const scrollContainerRef = useRef<HTMLOListElement | null>(null);
-    const slidesRef = useRef<Array<HTMLLIElement | null>>([]);
+    const [progress, setProgress] = useState(0);
+    const slidesRef = useRef<Array<HTMLDivElement | null>>([]);
     const contentRef = useRef<Array<HTMLDivElement | null>>([]);
+    const progressTween = useRef<gsap.core.Tween | null>(null);
 
-    useEffect(() => {
-        // Scroll to the selected slide con GSAP
-        if (scrollContainerRef.current && selectedIndex !== null) {
-            const scrollContainer = scrollContainerRef.current;
-            const selectedSlide = scrollContainer.children[selectedIndex] as HTMLElement;
-            const containerWidth = scrollContainer.offsetWidth;
-            const slideWidth = selectedSlide.offsetWidth;
-            const scrollLeft = selectedSlide.offsetLeft - (containerWidth - slideWidth) / 2;
-
-            gsap.to(scrollContainer, {
-                scrollLeft: Math.max(0, scrollLeft),
-                duration: 0.5,
-                ease: "power2.out"
-            });
-        }
-    }, [selectedIndex]);
-
-    // Animate slide transitions
+    // Animación de Slides (Fade + Scale)
     useEffect(() => {
         if (selectedIndex !== null) {
-            // Hide all slides first
+            // Resetear otros slides
             slidesRef.current.forEach((slide, index) => {
                 if (slide && index !== selectedIndex) {
                     gsap.to(slide, {
                         opacity: 0,
-                        scale: 0.95,
-                        duration: 0.3,
-                        ease: "power2.out",
-                        onComplete: () => {
-                            if (slide) slide.style.display = 'none';
-                        }
+                        zIndex: 0,
+                        scale: 1.1, // Zoom out effect
+                        duration: 0.8,
+                        ease: "power2.inOut",
                     });
                 }
             });
 
-            // Show and animate selected slide
+            // Animar slide activo
             const selectedSlide = slidesRef.current[selectedIndex];
             if (selectedSlide) {
-                selectedSlide.style.display = 'flex';
-
+                gsap.set(selectedSlide, { zIndex: 10 });
                 gsap.fromTo(selectedSlide,
-                    {
-                        opacity: 0,
-                        scale: 0.95,
-                    },
-                    {
-                        opacity: 1,
-                        scale: 1,
-                        duration: 0.5,
-                        ease: "power2.out"
-                    }
+                    { opacity: 0, scale: 1.05 },
+                    { opacity: 1, scale: 1, duration: 1, ease: "power2.out" }
                 );
 
-                // Animate content
+                // Animar contenido
                 const content = contentRef.current[selectedIndex];
                 if (content) {
-                    gsap.fromTo(Array.from(content.children),
-                        {
-                            y: 30,
-                            opacity: 0
-                        },
-                        {
-                            y: 0,
-                            opacity: 1,
-                            duration: 0.6,
-                            stagger: 0.1,
-                            ease: "power2.out",
-                            delay: 0.2
-                        }
-                    );
-                }
-
-                // Animate background image
-                const img = selectedSlide.querySelector('img') as HTMLImageElement | null;
-                if (img) {
-                    gsap.fromTo(img,
-                        {
-                            scale: selectedIndex % 2 === 0 ? 1.1 : 0.9,
-                        },
-                        {
-                            scale: 1,
-                            duration: 8,
-                            ease: "power1.inOut"
-                        }
+                    const elements = content.children;
+                    gsap.fromTo(elements,
+                        { y: 20, opacity: 0 },
+                        { y: 0, opacity: 1, duration: 0.6, stagger: 0.1, delay: 0.2, ease: "power2.out" }
                     );
                 }
             }
         }
     }, [selectedIndex]);
 
-    const handleChangeSlide = (index: number) => {
-        setSelectedIndex(index);
-        resetAutoSlide();
-    };
-
-    const startAutoSlide = () => {
-        const id = window.setInterval(() => {
-            setSelectedIndex((prevIndex) => {
-                if (prevIndex === null || prevIndex === newsItems.length - 1) {
-                    return 0;
-                }
-                return prevIndex + 1;
-            });
-        }, duration);
-        setIntervalId(id);
-    };
-
-    const stopAutoSlide = () => {
-        if (intervalId) {
-            clearInterval(intervalId);
-            setIntervalId(null);
-        }
-    };
-
-    const resetAutoSlide = () => {
-        stopAutoSlide();
-        startAutoSlide();
-    };
-
+    // Timer y Barra de Progreso
     useEffect(() => {
-        setSelectedIndex(0);
-        startAutoSlide();
-        return () => stopAutoSlide();
-    }, [newsItems.length, duration]);
+        if (progressTween.current) progressTween.current.kill();
+        setProgress(0);
+
+        if (newsItems.length > 1) { // Solo activar autoplay si hay más de una noticia
+            progressTween.current = gsap.to({}, {
+                duration: duration / 1000,
+                ease: "none",
+                onUpdate: function () {
+                    setProgress(this.progress() * 100);
+                },
+                onComplete: () => {
+                    setSelectedIndex((prev) => (prev + 1) % newsItems.length);
+                }
+            });
+        }
+
+        return () => {
+            if (progressTween.current) progressTween.current.kill();
+        };
+    }, [selectedIndex, newsItems.length, duration]);
 
     const handleNavigation = (event: MouseEvent, ctaLink: typeof NEWS[0]["ctaLink"]) => {
         if (!ctaLink.newTab) {
             event.preventDefault();
-            if (ctaLink.url.startsWith("#")) {
-                const target = document.querySelector(ctaLink.url);
-                if (target) {
-                    gsap.to(window, {
-                        duration: 1,
-                        scrollTo: target,
-                        ease: "power2.inOut"
-                    });
-                }
-            } else {
-                navigate(ctaLink.url);
-            }
+            navigate(ctaLink.url);
         }
     };
 
     return (
-        <section id="latest-news" className="max-w-screen-lg mx-auto">
-            <ol>
-                {newsItems.map((news, index) => (
-                    <li
-                        key={news.id}
-                        ref={(el) => (slidesRef.current[index] = el)}
-                        className="relative w-full min-h-[400px] aspect-[9/12] lg:aspect-[20/9] flex items-end rounded-[40px] overflow-hidden group"
-                        style={{ display: index !== selectedIndex ? 'none' : 'flex' }}
-                    >
+        <section className="w-full max-w-5xl mx-auto p-4">
+            {/* Contenedor Grid: Izquierda (Imagen Grande) - Derecha (Lista) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[500px] lg:h-[450px]">
+
+                {/* --- MAIN FEATURED NEWS (2/3 width) --- */}
+                <div className="relative lg:col-span-2 h-full rounded-2xl overflow-hidden border border-white/10 bg-gray-900 group shadow-2xl">
+                    {newsItems.map((news, index) => (
                         <div
-                            className="w-full h-full bg-black/80 absolute inset-0 select-none pointer-events-none"
-                            style={{
-                                maskImage: "radial-gradient(ellipse at bottom left, black 30%, transparent 70%)",
-                            }}
-                        />
-                        <a
-                            {...(news.ctaLink.newTab && {
-                                target: "_blank",
-                                rel: "noopener noreferrer",
-                            })}
-                            href={news.ctaLink.url}
-                            onClick={(event) => handleNavigation(event as unknown as MouseEvent, news.ctaLink)}
-                            className="cursor-pointer w-full h-full flex items-end"
+                            key={news.id}
+                            ref={(el) => (slidesRef.current[index] = el)}
+                            className="absolute inset-0 w-full h-full"
+                            style={{ opacity: index === 0 ? 1 : 0 }}
                         >
                             <img
-                                className={`absolute inset-0 w-full h-full object-cover -z-10 ${index % 2 === 0 ? "slide-zoom-animation-zoom-out" : "slide-zoom-animation-zoom-in"}`}
-                                src={news.background.img || "https://images.unsplash.com/photo-1579952363873-27d3bfad9c0d?w=1920&h=1080&fit=crop"}
+                                className="absolute inset-0 w-full h-full object-cover"
+                                src={news.background.img}
                                 alt={news.title}
-                                width="1920"
-                                height="1080"
-                                loading={index === selectedIndex ? "eager" : "lazy"}
-                                style={{ '--slider-timeout': `${duration}ms` } as any}
                             />
-                            <div
-                                ref={(el) => (contentRef.current[index] = el)}
-                                className="px-6 py-10 lg:px-20 lg:py-16"
-                            >
-                                <ol className="flex items-center gap-4 mb-5 overflow-x-auto">
-                                    {news.tags.map((tag) => (
-                                        <li
-                                            key={tag}
-                                            className="w-max font-sans border border-white/20 rounded-2xl px-4 py-1 text-sm md:text-base font-semibold text-white bg-blue-900/20 backdrop-blur-xl"
-                                        >
-                                            {tag}
-                                        </li>
-                                    ))}
-                                </ol>
-                                <h2 className="font-bold font-sans text-2xl md:text-4xl text-white mb-4" style={{ textShadow: "0 1px 0 rgba(0,0,0,0.4)" }}>
-                                    {news.title}
-                                </h2>
-                                <p className="text-base font-sans md:text-lg max-w-[42ch] text-white mb-6" style={{ textShadow: "0 1px 0 rgba(0,0,0,0.4)" }}>
-                                    {news.description}
-                                </p>
-                                <span className="px-8 py-3 font-sans inline-flex rounded-2xl border border-white/20 text-base w-max md:text-lg font-semibold text-white bg-white/10 backdrop-blur-xl hover:bg-white/20 hover:border-white/30 hover:scale-105 transition-all duration-300">
-                                    {news.ctaLink.text}
-                                </span>
+                            {/* Gradiente más agresivo para legibilidad */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
+
+                            {/* Contenido */}
+                            <div className="absolute inset-0 flex items-end p-8">
+                                <div ref={(el) => (contentRef.current[index] = el)} className="w-full relative z-20">
+                                    <div className="flex gap-2 mb-3">
+                                        {news.tags.map((tag) => (
+                                            <span key={tag} className="px-2 py-0.5 rounded text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/20 uppercase font-bold tracking-wider backdrop-blur-md">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    <h2 className="text-3xl md:text-5xl font-teko font-bold text-white uppercase leading-none mb-3 drop-shadow-md">
+                                        {news.title}
+                                    </h2>
+
+                                    <p className="text-gray-300 font-rubik text-sm md:text-base max-w-lg mb-6 line-clamp-2 leading-relaxed">
+                                        {news.description}
+                                    </p>
+
+                                    <a
+                                        href={news.ctaLink.url}
+                                        onClick={(e) => handleNavigation(e as unknown as MouseEvent, news.ctaLink)}
+                                        className="inline-flex items-center gap-2 px-6 py-2 bg-white/10 hover:bg-white text-white hover:text-black border border-white/20 transition-all duration-300 rounded-lg font-teko text-xl font-bold uppercase tracking-wide backdrop-blur-md group/btn"
+                                    >
+                                        {news.ctaLink.text}
+                                        <LucideArrowRight size={18} className="transition-transform group-hover/btn:translate-x-1" />
+                                    </a>
+                                </div>
                             </div>
-                        </a>
-                    </li>
-                ))}
-            </ol>
-            <nav className="relative w-full mt-10">
-
-                <ol
-                    className="flex gap-3 overflow-x-auto w-full py-2 justify-center scrollbar-hide snap-x snap-mandatory px-8"
-                    ref={scrollContainerRef}
-                    style={{
-                        scrollPaddingLeft: '2rem',
-                        scrollPaddingRight: '2rem',
-                        scrollbarWidth: 'none',
-                        msOverflowStyle: 'none'
-                    }}
-                >
-                    {newsItems.map((news, index) => (
-                        <li key={news.id} className="flex-shrink-0 snap-center">
-                            <button
-                                style={{
-                                    '--slider-timeout': `${duration}ms`,
-                                } as any}
-                                className={`h-24 aspect-[16/9] rounded-xl p-0.5 relative group transition-all duration-500 ${selectedIndex === index
-                                    ? "scale-110 slider-border"
-                                    : "scale-100"
-                                    } flex-shrink-0`}
-                                aria-label={news.ctaLink.text}
-                                title={news.ctaLink.text}
-                                onClick={() => handleChangeSlide(index)}
-
-                            >
-                                <img
-                                    className={`w-full h-full object-cover rounded-xl border-[4px] transition-all ${selectedIndex === index
-                                        ? "border-[#020617]"
-                                        : "border-transparent"
-                                        }`}
-                                    src={news.navImage || "https://images.unsplash.com/photo-1579952363873-27d3bfad9c0d?w=400&h=300&fit=crop"}
-                                    alt={news.title}
-                                    width="400"
-                                    height="300"
-                                />
-                            </button>
-                        </li>
+                        </div>
                     ))}
-                </ol>
-            </nav>
+                </div>
+
+                {/* --- SIDEBAR LIST (1/3 width) --- */}
+                <div className="hidden lg:flex flex-col gap-3 h-full overflow-y-auto pr-1">
+                    {newsItems.map((news, index) => {
+                        const isActive = selectedIndex === index;
+                        return (
+                            <button
+                                key={news.id}
+                                onClick={() => setSelectedIndex(index)}
+                                className={`
+                                    relative flex items-center gap-3 p-3 rounded-xl border text-left transition-all duration-300 w-full
+                                    ${isActive
+                                        ? "bg-white/10 border-white/20 shadow-lg"
+                                        : "bg-gray-900/40 border-transparent hover:bg-white/5 hover:border-white/5 opacity-60 hover:opacity-100"
+                                    }
+                                `}
+                            >
+                                {/* Thumbnail pequeño */}
+                                <div className="w-16 h-16 shrink-0 rounded-lg overflow-hidden bg-gray-800">
+                                    <img
+                                        src={news.navImage}
+                                        alt=""
+                                        className={`w-full h-full object-cover transition-transform duration-500 ${isActive ? 'scale-110' : 'grayscale'}`}
+                                    />
+                                </div>
+
+                                <div className="flex flex-col min-w-0">
+                                    <span className={`text-[10px] uppercase font-bold tracking-widest mb-0.5 ${isActive ? 'text-yellow-400' : 'text-gray-500'}`}>
+                                        {news.tags[0]}
+                                    </span>
+                                    <span className="font-teko text-lg text-white leading-tight truncate w-full">
+                                        {news.title}
+                                    </span>
+                                    <div className="flex items-center gap-1 mt-1 text-gray-500">
+                                        <LucideClock size={10} />
+                                        <span className="text-[10px] font-rubik">{news.date || 'Reciente'}</span>
+                                    </div>
+                                </div>
+
+                                {/* Progress Bar (Vertical indicator) */}
+                                {isActive && (
+                                    <div className="absolute left-0 top-2 bottom-2 w-[3px] bg-yellow-500 rounded-r-full">
+                                        {/* Optional: Fill height based on timer logic if desired, or just static indicator */}
+                                        <div
+                                            className="w-full bg-white absolute bottom-0 left-0 transition-all ease-linear"
+                                            style={{ height: `${100 - progress}%`, opacity: 0.5 }}
+                                        />
+                                    </div>
+                                )}
+                            </button>
+                        );
+                    })}
+
+                    {/* Botón para ver todas si hay muchas */}
+                    <div className="mt-auto pt-2">
+                        <a href="/noticias" className="flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-white/10 text-white/30 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all font-teko text-lg uppercase">
+                            Ver todas las noticias
+                        </a>
+                    </div>
+                </div>
+
+                {/* --- MOBILE INDICATORS (Dots) --- */}
+                {/* Solo visible en móvil ya que ocultamos la sidebar */}
+                <div className="lg:hidden flex justify-center gap-2 mt-2">
+                    {newsItems.map((_, index) => (
+                        <button
+                            key={index}
+                            onClick={() => setSelectedIndex(index)}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${selectedIndex === index ? "w-6 bg-yellow-400" : "w-1.5 bg-white/20"}`}
+                            aria-label={`Ir a noticia ${index + 1}`}
+                        />
+                    ))}
+                </div>
+            </div>
         </section>
     );
 };
