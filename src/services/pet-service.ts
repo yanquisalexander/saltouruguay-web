@@ -29,11 +29,34 @@ interface PetAppearance {
     clothing: string[];
 }
 
+interface ItemMetadata {
+    hungerRestore?: number;
+    happinessBoost?: number;
+    experienceGain?: number;
+    category?: string;
+    slot?: string;
+    [key: string]: any; // Allow additional properties
+}
+
+interface HouseLayout {
+    wallpaper: string;
+    flooring: string;
+    theme: string;
+}
+
+interface HouseItem {
+    itemId: number;
+    x: number;
+    y: number;
+    rotation?: number;
+}
+
+// Stat decay rates (points per hour)
 const STAT_DECAY_RATE = {
-    hunger: 1, // per hour
-    happiness: 0.5,
-    energy: 0.8,
-    hygiene: 0.6,
+    hunger: 1, // points per hour - pet gets hungry
+    happiness: 0.5, // points per hour - pet needs attention
+    energy: 0.8, // points per hour - pet gets tired
+    hygiene: 0.6, // points per hour - pet gets dirty
 };
 
 const EXPERIENCE_THRESHOLDS = {
@@ -45,6 +68,11 @@ const EXPERIENCE_THRESHOLDS = {
 };
 
 const MAX_DAILY_MINIGAME_PLAYS = 5;
+
+// Minigame reward constants
+const MAX_COINS_PER_GAME = 50;
+const SCORE_TO_COINS_RATIO = 10; // Every 10 points = 1 coin
+const SCORE_TO_EXPERIENCE_RATIO = 20; // Every 20 points = 1 experience
 
 export class PetService {
     /**
@@ -183,7 +211,7 @@ export class PetService {
                     throw new Error('This item is not food');
                 }
 
-                const metadata = inventoryItem.item.metadata as any;
+                const metadata = inventoryItem.item.metadata as ItemMetadata;
                 hungerRestore = metadata?.hungerRestore || 30;
                 happinessBoost = metadata?.happinessBoost || 10;
                 experienceGain = metadata?.experienceGain || 10;
@@ -497,7 +525,7 @@ export class PetService {
     /**
      * Update house layout and items
      */
-    static async updateHouse(userId: number, layout?: any, items?: any[]) {
+    static async updateHouse(userId: number, layout?: Partial<HouseLayout>, items?: HouseItem[]) {
         try {
             const house = await db.query.PetHousesTable.findFirst({
                 where: eq(PetHousesTable.ownerId, userId),
@@ -507,12 +535,16 @@ export class PetService {
                 throw new Error('House not found');
             }
 
-            const updateData: any = {
+            const updateData: {
+                layout?: HouseLayout;
+                items?: HouseItem[];
+                updatedAt: Date;
+            } = {
                 updatedAt: new Date(),
             };
 
             if (layout) {
-                updateData.layout = { ...house.layout, ...layout };
+                updateData.layout = { ...(house.layout as HouseLayout), ...layout };
             }
 
             if (items !== undefined) {
@@ -669,7 +701,7 @@ export class PetService {
             }
 
             // Calculate reward based on score
-            const coinsEarned = Math.min(50, Math.floor(score / 10));
+            const coinsEarned = Math.min(MAX_COINS_PER_GAME, Math.floor(score / SCORE_TO_COINS_RATIO));
 
             return await db.transaction(async (tx) => {
                 // Record session
@@ -713,7 +745,7 @@ export class PetService {
                 });
 
                 if (pet) {
-                    const newExperience = pet.experience + Math.floor(score / 20);
+                    const newExperience = pet.experience + Math.floor(score / SCORE_TO_EXPERIENCE_RATIO);
                     const newStage = this.calculateStage(newExperience);
 
                     await tx.update(PetsTable)

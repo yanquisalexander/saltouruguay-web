@@ -148,7 +148,12 @@ export const pets = {
             }
 
             try {
-                const appearance: any = {};
+                const appearance: {
+                    color?: string;
+                    shape?: string;
+                    accessories?: string[];
+                    clothing?: string[];
+                } = {};
                 if (color) appearance.color = color;
                 if (shape) appearance.shape = shape;
                 if (accessories) appearance.accessories = accessories;

@@ -2,6 +2,15 @@ import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import { actions } from 'astro:actions';
 
+interface ItemMetadata {
+    hungerRestore?: number;
+    happinessBoost?: number;
+    experienceGain?: number;
+    category?: string;
+    slot?: string;
+    [key: string]: any;
+}
+
 interface InventoryItem {
     id: number;
     userId: number;
@@ -15,7 +24,7 @@ interface InventoryItem {
         type: string;
         price: number;
         icon: string;
-        metadata: any;
+        metadata: ItemMetadata;
     };
 }
 
