@@ -1,85 +1,157 @@
 ---
 import { AWARDS_VOTES_RESULT } from "@/data/awards-winners";
-import { NOMINEES } from "@/awards/Nominees";
 import { CATEGORIES } from "@/awards/Categories";
+import { LucideTrophy, LucideMedal, LucideCrown } from "lucide-preact";
 
 interface Props {
   year?: number | string;
+  class?: string;
 }
 
-const { year } = Astro.props as Props;
+const { year, class: className } = Astro.props;
 
-// Determine which year to render: provided year or latest available
+// Determinar año
 const availableYears = Object.keys(AWARDS_VOTES_RESULT)
   .map((y) => Number(y))
   .sort((a, b) => b - a);
 const renderYear = year ? Number(year) : availableYears[0];
 const votesForYear = AWARDS_VOTES_RESULT[renderYear];
-if (!votesForYear) {
-  // If no data for the year, render nothing (parent can show fallback)
-}
+
+// Si no hay datos, no renderizamos nada (o podrías poner un mensaje de error)
+if (!votesForYear) return null;
 ---
 
-<section
-  id="last-edition-winners"
-  class="relative flex flex-col mt-16 justify-center items-center"
->
-  <h3
-    class="max-w-xl text-center text-yellow-400 tracking-wider uppercase font-medium mix-blend-screen mt-2 pb-6"
-  >
-    ¡Conoce a los ganadores de la edición {renderYear} de los #SaltoAwards!
-  </h3>
-  <div class="gap-8 gap-y-16 mt-10 flex flex-col">
-    {
-      votesForYear &&
-        Object.entries(votesForYear).map(([category, nominees]) => {
-          const highestPointsInCategory = Math.max(
-            ...nominees.map((vote) => vote.roundTotalPoints)
-          );
+<section class:list={["w-full", className]}>
+  <div class="flex flex-col items-center justify-center mb-12 text-center">
+    <div
+      class="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 text-sm font-bold uppercase tracking-widest backdrop-blur-md mb-4"
+    >
+      <LucideCrown size={16} />
+      <span>Salón de la Fama {renderYear}</span>
+    </div>
+    <h3
+      class="text-3xl md:text-5xl font-anton text-white uppercase tracking-wide"
+    >
+      Ganadores Oficiales
+    </h3>
+  </div>
 
-          return (
-            <div class="flex flex-col items-center justify-center gap-6">
-              <h3 class="text-lg font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen">
-                {CATEGORIES.find((c) => c.id === category)?.name}
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {
+      Object.entries(votesForYear).map(([category, nominees]) => {
+        const categoryInfo = CATEGORIES.find((c) => c.id === category);
+
+        // Ordenar: Ganador primero
+        const sortedNominees = nominees.sort(
+          (a, b) => b.roundTotalPoints - a.roundTotalPoints
+        );
+        const winner = sortedNominees[0];
+        const runnersUp = sortedNominees.slice(1);
+        const totalCategoryPoints = Math.max(
+          ...sortedNominees.map((n) => n.roundTotalPoints)
+        ); // O suma total si prefieres porcentaje sobre el total
+
+        return (
+          <article class="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 backdrop-blur-md flex flex-col group hover:border-yellow-500/30 transition-colors duration-300">
+            {/* Background Glow sutil */}
+            <div class="absolute top-0 right-0 p-12 bg-yellow-500/5 blur-3xl rounded-full pointer-events-none group-hover:bg-yellow-500/10 transition-colors" />
+
+            {/* HEADER CATEGORÍA */}
+            <div class="p-6 border-b border-white/5 bg-white/5">
+              <h3 class="font-anton text-2xl text-white uppercase tracking-wider flex items-center gap-2">
+                <LucideTrophy class="text-yellow-500" size={20} />
+                {categoryInfo?.name || category}
               </h3>
-              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {nominees
-                  .sort((a, b) => b.roundTotalPoints - a.roundTotalPoints)
-                  .map((nominee) => {
-                    const { nomineeId, displayName, percentage, votes } =
-                      nominee;
-                    const isWinner =
-                      nominee.roundTotalPoints === highestPointsInCategory;
-                    const placeholderAvatar = `https://ui-avatars.com/api/?name=${displayName}&background=random&color=fff`;
-                    return (
-                      <div
-                        class={[
-                          "flex flex-col items-center justify-center gap-2",
-                          isWinner &&
-                            "border-2 border-yellow-400 border-opacity-50 p-2 rounded-lg",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                      >
-                        <img
-                          onerror={`this.src='${placeholderAvatar}'`}
-                          src={`/images/nominees/${nomineeId}.webp`}
-                          alt={displayName}
-                          class="size-12 rounded-full object-cover"
-                        />
-                        <h4 class="text-lg font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen">
-                          {displayName}
-                        </h4>
-                        <p class="text-sm text-gray-300">
-                          {votes} votos • {percentage}%
-                        </p>
-                      </div>
-                    );
-                  })}
-              </div>
             </div>
-          );
-        })
+
+            {/* CUERPO DE LA TARJETA */}
+            <div class="p-6 flex flex-col gap-6 flex-1">
+              {/* 1. EL GANADOR (Destacado) */}
+              <div class="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-yellow-500/20 to-transparent border border-yellow-500/20 relative overflow-hidden">
+                <div class="absolute right-0 top-0 opacity-10">
+                  <LucideCrown
+                    size={64}
+                    className="text-yellow-500 rotate-12 -mr-4 -mt-2"
+                  />
+                </div>
+
+                <div class="relative shrink-0">
+                  <img
+                    src={`/images/nominees/${winner.nomineeId}.webp`}
+                    onError={`this.src='https://ui-avatars.com/api/?name=${winner.displayName}&background=FACC15&color=000'`}
+                    alt={winner.displayName}
+                    class="size-16 rounded-xl object-cover border-2 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.3)]"
+                  />
+                  <div class="absolute -bottom-2 -right-2 bg-yellow-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border border-black">
+                    Winner
+                  </div>
+                </div>
+
+                <div>
+                  <h4 class="font-teko text-3xl font-bold text-white leading-none">
+                    {winner.displayName}
+                  </h4>
+                  <div class="flex items-center gap-2 mt-1">
+                    <div class="h-2 w-24 bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        class="h-full bg-yellow-400"
+                        style={{ width: `${winner.percentage}%` }}
+                      />
+                    </div>
+                    <span class="text-xs font-mono text-yellow-400">
+                      {winner.percentage}%
+                    </span>
+                    <span class="text-[10px] text-white/40">
+                      ({winner.votes} votos)
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. LOS FINALISTAS (Lista compacta) */}
+              {runnersUp.length > 0 && (
+                <div class="flex flex-col gap-3">
+                  <span class="text-xs font-rubik uppercase tracking-widest text-white/30 font-bold ml-1">
+                    Finalistas
+                  </span>
+                  {runnersUp.map((nominee, index) => (
+                    <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
+                      <span class="font-mono text-white/30 w-4 text-center text-sm">
+                        #{index + 2}
+                      </span>
+                      <img
+                        src={`/images/nominees/${nominee.nomineeId}.webp`}
+                        onError={`this.src='https://ui-avatars.com/api/?name=${nominee.displayName}&background=333&color=fff'`}
+                        alt={nominee.displayName}
+                        class="size-8 rounded-full object-cover grayscale opacity-70"
+                      />
+                      <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-baseline">
+                          <h5 class="text-sm font-rubik font-medium text-white/80 truncate">
+                            {nominee.displayName}
+                          </h5>
+                          <span class="text-xs font-mono text-white/40">
+                            {nominee.percentage}%
+                          </span>
+                        </div>
+                        {/* Barra de progreso relativa al ganador para visualizar la diferencia */}
+                        <div class="h-1 w-full bg-white/5 rounded-full mt-1 overflow-hidden">
+                          <div
+                            class="h-full bg-white/20"
+                            style={{
+                              width: `${(nominee.roundTotalPoints / winner.roundTotalPoints) * 100}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </article>
+        );
+      })
     }
   </div>
 </section>

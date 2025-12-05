@@ -79,52 +79,87 @@ const cardClass =
       {
         votesOpen ? (
           /* --- ESTADO: VOTACIÓN ABIERTA --- */
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Tarjeta Principal de Votación (Ocupa 2 columnas) */}
-            <section
-              class={`${cardClass} md:col-span-2 lg:col-span-2 flex flex-col justify-center items-start text-left group border-yellow-500/50 bg-gradient-to-br from-yellow-900/20 to-black`}
-            >
-              <div class="absolute right-0 top-0 p-12 opacity-10 group-hover:opacity-20 transition-opacity">
-                <LucideVote size={200} />
-              </div>
+          <div class="space-y-16">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Tarjeta Principal de Votación (Ocupa 2 columnas) */}
+              <section
+                class={`${cardClass} md:col-span-2 lg:col-span-2 flex flex-col justify-center items-start text-left group border-yellow-500/50 bg-gradient-to-br from-yellow-900/20 to-black`}
+              >
+                <div class="absolute right-0 top-0 p-12 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <LucideVote size={200} />
+                </div>
 
-              <div class="relative z-10">
-                <h2 class="text-4xl md:text-5xl font-anton text-white uppercase mb-4">
-                  ¡La votación{" "}
-                  <span class="text-yellow-400">está abierta!</span>
-                </h2>
-                <p class="text-lg text-gray-300 mb-8 max-w-md">
-                  Es tu momento de decidir. Elige a tus favoritos y haz que su
-                  esfuerzo sea reconocido.
+                <div class="relative z-10">
+                  <h2 class="text-4xl md:text-5xl font-anton text-white uppercase mb-4">
+                    ¡La votación{" "}
+                    <span class="text-yellow-400">está abierta!</span>
+                  </h2>
+                  <p class="text-lg text-gray-300 mb-8 max-w-md">
+                    Es tu momento de decidir. Elige a tus favoritos y haz que su
+                    esfuerzo sea reconocido.
+                  </p>
+                  <a
+                    href="/awards/vota"
+                    class="inline-flex items-center gap-3 px-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-xl uppercase rounded-xl transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(234,179,8,0.4)]"
+                  >
+                    <LucideVote /> Ir a Votar
+                  </a>
+                </div>
+              </section>
+
+              {/* Tarjeta Informativa Lateral */}
+              <section
+                class={`${cardClass} flex flex-col justify-center items-center text-center`}
+              >
+                <div class="p-4 rounded-full bg-white/5 mb-4 text-yellow-400">
+                  <LucideHistory size={32} />
+                </div>
+                <h3 class="text-2xl font-anton text-white uppercase mb-2">
+                  El Legado
+                </h3>
+                <p class="text-white/60 text-sm mb-6">
+                  Repasa la historia de los premios antes de emitir tu voto.
                 </p>
                 <a
-                  href="/awards/vota"
-                  class="inline-flex items-center gap-3 px-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-xl uppercase rounded-xl transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(234,179,8,0.4)]"
+                  href="#history"
+                  class="text-yellow-400 hover:text-white underline underline-offset-4 decoration-yellow-500/50 hover:decoration-white transition-all"
                 >
-                  <LucideVote /> Ir a Votar
+                  Ver ganadores anteriores
                 </a>
-              </div>
-            </section>
+              </section>
+            </div>
 
-            {/* Tarjeta Informativa Lateral */}
-            <section
-              class={`${cardClass} flex flex-col justify-center items-center text-center`}
-            >
-              <div class="p-4 rounded-full bg-white/5 mb-4 text-yellow-400">
-                <LucideHistory size={32} />
+            {/* --- HISTORIAL DE EDICIONES --- */}
+            <section id="history" class="scroll-mt-24">
+              <div class="flex items-center gap-4 mb-8">
+                <div class="h-px flex-1 bg-white/10" />
+                <h3 class="text-2xl font-anton uppercase text-white tracking-wider flex items-center gap-2">
+                  <LucideHistory class="text-yellow-500" /> Historial de
+                  Ediciones
+                </h3>
+                <div class="h-px flex-1 bg-white/10" />
               </div>
-              <h3 class="text-2xl font-anton text-white uppercase mb-2">
-                El Legado
-              </h3>
-              <p class="text-white/60 text-sm mb-6">
-                Repasa la historia de los premios antes de emitir tu voto.
-              </p>
-              <a
-                href="#history"
-                class="text-yellow-400 hover:text-white underline underline-offset-4 decoration-yellow-500/50 hover:decoration-white transition-all"
-              >
-                Ver ganadores anteriores
-              </a>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {Object.keys(AWARDS_VOTES_RESULT)
+                  .sort((a, b) => Number(b) - Number(a))
+                  .map((y) => {
+                    const year = Number(y);
+                    return (
+                      <a
+                        href={`/awards/${year}`}
+                        class={`${cardClass} group !p-6 flex flex-col items-center justify-center hover:bg-white/5 transition-all duration-300`}
+                      >
+                        <span class="text-5xl font-anton text-white group-hover:text-yellow-400 transition-colors mb-2">
+                          {year}
+                        </span>
+                        <span class="text-xs uppercase tracking-widest text-white/40 group-hover:text-yellow-500/60">
+                          Ver Ganadores
+                        </span>
+                      </a>
+                    );
+                  })}
+              </div>
             </section>
           </div>
         ) : (

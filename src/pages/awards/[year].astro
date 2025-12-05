@@ -2,8 +2,19 @@
 import Layout from "@/layouts/Layout.astro";
 import LastEditionWinners from "@/components/LastEditionWinners.astro";
 import { AWARDS_VOTES_RESULT } from "@/data/awards-winners";
-import { CATEGORIES } from "@/awards/Categories";
-import { NOMINEES } from "@/awards/Nominees";
+import {
+  LucideCalendar,
+  LucideArrowLeft,
+  LucideChevronRight,
+} from "lucide-preact";
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  return Object.keys(AWARDS_VOTES_RESULT).map((year) => ({
+    params: { year },
+  }));
+}
 
 const { year: yearParam } = Astro.params;
 const year = Number(yearParam);
@@ -11,34 +22,85 @@ const year = Number(yearParam);
 const availableYears = Object.keys(AWARDS_VOTES_RESULT)
   .map((y) => Number(y))
   .sort((a, b) => b - a);
-
-if (!availableYears.includes(year)) {
-  // Return 404 if year not found
-  throw new Response(null, { status: 404 });
-}
 ---
 
-<Layout title={`SaltoAwards ${year}`}>
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
-    <header
-      class="relative z-10 flex flex-col items-center justify-center h-full text-center max-w-4xl mx-auto"
+<Layout title={`SaltoAwards ${year} - Resultados`}>
+  {/* Fondo inmersivo fijo */}
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5"
     >
-      <h1
-        class="text-4xl font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen mt-8"
+    </div>
+    <div
+      class="absolute top-0 w-full h-[50vh] bg-gradient-to-b from-yellow-900/10 to-transparent"
+    >
+    </div>
+  </div>
+
+  <div class="flex flex-col max-w-6xl mx-auto min-h-screen pt-24 px-4 pb-20">
+    {/* BREADCRUMB / BACK NAV */}
+    <div
+      class="mb-8 flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors w-max"
+    >
+      <a href="/awards" class="flex items-center gap-1">
+        <LucideArrowLeft size={14} /> Volver al Hub
+      </a>
+      <LucideChevronRight size={14} class="opacity-50" />
+      <span class="text-yellow-500">Edición {year}</span>
+    </div>
+
+    <header
+      class="relative z-10 flex flex-col items-center justify-center text-center max-w-4xl mx-auto mb-12"
+    >
+      <div
+        class="p-3 bg-white/5 border border-white/10 rounded-2xl mb-6 backdrop-blur-md"
       >
-        #SaltoAwards {year}
+        <LucideCalendar size={32} class="text-white/80" />
+      </div>
+      <h1
+        class="text-6xl md:text-8xl font-anton tracking-tight uppercase text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 mb-4"
+      >
+        #SaltoAwards <span class="text-yellow-500">{year}</span>
       </h1>
-      <p class="text-white mt-4">
-        Resultados y ganadores de la edición {year}.
+      <p class="text-lg font-rubik text-white/60 max-w-xl mx-auto">
+        Explora los resultados históricos y descubre a las leyendas que
+        definieron el año {year}.
       </p>
     </header>
 
+    {/* YEAR SELECTOR NAV */}
+    <nav class="flex flex-wrap justify-center gap-2 mb-16">
+      {
+        availableYears.map((y) => (
+          <a
+            href={`/awards/${y}`}
+            class={`
+                    px-6 py-2 rounded-full font-teko text-xl tracking-wide transition-all border
+                    ${
+                      y === year
+                        ? "bg-yellow-500 text-black border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.3)] scale-105"
+                        : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20"
+                    }
+                `}
+          >
+            {y}
+          </a>
+        ))
+      }
+    </nav>
+
+    {/* RESULTS COMPONENT */}
     <LastEditionWinners year={year} />
 
-    <div class="mt-8 w-full text-center">
-      <a href="/awards" class="text-yellow-400 underline"
-        >Volver a todas las ediciones</a
+    {/* FOOTER NAV */}
+    <div class="mt-20 pt-10 border-t border-white/10 w-full text-center">
+      <p class="text-white/30 text-sm font-rubik mb-4">¿Buscas otra edición?</p>
+      <a
+        href="/awards"
+        class="inline-flex items-center gap-2 text-yellow-400 hover:text-yellow-300 font-bold uppercase tracking-widest text-sm transition-colors"
       >
+        <LucideArrowLeft size={16} /> Regresar al Hub Principal
+      </a>
     </div>
   </div>
 </Layout>

@@ -17,15 +17,17 @@ interface CountdownProps {
         container?: string;
         timeDisplay?: string;
         calendarButton?: string;
+        block?: string;
+        label?: string;
     };
 }
 
-const TimeDisplay = ({ value, label, timeStyles }: { value: number, label: string, timeStyles?: string }) => (
-    <div className="text-center space-y-2 aspect-square">
+const TimeDisplay = ({ value, label, timeStyles, blockStyles, labelStyles }: { value: number, label: string, timeStyles?: string, blockStyles?: string, labelStyles?: string }) => (
+    <div className={`text-center flex flex-col items-center justify-center ${blockStyles || 'space-y-2 aspect-square'}`}>
         <div className={`text-4xl font-medium italic font-anton text-yellow-500 tabular-nums ${timeStyles}`}>
             {value.toString().padStart(2, "0")}
         </div>
-        <div className="text-gray-400">{label}</div>
+        <div className={`text-gray-400 ${labelStyles || ''}`}>{label}</div>
     </div>
 );
 
@@ -98,11 +100,11 @@ const LaunchCountdown = ({
             {...props}
             data-launch-timestamp={timestamp}
         >
-            <div className="flex space-x-6 justify-center">
-                <TimeDisplay value={timeLeft.days} label="Días" timeStyles={classNames?.timeDisplay || ""} />
-                <TimeDisplay value={timeLeft.hours} label="Horas" timeStyles={classNames?.timeDisplay || ""} />
-                <TimeDisplay value={timeLeft.minutes} label="Minutos" timeStyles={classNames?.timeDisplay || ""} />
-                <TimeDisplay value={timeLeft.seconds} label="Segundos" timeStyles={classNames?.timeDisplay || ""} />
+            <div className={`flex space-x-6 justify-center ${classNames?.container || ''}`}>
+                <TimeDisplay value={timeLeft.days} label="Días" timeStyles={classNames?.timeDisplay} blockStyles={classNames?.block} labelStyles={classNames?.label} />
+                <TimeDisplay value={timeLeft.hours} label="Horas" timeStyles={classNames?.timeDisplay} blockStyles={classNames?.block} labelStyles={classNames?.label} />
+                <TimeDisplay value={timeLeft.minutes} label="Minutos" timeStyles={classNames?.timeDisplay} blockStyles={classNames?.block} labelStyles={classNames?.label} />
+                <TimeDisplay value={timeLeft.seconds} label="Segundos" timeStyles={classNames?.timeDisplay} blockStyles={classNames?.block} labelStyles={classNames?.label} />
             </div>
 
             {
