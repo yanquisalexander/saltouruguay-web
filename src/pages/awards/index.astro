@@ -12,8 +12,10 @@ import {
   LucideCalendarClock,
   LucideSparkles,
 } from "lucide-preact";
+import { getTotalVotes } from "@/utils/awards-vote-system";
 
 const votesOpen = IS_VOTES_OPEN();
+const totalVotes = await getTotalVotes();
 
 // Helper para tarjetas glass
 const cardClass =
@@ -90,6 +92,13 @@ const cardClass =
                 </div>
 
                 <div class="relative z-10">
+                  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs font-bold uppercase tracking-widest mb-6">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
+                    </span>
+                    {totalVotes.toLocaleString()} Votos registrados
+                  </div>
                   <h2 class="text-4xl md:text-5xl font-anton text-white uppercase mb-4">
                     ¡La votación{" "}
                     <span class="text-yellow-400">está abierta!</span>
