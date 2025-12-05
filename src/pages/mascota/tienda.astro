@@ -1,0 +1,15 @@
+---
+import ShopApp from "@/components/mascota/ShopApp";
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return Astro.redirect("/signin?redirect=/mascota/tienda");
+}
+---
+
+<Layout title="Tienda Saltana">
+  <ShopApp client:only="preact" />
+</Layout>

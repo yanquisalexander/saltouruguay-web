@@ -1,0 +1,15 @@
+---
+import PetApp from "@/components/mascota/PetApp";
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return Astro.redirect("/signin?redirect=/mascota");
+}
+---
+
+<Layout title="Mi Mascota Saltana">
+  <PetApp client:only="preact" />
+</Layout>

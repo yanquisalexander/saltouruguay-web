@@ -1,0 +1,15 @@
+---
+import InventoryApp from "@/components/mascota/InventoryApp";
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return Astro.redirect("/signin?redirect=/mascota/inventario");
+}
+---
+
+<Layout title="Mi Inventario">
+  <InventoryApp client:only="preact" />
+</Layout>
