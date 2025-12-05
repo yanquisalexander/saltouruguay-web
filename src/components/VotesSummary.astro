@@ -2,6 +2,7 @@
 import { CATEGORIES } from "@/awards/Categories";
 import { NOMINEES } from "@/awards/Nominees";
 import type { currentUserVotes } from "@/utils/awards-vote-system";
+import { CheckCircle2, Trophy } from "lucide-preact";
 
 interface Props {
   votes: Awaited<ReturnType<typeof currentUserVotes>> | null;
@@ -11,57 +12,93 @@ const { votes } = Astro.props;
 ---
 
 {
-  votes && (
-    <div class="flex flex-col w-full max-w-5xl mx-auto gap-6 mt-8">
-      <h2 class="text-lg font-medium text-center uppercase font-rubik tracking-wider">
-        Estos han sido tus votos
-      </h2>
+  votes && votes.length > 0 && (
+    <div class="w-full max-w-6xl mx-auto mt-12 px-4 animate-fade-in-up">
+      {/* Título de la sección */}
+      <div class="flex flex-col items-center gap-2 mb-10">
+        <div class="flex items-center gap-3 text-yellow-500">
+          <Trophy class="size-6" />
+          <span class="font-bold tracking-widest text-sm uppercase">
+            Resumen
+          </span>
+        </div>
+        <h2 class="text-3xl md:text-4xl font-anton uppercase text-white tracking-wide text-center">
+          Tus Votos Registrados
+        </h2>
+        <div class="h-1 w-24 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mt-2" />
+      </div>
 
-      <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+      {/* Grid de Categorías */}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {CATEGORIES.map((category) => {
           const categoryVotes = votes.filter(
             (vote) => vote.categoryId === category.id
           );
-          // Filtramos solo los nominados que han recibido votos
+
           const votedNominees = category.nominees.filter((nominee) =>
             categoryVotes.some((vote) => vote.nomineeId === nominee.id)
           );
 
-          if (votedNominees.length === 0) return null; // No mostrar categorías sin votos
+          if (votedNominees.length === 0) return null;
 
           return (
-            <section class="w-full max-w-3xl mt-8">
-              <h3 class="text-xl font-bold text-center uppercase font-rubik tracking-wider italic text-blue-400">
-                {category.name}
-              </h3>
-              <ul class="grid grid-cols-1 gap-4 mt-4">
-                {votedNominees.map((nominee) => {
-                  const nomineeVotes = categoryVotes.filter(
-                    (vote) => vote.nomineeId === nominee.id
-                  );
+            <article class="group relative flex flex-col h-full bg-gray-900/40 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden transition-all hover:border-white/20 hover:bg-gray-900/60 hover:-translate-y-1 hover:shadow-xl">
+              {/* Encabezado de la Tarjeta */}
+              <div class="p-4 border-b border-white/5 bg-white/5">
+                <h3
+                  class="font-anton text-xl text-blue-200 uppercase tracking-wide truncate"
+                  title={category.name}
+                >
+                  {category.name}
+                </h3>
+              </div>
+
+              {/* Lista de Nominados Votados */}
+              <div class="p-4 flex flex-col gap-3 flex-1">
+                {votedNominees.map((nominee, index) => {
                   const nomineeFromConst = Object.values(NOMINEES).find(
                     (n) => n.username === nominee.id
                   );
+
+                  // Fallback para avatar
+                  const avatarUrl = nomineeFromConst?.username
+                    ? `/images/nominees/${nomineeFromConst.username}.webp`
+                    : `https://ui-avatars.com/api/?name=${nominee.id}&background=random`;
+
                   return (
-                    <li class="flex gap-y-2 gap-x-4 items-center">
-                      <img
-                        src={`/images/nominees/${nomineeFromConst?.username}.webp`}
-                        alt={nomineeFromConst?.displayName}
-                        class="size-10 rounded-full"
-                      />
-                      <div class="flex flex-col gap-y-2 items-center">
-                        <span class="font-bold">
-                          {nomineeFromConst?.displayName}
+                    <div class="flex items-center gap-4 p-3 rounded-xl bg-black/20 border border-white/5 transition-colors group-hover:bg-black/40">
+                      {/* Avatar con borde indicador de orden */}
+                      <div class="relative">
+                        <img
+                          src={avatarUrl}
+                          alt={nomineeFromConst?.displayName || nominee.id}
+                          class="size-12 rounded-full object-cover border-2 border-white/10"
+                        />
+                        <div class="absolute -bottom-1 -right-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-black shadow-sm">
+                          #{index + 1}
+                        </div>
+                      </div>
+
+                      {/* Info Texto */}
+                      <div class="flex flex-col">
+                        <span class="font-rubik font-bold text-white text-base leading-tight">
+                          {nomineeFromConst?.displayName || nominee.id}
+                        </span>
+                        <span class="text-xs text-green-400 flex items-center gap-1 mt-0.5">
+                          <CheckCircle2 class="size-3" /> Voto registrado
                         </span>
                       </div>
-                    </li>
+                    </div>
                   );
                 })}
-              </ul>
-            </section>
+              </div>
+
+              {/* Decoración inferior */}
+              <div class="h-1 w-full bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+            </article>
           );
         })}
-      </ul>
+      </div>
     </div>
   )
 }
