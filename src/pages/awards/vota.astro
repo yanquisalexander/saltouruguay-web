@@ -2,12 +2,17 @@
 import { CATEGORIES } from "@/awards/Categories";
 import VotesSummary from "@/components/VotesSummary.astro";
 import { VoteSystem } from "@/components/VoteSystem";
-import { IS_VOTES_OPEN, nowInUruguay, VOTES_OPEN_TIMESTAMP } from "@/config";
+import { IS_VOTES_OPEN } from "@/config";
 import Layout from "@/layouts/Layout.astro";
 import { currentUserVotes } from "@/utils/awards-vote-system";
 import { getSession } from "auth-astro/server";
 import TwitchIcon from "@/icons/Twitch.astro";
-import LaunchCountdown from "@/components/LaunchCountdown";
+import {
+  LucideLock,
+  LucideCheckCircle2,
+  LucideHourglass,
+  LucideSparkles,
+} from "lucide-preact";
 
 const session = await getSession(Astro.request);
 
@@ -16,99 +21,180 @@ let votes: Awaited<ReturnType<typeof currentUserVotes>> = null;
 if (session?.user) {
   votes = await currentUserVotes(session.user.id);
 }
+
+const votesOpen = IS_VOTES_OPEN();
+
+// Clases reutilizables para mantener consistencia
+const glassPanel =
+  "relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 backdrop-blur-md shadow-2xl";
 ---
 
 <Layout title="Votación" customId="awards-voting-layout">
+  {/* FONDO AMBIENTAL */}
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5"
+    >
+    </div>
+    <div
+      class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[600px] bg-yellow-500/10 blur-[120px] rounded-full pointer-events-none"
+    >
+    </div>
+  </div>
+
   <div
-    class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16"
+    class="flex flex-col max-w-6xl mx-auto min-h-screen pt-24 px-4 pb-20"
     id="awards-voting-page"
   >
+    {/* --- HEADER --- */}
     <header
-      class="relative z-10 flex flex-col items-center justify-center h-full max-w-4xl mx-auto"
+      class="relative z-10 flex flex-col items-center justify-center text-center mb-12 animate-fade-in-down"
     >
-      <div class="flex flex-col items-center justify-center gap-y-4">
+      <div class="relative group cursor-default mb-6">
+        {/* Glow effect behind trophy */}
         <div
-          class="relative animate-fade-in-up"
-          style="--floating-duration: 5000ms"
+          class="absolute inset-0 bg-yellow-500/30 blur-2xl rounded-full animate-pulse-slow"
         >
+        </div>
+
+        <div class="relative animate-float" style="--float-duration: 6s">
           <img
             src="/images/trofeo-awards.webp"
             alt="Trofeo SaltoAwards"
-            class="size-28 md:size-24 w-auto object-contain aspect-square animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)] saturate-150"
-          />
-          <img
-            src="/images/trofeo-awards.webp"
-            alt=""
-            aria-hidden="true"
-            class="absolute blur-md brightness-125 saturate-200 inset-0 size-28 md:size-24 w-auto object-contain aspect-square z-[-1] animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)]"
+            class="size-32 md:size-40 object-contain drop-shadow-[0_0_25px_rgba(234,179,8,0.4)]"
           />
         </div>
-        <h1
-          class="text-3xl animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen"
-        >
-          #SaltoAwards2025
-        </h1>
       </div>
 
-      <h2
-        class="text-xl animate-fade-in-up animate-delay-300 font-rubik uppercase text-white mix-blend-screen mt-2 mb-5 pb-10"
-      >
-        Elige a tus favoritos
-      </h2>
+      <div class="space-y-2">
+        <h1
+          class="text-5xl md:text-7xl font-anton text-white uppercase tracking-tight drop-shadow-lg"
+        >
+          #SaltoAwards<span class="text-yellow-500">2025</span>
+        </h1>
+        <h2
+          class="text-lg md:text-xl font-rubik text-white/60 font-medium tracking-wide max-w-lg mx-auto"
+        >
+          {
+            votesOpen
+              ? "Tu voz define la historia. Elige a los mejores."
+              : "La suerte está echada. Prepárate para la gala."
+          }
+        </h2>
+      </div>
     </header>
 
-    <main class="flex flex-col items-center justify-center h-full">
+    <main
+      class="mx-auto flex flex-col items-center justify-center flex-1 animate-fade-in-up"
+    >
       {
-        !IS_VOTES_OPEN() ? (
-          // Mostrar cuenta regresiva si las votaciones están cerradas
-          <div class="flex flex-col items-center justify-center h-full">
-            <h2 class="text-2xl font-rubik font-bold text-white uppercase tracking-wider">
-              ¡Votación cerrada!
+        /* CASO 1: VOTACIÓN CERRADA
+         */
+      }
+      {
+        !votesOpen ? (
+          <div
+            class={`${glassPanel} p-8 md:p-12 max-w-3xl text-center border-red-500/20`}
+          >
+            <div class="inline-flex p-4 rounded-full bg-red-500/10 text-red-500 mb-6 border border-red-500/20">
+              <LucideHourglass size={48} />
+            </div>
+            <h2 class="text-4xl font-anton text-white uppercase mb-4">
+              Votación Finalizada
             </h2>
-            <p class="text-white text-center font-rubik font-medium tracking-wider mt-4 max-w-2xl text-lg">
-              Los ganadores de esta edición de los{" "}
-              <span class="text-yellow-500">SaltoAwards</span> se darán a
-              conocer en la ceremonia de premiación.
+            <p class="text-white/70 font-rubik text-lg mb-8 max-w-xl mx-auto">
+              Gracias a todos por participar. Los sobres están cerrados y los
+              ganadores se revelarán en la gran ceremonia.
             </p>
 
-            {session && votes && <VotesSummary votes={votes} />}
+            {session && votes && (
+              <div class="mt-8 border-t border-white/10 pt-8 w-full">
+                <p class="text-sm uppercase tracking-widest text-white/40 mb-4 font-bold">
+                  Tus selecciones registradas
+                </p>
+                <VotesSummary votes={votes} />
+              </div>
+            )}
           </div>
-        ) : session ? (
+        ) : /* CASO 2: VOTACIÓN ABIERTA
+         */
+        session ? (
           votes ? (
-            // Mostrar resumen si el usuario ya votó
-            <>
-              <div class="flex flex-col items-center justify-center h-full">
-                <h2 class="text-2xl font-rubik font-bold text-white uppercase tracking-wider">
-                  ¡Ya has votado!
+            /* SUB-CASO: USUARIO YA VOTÓ (Ticket Dorado) */
+            <div
+              class={`${glassPanel} p-8 md:p-12 max-w-4xl w-full border-green-500/30 bg-gradient-to-b from-green-900/10 to-transparent`}
+            >
+              <div class="flex flex-col items-center text-center mb-8">
+                <div class="p-3 bg-green-500 text-black rounded-full mb-4 shadow-[0_0_20px_rgba(34,197,94,0.4)] animate-bounce-small">
+                  <LucideCheckCircle2 size={48} />
+                </div>
+                <h2 class="text-4xl font-anton text-white uppercase mb-2">
+                  ¡Votos Registrados!
                 </h2>
-                <p class="text-white text-center font-rubik font-medium tracking-wider mt-4 max-w-2xl text-lg">
-                  ¡Gracias por participar en los{" "}
-                  <span class="text-yellow-500">SaltoAwards</span>! Los
-                  ganadores se darán a conocer en la ceremonia de premiación.
+                <p class="text-white/70 font-rubik text-lg">
+                  Has cumplido con tu deber cívico saltano. <br /> Aquí tienes
+                  tu comprobante de participación.
                 </p>
               </div>
-              <VotesSummary votes={votes} />
-            </>
+
+              <div class="bg-black/30 rounded-2xl p-6 border border-white/5">
+                <VotesSummary votes={votes} />
+              </div>
+
+              <div class="mt-8 text-center">
+                <p class="text-sm text-white/30 italic">
+                  Los ganadores se anunciarán en el stream oficial. ¡No faltes!
+                </p>
+              </div>
+            </div>
           ) : (
-            // Mostrar formulario de votación si el usuario no ha votado
-            <VoteSystem
-              categories={CATEGORIES}
-              user={session.user}
-              client:load
-            />
+            /* SUB-CASO: USUARIO LISTO PARA VOTAR (Formulario) */
+            <div class="w-full">
+              <div class="mb-8 text-center">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm font-bold animate-pulse">
+                  <LucideSparkles size={16} /> <span>Votación Activa </span>
+                </div>
+              </div>
+
+              {/* El VoteSystem se encarga de su propio renderizado, le damos un contenedor limpio */}
+              <VoteSystem
+                categories={CATEGORIES}
+                user={session.user}
+                client:load
+              />
+            </div>
           )
         ) : (
-          // Mostrar mensaje de inicio de sesión si el usuario no está autenticado
-          <div class="flex flex-col items-center justify-center gap-y-4 h-full">
-            <h2 class="text-xl font-rubik font-bold text-white uppercase tracking-wider">
-              Por favor, inicia sesión para votar.
+          /* CASO 3: SIN SESIÓN (Login Card)
+           */
+          <div
+            class={`${glassPanel} p-10 max-w-md w-full flex flex-col items-center text-center group hover:border-purple-500/40 transition-colors duration-500`}
+          >
+            <div class="relative mb-6">
+              <div class="absolute inset-0 bg-purple-600/20 blur-xl rounded-full" />
+              <div class="relative p-4 bg-black/50 border border-white/10 rounded-2xl text-white group-hover:text-purple-400 transition-colors">
+                <LucideLock size={40} />
+              </div>
+            </div>
+
+            <h2 class="text-3xl font-anton text-white uppercase mb-2">
+              Identifícate
             </h2>
+            <p class="text-white/50 font-rubik text-sm mb-8 leading-relaxed">
+              Para asegurar la transparencia de los premios, necesitas iniciar
+              sesión con tu cuenta de Twitch para emitir tus votos.
+            </p>
+
             <button
               id="awards-login"
-              class=" bg-electric-violet-600 text-white font-rubik font-medium uppercase tracking-wider py-2 px-4 rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50"
+              class="w-full relative overflow-hidden group/btn bg-[#9146FF] hover:bg-[#7c2cf5] text-white font-teko text-xl uppercase tracking-wide py-3 px-6 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(145,70,255,0.2)] hover:shadow-[0_0_30px_rgba(145,70,255,0.4)] hover:-translate-y-1"
             >
-              <TwitchIcon class="w-6 h-6 mr-2 inline-block" />
-              Iniciar sesión
+              <div class="relative z-10 flex items-center justify-center gap-3">
+                <TwitchIcon class="size-6" />
+                <span>Acceder con Twitch</span>
+              </div>
+              {/* Shine effect */}
+              <div class="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover/btn:animate-shine" />
             </button>
           </div>
         )
@@ -117,6 +203,35 @@ if (session?.user) {
   </div>
 </Layout>
 
+<style>
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  .animate-float {
+    animation: float var(--float-duration, 3s) ease-in-out infinite;
+  }
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  .animate-bounce-small {
+    animation: bounce 2s infinite;
+  }
+  @keyframes shine {
+    100% {
+      left: 125%;
+    }
+  }
+  .group-hover\/btn\:animate-shine:hover {
+    animation: shine 0.75s;
+  }
+</style>
+
 <script>
   import { $ } from "@/lib/dom-selector";
   import { showSignInDialog } from "@/lib/utils";
@@ -124,8 +239,9 @@ if (session?.user) {
   document.addEventListener("astro:page-load", () => {
     const $awardsLogin = $("#awards-login");
 
-    const $body = document.body;
-    $body.classList.add("revealed");
+    // Reveal animation
+    const $page = $("#awards-voting-page");
+    if ($page) $page.classList.remove("opacity-0");
 
     $awardsLogin?.addEventListener("click", () => {
       showSignInDialog();
