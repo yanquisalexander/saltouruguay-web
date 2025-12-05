@@ -1,0 +1,28 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return Astro.redirect("/signin?redirect=/mascota/inventario");
+}
+---
+
+<Layout title="Mi Inventario">
+  <div class="max-w-4xl mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-4">🎒 Mi Inventario</h1>
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <p class="text-gray-600 mb-4">Aquí podrás ver todos los items que has comprado.</p>
+      <p class="text-sm text-gray-500">🚧 Esta sección está en desarrollo</p>
+    </div>
+    <div class="mt-6 text-center">
+      <a
+        href="/mascota"
+        class="inline-block px-6 py-3 bg-gray-500 text-white font-bold rounded-lg hover:bg-gray-600 transition-all"
+      >
+        ← Volver a mi mascota
+      </a>
+    </div>
+  </div>
+</Layout>

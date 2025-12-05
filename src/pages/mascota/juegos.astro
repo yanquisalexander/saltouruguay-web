@@ -1,0 +1,46 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return Astro.redirect("/signin?redirect=/mascota/juegos");
+}
+---
+
+<Layout title="Mini-Juegos">
+  <div class="max-w-4xl mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-4">🎮 Mini-Juegos</h1>
+    <div class="bg-white rounded-lg shadow-lg p-6">
+      <p class="text-gray-600 mb-4">Juega para ganar Saltocoins y experiencia para tu mascota.</p>
+      <p class="text-sm text-gray-500 mb-4">🚧 Esta sección está en desarrollo</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <div class="p-6 bg-gray-100 rounded-lg text-center">
+          <div class="text-4xl mb-2">🪙</div>
+          <h3 class="font-bold mb-2">Atrapa la Moneda</h3>
+          <p class="text-sm text-gray-600 mb-3">Atrapa las monedas que caen</p>
+          <button class="px-4 py-2 bg-gray-400 text-white rounded cursor-not-allowed">
+            Próximamente
+          </button>
+        </div>
+        <div class="p-6 bg-gray-100 rounded-lg text-center">
+          <div class="text-4xl mb-2">🏃</div>
+          <h3 class="font-bold mb-2">Saltano Runner</h3>
+          <p class="text-sm text-gray-600 mb-3">Corre y esquiva obstáculos</p>
+          <button class="px-4 py-2 bg-gray-400 text-white rounded cursor-not-allowed">
+            Próximamente
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="mt-6 text-center">
+      <a
+        href="/mascota"
+        class="inline-block px-6 py-3 bg-gray-500 text-white font-bold rounded-lg hover:bg-gray-600 transition-all"
+      >
+        ← Volver a mi mascota
+      </a>
+    </div>
+  </div>
+</Layout>

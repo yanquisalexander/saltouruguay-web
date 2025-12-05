@@ -12,6 +12,7 @@ import { CRON_SECRET } from "astro:env/server";
 export const POST = async ({ request }: APIContext) => {
     const TASKS = [
         "calculate-votes",
+        "update-pet-stats",
     ] as const;
 
     try {
@@ -50,6 +51,30 @@ export const POST = async ({ request }: APIContext) => {
 
                 await cache.set("calculatedVotes", groupedVotes);
 
+                break;
+
+            case "update-pet-stats":
+                console.log("Updating pet stats...");
+                
+                // Import PetService dynamically to avoid circular dependencies
+                const { PetService } = await import("@/services/pet-service");
+                const { client } = await import("@/db/client");
+                const { PetsTable } = await import("@/db/schema");
+                
+                // Get all pets
+                const pets = await client.query.PetsTable.findMany();
+                
+                let updatedCount = 0;
+                for (const pet of pets) {
+                    try {
+                        await PetService.updatePetStats(pet.ownerId);
+                        updatedCount++;
+                    } catch (error) {
+                        console.error(`Error updating pet stats for user ${pet.ownerId}:`, error);
+                    }
+                }
+                
+                console.log(`Updated stats for ${updatedCount} pets`);
                 break;
 
             default:
