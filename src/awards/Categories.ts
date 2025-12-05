@@ -404,6 +404,9 @@ export const CATEGORIES: Category[] = [
             {
                 id: NOMINEES.h0ru5_.username,
             },
+            {
+                id: NOMINEES.tuflakito77.username,
+            }
         ]
     },
     {
