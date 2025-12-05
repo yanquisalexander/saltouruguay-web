@@ -27,9 +27,11 @@ import { addRoleToUserWithoutLogging } from "@/services/discord";
 import { audio } from "./audio";
 import { voice } from "./voice";
 import { banco } from "./banco";
+import { pet } from "./pet";
 export const server = {
     userEvents,
     banco,
+    pet,
     sendVotes: defineAction({
         input: z.object({
             votes: z.record(z.array(z.object({

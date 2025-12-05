@@ -1037,3 +1037,133 @@ export const bancoSaltanoDailyRewardsRelations = relations(BancoSaltanoDailyRewa
         references: [UsersTable.id],
     }),
 }));
+
+/* 
+    Mascota Saltana (Pet System)
+    Tamagotchi-style virtual pet with economy integration
+*/
+
+// Pet item categories
+export const petItemCategoryEnum = pgEnum('pet_item_category', [
+    'food',      // Items to feed the pet
+    'toy',       // Items to play with the pet
+    'furniture', // Decorations for the house
+    'clothing',  // Cosmetic items for the pet
+    'accessory', // Hats, glasses, etc.
+]);
+
+// Pet item rarity
+export const petItemRarityEnum = pgEnum('pet_item_rarity', [
+    'common',
+    'uncommon',
+    'rare',
+    'epic',
+    'legendary'
+]);
+
+// Available pet items in the store
+export const PetItemsTable = pgTable('pet_items', {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 100 }).notNull(),
+    description: text('description'),
+    category: petItemCategoryEnum('category').notNull(),
+    rarity: petItemRarityEnum('rarity').notNull().default('common'),
+    price: integer('price').notNull(), // Price in SaltoCoins
+    iconUrl: varchar('icon_url'), // URL or path to icon image
+    effectValue: integer('effect_value').notNull().default(0), // How much it affects stats (e.g., +20 hunger)
+    isConsumable: boolean('is_consumable').notNull().default(true), // If true, item is consumed on use
+    isAvailable: boolean('is_available').notNull().default(true), // If item is currently available in store
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+});
+
+// User's pet
+export const PetsTable = pgTable('pets', {
+    id: serial('id').primaryKey(),
+    ownerId: integer('owner_id').notNull().unique().references(() => UsersTable.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 50 }).notNull(),
+    // Appearance stored as JSON
+    appearance: jsonb('appearance').notNull().default({
+        color: '#FFD700',
+        skinId: null,
+        hatId: null,
+        accessoryId: null,
+    }),
+    // Stats (0-100 scale)
+    hunger: integer('hunger').notNull().default(100),
+    energy: integer('energy').notNull().default(100),
+    hygiene: integer('hygiene').notNull().default(100),
+    happiness: integer('happiness').notNull().default(100),
+    // Crucial for serverless lazy evaluation
+    lastInteraction: timestamp('last_interaction').notNull().default(sql`current_timestamp`),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+});
+
+// User's inventory of purchased items
+export const PetUserInventoryTable = pgTable('pet_user_inventory', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => UsersTable.id, { onDelete: 'cascade' }),
+    itemId: integer('item_id').notNull().references(() => PetItemsTable.id, { onDelete: 'cascade' }),
+    quantity: integer('quantity').notNull().default(1),
+    acquiredAt: timestamp('acquired_at').notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueUserItem: unique('user_item_idx').on(t.userId, t.itemId),
+}));
+
+// Pet house decoration layout
+export const PetHousesTable = pgTable('pet_houses', {
+    id: serial('id').primaryKey(),
+    ownerId: integer('owner_id').notNull().unique().references(() => UsersTable.id, { onDelete: 'cascade' }),
+    backgroundId: varchar('background_id').notNull().default('default'), // Wall/floor theme
+    layout: jsonb('layout').notNull().default([]), // Array of placed furniture items with positions
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+});
+
+// Pet minigame scores and rewards tracking
+export const PetMinigameScoresTable = pgTable('pet_minigame_scores', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => UsersTable.id, { onDelete: 'cascade' }),
+    gameName: varchar('game_name', { length: 50 }).notNull(), // e.g., 'catch_the_coin'
+    score: integer('score').notNull(),
+    coinsEarned: integer('coins_earned').notNull().default(0),
+    playedAt: timestamp('played_at').notNull().default(sql`current_timestamp`),
+});
+
+// Pet Relations
+export const petItemsRelations = relations(PetItemsTable, ({ many }) => ({
+    inventoryEntries: many(PetUserInventoryTable),
+}));
+
+export const petsRelations = relations(PetsTable, ({ one }) => ({
+    owner: one(UsersTable, {
+        fields: [PetsTable.ownerId],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const petUserInventoryRelations = relations(PetUserInventoryTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [PetUserInventoryTable.userId],
+        references: [UsersTable.id],
+    }),
+    item: one(PetItemsTable, {
+        fields: [PetUserInventoryTable.itemId],
+        references: [PetItemsTable.id],
+    }),
+}));
+
+export const petHousesRelations = relations(PetHousesTable, ({ one }) => ({
+    owner: one(UsersTable, {
+        fields: [PetHousesTable.ownerId],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const petMinigameScoresRelations = relations(PetMinigameScoresTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [PetMinigameScoresTable.userId],
+        references: [UsersTable.id],
+    }),
+}));

@@ -1,0 +1,15 @@
+---
+import CommunityLayout from "@/layouts/CommunityLayout.astro";
+import PetApp from "@/components/pet/PetApp";
+import { getSession } from "auth-astro/server";
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return Astro.redirect("/signin?redirect=/comunidad/mascota");
+}
+---
+
+<CommunityLayout title="Mascota Saltana">
+  <PetApp client:only="preact" />
+</CommunityLayout>
