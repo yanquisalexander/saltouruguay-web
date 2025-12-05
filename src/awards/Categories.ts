@@ -1,6 +1,23 @@
 import type { Category } from "@/types/Awards";
 import { NOMINEES } from "./Nominees";
 
+export const HISTORICAL_CATEGORIES_NAMES: Record<string, string> = {
+    "mas-generoso": "Más generoso",
+    "mas-censurado": "Más censurado",
+    "mas-activos": "Más activos",
+    "streamer-destacado": "Streamer destacado",
+    "mejor-moderador": "Mejor moderador",
+    "joven-promesa": "Joven promesa",
+    "mas-alegre-del-chat": "Más alegre del chat",
+    "mas-creativo": "Más creativo",
+    "mas-fachero": "Más fachero",
+    "mas-companero": "Más compañero",
+    "mas-querido": "Más querido",
+    "mas-tryhard": "Más Tryhard",
+    "mas-dispuesto": "Más dispuesto",
+    "mejor-evento": "Mejor evento",
+};
+
 export const CATEGORIES: Category[] = [
     {
         id: "mas-generoso",
