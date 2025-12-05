@@ -948,7 +948,7 @@ export const ruletaLocaPlayerStatsRelations = relations(RuletaLocaPlayerStatsTab
 // Transaction types enum
 export const transactionTypeEnum = pgEnum('transaction_type', [
     'deposit',
-    'withdrawal', 
+    'withdrawal',
     'transfer',
     'game_reward',
     'daily_bonus',
@@ -1096,6 +1096,7 @@ export const PetsTable = pgTable('pets', {
     happiness: integer('happiness').notNull().default(100),
     // Crucial for serverless lazy evaluation
     lastInteraction: timestamp('last_interaction').notNull().default(sql`current_timestamp`),
+    sleepingSince: timestamp('sleeping_since'),
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
 });

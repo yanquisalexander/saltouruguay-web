@@ -1,7 +1,7 @@
 ---
-import CommunityLayout from "@/layouts/CommunityLayout.astro";
-import PetApp from "@/components/pet/PetApp";
 import { getSession } from "auth-astro/server";
+import Layout from "@/layouts/Layout.astro";
+import PetApp from "@/components/pet/PetApp.tsx";
 
 const session = await getSession(Astro.request);
 
@@ -10,6 +10,8 @@ if (!session) {
 }
 ---
 
-<CommunityLayout title="Mascota Saltana">
-  <PetApp client:only="preact" />
-</CommunityLayout>
+<Layout title="Mascota Saltana">
+  <div class="pt-20">
+    <PetApp client:only="preact" />
+  </div>
+</Layout>

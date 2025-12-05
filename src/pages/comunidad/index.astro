@@ -11,6 +11,7 @@ import {
   LucideWallet,
   LucideIdCard,
   LucideSparkles,
+  LucideHeart,
 } from "lucide-preact";
 
 const session = await getSession(Astro.request);
@@ -28,6 +29,17 @@ const APPS = [
     icon: LucideIdCard,
     soon: false,
     featured: true, // Ocupará 2 columnas
+    section: "main",
+  },
+  {
+    id: "mascota",
+    path: "/comunidad/mascota",
+    requiresLogin: true,
+    title: "Mascota Saltana",
+    description: "Adopta y cuida a tu compañero virtual.",
+    image: "/images/pet-bg.webp", // Assuming this image exists or will be a placeholder
+    icon: LucideHeart,
+    soon: false,
     section: "main",
   },
   {

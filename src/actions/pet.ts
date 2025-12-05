@@ -326,4 +326,29 @@ export const pet = {
             }
         },
     }),
+
+    /**
+     * Wake up pet
+     */
+    wakePet: defineAction({
+        handler: async (_, context) => {
+            const session = await getSession(context.request);
+            if (!session?.user?.id) {
+                throw new ActionError({
+                    code: 'UNAUTHORIZED',
+                    message: 'Debes iniciar sesión para despertar tu mascota',
+                });
+            }
+
+            try {
+                const result = await PetService.wakePet(session.user.id);
+                return result;
+            } catch (error: any) {
+                throw new ActionError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: error.message || 'Error al despertar la mascota',
+                });
+            }
+        },
+    }),
 };

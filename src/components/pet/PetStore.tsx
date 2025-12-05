@@ -2,7 +2,7 @@ import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { toast } from 'sonner';
-import { LucideShoppingCart, LucideCoins } from 'lucide-preact';
+import { LucideShoppingCart, LucideCoins, LucideLoader2 } from 'lucide-preact';
 
 import type { InventoryItem } from './PetActions';
 
@@ -31,11 +31,11 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const RARITY_COLORS: Record<string, string> = {
-    common: 'border-gray-500 bg-gray-800/50',
-    uncommon: 'border-green-500 bg-green-900/30',
-    rare: 'border-blue-500 bg-blue-900/30',
-    epic: 'border-purple-500 bg-purple-900/30',
-    legendary: 'border-yellow-500 bg-yellow-900/30',
+    common: 'border-gray-500/30 bg-gray-500/5',
+    uncommon: 'border-green-500/30 bg-green-500/5',
+    rare: 'border-blue-500/30 bg-blue-500/5',
+    epic: 'border-purple-500/30 bg-purple-500/5',
+    legendary: 'border-yellow-500/30 bg-yellow-500/5',
 };
 
 export default function PetStore({ onItemPurchased }: PetStoreProps) {
@@ -81,7 +81,7 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
         try {
             setPurchasing(itemId);
             const result = await actions.pet.purchaseItem({ itemId, quantity: 1 });
-            
+
             if (result.data?.success) {
                 toast.success(`¡Compraste ${itemName}!`);
                 await loadInventory();
@@ -102,15 +102,15 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
     const categories = ['all', 'food', 'toy', 'furniture', 'clothing', 'accessory'];
 
     return (
-        <div className="p-6">
-            <div className="max-w-6xl mx-auto space-y-6">
+        <div className="p-6 md:p-8">
+            <div className="max-w-6xl mx-auto space-y-8">
                 {/* Header */}
-                <div className="text-center">
-                    <h2 className="pixel-heading text-3xl text-white drop-shadow-lg">
+                <div className="text-center space-y-2">
+                    <h2 className="text-4xl font-bold text-white">
                         Tienda de Mascotas
                     </h2>
-                    <p className="pixel-text text-gray-400 mt-2">
-                        Compra comida, juguetes y decoraciones con SaltoCoins
+                    <p className="text-gray-400 max-w-lg mx-auto">
+                        Mejora la vida de tu compañero virtual con los mejores productos.
                     </p>
                 </div>
 
@@ -118,9 +118,10 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
                 <div className="flex flex-wrap gap-2 justify-center">
                     <button
                         onClick={() => setSelectedCategory('all')}
-                        className={`pixel-btn-chunky ${
-                            selectedCategory === 'all' ? 'variant-violet' : 'variant-gray'
-                        }`}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${selectedCategory === 'all'
+                                ? 'bg-white text-black shadow-lg scale-105'
+                                : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                            }`}
                     >
                         Todo
                     </button>
@@ -128,9 +129,10 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
                         <button
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
-                            className={`pixel-btn-chunky ${
-                                selectedCategory === cat ? 'variant-violet' : 'variant-gray'
-                            }`}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${selectedCategory === cat
+                                    ? 'bg-white text-black shadow-lg scale-105'
+                                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                                }`}
                         >
                             {CATEGORY_LABELS[cat]}
                         </button>
@@ -139,16 +141,18 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
 
                 {/* Inventory Summary */}
                 {inventory.length > 0 && (
-                    <div className="pixel-inset p-4 bg-blue-900/30">
-                        <h3 className="pixel-text text-white mb-2">Tu Inventario:</h3>
-                        <div className="flex flex-wrap gap-2">
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex items-center gap-4 overflow-x-auto custom-scrollbar">
+                        <div className="flex-shrink-0 font-bold text-blue-200 text-sm uppercase tracking-wider">
+                            Tu Inventario:
+                        </div>
+                        <div className="flex gap-2">
                             {inventory.slice(0, 5).map(item => (
-                                <span key={item.id} className="pixel-text text-sm bg-gray-800 px-3 py-1 border-2 border-gray-600">
-                                    {item.item.name} ({item.quantity})
+                                <span key={item.id} className="bg-blue-500/20 text-blue-100 px-3 py-1 rounded-full text-xs font-medium border border-blue-500/30 whitespace-nowrap">
+                                    {item.item.name} <span className="opacity-60 ml-1">x{item.quantity}</span>
                                 </span>
                             ))}
                             {inventory.length > 5 && (
-                                <span className="pixel-text text-sm text-gray-400">
+                                <span className="text-xs text-blue-300/60 self-center whitespace-nowrap">
                                     +{inventory.length - 5} más
                                 </span>
                             )}
@@ -158,24 +162,24 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
 
                 {/* Items Grid */}
                 {loading ? (
-                    <div className="text-center py-12">
-                        <p className="pixel-text text-white">Cargando tienda...</p>
+                    <div className="flex justify-center py-20">
+                        <LucideLoader2 className="animate-spin text-violet-500" size={40} />
                     </div>
                 ) : items.length === 0 ? (
-                    <div className="text-center py-12">
-                        <p className="pixel-text text-gray-400">No hay items disponibles</p>
+                    <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10">
+                        <p className="text-gray-400">No hay items disponibles en esta categoría.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {items.map(item => {
                             const quantity = getItemQuantity(item.id);
                             return (
                                 <div
                                     key={item.id}
-                                    className={`pixel-inset p-4 border-4 ${RARITY_COLORS[item.rarity]} space-y-3`}
+                                    className={`group relative bg-black/40 backdrop-blur-md border rounded-3xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${RARITY_COLORS[item.rarity]}`}
                                 >
                                     {/* Item Icon/Preview */}
-                                    <div className="w-full aspect-square bg-gray-900 border-4 border-gray-700 flex items-center justify-center text-4xl">
+                                    <div className="w-full aspect-square bg-gradient-to-br from-white/5 to-white/0 rounded-2xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform duration-500">
                                         {item.category === 'food' && '🍔'}
                                         {item.category === 'toy' && '🎮'}
                                         {item.category === 'furniture' && '🪑'}
@@ -184,40 +188,51 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
                                     </div>
 
                                     {/* Item Info */}
-                                    <div>
-                                        <h4 className="pixel-text text-white font-bold">
-                                            {item.name}
-                                        </h4>
-                                        <p className="pixel-text text-xs text-gray-400 mt-1">
+                                    <div className="space-y-2 mb-4">
+                                        <div className="flex justify-between items-start">
+                                            <h4 className="font-bold text-white text-lg leading-tight">
+                                                {item.name}
+                                            </h4>
+                                            {quantity > 0 && (
+                                                <span className="bg-yellow-500/20 text-yellow-300 text-xs font-bold px-2 py-1 rounded-full border border-yellow-500/30">
+                                                    x{quantity}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <p className="text-sm text-gray-400 line-clamp-2 h-10">
                                             {item.description || 'Sin descripción'}
                                         </p>
+
                                         {item.effectValue > 0 && (
-                                            <p className="pixel-text text-xs text-green-400 mt-1">
+                                            <div className="flex items-center gap-1 text-xs text-green-400 font-medium">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                                                 Efecto: +{item.effectValue}
-                                            </p>
-                                        )}
-                                        {quantity > 0 && (
-                                            <p className="pixel-text text-xs text-yellow-400 mt-1">
-                                                Tienes: {quantity}
-                                            </p>
+                                            </div>
                                         )}
                                     </div>
 
                                     {/* Price and Buy Button */}
-                                    <div className="flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-1">
-                                            <LucideCoins size={16} className="text-yellow-400" />
-                                            <span className="pixel-text text-yellow-400 font-bold">
+                                    <div className="flex items-center justify-between gap-3 pt-4 border-t border-white/10">
+                                        <div className="flex items-center gap-1.5">
+                                            <LucideCoins size={18} className="text-yellow-400" />
+                                            <span className="font-bold text-yellow-400 text-lg">
                                                 {item.price}
                                             </span>
                                         </div>
                                         <button
                                             onClick={() => handlePurchase(item.id, item.price, item.name)}
                                             disabled={purchasing !== null}
-                                            className="pixel-btn-chunky variant-yellow text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                            className="flex-1 bg-white text-black hover:bg-gray-200 disabled:bg-gray-500 disabled:cursor-not-allowed font-bold py-2 px-4 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
                                         >
-                                            <LucideShoppingCart size={14} />
-                                            {purchasing === item.id ? 'Comprando...' : 'Comprar'}
+                                            {purchasing === item.id ? (
+                                                <LucideLoader2 size={16} className="animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <LucideShoppingCart size={16} />
+                                                    Comprar
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </div>

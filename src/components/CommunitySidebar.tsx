@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { MessageSquare, MessageCircle, Calendar, HelpCircle, LucideHome, LucideUsers, LucidePiggyBank, LucideTrophy, LucidePaw } from 'lucide-preact';
+import { MessageSquare, MessageCircle, Calendar, HelpCircle, LucideHome, LucideUsers, LucidePiggyBank, LucideTrophy, LucidePawPrint } from 'lucide-preact';
 
 export default function CommunitySidebar() {
     return (
@@ -22,7 +22,7 @@ export default function CommunitySidebar() {
                 </li>
                 <li>
                     <a href="/comunidad/mascota" className="pixel-btn-chunky variant-pink" title="Mascota Saltana">
-                        <LucidePaw size={24} />
+                        <LucidePawPrint size={24} />
                     </a>
                 </li>
                 <li>

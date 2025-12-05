@@ -330,6 +330,13 @@
       "when": 1764965267301,
       "tag": "0046_eminent_vance_astro",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1764967859575,
+      "tag": "0047_kind_major_mapleleaf",
+      "breakpoints": true
     }
   ]
 }

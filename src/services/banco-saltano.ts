@@ -28,19 +28,28 @@ export class BancoSaltanoService {
                 where: eq(BancoSaltanoAccountsTable.userId, userId),
             });
 
+            // Get user to check coins
+            const user = await db.query.UsersTable.findFirst({
+                where: eq(UsersTable.id, userId),
+                columns: { coins: true },
+            });
+
             if (!account) {
                 // Create account and sync with user's current coins
-                const user = await db.query.UsersTable.findFirst({
-                    where: eq(UsersTable.id, userId),
-                    columns: { coins: true },
-                });
-
                 const [newAccount] = await db.insert(BancoSaltanoAccountsTable).values({
                     userId,
                     balance: user?.coins || 0,
                 }).returning();
 
                 account = newAccount;
+            } else if (user && user.coins > account.balance) {
+                // Sync if user has more coins in UsersTable (migration/manual update fix)
+                const [updatedAccount] = await db.update(BancoSaltanoAccountsTable)
+                    .set({ balance: user.coins })
+                    .where(eq(BancoSaltanoAccountsTable.id, account.id))
+                    .returning();
+
+                account = updatedAccount;
             }
 
             return account;

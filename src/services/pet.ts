@@ -18,6 +18,9 @@ const DECAY_RATES = {
     happiness: 2, // -2 per hour
 };
 
+const SLEEP_RECOVERY_RATE = 30; // +30 energy per hour while sleeping
+const SLEEP_DECAY_MULTIPLIER = 0.5; // Stats decay 50% slower while sleeping
+
 // Maximum stats
 const MAX_STAT = 100;
 const MIN_STAT = 0;
@@ -42,16 +45,40 @@ export class PetService {
      */
     static calculateCurrentStats(
         savedStats: PetStats,
-        lastInteraction: Date
+        lastInteraction: Date,
+        sleepingSince: Date | null = null
     ): PetStats {
         const now = new Date();
+
+        // If sleeping, calculate with recovery and slower decay
+        if (sleepingSince) {
+            // Use sleepingSince as the start point, but ensure we don't go back in time before lastInteraction if that happened
+            // In practice, putPetToSleep updates both, so they are close.
+            // We use sleepingSince to be precise about when sleep started.
+            const sleepStart = new Date(sleepingSince).getTime();
+            const hoursSleeping = (now.getTime() - sleepStart) / (1000 * 60 * 60);
+
+            // If for some reason hours is negative (clock skew), treat as 0
+            const safeHours = Math.max(0, hoursSleeping);
+
+            // Energy recovers, others decay slower
+            const energyRecovered = safeHours * SLEEP_RECOVERY_RATE;
+
+            return {
+                hunger: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.hunger - (DECAY_RATES.hunger * SLEEP_DECAY_MULTIPLIER * safeHours)))),
+                energy: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.energy + energyRecovered))),
+                hygiene: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.hygiene - (DECAY_RATES.hygiene * SLEEP_DECAY_MULTIPLIER * safeHours)))),
+                happiness: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.happiness - (DECAY_RATES.happiness * SLEEP_DECAY_MULTIPLIER * safeHours)))),
+            };
+        }
+
         const hoursElapsed = (now.getTime() - new Date(lastInteraction).getTime()) / (1000 * 60 * 60);
 
         return {
-            hunger: Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.hunger - (DECAY_RATES.hunger * hoursElapsed))),
-            energy: Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.energy - (DECAY_RATES.energy * hoursElapsed))),
-            hygiene: Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.hygiene - (DECAY_RATES.hygiene * hoursElapsed))),
-            happiness: Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.happiness - (DECAY_RATES.happiness * hoursElapsed))),
+            hunger: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.hunger - (DECAY_RATES.hunger * hoursElapsed)))),
+            energy: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.energy - (DECAY_RATES.energy * hoursElapsed)))),
+            hygiene: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.hygiene - (DECAY_RATES.hygiene * hoursElapsed)))),
+            happiness: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.happiness - (DECAY_RATES.happiness * hoursElapsed)))),
         };
     }
 
@@ -123,7 +150,8 @@ export class PetService {
                     hygiene: pet.hygiene,
                     happiness: pet.happiness,
                 },
-                pet.lastInteraction
+                pet.lastInteraction,
+                pet.sleepingSince
             );
 
             return {
@@ -157,6 +185,10 @@ export class PetService {
                     throw new Error('Pet not found');
                 }
 
+                if (pet.sleepingSince) {
+                    throw new Error('Tu mascota está durmiendo. Despiértala para alimentarla.');
+                }
+
                 // Get item
                 const item = await tx.query.PetItemsTable.findFirst({
                     where: eq(PetItemsTable.id, itemId),
@@ -188,6 +220,10 @@ export class PetService {
                     },
                     pet.lastInteraction
                 );
+
+                if (currentStats.hunger >= MAX_STAT) {
+                    throw new Error('Tu mascota está llena, no tiene hambre.');
+                }
 
                 // Apply item effect
                 const newHunger = Math.min(MAX_STAT, currentStats.hunger + item.effectValue);
@@ -249,6 +285,10 @@ export class PetService {
                     throw new Error('Pet not found');
                 }
 
+                if (pet.sleepingSince) {
+                    throw new Error('Tu mascota está durmiendo. Despiértala para limpiarla.');
+                }
+
                 const currentStats = this.calculateCurrentStats(
                     {
                         hunger: pet.hunger,
@@ -258,6 +298,10 @@ export class PetService {
                     },
                     pet.lastInteraction
                 );
+
+                if (currentStats.hygiene >= MAX_STAT) {
+                    throw new Error('Tu mascota ya está limpia y reluciente.');
+                }
 
                 // Improve hygiene and happiness
                 const newHygiene = Math.min(MAX_STAT, currentStats.hygiene + 30);
@@ -302,6 +346,10 @@ export class PetService {
 
                 if (!pet) {
                     throw new Error('Pet not found');
+                }
+
+                if (pet.sleepingSince) {
+                    throw new Error('Tu mascota está durmiendo. Despiértala para jugar.');
                 }
 
                 const currentStats = this.calculateCurrentStats(
@@ -402,6 +450,10 @@ export class PetService {
                     throw new Error('Pet not found');
                 }
 
+                if (pet.sleepingSince) {
+                    throw new Error('Tu mascota ya está durmiendo.');
+                }
+
                 const currentStats = this.calculateCurrentStats(
                     {
                         hunger: pet.hunger,
@@ -412,16 +464,19 @@ export class PetService {
                     pet.lastInteraction
                 );
 
-                // Restore energy
-                const newEnergy = Math.min(MAX_STAT, currentStats.energy + 40);
+                if (currentStats.energy >= MAX_STAT) {
+                    throw new Error('Tu mascota no tiene sueño, ¡quiere jugar!');
+                }
 
+                // Start sleeping
                 await tx.update(PetsTable)
                     .set({
                         hunger: currentStats.hunger,
-                        energy: newEnergy,
+                        energy: currentStats.energy,
                         hygiene: currentStats.hygiene,
                         happiness: currentStats.happiness,
                         lastInteraction: sql`current_timestamp`,
+                        sleepingSince: sql`current_timestamp`,
                         updatedAt: sql`current_timestamp`,
                     })
                     .where(eq(PetsTable.ownerId, userId));
@@ -430,14 +485,75 @@ export class PetService {
                     success: true,
                     newStats: {
                         hunger: currentStats.hunger,
-                        energy: newEnergy,
+                        energy: currentStats.energy,
                         hygiene: currentStats.hygiene,
                         happiness: currentStats.happiness,
                     },
+                    isSleeping: true
                 };
             });
         } catch (error) {
             console.error('Error putting pet to sleep:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Wake up pet
+     */
+    static async wakePet(userId: number) {
+        try {
+            return await db.transaction(async (tx) => {
+                const pet = await tx.query.PetsTable.findFirst({
+                    where: eq(PetsTable.ownerId, userId),
+                });
+
+                if (!pet) {
+                    throw new Error('Pet not found');
+                }
+
+                if (!pet.sleepingSince) {
+                    throw new Error('Tu mascota ya está despierta.');
+                }
+
+                // Calculate stats including sleep recovery
+                const currentStats = this.calculateCurrentStats(
+                    {
+                        hunger: pet.hunger,
+                        energy: pet.energy,
+                        hygiene: pet.hygiene,
+                        happiness: pet.happiness,
+                    },
+                    pet.lastInteraction,
+                    pet.sleepingSince
+                );
+
+                // Wake up
+                await tx.update(PetsTable)
+                    .set({
+                        hunger: currentStats.hunger,
+                        energy: currentStats.energy,
+                        hygiene: currentStats.hygiene,
+                        happiness: currentStats.happiness,
+                        lastInteraction: sql`current_timestamp`,
+                        sleepingSince: null, // Clear sleeping status
+                        updatedAt: sql`current_timestamp`,
+                    })
+                    .where(eq(PetsTable.ownerId, userId));
+
+                return {
+                    success: true,
+                    newStats: {
+                        hunger: currentStats.hunger,
+                        energy: currentStats.energy,
+                        hygiene: currentStats.hygiene,
+                        happiness: currentStats.happiness,
+                    },
+                    isSleeping: false
+                };
+            });
+        } catch (error) {
+            console.error('Error waking pet:', error);
             throw error;
         }
     }
@@ -582,8 +698,8 @@ export class PetService {
      * Update pet house layout
      */
     static async updateHouseLayout(
-        userId: number, 
-        layout: Array<{ item_id: string; position_x: number; position_y: number; rotation: number }>, 
+        userId: number,
+        layout: Array<{ item_id: string; position_x: number; position_y: number; rotation: number }>,
         backgroundId?: string
     ) {
         try {
