@@ -1,9 +1,16 @@
 ---
 import { ACHIEVEMENTS, ACHIEVEMENTS_TEXTS } from "@/consts/Achievements";
 import CommunityLayout from "@/layouts/CommunityLayout.astro";
+import Layout from "@/layouts/Layout.astro";
 import { getUserAchievements } from "@/utils/user";
 import { getSession } from "auth-astro/server";
-import { LucideLockKeyhole } from "lucide-preact";
+import {
+  LucideLock,
+  LucideTrophy,
+  LucideCalendar,
+  LucideSparkles,
+  LucideMedal,
+} from "lucide-preact";
 
 const session = await getSession(Astro.request);
 
@@ -14,113 +21,444 @@ if (!session) {
 }
 
 const userAchievements = await getUserAchievements(session.user.id);
+const totalAchievements = Object.keys(ACHIEVEMENTS).length;
+const unlockedCount = userAchievements.length;
+const progressPercentage = Math.round(
+  (unlockedCount / totalAchievements) * 100
+);
+
+// Helper para formatear fecha
+const formatDate = (dateString: Date) => {
+  return new Date(dateString).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
 ---
 
-<CommunityLayout
+<Layout
   title="Mis Logros"
   description="Descubre los logros que has desbloqueado."
 >
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-8">
-    <header class="relative z-10 flex flex-col h-full mb-8">
-      <div class="flex items-center gap-x-8 flex-col md:flex-row gap-y-6">
-        <div class="flex flex-col w-full">
-          <h1
-            class="text-2xl md:text-4xl font-press-start-2p uppercase text-center md:text-left text-white mb-4"
+  <div class="flex flex-col max-w-6xl mx-auto min-h-screen mt-8 px-4 pb-20">
+    {/* --- HEADER --- */}
+    <header
+      class="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-gray-900 via-gray-900 to-black p-8 shadow-2xl mb-8"
+    >
+      <div
+        class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5 pointer-events-none"
+      >
+      </div>
+      <div
+        class="absolute top-0 right-0 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"
+      >
+      </div>
+
+      <div
+        class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6"
+      >
+        <div class="flex items-center gap-6">
+          <div class="relative">
+            <div class="absolute inset-0 bg-yellow-500 blur-xl opacity-20">
+            </div>
+            <LucideTrophy
+              size={64}
+              className="relative text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+            />
+          </div>
+          <div>
+            <h1
+              class="font-teko text-4xl md:text-5xl font-bold text-white uppercase tracking-wide leading-none"
+            >
+              Salón de <span
+                class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500"
+                >Logros</span
+              >
+            </h1>
+            <p class="font-rubik text-white/50 text-sm mt-1 max-w-md">
+              Tu legado en la comunidad. Desbloquea hitos únicos participando en
+              distintas actividades de la comunidad y la web.
+            </p>
+          </div>
+        </div>
+
+        {/* Progress Circle / Stat */}
+        <div
+          class="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm"
+        >
+          <div class="text-right">
+            <span
+              class="block text-xs font-rubik text-white/40 uppercase tracking-widest"
+              >Progreso Total</span
+            >
+            <span class="block font-teko text-3xl font-bold text-white">
+              <span class="text-yellow-400">{unlockedCount}</span> / {
+                totalAchievements
+              }
+            </span>
+          </div>
+          <div
+            class="relative size-16 flex items-center justify-center rounded-full border-4 border-white/10"
           >
-            Mis Logros
-          </h1>
-          <p class="text-center md:text-left font-vt323 text-xl text-gray-400">
-            Aquí encontrarás todos los logros que has desbloqueado
-          </p>
+            <svg
+              class="size-full -rotate-90 absolute inset-0"
+              viewBox="0 0 36 36"
+            >
+              <path
+                class="text-yellow-500 transition-all duration-1000 ease-out"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-dasharray={`${progressPercentage}, 100`}></path>
+            </svg>
+            <span class="text-xs font-bold text-white"
+              >{progressPercentage}%</span
+            >
+          </div>
         </div>
       </div>
     </header>
 
-    <div class="flex flex-col pb-16">
-      <div class="block max-w-md mt-2 mb-8 pixel-panel p-4">
-        <div class="block pb-2 text-lg font-vt323 text-white">
-          Desbloqueaste
-          <span class="font-bold text-yellow-400"
-            >{userAchievements.length}</span
-          > de {Object.keys(ACHIEVEMENTS).length} logros. ¡Seguí así!
-        </div>
-        <div class="relative w-full h-4 bg-black border-2 border-gray-700">
+    {/* --- PROGRESS BAR COMPACT --- */}
+    <div class="mb-10 relative group">
+      <div
+        class="absolute -inset-1 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-lg blur opacity-10 group-hover:opacity-20 transition duration-1000 group-hover:duration-200"
+      >
+      </div>
+      <div
+        class="relative h-4 w-full bg-gray-900 rounded-full border border-white/10 overflow-hidden"
+      >
+        <div
+          class="h-full bg-gradient-to-r from-yellow-400 to-orange-500 shadow-[0_0_15px_rgba(234,179,8,0.5)] transition-all duration-1000 ease-out"
+          style={{ width: `${progressPercentage}%` }}
+        >
           <div
-            class="h-full bg-green-500 transition-all duration-500"
-            style={{
-              width: `${(userAchievements.length / Object.keys(ACHIEVEMENTS).length) * 100}%`,
-            }}
+            class="w-full h-full bg-[url('/images/pattern-grid.svg')] opacity-20 bg-repeat-x animate-slide-bg"
           >
           </div>
         </div>
       </div>
+      <div class="flex justify-between mt-2 px-1">
+        <span class="text-xs font-rubik text-white/40">Novato</span>
+        <span
+          class="text-xs font-rubik text-yellow-500 font-bold tracking-widest uppercase"
+          >Leyenda Saltana</span
+        >
+      </div>
+    </div>
 
-      <ul
-        class="grid grid-cols-1 gap-8 mt-4 sm:grid-cols-2 md:grid-cols-3 max-w-4xl mx-auto mb-16"
-      >
-        {
-          Object.keys(ACHIEVEMENTS).map((key) => {
-            // @ts-ignore
-            const achievement = ACHIEVEMENTS[key];
+    {/* --- GRID DE LOGROS --- */}
+    <ul
+      class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+    >
+      {
+        Object.keys(ACHIEVEMENTS).map((key) => {
+          // @ts-ignore
+          const achievementId = ACHIEVEMENTS[key];
+          const achievementText = ACHIEVEMENTS_TEXTS.find(
+            (t) => t.id === achievementId
+          );
 
-            const achievementText = ACHIEVEMENTS_TEXTS.find(
-              (achievementText) => achievementText.id === achievement
-            );
+          const userAchievement = userAchievements.find(
+            (ua) => ua.achievementId === achievementId
+          );
+          const unlockedAt = userAchievement?.unlockedAt;
+          const iconUrl = `/images/achievements/${achievementId}.svg`;
 
-            const unlockedAt = userAchievements.find(
-              (userAchievement) => userAchievement.achievementId === achievement
-            )?.unlockedAt;
+          // Estado visual
+          const isUnlocked = !!unlockedAt;
 
-            const iconUrl = `/images/achievements/${achievement}.svg`;
+          return (
+            <li
+              class={`
+                group relative overflow-hidden rounded-2xl border transition-all duration-500 cursor-pointer
+                ${
+                  isUnlocked
+                    ? "bg-gray-900/40 border-yellow-500/30 hover:border-yellow-400/60 hover:shadow-[0_0_30px_rgba(234,179,8,0.1)] hover:-translate-y-1"
+                    : "bg-black/40 border-white/5 opacity-60 hover:opacity-80 grayscale hover:grayscale-0"
+                }
+              `}
+              data-achievement-card
+              data-achievement-id={achievementId}
+              data-achievement-title={achievementText?.title}
+              data-achievement-description={achievementText?.description}
+              data-achievement-icon={iconUrl}
+              data-achievement-unlocked={isUnlocked ? "true" : "false"}
+              data-achievement-date={unlockedAt ? formatDate(unlockedAt) : ""}
+            >
+              {/* Glow Background for unlocked */}
+              {isUnlocked && (
+                <div class="absolute inset-0 bg-gradient-to-b from-yellow-500/5 to-transparent pointer-events-none" />
+              )}
 
-            return (
-              <li
-                class={`pixel-card p-4 flex flex-col text-center transition hover:scale-105 group bg-[#1f2937] ${!unlockedAt ? "grayscale opacity-75 hover:grayscale-0 hover:opacity-100" : ""}`}
-              >
-                <picture class="block mb-4 w-full aspect-square bg-black/20 border-4 border-black relative">
-                  <img
-                    src={iconUrl}
-                    alt={`Ilustración de ${achievementText?.title}`}
-                    class="block w-full aspect-square"
-                    style="image-rendering: pixelated;"
-                  />
-                  {!unlockedAt && (
-                    <div class="absolute inset-0 flex items-center justify-center bg-black/80 flex-col">
-                      <LucideLockKeyhole size={48} className="text-gray-500" />
-                      <span class="block mt-2 text-gray-500 font-press-start-2p text-xs">
-                        Bloqueado
-                      </span>
-                    </div>
-                  )}
-                </picture>
-                <div class={`flex flex-col flex-1 justify-between`}>
-                  <div>
-                    <h2 class="text-xs md:text-sm font-press-start-2p text-yellow-400 mb-3 leading-relaxed min-h-[3em] flex items-center justify-center">
-                      {achievementText?.title}
-                    </h2>
-                    {achievementText && (
-                      <p class="text-lg font-vt323 text-gray-300 leading-tight mb-2">
-                        {achievementText.description}
-                      </p>
-                    )}
+              <div class="p-5 flex flex-col h-full relative z-10">
+                {/* Header: Icon & Badge */}
+                <div class="flex justify-between items-start mb-4">
+                  <div
+                    class={`
+                            relative size-16 p-2 rounded-xl border
+                            ${isUnlocked ? "bg-black/50 border-yellow-500/20 shadow-inner" : "bg-white/5 border-white/5"}
+                        `}
+                  >
+                    <img
+                      src={iconUrl}
+                      alt={achievementText?.title}
+                      class="w-full h-full object-contain"
+                      style="image-rendering: pixelated;"
+                    />
                   </div>
 
-                  {unlockedAt && (
-                    <span class="text-sm text-green-400 font-vt323 mt-2 border-t-2 border-gray-700 pt-2">
-                      Desbloqueado el{" "}
-                      {new Date(unlockedAt).toLocaleDateString("es-ES", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </span>
+                  {isUnlocked ? (
+                    <div class="bg-yellow-500/20 border border-yellow-500/30 p-1.5 rounded-lg text-yellow-400 animate-pulse">
+                      <LucideMedal size={20} />
+                    </div>
+                  ) : (
+                    <div class="bg-white/5 border border-white/10 p-1.5 rounded-lg text-white/30">
+                      <LucideLock size={20} />
+                    </div>
                   )}
                 </div>
-              </li>
-            );
-          })
-        }
-      </ul>
-    </div>
+
+                {/* Content */}
+                <div class="mt-auto">
+                  <h2
+                    class={`
+                            font-teko text-2xl uppercase font-bold leading-none mb-2
+                            ${isUnlocked ? "text-white group-hover:text-yellow-400 transition-colors" : "text-white/50"}
+                        `}
+                  >
+                    {achievementText?.title}
+                  </h2>
+
+                  <p class="font-rubik text-sm text-white/50 leading-relaxed line-clamp-3 min-h-[3em]">
+                    {achievementText?.description}
+                  </p>
+
+                  {/* Footer: Date or Status */}
+                  <div class="mt-4 pt-4 border-t border-white/5 flex items-center gap-2">
+                    {isUnlocked ? (
+                      <>
+                        <LucideCalendar size={14} class="text-green-400" />
+                        <span class="text-xs font-mono text-green-400/80">
+                          {formatDate(unlockedAt)}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <LucideLock size={14} class="text-white/20" />
+                        <span class="text-xs font-mono text-white/30 uppercase">
+                          Bloqueado
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </li>
+          );
+        })
+      }
+    </ul>
+
+    {/* --- DIALOG MODAL --- */}
+    <dialog
+      id="achievement-dialog"
+      class="backdrop:bg-black/80 backdrop:backdrop-blur-sm bg-transparent p-0 max-w-lg w-full rounded-2xl"
+    >
+      <div
+        class="bg-gradient-to-br from-gray-900 via-gray-900 to-black border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
+      >
+        {/* Header con icono */}
+        <div
+          id="dialog-header"
+          class="relative p-8 flex flex-col items-center text-center border-b border-white/10"
+        >
+          <div
+            class="absolute inset-0 bg-gradient-to-b from-yellow-500/10 to-transparent pointer-events-none"
+            id="dialog-glow"
+          >
+          </div>
+          <div
+            id="dialog-icon-container"
+            class="relative size-24 p-3 rounded-2xl border bg-black/50 border-yellow-500/20 shadow-inner mb-4"
+          >
+            <img
+              id="dialog-icon"
+              src=""
+              alt=""
+              class="w-full h-full object-contain"
+              style="image-rendering: pixelated;"
+            />
+          </div>
+          <h2
+            id="dialog-title"
+            class="font-teko text-3xl uppercase font-bold text-white leading-none"
+          >
+          </h2>
+          <div id="dialog-status" class="mt-3 flex items-center gap-2">
+            {/* Se llena dinámicamente */}
+          </div>
+        </div>
+
+        {/* Contenido */}
+        <div class="p-6">
+          <p
+            id="dialog-description"
+            class="font-rubik text-white/70 text-center leading-relaxed"
+          >
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div class="p-4 border-t border-white/10 flex justify-center">
+          <button
+            id="dialog-close"
+            class="px-6 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white font-rubik text-sm transition-colors"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </dialog>
   </div>
-</CommunityLayout>
+</Layout>
+
+<style>
+  /* Opcional: animación suave para el fondo de la barra de progreso */
+  @keyframes slide-bg {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 50px 0;
+    }
+  }
+  .animate-slide-bg {
+    animation: slide-bg 3s linear infinite;
+  }
+
+  /* Animación de entrada del dialog */
+  dialog[open] {
+    animation: dialog-show 0.3s ease-out forwards;
+  }
+
+  dialog::backdrop {
+    animation: backdrop-show 0.3s ease-out forwards;
+  }
+
+  @keyframes dialog-show {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes backdrop-show {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  import { $, $$ } from "@/lib/dom-selector";
+
+  const setupAchievementDialog = () => {
+    const dialog = $("#achievement-dialog") as HTMLDialogElement;
+    const cards = $$("[data-achievement-card]");
+    const closeBtn = $("#dialog-close");
+
+    // Elementos del dialog
+    const dialogIcon = $("#dialog-icon") as HTMLImageElement;
+    const dialogTitle = $("#dialog-title");
+    const dialogDescription = $("#dialog-description");
+    const dialogStatus = $("#dialog-status");
+    const dialogGlow = $("#dialog-glow");
+    const dialogIconContainer = $("#dialog-icon-container");
+
+    cards.forEach((card) => {
+      card.addEventListener("click", () => {
+        const title = card.getAttribute("data-achievement-title") || "";
+        const description =
+          card.getAttribute("data-achievement-description") || "";
+        const icon = card.getAttribute("data-achievement-icon") || "";
+        const isUnlocked =
+          card.getAttribute("data-achievement-unlocked") === "true";
+        const date = card.getAttribute("data-achievement-date") || "";
+
+        // Actualizar contenido
+        if (dialogIcon) {
+          dialogIcon.src = icon;
+          dialogIcon.alt = title;
+        }
+        if (dialogTitle) dialogTitle.textContent = title;
+        if (dialogDescription) dialogDescription.textContent = description;
+
+        // Actualizar estado visual
+        if (dialogGlow) {
+          dialogGlow.className = isUnlocked
+            ? "absolute inset-0 bg-gradient-to-b from-yellow-500/10 to-transparent pointer-events-none"
+            : "absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none";
+        }
+
+        if (dialogIconContainer) {
+          dialogIconContainer.className = isUnlocked
+            ? "relative size-24 p-3 rounded-2xl border bg-black/50 border-yellow-500/20 shadow-inner mb-4"
+            : "relative size-24 p-3 rounded-2xl border bg-white/5 border-white/10 mb-4 grayscale";
+        }
+
+        // Actualizar status
+        if (dialogStatus) {
+          if (isUnlocked) {
+            dialogStatus.innerHTML = `
+              <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Desbloqueado el ${date}
+              </span>
+            `;
+          } else {
+            dialogStatus.innerHTML = `
+              <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-white/50 text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Aún no desbloqueado
+              </span>
+            `;
+          }
+        }
+
+        dialog.showModal();
+      });
+    });
+
+    // Cerrar con botón
+    closeBtn?.addEventListener("click", () => {
+      dialog.close();
+    });
+
+    // Cerrar al hacer click fuera
+    dialog.addEventListener("click", (e) => {
+      if (e.target === dialog) {
+        dialog.close();
+      }
+    });
+
+    // Cerrar con Escape (ya viene por defecto, pero por si acaso)
+    dialog.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        dialog.close();
+      }
+    });
+  };
+
+  // Ejecutar en carga y en navegación de Astro
+  document.addEventListener("astro:page-load", setupAchievementDialog);
+</script>

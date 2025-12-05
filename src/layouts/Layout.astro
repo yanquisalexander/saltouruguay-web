@@ -22,6 +22,7 @@ import SignInModal from "@/components/SignInModal.astro";
 import KonamiCode from "@/components/KonamiCode.astro";
 import { DebugInfo } from "@/components/DebugInfo";
 import { ClientRouter } from "astro:transitions";
+import StingerGsap from "@/components/StingerGsap";
 interface Props {
   title?: string;
   description?: string;
@@ -104,6 +105,8 @@ preload?.push({
     {!hideHeader && <SiteHeader session={session} />}
 
     <main class={mainClassname}>
+      <StingerGsap client:only="preact" transition:persist="stinger-su" />
+
       <slot />
     </main>
     <SignInModal />

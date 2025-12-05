@@ -1,6 +1,7 @@
 ---
 import BancoSaltanoApp from "@/components/banco/BancoSaltanoApp";
 import CommunityLayout from "@/layouts/CommunityLayout.astro";
+import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
 
 const session = await getSession(Astro.request);
@@ -10,6 +11,6 @@ if (!session) {
 }
 ---
 
-<CommunityLayout title="Banco Saltano">
+<Layout title="Banco Saltano">
   <BancoSaltanoApp client:only="preact" />
-</CommunityLayout>
+</Layout>

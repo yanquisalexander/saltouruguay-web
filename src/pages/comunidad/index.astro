@@ -1,67 +1,80 @@
 ---
-import CommunityLayout from "@/layouts/CommunityLayout.astro";
+import Layout from "@/layouts/Layout.astro";
 import cacheService from "@/services/cache";
 
 import { getTotalOfMemberCards } from "@/utils/user";
 import { getSession } from "auth-astro/server";
-import { LucideLock, LucidePencilRuler } from "lucide-preact";
+import {
+  LucideLock,
+  LucideGamepad2,
+  LucideTrophy,
+  LucideWallet,
+  LucideIdCard,
+  LucideSparkles,
+} from "lucide-preact";
 
 const session = await getSession(Astro.request);
 
-interface CommunityCard {
-  path: string;
-  requiresLogin: boolean;
-  title: string;
-  description: string;
-  image: string;
-  soon: boolean;
-  soonCustomText?: string;
-}
+// --- DATA DEFINITION ---
 
-const COMMUNITY_GRID_CARDS: CommunityCard[] = [
+const APPS = [
   {
+    id: "member-card",
     path: "/comunidad/member-card",
     requiresLogin: true,
-    title: "Miembro Saltano",
-    description: "Manejá tu perfil y participá en la comunidad.",
+    title: "Mi Member Card",
+    description: "Tu identidad en la comunidad. Personaliza tu perfil.",
     image: "/images/member-card.webp",
+    icon: LucideIdCard,
     soon: false,
+    featured: true, // Ocupará 2 columnas
+    section: "main",
   },
   {
-    path: "/comunidad/logros",
-    requiresLogin: true,
-    title: "Mis Logros",
-    description: "Descubre los logros que has desbloqueado.",
-    image: "/images/achievements.webp",
-    soon: false,
-  },
-  {
+    id: "banco",
     path: "/comunidad/banco",
     requiresLogin: true,
     title: "Banco Saltano",
-    description: "Administra tus SaltoCoins y realiza transacciones.",
+    description: "Gestiona tus SaltoCoins.",
     image: "/images/banco.webp",
+    icon: LucideWallet,
     soon: false,
+    soonCustomText: "Próximamente",
+    section: "main",
   },
-  {
-    path: "/comunidad/juegos/ruleta-loca",
-    requiresLogin: true,
-    title: "Ruleta Loca",
-    description: "Gira la ruleta, adivina letras y gana SaltoCoins.",
-    image: "/images/banco.webp",
-    soon: false,
-  },
-  /*  {
-    path: "/comunidad/debate-salto-awards",
-    requiresLogin: true,
-    title: "Debate SaltoAwards",
-    description:
-      "Comparte tus opiniones sobre los SaltoAwards de forma anónima.",
-    image: "/images/debate-salto-awards.webp",
-    soon: false,
-    soonCustomText: "Disponible el Jueves durante el stream",
-  }, */
 ];
+
+const PROGRESSION = [
+  {
+    id: "logros",
+    path: "/comunidad/logros",
+    requiresLogin: true,
+    title: "Salón de Logros",
+    description: "Tus hitos y medallas desbloqueadas.",
+    image: "/images/achievements.webp",
+    icon: LucideTrophy,
+    soon: false,
+    section: "progression",
+  },
+];
+
+const GAMES = [
+  {
+    id: "minigames",
+    path: "/comunidad/juegos",
+    requiresLogin: false,
+    title: "Sala de Arcade",
+    description: "Minijuegos para pasar el rato.",
+    image: "/images/arcade-bg.webp",
+    icon: LucideGamepad2,
+    soon: true,
+    soonCustomText: "En desarrollo",
+    section: "games",
+  },
+];
+
+// Unimos listas para iterar (o podrías iterarlas por separado si prefieres separar el HTML visualmente)
+// Aquí las mantengo separadas en el HTML para darles contenedores distintos si hace falta.
 
 const cache = cacheService.create({ ttl: 7200 });
 let totalOfMemberCards: number | null = await cache.get(
@@ -74,112 +87,236 @@ if (!totalOfMemberCards) {
 }
 ---
 
-<CommunityLayout title="Comunidad">
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-8">
+<Layout title="Comunidad">
+  <div class="flex flex-col max-w-6xl mx-auto min-h-screen mt-20 px-4 mb-20">
+    {/* HEADER SECTION */}
     <header
-      class="relative z-10 flex flex-col items-center justify-center h-full max-w-4xl mx-auto mb-12"
+      class="relative flex flex-col items-center justify-center mb-12 text-center"
     >
-      <div class="flex items-center justify-center gap-x-4">
+      <div class="flex items-center justify-center gap-x-4 mb-4">
         <div
           class="relative animate-fade-in-up"
           style="--floating-duration: 5000ms"
         >
           <img
             src="/images/logo_salto.webp"
-            alt="SaltoUruguayServer"
-            class="size-20 md:size-24 w-auto object-contain aspect-square animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)] saturate-150"
-            style="image-rendering: pixelated;"
+            alt="Salto Logo"
+            class="size-16 md:size-20 object-contain animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)]"
           />
         </div>
         <h1
-          class="text-2xl md:text-4xl animate-fade-in-up animate-delay-150 font-press-start-2p tracking-wider uppercase text-white drop-shadow-md"
+          class="text-4xl md:text-5xl font-teko uppercase font-bold text-white tracking-wide"
         >
-          Comunidad
+          Hub <span
+            class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500"
+            >Comunitario</span
+          >
         </h1>
       </div>
 
-      <h2
-        class="text-xl md:text-2xl animate-fade-in-up animate-delay-300 font-vt323 uppercase text-gray-300 my-5 text-center"
+      <p
+        class="text-lg text-white/70 font-rubik max-w-2xl mx-auto animate-fade-in-up animate-delay-150"
       >
-        ¡Te damos la bienvenida a la <span class="text-yellow-400"
-          >comunidad Saltana</span
-        >!
-      </h2>
+        Bienvenido a tu centro de mando. Gestiona tu perfil, revisa tus finanzas
+        y diviértete.
+      </p>
+
+      {
+        totalOfMemberCards !== null && totalOfMemberCards > 0 && (
+          <div class="mt-6 animate-fade-in-up animate-delay-300 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-200 text-sm font-medium">
+            <LucideSparkles size={16} class="text-yellow-400" />
+            <span>
+              <span class="text-yellow-400 font-bold">
+                {totalOfMemberCards}
+              </span>{" "}
+              saltanos tiene su Member Card
+            </span>
+          </div>
+        )
+      }
     </header>
 
-    {
-      totalOfMemberCards ? (
-        <div class="flex justify-center flex-col items-center mb-12 sm:w-max font-vt323 px-4 sm:px-8 uppercase text-lg text-white mx-auto text-center py-2 border-2 border-violet-500 bg-violet-900/50 shadow-[4px_4px_0px_0px_rgba(139,92,246,1)] hover:translate-y-1 hover:shadow-none transition-all duration-200 cursor-default">
-          <p class="text-white">
-            🔥
-            <span class="text-yellow-400 font-bold">{totalOfMemberCards}</span>
-            saltanos ya tienen su{" "}
-            <span class="text-yellow-400 font-bold">Member Card</span>
-            🔥
-          </p>
-        </div>
-      ) : null
-    }
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 p-4">
+    {/* BENTO GRID LAYOUT */}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[250px]">
+      {/* SECCIÓN 1: UTILIDADES Y LOGROS (Mezclados en el grid superior) */}
+      {/* Mapeamos APPS */}
       {
-        COMMUNITY_GRID_CARDS.map((card) => {
-          const isDisabled = (card.requiresLogin && !session) || card.soon;
+        APPS.map((item) => {
+          const isDisabled = (item.requiresLogin && !session) || item.soon;
           const Tag =
-            card.soon || (card.requiresLogin && !session) ? "div" : "a";
+            item.soon || (item.requiresLogin && !session) ? "div" : "a";
+          const Icon = item.icon;
+
           return (
             <Tag
-              href={isDisabled ? "#" : card.path}
-              class={`pixel-card group relative overflow-hidden flex flex-col ${
-                isDisabled ? "cursor-not-allowed opacity-75 grayscale" : ""
-              }`}
-              {...(!card.soon &&
-                card.requiresLogin &&
+              href={isDisabled ? "#" : item.path}
+              class={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 backdrop-blur-sm transition-all duration-300 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-400/10 ${isDisabled ? "cursor-not-allowed" : "hover:-translate-y-1"} ${item.featured ? "md:col-span-2" : "md:col-span-1"}`}
+              {...(!item.soon &&
+                item.requiresLogin &&
                 !session && { "data-click-to-login": true })}
               aria-disabled={isDisabled}
-              title={
-                card.soon
-                  ? card.soonCustomText || "Próximamente"
-                  : card.requiresLogin && !session
-                    ? "Inicia sesión para acceder"
-                    : ""
-              }
             >
-              <div class="relative h-48 overflow-hidden border-b-4 border-black">
+              {/* Background Image */}
+              <div class="absolute inset-0 z-0">
                 <img
-                  src={card.image}
-                  alt={card.title}
-                  class="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
-                  style="image-rendering: pixelated;"
+                  src={item.image}
+                  alt={item.title}
+                  class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-40 group-hover:opacity-50"
                 />
-                {isDisabled && (
-                  <div class="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <LucideLock className="text-white w-12 h-12" />
-                  </div>
-                )}
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent" />
               </div>
 
-              <div class="p-6 flex-1 flex flex-col bg-[#1f2937]">
-                <h3 class="text-sm md:text-base font-press-start-2p uppercase text-white mb-4 leading-relaxed group-hover:text-yellow-400 transition-colors">
-                  {card.title}
+              {/* Content */}
+              <div class="relative z-10 flex h-full flex-col justify-end p-6">
+                <div class="mb-auto flex items-start justify-between">
+                  <div class="rounded-lg bg-white/10 p-2 backdrop-blur-md text-yellow-400">
+                    <Icon size={24} />
+                  </div>
+                  {isDisabled && (
+                    <span class="rounded-full bg-black/60 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-md border border-white/10">
+                      {item.soon ? item.soonCustomText || "Pronto" : "Loguéate"}
+                    </span>
+                  )}
+                </div>
+
+                <h3 class="mt-4 font-teko text-3xl font-bold uppercase text-white group-hover:text-yellow-400 transition-colors">
+                  {item.title}
                 </h3>
-                <p class="text-lg text-gray-400 font-vt323 leading-tight">
-                  {card.description}
+                <p class="font-rubik text-sm text-gray-300 line-clamp-2">
+                  {item.description}
                 </p>
-
-                {card.soon && (
-                  <div class="mt-4 inline-block bg-red-600 text-white text-xs font-press-start-2p px-2 py-1 self-start">
-                    SOON
-                  </div>
-                )}
               </div>
+
+              {/* Lock Overlay */}
+              {item.requiresLogin && !session && !item.soon && (
+                <div class="absolute inset-0 z-20 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                  <LucideLock className="text-white/80" size={32} />
+                </div>
+              )}
             </Tag>
           );
         })
       }
+
+      {/* Mapeamos PROGRESSION (Logros) */}
+      {
+        PROGRESSION.map((item) => {
+          const isDisabled = (item.requiresLogin && !session) || item.soon;
+          const Tag =
+            item.soon || (item.requiresLogin && !session) ? "div" : "a";
+          const Icon = item.icon;
+
+          return (
+            <Tag
+              href={isDisabled ? "#" : item.path}
+              class={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 backdrop-blur-sm transition-all duration-300 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-400/10 md:col-span-1 ${isDisabled ? "cursor-not-allowed" : "hover:-translate-y-1"}`}
+              {...(!item.soon &&
+                item.requiresLogin &&
+                !session && { "data-click-to-login": true })}
+              aria-disabled={isDisabled}
+            >
+              <div class="absolute inset-0 z-0">
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-40 group-hover:opacity-50"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent" />
+              </div>
+
+              <div class="relative z-10 flex h-full flex-col justify-end p-6">
+                <div class="mb-auto flex items-start justify-between">
+                  <div class="rounded-lg bg-white/10 p-2 backdrop-blur-md text-yellow-400">
+                    <Icon size={24} />
+                  </div>
+                </div>
+                <h3 class="mt-4 font-teko text-3xl font-bold uppercase text-white group-hover:text-yellow-400 transition-colors">
+                  {item.title}
+                </h3>
+                <p class="font-rubik text-sm text-gray-300 line-clamp-2">
+                  {item.description}
+                </p>
+              </div>
+              {item.requiresLogin && !session && !item.soon && (
+                <div class="absolute inset-0 z-20 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                  <LucideLock className="text-white/80" size={32} />
+                </div>
+              )}
+            </Tag>
+          );
+        })
+      }
+
+      {/* SECCIÓN 3: JUEGOS (Bloque Completo) */}
+      <div class="md:col-span-3 mt-8">
+        <div class="flex items-center gap-2 mb-4 text-white/80">
+          <LucideGamepad2 className="text-yellow-400" />
+          <h2 class="font-teko text-2xl uppercase tracking-wide">
+            Zona de Juegos
+          </h2>
+          <div
+            class="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent ml-2"
+          >
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 auto-rows-[200px]">
+          {
+            GAMES.length > 0 ? (
+              GAMES.map((item) => {
+                const isDisabled =
+                  (item.requiresLogin && !session) || item.soon;
+                const Tag =
+                  item.soon || (item.requiresLogin && !session) ? "div" : "a";
+                const Icon = item.icon;
+                return (
+                  <Tag
+                    href={isDisabled ? "#" : item.path}
+                    class={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 backdrop-blur-sm transition-all duration-300 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/10 ${isDisabled ? "cursor-not-allowed" : "hover:-translate-y-1"}`}
+                    aria-disabled={isDisabled}
+                  >
+                    <div class="absolute inset-0 z-0">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-40 group-hover:opacity-50"
+                      />
+                      <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent" />
+                    </div>
+
+                    <div class="relative z-10 flex h-full flex-col justify-end p-6">
+                      <div class="mb-auto flex items-start justify-between">
+                        <div class="rounded-lg bg-white/10 p-2 backdrop-blur-md text-green-400">
+                          <Icon size={24} />
+                        </div>
+                        {item.soon && (
+                          <span class="rounded-full bg-black/60 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-md border border-white/10">
+                            {item.soonCustomText}
+                          </span>
+                        )}
+                      </div>
+                      <h3 class="mt-4 font-teko text-3xl font-bold uppercase text-white group-hover:text-green-400 transition-colors">
+                        {item.title}
+                      </h3>
+                      <p class="font-rubik text-sm text-gray-300 line-clamp-2">
+                        {item.description}
+                      </p>
+                    </div>
+                  </Tag>
+                );
+              })
+            ) : (
+              <div class="col-span-full border border-dashed border-white/20 rounded-xl p-8 flex flex-col items-center justify-center text-center text-white/40">
+                <LucideGamepad2 size={48} class="mb-2 opacity-50" />
+                <p>Próximamente nuevos juegos</p>
+              </div>
+            )
+          }
+        </div>
+      </div>
     </div>
   </div>
-</CommunityLayout>
+</Layout>
 
 <script>
   import { showSignInDialog } from "@/lib/utils";
@@ -188,10 +325,8 @@ if (!totalOfMemberCards) {
     const cards = document.querySelectorAll("[data-click-to-login]");
     cards.forEach((card) => {
       card.addEventListener("click", (event) => {
-        if (card.getAttribute("aria-disabled") === "true") {
-          event.preventDefault();
-          showSignInDialog();
-        }
+        event.preventDefault();
+        showSignInDialog();
       });
     });
   };
@@ -201,13 +336,4 @@ if (!totalOfMemberCards) {
   document.addEventListener("astro:before-swap", () => {
     document.removeEventListener("astro:page-load", handlePageLoad);
   });
-</script>
-
-<script data-astro-rerun>
-  (async () => {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      await fetch("/api/cinematics?name=community");
-    } catch (error) {}
-  })();
 </script>
