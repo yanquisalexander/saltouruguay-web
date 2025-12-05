@@ -294,7 +294,12 @@ export const pet = {
      */
     updateHouseLayout: defineAction({
         input: z.object({
-            layout: z.array(z.any()),
+            layout: z.array(z.object({
+                item_id: z.string(),
+                position_x: z.number(),
+                position_y: z.number(),
+                rotation: z.number(),
+            })),
             backgroundId: z.string().optional(),
         }),
         handler: async (input, context) => {

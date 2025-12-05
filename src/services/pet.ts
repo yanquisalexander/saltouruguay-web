@@ -540,12 +540,12 @@ export class PetService {
     /**
      * Get all available items in the store
      */
-    static async getStoreItems(category?: string) {
+    static async getStoreItems(category?: 'food' | 'toy' | 'furniture' | 'clothing' | 'accessory') {
         try {
             const whereCondition = category
                 ? and(
                     eq(PetItemsTable.isAvailable, true),
-                    eq(PetItemsTable.category, category as any)
+                    eq(PetItemsTable.category, category)
                 )
                 : eq(PetItemsTable.isAvailable, true);
 
@@ -581,7 +581,11 @@ export class PetService {
     /**
      * Update pet house layout
      */
-    static async updateHouseLayout(userId: number, layout: any[], backgroundId?: string) {
+    static async updateHouseLayout(
+        userId: number, 
+        layout: Array<{ item_id: string; position_x: number; position_y: number; rotation: number }>, 
+        backgroundId?: string
+    ) {
         try {
             const house = await db.query.PetHousesTable.findFirst({
                 where: eq(PetHousesTable.ownerId, userId),
@@ -591,7 +595,11 @@ export class PetService {
                 throw new Error('Pet house not found');
             }
 
-            const updateData: any = {
+            const updateData: {
+                layout: typeof layout;
+                backgroundId?: string;
+                updatedAt: any;
+            } = {
                 layout,
                 updatedAt: sql`current_timestamp`,
             };

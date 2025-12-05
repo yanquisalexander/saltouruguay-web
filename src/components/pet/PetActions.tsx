@@ -14,7 +14,7 @@ interface PetActionsProps {
     onActionComplete: () => void;
 }
 
-interface InventoryItem {
+export interface InventoryItem {
     id: number;
     itemId: number;
     quantity: number;

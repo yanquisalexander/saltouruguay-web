@@ -4,6 +4,8 @@ import { actions } from 'astro:actions';
 import { toast } from 'sonner';
 import { LucideShoppingCart, LucideCoins } from 'lucide-preact';
 
+import type { InventoryItem } from './PetActions';
+
 interface PetStoreProps {
     onItemPurchased: () => void;
 }
@@ -41,7 +43,7 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
     const [loading, setLoading] = useState(true);
     const [purchasing, setPurchasing] = useState<number | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
-    const [inventory, setInventory] = useState<any[]>([]);
+    const [inventory, setInventory] = useState<InventoryItem[]>([]);
 
     useEffect(() => {
         loadStoreItems();
@@ -68,7 +70,7 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
         try {
             const result = await actions.pet.getUserInventory();
             if (result.data) {
-                setInventory(result.data as any[]);
+                setInventory(result.data as InventoryItem[]);
             }
         } catch (error) {
             console.error('Error loading inventory:', error);
