@@ -7,7 +7,6 @@ import { toast } from "sonner"
 import { VoteFinal } from "./VoteFinal"
 import { IS_VOTES_OPEN } from "@/config"
 import { NOMINEES } from "@/awards/Nominees"
-import { AwardsInmersiveIntro } from "./streamer-wars/AwardsInmersiveIntro"
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds"
 
 const MAX_VOTES_PER_CATEGORY = 2;
@@ -18,6 +17,9 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
     const [votesByCategory, setVotesByCategory] = useState<{ [key: string]: Vote[] }>({})
     const [isVotingFinished, setIsVotingFinished] = useState(false)
     const [hasShownFirstVoteToast, setHasShownFirstVoteToast] = useState(false)
+
+    // Referencia para el scroll "suave" hacia arriba al cambiar categoría
+    const topRef = useRef<HTMLDivElement>(null);
 
     const currentCategory = categories[currentCategoryIndex]
     const currentVotesCategory = currentCategory ? votesByCategory[currentCategory.id] || [] : []
@@ -73,7 +75,12 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
         setIsVotingFinished(true)
     }
 
-    const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+    const scrollToTop = () => {
+        if (topRef.current) {
+            const y = topRef.current.getBoundingClientRect().top + window.scrollY - 100;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    };
 
     const handleNextCategory = () => {
         if (isLastCategory) return
@@ -91,7 +98,8 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
 
     // --- RENDER ---
     return (
-        <div class="flex w-full max-w-5xl flex-col justify-center items-center gap-y-8 pb-10">
+        <div ref={topRef} class="flex w-full max-w-6xl flex-col justify-center items-center gap-y-8 pb-32">
+
             {currentUserIsNominee && (
                 <div class="bg-blue-500/10 border border-blue-500/30 w-full rounded-xl p-4 flex items-center gap-4 animate-fade-in-down">
                     <div class="bg-blue-500 p-2 rounded-lg text-white"><LucideTrophy size={20} /></div>
@@ -106,13 +114,13 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                 <VoteFinal user={user} categories={categories} votes={votesByCategory} onReturn={() => setIsVotingFinished(false)} />
             ) : (
                 <>
-                    <AwardsInmersiveIntro />
-
                     {/* Header Categoría */}
-                    <div class="text-center space-y-2">
-                        <div class="flex items-center justify-center gap-3 animate-fade-in">
+                    <div class="text-center space-y-2 animate-fade-in">
+                        <div class="flex items-center justify-center gap-3">
                             <LucideMinus class="w-8 h-8 text-yellow-500 hidden md:block" />
-                            <h1 class="text-4xl md:text-5xl font-anton text-white uppercase tracking-wide">{currentCategory.name}</h1>
+                            <h1 class="text-3xl md:text-5xl font-anton text-white uppercase tracking-wide px-2 break-words">
+                                {currentCategory.name}
+                            </h1>
                             <LucideMinus class="w-8 h-8 text-yellow-500 hidden md:block" />
                         </div>
                         <div class="inline-flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 px-4 py-1 rounded-full text-yellow-400 font-rubik text-sm">
@@ -122,7 +130,11 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                     </div>
 
                     {/* Grid de Nominados */}
-                    <ul class={`grid grid-cols-2 ${currentCategory.isEventsCategory ? 'md:grid-cols-2 lg:grid-cols-3' : 'md:grid-cols-3 lg:grid-cols-4'} gap-4 w-full`}>
+                    <ul class={`
+                        grid grid-cols-1 sm:grid-cols-2 
+                        ${currentCategory.isEventsCategory ? 'md:grid-cols-2 lg:grid-cols-3' : 'md:grid-cols-3 lg:grid-cols-4'} 
+                        gap-3 md:gap-4 w-full
+                    `}>
                         {currentCategory.nominees.map((nominee, index) => {
                             const isVoted = currentVotesCategory.some(vote => vote.nomineeId === nominee.id)
                             return (
@@ -139,88 +151,90 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                         })}
                     </ul>
 
-                    {/* Footer Navigation (Manteniendo tu estructura original) */}
-                    <footer class="w-full flex flex-col gap-6 mt-8 p-6 bg-black/40 backdrop-blur-md border border-white/5 rounded-2xl">
+                    {/* FOOTER CON TU DISEÑO ORIGINAL RESTAURADO */}
+                    <footer class="fixed bottom-0 left-0 w-full z-40 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 pb-6 safe-area-bottom">
+                        <div class="max-w-5xl mx-auto flex flex-col gap-4">
 
-                        {/* Scroll Horizontal de Categorías */}
-                        <div class="relative w-full">
-                            {/* Degradados para indicar scroll */}
-                            <div class="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-black/80 to-transparent pointer-events-none z-10"></div>
-                            <div class="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-black/80 to-transparent pointer-events-none z-10"></div>
+                            {/* --- AQUÍ ESTÁ TU CÓDIGO RESTAURADO --- */}
+                            {/* Wrapper extra para blindar el overflow en móviles */}
+                            <div class="w-full relative">
+                                <div class="relative overflow-x-auto scrollbar-hide snap-x snap-mandatory" style={{ scrollbarColor: '#5865F2 #060109', scrollbarWidth: 'thin' }}>
 
-                            <div class="flex gap-3 overflow-x-auto scrollbar-hide py-2 px-1 snap-x">
-                                {categories.map((category, index) => {
-                                    const hasVoted = votesByCategory[category.id]?.length > 0;
-                                    const isCurrentCategory = currentCategory.id === category.id;
-                                    const ref = useRef<HTMLButtonElement>(null);
+                                    {/* Degradados laterales */}
+                                    <div class="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-black to-transparent pointer-events-none z-10"></div>
+                                    <div class="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-black to-transparent pointer-events-none z-10"></div>
 
-                                    useEffect(() => {
-                                        if (isCurrentCategory && ref.current) {
-                                            ref.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-                                        }
-                                    }, [isCurrentCategory]);
+                                    <div class="flex gap-2 w-max px-2">
+                                        {categories.map((category, index) => {
+                                            const hasVoted = votesByCategory[category.id]?.length > 0;
+                                            const isCurrentCategory = currentCategory.id === category.id;
+                                            const ref = useRef<HTMLButtonElement>(null);
 
-                                    return (
-                                        <button
-                                            ref={ref}
-                                            onClick={() => setCurrentCategoryIndex(index)}
-                                            class={`
-                                                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-all duration-300 border snap-center
-                                                ${isCurrentCategory
-                                                    ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/20'
-                                                    : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10 hover:text-white'
+                                            useEffect(() => {
+                                                if (isCurrentCategory && ref.current) {
+                                                    ref.current.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
                                                 }
-                                            `}
-                                        >
-                                            {isCurrentCategory
-                                                ? <span class=" tracking-wide">{category.name}</span>
-                                                : (
-                                                    <>
-                                                        {hasVoted
-                                                            ? <LucideCheckCircle2 size={16} class="text-green-500" />
-                                                            : <LucideCircleDashed size={16} />
-                                                        }
-                                                        <span>{category.name}</span>
-                                                    </>
-                                                )
-                                            }
-                                        </button>
-                                    );
-                                })}
+                                            }, [isCurrentCategory]);
+
+                                            return (
+                                                <button
+                                                    key={category.id}
+                                                    ref={ref}
+                                                    onClick={() => setCurrentCategoryIndex(index)}
+                                                    class={`
+                                                        flex items-center gap-2 font-rubik text-sm font-bold py-2 px-4 rounded-[10px] transition-all duration-300 border snap-center whitespace-nowrap
+                                                        ${isCurrentCategory
+                                                            ? 'bg-[#5865F2]/20 border-[#5865F2] text-white'
+                                                            : 'bg-white/5 border-transparent text-gray-500 hover:bg-white/10'
+                                                        } 
+                                                        ${hasVoted && !isCurrentCategory ? 'text-green-500' : ''}
+                                                    `}
+                                                >
+                                                    {/* Lógica de Iconos Original */}
+                                                    {!isCurrentCategory && (
+                                                        hasVoted ? <LucideCheckCircle2 class="w-4 h-4" /> : <LucideCircleDashed class="w-4 h-4" />
+                                                    )}
+                                                    <span>{category.name}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                            {/* ------------------------------------- */}
 
-                        {/* Botones Anterior / Siguiente */}
-                        <div class="flex flex-col md:flex-row justify-between items-center gap-4 pt-4 border-t border-white/5">
-                            <span class="font-teko text-xl text-white/50 order-2 md:order-1">
-                                Categoría {currentCategoryIndex + 1} de {categories.length}
-                            </span>
-
-                            <nav class="flex gap-3 w-full md:w-auto order-1 md:order-2">
+                            {/* Controles de Navegación Inferior (Necesarios para UX) */}
+                            <div class="flex justify-between items-center gap-4">
                                 <button
-                                    class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-2.5 px-6 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    class="flex items-center gap-2 text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                     onClick={handlePreviousCategory}
                                     disabled={currentCategoryIndex === 0}
                                 >
-                                    <LucideChevronLeft size={18} /> Anterior
+                                    <LucideChevronLeft size={24} />
+                                    <span class="hidden md:inline font-bold">Anterior</span>
                                 </button>
+
+                                <span class="font-teko text-xl text-white/40">
+                                    {currentCategoryIndex + 1} / {categories.length}
+                                </span>
 
                                 {isLastCategory ? (
                                     <button
-                                        class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2.5 px-6 rounded-lg transition-all hover:scale-105 shadow-[0_0_15px_rgba(234,179,8,0.3)]"
+                                        class="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2 px-6 rounded-lg shadow-lg shadow-yellow-500/20 transition-transform hover:scale-105"
                                         onClick={showMyVotes}
                                     >
-                                        Ver mis votos <LucideList size={18} />
+                                        Ver votos <LucideList size={18} />
                                     </button>
                                 ) : (
                                     <button
-                                        class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-200 font-bold py-2.5 px-6 rounded-lg transition-colors"
+                                        class="flex items-center gap-2 text-white hover:text-blue-400 transition-colors"
                                         onClick={handleNextCategory}
                                     >
-                                        Siguiente <LucideChevronRight size={18} />
+                                        <span class="hidden md:inline font-bold">Siguiente</span>
+                                        <LucideChevronRight size={24} />
                                     </button>
                                 )}
-                            </nav>
+                            </div>
                         </div>
                     </footer>
                 </>

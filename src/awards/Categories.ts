@@ -399,14 +399,14 @@ export const CATEGORIES: Category[] = [
                 id: NOMINEES.TinchoXP22.username,
             },
             {
+                id: NOMINEES.tuflakito77.username,
+            },
+            {
                 id: NOMINEES.iKombak.username,
             },
             {
                 id: NOMINEES.h0ru5_.username,
             },
-            {
-                id: NOMINEES.tuflakito77.username,
-            }
         ]
     },
     {

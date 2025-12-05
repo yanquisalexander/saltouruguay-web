@@ -69,7 +69,7 @@ export const VoteFinal = ({ user, categories, votes, onReturn }: { user: Session
                 /* --- PANTALLA DE ÉXITO --- */
                 <div
                     ref={successMesageRef}
-                    className="flex flex-col items-center justify-center text-center p-8 md:p-16 rounded-3xl border border-green-500/30 bg-gradient-to-b from-green-900/10 to-black/60 backdrop-blur-md shadow-2xl"
+                    className="flex flex-col items-center justify-center text-center p-6 md:p-16 rounded-3xl border border-green-500/30 bg-gradient-to-b from-green-900/10 to-black/60 backdrop-blur-md shadow-2xl"
                 >
                     <div className="relative mb-6">
                         <div className="absolute inset-0 bg-green-500/20 blur-xl rounded-full animate-pulse"></div>

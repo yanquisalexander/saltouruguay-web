@@ -39,7 +39,7 @@ export const VoteNominee = ({
                 disabled={disabled}
                 onClick={() => onVote(nominee.id, category.id)}
                 className={`
-                    group relative w-full h-full size-12 overflow-hidden rounded-xl border-2 transition-all duration-300
+                    group relative w-full h-full overflow-hidden rounded-xl border-2 transition-all duration-300
                     flex flex-col items-center justify-end p-4 text-center
                     ${isVoted
                         ? 'border-yellow-500 bg-yellow-500/10 shadow-[0_0_20px_rgba(234,179,8,0.3)]'

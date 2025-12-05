@@ -1,6 +1,7 @@
 import { CDN_PREFIX, playSound, playSoundWithReverb } from "@/consts/Sounds";
 import { useEffect, useState } from "preact/hooks";
 import { LucideCheckCircle2, LucideClock, LucideHash } from "lucide-preact";
+import { createPortal } from "preact/compat";
 
 interface ScriptItem {
     text?: string;
@@ -165,7 +166,7 @@ export const AwardsInmersiveIntro = () => {
     const minutes = Math.floor(remainingTime / 60);
     const seconds = Math.floor(remainingTime % 60);
 
-    return (
+    return createPortal(
         <div className={`fixed inset-0 bg-black/95 flex min-h-screen h-full flex-col justify-center items-center z-[10000] transition-opacity duration-500 ${isFadingOut ? 'opacity-0' : 'opacity-100'}`}>
             <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300 z-[10001]">
                 {minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}
@@ -192,6 +193,7 @@ export const AwardsInmersiveIntro = () => {
                     />
                 ))}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

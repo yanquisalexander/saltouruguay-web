@@ -13,6 +13,7 @@ import {
   LucideHourglass,
   LucideSparkles,
 } from "lucide-preact";
+import { AwardsInmersiveIntro } from "@/components/streamer-wars/AwardsInmersiveIntro";
 
 const session = await getSession(Astro.request);
 
@@ -155,6 +156,7 @@ const glassPanel =
                   <LucideSparkles size={16} /> <span>Votación Activa </span>
                 </div>
               </div>
+              <AwardsInmersiveIntro client:only />
 
               {/* El VoteSystem se encarga de su propio renderizado, le damos un contenedor limpio */}
               <VoteSystem
