@@ -300,6 +300,9 @@ export const CATEGORIES: Category[] = [
                 id: NOMINEES["21diagog"].username,
             },
             {
+                id: NOMINEES.vegakko.username,
+            },
+            {
                 id: NOMINEES.elbarre_.username,
             },
             {

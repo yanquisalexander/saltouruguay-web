@@ -406,5 +406,9 @@ export const NOMINEES = {
     tuflakito77: {
         username: "tuflakito77",
         displayName: "tuflakito77"
+    },
+    vegakko: {
+        username: "vegakko",
+        displayName: "Vegakko"
     }
 };
