@@ -193,10 +193,11 @@ export const getSpriteStyle = (name: string, scale = 1) => {
     if (!sprite) return {};
 
     return {
-        width: `${sprite.width * scale}px`,
-        height: `${sprite.height * scale}px`,
+        width: `${sprite.width}px`,
+        height: `${sprite.height}px`,
         backgroundImage: `url(${SPRITE_SHEET_SRC})`,
         backgroundPosition: `-${sprite.x}px -${sprite.y}px`,
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: 'no-repeat',
+        zoom: scale // Use zoom to scale the element without cropping the background
     };
 };
