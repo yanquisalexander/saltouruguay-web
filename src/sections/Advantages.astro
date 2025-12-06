@@ -1,82 +1,161 @@
 ---
 import DiscordIcon from "@/icons/Discord.astro";
 import TwitchIcon from "@/icons/Twitch.astro";
+import { LucideArrowRight, LucideUsers, LucideTv } from "lucide-preact";
 
 const ADVANTAGES = [
   {
+    id: "discord",
     title: "Discord",
+    subtitle: "Chat & Soporte",
     icon: DiscordIcon,
-    iconClasses: "text-[#5865F2]",
     href: "https://discord.gg/zXHhjExy92",
     image: "/images/advantages/ventaja-discord.webp",
     description:
-      "Espacio exclusivo con soporte personalizado y contenido valioso.",
-    customClasses:
-      "before:[background-image:radial-gradient(circle,_rgba(88,101,242)_0,_rgba(13,16,35,0.4)_100%)]",
+      "Únete al servidor oficial. Soporte 24/7, canales de voz y roles exclusivos para miembros.",
+    stats: "3.5k+ Miembros", // Ejemplo de dato
+    theme: {
+      bg: "hover:shadow-[#5865F2]/20",
+      border: "group-hover:border-[#5865F2]/50",
+      text: "text-[#5865F2]",
+      button: "bg-[#5865F2] hover:bg-[#4752C4]",
+      gradient: "from-[#5865F2]/10 to-transparent",
+    },
   },
   {
+    id: "twitch",
     title: "Twitch",
+    subtitle: "Stream & Eventos",
     icon: TwitchIcon,
-    iconClasses: "text-[#9146FF]",
     href: "https://www.twitch.tv/SaltoUruguayServer",
     image: "/images/advantages/ventaja-twitch.webp",
     description:
-      "Contenido en vivo, sorteos y eventos exclusivos para la comunidad.",
-    customClasses:
-      "before:[background-image:radial-gradient(circle,_rgba(145,70,255,0.7)_0,_rgba(13,16,35,0.4)_100%)]",
+      "No te pierdas ningún directo. Sorteos, torneos en vivo y drops exclusivos para subs.",
+    stats: "Interacciones en Vivo", // Ejemplo de dato
+    theme: {
+      bg: "hover:shadow-[#9146FF]/20",
+      border: "group-hover:border-[#9146FF]/50",
+      text: "text-[#9146FF]",
+      button: "bg-[#9146FF] hover:bg-[#772CE8]",
+      gradient: "from-[#9146FF]/10 to-transparent",
+    },
   },
 ];
 ---
 
-<section id="advantages" class="px-4 md:px-12 max-w-screen-full mx-auto my-32">
-  <h2
-    class="max-w-[28ch] sm:text-3xl md:text-4xl text-xl font-rubik text-pretty text-center mx-auto font-medium [text-shadow:_0_1px_2px_#000]"
-  >
-    Disfrutá las ventajas de ser parte de la comunidad de <span
-      class="text-yellow-500">SaltoUruguayServer</span
+<section id="advantages" class="relative py-24 px-4 overflow-hidden">
+  {/* Fondo Decorativo General */}
+  <div class="absolute inset-0 pointer-events-none -z-10">
+    <div
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] bg-blue-900/5 rounded-full blur-[100px]"
     >
-  </h2>
-  <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-    {
-      ADVANTAGES.map(
-        ({
-          title,
-          icon: Icon,
-          description,
-          iconClasses,
-          href,
-          image,
-          customClasses,
-        }) => (
-          <li>
-            <a
-              href={href}
-              {...(href.startsWith("http")
-                ? { target: "_blank", rel: "noopener noreferrer" }
-                : {})}
-              class="p-0.5 block rounded-2xl group bg-gradient-to-b transition from-[rgba(32,35,91,0.7)] to-[rgba(7,9,33,0.7)]"
-            >
-              <article
-                class={`bg-gradient-to-tl z-0 overflow-hidden relative rounded-xl before:absolute before:w-full before:aspect-square before:left-0 before:top-0 before:rounded-full before:blur-3xl before:opacity-80 before:-z-10 before:transition from-[rgba(32,35,91,0.7)] to-[rgba(7,9,33,0.7)] ${customClasses}`}
-              >
-                <header class="flex items-center gap-3 p-6">
-                  {Icon && <Icon class={`w-8 h-auto ${iconClasses}`} />}
-                  <h3 class="font-bold text-lg">{title}</h3>
-                </header>
-                <p class="text-balance px-6 pb-4">{description}</p>
-                <div class="w-full h-[1px] bg-white/5 m-6" />
-                {image && (
-                  <img
-                    class="w-[calc(100%_-_56px)] object-contain h-auto rounded-3xl max-w-96 group-hover:translate-y-3 group-hover:-translate-x-1 transition group-hover:scale-[101%] translate-y-4  ml-auto"
-                    src={image}
-                    alt=""
-                  />
-                )}
-              </article>
-            </a>
-          </li>
-        )
-      )
-    }
-  </ul>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto">
+    {/* Header Sección */}
+    <div class="text-center mb-16 space-y-4">
+      <h2
+        class="text-4xl md:text-6xl font-anton text-white uppercase tracking-tight"
+      >
+        Comunidad <span
+          class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500"
+          >Oficial</span
+        >
+      </h2>
+      <p class="text-white/50 font-rubik text-lg max-w-xl mx-auto">
+        La experiencia Salto Uruguay está por todas partes. Conéctate en
+        nuestras plataformas principales.
+      </p>
+    </div>
+
+    {/* Grid de Portales */}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {
+        ADVANTAGES.map((item) => (
+          <a
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            class={`
+                group relative h-[400px] md:h-[450px] rounded-[32px] border border-white/10 bg-[#0a0a0a] overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl ${item.theme.bg} ${item.theme.border}
+            `}
+          >
+            {/* 1. IMAGEN DE FONDO (Full Cover con Overlay) */}
+            <div class="absolute inset-0 z-0">
+              {/* Gradiente de color base */}
+              <div
+                class={`absolute inset-0 bg-gradient-to-b ${item.theme.gradient} opacity-20 group-hover:opacity-40 transition-opacity duration-500`}
+              />
+
+              {/* Imagen del producto */}
+              <div class="absolute bottom-0 right-0 w-[80%] h-[80%] translate-x-10 translate-y-10 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-700 ease-out">
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  class="w-full h-full object-contain object-bottom drop-shadow-2xl opacity-60 group-hover:opacity-100 transition-opacity duration-500 mask-image-b-fade"
+                />
+              </div>
+
+              {/* Overlay oscuro para leer texto */}
+              <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
+            </div>
+
+            {/* 2. CONTENIDO (Flotando encima) */}
+            <div class="relative z-10 flex flex-col h-full p-8 md:p-10">
+              {/* Header Card */}
+              <div class="flex items-start justify-between mb-auto">
+                <div
+                  class={`p-4 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 ${item.theme.text}`}
+                >
+                  <item.icon class="size-8 md:size-10" />
+                </div>
+                {/* Badge Pill */}
+                <div class="px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-2 text-xs font-bold text-white/70 uppercase tracking-widest">
+                  {item.id === "discord" ? (
+                    <LucideUsers size={12} />
+                  ) : (
+                    <LucideTv size={12} />
+                  )}
+                  {item.stats}
+                </div>
+              </div>
+
+              {/* Textos */}
+              <div class="mt-auto relative">
+                <span
+                  class={`text-sm font-bold uppercase tracking-widest mb-2 block ${item.theme.text}`}
+                >
+                  {item.subtitle}
+                </span>
+                <h3 class="text-4xl md:text-5xl font-anton text-white uppercase mb-4 leading-none">
+                  {item.title}
+                </h3>
+                <p class="text-white/60 font-rubik text-sm md:text-base leading-relaxed mb-8 max-w-xs">
+                  {item.description}
+                </p>
+
+                {/* Botón CTA */}
+                <div
+                  class={`
+                        inline-flex items-center gap-3 px-6 py-3 rounded-xl text-white font-bold uppercase tracking-wide text-sm transition-all duration-300 transform group-hover:scale-105 shadow-lg
+                        ${item.theme.button}
+                    `}
+                >
+                  Unirse Ahora <LucideArrowRight size={18} />
+                </div>
+              </div>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+  </div>
 </section>
+
+<style>
+  /* Máscara para suavizar la imagen abajo si se corta */
+  .mask-image-b-fade {
+    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  }
+</style>
