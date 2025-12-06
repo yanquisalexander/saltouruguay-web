@@ -35,8 +35,10 @@ export const events = {
             location: z.string().optional(),
             startDate: z.string(),
             endDate: z.string().optional(),
+            cover: z.string().optional(),
+            featured: z.boolean().optional(),
         }),
-        handler: async ({ id, name, description, startDate, endDate, location }, { request }) => {
+        handler: async ({ id, name, description, startDate, endDate, location, cover, featured }, { request }) => {
             const session = await getSession(request);
 
             if (!session?.user.isAdmin) {
@@ -52,6 +54,8 @@ export const events = {
                 location,
                 startDate: new Date(startDate),
                 endDate: endDate ? new Date(endDate) : undefined,
+                cover,
+                featured,
             });
 
             if (!event) {
@@ -73,9 +77,10 @@ export const events = {
             startDate: z.string(),
             endDate: z.string().optional(),
             location: z.string().optional(),
-
+            cover: z.string().optional(),
+            featured: z.boolean().optional(),
         }),
-        handler: async ({ name, description, startDate, endDate, location }, { request }) => {
+        handler: async ({ name, description, startDate, endDate, location, cover, featured }, { request }) => {
             const session = await getSession(request);
 
             if (!session?.user.isAdmin) {
@@ -92,6 +97,8 @@ export const events = {
                 endDate: endDate ? new Date(endDate) : undefined,
                 location,
                 mainOrganizerId: session.user.id,
+                cover,
+                featured: featured || false,
             });
 
             if (!event) {

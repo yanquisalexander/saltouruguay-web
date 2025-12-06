@@ -1,12 +1,24 @@
 import { useState, useEffect, useRef, useCallback } from "preact/hooks";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, Loader } from "lucide-preact";
+import {
+    Pencil,
+    Trash2,
+    Plus,
+    Loader2,
+    Calendar,
+    MapPin,
+    Image as ImageIcon,
+    Upload,
+    X,
+    RefreshCw,
+    Star
+} from "lucide-preact";
 import type { getPaginatedEvents } from "@/lib/events";
 import { DateTime } from 'luxon';
 
 export default function EventsManager() {
-    // State management
+    // --- STATE ---
     const [events, setEvents] = useState<Awaited<ReturnType<typeof getPaginatedEvents>>['events']>([]);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -18,14 +30,17 @@ export default function EventsManager() {
     const editorDialogRef = useRef<HTMLDialogElement>(null);
     const observerRef = useRef<IntersectionObserver | null>(null);
     const loadMoreRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Form states
+    // Form State
     const initialEventState = {
         name: "",
         startDate: "",
         endDate: "",
         location: "",
-        description: ""
+        description: "",
+        cover: "", // Nuevo campo para la imagen (Base64 o URL)
+        featured: false
     };
 
     const [newEvent, setNewEvent] = useState(initialEventState);
@@ -36,44 +51,33 @@ export default function EventsManager() {
         endDate: string | null;
         location: string;
         description: string;
-        // Guardar el evento original completo para referencias
+        cover: string; // Nuevo campo
+        featured: boolean;
         originalEvent: any;
     }>(null);
 
-    // Data fetching
+    // --- DATA FETCHING ---
     const fetchEvents = useCallback(async (pageNum = 1, replace = false) => {
         if (loading) return;
-
         setLoading(true);
         try {
-            const { data, error } = await actions.admin.events.getEvents({
-                page: pageNum,
-                limit
-            });
-
-            if (error) {
-                toast.error("Error al cargar los eventos");
-                console.error("Error loading events:", error);
-                return;
-            }
+            const { data, error } = await actions.admin.events.getEvents({ page: pageNum, limit });
+            if (error) throw new Error("Error loading events");
 
             const newEvents = data.events || [];
             setHasMore(newEvents.length >= limit);
             setEvents(prev => replace ? newEvents : [...prev, ...newEvents]);
         } catch (error) {
-            console.error("Error fetching events:", error);
+            console.error(error);
             toast.error("Error al cargar los eventos");
         } finally {
             setLoading(false);
         }
-    }, [loading, limit]);
+    }, [limit]); // Removed 'loading' dependency to avoid stale closures if needed, though usually safe with check
 
-    // Initialize data load
-    useEffect(() => {
-        fetchEvents(1, true);
-    }, []);
+    useEffect(() => { fetchEvents(1, true); }, []);
 
-    // Function to load more events
+    // --- INFINITE SCROLL ---
     const loadMoreEvents = useCallback(() => {
         if (loading || !hasMore) return;
         const nextPage = page + 1;
@@ -81,478 +85,468 @@ export default function EventsManager() {
         fetchEvents(nextPage);
     }, [loading, hasMore, page, fetchEvents]);
 
-    // Infinite scroll setup
     useEffect(() => {
-        if (observerRef.current) {
-            observerRef.current.disconnect();
-            observerRef.current = null;
-        }
-
+        if (observerRef.current) observerRef.current.disconnect();
         if (!hasMore || loading) return;
 
-        const observer = new IntersectionObserver(
-            entries => {
-                if (entries[0].isIntersecting && !loading && hasMore) {
-                    loadMoreEvents();
-                }
-            },
-            { threshold: 0.1 }
-        );
+        const observer = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && !loading && hasMore) loadMoreEvents();
+        }, { threshold: 0.1 });
 
-        const currentRef = loadMoreRef.current;
-        if (currentRef) {
-            observer.observe(currentRef);
-        }
-
+        if (loadMoreRef.current) observer.observe(loadMoreRef.current);
         observerRef.current = observer;
 
-        return () => {
-            if (observer) {
-                if (currentRef) observer.unobserve(currentRef);
-                observer.disconnect();
-            }
-        };
+        return () => observer.disconnect();
     }, [loading, hasMore, loadMoreEvents]);
 
-    // Utility functions
     const refreshEvents = () => {
         setPage(1);
         setHasMore(true);
         fetchEvents(1, true);
     };
 
-    // Lógica de fechas completamente rehecha
+    // --- IMAGE HANDLING ---
+    const handleImageSelect = (e: Event, isNew = true) => {
+        const input = e.target as HTMLInputElement;
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+
+            // Validar tamaño (ej. 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                toast.error("La imagen es demasiado pesada (Máx 2MB)");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64String = e.target?.result as string;
+                if (isNew) {
+                    setNewEvent(prev => ({ ...prev, cover: base64String }));
+                } else if (currentEvent) {
+                    setCurrentEvent(prev => prev ? { ...prev, cover: base64String } : null);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeImage = (isNew = true) => {
+        if (isNew) {
+            setNewEvent(prev => ({ ...prev, cover: "" }));
+        } else if (currentEvent) {
+            setCurrentEvent(prev => prev ? { ...prev, cover: "" } : null);
+        }
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    // --- FORM LOGIC ---
     const prepareEventForSubmission = (formEvent: any, originalEvent: any = null) => {
-        // Crear una copia para no modificar el original
         const preparedEvent = { ...formEvent };
 
-        // CASO 1: Evento nuevo - solo convertir fechas si existen
         if (!originalEvent) {
-            if (formEvent.startDate) {
-                preparedEvent.startDate = DateTime.fromISO(formEvent.startDate).toUTC().toISO();
-            }
-
-            if (formEvent.endDate) {
-                preparedEvent.endDate = DateTime.fromISO(formEvent.endDate).toUTC().toISO();
-            }
-
+            if (formEvent.startDate) preparedEvent.startDate = DateTime.fromISO(formEvent.startDate).toUTC().toISO();
+            if (formEvent.endDate) preparedEvent.endDate = DateTime.fromISO(formEvent.endDate).toUTC().toISO();
             return preparedEvent;
         }
 
-        // CASO 2: Edición de un evento existente
-
-        // Preservar ID siempre
         preparedEvent.id = originalEvent.id;
+        if (formEvent.startDate) preparedEvent.startDate = DateTime.fromISO(formEvent.startDate).toUTC().toISO();
+        else if (originalEvent.startDate) preparedEvent.startDate = originalEvent.startDate;
 
-        // Si el formulario tiene una fecha de inicio y fue modificada, convertirla
-        if (formEvent.startDate) {
-            preparedEvent.startDate = DateTime.fromISO(formEvent.startDate).toUTC().toISO();
-        }
-        // Si el formulario NO tiene fecha de inicio pero el evento original sí, usamos la original
-        else if (originalEvent.startDate) {
-            // Usamos directamente el objeto Date original
-            preparedEvent.startDate = originalEvent.startDate;
-        }
-
-        // Mismo proceso para la fecha de fin
-        if (formEvent.endDate) {
-            preparedEvent.endDate = DateTime.fromISO(formEvent.endDate).toUTC().toISO();
-        }
-        else if (originalEvent.endDate) {
-            preparedEvent.endDate = originalEvent.endDate;
-        }
+        if (formEvent.endDate) preparedEvent.endDate = DateTime.fromISO(formEvent.endDate).toUTC().toISO();
+        else if (originalEvent.endDate) preparedEvent.endDate = originalEvent.endDate;
 
         return preparedEvent;
     };
 
     const validateEvent = (event: any) => {
-        if (!event.name || event.name.trim() === "") {
-            toast.error("El nombre es obligatorio");
-            return false;
-        }
+        if (!event.name?.trim()) return toast.error("El nombre es obligatorio");
+        if (!event.startDate && !event.originalEvent?.startDate) return toast.error("La fecha de inicio es obligatoria");
 
-        // Para nuevos eventos, la fecha de inicio es obligatoria
-        // Para ediciones, permitimos actualizar solo otros campos
-        if (!event.startDate && !event.originalEvent?.startDate) {
-            toast.error("La fecha de inicio es obligatoria");
-            return false;
-        }
-
-        // Si ambas fechas están presentes, validamos que la fecha fin sea posterior
         if (event.startDate && event.endDate) {
-            try {
-                const startDate = DateTime.fromISO(event.startDate);
-                const endDate = DateTime.fromISO(event.endDate);
-
-                if (endDate < startDate) {
-                    toast.error("La fecha de finalización no puede ser anterior a la de inicio");
-                    return false;
-                }
-            } catch (e) {
-                console.error("Error validando fechas:", e);
-                toast.error("Formato de fechas inválido");
-                return false;
-            }
+            const start = DateTime.fromISO(event.startDate);
+            const end = DateTime.fromISO(event.endDate);
+            if (end < start) return toast.error("La fecha final no puede ser antes que la inicial");
         }
-
         return true;
     };
 
-    // Dialog handlers
-    const openDialog = () => dialogRef.current?.showModal();
-
-    const closeDialog = () => {
-        dialogRef.current?.close();
-        setNewEvent(initialEventState);
-    };
-
-    const openEditorDialog = (event: typeof events[number]) => {
-        try {
-            // Formatea las fechas para el formulario si existen
-            const startDateFormatted = event.startDate
-                ? DateTime.fromJSDate(event.startDate).toFormat("yyyy-MM-dd'T'HH:mm")
-                : "";
-
-            const endDateFormatted = event.endDate
-                ? DateTime.fromJSDate(event.endDate).toFormat("yyyy-MM-dd'T'HH:mm")
-                : "";
-
-            setCurrentEvent({
-                id: event.id,
-                name: event.name,
-                startDate: startDateFormatted,
-                endDate: endDateFormatted,
-                location: event.location || "",
-                description: event.description || "",
-                originalEvent: event // Guardar el evento original completo
-            });
-
-            editorDialogRef.current?.showModal();
-        } catch (error) {
-            console.error("Error al abrir el diálogo de edición:", error);
-            toast.error("Error al cargar los datos del evento");
-        }
-    };
-
-    const closeEditorDialog = () => {
-        editorDialogRef.current?.close();
-        setCurrentEvent(null);
-    };
-
-    // Event CRUD operations
+    // --- CRUD ACTIONS ---
     const createEvent = async () => {
         if (!validateEvent(newEvent)) return;
-
         try {
             const eventToSubmit = prepareEventForSubmission(newEvent);
             const { error } = await actions.admin.events.createEvent(eventToSubmit);
-
-            if (error) {
-                toast.error("Error al crear el evento");
-                return;
-            }
-
+            if (error) throw new Error(error.message);
             toast.success("Evento creado exitosamente");
             refreshEvents();
             closeDialog();
         } catch (error) {
-            console.error("Error creating event:", error);
+            console.error(error);
             toast.error("Error al crear el evento");
         }
     };
 
     const updateEvent = async () => {
-        if (!currentEvent) return;
-        if (!validateEvent(currentEvent)) return;
-
+        if (!currentEvent || !validateEvent(currentEvent)) return;
         try {
-            // Usar la función optimizada para preparar el evento
             const eventToSubmit = prepareEventForSubmission(currentEvent, currentEvent.originalEvent);
-
-            // Log para debug
-            console.log("Enviando actualización:", eventToSubmit);
-
             const { error } = await actions.admin.events.updateEvent(eventToSubmit);
-
-            if (error) {
-                toast.error("Error al actualizar el evento");
-                return;
-            }
-
-            toast.success("Evento actualizado exitosamente");
+            if (error) throw new Error(error.message);
+            toast.success("Evento actualizado");
             refreshEvents();
             closeEditorDialog();
         } catch (error) {
-            console.error("Error updating event:", error);
-            toast.error("Error al actualizar el evento");
+            console.error(error);
+            toast.error("Error al actualizar");
         }
     };
 
     const deleteEvent = async (id: number) => {
-        if (!confirm("¿Estás seguro de que quieres eliminar este evento?")) return;
-
+        if (!confirm("¿Eliminar este evento permanentemente?")) return;
         try {
             const { error } = await actions.admin.events.deleteEvent(id);
-
-            if (error) {
-                toast.error("Error al eliminar el evento");
-                return;
-            }
-
-            toast.success("Evento eliminado exitosamente");
+            if (error) throw new Error(error.message);
+            toast.success("Evento eliminado");
             refreshEvents();
         } catch (error) {
-            console.error("Error deleting event:", error);
-            toast.error("Error al eliminar el evento");
+            console.error(error);
+            toast.error("Error al eliminar");
         }
     };
 
-    // Form event handlers
-    const handleDateChange = (e: Event, field: string, isNewEvent = true) => {
-        const picker = e.target as HTMLInputElement;
-        if (isNewEvent) {
-            setNewEvent(prev => ({ ...prev, [field]: picker.value }));
-        } else if (currentEvent) {
-            setCurrentEvent(prev => prev ? { ...prev, [field]: picker.value } : null);
-        }
+    // --- DIALOGS ---
+    const openDialog = () => dialogRef.current?.showModal();
+    const closeDialog = () => { dialogRef.current?.close(); setNewEvent(initialEventState); };
+
+    const openEditorDialog = (event: typeof events[number]) => {
+        try {
+            setCurrentEvent({
+                id: event.id,
+                name: event.name,
+                startDate: event.startDate ? DateTime.fromJSDate(event.startDate).toFormat("yyyy-MM-dd'T'HH:mm") : "",
+                endDate: event.endDate ? DateTime.fromJSDate(event.endDate).toFormat("yyyy-MM-dd'T'HH:mm") : "",
+                location: event.location || "",
+                description: event.description || "",
+                cover: event.cover || "",
+                featured: event.featured || false,
+                originalEvent: event
+            });
+            editorDialogRef.current?.showModal();
+        } catch (e) { toast.error("Error al abrir editor"); }
     };
+    const closeEditorDialog = () => { editorDialogRef.current?.close(); setCurrentEvent(null); };
 
-    const handleInputChange = (e: Event, field: string, isNewEvent = true) => {
-        const input = e.currentTarget as HTMLInputElement | HTMLTextAreaElement;
-        if (isNewEvent) {
-            setNewEvent(prev => ({ ...prev, [field]: input.value }));
-        } else if (currentEvent) {
-            setCurrentEvent(prev => prev ? { ...prev, [field]: input.value } : null);
-        }
-    };
+    // --- FORMATTERS ---
+    const getStatusBadge = (event: typeof events[number]) => {
+        if (!event.startDate) return <span class="px-2 py-1 rounded text-xs bg-gray-800 text-gray-400">Borrador</span>;
 
-    // Display formatting
-    const formatEventDuration = (event: typeof events[number]) => {
-        if (!event.startDate) {
-            return <span className="text-amber-400">Fecha no definida</span>;
-        }
-
-        const startDate = DateTime.fromJSDate(event.startDate);
-        const endDate = event.endDate ? DateTime.fromJSDate(event.endDate) : null;
+        const start = DateTime.fromJSDate(event.startDate);
+        const end = event.endDate ? DateTime.fromJSDate(event.endDate) : null;
         const now = DateTime.local();
 
-        if (!endDate) {
-            return (
-                <span title={startDate.toLocaleString(DateTime.DATETIME_FULL)}>
-                    {startDate.toRelative()}
-                </span>
-            );
-        }
-
-        if (endDate < now) {
-            return (
-                <span title={endDate.toLocaleString(DateTime.DATETIME_FULL)} className="text-gray-400">
-                    Finalizado {endDate.toRelative()}
-                </span>
-            );
-        }
-
-        if (startDate <= now && endDate > now) {
-            const totalDuration = endDate.diff(startDate, 'milliseconds').milliseconds;
-            const elapsedDuration = now.diff(startDate, 'milliseconds').milliseconds;
-            const percentageElapsed = (elapsedDuration / totalDuration) * 100;
-
-            return (
-                <span title={percentageElapsed < 50
-                    ? startDate.toLocaleString(DateTime.DATETIME_FULL)
-                    : endDate.toLocaleString(DateTime.DATETIME_FULL)}
-                    className="text-green-400">
-                    {percentageElapsed < 50
-                        ? `Comenzado ${startDate.toRelative()}`
-                        : `Finaliza ${endDate.toRelative()}`}
-                </span>
-            );
-        }
-
-        if (startDate > now) {
-            return (
-                <span title={startDate.toLocaleString(DateTime.DATETIME_FULL)} className="text-blue-400">
-                    Comienza en {startDate.toRelative()}
-                </span>
-            );
-        }
-
-        return null;
+        if (end && end < now) return <span class="px-2 py-1 rounded text-xs bg-red-900/30 text-red-400 border border-red-900/50">Finalizado</span>;
+        if (start <= now && (!end || end > now)) return <span class="px-2 py-1 rounded text-xs bg-green-900/30 text-green-400 border border-green-900/50 animate-pulse">En curso</span>;
+        return <span class="px-2 py-1 rounded text-xs bg-blue-900/30 text-blue-400 border border-blue-900/50">Próximo</span>;
     };
 
-    // UI Components
-    const renderEventForm = (event: any, isNew = true) => (
-        <div className="space-y-4">
-            <div>
-                <label className="block text-sm text-gray-300">Nombre</label>
-                <input
-                    type="text"
-                    value={event.name}
-                    onInput={(e) => handleInputChange(e, 'name', isNew)}
-                    className="w-full p-2 bg-[#09090f] text-white border border-gray-700 rounded-md"
-                    placeholder="Nombre del evento"
-                />
+    // --- RENDER FORM ---
+    const renderForm = (data: any, isNew: boolean, onChangeInput: (e: any, f: string, n: boolean) => void, onChangeDate: (e: any, f: string, n: boolean) => void) => (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Columna Izquierda: Datos */}
+            <div className="space-y-4">
+                <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nombre del Evento</label>
+                    <input
+                        type="text"
+                        value={data.name}
+                        onInput={(e) => onChangeInput(e, 'name', isNew)}
+                        className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"
+                        placeholder="Ej: Torneo de Bedwars"
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Inicio</label>
+                        <input
+                            type="datetime-local"
+                            value={data.startDate || ""}
+                            onInput={(e) => onChangeDate(e, 'startDate', isNew)}
+                            className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-none"
+                            style={{ colorScheme: "dark" }}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Fin (Opcional)</label>
+                        <input
+                            type="datetime-local"
+                            value={data.endDate || ""}
+                            onInput={(e) => onChangeDate(e, 'endDate', isNew)}
+                            className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-none"
+                            style={{ colorScheme: "dark" }}
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ubicación</label>
+                    <div className="relative">
+                        <MapPin size={16} className="absolute left-3 top-3.5 text-gray-500" />
+                        <input
+                            type="text"
+                            value={data.location || ""}
+                            onInput={(e) => onChangeInput(e, 'location', isNew)}
+                            className="w-full p-3 pl-10 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-none"
+                            placeholder="Ej: Discord, Twitch, Lobby 1"
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Descripción</label>
+                    <textarea
+                        value={data.description || ""}
+                        onInput={(e) => onChangeInput(e, 'description', isNew)}
+                        className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl h-32 resize-none focus:border-blue-500 focus:outline-none"
+                        placeholder="Detalles del evento..."
+                    />
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                    <input
+                        type="checkbox"
+                        id={isNew ? "new-featured" : "edit-featured"}
+                        checked={data.featured}
+                        onChange={(e) => onChangeInput(e, 'featured', isNew)}
+                        className="w-5 h-5 rounded border-gray-600 text-blue-600 focus:ring-blue-500 bg-gray-700"
+                    />
+                    <label htmlFor={isNew ? "new-featured" : "edit-featured"} className="text-sm font-medium text-white cursor-pointer select-none">
+                        Destacar evento
+                    </label>
+                </div>
             </div>
 
-            <div>
-                <label className="block text-sm text-gray-300">Fecha de Inicio</label>
-                <input
-                    type="datetime-local"
-                    value={event.startDate || ""}
-                    onInput={(e) => handleDateChange(e, 'startDate', isNew)}
-                    className="w-full p-2 bg-[#09090f] text-white border border-gray-700 rounded-md"
-                    style={{ colorScheme: "dark" }}
-                />
-            </div>
+            {/* Columna Derecha: Portada */}
+            <div className="space-y-4">
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Portada del Evento</label>
 
-            <div>
-                <label className="block text-sm text-gray-300">Fecha de Fin (opcional)</label>
-                <input
-                    type="datetime-local"
-                    value={event.endDate || ""}
-                    onInput={(e) => handleDateChange(e, 'endDate', isNew)}
-                    className="w-full p-2 bg-[#09090f] text-white border border-gray-700 rounded-md"
-                    style={{ colorScheme: "dark" }}
-                />
-            </div>
+                <div
+                    className={`
+                        relative w-full aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden group
+                        ${data.cover ? 'border-blue-500/50 bg-black' : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'}
+                    `}
+                >
+                    {data.cover ? (
+                        <>
+                            <img src={data.cover} alt="Preview" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="p-2 bg-blue-600 rounded-lg text-white hover:bg-blue-500" title="Cambiar"
+                                >
+                                    <Pencil size={18} />
+                                </button>
+                                <button
+                                    onClick={() => removeImage(isNew)}
+                                    className="p-2 bg-red-600 rounded-lg text-white hover:bg-red-500" title="Eliminar"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex flex-col items-center text-gray-500 hover:text-white transition-colors"
+                        >
+                            <div className="p-3 rounded-full bg-white/5 mb-2">
+                                <ImageIcon size={32} />
+                            </div>
+                            <span className="text-sm font-medium">Subir Portada</span>
+                            <span className="text-xs text-gray-600">Recomendado: 1920x1080 (Máx 2MB)</span>
+                        </button>
+                    )}
 
-            <div>
-                <label className="block text-sm text-gray-300">Ubicación</label>
-                <input
-                    type="text"
-                    value={event.location || ""}
-                    onInput={(e) => handleInputChange(e, 'location', isNew)}
-                    className="w-full p-2 bg-[#09090f] text-white border border-gray-700 rounded-md"
-                    placeholder="Ubicación (opcional)"
-                />
-            </div>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={(e) => handleImageSelect(e, isNew)}
+                        className="hidden"
+                        accept="image/*"
+                    />
+                </div>
 
-            <div>
-                <label className="block text-sm text-gray-300">Descripción</label>
-                <textarea
-                    value={event.description || ""}
-                    onInput={(e) => handleInputChange(e, 'description', isNew)}
-                    className="w-full p-2 bg-[#09090f] text-white border border-gray-700 rounded-md h-32"
-                    placeholder="Descripción del evento (opcional)"
-                />
+                <div className="bg-blue-900/10 border border-blue-900/20 p-3 rounded-lg flex gap-3 items-start">
+                    <div className="p-1 bg-blue-500/20 rounded text-blue-400 mt-0.5"><Upload size={14} /></div>
+                    <p className="text-xs text-blue-200/70 leading-relaxed">
+                        La imagen se subirá automáticamente al guardar. Asegúrate de tener derechos sobre la imagen utilizada.
+                    </p>
+                </div>
             </div>
         </div>
     );
 
+    // Helpers para inputs del render
+    const handleInp = (e: any, f: string, n: boolean) => {
+        const val = e.target.type === 'checkbox' ? e.target.checked : e.currentTarget.value;
+        if (n) setNewEvent(p => ({ ...p, [f]: val }));
+        else setCurrentEvent(p => p ? { ...p, [f]: val } : null);
+    };
+    const handleDate = (e: any, f: string, n: boolean) => {
+        const val = e.target.value;
+        if (n) setNewEvent(p => ({ ...p, [f]: val }));
+        else setCurrentEvent(p => p ? { ...p, [f]: val } : null);
+    };
+
     return (
-        <div className="relative w-full overflow-auto rounded-md">
-            <div className="flex justify-between mb-4 sticky top-0 z-10 py-3">
-                <h2 className="text-lg font-semibold text-slate-400">Administrador de Eventos</h2>
-                <button
-                    onClick={openDialog}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-3 py-2 text-white rounded-md"
-                >
-                    <Plus size={16} /> Crear Evento
-                </button>
+        <div className="relative w-full space-y-6">
+            {/* HEADER */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#0a0a0a] border border-white/5 p-4 rounded-2xl shadow-lg">
+                <div>
+                    <h2 className="text-2xl font-anton text-white uppercase tracking-wide">Eventos</h2>
+                    <p className="text-sm text-gray-500 font-rubik">Gestiona la agenda de la comunidad</p>
+                </div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={refreshEvents}
+                        className="p-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all"
+                        title="Recargar lista"
+                    >
+                        <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+                    </button>
+                    <button
+                        onClick={openDialog}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl font-bold uppercase tracking-wider text-sm shadow-lg shadow-blue-900/20 transition-all hover:scale-105"
+                    >
+                        <Plus size={18} /> Nuevo Evento
+                    </button>
+                </div>
             </div>
 
-            <div className="min-h-[400px]">
-                <table className="w-full caption-bottom text-sm">
-                    <thead className="[&_tr]:border-b bg-[#13131f] sticky top-14 z-10">
-                        <tr className="border-b border-[#1f1f2f]">
-                            <th className="h-12 px-4 text-left text-slate-400">
-
-                            </th>
-                            <th className="h-12 px-4 text-left text-slate-400">Nombre</th>
-                            <th className="h-12 px-4 text-left text-slate-400">Fecha y Hora</th>
-                            <th className="h-12 px-4 text-left text-slate-400">Ubicación</th>
-                            <th className="h-12 px-4 text-left text-slate-400">Última Modificación</th>
-                            <th className="h-12 px-4 text-left text-slate-400">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {events.map(event => (
-                            <tr key={event.id} className="border-b border-[#1f1f2f] bg-[#09090f]">
-                                <td class="">
-                                    <img
-                                        src={event.cover || "/og.webp"}
-                                        alt="Evento"
-                                        draggable={false}
-                                        className="aspect-video h-16 object-scale-down rounded-md"
-                                    />
-                                </td>
-                                <td className="p-4 text-slate-300">{event.name}</td>
-                                <td className="p-4 text-slate-300">{formatEventDuration(event)}</td>
-                                <td className="p-4 text-slate-300">{event.location ?? "No especificada"}</td>
-                                <td className="p-4 text-slate-300">
-                                    {event.updatedAt ? (
-                                        <span title={DateTime.fromJSDate(event.updatedAt).toLocaleString()}>
-                                            {DateTime.fromJSDate(event.updatedAt).toRelative()}
-                                        </span>
-                                    ) : (
-                                        "Nunca"
-                                    )}
-                                </td>
-                                <td className="p-4">
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => openEditorDialog(event)}
-                                            title="Editar Evento"
-                                            className="text-blue-500 hover:text-blue-400">
-                                            <Pencil size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => deleteEvent(event.id)}
-                                            title="Eliminar Evento"
-                                            className="text-red-500 hover:text-red-400">
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                        {events.length === 0 && !loading && (
+            {/* TABLA / LISTA */}
+            <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden shadow-xl min-h-[400px] relative">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead className="bg-white/5 text-xs uppercase tracking-widest text-gray-400 font-bold">
                             <tr>
-                                <td colSpan={5} className="p-8 text-center text-slate-400">
-                                    No hay eventos disponibles
-                                </td>
+                                <th className="p-4 w-24 text-center">Portada</th>
+                                <th className="p-4">Evento</th>
+                                <th className="p-4">Estado</th>
+                                <th className="p-4">Ubicación</th>
+                                <th className="p-4 text-right">Acciones</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            {events.map(event => (
+                                <tr key={event.id} className="group hover:bg-white/[0.02] transition-colors">
+                                    <td className="p-4">
+                                        <div className="size-12 rounded-lg bg-white/5 overflow-hidden border border-white/10">
+                                            <img
+                                                src={event.cover || "/og.webp"}
+                                                alt=""
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                            />
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="font-bold text-white text-base mb-0.5 flex items-center gap-2">
+                                            {event.name}
+                                            {event.featured && <Star size={14} className="text-yellow-400 fill-yellow-400" />}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                            <Calendar size={12} />
+                                            {event.startDate
+                                                ? DateTime.fromJSDate(event.startDate).toFormat("dd MMM yyyy, HH:mm")
+                                                : "Sin fecha"
+                                            }
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        {getStatusBadge(event)}
+                                    </td>
+                                    <td className="p-4 text-sm text-gray-400">
+                                        {event.location ? (
+                                            <span className="flex items-center gap-1.5"><MapPin size={14} /> {event.location}</span>
+                                        ) : (
+                                            <span className="text-gray-600 italic">--</span>
+                                        )}
+                                    </td>
+                                    <td className="p-4 text-right">
+                                        <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => openEditorDialog(event)}
+                                                className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                                title="Editar"
+                                            >
+                                                <Pencil size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => deleteEvent(event.id)}
+                                                className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                title="Eliminar"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
-                {(hasMore || loading) && (
-                    <div
-                        ref={loadMoreRef}
-                        className="w-full py-4 flex justify-center"
-                        style={{ minHeight: "50px" }}
-                    >
-                        {loading && (
-                            <div className="flex items-center gap-2 text-slate-400">
-                                <Loader size={16} className="animate-spin" />
-                                <span>Cargando eventos...</span>
-                            </div>
-                        )}
+                {/* Empty State */}
+                {events.length === 0 && !loading && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                        <Calendar size={48} className="mb-4 opacity-20" />
+                        <p>No hay eventos registrados</p>
                     </div>
                 )}
 
-                {!hasMore && events.length > 0 && (
-                    <p className="w-full py-4 text-center text-slate-400 text-sm">No hay más eventos para cargar</p>
+                {/* Loading / Infinite Scroll Trigger */}
+                {(hasMore || loading) && (
+                    <div ref={loadMoreRef} className="p-6 flex justify-center">
+                        {loading && <Loader2 size={24} className="animate-spin text-blue-500" />}
+                    </div>
                 )}
             </div>
 
-            {/* Dialogo para crear evento */}
-            <dialog ref={dialogRef} className="bg-[#13131f] p-6 rounded-md shadow-lg">
-                <h3 className="text-lg font-semibold text-white mb-4">Crear Evento</h3>
-                {renderEventForm(newEvent, true)}
-                <div className="flex justify-end gap-2 mt-4">
-                    <button onClick={closeDialog} className="bg-gray-600 hover:bg-gray-500 px-3 py-2 text-white rounded-md">Cancelar</button>
-                    <button onClick={createEvent} className="bg-blue-600 hover:bg-blue-500 px-3 py-2 text-white rounded-md">Crear</button>
+            {/* MODAL CREAR */}
+            <dialog
+                ref={dialogRef}
+                className="backdrop:bg-black/80 backdrop:backdrop-blur-sm bg-[#111] text-white border border-white/10 rounded-2xl shadow-2xl p-0 w-full max-w-4xl m-auto open:animate-in open:fade-in open:zoom-in-95"
+                onClick={(e) => e.target === dialogRef.current && closeDialog()}
+            >
+                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#15151a]">
+                    <h3 className="text-xl font-bold font-anton uppercase tracking-wide">Nuevo Evento</h3>
+                    <button onClick={closeDialog} className="text-gray-500 hover:text-white transition-colors"><X size={20} /></button>
+                </div>
+                <div className="p-6 md:p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    {renderForm(newEvent, true, handleInp, handleDate)}
+                </div>
+                <div className="p-6 border-t border-white/10 bg-[#15151a] flex justify-end gap-3">
+                    <button onClick={closeDialog} className="px-4 py-2 text-sm font-bold text-gray-400 hover:text-white transition-colors">Cancelar</button>
+                    <button onClick={createEvent} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg transition-all">Crear Evento</button>
                 </div>
             </dialog>
 
-            {/* Dialogo para editar evento */}
-            <dialog ref={editorDialogRef} className="bg-[#13131f] p-6 rounded-md shadow-lg">
-                <h3 className="text-lg font-semibold text-white mb-4">Editar Evento</h3>
-                {currentEvent && renderEventForm(currentEvent, false)}
-                <div className="flex justify-end gap-2 mt-4">
-                    <button onClick={closeEditorDialog} className="bg-gray-600 hover:bg-gray-500 px-3 py-2 text-white rounded-md">Cancelar</button>
-                    <button onClick={updateEvent} className="bg-blue-600 hover:bg-blue-500 px-3 py-2 text-white rounded-md">Guardar</button>
+            {/* MODAL EDITAR */}
+            <dialog
+                ref={editorDialogRef}
+                className="backdrop:bg-black/80 backdrop:backdrop-blur-sm bg-[#111] text-white border border-white/10 rounded-2xl shadow-2xl p-0 w-full max-w-4xl m-auto open:animate-in open:fade-in open:zoom-in-95"
+                onClick={(e) => e.target === editorDialogRef.current && closeEditorDialog()}
+            >
+                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#15151a]">
+                    <h3 className="text-xl font-bold font-anton uppercase tracking-wide">Editar Evento</h3>
+                    <button onClick={closeEditorDialog} className="text-gray-500 hover:text-white transition-colors"><X size={20} /></button>
+                </div>
+                <div className="p-6 md:p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    {currentEvent && renderForm(currentEvent, false, handleInp, handleDate)}
+                </div>
+                <div className="p-6 border-t border-white/10 bg-[#15151a] flex justify-end gap-3">
+                    <button onClick={closeEditorDialog} className="px-4 py-2 text-sm font-bold text-gray-400 hover:text-white transition-colors">Cancelar</button>
+                    <button onClick={updateEvent} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg transition-all">Guardar Cambios</button>
                 </div>
             </dialog>
         </div>
