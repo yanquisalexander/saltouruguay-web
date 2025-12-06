@@ -253,7 +253,7 @@ export const pet = {
             }
 
             try {
-                const items = await PetService.getStoreItems(input.category);
+                const items = await PetService.getStoreItems(input.category as any);
                 return items;
             } catch (error: any) {
                 throw new ActionError({
