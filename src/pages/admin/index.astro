@@ -1,38 +1,36 @@
 ---
 import Chart from "@/components/Chart.astro";
 import type { ChartOptions } from "chart.js";
-import Layout from "@/layouts/Layout.astro";
 import { checkAdmin } from "@/lib/checkAdmin";
 import { createDataset } from "@/utils/chart";
 import { getSession } from "auth-astro/server";
-import { SALTO_BROADCASTER_ID } from "@/config";
-
 import {
-  LucideArrowRight,
   LucideBell,
   LucideCalendar,
-  LucideTrendingUpDown,
+  LucideTrendingUp,
+  LucideTrendingDown,
   LucideTrophy,
   LucideUsers,
-  LucideLightbulb,
+  LucideSparkles,
+  LucideBarChart3,
+  LucideActivity,
 } from "lucide-preact";
 
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { getSiteStats } from "@/utils/site-admin";
-import Cache from "@/lib/Cache";
 import cacheService from "@/services/cache";
 import { GeminiService } from "@/services/gemini";
 import { markdown } from "@astropub/md";
+import { DateTime } from "luxon";
 
 const session = await getSession(Astro.request);
 
-// Si la función `checkAdmin` retorna un `Response`, deberías manejarlo explícitamente:
 const checkResult = await checkAdmin(session);
 if (checkResult) {
-  // Manejar la respuesta retornada (404 en este caso).
   return checkResult;
 }
 
+// --- DATA PROCESSING ---
 const fillMissingDays = (byDay: { day: string; value: number }[]) => {
   const startDate = new Date(byDay[0].day);
   const endDate = new Date(byDay[byDay.length - 1].day);
@@ -43,14 +41,12 @@ const fillMissingDays = (byDay: { day: string; value: number }[]) => {
     const existing = byDay.find((entry) => entry.day === dayString);
     completeDays.push({ day: dayString, value: existing ? existing.value : 0 });
   }
-
   return completeDays;
 };
 
 const visitorStats = await fetch(
   "https://librecounter.org/saltouruguayserver.com/siteStats"
 ).then((res) => res.json());
-
 const completeByDay = fillMissingDays(visitorStats.byDay);
 
 const data = {
@@ -59,44 +55,41 @@ const data = {
     createDataset({
       label: "Visitas",
       data: completeByDay.map((stat) => stat.value),
-      borderColor: "rgb(255, 255, 255)",
-      backgroundColor: "rgba(255, 255, 255, 0.2)",
+      borderColor: "#3b82f6", // Blue-500
+      backgroundColor: "rgba(59, 130, 246, 0.1)",
       borderWidth: 2,
-      tension: 0.2,
+      tension: 0.3,
       fill: true,
+      pointBackgroundColor: "#09090b",
+      pointBorderColor: "#3b82f6",
     }),
   ],
 };
 
 const chartOptions: Partial<ChartOptions> = {
   responsive: true,
-  interaction: {
-    intersect: false,
-    mode: "index",
-  },
-  plugins: {
-    legend: {
-      display: false,
-    },
+  maintainAspectRatio: false,
+  interaction: { intersect: false, mode: "index" },
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { grid: { display: false }, ticks: { color: "#52525b" } },
+    y: { grid: { color: "#27272a" }, ticks: { color: "#52525b" } },
   },
 };
 
 const stats = await getSiteStats();
-
 const cache = cacheService.create();
 const cacheKey = "site-admin-tips";
-
 let tips: string | null = null;
-
 const cacheValue = (await cache.get(cacheKey)) as string | null;
 
 const BEAUTIFIED_STATS = [
   {
     id: "total-users",
     icon: LucideUsers,
-    title: "Usuarios totales",
+    title: "Usuarios Totales",
     value: stats.totalUsers,
-
+    color: "blue",
     percentage:
       stats.newSignupsWeek === 0
         ? 0
@@ -107,139 +100,206 @@ const BEAUTIFIED_STATS = [
                 100
             )
           : -100,
-
     percentageText:
-      stats.newSignupsWeek === 0
-        ? "Sin cambios"
-        : stats.totalUsers > stats.newSignupsWeek
-          ? "más que la semana pasada"
-          : "menos que la semana pasada",
+      stats.newSignupsWeek === 0 ? "Sin cambios" : "vs semana pasada",
   },
   {
     id: "new-signups",
     icon: LucideBell,
-    title: "Nuevos usuarios",
+    title: "Nuevos Registros",
     value: stats.newSignupsWeek,
-    description: "Nuevos usuarios registrados en la última semana",
+    color: "green",
+    description: "Últimos 7 días",
   },
-  /* 
-    Por ahora, son placeholders, ya que no hay sistema de torneos y eventos
-  */
   {
     id: "active-events",
     icon: LucideCalendar,
-    title: "Eventos activos",
+    title: "Eventos Activos",
     value: stats.activeEvents,
-    description: `${stats.activeEvents} eventos activos`,
+    color: "purple",
+    description: "En curso o próximos",
   },
   {
     id: "active-tournaments",
     icon: LucideTrophy,
-    title: "Torneos activos",
+    title: "Torneos",
     value: 0,
-    description: "0 torneos activos",
+    color: "yellow",
+    description: "Competiciones activas",
   },
 ];
 
 if (cacheValue) {
   tips = cacheValue;
 } else {
-  console.log("Cache miss");
   const gemini = new GeminiService();
-  const message = `
-    JSON de Visitas: ${JSON.stringify(visitorStats)}
-
-    JSON de Stats: ${JSON.stringify(
-      BEAUTIFIED_STATS.map((stat) => ({
-        id: stat.id,
-        title: stat.title,
-        value: stat.value,
-      }))
-    )}
-  `;
-  const generatedTips = await gemini.generateTipsForAdminPanel({
-    dashboardStats: message.trim(),
-  }).catch((err) => {
-    console.error("Error generating tips:", err);
-    return "No se pudieron generar consejos en este momento.";
-  });
-  await cache.set(cacheKey, generatedTips, 60 * 60 * 24); // 1 día
+  const message = `JSON Visitas: ${JSON.stringify(visitorStats)} | JSON Stats: ${JSON.stringify(BEAUTIFIED_STATS.map((s) => ({ id: s.id, title: s.title, value: s.value })))}`;
+  const generatedTips = await gemini
+    .generateTipsForAdminPanel({ dashboardStats: message.trim() })
+    .catch((err) => "Sistema de IA no disponible temporalmente.");
+  await cache.set(cacheKey, generatedTips, 60 * 60 * 24);
   tips = generatedTips;
 }
+
+// Estilos
+const cardBase =
+  "relative overflow-hidden bg-[#0a0a0a] border border-white/5 rounded-2xl p-6 shadow-xl backdrop-blur-sm";
 ---
 
-<AdminLayout title="Administrador" session={session}>
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16 pb-16">
+<AdminLayout title="Dashboard" session={session}>
+  {/* Fondo Sutil */}
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
     <div
-      class="px-4 py-2 bg-gradient-to-br from-blue-500/40 to-blue-900/40 rounded-lg shadow-lg mb-8"
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"
     >
-      <h2 class="text-xl font-medium text-white mix-blend-screen">
-        Bienvenido al nuevo panel de administración
-      </h2>
-      <p class="text-white/70 mb-4">
-        El panel de administración ha sido renovado y ahora es más fácil de
-        usar.
-      </p>
+    </div>
+  </div>
+
+  <div class="flex flex-col w-full max-w-[1600px] mx-auto p-6 md:p-8 space-y-8">
+    {/* --- HEADER BIENVENIDA --- */}
+    <div
+      class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+    >
+      <div>
+        <h1
+          class="text-3xl font-anton text-white uppercase tracking-wide flex items-center gap-3"
+        >
+          Dashboard <span
+            class="px-2 py-0.5 rounded-md bg-white/10 text-xs font-rubik text-white/50 tracking-widest border border-white/5"
+            >BETA v2.0</span
+          >
+        </h1>
+        <p class="text-white/40 font-rubik text-sm mt-1">
+          {DateTime.now().setLocale("es").toFormat("cccc, dd 'de' LLLL yyyy")}
+        </p>
+      </div>
+
+      <div
+        class="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-xl"
+      >
+        <img
+          src={session?.user?.image}
+          alt={session?.user?.name}
+          class="size-8 rounded-full border border-white/10"
+        />
+        <div class="flex flex-col">
+          <span class="text-xs text-white/40 font-bold uppercase tracking-wider"
+            >Operador</span
+          >
+          <span class="text-sm font-medium text-white leading-none"
+            >{session?.user?.name}</span
+          >
+        </div>
+      </div>
     </div>
 
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+    {/* --- KPI GRIDS --- */}
+    <div class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
       {
-        BEAUTIFIED_STATS.map((stat) => (
-          <div class="bg-neutral-900/50 rounded-lg p-4 border border-white/10 shadow-md">
-            <div class="space-y-1.5 p-6 flex flex-row items-center justify-between pb-2">
-              <h3 class="tracking-tight text-sm font-medium flex gap-x-1 items-center">
-                <stat.icon class="size-4 text-white" />
-                <span class="ml-2">{stat.title}</span>
-              </h3>
+        BEAUTIFIED_STATS.map((stat) => {
+          const colors = {
+            blue: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+            green: "text-green-400 bg-green-500/10 border-green-500/20",
+            purple: "text-purple-400 bg-purple-500/10 border-purple-500/20",
+            yellow: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
+          };
+          const colorClass =
+            colors[stat.color as keyof typeof colors] || colors.blue;
+
+          return (
+            <div
+              class={`${cardBase} group hover:border-white/10 transition-colors`}
+            >
+              <div class="flex justify-between items-start mb-4">
+                <div class={`p-3 rounded-xl border ${colorClass}`}>
+                  <stat.icon size={20} />
+                </div>
+                {stat.percentage !== undefined && (
+                  <span
+                    class={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${stat.percentage >= 0 ? "text-green-400 bg-green-900/20" : "text-red-400 bg-red-900/20"}`}
+                  >
+                    {stat.percentage >= 0 ? (
+                      <LucideTrendingUp size={12} />
+                    ) : (
+                      <LucideTrendingDown size={12} />
+                    )}
+                    {Math.abs(stat.percentage)}%
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <h3 class="text-white/50 text-xs font-bold uppercase tracking-widest mb-1">
+                  {stat.title}
+                </h3>
+                <p class="text-3xl font-anton text-white tracking-wide">
+                  {stat.value}
+                </p>
+
+                {(stat.percentageText || stat.description) && (
+                  <p class="text-white/30 text-xs mt-2 font-mono">
+                    {stat.percentageText || stat.description}
+                  </p>
+                )}
+              </div>
             </div>
-            <div class="p-6 pt-0">
-              <div class="text-2xl font-bold">{stat.value}</div>
-            </div>
-            <p class="text-xs text-neutral-600 flex items-center gap-1 mt-1">
-              {stat.percentage !== undefined && stat.percentage !== null ? (
-                <span
-                  class={
-                    stat.percentage > 0
-                      ? "text-green-400"
-                      : stat.percentage < 0
-                        ? "text-red-400"
-                        : "text-gray-400"
-                  }
-                >
-                  <LucideTrendingUpDown class="inline-block align-middle w-4 h-4 mr-1" />
-                  {stat.percentage > 0 ? "+" : ""}
-                  {stat.percentage}% {stat.percentageText}
-                </span>
-              ) : null}
-              {stat.description && (
-                <span class="text-neutral-400">{stat.description}</span>
-              )}
-            </p>
-          </div>
-        ))
+          );
+        })
       }
     </div>
 
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-7 items-start">
-      <div
-        class="bg-neutral-900/50 rounded-lg p-4 border border-white/10 shadow-md lg:col-span-4"
-      >
-        <h3 class="text-xl font-bold text-white">Estadísticas de visitas</h3>
-        <p class="text-white/70 mb-4 text-sm">Visitas a la página por día</p>
-        <Chart data={data} chartOptions={chartOptions} />
+    {/* --- MAIN CONTENT GRID --- */}
+    <div class="grid gap-6 grid-cols-1 lg:grid-cols-3">
+      {/* 1. CHART (Ocupa 2 columnas) */}
+      <div class={`${cardBase} lg:col-span-2 flex flex-col`}>
+        <div class="flex items-center justify-between mb-6">
+          <h3
+            class="text-xl font-anton text-white uppercase tracking-wide flex items-center gap-2"
+          >
+            <LucideBarChart3 class="text-blue-500" size={20} /> Tráfico Web
+          </h3>
+          <div class="flex gap-2">
+            <span class="size-2 rounded-full bg-blue-500 animate-pulse"></span>
+            <span class="text-xs text-blue-400 font-bold uppercase"
+              >En vivo</span
+            >
+          </div>
+        </div>
+
+        <div class="flex-1 w-full min-h-[300px] relative">
+          <Chart data={data} chartOptions={chartOptions} />
+        </div>
       </div>
 
+      {/* 2. AI INSIGHTS (Ocupa 1 columna) */}
       {
         tips && (
-          <div class="bg-neutral-900/50 rounded-lg p-4 border border-white/10 shadow-md lg:col-span-3">
-            <h3 class="text-xl font-bold text-white mb-2">
-              <LucideLightbulb class="size-5 text-white inline-block mr-1" />
-              Consejos basados en IA
-            </h3>
-            <div
-              class="text-white/70 mb-4 text-sm prose prose-invert prose-indigo prose-p:text-sm prose-p:leading-6 prose-p:text-neutral-400 prose-p:mb-4 prose-p:mt-0 prose-p:prose-neutral-100"
-              set:html={markdown(tips)}
-            />
+          <div
+            class={`${cardBase} border-purple-500/20 bg-gradient-to-b from-[#0f0f12] to-[#0a0a0a]`}
+          >
+            <div class="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
+              <div class="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
+                <LucideSparkles size={20} />
+              </div>
+              <div>
+                <h3 class="text-lg font-anton text-white uppercase tracking-wide">
+                  Gemini Analysis
+                </h3>
+                <p class="text-xs text-purple-300/60 font-mono">
+                  Reporte Automático
+                </p>
+              </div>
+            </div>
+
+            <div class="prose prose-invert prose-sm max-w-none prose-p:text-gray-400 prose-strong:text-white prose-ul:pl-4 prose-li:marker:text-purple-500">
+              <div set:html={markdown(tips)} />
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-white/5 text-center">
+              <span class="text-[10px] text-white/20 uppercase tracking-widest">
+                Powered by Google Gemini
+              </span>
+            </div>
           </div>
         )
       }
