@@ -3,6 +3,7 @@ import PageBreadcrumb from "@/components/PageBreadcrumb.astro";
 import Layout from "@/layouts/Layout.astro";
 import { getPaginatedEvents } from "@/lib/events";
 import { EventCard } from "@/components/EventCard.tsx";
+import { LucideCalendarSearch } from "lucide-preact";
 
 const { events } = await getPaginatedEvents(1, 10);
 const firstFeaturedEvent = events.find((event) => event.featured);
@@ -16,59 +17,83 @@ const eventsWithoutFirstFeaturedEvent = events.filter(
   title="Eventos"
   description="Participa en nuestros eventos exclusivos y conéctate con la comunidad"
 >
-  <div class="flex flex-col max-w-7xl mx-auto min-h-screen px-4 sm:px-6">
-    <header class="mb-8">
-      <PageBreadcrumb
-        breadcrumbs={[{ text: "Eventos", href: "/eventos" }]}
-        pathname="/eventos"
-      />
-      <h1 class="text-3xl font-rubik font-medium tracking-tight">
-        Eventos de la Comunidad
-      </h1>
-      <p class="text-neutral-500 mt-1">
-        Participa en nuestros eventos exclusivos y conéctate con la comunidad
-      </p>
+  {/* Fondo Ambiental */}
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5"
+    >
+    </div>
+    <div
+      class="absolute top-0 right-0 w-[600px] h-[600px] bg-purple-900/10 blur-[150px] rounded-full pointer-events-none"
+    >
+    </div>
+  </div>
+
+  <div
+    class="flex flex-col max-w-7xl mx-auto min-h-screen px-4 sm:px-6 pt-24 pb-20"
+  >
+    {/* HEADER */}
+    <header
+      class="mb-12 text-center md:text-left flex flex-col md:flex-row items-end justify-between gap-6 border-b border-white/5 pb-8"
+    >
+      <div class="space-y-4">
+        <PageBreadcrumb
+          breadcrumbs={[{ text: "Eventos", href: "/eventos" }]}
+          pathname="/eventos"
+        />
+        <div>
+          <h1
+            class="text-5xl md:text-6xl font-anton text-white uppercase tracking-tight mb-2"
+          >
+            Cartelera de <span class="text-yellow-500">Eventos</span>
+          </h1>
+          <p class="text-white/60 font-rubik text-lg max-w-2xl">
+            Descubre torneos, watch parties y reuniones de la comunidad. No te
+            pierdas la acción en vivo.
+          </p>
+        </div>
+      </div>
+
+      {/* Stats o Filtros rápidos (Visual Only por ahora) */}
+      <div
+        class="flex items-center gap-4 text-sm font-bold text-white/40 uppercase tracking-widest"
+      >
+        <span class="flex items-center gap-2"
+          ><LucideCalendarSearch size={18} />
+          {events.length} Eventos Activos</span
+        >
+      </div>
     </header>
 
-    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    {/* GRID DE EVENTOS */}
+    <div
+      class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr"
+    >
+      {/* Evento Destacado (Ocupa más espacio) */}
       {
         firstFeaturedEvent && (
-          <EventCard
-            event={firstFeaturedEvent}
-            index={1}
-            firstFeaturedEvent={true}
-            client:only="preact"
-          />
+          <div class="md:col-span-2 lg:col-span-2 row-span-1 md:row-span-2">
+            <EventCard
+              event={firstFeaturedEvent}
+              index={0}
+              firstFeaturedEvent={true}
+              client:only="preact"
+            />
+          </div>
         )
       }
 
-      <!--
-        Resto de eventos, excluyendo el primero destacado
-      -->
+      {/* Resto de Eventos */}
       {
-        eventsWithoutFirstFeaturedEvent &&
-          eventsWithoutFirstFeaturedEvent.length > 0 &&
-          eventsWithoutFirstFeaturedEvent.map((event, index) => (
-            <EventCard event={event} index={index + 1} client:only="preact" />
-          ))
+        eventsWithoutFirstFeaturedEvent.map((event, index) => (
+          <EventCard
+            key={event.id}
+            event={event}
+            index={index + 1}
+            client:only="preact"
+          />
+        ))
       }
     </div>
   </div>
 </Layout>
-
-<style is:inline>
-  @keyframes fadeInUp {
-    0% {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .fade-in-up {
-    animation: fadeInUp 0.5s ease-in-out;
-  }
-</style>

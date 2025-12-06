@@ -1,8 +1,7 @@
 import { h } from 'preact';
-import { LucideUsers, LucideCalendar, LucideClock, LucideStar, type LucideIcon } from 'lucide-preact';
+import { LucideUsers, LucideCalendar, LucideClock, LucideStar, LucideExternalLink, LucideTv } from 'lucide-preact';
 import { DateTime } from 'luxon';
 import type { getEventById } from "@/lib/events";
-
 import { useEffect, useState } from 'preact/hooks';
 
 export const EventCard = ({ firstFeaturedEvent, event, index }: { firstFeaturedEvent?: boolean, event: Awaited<ReturnType<typeof getEventById>>, index: number }) => {
@@ -17,112 +16,112 @@ export const EventCard = ({ firstFeaturedEvent, event, index }: { firstFeaturedE
             const end = endDate ? DateTime.fromISO(endDate.toISOString()).setZone('local') : null;
 
             if (now < start) return { status: 0, text: start.toRelative() || "Próximamente" };
-            if (end && now > end) return { status: 2, text: `Finalizado ${end.toRelative() || ""}` };
-            return { status: 1, text: `En curso desde ${start.toRelative() || ""} hasta ${end?.toRelative() || ""}` };
+            if (end && now > end) return { status: 2, text: `Finalizado` };
+            return { status: 1, text: `En curso ahora` };
         };
 
         setStatus(getTimeStatus(event.startDate, event.endDate));
     }, [event.startDate, event.endDate]);
 
+    // Format Date
+    const dateFormatted = DateTime.fromISO(event.startDate.toISOString()).setLocale('es').toFormat("dd MMM, HH:mm");
+
     return (
         <a
             href={`/eventos/${event.id}`}
-            key={event.id}
-            class={`rounded-lg border shadow-sm ease-in-out fade-in-up animate-delay-[var(--animation-delay)] 
-                hover:saturate-150 hover:scale-105 duration-300 cursor-pointer transform-gpu will-change-transform
-                ${firstFeaturedEvent
-                    ? "col-span-full bg-gradient-to-br border-neutral-600 from-electric-violet-500/10 via-yellow-500/10"
-                    : "border-neutral-500/50 bg-neutral-500/5"
-                }`}
-            style={{
-                "--animation-delay": `${index * 0.1}s`,
-            }}
-
-
+            className={`
+                group relative flex flex-col justify-end overflow-hidden rounded-3xl border border-white/10 bg-[#0a0a0a] transition-all duration-500 hover:border-white/30 hover:shadow-2xl hover:shadow-purple-900/20
+                ${firstFeaturedEvent ? 'min-h-[400px] md:min-h-[500px]' : 'min-h-[350px]'}
+                animate-fade-in-up
+            `}
+            style={{ animationDelay: `${index * 100}ms` }}
         >
-            <div class="flex flex-col space-y-1.5 p-4 sm:p-6 pb-4">
-                <div class="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0">
-                    <div class="space-y-1 w-full sm:w-auto">
-                        <div class="flex flex-wrap items-center gap-2">
-                            {event.featured && <Badge icon={LucideStar} text="Destacado" className="bg-primary text-primary-foreground" />}
-                            {status?.status === 0 && <Badge text="Próximo" className="bg-blue-500/10 text-blue-500" />}
-                            {status?.status === 1 && <Badge text="En curso" className="bg-yellow-500/10 text-yellow-500" />}
-                            {status?.status === 2 && <Badge icon={LucideClock} text="Finalizado" className="bg-red-500/10 text-red-500" />}
-                            <Badge text="Stream especial" className="bg-purple-500/10 text-purple-500" />
+            {/* --- IMAGEN DE FONDO --- */}
+            <div className="absolute inset-0 z-0">
+                <img
+                    src={event.cover || "/og.webp"}
+                    alt={event.name}
+                    className={`
+                        w-full h-full object-cover transition-transform duration-700
+                        ${firstFeaturedEvent ? 'scale-105 group-hover:scale-100' : 'scale-100 group-hover:scale-110'}
+                    `}
+                />
+                {/* Overlay Gradiente para legibilidad */}
+                <div className={`absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent transition-opacity duration-300 ${firstFeaturedEvent ? 'opacity-90' : 'opacity-80 group-hover:opacity-90'}`}></div>
+            </div>
+
+            {/* --- BADGES SUPERIORES --- */}
+            <div className="absolute top-4 left-4 z-20 flex flex-wrap gap-2">
+                {event.featured && (
+                    <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-500 text-black text-xs font-bold uppercase tracking-wider shadow-lg">
+                        <LucideStar size={12} fill="currentColor" /> Destacado
+                    </span>
+                )}
+
+                {status && (
+                    <span className={`
+                        flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg backdrop-blur-md border border-white/10
+                        ${status.status === 0 ? 'bg-blue-600/80 text-white' : ''}
+                        ${status.status === 1 ? 'bg-red-600 text-white animate-pulse' : ''}
+                        ${status.status === 2 ? 'bg-black/60 text-white/50' : ''}
+                    `}>
+                        {status.status === 1 && <div className="size-2 rounded-full bg-white animate-ping mr-1"></div>}
+                        {status.text}
+                    </span>
+                )}
+            </div>
+
+            {/* --- CONTENIDO --- */}
+            <div className="relative z-10 p-6 md:p-8 flex flex-col h-full justify-end">
+
+                <div className="space-y-4">
+                    {/* Título & Info */}
+                    <div>
+                        <div className="flex items-center gap-3 text-white/60 text-xs font-bold uppercase tracking-widest mb-2">
+                            <span className="flex items-center gap-1.5"><LucideCalendar size={14} /> {dateFormatted}</span>
+                            {event.assistants.length > 0 && (
+                                <>
+                                    <span className="size-1 rounded-full bg-white/20"></span>
+                                    <span className="flex items-center gap-1.5"><LucideUsers size={14} /> {event.assistants.length}</span>
+                                </>
+                            )}
                         </div>
-                        <h2 class="text-xl sm:text-2xl font-rubik font-semibold pt-2">{event.name}</h2>
+
+                        <h2 className={`font-anton text-white uppercase leading-none mb-2 ${firstFeaturedEvent ? 'text-4xl md:text-6xl' : 'text-3xl'}`}>
+                            {event.name}
+                        </h2>
+
+                        <p className={`font-rubik text-white/70 line-clamp-2 ${firstFeaturedEvent ? 'text-lg max-w-2xl' : 'text-sm'}`}>
+                            {event.description}
+                        </p>
                     </div>
-                    <div class="flex flex-col items-start sm:items-end mt-2 sm:mt-0">
-                        <InfoRow icon={LucideUsers} text={`${event.assistants.length} confirmados`} />
-                        <InfoRow
-                            icon={LucideCalendar}
-                            text={DateTime.fromISO(event.startDate.toISOString()).setLocale('es').toFormat("EEEE, dd 'de' LLLL 'a las' HH:mm")}
-                        />
-                    </div>
-                </div>
-                <div class="flex flex-col sm:flex-row items-start gap-4 mt-4">
-                    <img
-                        src={event.cover || "/og.webp"}
-                        alt={`Portada de ${event.name}`}
-                        width={240}
-                        height={140}
-                        class="rounded-md object-cover w-full aspect-video max-w-[200px] sm:w-60 h-auto"
-                    />
-                    <div class="flex-1 flex flex-col mt-3 sm:mt-0">
-                        <p class="text-sm">{event.description}</p>
-                        <div class="mt-4 space-y-2">
-                            <div class="flex flex-col gap-1 text-sm">
-                                <span class="font-semibold">Organizador</span>
-                                <div class="flex items-center gap-2">
-                                    <img src={event.mainOrganizer.avatar!} alt="Organizador" class="w-6 h-6 rounded-full" />
-                                    <span class="font-semibold">{event.mainOrganizer.displayName}</span>
-                                </div>
+
+                    {/* Organizador & Action */}
+                    <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                        <div className="flex items-center gap-3">
+                            <img
+                                src={event.mainOrganizer.avatar || `https://ui-avatars.com/api/?name=${event.mainOrganizer.displayName}`}
+                                alt={event.mainOrganizer.displayName}
+                                className="size-8 rounded-full border border-white/20"
+                            />
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">Organiza</span>
+                                <span className="text-sm text-white font-medium leading-none">{event.mainOrganizer.displayName}</span>
                             </div>
-                            {event.platform && <InfoRow text="Plataforma: Twitch" />}
                         </div>
+
+                        {event.url ? (
+                            <button className="size-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-110 transition-transform shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                                <LucideExternalLink size={20} />
+                            </button>
+                        ) : (
+                            <div className="flex items-center gap-1 text-white/30 text-xs font-bold uppercase">
+                                <LucideTv size={14} /> Info
+                            </div>
+                        )}
                     </div>
-                </div>
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mt-4">
-                    <div class={`flex items-center gap-1 text-sm ${status?.status === 0
-                        ? "text-green-500"
-                        : status?.status === 1
-                            ? "text-yellow-500"
-                            : "text-red-500"
-                        }`}
-                    >
-                        <LucideClock class="h-4 w-4" />
-                        <span>{status ? status.text : "Calculando..."}</span>
-                    </div>
-                    {event.url && (
-                        <a
-                            href={event.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 text-center"
-                        >
-                            Unirme al stream
-                        </a>
-                    )}
                 </div>
             </div>
         </a>
     );
 };
-
-
-// **Componente Badge**
-const Badge = ({ icon: Icon, text, className }: { icon?: any; text: string; className: string }) => (
-    <div class={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${className || ""}`}>
-        {Icon && <Icon class="h-4 w-4 mr-2" />}
-        {text}
-    </div>
-
-);
-
-// **Componente InfoRow**
-const InfoRow = ({ icon: Icon, text }: { icon?: LucideIcon; text: string }) => (
-    <div class="flex items-center gap-1 text-sm text-muted-foreground">
-        {Icon && <Icon class="h-4 w-4" />}
-        <span>{text}</span>
-    </div>
-);

@@ -4,7 +4,13 @@ import Layout from "@/layouts/Layout.astro";
 import { getEventAssistants, getEventById } from "@/lib/events";
 import { getSession } from "auth-astro/server";
 import { ParticipeOnEvent } from "@/components/events/ParticipeOnEvent.tsx";
-import { LucideCalendar, LucideUsers } from "lucide-preact";
+import {
+  LucideCalendar,
+  LucideClock,
+  LucideUsers,
+  LucideCrown,
+  LucideMapPin,
+} from "lucide-preact";
 import { DateTime } from "luxon";
 
 const { eventId } = Astro.params;
@@ -18,6 +24,17 @@ if (!event) {
 }
 
 const assistants = await getEventAssistants(event.id);
+
+// Formateo de fechas para que se vea elegante
+const startDate = DateTime.fromISO(event.startDate.toISOString()).setLocale(
+  "es"
+);
+const dateStr = startDate.toFormat("cccc dd 'de' LLLL");
+const timeStr = startDate.toFormat("HH:mm 'hs'");
+
+// Clases reutilizables
+const glassCard =
+  "bg-[#0a0a0a]/60 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden";
 ---
 
 <Layout
@@ -25,7 +42,24 @@ const assistants = await getEventAssistants(event.id);
   description={event.description!}
   image={event.cover!}
 >
-  <div class="flex flex-col max-w-7xl mx-auto min-h-screen px-4 sm:px-6">
+  {
+    /* Fondo Ambiental Dinámico basado en la portada si es posible, sino genérico */
+  }
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5"
+    >
+    </div>
+    {/* Glow de color detrás */}
+    <div
+      class="absolute top-0 right-0 w-[800px] h-[600px] bg-blue-900/20 blur-[150px] rounded-full pointer-events-none"
+    >
+    </div>
+  </div>
+
+  <div
+    class="flex flex-col max-w-7xl mx-auto min-h-screen px-4 sm:px-6 pt-24 pb-20"
+  >
     <PageBreadcrumb
       breadcrumbs={[
         { text: "Eventos", href: "/eventos" },
@@ -33,120 +67,196 @@ const assistants = await getEventAssistants(event.id);
       ]}
       pathname={`/eventos/${eventId}`}
     />
-    <header
-      class="flex flex-col md:flex-row gap-4 md:items-start justify-between mb-6"
-    >
-      <div>
-        <div class="flex flex-wrap items-center gap-2 mb-2">
-          <!-- 
-                Badges
-            -->
-        </div>
-        <h1 class="text-3xl font-rubik font-medium tracking-tight">
-          {event.name}
-        </h1>
-        <p class="text-neutral-500 mt-1 text-sm max-w-[60ch]">
-          {
-            event.description?.length > 120
-              ? event.description?.slice(0, 120) + "..."
-              : event.description
-          }
-        </p>
+
+    {/* HEADER / TITULO */}
+    <header class="mt-8 mb-12">
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        {
+          event.featured && (
+            <span class="px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-bold uppercase tracking-widest">
+              Evento Destacado
+            </span>
+          )
+        }
+        <span
+          class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/60 text-xs font-bold uppercase tracking-widest"
+        >
+          Comunidad
+        </span>
       </div>
-      <aside class="flex flex-wrap gap-2">
-        <ParticipeOnEvent
-          event={event}
-          assistants={assistants}
-          session={session}
-          client:load
-        />
-      </aside>
+
+      <h1
+        class="text-5xl md:text-7xl font-anton text-white uppercase tracking-tight leading-none text-balance drop-shadow-xl"
+      >
+        {event.name}
+      </h1>
     </header>
 
-    <div class="grid gap-6 md:grid-cols-3">
-      <div class="md:col-span-2">
-        <article
-          class="rounded-lg border border-neutral-800 bg-neutral-500/10 shadow-sm"
+    <div class="grid gap-8 lg:grid-cols-3 lg:items-start">
+      {/* COLUMNA IZQUIERDA: CONTENIDO PRINCIPAL */}
+      <div class="lg:col-span-2 space-y-8">
+        {/* IMAGEN DE PORTADA */}
+        <div
+          class="relative group rounded-3xl overflow-hidden border border-white/10 shadow-2xl aspect-video"
         >
-          <div class="aspect-video relative">
-            <img
-              alt={event.name}
-              loading="lazy"
-              decoding="async"
-              class="object-cover rounded-t-lg"
-              src={event.cover || "/og.webp"}
-            />
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"
+          >
           </div>
-          <div class="p-6 pt-8 space-y-4">
-            <div class="prose max-w-none prose-invert prose-neutral">
-              <p>{event.description}</p>
-            </div>
+          <img
+            alt={event.name}
+            loading="eager"
+            decoding="async"
+            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            src={event.cover || "/og.webp"}
+          />
+        </div>
+
+        {/* DESCRIPCIÓN */}
+        <div class={`${glassCard} p-6 md:p-8`}>
+          <h3
+            class="text-2xl font-anton text-white uppercase mb-4 flex items-center gap-2"
+          >
+            <span class="w-1 h-8 bg-blue-500 rounded-full"></span>
+            Sobre el evento
+          </h3>
+          <div
+            class="prose prose-invert prose-lg max-w-none text-white/70 font-rubik leading-relaxed"
+          >
+            <p>{event.description}</p>
           </div>
-        </article>
+        </div>
       </div>
 
-      <aside class="flex flex-col space-y-6">
-        <div class="bg-neutral-800/10 rounded-lg border border-neutral-800 p-4">
-          <header class="flex flex-col space-y-1.5 p-6">
-            <h3 class="text-2xl font-semibold leading-none tracking-tight">
-              Detalles del evento
-            </h3>
-          </header>
-          <div class="p-6 pt-0 space-y-4">
-            <div class="flex items-center gap-3">
-              <LucideCalendar class="h-5 w-5 text-neutral-300" />
+      {/* COLUMNA DERECHA: SIDEBAR DE ACCIÓN (HUD) */}
+      <aside class="flex flex-col gap-6 lg:sticky lg:top-28">
+        {/* TARJETA DE ACCIÓN (Participar) */}
+        <div
+          class="relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#1a1a1a] to-black border border-yellow-500/30 p-6 shadow-[0_0_30px_rgba(234,179,8,0.1)]"
+        >
+          <div class="absolute top-0 right-0 p-3 opacity-10 text-yellow-500">
+            <LucideCrown size={80} />
+          </div>
+
+          <h3
+            class="relative z-10 text-xl font-anton text-white uppercase mb-4"
+          >
+            Panel de Inscripción
+          </h3>
+
+          <div class="relative z-10">
+            <ParticipeOnEvent
+              event={event}
+              assistants={assistants}
+              session={session}
+              client:load
+            />
+          </div>
+
+          <div
+            class="mt-4 pt-4 border-t border-white/10 flex justify-between items-center text-sm text-white/50"
+          >
+            <span>Cupos disponibles</span>
+            <span class="text-green-400 font-bold">Abierto</span>
+          </div>
+        </div>
+
+        {/* DETALLES TÉCNICOS */}
+        <div class={glassCard}>
+          <div class="p-6 space-y-6">
+            {/* Fecha */}
+            <div class="flex items-start gap-4">
+              <div
+                class="p-3 bg-white/5 rounded-xl text-white/70 border border-white/5"
+              >
+                <LucideCalendar size={24} />
+              </div>
               <div>
-                <p class="text-sm font-semibold">Fecha y hora</p><p
-                  class="text-sm"
+                <p
+                  class="text-xs font-bold text-white/40 uppercase tracking-widest"
                 >
-                  {
-                    DateTime.fromISO(event.startDate.toISOString()).toFormat(
-                      "dd LLLL yyyy"
-                    )
-                  } a las {
-                    DateTime.fromISO(event.startDate.toISOString()).toFormat(
-                      "HH:mm"
-                    )
-                  }
+                  Fecha
                 </p>
+                <p class="text-lg font-bold text-white capitalize">{dateStr}</p>
               </div>
             </div>
-            <div class="flex items-center gap-3">
-              <LucideUsers class="h-5 w-5 text-neutral-300" />
-              <div>
-                <p class="text-sm font-semibold">Asistentes</p>
-                <p class="text-sm">
-                  {assistants.length} asistentes
-                </p>
+
+            {/* Hora */}
+            <div class="flex items-start gap-4">
+              <div
+                class="p-3 bg-white/5 rounded-xl text-white/70 border border-white/5"
+              >
+                <LucideClock size={24} />
               </div>
+              <div>
+                <p
+                  class="text-xs font-bold text-white/40 uppercase tracking-widest"
+                >
+                  Hora de inicio
+                </p>
+                <p class="text-lg font-bold text-white">{timeStr}</p>
+              </div>
+            </div>
+
+            {/* Ubicación / Plataforma */}
+            <div class="flex items-start gap-4">
+              <div
+                class="p-3 bg-white/5 rounded-xl text-white/70 border border-white/5"
+              >
+                <LucideMapPin size={24} />
+              </div>
+              <div>
+                <p
+                  class="text-xs font-bold text-white/40 uppercase tracking-widest"
+                >
+                  Ubicación
+                </p>
+                <p class="text-lg font-bold text-white">Twitch / Discord</p>
+              </div>
+            </div>
+
+            {/* Separador */}
+            <div class="h-px w-full bg-white/10"></div>
+
+            {/* Asistentes Count */}
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-white/70">
+                <LucideUsers size={18} />
+                <span class="font-rubik">Participantes</span>
+              </div>
+              <span class="text-2xl font-anton text-white"
+                >{assistants.length}</span
+              >
             </div>
           </div>
         </div>
 
-        <!--  -->
-
-        <div class="bg-neutral-800/10 rounded-lg border border-neutral-800 p-4">
-          <header class="flex flex-col space-y-1.5 p-6">
-            <h3 class="text-2xl font-semibold leading-none tracking-tight">
-              Organizadores
-            </h3>
-          </header>
-          <div class="p-6 pt-0 space-y-4">
-            <div class="flex items-center gap-3">
-              <span
-                class="relative flex shrink-0 overflow-hidden rounded-full h-10 w-10 border-2 border-primary"
-                ><img
-                  class="aspect-square h-full w-full"
-                  alt={event.mainOrganizer.displayName}
-                  src={event.mainOrganizer.avatar!}
-                /></span
-              ><div>
-                <p class="font-medium">
-                  {event.mainOrganizer.displayName}
-                </p><p class="text-xs text-neutral-500">
-                  Organizador principal
-                </p>
+        {/* ORGANIZADOR */}
+        <div
+          class={`${glassCard} p-1 flex items-center gap-4 hover:bg-white/5 transition-colors`}
+        >
+          <div class="p-4 flex items-center gap-4 w-full">
+            <div class="relative">
+              <img
+                class="size-12 rounded-full object-cover border-2 border-purple-500 shadow-lg"
+                alt={event.mainOrganizer.displayName}
+                src={event.mainOrganizer.avatar!}
+              />
+              <div
+                class="absolute -bottom-1 -right-1 bg-purple-500 text-[10px] font-bold px-1.5 rounded text-white border border-black"
+              >
+                HOST
               </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p
+                class="text-xs font-bold text-purple-400 uppercase tracking-widest mb-0.5"
+              >
+                Organizado por
+              </p>
+              <p class="font-anton text-xl text-white truncate">
+                {event.mainOrganizer.displayName}
+              </p>
             </div>
           </div>
         </div>
