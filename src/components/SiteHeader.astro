@@ -4,7 +4,7 @@ import type { Session } from "@auth/core/types";
 import { CurrentUser } from "./CurrentUser";
 import DiscordPresenceCount from "./DiscordPresenceCount";
 import { Notifications } from "./Notifications";
-import SiteFooter from "./SiteFooter.astro";
+import { LucideLock } from "lucide-preact";
 
 interface Props {
   session?: Session | null;
@@ -20,309 +20,323 @@ const PRERENDERED_PATHS = [
 ];
 
 const currentPath = Astro.url.pathname;
-
 const { session, hideNav } = Astro.props;
 
 const links = [
-  {
-    label: "Comunidad",
-    url: "/comunidad",
-  },
-  {
-    label: "Torneos",
-    url: "/torneos",
-  },
-  {
-    label: "Eventos",
-    url: "/eventos",
-    soon: false,
-    specialComment: "ATENTOS 🔥",
-  },
-  {
-    label: "Awards",
-    url: "/awards",
-
-    //specialComment: "VOTA AHORA 🔥",
-  },
+  { label: "Comunidad", url: "/comunidad" },
+  { label: "Torneos", url: "/torneos" },
+  { label: "Eventos", url: "/eventos", soon: false, specialComment: "NUEVO" },
+  { label: "Awards", url: "/awards", specialComment: "VOTACIÓN" },
 ];
-const activeClasses = ["bg-brand-gray/10", "border-gray-900/10"];
 
 const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
-
-// Divide en dos arrays: enlaces pares e impares
 const evenLinks = links.filter((_, index) => index % 2 === 0);
 const oddLinks = links.filter((_, index) => index % 2 !== 0);
+
+// Estilos de enlaces
+const navLinkBase =
+  "relative flex flex-col items-center justify-center px-4 py-1 group transition-all duration-300";
+const textStyle =
+  "font-teko text-xl uppercase tracking-wide transition-colors relative z-10";
+const activeText = "text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]";
+const inactiveText = "text-white/70 group-hover:text-white";
+
+// Helper para generar las clases del Badge según el tipo de mensaje
+const getBadgeStyles = (label: string) => {
+  const base =
+    "absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-bold font-rubik px-2 py-0.5 rounded-full border shadow-[0_0_10px_rgba(0,0,0,0.5)] tracking-widest leading-none whitespace-nowrap transition-transform duration-300 group-hover:-translate-y-1 pointer-events-none backdrop-blur-md z-20";
+
+  if (label.includes("VOTA") || label.includes("VOTACIÓN")) {
+    return `${base} bg-yellow-500/20 text-yellow-300 border-yellow-500/40 shadow-yellow-500/10`;
+  }
+  if (label.includes("NUEVO") || label.includes("ATENTOS")) {
+    return `${base} bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-cyan-500/10`;
+  }
+  return `${base} bg-white/10 text-white/80 border-white/20`;
+};
 ---
 
 {
   !hideNav && (
-    <header class="z-[1001] header-animate sticky inset-x-0 flex items-center justify-between px-5 py-4 md:py-8 transition-all duration-300 md:px-10">
-      <div class="flex items-center justify-between w-full relative">
-        <!-- Enlaces pares a la izquierda -->
-        <div class="items-center space-x-5 hidden md:flex">
-          {
-            evenLinks.map((link) => (
+    <>
+      <header
+        id="site-header"
+        class="fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 py-6"
+      >
+        {/* LA ISLA FLOTANTE */}
+        <div
+          id="nav-island"
+          class="mx-auto flex items-center justify-between px-4 md:px-6 py-2 transition-all duration-300 w-[95%] max-w-7xl rounded-full border border-transparent"
+        >
+          {/* --- IZQUIERDA --- */}
+          <div class="flex items-center flex-1 gap-4">
+            {/* Logo Móvil */}
+            <a
+              href="/"
+              class="md:hidden block transition-transform hover:scale-105"
+            >
+              <img
+                src="/favicon.svg"
+                alt="Logo"
+                class="size-10 object-contain"
+              />
+            </a>
+
+            {/* Nav Escritorio (Izquierda) */}
+            <nav class="hidden md:flex items-center gap-1 ml-auto mr-4">
+              {evenLinks.map((link) =>
+                link.soon ? (
+                  <div class={`${navLinkBase} opacity-50 cursor-not-allowed`}>
+                    <span class={textStyle}>{link.label}</span>
+                    <LucideLock
+                      size={12}
+                      class="absolute top-1 -right-2 text-white/30"
+                    />
+                  </div>
+                ) : (
+                  <a href={link.url} class={navLinkBase}>
+                    <span
+                      class={`${textStyle} ${currentPath.startsWith(link.url) ? activeText : inactiveText}`}
+                    >
+                      {link.label}
+                    </span>
+
+                    {/* SPECIAL LABEL MEJORADO */}
+                    {link.specialComment && (
+                      <span class={getBadgeStyles(link.specialComment)}>
+                        {link.specialComment}
+                      </span>
+                    )}
+
+                    {/* Underline animado */}
+                    <span
+                      class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-yellow-500 rounded-full transition-all duration-300 ${currentPath.startsWith(link.url) ? "w-full opacity-100 shadow-[0_0_10px_#EAB308]" : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-100"}`}
+                    />
+                  </a>
+                )
+              )}
+            </nav>
+          </div>
+
+          {/* --- CENTRO (Logo Escritorio) --- */}
+          <div class="hidden md:flex flex-shrink-0 mx-4 relative group">
+            <a
+              href="/"
+              id="home-button"
+              class="block transition-transform duration-300 group-hover:scale-110 active:scale-95"
+            >
+              <div class="absolute inset-0 bg-yellow-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <img
+                src="/favicon.svg"
+                alt="Home"
+                class="size-14 object-contain relative z-10 drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)]"
+              />
+            </a>
+          </div>
+
+          {/* --- DERECHA --- */}
+          <div class="flex items-center flex-1 gap-4">
+            {/* Nav Escritorio (Derecha) */}
+            <nav class="hidden md:flex items-center gap-1 mr-auto ml-4">
+              {oddLinks.map((link) =>
+                link.soon ? (
+                  <div class={`${navLinkBase} opacity-50 cursor-not-allowed`}>
+                    <span class={textStyle}>{link.label}</span>
+                    <LucideLock
+                      size={12}
+                      class="absolute top-1 -right-2 text-white/30"
+                    />
+                  </div>
+                ) : (
+                  <a href={link.url} class={navLinkBase}>
+                    <span
+                      class={`${textStyle} ${currentPath.startsWith(link.url) ? activeText : inactiveText}`}
+                    >
+                      {link.label}
+                    </span>
+
+                    {/* SPECIAL LABEL MEJORADO */}
+                    {link.specialComment && (
+                      <span class={getBadgeStyles(link.specialComment)}>
+                        {link.specialComment}
+                      </span>
+                    )}
+
+                    <span
+                      class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-yellow-500 rounded-full transition-all duration-300 ${currentPath.startsWith(link.url) ? "w-full opacity-100 shadow-[0_0_10px_#EAB308]" : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-100"}`}
+                    />
+                  </a>
+                )
+              )}
+            </nav>
+
+            {/* HERRAMIENTAS */}
+            <div class="flex items-center gap-2 ml-auto md:pl-4 md:border-l border-white/10">
+              <div class="hidden md:block opacity-80 hover:opacity-100 transition-opacity">
+                <DiscordPresenceCount
+                  client:idle
+                  transition:persist
+                  transition:name="discord-widget-count"
+                />
+              </div>
+              <div class="opacity-80 hover:opacity-100 transition-opacity">
+                <Notifications
+                  client:load
+                  transition:persist
+                  transition:name="notifications"
+                />
+              </div>
+              <div class="relative z-50">
+                <CurrentUser
+                  user={session?.user || null}
+                  isPrerenderedPath={isPrerenderedPath}
+                  client:load
+                  transition:persist
+                  transition:name="current-user"
+                />
+              </div>
+              <button
+                id="mobile-menu-btn"
+                class="md:hidden p-2 text-white/80 bg-white/5 hover:bg-white/10 rounded-full ml-1 transition-colors"
+              >
+                <MenuIcon class="size-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* --- MENU MÓVIL --- */}
+      <div
+        id="mobile-drawer"
+        class="fixed inset-0 z-[40] hidden pointer-events-none"
+      >
+        <div
+          id="drawer-bg"
+          class="absolute inset-0 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300 pointer-events-auto"
+        />
+
+        <nav
+          id="drawer-panel"
+          class="absolute top-0 right-0 h-full w-[80%] max-w-xs bg-[#0a0a0a] border-l border-white/10 shadow-2xl transform translate-x-full transition-transform duration-300 pointer-events-auto pt-24 flex flex-col"
+        >
+          <div class="px-6 flex justify-between items-center mb-6">
+            <span class="font-teko text-xl text-white/50 tracking-widest">
+              NAVEGACIÓN
+            </span>
+            <button
+              id="close-drawer"
+              class="text-white/50 hover:text-white p-2"
+            >
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto px-4 space-y-2">
+            <a
+              href="/"
+              class={`block px-4 py-3 rounded-lg font-teko text-xl transition-colors ${currentPath === "/" ? "bg-yellow-500/10 text-yellow-400" : "bg-white/5 text-white hover:bg-white/10"}`}
+            >
+              INICIO
+            </a>
+            {links.map((link) =>
               link.soon ? (
-                <li class="flex font-teko opacity-70 tracking-wide items-center md:w-auto md:text-xl justify-center gap-2 md:px-4 md:py-2 rounded-2xl border border-transparent px-5 py-4 text-xl duration-300 w-full relative h-full pointer-events-none text-brand-gray">
-                  {link.label}
-                  <span class="text-[10px] font-rubik text-center w-max md:absolute left-1/2 md:-translate-x-1/2 bottom-[6px] md:translate-y-1/2 md:opacity-80">
-                    ¡Muy pronto!
-                  </span>
-                </li>
+                <div class="block px-4 py-3 text-white/30 font-teko text-xl flex justify-between cursor-not-allowed">
+                  {link.label} <LucideLock size={16} />
+                </div>
               ) : (
                 <a
                   href={link.url}
-                  class:list={currentPath === link.url ? activeClasses : ""}
-                  class="flex items-center font-teko tracking-wide md:w-auto justify-center gap-2 md:px-4 md:py-2 hover:bg-brand-gray/5 rounded-md border border-transparent hover:border-brand-gray/10 transition-all min-h-[50px] md:text-xl px-5 py-4 text-xl duration-300 w-full relative h-full"
+                  class={`block px-4 py-3 rounded-lg font-teko text-xl flex justify-between transition-colors ${currentPath.startsWith(link.url) ? "bg-yellow-500/10 text-yellow-400" : "text-white/70 hover:bg-white/5 hover:text-white"}`}
                 >
                   {link.label}
                   {link.specialComment && (
-                    <span class="text-[10.5px] z-10 font-semibold whitespace-nowrap text-yellow-400 font-rubik text-center w-max md:absolute left-1/2 md:-translate-x-1/2 bottom-[6px] md:translate-y-1/2">
+                    <span
+                      class={`text-[10px] font-rubik font-bold px-2 py-0.5 rounded tracking-wide ${link.specialComment === "VOTACIÓN" ? "bg-yellow-500/20 text-yellow-400" : "bg-blue-500/20 text-blue-400"}`}
+                    >
                       {link.specialComment}
                     </span>
                   )}
                 </a>
               )
-            ))
-          }
-        </div>
-
-        <!-- Logo al centro -->
-        <div class="flex items-center flex-1 md:flex-none md:absolute md:left-1/2 md:transform md:-translate-x-1/2">
-          <a
-            id="home-button"
-            href="/"
-            class="size-12 relative group flex items-center justify-center transform hover:scale-110 transition-transform duration-300"
-          >
-            <img
-              src="/favicon.svg"
-              alt="Inicio de SaltoUruguayServer"
-              transition:name="salto-home-logo"
-              class="size-12 group-hover:saturate-200 group-hover:brightness-150 transition-all duration-300"
-            />
-
-            <img
-              src="/favicon.svg"
-              alt="Inicio de SaltoUruguayServer"
-              class="size-12 absolute inset-0 blur-md brightness-150 saturate-200 opacity-50 group-hover:opacity-100 transition-opacity duration-300"
-            />
-          </a>
-        </div>
-
-        <!-- Derecha: enlaces impares + elementos -->
-        <div class="flex items-center md:gap-5">
-          <div class="items-center space-x-5 hidden md:flex">
-            {
-              oddLinks.map((link) => (
-                link.soon ? (
-                  <li class="flex font-teko opacity-70 tracking-wide items-center md:w-auto md:text-xl justify-center gap-2 md:px-4 md:py-2 rounded-2xl border border-transparent px-5 py-4 text-xl duration-300 w-full relative h-full pointer-events-none text-brand-gray">
-                    {link.label}
-                    <span class="text-[10px] font-rubik text-center w-max md:absolute left-1/2 md:-translate-x-1/2 bottom-[6px] md:translate-y-1/2 md:opacity-80">
-                      ¡Muy pronto!
-                    </span>
-                  </li>
-                ) : (
-                  <a
-                    href={link.url}
-                    class:list={currentPath === link.url ? activeClasses : ""}
-                    class="flex items-center font-teko tracking-wide md:w-auto justify-center gap-2 md:px-4 md:py-2 hover:bg-brand-gray/5 rounded-md border border-transparent hover:border-brand-gray/10 transition-all min-h-[50px] md:text-xl px-5 py-4 text-xl duration-300 w-full relative h-full"
-                  >
-                    {link.label}
-                    {link.specialComment && (
-                      <span class="text-[10.5px] z-10 font-semibold whitespace-nowrap text-yellow-400 font-rubik text-center w-max md:absolute left-1/2 md:-translate-x-1/2 bottom-[6px] md:translate-y-1/2">
-                        {link.specialComment}
-                      </span>
-                    )}
-                  </a>
-                )
-              ))
-            }
-          </div>
-
-          <DiscordPresenceCount
-            client:idle
-            transition:name="discord-widget-count"
-            transition:persist
-            transition:persist-props
-          />
-
-          <Notifications
-            client:load
-            transition:persist
-            transition:name="notifications"
-            transition:persist-props
-          />
-
-          <CurrentUser
-            user={session?.user || null}
-            isPrerenderedPath={isPrerenderedPath}
-            client:load
-            transition:persist
-            transition:name="current-user"
-            transition:persist-props
-          />
-        </div>
-
-        <!-- Botón menú móvil y elementos -->
-        <div class="flex md:hidden items-center gap-2">
-          <button
-            id="mobile-menu-button"
-            aria-label="Alternar menú de navegación"
-            class="relative p-2 hover:bg-brand-gray/5 rounded-2xl border border-transparent hover:border-brand-gray/10 transition-all"
-          >
-            <MenuIcon class="w-6 h-6" />
-          </button>
-        </div>
-      </div>
-
-      <!-- Menú móvil -->
-      <div
-        id="mobile-menu"
-        class="fixed inset-0 h-screen w-full z-[1000] bg-black bg-opacity-90 hidden"
-      >
-        <header class="flex items-center justify-end w-full px-5 py-6">
-          <button
-            id="close-mobile-menu"
-            class="text-white focus:outline-none"
-            title="Close mobile menu"
-            aria-label="Close mobile menu"
-          >
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </header>
-
-        <nav class="grid grid-rows-[auto_1fr] gap-6 w-full max-w-md mx-auto px-6">
-          <div class="pt-2">
-            <a
-              href="/"
-              class:list={[
-                "text-white",
-                "transition-all",
-                "duration-300",
-                "w-full",
-                "py-2",
-                "relative",
-                "px-3",
-                "hover:bg-white/20",
-                "hover:bg-opacity-10",
-                currentPath === "/" ? 'mobile-active' : null,
-              ]}
-            >
-              Inicio
-            </a>
-          </div>
-
-          <div class="flex flex-col w-full items-start space-y-2">
-            {
-              links.map((link) => (
-                <a
-                  href={link.url}
-                  class:list={[
-                    "text-white",
-                    "transition-all",
-                    "duration-300",
-                    "w-full",
-                    "py-2",
-                    "px-3",
-                    "hover:bg-white/20",
-                    "hover:bg-opacity-10",
-                    "relative",
-                    currentPath === link.url ? 'mobile-active' : null,
-                  ]}
-                >
-                  {link.label}
-                </a>
-              ))
-            }
-          </div>
-
-          <div class="pt-6">
-            <SiteFooter />
+            )}
+            <div class="mt-4 pt-4 border-t border-white/10 px-4">
+              <DiscordPresenceCount client:visible />
+            </div>
           </div>
         </nav>
       </div>
-    </header>
+    </>
   )
 }
 
 <style>
-  .header-animate {
-    position: sticky;
-    top: 0;
-    left: 0;
-    right: 0;
-    animation: reduce-header linear both;
-    animation-timeline: scroll();
-    animation-range: 0 150px;
-    background-color: var(--color-brand-black);
+  /* ESTILOS ACTIVOS POR JS (SCROLL) */
+  :global(#site-header.is-scrolled) {
+    @apply py-2;
   }
 
-  @keyframes reduce-header {
-    to {
-      box-shadow:
-        0 5px 50px -5px #ffffff1a,
-        0 0 0 1px #ffffff1a;
-      background: #0000004d;
-      @apply py-3;
-      backdrop-filter: blur(10px);
-    }
+  :global(#site-header.is-scrolled #nav-island) {
+    @apply bg-[#050505]/85 backdrop-blur-xl border-white/10 shadow-2xl max-w-6xl;
   }
 </style>
+
 <script>
-  import { $, $$ } from "@/lib/dom-selector";
+  import { $ } from "@/lib/dom-selector";
 
   document.addEventListener("astro:page-load", () => {
-    const $homeButton = $("#home-button");
-    const $header = $("header");
-    const $mobileMenuButton = $("#mobile-menu-button");
-    const $closeMobileMenu = $("#close-mobile-menu");
-    const $mobileMenu = $("#mobile-menu");
-    const $body = $("body");
+    const header = $("#site-header");
+    const mobileBtn = $("#mobile-menu-btn");
+    const closeBtn = $("#close-drawer");
+    const drawer = $("#mobile-drawer");
+    const drawerBg = $("#drawer-bg");
+    const drawerPanel = $("#drawer-panel");
+    const body = document.body;
 
-    if ($homeButton) {
-      $homeButton.addEventListener("click", (event) => {
-        if (location.pathname === "/") {
-          event.preventDefault();
-          window.scrollTo({
-            top: 0,
-            behavior: "smooth",
-          });
-        }
-      });
-    }
+    // 1. Lógica de Scroll
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        header?.classList.add("is-scrolled");
+      } else {
+        header?.classList.remove("is-scrolled");
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
 
-    const openMobileMenu = () => {
-      if (!$mobileMenu) return;
-      $mobileMenu.classList.remove("hidden");
-      // usar grid layout para el overlay del menú móvil
-      $mobileMenu.classList.add("grid", "grid-rows-[auto_1fr]", "items-start");
-      $body?.classList.add("overflow-hidden");
+    // 2. Lógica de Menú Móvil
+    const openMenu = () => {
+      drawer?.classList.remove("hidden");
+      setTimeout(() => {
+        drawerBg?.classList.remove("opacity-0");
+        drawerPanel?.classList.remove("translate-x-full");
+      }, 10);
+      body.style.overflow = "hidden";
     };
 
-    const closeMobileMenu = () => {
-      if (!$mobileMenu) return;
-      $mobileMenu.classList.add("hidden");
-      $mobileMenu.classList.remove("grid", "grid-rows-[auto_1fr]", "items-start");
-      $body?.classList.remove("overflow-hidden");
+    const closeMenu = () => {
+      drawerBg?.classList.add("opacity-0");
+      drawerPanel?.classList.add("translate-x-full");
+      setTimeout(() => {
+        drawer?.classList.add("hidden");
+        body.style.overflow = "";
+      }, 300);
     };
 
-    $mobileMenuButton?.addEventListener("click", () => {
-      if ($mobileMenu?.classList.contains("hidden")) openMobileMenu();
-      else closeMobileMenu();
-    });
-
-    $closeMobileMenu?.addEventListener("click", closeMobileMenu);
+    mobileBtn?.addEventListener("click", openMenu);
+    closeBtn?.addEventListener("click", closeMenu);
+    drawerBg?.addEventListener("click", closeMenu);
   });
 </script>

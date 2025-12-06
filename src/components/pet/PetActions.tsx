@@ -2,6 +2,8 @@ import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { toast } from 'sonner';
+import { motion } from 'motion/react';
+import { type RefObject } from 'preact';
 import {
     LucideUtensils,
     LucideSparkles,
@@ -20,6 +22,9 @@ interface PetActionsProps {
     };
     isSleeping: boolean;
     onActionComplete: () => void;
+    petRef?: RefObject<HTMLDivElement>;
+    onEatStart?: () => void;
+    onEatEnd?: () => void;
 }
 
 export interface InventoryItem {
@@ -34,13 +39,16 @@ export interface InventoryItem {
     };
 }
 
-export default function PetActions({ petId, stats, isSleeping, onActionComplete }: PetActionsProps) {
+export default function PetActions({ petId, stats, isSleeping, onActionComplete, petRef, onEatStart, onEatEnd }: PetActionsProps) {
     const [performing, setPerforming] = useState<string | null>(null);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [selectedFoodItem, setSelectedFoodItem] = useState<number | null>(null);
     const [selectedToyItem, setSelectedToyItem] = useState<number | null>(null);
     const [showFoodSelector, setShowFoodSelector] = useState(false);
     const [showToySelector, setShowToySelector] = useState(false);
+
+    const [foodPage, setFoodPage] = useState(0);
+    const ITEMS_PER_PAGE = 8;
 
     useEffect(() => {
         loadInventory();
@@ -57,26 +65,60 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete 
         }
     };
 
-    const handleFeed = async () => {
-        if (!selectedFoodItem) {
+    const handleFeed = async (arg?: number | unknown) => {
+        const itemId = typeof arg === 'number' ? arg : undefined;
+        const idToUse = itemId || selectedFoodItem;
+
+        if (!idToUse) {
             setShowFoodSelector(true);
             return;
         }
 
         try {
             setPerforming('feed');
-            const result = await actions.pet.feedPet({ itemId: selectedFoodItem });
+            const { error, data } = await actions.pet.feedPet({ itemId: idToUse });
 
-            if (result.data?.success) {
+            if (data?.success) {
                 toast.success('¡Mascota alimentada!');
                 await loadInventory();
                 onActionComplete();
-                setShowFoodSelector(false);
+                // Don't close selector immediately to allow feeding more
+                // setShowFoodSelector(false); 
+            }
+
+            if (error) {
+                toast.error(error.message || 'Error al alimentar la mascota');
             }
         } catch (error: any) {
             toast.error(error.message || 'Error al alimentar la mascota');
         } finally {
             setPerforming(null);
+        }
+    };
+
+    const handleDragEnd = (event: any, info: any, item: InventoryItem) => {
+        onEatEnd?.();
+
+        if (!petRef?.current) {
+            console.warn("Pet reference not found for drop target");
+            return;
+        }
+
+        const petRect = petRef.current.getBoundingClientRect();
+        const point = info.point;
+
+        // Increase padding to make dropping much easier
+        // Effectively covers most of the central screen area
+        const padding = 100;
+
+        // Check if dropped within pet bounds (with generous padding)
+        if (
+            point.x >= (petRect.left - padding) &&
+            point.x <= (petRect.right + padding) &&
+            point.y >= (petRect.top - padding) &&
+            point.y <= (petRect.bottom + padding)
+        ) {
+            handleFeed(item.itemId);
         }
     };
 
@@ -151,137 +193,139 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete 
     const foodItems = inventory.filter(item => item.item.category === 'food');
     const toyItems = inventory.filter(item => item.item.category === 'toy');
 
-    return (
-        <div className="space-y-6">
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <span className="w-1 h-6 bg-violet-500 rounded-full"></span>
-                Acciones
-            </h3>
+    const paginatedFoodItems = foodItems.slice(foodPage * ITEMS_PER_PAGE, (foodPage + 1) * ITEMS_PER_PAGE);
+    const totalFoodPages = Math.ceil(foodItems.length / ITEMS_PER_PAGE);
 
-            {/* Food Selector Modal/Overlay */}
+    const ActionButton = ({ onClick, disabled, icon: Icon, label, colorClass, bgClass, borderClass }: any) => (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            className="flex flex-col items-center gap-2 group w-full"
+        >
+            <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-3xl ${bgClass} ${colorClass} flex items-center justify-center shadow-lg ${borderClass} border border-b-4 active:border-b active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:border-b-4 backdrop-blur-sm`}>
+                <Icon size={28} strokeWidth={2.5} />
+            </div>
+            <span className="text-xs font-bold text-gray-400 group-hover:text-white transition-colors">{label}</span>
+        </button>
+    );
+
+    return (
+        <div className="w-full">
+            {/* Food Selector Bar (Bottom Sheet style) */}
             {showFoodSelector && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                <motion.div
+                    initial={{ y: 100, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="fixed bottom-0 left-0 right-0 z-50 bg-[#121212] border-t border-white/10 p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] rounded-t-3xl"
+                >
+                    <div className="max-w-md mx-auto">
                         <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-lg font-bold text-white">Selecciona comida</h4>
-                            <button
-                                onClick={() => setShowFoodSelector(false)}
-                                className="text-gray-400 hover:text-white transition-colors"
-                            >
-                                <LucideX size={20} />
-                            </button>
+                            <h4 className="text-lg font-bold text-white">Arrastra la comida</h4>
+                            <div className="flex gap-2">
+                                {totalFoodPages > 1 && (
+                                    <div className="flex gap-1 mr-2">
+                                        <button
+                                            onClick={() => setFoodPage(p => Math.max(0, p - 1))}
+                                            disabled={foodPage === 0}
+                                            className="p-1 rounded-full hover:bg-white/10 disabled:opacity-30 text-white"
+                                        >
+                                            ←
+                                        </button>
+                                        <span className="text-white text-sm self-center">{foodPage + 1}/{totalFoodPages}</span>
+                                        <button
+                                            onClick={() => setFoodPage(p => Math.min(totalFoodPages - 1, p + 1))}
+                                            disabled={foodPage === totalFoodPages - 1}
+                                            className="p-1 rounded-full hover:bg-white/10 disabled:opacity-30 text-white"
+                                        >
+                                            →
+                                        </button>
+                                    </div>
+                                )}
+                                <button
+                                    onClick={() => setShowFoodSelector(false)}
+                                    className="bg-white/10 p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/20 transition-colors"
+                                >
+                                    <LucideX size={20} />
+                                </button>
+                            </div>
                         </div>
 
                         {foodItems.length === 0 ? (
                             <div className="text-center py-8">
-                                <p className="text-gray-400 mb-4">No tienes comida en tu inventario.</p>
+                                <p className="text-gray-400 mb-4">No tienes comida.</p>
                                 <button
                                     onClick={() => setShowFoodSelector(false)}
-                                    className="text-violet-400 hover:text-violet-300 text-sm font-medium"
+                                    className="text-violet-400 font-bold text-sm hover:text-violet-300"
                                 >
                                     Ir a la tienda
                                 </button>
                             </div>
                         ) : (
-                            <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                                {foodItems.map(item => (
-                                    <button
+                            <div className="flex flex-wrap gap-4 justify-center p-2 min-h-[100px]">
+                                {paginatedFoodItems.map(item => (
+                                    <motion.div
                                         key={item.id}
-                                        onClick={() => {
-                                            setSelectedFoodItem(item.itemId);
-                                            handleFeed();
-                                        }}
-                                        className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-violet-500/50 transition-all group"
+                                        drag
+                                        dragSnapToOrigin
+                                        whileDrag={{ scale: 1.2, zIndex: 1000 }}
+                                        onDragStart={() => onEatStart?.()}
+                                        onDragEnd={(e, info) => handleDragEnd(e, info, item)}
+                                        className="flex-shrink-0 w-20 h-20 bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center gap-1 cursor-grab active:cursor-grabbing hover:border-violet-500/50 hover:bg-white/10 transition-colors relative shadow-lg touch-none"
                                     >
-                                        <span className="font-medium text-white group-hover:text-violet-300 transition-colors">
-                                            {item.item.name}
-                                        </span>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full">
-                                                +{item.item.effectValue}
-                                            </span>
-                                            <span className="text-sm text-gray-400">
-                                                x{item.quantity}
-                                            </span>
+                                        <span className="text-3xl drop-shadow-md">🍎</span>
+                                        <span className="text-[10px] font-bold text-gray-400 truncate w-full text-center px-1">{item.item.name}</span>
+                                        <div className="absolute -top-2 -right-2 bg-violet-600 rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold text-white border border-white/20 shadow-lg">
+                                            {item.quantity}
                                         </div>
-                                    </button>
+                                    </motion.div>
                                 ))}
                             </div>
                         )}
                     </div>
-                </div>
+                </motion.div>
             )}
 
             {/* Action Buttons Grid */}
-            <div className="grid grid-cols-2 gap-4">
-                <button
+            <div className="grid grid-cols-4 gap-2 sm:gap-4">
+                <ActionButton
                     onClick={handleFeed}
                     disabled={performing !== null || stats.hunger >= 100 || isSleeping}
-                    className="group relative overflow-hidden bg-gradient-to-br from-green-600/20 to-green-900/20 hover:from-green-600/30 hover:to-green-900/30 border border-green-500/30 hover:border-green-500/50 rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-                >
-                    <div className="flex flex-col items-center gap-3 relative z-10">
-                        <div className="p-3 bg-green-500/20 rounded-full text-green-400 group-hover:scale-110 transition-transform duration-300">
-                            <LucideUtensils size={24} />
-                        </div>
-                        <span className="font-medium text-green-100">
-                            {performing === 'feed' ? 'Alimentando...' : stats.hunger >= 100 ? 'Lleno' : 'Alimentar'}
-                        </span>
-                    </div>
-                </button>
+                    icon={LucideUtensils}
+                    label="Comer"
+                    bgClass="bg-red-500/10"
+                    colorClass="text-red-400"
+                    borderClass="border-red-500/20"
+                />
 
-                <button
+                <ActionButton
                     onClick={handleClean}
                     disabled={performing !== null || stats.hygiene >= 100 || isSleeping}
-                    className="group relative overflow-hidden bg-gradient-to-br from-blue-600/20 to-blue-900/20 hover:from-blue-600/30 hover:to-blue-900/30 border border-blue-500/30 hover:border-blue-500/50 rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-                >
-                    <div className="flex flex-col items-center gap-3 relative z-10">
-                        <div className="p-3 bg-blue-500/20 rounded-full text-blue-400 group-hover:scale-110 transition-transform duration-300">
-                            <LucideSparkles size={24} />
-                        </div>
-                        <span className="font-medium text-blue-100">
-                            {performing === 'clean' ? 'Limpiando...' : stats.hygiene >= 100 ? 'Limpio' : 'Limpiar'}
-                        </span>
-                    </div>
-                </button>
+                    icon={LucideSparkles}
+                    label="Limpiar"
+                    bgClass="bg-blue-500/10"
+                    colorClass="text-blue-400"
+                    borderClass="border-blue-500/20"
+                />
 
-                <button
+                <ActionButton
                     onClick={handlePlay}
                     disabled={performing !== null || stats.energy < 10 || isSleeping}
-                    className="group relative overflow-hidden bg-gradient-to-br from-yellow-600/20 to-yellow-900/20 hover:from-yellow-600/30 hover:to-yellow-900/30 border border-yellow-500/30 hover:border-yellow-500/50 rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-                >
-                    <div className="flex flex-col items-center gap-3 relative z-10">
-                        <div className="p-3 bg-yellow-500/20 rounded-full text-yellow-400 group-hover:scale-110 transition-transform duration-300">
-                            <LucideGamepad2 size={24} />
-                        </div>
-                        <span className="font-medium text-yellow-100">
-                            {performing === 'play' ? 'Jugando...' : stats.energy < 10 ? 'Cansado' : 'Jugar'}
-                        </span>
-                    </div>
-                </button>
+                    icon={LucideGamepad2}
+                    label="Jugar"
+                    bgClass="bg-yellow-500/10"
+                    colorClass="text-yellow-400"
+                    borderClass="border-yellow-500/20"
+                />
 
-                <button
+                <ActionButton
                     onClick={handleSleepToggle}
                     disabled={performing !== null || (stats.energy >= 100 && !isSleeping)}
-                    className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 ${isSleeping
-                        ? 'bg-gradient-to-br from-indigo-600/20 to-indigo-900/20 hover:from-indigo-600/30 hover:to-indigo-900/30 border border-indigo-500/30 hover:border-indigo-500/50'
-                        : 'bg-gradient-to-br from-violet-600/20 to-violet-900/20 hover:from-violet-600/30 hover:to-violet-900/30 border border-violet-500/30 hover:border-violet-500/50'
-                        }`}
-                >
-                    <div className="flex flex-col items-center gap-3 relative z-10">
-                        <div className={`p-3 rounded-full transition-transform duration-300 group-hover:scale-110 ${isSleeping ? 'bg-indigo-500/20 text-indigo-400' : 'bg-violet-500/20 text-violet-400'}`}>
-                            <LucideBed size={24} />
-                        </div>
-                        <span className={`font-medium ${isSleeping ? 'text-indigo-100' : 'text-violet-100'}`}>
-                            {performing === 'sleep' || performing === 'wake'
-                                ? 'Procesando...'
-                                : isSleeping
-                                    ? 'Despertar'
-                                    : stats.energy >= 100
-                                        ? 'Descansado'
-                                        : 'Dormir'}
-                        </span>
-                    </div>
-                </button>
+                    icon={LucideBed}
+                    label={isSleeping ? "Despertar" : "Dormir"}
+                    bgClass={isSleeping ? "bg-indigo-500/10" : "bg-violet-500/10"}
+                    colorClass={isSleeping ? "text-indigo-400" : "text-violet-400"}
+                    borderClass={isSleeping ? "border-indigo-500/20" : "border-violet-500/20"}
+                />
             </div>
         </div>
     );
