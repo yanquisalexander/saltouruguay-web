@@ -85,7 +85,7 @@ export class PetService {
     /**
      * Create a new pet for a user
      */
-    static async createPet(userId: number, petName: string) {
+    static async createPet(userId: number, petName: string, appearance?: { color: string; skinId: string }) {
         try {
             // Check if user already has a pet
             const existingPet = await db.query.PetsTable.findFirst({
@@ -102,13 +102,19 @@ export class PetService {
             }
 
             if (petName.length > 50) {
-                throw new Error('Pet name is too long (max 50 characters)');
+                throw new Error('Pet name is too long');
             }
 
             // Create pet with default stats
             const [pet] = await db.insert(PetsTable).values({
                 ownerId: userId,
                 name: petName.trim(),
+                appearance: {
+                    color: appearance?.color || 'blue',
+                    skinId: appearance?.skinId || 'A',
+                    hatId: null,
+                    accessoryId: null,
+                },
                 hunger: 100,
                 energy: 100,
                 hygiene: 100,

@@ -10,6 +10,8 @@ export const pet = {
     createPet: defineAction({
         input: z.object({
             name: z.string().min(1).max(50),
+            color: z.string().optional(),
+            skinId: z.string().optional(),
         }),
         handler: async (input, context) => {
             const session = await getSession(context.request);
@@ -21,7 +23,10 @@ export const pet = {
             }
 
             try {
-                const pet = await PetService.createPet(session.user.id, input.name);
+                const pet = await PetService.createPet(session.user.id, input.name, {
+                    color: input.color || 'blue',
+                    skinId: input.skinId || 'A',
+                });
                 return {
                     success: true,
                     pet,

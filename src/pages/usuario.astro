@@ -4,15 +4,12 @@ import { UserAccountLayout } from "@/components/UsersPage/UserAccountLayout";
 import Layout from "@/layouts/Layout.astro";
 import { getDiscordUser } from "@/services/discord";
 import { getSession } from "auth-astro/server";
-import { signOut } from "auth-astro/client";
 import {
-  LucideCheckCircle,
   LucideExternalLink,
   LucideLogOut,
-  LucideCrown,
-  LucideMail,
   LucideShield,
-  LucideTwitch,
+  LucideUser,
+  LucideCrown,
 } from "lucide-preact";
 
 const session = await getSession(Astro.request);
@@ -25,256 +22,158 @@ const discordUser = session?.user?.discordId
   ? await getDiscordUser(session.user.discordId)
   : null;
 
-// Clases de utilidad para mantener consistencia
-const cardBase =
-  "relative overflow-hidden rounded-2xl border border-white/5 bg-[#0a0a0a]/60 backdrop-blur-md shadow-xl";
+// Estilos Glass
+const glassPanel =
+  "relative overflow-hidden rounded-2xl border border-white/5 bg-[#0a0a0a]/60 backdrop-blur-xl shadow-xl";
 ---
 
-<Layout title="Mi Perfil">
+<Layout title="Mi cuenta">
   {/* Fondo Ambiental */}
   <div class="fixed inset-0 -z-10 bg-[#050505]">
-    <div
-      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5"
-    >
-    </div>
     <div
       class="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-900/10 blur-[120px] rounded-full pointer-events-none"
     >
     </div>
+    <div
+      class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[120px] rounded-full pointer-events-none"
+    >
+    </div>
   </div>
 
-  <div class="max-w-6xl mx-auto px-4 pt-24 pb-20">
-    <div class="mb-6">
-      <PageBreadcrumb
-        pathname="/usuario"
-        breadcrumbs={[
-          {
-            text: "Inicio",
-            href: "/",
-          },
-          {
-            text: "Mi Perfil",
-            href: "/usuario",
-          },
-        ]}
-      />
-    </div>
+  <div class="max-w-6xl mx-auto px-4 py-8 md:py-12 mt-20">
+    <PageBreadcrumb
+      pathname="/usuario"
+      breadcrumbs={[{ text: "Mi cuenta", href: "/usuario" }]}
+    />
 
-    {/* --- HEADER DEL PERFIL --- */}
-    <header class="relative mb-8 group">
-      {/* Banner Cover */}
-      <div
-        class="h-48 md:h-64 w-full rounded-t-3xl rounded-b-lg bg-gradient-to-r from-violet-900 via-[#0a0a0a] to-[#0a0a0a] border border-white/5 relative overflow-hidden"
-      >
-        <div
-          class="absolute inset-0 bg-[url('/images/noise.png')] opacity-10 mix-blend-overlay"
+    <div class="grid gap-8 lg:grid-cols-[320px_1fr] mt-8">
+      {/* SIDEBAR: PERFIL CARD */}
+      <aside class="flex flex-col gap-6">
+        {/* Tarjeta de Identidad */}
+        <section
+          class={`${glassPanel} p-6 flex flex-col items-center text-center group`}
         >
-        </div>
-        <div
-          class="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent opacity-80"
-        >
-        </div>
-      </div>
-
-      {/* Info del Usuario (Superpuesta) */}
-      <div
-        class="px-6 md:px-10 pb-6 -mt-16 relative z-10 flex flex-col md:flex-row items-end gap-6"
-      >
-        {/* Avatar */}
-        <div class="relative shrink-0">
-          <div
-            class="size-32 rounded-full p-1 bg-[#050505] border border-white/10 shadow-2xl"
-          >
+          <div class="relative mb-4">
+            <div
+              class="absolute inset-0 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-full blur opacity-40 group-hover:opacity-60 transition-opacity"
+            >
+            </div>
             <img
               src={session.user.image}
               alt={session.user.name}
-              class="size-full rounded-full object-cover"
+              class="relative size-24 rounded-full border-4 border-[#0a0a0a] shadow-2xl object-cover"
             />
+            {/* Status Badge */}
+            <div
+              class="absolute bottom-0 right-0 size-6 bg-green-500 border-4 border-[#0a0a0a] rounded-full"
+            >
+            </div>
           </div>
-          {
-            session.user.tier && (
-              <div
-                class="absolute bottom-1 right-1 bg-yellow-500 text-black p-1.5 rounded-full border-4 border-[#050505]"
-                title={`Tier ${session.user.tier}`}
-              >
-                <LucideCrown size={16} fill="currentColor" />
-              </div>
-            )
-          }
-        </div>
 
-        {/* Textos */}
-        <div class="flex-1 mb-2">
-          <h1
-            class="text-4xl md:text-5xl font-anton text-white uppercase tracking-wide drop-shadow-md"
-          >
+          <h2 class="text-2xl font-anton text-white uppercase tracking-wide">
             {session.user.name}
-          </h1>
-          <div
-            class="flex flex-wrap items-center gap-4 mt-2 text-sm font-rubik text-white/60"
-          >
-            <span class="flex items-center gap-1.5">
-              <LucideMail size={14} />
-              {session.user.email}
-            </span>
-            <span class="flex items-center gap-1.5">
-              <LucideShield size={14} /> ID: <span class="font-mono opacity-70"
-                >{session.user?.id}</span
-              >
-            </span>
-          </div>
-        </div>
+          </h2>
+          <p class="text-white/40 font-rubik text-sm mb-6">
+            {session.user.email}
+          </p>
 
-        {/* Logout Button (Desktop) */}
-        <div class="hidden md:block mb-3">
+          <div class="w-full grid grid-cols-2 gap-2 mb-6">
+            <div class="bg-white/5 rounded-xl p-3 flex flex-col items-center">
+              <span
+                class="text-xs text-white/40 uppercase tracking-widest font-bold"
+                >Rol</span
+              >
+              <span class="text-sm font-bold text-white"
+                >{session.user.isAdmin ? "Admin" : "Usuario"}</span
+              >
+            </div>
+            <div class="bg-white/5 rounded-xl p-3 flex flex-col items-center">
+              <span
+                class="text-xs text-white/40 uppercase tracking-widest font-bold"
+                >ID</span
+              >
+              <span
+                class="text-sm font-bold text-white font-mono truncate w-full text-center"
+                >#{session.user.id}</span
+              >
+            </div>
+          </div>
+
           <button
-            id="account-logout-btn"
-            class="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all text-sm font-bold uppercase tracking-wide"
+            id="account-logout"
+            class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all font-bold text-sm uppercase tracking-wide border border-red-500/20 hover:border-red-500"
           >
             <LucideLogOut size={16} /> Cerrar Sesión
           </button>
-        </div>
-      </div>
-    </header>
-
-    {/* --- CONTENIDO PRINCIPAL (GRID) --- */}
-    <div class="grid gap-8 lg:grid-cols-[320px_1fr]">
-      {/* COLUMNA IZQUIERDA (Sidebar Info) */}
-      <aside class="flex flex-col gap-6">
-        {/* Tarjeta de Suscripción (Estilo Gamer Rank) */}
-        <section class={`${cardBase} group`}>
-          <div class="p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3
-                class="font-teko text-2xl text-white uppercase tracking-wide flex items-center gap-2"
-              >
-                <LucideTwitch size={20} class="text-[#9146FF]" /> Estado del Canal
-              </h3>
-              {
-                session.user.tier && (
-                  <span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 text-[10px] font-bold border border-yellow-500/30 uppercase">
-                    Activo
-                  </span>
-                )
-              }
-            </div>
-
-            <div class="flex flex-col items-center text-center py-4 relative">
-              {/* Decoración de fondo */}
-              <div
-                class="absolute inset-0 bg-[#9146FF]/5 blur-2xl rounded-full"
-              >
-              </div>
-
-              {
-                session.user.tier ? (
-                  <>
-                    <div class="size-16 rounded-xl bg-[#9146FF] flex items-center justify-center text-white mb-3 shadow-[0_0_20px_rgba(145,70,255,0.4)]">
-                      <span class="font-anton text-3xl">
-                        {session.user.tier}
-                      </span>
-                    </div>
-                    <h4 class="text-white font-bold text-lg">
-                      Suscriptor Tier {session.user.tier}
-                    </h4>
-                    <p class="text-white/50 text-xs mt-1 max-w-[200px]">
-                      Eres un miembro VIP de la comunidad. Gracias por tu apoyo.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <div class="size-16 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/30 mb-3">
-                      <LucideTwitch size={32} />
-                    </div>
-                    <h4 class="text-white/80 font-bold text-lg">
-                      Modo Espectador
-                    </h4>
-                    <p class="text-white/40 text-xs mt-1 max-w-[200px] mb-4">
-                      Apoya al canal para desbloquear beneficios exclusivos y
-                      rangos.
-                    </p>
-                    <a
-                      href="https://twitch.tv/subs/SaltoUruguayServer"
-                      target="_blank"
-                      class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#9146FF] hover:bg-[#7c2cf5] text-white rounded-lg font-bold text-sm transition-all shadow-[0_0_15px_rgba(145,70,255,0.2)] hover:shadow-[0_0_25px_rgba(145,70,255,0.4)]"
-                    >
-                      <LucideExternalLink size={16} /> Suscribirse Ahora
-                    </a>
-                  </>
-                )
-              }
-            </div>
-          </div>
-
-          {/* Footer de la tarjeta */}
-          {
-            session.user.tier && (
-              <div class="bg-[#9146FF]/10 border-t border-[#9146FF]/20 p-3 text-center">
-                <p class="text-[#9146FF] text-xs font-bold uppercase tracking-widest">
-                  Beneficios Activos
-                </p>
-              </div>
-            )
-          }
         </section>
 
-        {/* Discord Link (Si existe) */}
-        {
-          discordUser && (
-            <section class={`${cardBase} p-4 flex items-center gap-4`}>
-              <img
-                src={`https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`}
-                alt="Discord Avatar"
-                class="size-12 rounded-full bg-[#5865F2]"
-              />
-              <div class="flex-1 min-w-0">
-                <h4 class="text-white font-bold text-sm truncate">
-                  {discordUser.username}
-                </h4>
-                <p class="text-white/40 text-xs truncate">
-                  Conectado con Discord
-                </p>
-              </div>
-              <LucideCheckCircle size={18} class="text-green-500" />
-            </section>
-          )
-        }
+        {/* Tarjeta de Suscripción */}
+        <section
+          class={`${glassPanel} p-6 relative overflow-hidden border-yellow-500/20`}
+        >
+          <div class="absolute top-0 right-0 p-4 opacity-10 text-yellow-500">
+            <LucideCrown size={80} />
+          </div>
 
-        {/* Logout Mobile Only */}
-        <div class="md:hidden">
-          <button
-            id="account-logout-btn-mobile"
-            class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all text-sm font-bold uppercase tracking-wide"
+          <h3
+            class="font-anton text-xl text-white uppercase mb-4 relative z-10 flex items-center gap-2"
           >
-            <LucideLogOut size={16} /> Cerrar Sesión
-          </button>
-        </div>
+            <LucideCrown size={20} class="text-yellow-500" /> Membresía
+          </h3>
+
+          <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-4">
+              <div
+                class="size-12 bg-[#9146FF] rounded-xl overflow-hidden flex items-center justify-center text-white shrink-0 shadow-lg shadow-purple-900/20"
+              >
+                <img src="/twitch-icon.png" />
+              </div>
+              <div>
+                <span
+                  class={`block text-lg font-bold ${session.user.tier ? "text-yellow-400" : "text-white/60"}`}
+                >
+                  {
+                    session.user.tier
+                      ? `Tier ${session.user.tier}`
+                      : "Sin suscripción"
+                  }
+                </span>
+                <span class="text-xs text-white/40">Twitch Subscriber</span>
+              </div>
+            </div>
+
+            {
+              !session.user.tier && (
+                <a
+                  href="https://twitch.tv/subs/SaltoUruguayServer"
+                  target="_blank"
+                  class="block w-full text-center py-2 rounded-lg bg-[#9146FF] hover:bg-[#7c2cf5] text-white font-bold text-sm transition-colors shadow-lg shadow-purple-900/30"
+                >
+                  Suscribirse Ahora{" "}
+                  <LucideExternalLink size={14} class="inline ml-1" />
+                </a>
+              )
+            }
+          </div>
+        </section>
       </aside>
 
-      {/* COLUMNA DERECHA (Contenido Dinámico) */}
+      {/* PANEL PRINCIPAL */}
       <main class="min-w-0">
-        {/* Wrapper para el componente de React para darle estilo */}
-        <div class={`${cardBase} min-h-[400px]`}>
-          <UserAccountLayout
-            session={session}
-            discordUser={discordUser}
-            client:idle
-          />
-        </div>
+        <UserAccountLayout
+          session={session}
+          discordUser={discordUser}
+          client:idle
+        />
       </main>
     </div>
   </div>
 </Layout>
 
 <script>
-  import { $ } from "@/lib/dom-selector";
   import { signOut } from "auth-astro/client";
-
-  // Script para manejar el logout en ambos botones
-  document.addEventListener("astro:page-load", () => {
-    const handleLogout = () => signOut({ callbackUrl: "/" });
-
-    $("#account-logout-btn")?.addEventListener("click", handleLogout);
-    $("#account-logout-btn-mobile")?.addEventListener("click", handleLogout);
-  });
+  const btn = document.getElementById("account-logout");
+  if (btn) {
+    btn.addEventListener("click", () => signOut({ callbackUrl: "/" }));
+  }
 </script>
