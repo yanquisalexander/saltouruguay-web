@@ -1,32 +1,47 @@
 ---
 import { currentUserVotes } from "@/utils/awards-vote-system";
 import { getSession } from "auth-astro/server";
+import { LucideTicket } from "lucide-preact";
 
 const session = await getSession(Astro.request);
 const votes = session ? await currentUserVotes(session?.user?.id) : [];
+
+// Lógica corregida: Verificamos si el array tiene longitud, no solo si existe
+const hasVoted = Array.isArray(votes) && votes.length > 0;
 ---
 
 {
-  session ? (
-    !votes && (
-      <a
-        href="/awards"
-        class="flex justify-center flex-col items-center mt-8 sm:w-max font-rubik px-2 sm:px-6 uppercase font-medium text-sm text-white/70 mx-auto text-center py-1.5 rounded-full bg-violet-500/20 gap-1 hover:bg-violet-500/30 transition-all duration-300 hover:scale-105"
-      >
-        <span class="text-yellow-500 font-bold">🔥 #SaltoAwards2025 🔥</span>
-        <span>
-          <span class="text-white">{session.user.name}</span>, ¿qué esperas para
-          votar?
-        </span>
-      </a>
-    )
-  ) : (
+  /* Solo mostramos el CTA si NO ha votado (o si no hay sesión) */
+  !hasVoted && (
     <a
       href="/awards"
-      class="flex justify-center flex-col items-center mt-8 sm:w-max font-rubik px-2 sm:px-6 uppercase font-medium text-sm text-white/70 mx-auto text-center py-1.5 rounded-full bg-violet-500/20 gap-1 hover:bg-violet-500/30 transition-all duration-300 hover:scale-105"
+      class="group relative flex flex-col items-center justify-center mt-8 mx-auto w-max py-2 px-8 rounded-full transition-all duration-300
+      bg-violet-900/30 hover:bg-violet-900/50 
+      border border-violet-500/30 hover:border-yellow-500/50
+      hover:scale-105 hover:shadow-[0_0_20px_rgba(139,92,246,0.3)]
+      backdrop-blur-sm overflow-hidden"
     >
-      <span class="text-yellow-500 font-bold">🔥 #SaltoAwards2025 🔥</span>
-      <span>¡Las votaciones ya están abiertas!</span>
+      {/* Efecto de brillo sutil en el fondo al hacer hover */}
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+
+      <div class="flex items-center gap-2 mb-0.5">
+        <LucideTicket class="w-4 h-4 text-yellow-500 animate-pulse" />
+        <span class="text-yellow-400 font-bold font-rubik text-sm tracking-wider uppercase drop-shadow-sm">
+          #SaltoAwards2025
+        </span>
+        <LucideTicket class="w-4 h-4 text-yellow-500 animate-pulse" />
+      </div>
+
+      <span class="font-rubik text-xs md:text-sm text-white/80 group-hover:text-white transition-colors text-center">
+        {session ? (
+          <>
+            <span class="font-bold text-white">{session.user.name}</span>, ¿qué
+            esperas para votar?
+          </>
+        ) : (
+          "¡Las votaciones ya están abiertas!"
+        )}
+      </span>
     </a>
   )
 }
