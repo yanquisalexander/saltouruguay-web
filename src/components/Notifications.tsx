@@ -36,6 +36,14 @@ interface NotificationState {
 
 // --- MOCK DATA (Ejemplo) ---
 const NOTIFICATIONS_DATA: Notification[] = [
+    {
+        id: "new-page-ui",
+        title: "Acabamos de mejorar para ti",
+        description: "Estamos trabajando en una nueva interfaz de usuario para mejorar tu experiencia en SaltoUruguayServer.",
+        imageURL: "/og.webp",
+        link: { title: "Descubre más", url: "#" },
+        tags: [{ type: "info", title: "Novedad" }],
+    }
     /* {
         id: "saltocraft-promo",
         title: "¡SaltoCraft III Extremo!",

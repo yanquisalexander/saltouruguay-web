@@ -8,6 +8,9 @@ export const EventCard = ({ firstFeaturedEvent, event, index }: { firstFeaturedE
     if (!event) return null;
 
     const [status, setStatus] = useState<{ status: number, text: string } | null>(null);
+    const [dateFormatted, setDateFormatted] = useState(
+        DateTime.fromISO(event.startDate.toISOString()).setLocale('es').toFormat("dd MMM, HH:mm")
+    );
 
     useEffect(() => {
         const getTimeStatus = (startDate: Date, endDate?: Date | null) => {
@@ -21,10 +24,15 @@ export const EventCard = ({ firstFeaturedEvent, event, index }: { firstFeaturedE
         };
 
         setStatus(getTimeStatus(event.startDate, event.endDate));
-    }, [event.startDate, event.endDate]);
 
-    // Format Date
-    const dateFormatted = DateTime.fromISO(event.startDate.toISOString()).setLocale('es').toFormat("dd MMM, HH:mm");
+        // Update date to local
+        setDateFormatted(
+            DateTime.fromISO(event.startDate.toISOString())
+                .setZone('local')
+                .setLocale('es')
+                .toFormat("dd MMM, HH:mm")
+        );
+    }, [event.startDate, event.endDate]);
 
     return (
         <a

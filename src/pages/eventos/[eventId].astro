@@ -177,7 +177,13 @@ const glassCard =
                 >
                   Fecha
                 </p>
-                <p class="text-lg font-bold text-white capitalize">{dateStr}</p>
+                <p
+                  class="text-lg font-bold text-white capitalize"
+                  data-date-iso={event.startDate.toISOString()}
+                  data-format="date"
+                >
+                  {dateStr}
+                </p>
               </div>
             </div>
 
@@ -194,7 +200,13 @@ const glassCard =
                 >
                   Hora de inicio
                 </p>
-                <p class="text-lg font-bold text-white">{timeStr}</p>
+                <p
+                  class="text-lg font-bold text-white"
+                  data-date-iso={event.startDate.toISOString()}
+                  data-format="time"
+                >
+                  {timeStr}
+                </p>
               </div>
             </div>
 
@@ -263,4 +275,28 @@ const glassCard =
       </aside>
     </div>
   </div>
+
+  <script>
+    import { DateTime } from "luxon";
+
+    const updateTimes = () => {
+      const elements = document.querySelectorAll("[data-date-iso]");
+      elements.forEach((el) => {
+        const iso = el.getAttribute("data-date-iso");
+        const format = el.getAttribute("data-format");
+        if (!iso) return;
+
+        const dt = DateTime.fromISO(iso).setZone("local").setLocale("es");
+
+        if (format === "date") {
+          el.textContent = dt.toFormat("cccc dd 'de' LLLL");
+        } else if (format === "time") {
+          el.textContent = dt.toFormat("HH:mm 'hs'");
+        }
+      });
+    };
+
+    updateTimes();
+    document.addEventListener("astro:page-load", updateTimes);
+  </script>
 </Layout>
