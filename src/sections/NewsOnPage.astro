@@ -1,33 +1,113 @@
 ---
 import { Container3D } from "@/components/Container3D";
 import { MemberCard } from "@/components/MemberCard";
+import {
+  LucideSparkles,
+  LucideArrowRight,
+  LucideIdCard,
+  LucideZap,
+  LucidePalette,
+} from "lucide-preact";
 ---
 
-<section id="news-on-page" class="max-w-5xl mx-auto px-6 sm:px-10 pb-8">
-  <h2
-    class="text-2xl uppercase font-rubik font-medium text-white tracking-wider"
-  >
-    Novedades del sitio
-  </h2>
-  <p class="text-white max-w-lg mt-4">
-    ¡Estamos trabajando en nuevas funcionalidades para el sitio! Pronto podrás
-    disfrutar de nuevas secciones y contenido exclusivo.
-  </p>
+<section id="news-on-page" class="relative py-12 px-4 overflow-hidden">
+  {/* Fondo Ambiental */}
+  <div class="absolute inset-0 -z-10 pointer-events-none">
+    <div
+      class="absolute top-1/2 right-0 -translate-y-1/2 w-[600px] h-[600px] bg-yellow-500/10 blur-[120px] rounded-full"
+    >
+    </div>
+  </div>
 
-  <ul class="flex flex-col gap-y-6 mt-12">
-    <li class="flex items-center gap-x-4">
-      <article class="flex flex-col gap-y-2">
-        <h3 class="text-xl font-rubik font-medium text-white">
-          Conocé la <span class="text-yellow-400">Member Card</span>
-        </h3>
-        <p class="text-white max-w-lg">
-          Creá tu tarjeta de miembro y accedé a eventos exclusivos y beneficios
-          <small class="text-gray-400 italic"
-            >Con tu suscripción a Twitch tenés mejoras en tu tarjeta</small
+  <div class="max-w-7xl mx-auto">
+    <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+      {/* COLUMNA IZQUIERDA: TEXTO Y VENTAS */}
+      <div class="space-y-8 relative z-10">
+        <div
+          class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-bold uppercase tracking-widest animate-fade-in-down"
+        >
+          <LucideSparkles size={14} /> Nueva Funcionalidad
+        </div>
+
+        <div class="space-y-4">
+          <h2
+            class="text-5xl md:text-6xl font-anton text-white uppercase tracking-tight leading-none"
           >
-        </p>
+            Tu Identidad <br />
+            <span
+              class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500"
+              >Saltana</span
+            >
+          </h2>
+          <p class="text-white/60 font-rubik text-lg max-w-md leading-relaxed">
+            Ya no eres un usuario más. Reclama tu <strong>Member Card</strong> única,
+            personalízala con stickers exclusivos y presume tu rango en la comunidad.
+          </p>
+        </div>
 
-        <div class="max-w-lg mt-2">
+        {/* Lista de Beneficios */}
+        <div class="grid gap-4">
+          <div
+            class="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
+          >
+            <div class="p-2 bg-blue-500/20 text-blue-400 rounded-lg">
+              <LucideZap size={20} />
+            </div>
+            <div>
+              <h4 class="text-white font-bold text-sm uppercase">
+                Sincronización Twitch
+              </h4>
+              <p class="text-white/50 text-xs mt-1">
+                Con tu suscripción podrás personalizar el diseño de tu tarjeta.
+              </p>
+            </div>
+          </div>
+          <div
+            class="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
+          >
+            <div class="p-2 bg-purple-500/20 text-purple-400 rounded-lg">
+              <LucidePalette size={20} />
+            </div>
+            <div>
+              <h4 class="text-white font-bold text-sm uppercase">
+                Personalización Total
+              </h4>
+              <p class="text-white/50 text-xs mt-1">
+                Elige tus stickers favoritos y desbloquea nuevos con logros.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-4 pt-4">
+          <a
+            href="/comunidad/member-card"
+            class="inline-flex items-center gap-2 px-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-anton text-xl uppercase tracking-wide rounded-xl transition-all hover:scale-105 shadow-[0_0_20px_rgba(234,179,8,0.3)]"
+          >
+            <LucideIdCard size={20} /> Crear mi Tarjeta
+          </a>
+          <a
+            href="/comunidad"
+            class="inline-flex items-center gap-2 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold uppercase tracking-wide rounded-xl transition-all text-sm"
+          >
+            Ver Galería
+          </a>
+        </div>
+      </div>
+
+      {/* COLUMNA DERECHA: DEMO 3D */}
+      <div
+        class="relative w-full aspect-square md:aspect-auto md:h-[600px] flex items-center justify-center perspective-1000"
+      >
+        {/* Círculo decorativo detrás */}
+        <div
+          class="absolute inset-0 bg-gradient-to-b from-yellow-500/5 to-transparent rounded-full blur-3xl transform scale-75"
+        >
+        </div>
+
+        <div
+          class="relative z-10 w-full max-w-md transform transition-transform duration-500 hover:scale-105"
+        >
           <Container3D client:only="preact">
             <MemberCard
               client:idle
@@ -43,8 +123,38 @@ import { MemberCard } from "@/components/MemberCard";
               }}
             />
           </Container3D>
+
+          {/* Nota flotante */}
+          <div
+            class="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full text-[10px] text-white/50 uppercase tracking-widest whitespace-nowrap"
+          >
+            Interactúa con la tarjeta
+          </div>
         </div>
-      </article>
-    </li>
-  </ul>
+      </div>
+    </div>
+
+    {/* ROADMAP FOOTER */}
+    <div class="mt-20 pt-10 border-t border-white/5">
+      <div
+        class="flex flex-col md:flex-row items-center justify-between gap-6 opacity-60 hover:opacity-100 transition-opacity"
+      >
+        <div class="flex items-center gap-3">
+          <span class="size-2 rounded-full bg-blue-500 animate-pulse"></span>
+          <p class="text-sm font-rubik text-white/80">
+            <span class="font-bold text-white uppercase tracking-wider mr-2"
+              >Roadmap:</span
+            >
+            Estamos trabajando en nuevas secciones y contenido exclusivo.
+          </p>
+        </div>
+        <a
+          href="/comunidad"
+          class="flex items-center gap-2 text-xs font-bold text-white uppercase tracking-widest hover:text-yellow-400 transition-colors"
+        >
+          Ver hoja de ruta <LucideArrowRight size={14} />
+        </a>
+      </div>
+    </div>
+  </div>
 </section>

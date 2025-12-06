@@ -2,230 +2,258 @@
 import { SALTO_BROADCASTER_ID } from "@/config";
 import { getLiveStream } from "@/utils/twitch-runtime";
 import TwitchEmbed from "./TwitchEmbed.astro";
-import TwitchIcon from "@/icons/Twitch.astro";
-import { LucideExternalLink } from "lucide-preact";
-const stream = await getLiveStream(import.meta.env.DEV ? '277624494' : SALTO_BROADCASTER_ID);
+import { LucideExternalLink, LucideMessageSquare, LucideTv } from "lucide-preact";
 
+const stream = await getLiveStream(import.meta.env.DEV ? '277624494' : SALTO_BROADCASTER_ID);
 const PREVIEW = stream?.getThumbnailUrl(1280, 720);
 ---
 
 {
   stream && (
-    <section
-      id="live-stream"
-      class="max-w-5xl mx-auto flex flex-col items-center justify-center mb-24"
-    >
-      <p class="font-rubik uppercase text-lg text-center mb-8">
-        Mirá la transmisión en vivo de{" "}
-        <span class="font-bold text-yellow-500">SaltoUruguayServer</span>
-      </p>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-        <TwitchEmbed
-          channelId={SALTO_BROADCASTER_ID}
-          username={stream.userName}
-          placeholder={PREVIEW || ""}
-          data-title={stream.title}
-          extraClasses="col-span-full md:col-span-2"
-        />
-
-        <div class="col-span-full md:col-span-1">
-          <div class="bg-neutral-950 border border-white/20 border-dashed py-4 px-3 rounded-lg">
-            <h2 class="font-rubik text-lg text-white mb-4">Chat en vivo</h2>
-            <div class="overflow-y-auto overflow-x-hidden h-96 aspect-[9/16] chat-box w-full scroll-smooth"
-            style="scrollbar-width: thin; scrollbar-color: #4B5563 #1F2937;">
-
+    <section id="live-stream" class="w-full max-w-7xl mx-auto px-4 py-12">
+        
+        {/* HEADER DE TRANSMISIÓN */}
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="relative flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-anton uppercase text-white tracking-wide">
+                    En Vivo Ahora: <span class="text-white/60">{stream.title}</span>
+                </h2>
             </div>
-            <footer class="flex justify-center mt-4">
-              <a
-                href={`https://www.twitch.tv/${stream.userName}/chat`}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="font-rubik text-yellow-500 hover:underline transition-transform hover:scale-105"
-              >
-                <LucideExternalLink class="size-6 mr-2 inline" />
-                Participar en el chat
-              </a>
-            </footer>
-          </div>
+            
+            <div class="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40">
+                <LucideTv size={14} /> SaltoUruguayServer
+            </div>
         </div>
-      </div>
+
+        {/* CONTENEDOR PRINCIPAL (GRID) */}
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+            
+            {/* VIDEO (Ocupa 3 columnas en desktop) */}
+            <div class="lg:col-span-3 rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-900/10 bg-black relative group">
+                {/* Glow ambiental detrás del video */}
+                <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-1000"></div>
+                
+                <div class="relative z-10 w-full h-full bg-black rounded-xl overflow-hidden">
+                    <TwitchEmbed
+                        channelId={SALTO_BROADCASTER_ID}
+                        username={stream.userName}
+                        placeholder={PREVIEW || ""}
+                        data-title={stream.title}
+                        extraClasses="w-full h-full aspect-video"
+                    />
+                </div>
+            </div>
+
+            {/* CHAT (Ocupa 1 columna) */}
+            <div class="lg:col-span-1 flex flex-col h-[500px] lg:h-auto rounded-2xl border border-white/10 bg-[#0f0f11] overflow-hidden shadow-xl">
+                
+                {/* Header Chat */}
+                <div class="p-4 border-b border-white/5 bg-[#15151a] flex items-center justify-between">
+                    <span class="font-bold text-sm text-white uppercase tracking-widest flex items-center gap-2">
+                        <LucideMessageSquare size={14} className="text-purple-400"/> Chat del Stream
+                    </span>
+                    <div class="size-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]"></div>
+                </div>
+
+                {/* Área de Mensajes */}
+                <div 
+                    class="chat-box flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+                    style="scroll-behavior: smooth;"
+                >
+                    {/* Los mensajes se inyectan aquí */}
+                    <div class="text-center py-10 text-white/20 text-xs italic">
+                        Conectando al chat...
+                    </div>
+                </div>
+
+                {/* Footer Chat */}
+                <div class="p-4 border-t border-white/5 bg-[#15151a]">
+                    <a
+                        href={`https://www.twitch.tv/${stream.userName}/chat`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-[#9146FF] hover:bg-[#772CE8] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-lg shadow-purple-900/20"
+                    >
+                        Unirse a la conversación <LucideExternalLink size={12} />
+                    </a>
+                </div>
+            </div>
+        </div>
     </section>
 
     <template id="chat-message">
-      <div class="flex space-x-2 mb-2">
+      <div class="group flex gap-3 items-start animate-fade-in-left">
         <img
           src="/favicon.svg"
           alt="Avatar"
-          class="size-8 rounded-md border"
+          class="size-8 rounded-full bg-white/5 object-cover shrink-0 border border-white/10"
         />
-        <div class="flex flex-col">
-          <p class="font-rubik text-blue-400 username"></p>
-          <p class="font-rubik text-sm text-white message text-wrap"></p>
+        <div class="flex flex-col min-w-0">
+          <div class="flex items-baseline gap-2">
+              <span class="font-bold text-xs text-[#a970ff] username truncate">Usuario</span>
+              <span class="text-[10px] text-white/30 timestamp hidden group-hover:inline">Justo ahora</span>
+          </div>
+          <p class="text-sm text-white/80 message break-words leading-snug"></p>
         </div>
       </div>
     </template>
   )
 }
 
-<script>
-  /* 
-    Connect to LiveStream Chat using websockets
-  */
+<style>
+    .animate-fade-in-left {
+        animation: fadeInLeft 0.3s ease-out forwards;
+    }
+    @keyframes fadeInLeft {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+</style>
 
+<script>
 import { $ } from "@/lib/dom-selector";
 
 let isChatInitialized = false;
 
 const initChat = () => {
   if (isChatInitialized) return;
+  
+  const $chat = $(".chat-box") as HTMLElement;
+  if (!$chat) return; // Seguridad si no hay stream
 
   isChatInitialized = true;
-
   const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
-
   const SALTO_USERNAME = "SaltoUruguayServer";
-  const LIMIT_MESSAGES = 15;
+  const LIMIT_MESSAGES = 20;
   const LOADED_AVATARS = new Map<string, string>();
-    const DECAPI_AVATAR_PREFIX = "https://decapi.me/twitch/avatar/";
-
+  const DECAPI_AVATAR_PREFIX = "https://decapi.me/twitch/avatar/";
   const $messageTemplate = $("#chat-message") as HTMLTemplateElement;
 
-  const $chat = $(".chat-box") as HTMLElement;
+  // Limpiar mensaje de "Conectando..."
+  const clearLoading = () => {
+      if($chat.innerText.includes("Conectando")) $chat.innerHTML = "";
+  }
 
   const parseEmotes = (message: string, emotesTag: string) => {
-  if (!emotesTag) return message; // Si no hay emotes, devolver el mensaje sin cambios
+    if (!emotesTag) return message;
+    const emotes = emotesTag.split("/").map(emote => {
+        const [emoteId, positions] = emote.split(":");
+        return positions.split(",").map(position => ({
+        id: emoteId,
+        start: parseInt(position.split("-")[0]),
+        end: parseInt(position.split("-")[1]),
+        }));
+    }).flat();
 
-  const emotes = emotesTag.split("/").map(emote => {
-    const [emoteId, positions] = emote.split(":");
-    return positions.split(",").map(position => ({
-      id: emoteId,
-      start: parseInt(position.split("-")[0]),
-      end: parseInt(position.split("-")[1]),
-    }));
-  }).flat();
-
-  // Reemplazar emotes en el mensaje con imágenes
-  let parsedMessage = "";
-  let lastIndex = 0;
-
-  emotes.sort((a, b) => a.start - b.start).forEach(({ id, start, end }) => {
-    parsedMessage += message.slice(lastIndex, start); // Agregar el texto antes del emote
-    parsedMessage += `<img src="https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/1.0" class="inline size-5" alt="Emote">`;
-    lastIndex = end + 1;
-  });
-
-  parsedMessage += message.slice(lastIndex); // Agregar el texto restante
-  return parsedMessage;
-};
+    let parsedMessage = "";
+    let lastIndex = 0;
+    emotes.sort((a, b) => a.start - b.start).forEach(({ id, start, end }) => {
+        parsedMessage += message.slice(lastIndex, start);
+        parsedMessage += `<img src="https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/1.0" class="inline-block h-5 align-middle mx-0.5" alt="Emote">`;
+        lastIndex = end + 1;
+    });
+    parsedMessage += message.slice(lastIndex);
+    return parsedMessage;
+  };
   
+  const getAvatar = async (username: string) => {
+    if (LOADED_AVATARS.has(username)) return LOADED_AVATARS.get(username)!;
+    try {
+        const response = await fetch(`${DECAPI_AVATAR_PREFIX}${username}`);
+        if (!response.ok) throw new Error("Error avatar");
+        const avatarUrl = await response.text();
+        LOADED_AVATARS.set(username, avatarUrl);
+        return avatarUrl;
+    } catch (error) {
+        return "";
+    }
+  };
 
-const getAvatar = async (username: string) => {
-  if (LOADED_AVATARS.has(username)) {
-    return LOADED_AVATARS.get(username)!;
+  const handleNewMessage = (message: { avatar: string; username: string; message: string }) => {
+    clearLoading();
+    const $clone = $messageTemplate.content.cloneNode(true) as HTMLElement;
+    const $avatar = $clone.querySelector("img") as HTMLImageElement;
+    const $username = $clone.querySelector(".username") as HTMLElement;
+    const $messageText = $clone.querySelector(".message") as HTMLElement;
+
+    // Asignar datos
+    $username.textContent = message.username;
+    $username.style.color = stringToColor(message.username); // Color consistente por usuario
+    $messageText.innerHTML = message.message;
+
+    // Cargar avatar asíncronamente
+    getAvatar(message.username).then(url => {
+        if(url) $avatar.src = url;
+        else $avatar.src = `https://ui-avatars.com/api/?name=${message.username}&background=random&color=fff`;
+    });
+
+    $chat.appendChild($clone);
+    
+    // Auto-scroll si está cerca del final
+    if ($chat.scrollTop + $chat.clientHeight >= $chat.scrollHeight - 100) {
+        $chat.scrollTop = $chat.scrollHeight;
+    }
+
+    if ($chat.children.length > LIMIT_MESSAGES) {
+        $chat.removeChild($chat.children[0]);
+    }
+  };
+
+  // Helper para color consistente
+  const stringToColor = (str: string) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c = (hash & 0x00ffffff).toString(16).toUpperCase();
+    return '#' + '00000'.substring(0, 6 - c.length) + c;
   }
-
-  try {
-    const response = await fetch(`${DECAPI_AVATAR_PREFIX}${username}`);
-    if (!response.ok) throw new Error("Error al obtener avatar");
-
-    const avatarUrl = await response.text();
-    LOADED_AVATARS.set(username, avatarUrl); // Almacena el avatar en caché
-
-    return avatarUrl;
-  } catch (error) {
-    console.error("Fallo al cargar avatar de", username, error);
-    return ""; // Retorna un avatar vacío si hay error
-  }
-};
-
-const handleNewMessage = (message: { avatar: string; username: string; message: string }) => {
-  const $message = $messageTemplate.content.cloneNode(true) as HTMLElement;
-  const $avatar = $message.querySelector("img") as HTMLImageElement;
-  const $username = $message.querySelector(".username") as HTMLElement;
-  const $messageText = $message.querySelector(".message") as HTMLElement;
-
-  getAvatar(message.username).then(avatarUrl => {
-    $avatar.src = avatarUrl || "https://static-cdn.jtvnw.net/jtv_user_pictures/default-profile_image.png";
-  });
-
-  $username.textContent = message.username;
-  $messageText.innerHTML = message.message; // Usar innerHTML para renderizar los emotes
-
-  const $el = $chat.appendChild($message);
-  $chat.scrollTop = $chat.scrollHeight; // Hacer scroll al último mensaje
-
-  if ($chat.children.length > LIMIT_MESSAGES) {
-    $chat.removeChild($chat.children[0]);
-  }
-};
-
 
   const parseTmiMessage = (message: string) => {
-  if (message.startsWith("PING")) {
-    ws.send("PONG :tmi.twitch.tv");
-    return;
-  }
+    if (message.startsWith("PING")) {
+        ws.send("PONG :tmi.twitch.tv");
+        return;
+    }
+    const tagMatch = message.match(/^@(.*?) /);
+    const messageParts = message.split("PRIVMSG");
+    if (!tagMatch || messageParts.length < 2) return;
 
-  const tagMatch = message.match(/^@(.*?) /);
-  const messageParts = message.split("PRIVMSG");
+    const tags = tagMatch[1];
+    const messageText = messageParts[1].split(" :")[1]?.trim();
+    if (!messageText) return;
 
-  if (!tagMatch || messageParts.length < 2) {
-    return;
-  }
+    const tagMap: Record<string, string> = Object.fromEntries(
+        tags.split(";").map(tag => tag.split("=").map(decodeURIComponent))
+    );
 
-  const tags = tagMatch[1];
-  const messageText = messageParts[1].split(" :")[1]?.trim();
-  if (!messageText) return;
-
-  const tagMap: Record<string, string> = Object.fromEntries(
-    tags.split(";").map(tag => tag.split("=").map(decodeURIComponent))
-  );
-
-  const parsedMessage = parseEmotes(messageText, tagMap["emotes"]);
-
-  return {
-    username: tagMap["display-name"] || "Desconocido",
-    avatar: tagMap["user-id"]
-      ? `https://static-cdn.jtvnw.net/jtv_user_pictures/${tagMap["user-id"]}-profile_image-70x70.png`
-      : "",
-    message: parsedMessage,
+    return {
+        username: tagMap["display-name"] || "Chatter",
+        avatar: "", // Se carga después
+        message: parseEmotes(messageText, tagMap["emotes"]),
+    };
   };
-};
-
-
-
 
   ws.onopen = function () {
     ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
-    ws.send("PASS SCHMOOPIIE");
+    ws.send("PASS SCHMOOPIIE"); // Token anónimo válido para leer
     ws.send("NICK justinfan12345");
     ws.send(`JOIN #${SALTO_USERNAME}`);
   };
 
   ws.onmessage = function (event) {
-  const data = event.data.trim();
-  
-  const messages = data.split("\r\n"); // Twitch puede enviar múltiples mensajes juntos
-
-  messages.forEach((line: string) => {
-    const message = parseTmiMessage(line);
-    if (message) {
-      handleNewMessage(message);
-    }
-  });
-};
-
-  ws.onerror = function (error) {
-    console.log("WebSocket error: ", error);
+    const data = event.data.trim();
+    const messages = data.split("\r\n");
+    messages.forEach((line: string) => {
+        const message = parseTmiMessage(line);
+        if (message) handleNewMessage(message);
+    });
   };
-
-  ws.onclose = function () {
-    console.log("WebSocket is closed now.");
-  };
-
 };
 
 document.addEventListener("astro:page-load", initChat);
-
 initChat();
 </script>
