@@ -75,8 +75,16 @@ export const stories = {
                 ),
                 with: {
                     user: true,
-                    views: true,
-                    likes: true
+                    views: {
+                        with: {
+                            user: true
+                        }
+                    },
+                    likes: {
+                        with: {
+                            user: true
+                        }
+                    }
                 },
                 orderBy: [asc(SaltogramStoriesTable.createdAt)]
             });

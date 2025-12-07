@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "preact/hooks";
 import { actions } from "astro:actions";
-import { LucideX, LucideHeart, LucideChevronLeft, LucideChevronRight, LucideEye, LucideTrash2, LucideSend, LucideStar, LucideLoader2 } from "lucide-preact";
+import { LucideX, LucideHeart, LucideChevronLeft, LucideChevronRight, LucideEye, LucideTrash2, LucideSend, LucideStar, LucideLoader2, LucideChevronUp } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 import { motion, AnimatePresence } from "motion/react";
 import { formatDistanceToNow } from "date-fns";
@@ -32,6 +32,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     const [likesCount, setLikesCount] = useState(0);
     const [replyText, setReplyText] = useState("");
     const [showReactions, setShowReactions] = useState(false);
+    const [showViewers, setShowViewers] = useState(false);
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
@@ -44,6 +45,17 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     const music = story.metadata?.music;
     const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
 
+    // Process viewers list (merge views and likes)
+    const viewersList = isOwner ? (story.views || []).map((view: any) => {
+        const hasLiked = story.likes?.some((like: any) => like.userId === view.userId);
+        return { ...view, hasLiked };
+    }).sort((a: any, b: any) => {
+        // Sort by liked first, then by view date
+        if (a.hasLiked && !b.hasLiked) return -1;
+        if (!a.hasLiked && b.hasLiked) return 1;
+        return new Date(b.viewedAt).getTime() - new Date(a.viewedAt).getTime();
+    }) : [];
+
     // Reset state when user changes
     useEffect(() => {
         const stories = feed[currentUserIndex].stories;
@@ -51,6 +63,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
         setCurrentStoryIndex(firstUnseenIndex !== -1 ? firstUnseenIndex : 0);
         setProgress(0);
         setIsBuffering(true);
+        setShowViewers(false);
     }, [currentUserIndex]);
 
     // Reset state when story changes
@@ -58,6 +71,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
         setProgress(0);
         setLiked(story.isLiked);
         setLikesCount(story.likesCount);
+        setShowViewers(false);
 
         // Smart buffering reset
         if (story.mediaType === 'image') {
@@ -136,7 +150,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
 
     // Timer Logic
     useEffect(() => {
-        if (isPaused || isBuffering || isAudioFetching) return;
+        if (isPaused || isBuffering || isAudioFetching || showViewers) return;
 
         const duration = story.duration * 1000;
         const intervalTime = 50;
@@ -155,7 +169,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
         return () => {
             if (progressInterval.current) clearInterval(progressInterval.current);
         };
-    }, [story, isPaused, isBuffering, isAudioFetching, currentUserIndex, currentStoryIndex]);
+    }, [story, isPaused, isBuffering, isAudioFetching, showViewers, currentUserIndex, currentStoryIndex]);
 
     const handleNext = useCallback(() => {
         if (currentStoryIndex < userStories.stories.length - 1) {
@@ -280,6 +294,8 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                 onDragEnd={(_, info) => {
                     if (info.offset.y > 100) {
                         onClose();
+                    } else if (info.offset.y < -50 && isOwner) {
+                        setShowViewers(true);
                     }
                 }}
                 className="relative w-full max-w-md h-full md:h-[90vh] md:rounded-2xl overflow-hidden bg-[#1a1a1a] flex flex-col"
@@ -327,6 +343,14 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                             </p>
                         </div>
                     </div>
+
+                    {/* Buffering Indicator (Top Right) */}
+                    {(isBuffering || isAudioFetching) && (
+                        <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/10">
+                            <LucideLoader2 className="w-4 h-4 text-white animate-spin" />
+                            <span className="text-white/80 text-xs font-medium">Cargando...</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Media Content */}
@@ -337,12 +361,6 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                     onTouchStart={() => setIsPaused(true)}
                     onTouchEnd={() => setIsPaused(false)}
                 >
-                    {(isBuffering || isAudioFetching) && (
-                        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
-                            <LucideLoader2 className="w-10 h-10 text-white animate-spin" />
-                        </div>
-                    )}
-
                     {story.mediaType === 'image' ? (
                         <img
                             ref={imgRef}
@@ -432,6 +450,18 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
 
                 {/* Footer / Interactions */}
                 <div className="absolute bottom-0 left-0 right-0 z-20 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                    {/* Swipe Up Indicator (Only for owner) */}
+                    {isOwner && !showViewers && (
+                        <motion.div 
+                            className="absolute -top-10 left-0 right-0 flex flex-col items-center justify-center text-white/50 pointer-events-none"
+                            animate={{ y: [0, -5, 0] }}
+                            transition={{ repeat: Infinity, duration: 1.5 }}
+                        >
+                            <LucideChevronUp size={20} />
+                            <span className="text-[10px] font-medium uppercase tracking-wider">Desliza para ver vistas</span>
+                        </motion.div>
+                    )}
+
                     {/* Quick Reactions */}
                     <AnimatePresence>
                         {showReactions && !isOwner && (
@@ -475,10 +505,14 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                         <div className="flex items-center gap-4 ml-auto">
                             {isOwner ? (
                                 <>
-                                    <div className="flex items-center gap-1 text-white/80 mr-2" title={`${story.views.length} vistas`}>
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); setShowViewers(true); }}
+                                        className="flex items-center gap-1 text-white/80 mr-2 hover:text-white transition-colors" 
+                                        title={`${story.views.length} vistas`}
+                                    >
                                         <LucideEye size={20} />
                                         <span className="text-sm font-bold">{story.views.length}</span>
-                                    </div>
+                                    </button>
                                     <div className="flex items-center gap-1 text-white/80 mr-2" title={`${likesCount} me gusta`}>
                                         <LucideHeart size={20} />
                                         <span className="text-sm font-bold">{likesCount}</span>
@@ -537,6 +571,77 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
             >
                 <LucideChevronRight size={48} />
             </button>
+
+            {/* Viewers Bottom Sheet */}
+            <AnimatePresence>
+                {showViewers && isOwner && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowViewers(false)}
+                            className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ y: "100%" }}
+                            animate={{ y: 0 }}
+                            exit={{ y: "100%" }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className="fixed bottom-0 left-0 right-0 z-[70] bg-[#242526] rounded-t-3xl border-t border-white/10 max-h-[70vh] flex flex-col shadow-2xl md:max-w-md md:mx-auto"
+                            drag="y"
+                            dragConstraints={{ top: 0 }}
+                            dragElastic={0.2}
+                            onDragEnd={(_, info) => {
+                                if (info.offset.y > 100) setShowViewers(false);
+                            }}
+                        >
+                            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mt-3 mb-2" />
+                            
+                            <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                                <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                                    <LucideEye size={20} />
+                                    Vistas ({viewersList.length})
+                                </h3>
+                                <button onClick={() => setShowViewers(false)} className="p-2 hover:bg-white/10 rounded-full text-white/50 hover:text-white">
+                                    <LucideX size={20} />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                                {viewersList.length > 0 ? (
+                                    <div className="space-y-1">
+                                        {viewersList.map((viewer: any) => (
+                                            <div key={viewer.userId} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-xl transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <img 
+                                                        src={viewer.user?.avatar || `https://ui-avatars.com/api/?name=${viewer.user?.displayName || 'User'}`} 
+                                                        className="w-10 h-10 rounded-full border border-white/10"
+                                                    />
+                                                    <div>
+                                                        <p className="text-white font-medium text-sm">{viewer.user?.displayName}</p>
+                                                        <p className="text-white/40 text-xs">@{viewer.user?.username}</p>
+                                                    </div>
+                                                </div>
+                                                {viewer.hasLiked && (
+                                                    <div className="bg-red-500/10 p-2 rounded-full">
+                                                        <LucideHeart size={16} className="text-red-500 fill-red-500" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-12 text-white/30 gap-2">
+                                        <LucideEye size={48} />
+                                        <p>Aún no hay vistas</p>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }
