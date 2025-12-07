@@ -1168,3 +1168,101 @@ export const petMinigameScoresRelations = relations(PetMinigameScoresTable, ({ o
         references: [UsersTable.id],
     }),
 }));
+
+/* 
+    Saltogram - Social Module
+*/
+
+export const SaltogramPostsTable = pgTable("saltogram_posts", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    text: text("text"),
+    imageUrl: varchar("image_url"),
+    isPinned: boolean("is_pinned").notNull().default(false),
+    isFeatured: boolean("is_featured").notNull().default(false),
+    featuredUntil: timestamp("featured_until"),
+    isHidden: boolean("is_hidden").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
+});
+
+export const SaltogramReactionsTable = pgTable("saltogram_reactions", {
+    id: serial("id").primaryKey(),
+    postId: integer("post_id").notNull().references(() => SaltogramPostsTable.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    emoji: varchar("emoji", { length: 10 }).notNull(),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueUserPostEmoji: unique("unique_user_post_emoji").on(t.postId, t.userId, t.emoji),
+}));
+
+export const SaltogramCommentsTable = pgTable("saltogram_comments", {
+    id: serial("id").primaryKey(),
+    postId: integer("post_id").notNull().references(() => SaltogramPostsTable.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    text: text("text").notNull(),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
+});
+
+export const SaltogramReportsTable = pgTable("saltogram_reports", {
+    id: serial("id").primaryKey(),
+    postId: integer("post_id").notNull().references(() => SaltogramPostsTable.id, { onDelete: "cascade" }),
+    reporterId: integer("reporter_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    reason: text("reason").notNull(),
+    status: varchar("status", { enum: ["pending", "reviewed", "dismissed"] }).notNull().default("pending"),
+    reviewedBy: integer("reviewed_by").references(() => UsersTable.id),
+    reviewedAt: timestamp("reviewed_at"),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+});
+
+/* 
+    Saltogram Relations
+*/
+
+export const saltogramPostsRelations = relations(SaltogramPostsTable, ({ one, many }) => ({
+    user: one(UsersTable, {
+        fields: [SaltogramPostsTable.userId],
+        references: [UsersTable.id],
+    }),
+    reactions: many(SaltogramReactionsTable),
+    comments: many(SaltogramCommentsTable),
+    reports: many(SaltogramReportsTable),
+}));
+
+export const saltogramReactionsRelations = relations(SaltogramReactionsTable, ({ one }) => ({
+    post: one(SaltogramPostsTable, {
+        fields: [SaltogramReactionsTable.postId],
+        references: [SaltogramPostsTable.id],
+    }),
+    user: one(UsersTable, {
+        fields: [SaltogramReactionsTable.userId],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const saltogramCommentsRelations = relations(SaltogramCommentsTable, ({ one }) => ({
+    post: one(SaltogramPostsTable, {
+        fields: [SaltogramCommentsTable.postId],
+        references: [SaltogramPostsTable.id],
+    }),
+    user: one(UsersTable, {
+        fields: [SaltogramCommentsTable.userId],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const saltogramReportsRelations = relations(SaltogramReportsTable, ({ one }) => ({
+    post: one(SaltogramPostsTable, {
+        fields: [SaltogramReportsTable.postId],
+        references: [SaltogramReportsTable.id],
+    }),
+    reporter: one(UsersTable, {
+        fields: [SaltogramReportsTable.reporterId],
+        references: [UsersTable.id],
+    }),
+    reviewer: one(UsersTable, {
+        fields: [SaltogramReportsTable.reviewedBy],
+        references: [UsersTable.id],
+    }),
+}));
