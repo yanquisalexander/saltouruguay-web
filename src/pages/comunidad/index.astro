@@ -12,6 +12,7 @@ import {
   LucideIdCard,
   LucideSparkles,
   LucideHeart,
+  LucideImage,
 } from "lucide-preact";
 
 const session = await getSession(Astro.request);
@@ -52,6 +53,17 @@ const APPS = [
     icon: LucideWallet,
     soon: false,
     soonCustomText: "Próximamente",
+    section: "main",
+  },
+  {
+    id: "saltogram",
+    path: "/comunidad/saltogram",
+    requiresLogin: true,
+    title: "Saltogram",
+    description: "Red social de la comunidad. Comparte y conecta.",
+    image: "/images/saltogram-bg.webp",
+    icon: LucideImage,
+    soon: false,
     section: "main",
   },
 ];
