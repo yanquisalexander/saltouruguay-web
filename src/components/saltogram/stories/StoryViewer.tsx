@@ -32,11 +32,13 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     const [showReactions, setShowReactions] = useState(false);
 
     const videoRef = useRef<HTMLVideoElement>(null);
+    const audioRef = useRef<HTMLAudioElement>(null);
     const progressInterval = useRef<number | null>(null);
 
     const userStories = feed[currentUserIndex];
     const story = userStories.stories[currentStoryIndex];
     const isOwner = currentUser?.id && Number(currentUser.id) === story.userId;
+    const music = story.metadata?.music;
 
     // Reset state when user changes
     useEffect(() => {
@@ -68,6 +70,18 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
             }
         }
     }, [isPaused, story.mediaType]);
+
+    // Control music playback
+    useEffect(() => {
+        if (music && audioRef.current) {
+            audioRef.current.volume = 0.5; // Default volume
+            if (isPaused) {
+                audioRef.current.pause();
+            } else {
+                audioRef.current.play().catch(() => { });
+            }
+        }
+    }, [isPaused, music, story]);
 
     // Timer Logic
     useEffect(() => {
@@ -284,8 +298,42 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                             className="w-full h-full object-contain"
                             autoPlay
                             playsInline
+                            muted={!!music} // Mute video if music is present
                             onEnded={handleNext}
                         />
+                    )}
+
+                    {/* Music Player & Sticker */}
+                    {music && (
+                        <>
+                            <audio
+                                ref={audioRef}
+                                src={music.preview}
+                                autoPlay
+                                loop
+                            />
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 shadow-xl z-20 max-w-[80%] pointer-events-none">
+                                <img src={music.album.cover_medium} className="w-12 h-12 rounded-md shadow-sm" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-black text-sm truncate">{music.title}</p>
+                                    <p className="text-black/60 text-xs truncate">{music.artist.name}</p>
+                                </div>
+                                <div className="w-1 h-8 bg-black/10 rounded-full mx-1" />
+                                <div className="flex gap-0.5 items-end h-4">
+                                    {[1, 2, 3, 4].map(i => (
+                                        <div
+                                            key={i}
+                                            className="w-1 bg-pink-500 rounded-full animate-music-bar"
+                                            style={{
+                                                height: isPaused ? '20%' : `${Math.random() * 100}%`,
+                                                animation: isPaused ? 'none' : `music-bar 0.5s ease-in-out infinite alternate`,
+                                                animationDelay: `${i * 0.1}s`
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </>
                     )}
 
                     {/* Navigation Zones */}
