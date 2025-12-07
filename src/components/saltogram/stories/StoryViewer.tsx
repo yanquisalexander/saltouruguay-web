@@ -47,6 +47,17 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
         }
     }, [story]);
 
+    // Control video playback
+    useEffect(() => {
+        if (story.mediaType === 'video' && videoRef.current) {
+            if (isPaused) {
+                videoRef.current.pause();
+            } else {
+                videoRef.current.play().catch(() => {});
+            }
+        }
+    }, [isPaused, story.mediaType]);
+
     // Timer Logic
     useEffect(() => {
         if (isPaused) return;
