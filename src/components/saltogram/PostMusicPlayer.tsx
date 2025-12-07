@@ -10,9 +10,29 @@ export default function PostMusicPlayer({ music }: PostMusicPlayerProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const wavesurferRef = useRef<WaveSurfer | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [audioUrl, setAudioUrl] = useState(music.preview);
 
     useEffect(() => {
-        if (containerRef.current && !wavesurferRef.current) {
+        let active = true;
+        if (music.id) {
+            fetch(`/api/deezer/track?id=${music.id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (active && data.preview && data.preview !== music.preview) {
+                        setAudioUrl(data.preview);
+                    }
+                })
+                .catch(err => console.error("Error refreshing music URL:", err));
+        }
+        return () => { active = false; };
+    }, [music]);
+
+    useEffect(() => {
+        if (containerRef.current) {
+            if (wavesurferRef.current) {
+                wavesurferRef.current.destroy();
+            }
+
             // Create gradients
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -32,7 +52,7 @@ export default function PostMusicPlayer({ music }: PostMusicPlayerProps) {
                 barGap: 2,
                 barRadius: 2,
                 height: 40,
-                url: music.preview,
+                url: audioUrl,
                 normalize: true,
             });            ws.on('play', () => setIsPlaying(true));
             ws.on('pause', () => setIsPlaying(false));
@@ -45,7 +65,7 @@ export default function PostMusicPlayer({ music }: PostMusicPlayerProps) {
             wavesurferRef.current?.destroy();
             wavesurferRef.current = null;
         };
-    }, [music]);
+    }, [audioUrl]);
 
     const togglePlay = () => {
         wavesurferRef.current?.playPause();

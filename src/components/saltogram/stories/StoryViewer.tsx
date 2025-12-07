@@ -39,6 +39,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     const story = userStories.stories[currentStoryIndex];
     const isOwner = currentUser?.id && Number(currentUser.id) === story.userId;
     const music = story.metadata?.music;
+    const [audioUrl, setAudioUrl] = useState(music?.preview);
 
     // Reset state when user changes
     useEffect(() => {
@@ -59,6 +60,25 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
             actions.stories.view({ storyId: story.id });
         }
     }, [story]);
+
+    // Refresh music URL
+    useEffect(() => {
+        if (music) {
+            setAudioUrl(music.preview);
+            if (music.id) {
+                fetch(`/api/deezer/track?id=${music.id}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.preview && data.preview !== music.preview) {
+                            setAudioUrl(data.preview);
+                        }
+                    })
+                    .catch(err => console.error("Error refreshing music URL:", err));
+            }
+        } else {
+            setAudioUrl(undefined);
+        }
+    }, [music]);
 
     // Control video playback
     useEffect(() => {
@@ -319,7 +339,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                         <>
                             <audio
                                 ref={audioRef}
-                                src={music.preview}
+                                src={audioUrl}
                                 autoPlay
                                 onTimeUpdate={(e) => {
                                     const audio = e.currentTarget;
