@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "preact/hooks";
 import { actions } from "astro:actions";
-import { LucideX, LucideHeart, LucideChevronLeft, LucideChevronRight, LucideEye, LucideTrash2 } from "lucide-preact";
+import { LucideX, LucideHeart, LucideChevronLeft, LucideChevronRight, LucideEye, LucideTrash2, LucideSend, LucideStar } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 import { motion, AnimatePresence } from "motion/react";
 import { formatDistanceToNow } from "date-fns";
@@ -28,6 +28,8 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     const [isPaused, setIsPaused] = useState(false);
     const [liked, setLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
+    const [replyText, setReplyText] = useState("");
+    const [showReactions, setShowReactions] = useState(false);
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const progressInterval = useRef<number | null>(null);
@@ -118,6 +120,44 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
         await actions.stories.toggleLike({ storyId: story.id });
     };
 
+    const handleReaction = async (emoji: string) => {
+        try {
+            const { error } = await actions.messages.send({
+                receiverId: story.userId,
+                reaction: emoji,
+                storyId: story.id
+            });
+
+            if (error) throw new Error(error.message);
+
+            toast.success(`Reacción enviada: ${emoji}`);
+            setIsPaused(false);
+            // Optional: Close keyboard/input focus if needed
+        } catch (e) {
+            toast.error("Error al enviar reacción");
+        }
+    };
+
+    const handleSendReply = async () => {
+        if (!replyText.trim()) return;
+
+        try {
+            const { error } = await actions.messages.send({
+                receiverId: story.userId,
+                content: replyText,
+                storyId: story.id
+            });
+
+            if (error) throw new Error(error.message);
+
+            toast.success("Mensaje enviado");
+            setReplyText("");
+            setIsPaused(false);
+        } catch (e) {
+            toast.error("Error al enviar mensaje");
+        }
+    };
+
     const handleDelete = async () => {
         if (!confirm("¿Eliminar esta historia?")) return;
         setIsPaused(true);
@@ -203,7 +243,15 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                             className="w-10 h-10 rounded-full border border-white/20"
                         />
                         <div>
-                            <p className="text-white font-semibold text-sm">{userStories.user.displayName}</p>
+                            <div className="flex items-center gap-2">
+                                <p className="text-white font-semibold text-sm">{userStories.user.displayName}</p>
+                                {story.isVip && (
+                                    <div className="bg-green-500/20 border border-green-500/50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                        <LucideStar size={10} className="text-green-400 fill-green-400" />
+                                        <span className="text-green-400 text-[10px] font-bold uppercase tracking-wider">Mejores Amigos</span>
+                                    </div>
+                                )}
+                            </div>
                             <p className="text-white/60 text-xs">
                                 {formatDistanceToNow(new Date(story.createdAt), { addSuffix: true, locale: es })}
                             </p>
@@ -245,20 +293,48 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
 
                 {/* Footer / Interactions */}
                 <div className="absolute bottom-0 left-0 right-0 z-20 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                    <div className="flex items-center justify-between">
-                        {/* Reply Input (Placeholder) */}
+                    {/* Quick Reactions */}
+                    <AnimatePresence>
+                        {showReactions && !isOwner && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                                className="absolute bottom-20 left-0 right-0 flex justify-center gap-4 pointer-events-auto"
+                            >
+                                {["😂", "😮", "😍", "😢", "🔥", "👏"].map((emoji, i) => (
+                                    <button
+                                        key={emoji}
+                                        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleReaction(emoji); }}
+                                        className="text-4xl hover:scale-125 transition-transform drop-shadow-lg"
+                                        style={{ transitionDelay: `${i * 50}ms` }}
+                                    >
+                                        {emoji}
+                                    </button>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <div className="flex items-center justify-between gap-3">
+                        {/* Reply Input */}
                         {!isOwner && (
-                            <input
-                                type="text"
-                                placeholder="Enviar mensaje..."
-                                className="bg-transparent border border-white/30 rounded-full px-4 py-2 text-white text-sm w-full mr-4 focus:outline-none focus:border-white/60 placeholder:text-white/50"
-                                onFocus={() => setIsPaused(true)}
-                                onBlur={() => setIsPaused(false)}
-                            />
+                            <div className="relative flex-1">
+                                <input
+                                    type="text"
+                                    value={replyText}
+                                    onInput={(e) => setReplyText(e.currentTarget.value)}
+                                    placeholder={`Responder a ${userStories.user.displayName}...`}
+                                    className="w-full bg-transparent border border-white/30 rounded-full py-2.5 px-4 text-white placeholder-white/70 focus:outline-none focus:border-white/60 text-sm backdrop-blur-sm"
+                                    onFocus={() => { setIsPaused(true); setShowReactions(true); }}
+                                    onBlur={() => { setIsPaused(false); setShowReactions(false); }}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
+                                />
+                            </div>
                         )}
 
                         <div className="flex items-center gap-4 ml-auto">
-                            {isOwner && (
+                            {isOwner ? (
                                 <>
                                     <div className="flex items-center gap-1 text-white/80 mr-2" title={`${story.views.length} vistas`}>
                                         <LucideEye size={20} />
@@ -276,20 +352,32 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                                         <LucideTrash2 size={24} />
                                     </button>
                                 </>
-                            )}
-
-                            {!isOwner && (
-                                <div className="flex items-center gap-2">
-                                    {likesCount > 0 && (
-                                        <span className="text-white text-sm font-medium">{likesCount}</span>
+                            ) : (
+                                <>
+                                    {replyText ? (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleSendReply(); }}
+                                            className="text-blue-500 font-semibold text-sm"
+                                        >
+                                            Enviar
+                                        </button>
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            {likesCount > 0 && (
+                                                <span className="text-white text-sm font-medium">{likesCount}</span>
+                                            )}
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); toggleLike(); }}
+                                                className={`p-2 rounded-full transition-transform active:scale-90 ${liked ? 'text-red-500' : 'text-white'}`}
+                                            >
+                                                <LucideHeart size={28} fill={liked ? "currentColor" : "none"} />
+                                            </button>
+                                            <button className="text-white p-2">
+                                                <LucideSend size={26} className="-rotate-45 mb-1" />
+                                            </button>
+                                        </div>
                                     )}
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); toggleLike(); }}
-                                        className={`p-2 rounded-full transition-transform active:scale-90 ${liked ? 'text-red-500' : 'text-white'}`}
-                                    >
-                                        <LucideHeart size={28} fill={liked ? "currentColor" : "none"} />
-                                    </button>
-                                </div>
+                                </>
                             )}
                         </div>
                     </div>

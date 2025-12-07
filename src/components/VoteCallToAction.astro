@@ -35,8 +35,8 @@ const hasVoted = Array.isArray(votes) && votes.length > 0;
       <span class="font-rubik text-xs md:text-sm text-white/80 group-hover:text-white transition-colors text-center">
         {session ? (
           <>
-            <span class="font-bold text-white">{session.user.name}</span>, ¿qué
-            esperas para votar?
+            <span class="font-bold text-white">{session?.user?.name}</span>,
+            ¿qué esperas para votar?
           </>
         ) : (
           "¡Las votaciones ya están abiertas!"

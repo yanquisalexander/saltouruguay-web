@@ -1,5 +1,5 @@
 import { useState, useRef } from "preact/hooks";
-import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo } from "lucide-preact";
+import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo, LucideStar } from "lucide-preact";
 import { toast } from "sonner";
 
 interface CreateStoryModalProps {
@@ -14,6 +14,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const [loading, setLoading] = useState(false);
     const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
     const [duration, setDuration] = useState(5);
+    const [isVip, setIsVip] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     if (!isOpen) return null;
@@ -53,6 +54,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             const formData = new FormData();
             formData.append("file", file);
             formData.append("duration", duration.toString());
+            formData.append("isVip", isVip.toString());
 
             const response = await fetch("/api/saltogram/stories", {
                 method: "POST",
@@ -107,6 +109,15 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                                 className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full hover:bg-red-500/80 transition-colors"
                             >
                                 <LucideX size={20} />
+                            </button>
+                            
+                            {/* VIP Toggle Overlay */}
+                            <button
+                                onClick={() => setIsVip(!isVip)}
+                                className={`absolute bottom-4 right-4 p-2 rounded-full transition-colors flex items-center gap-2 px-4 ${isVip ? 'bg-green-500 text-white' : 'bg-black/50 text-white/70 hover:bg-black/70'}`}
+                            >
+                                <LucideStar size={18} fill={isVip ? "currentColor" : "none"} />
+                                <span className="text-sm font-medium">{isVip ? "Mejores Amigos" : "Público"}</span>
                             </button>
                         </div>
                     )}

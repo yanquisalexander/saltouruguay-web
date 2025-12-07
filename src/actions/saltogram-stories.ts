@@ -2,7 +2,7 @@ import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
 import { client } from "@/db/client";
-import { SaltogramStoriesTable, SaltogramStoryViewsTable, SaltogramStoryLikesTable, FriendsTable, UsersTable } from "@/db/schema";
+import { SaltogramStoriesTable, SaltogramStoryViewsTable, SaltogramStoryLikesTable, FriendsTable, UsersTable, SaltogramVipListTable } from "@/db/schema";
 import { eq, and, or, gt, desc, asc, sql } from "drizzle-orm";
 
 export const stories = {
@@ -11,8 +11,9 @@ export const stories = {
             mediaUrl: z.string().url(),
             mediaType: z.enum(["image", "video"]),
             duration: z.number().min(1).max(60).default(5),
+            isVip: z.boolean().default(false),
         }),
-        handler: async ({ mediaUrl, mediaType, duration }, { request }) => {
+        handler: async ({ mediaUrl, mediaType, duration, isVip }, { request }) => {
             const session = await getSession(request);
             if (!session?.user?.id) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
@@ -27,6 +28,7 @@ export const stories = {
                     mediaUrl,
                     mediaType,
                     duration,
+                    isVip,
                     expiresAt
                 })
                 .returning();
@@ -56,6 +58,12 @@ export const stories = {
             const friendIds = friends.map(f => f.userId === userId ? f.friendId : f.userId);
             const userIdsToFetch = [userId, ...friendIds];
 
+            // Get VIP lists where current user is a member
+            const vipLists = await client.query.SaltogramVipListTable.findMany({
+                where: eq(SaltogramVipListTable.friendId, userId)
+            });
+            const vipCreatorIds = vipLists.map(v => v.userId);
+
             // Fetch active stories
             const stories = await client.query.SaltogramStoriesTable.findMany({
                 where: and(
@@ -73,6 +81,12 @@ export const stories = {
             // Group by user
             const storiesByUser = stories.reduce((acc, story) => {
                 const storyUserId = story.userId;
+
+                // Filter VIP stories
+                if (story.isVip && storyUserId !== userId && !vipCreatorIds.includes(storyUserId)) {
+                    return acc;
+                }
+
                 if (!acc[storyUserId]) {
                     acc[storyUserId] = {
                         user: story.user,

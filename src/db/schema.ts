@@ -1223,9 +1223,30 @@ export const SaltogramStoriesTable = pgTable("saltogram_stories", {
     mediaType: varchar("media_type", { enum: ["image", "video"] }).notNull(),
     duration: integer("duration").default(5), // Seconds
     metadata: jsonb("metadata").default({}), // Stickers, text, etc.
+    isVip: boolean("is_vip").notNull().default(false),
     expiresAt: timestamp("expires_at").notNull(),
     createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
 });
+
+export const SaltogramMessagesTable = pgTable("saltogram_messages", {
+    id: serial("id").primaryKey(),
+    senderId: integer("sender_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    receiverId: integer("receiver_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    content: text("content"),
+    storyId: integer("story_id").references(() => SaltogramStoriesTable.id, { onDelete: "set null" }),
+    reaction: varchar("reaction"), // For quick reactions like emojis
+    isRead: boolean("is_read").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+});
+
+export const SaltogramVipListTable = pgTable("saltogram_vip_list", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    friendId: integer("friend_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueVip: unique("unique_vip").on(t.userId, t.friendId),
+}));
 
 export const SaltogramStoryViewsTable = pgTable("saltogram_story_views", {
     id: serial("id").primaryKey(),
@@ -1353,5 +1374,35 @@ export const saltogramStoryLikesRelations = relations(SaltogramStoryLikesTable, 
     user: one(UsersTable, {
         fields: [SaltogramStoryLikesTable.userId],
         references: [UsersTable.id],
+    }),
+}));
+
+export const saltogramMessagesRelations = relations(SaltogramMessagesTable, ({ one }) => ({
+    sender: one(UsersTable, {
+        fields: [SaltogramMessagesTable.senderId],
+        references: [UsersTable.id],
+        relationName: "sentMessages"
+    }),
+    receiver: one(UsersTable, {
+        fields: [SaltogramMessagesTable.receiverId],
+        references: [UsersTable.id],
+        relationName: "receivedMessages"
+    }),
+    story: one(SaltogramStoriesTable, {
+        fields: [SaltogramMessagesTable.storyId],
+        references: [SaltogramStoriesTable.id],
+    }),
+}));
+
+export const saltogramVipListRelations = relations(SaltogramVipListTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [SaltogramVipListTable.userId],
+        references: [UsersTable.id],
+        relationName: "vipListOwner"
+    }),
+    friend: one(UsersTable, {
+        fields: [SaltogramVipListTable.friendId],
+        references: [UsersTable.id],
+        relationName: "vipListMember"
     }),
 }));
