@@ -73,7 +73,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                 // Simple regex to check if it's a valid username format (alphanumeric + underscore)
                 if (/^[a-zA-Z0-9_]+$/.test(username)) {
                     return (
-                        <a key={i} href={`/comunidad/usuarios/${username}`} className="text-blue-400 hover:text-blue-300 font-medium hover:underline">
+                        <a key={i} href={`/comunidad/saltogram/u/${username}`} className="text-blue-400 hover:text-blue-300 font-medium hover:underline">
                             {word}
                         </a>
                     );
