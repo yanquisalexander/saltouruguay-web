@@ -1064,7 +1064,7 @@ export const petItemRarityEnum = pgEnum('pet_item_rarity', [
 // Available pet items in the store
 export const PetItemsTable = pgTable('pet_items', {
     id: serial('id').primaryKey(),
-    name: varchar('name', { length: 100 }).notNull(),
+    name: varchar('name', { length: 100 }).notNull().unique(),
     description: text('description'),
     category: petItemCategoryEnum('category').notNull(),
     rarity: petItemRarityEnum('rarity').notNull().default('common'),

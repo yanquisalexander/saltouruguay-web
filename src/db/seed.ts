@@ -3,6 +3,7 @@ import { ACHIEVEMENTS } from "../consts/Achievements";
 import { client } from "./client";
 import { AchievementsTable, StreamerWarsTeamsTable } from "./schema";
 import { seedRuletaLocaPhrases } from "./seeds/ruleta-loca-phrases";
+import { seedPetItems } from "./seeds/pet-items";
 
 export const seed = async () => {
     console.log('Seeding database...');
@@ -32,6 +33,12 @@ export const seed = async () => {
         await seedRuletaLocaPhrases();
     } catch (error) {
         console.error("Error seeding Ruleta Loca phrases:", error)
+    }
+
+    try {
+        await seedPetItems();
+    } catch (error) {
+        console.error("Error seeding Pet Items:", error)
     }
 
 
