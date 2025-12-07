@@ -1180,10 +1180,10 @@ export const SaltogramPostsTable = pgTable("saltogram_posts", {
     imageUrl: varchar("image_url"),
     isPinned: boolean("is_pinned").notNull().default(false),
     isFeatured: boolean("is_featured").notNull().default(false),
-    featuredUntil: timestamp("featured_until"),
+    featuredUntil: timestamp("featured_until", { withTimezone: true }),
     isHidden: boolean("is_hidden").notNull().default(false),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`current_timestamp`),
 });
 
 export const SaltogramReactionsTable = pgTable("saltogram_reactions", {
@@ -1202,8 +1202,8 @@ export const SaltogramCommentsTable = pgTable("saltogram_comments", {
     userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
     parentId: integer("parent_id").references((): AnyPgColumn => SaltogramCommentsTable.id, { onDelete: "cascade" }),
     text: text("text").notNull(),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`current_timestamp`),
 });
 
 export const SaltogramReportsTable = pgTable("saltogram_reports", {
@@ -1225,8 +1225,8 @@ export const SaltogramStoriesTable = pgTable("saltogram_stories", {
     duration: integer("duration").default(5), // Seconds
     metadata: jsonb("metadata").default({}), // Stickers, text, etc.
     visibility: varchar("visibility", { enum: ["public", "friends", "vip"] }).notNull().default("public"),
-    expiresAt: timestamp("expires_at").notNull(),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`current_timestamp`),
 });
 
 export const SaltogramMessagesTable = pgTable("saltogram_messages", {
@@ -1237,7 +1237,7 @@ export const SaltogramMessagesTable = pgTable("saltogram_messages", {
     storyId: integer("story_id").references(() => SaltogramStoriesTable.id, { onDelete: "set null" }),
     reaction: varchar("reaction"), // For quick reactions like emojis
     isRead: boolean("is_read").notNull().default(false),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`current_timestamp`),
 });
 
 export const SaltogramVipListTable = pgTable("saltogram_vip_list", {

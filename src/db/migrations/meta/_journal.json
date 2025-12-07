@@ -379,6 +379,13 @@
       "when": 1765126707414,
       "tag": "0053_green_gertrude_yorkes",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1765127736183,
+      "tag": "0054_slim_steel_serpent",
+      "breakpoints": true
     }
   ]
 }
