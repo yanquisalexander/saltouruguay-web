@@ -245,10 +245,15 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                         <div>
                             <div className="flex items-center gap-2">
                                 <p className="text-white font-semibold text-sm">{userStories.user.displayName}</p>
-                                {story.isVip && (
+                                {story.visibility === 'vip' && (
                                     <div className="bg-green-500/20 border border-green-500/50 px-2 py-0.5 rounded-full flex items-center gap-1">
                                         <LucideStar size={10} className="text-green-400 fill-green-400" />
                                         <span className="text-green-400 text-[10px] font-bold uppercase tracking-wider">Mejores Amigos</span>
+                                    </div>
+                                )}
+                                {story.visibility === 'friends' && (
+                                    <div className="bg-blue-500/20 border border-blue-500/50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                        <span className="text-blue-400 text-[10px] font-bold uppercase tracking-wider">Solo Amigos</span>
                                     </div>
                                 )}
                             </div>

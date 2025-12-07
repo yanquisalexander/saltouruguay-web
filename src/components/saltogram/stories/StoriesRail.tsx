@@ -108,7 +108,7 @@ export default function StoriesRail({ user }: StoriesRailProps) {
                         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
 
                         {/* User Avatar Ring */}
-                        <div className={`absolute top-3 left-3 p-1 rounded-full ${item.stories.some((s: any) => s.isVip && !s.isSeen) ? 'bg-green-500' : item.hasUnseen ? 'bg-blue-500' : 'bg-white/30'}`}>
+                        <div className={`absolute top-3 left-3 p-1 rounded-full ${item.stories.some((s: any) => s.visibility === 'vip' && !s.isSeen) ? 'bg-green-500' : item.hasUnseen ? 'bg-blue-500' : 'bg-white/30'}`}>
                             <img
                                 src={item.user.avatar || `https://ui-avatars.com/api/?name=${item.user.displayName}`}
                                 className="w-8 h-8 rounded-full border-2 border-[#242526]"

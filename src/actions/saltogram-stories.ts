@@ -11,9 +11,9 @@ export const stories = {
             mediaUrl: z.string().url(),
             mediaType: z.enum(["image", "video"]),
             duration: z.number().min(1).max(60).default(5),
-            isVip: z.boolean().default(false),
+            visibility: z.enum(["public", "friends", "vip"]).default("public"),
         }),
-        handler: async ({ mediaUrl, mediaType, duration, isVip }, { request }) => {
+        handler: async ({ mediaUrl, mediaType, duration, visibility }, { request }) => {
             const session = await getSession(request);
             if (!session?.user?.id) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
@@ -28,7 +28,7 @@ export const stories = {
                     mediaUrl,
                     mediaType,
                     duration,
-                    isVip,
+                    visibility,
                     expiresAt
                 })
                 .returning();
@@ -83,7 +83,7 @@ export const stories = {
                 const storyUserId = story.userId;
 
                 // Filter VIP stories
-                if (story.isVip && storyUserId !== userId && !vipCreatorIds.includes(storyUserId)) {
+                if (story.visibility === 'vip' && storyUserId !== userId && !vipCreatorIds.includes(storyUserId)) {
                     return acc;
                 }
 

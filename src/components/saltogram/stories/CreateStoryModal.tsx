@@ -1,5 +1,5 @@
 import { useState, useRef } from "preact/hooks";
-import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo, LucideStar } from "lucide-preact";
+import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo, LucideStar, LucideGlobe, LucideUsers } from "lucide-preact";
 import { toast } from "sonner";
 
 interface CreateStoryModalProps {
@@ -14,7 +14,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const [loading, setLoading] = useState(false);
     const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
     const [duration, setDuration] = useState(5);
-    const [isVip, setIsVip] = useState(false);
+    const [visibility, setVisibility] = useState<'public' | 'friends' | 'vip'>('public');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     if (!isOpen) return null;
@@ -46,6 +46,12 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
         }
     };
 
+    const toggleVisibility = () => {
+        if (visibility === 'public') setVisibility('friends');
+        else if (visibility === 'friends') setVisibility('vip');
+        else setVisibility('public');
+    };
+
     const handleSubmit = async () => {
         if (!file) return;
 
@@ -54,7 +60,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             const formData = new FormData();
             formData.append("file", file);
             formData.append("duration", duration.toString());
-            formData.append("isVip", isVip.toString());
+            formData.append("visibility", visibility);
 
             const response = await fetch("/api/saltogram/stories", {
                 method: "POST",
@@ -111,13 +117,22 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                                 <LucideX size={20} />
                             </button>
                             
-                            {/* VIP Toggle Overlay */}
+                            {/* Visibility Toggle Overlay */}
                             <button
-                                onClick={() => setIsVip(!isVip)}
-                                className={`absolute bottom-4 right-4 p-2 rounded-full transition-colors flex items-center gap-2 px-4 ${isVip ? 'bg-green-500 text-white' : 'bg-black/50 text-white/70 hover:bg-black/70'}`}
+                                onClick={toggleVisibility}
+                                className={`absolute bottom-4 right-4 p-2 rounded-full transition-colors flex items-center gap-2 px-4 ${
+                                    visibility === 'vip' ? 'bg-green-500 text-white' : 
+                                    visibility === 'friends' ? 'bg-blue-500 text-white' :
+                                    'bg-black/50 text-white/70 hover:bg-black/70'
+                                }`}
                             >
-                                <LucideStar size={18} fill={isVip ? "currentColor" : "none"} />
-                                <span className="text-sm font-medium">{isVip ? "Mejores Amigos" : "Público"}</span>
+                                {visibility === 'vip' && <LucideStar size={18} fill="currentColor" />}
+                                {visibility === 'friends' && <LucideUsers size={18} />}
+                                {visibility === 'public' && <LucideGlobe size={18} />}
+                                <span className="text-sm font-medium">
+                                    {visibility === 'vip' ? "Mejores Amigos" : 
+                                     visibility === 'friends' ? "Solo Amigos" : "Público"}
+                                </span>
                             </button>
                         </div>
                     )}

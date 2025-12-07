@@ -1223,7 +1223,7 @@ export const SaltogramStoriesTable = pgTable("saltogram_stories", {
     mediaType: varchar("media_type", { enum: ["image", "video"] }).notNull(),
     duration: integer("duration").default(5), // Seconds
     metadata: jsonb("metadata").default({}), // Stickers, text, etc.
-    isVip: boolean("is_vip").notNull().default(false),
+    visibility: varchar("visibility", { enum: ["public", "friends", "vip"] }).notNull().default("public"),
     expiresAt: timestamp("expires_at").notNull(),
     createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
 });

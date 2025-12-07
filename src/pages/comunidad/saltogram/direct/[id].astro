@@ -1,0 +1,50 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+import { actions } from "astro:actions";
+import { client } from "@/db/client";
+import { UsersTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import ChatWindow from "@/components/saltogram/direct/ChatWindow";
+
+const { id } = Astro.params;
+const otherUserId = Number(id);
+
+const session = await getSession(Astro.request);
+if (!session) {
+  return Astro.redirect("/");
+}
+
+if (isNaN(otherUserId)) {
+  return Astro.redirect("/comunidad/saltogram/direct");
+}
+
+// Get other user details
+const otherUser = await client.query.UsersTable.findFirst({
+  where: eq(UsersTable.id, otherUserId),
+});
+
+if (!otherUser) {
+  return Astro.redirect("/comunidad/saltogram/direct");
+}
+
+// Get messages
+const { data } = await Astro.callAction(actions.messages.getConversation, {
+  otherUserId,
+});
+const initialMessages = data?.messages || [];
+const currentUser = session.user;
+---
+
+<Layout title={`Chat con ${otherUser.displayName} - Saltogram`}>
+  <div class="min-h-screen bg-[#18191a] pt-20 pb-10">
+    <div class="max-w-2xl mx-auto px-4 h-[calc(100vh-120px)]">
+      <ChatWindow
+        otherUser={otherUser}
+        currentUser={currentUser}
+        initialMessages={initialMessages}
+        client:load
+      />
+    </div>
+  </div>
+</Layout>

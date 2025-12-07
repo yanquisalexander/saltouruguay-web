@@ -17,7 +17,7 @@ export const POST = async ({ request }: APIContext) => {
         const formData = await request.formData();
         const file = formData.get("file") as File | null;
         let duration = Math.round(Number(formData.get("duration") || 5));
-        const isVip = formData.get("isVip") === "true";
+        const visibility = (formData.get("visibility") as "public" | "friends" | "vip") || "public";
 
         // Max duration 60 seconds
         if (duration > 60) duration = 60;
@@ -48,8 +48,8 @@ export const POST = async ({ request }: APIContext) => {
                 userId,
                 mediaUrl,
                 mediaType,
-                duration: isVideo ? duration : 5,
-                isVip,
+                duration,
+                visibility,
                 expiresAt
             })
             .returning();
