@@ -1,5 +1,5 @@
 import { useState, useRef } from "preact/hooks";
-import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo, LucideStar, LucideGlobe, LucideUsers, LucideMusic, LucideTrash2 } from "lucide-preact";
+import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo, LucideStar, LucideGlobe, LucideUsers, LucideMusic, LucideTrash2, LucideMaximize2 } from "lucide-preact";
 import { toast } from "sonner";
 import MusicPicker from "./MusicPicker";
 
@@ -18,9 +18,73 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const [visibility, setVisibility] = useState<'public' | 'friends' | 'vip'>('public');
     const [showMusicPicker, setShowMusicPicker] = useState(false);
     const [selectedMusic, setSelectedMusic] = useState<any | null>(null);
+    const [stickerConfig, setStickerConfig] = useState({ x: 50, y: 50, scale: 1 });
+    
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const isDragging = useRef(false);
+    const isResizing = useRef(false);
+    const startPos = useRef({ x: 0, y: 0 });
+    const startConfig = useRef({ x: 0, y: 0, scale: 1 });
 
     if (!isOpen) return null;
+
+    const handleDragStart = (e: PointerEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const target = e.currentTarget as HTMLElement;
+        target.setPointerCapture(e.pointerId);
+        
+        isDragging.current = true;
+        startPos.current = { x: e.clientX, y: e.clientY };
+        startConfig.current = { ...stickerConfig };
+    };
+
+    const handleResizeStart = (e: PointerEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const target = e.currentTarget as HTMLElement;
+        target.setPointerCapture(e.pointerId);
+        
+        isResizing.current = true;
+        startPos.current = { x: e.clientX, y: e.clientY };
+        startConfig.current = { ...stickerConfig };
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+        if (!isDragging.current && !isResizing.current) return;
+        if (!containerRef.current) return;
+
+        if (isDragging.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const deltaX = e.clientX - startPos.current.x;
+            const deltaY = e.clientY - startPos.current.y;
+            
+            const percentX = (deltaX / rect.width) * 100;
+            const percentY = (deltaY / rect.height) * 100;
+
+            setStickerConfig(prev => ({
+                ...prev,
+                x: Math.min(100, Math.max(0, startConfig.current.x + percentX)),
+                y: Math.min(100, Math.max(0, startConfig.current.y + percentY))
+            }));
+        } else if (isResizing.current) {
+             const deltaX = e.clientX - startPos.current.x;
+             const scaleDelta = deltaX * 0.005;
+             
+             setStickerConfig(prev => ({
+                 ...prev,
+                 scale: Math.max(0.5, Math.min(3, startConfig.current.scale + scaleDelta))
+             }));
+        }
+    };
+
+    const handlePointerUp = (e: PointerEvent) => {
+        const target = e.currentTarget as HTMLElement;
+        target.releasePointerCapture(e.pointerId);
+        isDragging.current = false;
+        isResizing.current = false;
+    };
 
     const handleFileSelect = (e: Event) => {
         const selectedFile = (e.target as HTMLInputElement).files?.[0];
@@ -66,7 +130,12 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             formData.append("visibility", visibility);
             
             if (selectedMusic) {
-                formData.append("metadata", JSON.stringify({ music: selectedMusic }));
+                formData.append("metadata", JSON.stringify({ 
+                    music: {
+                        ...selectedMusic,
+                        config: stickerConfig
+                    }
+                }));
             }
 
             const response = await fetch("/api/saltogram/stories", {
@@ -121,32 +190,59 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                             />
                         </div>
                     ) : (
-                        <div className="relative w-full h-full flex items-center justify-center bg-black">
+                        <div 
+                            ref={containerRef}
+                            className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden"
+                        >
                             {mediaType === 'video' ? (
-                                <video src={preview} className="max-w-full max-h-full object-contain" controls />
+                                <video src={preview} className="max-w-full max-h-full object-contain pointer-events-none" />
                             ) : (
-                                <img src={preview} className="max-w-full max-h-full object-contain" />
+                                <img src={preview} className="max-w-full max-h-full object-contain pointer-events-none" />
                             )}
 
                             {/* Music Sticker */}
                             {selectedMusic && (
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 shadow-xl max-w-[80%] animate-in zoom-in duration-300">
-                                    <img src={selectedMusic.album.cover_medium} className="w-12 h-12 rounded-lg shadow-sm" />
-                                    <div className="min-w-0">
+                                <div 
+                                    className="absolute bg-white/90 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 shadow-xl max-w-[80%] cursor-move touch-none select-none group"
+                                    style={{
+                                        left: `${stickerConfig.x}%`,
+                                        top: `${stickerConfig.y}%`,
+                                        transform: `translate(-50%, -50%) scale(${stickerConfig.scale})`,
+                                        zIndex: 10
+                                    }}
+                                    onPointerDown={handleDragStart}
+                                    onPointerMove={handlePointerMove}
+                                    onPointerUp={handlePointerUp}
+                                >
+                                    <img src={selectedMusic.album.cover_medium} className="w-12 h-12 rounded-lg shadow-sm pointer-events-none" />
+                                    <div className="min-w-0 pointer-events-none">
                                         <p className="text-black font-bold text-sm truncate">{selectedMusic.title}</p>
                                         <p className="text-black/60 text-xs truncate">{selectedMusic.artist.name}</p>
                                     </div>
-                                    <div className="flex gap-1 items-end h-4 ml-2">
+                                    <div className="flex gap-1 items-end h-4 ml-2 pointer-events-none">
                                         <div className="w-1 bg-black/80 h-full animate-pulse"></div>
                                         <div className="w-1 bg-black/80 h-2/3 animate-pulse delay-75"></div>
                                         <div className="w-1 bg-black/80 h-full animate-pulse delay-150"></div>
                                     </div>
+                                    
+                                    {/* Delete Button */}
                                     <button 
-                                        onClick={() => setSelectedMusic(null)}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"
+                                        onClick={(e) => { e.stopPropagation(); setSelectedMusic(null); }}
+                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 z-20"
+                                        onPointerDown={(e) => e.stopPropagation()}
                                     >
                                         <LucideX size={12} />
                                     </button>
+
+                                    {/* Resize Handle */}
+                                    <div 
+                                        className="absolute -bottom-3 -right-3 bg-blue-500 text-white rounded-full p-1.5 shadow-md cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                        onPointerDown={handleResizeStart}
+                                        onPointerMove={handlePointerMove}
+                                        onPointerUp={handlePointerUp}
+                                    >
+                                        <LucideMaximize2 size={12} />
+                                    </div>
                                 </div>
                             )}
 

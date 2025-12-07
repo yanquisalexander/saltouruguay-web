@@ -312,7 +312,14 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                                 autoPlay
                                 loop
                             />
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 shadow-xl z-20 max-w-[80%] pointer-events-none">
+                            <div 
+                                className="absolute bg-white/90 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 shadow-xl z-20 max-w-[80%] pointer-events-none"
+                                style={{
+                                    left: music.config ? `${music.config.x}%` : '50%',
+                                    top: music.config ? `${music.config.y}%` : '50%',
+                                    transform: `translate(-50%, -50%) scale(${music.config ? music.config.scale : 1})`
+                                }}
+                            >
                                 <img src={music.album.cover_medium} className="w-12 h-12 rounded-md shadow-sm" />
                                 <div className="flex-1 min-w-0">
                                     <p className="font-bold text-black text-sm truncate">{music.title}</p>
