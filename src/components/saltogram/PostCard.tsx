@@ -56,7 +56,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
         } catch (e) { toast.error("Error al eliminar"); }
     };
 
-    // Formatear texto con hashtags coloreados
+    // Formatear texto con hashtags y menciones
     const formatText = (text: string) => {
         if (!text) return null;
         return text.split(/(\s+)/).map((word, i) => {
@@ -67,6 +67,17 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                         {word}
                     </a>
                 );
+            }
+            if (word.startsWith("@") && word.length > 1) {
+                const username = word.substring(1);
+                // Simple regex to check if it's a valid username format (alphanumeric + underscore)
+                if (/^[a-zA-Z0-9_]+$/.test(username)) {
+                    return (
+                        <a key={i} href={`/comunidad/usuarios/${username}`} className="text-blue-400 hover:text-blue-300 font-medium hover:underline">
+                            {word}
+                        </a>
+                    );
+                }
             }
             return word;
         });

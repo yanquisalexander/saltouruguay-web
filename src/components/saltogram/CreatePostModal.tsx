@@ -9,6 +9,7 @@ import {
     LucideUploadCloud
 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
+import { actions } from "astro:actions";
 
 interface CreatePostModalProps {
     isOpen: boolean;
@@ -27,6 +28,8 @@ export default function CreatePostModal({
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [mentionUsers, setMentionUsers] = useState<any[]>([]);
+    const [showMentions, setShowMentions] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -38,10 +41,40 @@ export default function CreatePostModal({
         }
     };
 
-    const handleTextChange = (e: Event) => {
-        const val = (e.target as HTMLTextAreaElement).value;
+    const handleTextChange = async (e: any) => {
+        const val = e.target.value;
         setText(val);
         adjustTextareaHeight();
+
+        const cursor = e.target.selectionStart;
+        const textBeforeCursor = val.slice(0, cursor);
+        const lastWord = textBeforeCursor.split(/\s/).pop();
+
+        if (lastWord && lastWord.startsWith("@") && lastWord.length > 1) {
+            const query = lastWord.slice(1);
+            const { data } = await actions.saltogram.searchUsers({ query });
+            if (data?.users && data.users.length > 0) {
+                setMentionUsers(data.users);
+                setShowMentions(true);
+            } else {
+                setShowMentions(false);
+            }
+        } else {
+            setShowMentions(false);
+        }
+    };
+
+    const handleMentionSelect = (username: string) => {
+        const cursor = textareaRef.current?.selectionStart || 0;
+        const textBeforeCursor = text.slice(0, cursor);
+        const textAfterCursor = text.slice(cursor);
+        
+        const lastWordStart = textBeforeCursor.lastIndexOf("@");
+        const newText = textBeforeCursor.slice(0, lastWordStart) + `@${username} ` + textAfterCursor;
+        
+        setText(newText);
+        setShowMentions(false);
+        textareaRef.current?.focus();
     };
 
     const processFile = (file: File) => {
@@ -145,6 +178,29 @@ export default function CreatePostModal({
 
                         {/* Textarea Auto-resize */}
                         <div className="relative">
+                            {/* Mentions Popup */}
+                            {showMentions && mentionUsers.length > 0 && (
+                                <div className="absolute bottom-full left-0 mb-2 w-64 bg-[#242526] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2">
+                                    {mentionUsers.map(user => (
+                                        <button
+                                            key={user.id}
+                                            type="button"
+                                            onClick={() => handleMentionSelect(user.username)}
+                                            className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors text-left"
+                                        >
+                                            <img 
+                                                src={user.avatar || `https://ui-avatars.com/api/?name=${user.displayName}`} 
+                                                className="w-8 h-8 rounded-full object-cover"
+                                            />
+                                            <div>
+                                                <p className="text-white text-sm font-medium">{user.displayName}</p>
+                                                <p className="text-white/40 text-xs">@{user.username}</p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
                             <textarea
                                 ref={textareaRef}
                                 value={text}
