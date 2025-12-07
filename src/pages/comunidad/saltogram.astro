@@ -3,6 +3,7 @@ import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
 import SaltogramFeed from "@/components/saltogram/SaltogramFeed";
 import FriendRequestsWidget from "@/components/saltogram/FriendRequestsWidget";
+import StoriesRail from "@/components/saltogram/stories/StoriesRail";
 import { LucideCamera, LucideTrendingUp } from "lucide-preact";
 import { getSaltogramStats, getTrendingTags } from "@/lib/saltogram";
 import { client } from "@/db/client";
@@ -102,6 +103,7 @@ const friendRequests = session?.user?.id
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
       {/* Main Feed */}
       <main>
+        <StoriesRail client:load user={session?.user} />
         <SaltogramFeed client:load user={session?.user} />
       </main>
 

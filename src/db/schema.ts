@@ -1216,6 +1216,35 @@ export const SaltogramReportsTable = pgTable("saltogram_reports", {
     createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
 });
 
+export const SaltogramStoriesTable = pgTable("saltogram_stories", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    mediaUrl: varchar("media_url").notNull(),
+    mediaType: varchar("media_type", { enum: ["image", "video"] }).notNull(),
+    duration: integer("duration").default(5), // Seconds
+    metadata: jsonb("metadata").default({}), // Stickers, text, etc.
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+});
+
+export const SaltogramStoryViewsTable = pgTable("saltogram_story_views", {
+    id: serial("id").primaryKey(),
+    storyId: integer("story_id").notNull().references(() => SaltogramStoriesTable.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    viewedAt: timestamp("viewed_at").notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueStoryView: unique("unique_story_view").on(t.storyId, t.userId),
+}));
+
+export const SaltogramStoryLikesTable = pgTable("saltogram_story_likes", {
+    id: serial("id").primaryKey(),
+    storyId: integer("story_id").notNull().references(() => SaltogramStoriesTable.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueStoryLike: unique("unique_story_like").on(t.storyId, t.userId),
+}));
+
 /* 
     Saltogram Relations
 */
@@ -1292,6 +1321,37 @@ export const saltogramReportsRelations = relations(SaltogramReportsTable, ({ one
     }),
     reviewer: one(UsersTable, {
         fields: [SaltogramReportsTable.reviewedBy],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const saltogramStoriesRelations = relations(SaltogramStoriesTable, ({ one, many }) => ({
+    user: one(UsersTable, {
+        fields: [SaltogramStoriesTable.userId],
+        references: [UsersTable.id],
+    }),
+    views: many(SaltogramStoryViewsTable),
+    likes: many(SaltogramStoryLikesTable),
+}));
+
+export const saltogramStoryViewsRelations = relations(SaltogramStoryViewsTable, ({ one }) => ({
+    story: one(SaltogramStoriesTable, {
+        fields: [SaltogramStoryViewsTable.storyId],
+        references: [SaltogramStoriesTable.id],
+    }),
+    user: one(UsersTable, {
+        fields: [SaltogramStoryViewsTable.userId],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const saltogramStoryLikesRelations = relations(SaltogramStoryLikesTable, ({ one }) => ({
+    story: one(SaltogramStoriesTable, {
+        fields: [SaltogramStoryLikesTable.storyId],
+        references: [SaltogramStoriesTable.id],
+    }),
+    user: one(UsersTable, {
+        fields: [SaltogramStoryLikesTable.userId],
         references: [UsersTable.id],
     }),
 }));

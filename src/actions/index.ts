@@ -23,6 +23,7 @@ import { events } from "./admin/events";
 import { banco } from "./banco";
 import { pet } from "./pet";
 import { saltogram } from "./saltogram";
+import { stories } from "./saltogram-stories";
 import { events as userEvents } from "./events";
 import { experimental_AstroContainer } from "astro/container";
 import { sendNotificationEmail } from "@/utils/email";
@@ -35,6 +36,7 @@ import { voice } from "./voice";
 
 export const server = {
     saltogram,
+    stories,
     userEvents,
     banco,
     pet,
