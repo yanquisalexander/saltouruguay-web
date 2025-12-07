@@ -20,6 +20,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     const [progress, setProgress] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [liked, setLiked] = useState(false);
+    const [likesCount, setLikesCount] = useState(0);
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const progressInterval = useRef<number | null>(null);
@@ -38,6 +39,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     useEffect(() => {
         setProgress(0);
         setLiked(story.isLiked);
+        setLikesCount(story.likesCount);
 
         // Mark as viewed
         if (!story.isSeen && !isOwner) {
@@ -90,7 +92,9 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     }, [currentStoryIndex, currentUserIndex]);
 
     const toggleLike = async () => {
-        setLiked(!liked);
+        const newLiked = !liked;
+        setLiked(newLiked);
+        setLikesCount(prev => newLiked ? prev + 1 : prev - 1);
         await actions.stories.toggleLike({ storyId: story.id });
     };
 
@@ -227,9 +231,13 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                         <div className="flex items-center gap-4 ml-auto">
                             {isOwner && (
                                 <>
-                                    <div className="flex items-center gap-1 text-white/80 mr-2">
+                                    <div className="flex items-center gap-1 text-white/80 mr-2" title={`${story.views.length} vistas`}>
                                         <LucideEye size={20} />
                                         <span className="text-sm font-bold">{story.views.length}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-white/80 mr-2" title={`${likesCount} me gusta`}>
+                                        <LucideHeart size={20} />
+                                        <span className="text-sm font-bold">{likesCount}</span>
                                     </div>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); handleDelete(); }}
@@ -242,12 +250,17 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                             )}
 
                             {!isOwner && (
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); toggleLike(); }}
-                                    className={`p-2 rounded-full transition-transform active:scale-90 ${liked ? 'text-red-500' : 'text-white'}`}
-                                >
-                                    <LucideHeart size={28} fill={liked ? "currentColor" : "none"} />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    {likesCount > 0 && (
+                                        <span className="text-white text-sm font-medium">{likesCount}</span>
+                                    )}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); toggleLike(); }}
+                                        className={`p-2 rounded-full transition-transform active:scale-90 ${liked ? 'text-red-500' : 'text-white'}`}
+                                    >
+                                        <LucideHeart size={28} fill={liked ? "currentColor" : "none"} />
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>
