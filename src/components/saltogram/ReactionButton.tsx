@@ -8,19 +8,28 @@ interface ReactionButtonProps {
     currentUserId?: number;
 }
 
+interface RecentReaction {
+    userId: number;
+    displayName: string;
+    username: string;
+    avatar: string | null;
+    emoji: string;
+}
+
 const EMOJIS = ["❤️", "🔥", "😂", "👍", "😮", "😢", "😡"];
 
 export default function ReactionButton({ postId, currentUserId }: ReactionButtonProps) {
     const [reactions, setReactions] = useState<SaltogramReaction[]>([]);
+    const [userReaction, setUserReaction] = useState<string | null>(null);
+    const [recentReactions, setRecentReactions] = useState<RecentReaction[]>([]);
     const [showPicker, setShowPicker] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [reactingTo, setReactingTo] = useState<string | null>(null); // Para saber qué emoji está cargando
+    const [reactingTo, setReactingTo] = useState<string | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetchReactions();
 
-        // Close on click outside
         const handleClickOutside = (event: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setShowPicker(false);
@@ -35,6 +44,8 @@ export default function ReactionButton({ postId, currentUserId }: ReactionButton
             const response = await fetch(`/api/saltogram/posts/${postId}/reactions`);
             const data = await response.json();
             setReactions(data.reactions || []);
+            setUserReaction(data.userReaction || null);
+            setRecentReactions(data.recentReactions || []);
         } catch (error) {
             console.error(error);
         }
@@ -48,7 +59,7 @@ export default function ReactionButton({ postId, currentUserId }: ReactionButton
         if (loading) return;
 
         setLoading(true);
-        setReactingTo(emoji); // Activar spinner en este emoji específico
+        setReactingTo(emoji);
 
         try {
             const response = await fetch(`/api/saltogram/posts/${postId}/reactions`, {
@@ -62,7 +73,6 @@ export default function ReactionButton({ postId, currentUserId }: ReactionButton
             if (response.ok) {
                 await fetchReactions();
                 setShowPicker(false);
-                // Pequeña animación de éxito o feedback podría ir aquí
             } else {
                 toast.error(data.error || "Error al reaccionar");
             }
@@ -77,6 +87,32 @@ export default function ReactionButton({ postId, currentUserId }: ReactionButton
     const totalReactions = reactions.reduce((sum, r) => sum + r.count, 0);
     const hasReactions = totalReactions > 0;
 
+    // Get top 3 emojis by count
+    const topEmojis = reactions
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3)
+        .map(r => r.emoji);
+
+    // Generate tooltip text
+    const getTooltipText = () => {
+        if (recentReactions.length === 0) return "";
+        
+        const names = recentReactions.map(r => r.userId === currentUserId ? "Tú" : r.displayName);
+        const uniqueNames = [...new Set(names)]; // Remove duplicates if any (though API returns unique users usually, but logic might vary)
+        
+        // We want to show a few names
+        const displayNames = uniqueNames.slice(0, 5);
+        const remaining = totalReactions - displayNames.length; // This is an approximation as totalReactions is sum of counts, and uniqueNames is users. 
+        // Actually totalReactions is correct count of reactions. 
+        // If one user can only react once per post (which seems to be the case in API logic: "Check if user already reacted... Remove reaction... Add reaction"), then totalReactions == totalUsers.
+        
+        let text = displayNames.join(", ");
+        if (totalReactions > displayNames.length) {
+            text += ` y ${totalReactions - displayNames.length} más`;
+        }
+        return text;
+    };
+
     return (
         <div className="relative" ref={containerRef}>
 
@@ -84,29 +120,34 @@ export default function ReactionButton({ postId, currentUserId }: ReactionButton
             <button
                 onClick={() => setShowPicker(!showPicker)}
                 className={`
-                    group flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300
+                    group flex items-center gap-2 px-2 py-1.5 rounded-full transition-all duration-300
                     ${showPicker
-                        ? 'bg-white/10 text-white'
-                        : 'text-white/60 hover:text-red-400 hover:bg-white/5'
+                        ? 'bg-white/10'
+                        : 'hover:bg-white/5'
                     }
                 `}
+                title={getTooltipText()}
             >
-                <div className="relative">
-                    <LucideHeart
-                        size={20}
-                        className={`
-                            transition-transform duration-300
-                            ${showPicker || hasReactions ? 'fill-red-500 text-red-500' : 'group-hover:scale-110'}
-                            ${showPicker ? 'scale-110' : ''}
-                        `}
-                    />
-                    {/* Efecto de partículas (simulado con opacidad) si hay reacciones */}
-                    {hasReactions && !showPicker && (
-                        <div className="absolute inset-0 bg-red-500 blur-lg opacity-20 rounded-full"></div>
+                <div className="flex items-center -space-x-1.5 overflow-hidden">
+                    {hasReactions ? (
+                        topEmojis.map((emoji, idx) => (
+                            <div 
+                                key={emoji} 
+                                className="relative z-10 w-5 h-5 flex items-center justify-center bg-[#242526] rounded-full ring-2 ring-[#242526]"
+                                style={{ zIndex: 3 - idx }}
+                            >
+                                <span className="text-xs leading-none">{emoji}</span>
+                            </div>
+                        ))
+                    ) : (
+                        <LucideHeart
+                            size={20}
+                            className="text-white/60 group-hover:text-red-400 transition-colors"
+                        />
                     )}
                 </div>
 
-                <span className={`font-medium text-sm ${hasReactions ? 'text-white' : 'text-inherit'}`}>
+                <span className={`font-medium text-[13px] ${userReaction ? 'text-red-400' : 'text-[#b0b3b8] group-hover:text-[#e4e6eb]'}`}>
                     {totalReactions > 0 ? totalReactions : 'Me gusta'}
                 </span>
             </button>
@@ -114,18 +155,22 @@ export default function ReactionButton({ postId, currentUserId }: ReactionButton
             {/* EMOJI PICKER (Floating Pill) */}
             {showPicker && (
                 <div className="absolute bottom-full left-0 mb-3 z-20 animate-in slide-in-from-bottom-2 fade-in zoom-in-95 duration-200">
-                    <div className="flex items-center gap-1 p-2 bg-[#0a0a0a]/90 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl ring-1 ring-white/5">
+                    <div className="flex items-center gap-1 p-2 bg-[#242526] border border-white/10 rounded-full shadow-2xl ring-1 ring-black/50">
                         {EMOJIS.map((emoji) => {
                             const reactionData = reactions.find((r) => r.emoji === emoji);
                             const count = reactionData ? reactionData.count : 0;
                             const isLoadingThis = reactingTo === emoji;
+                            const isSelected = userReaction === emoji;
 
                             return (
                                 <button
                                     key={emoji}
                                     onClick={() => handleReaction(emoji)}
                                     disabled={loading}
-                                    className="relative group/emoji flex flex-col items-center justify-center p-2 rounded-full hover:bg-white/10 transition-all hover:-translate-y-1 active:scale-95 w-10 h-10"
+                                    className={`
+                                        relative group/emoji flex flex-col items-center justify-center p-2 rounded-full transition-all hover:-translate-y-1 active:scale-95 w-10 h-10
+                                        ${isSelected ? 'bg-white/10' : 'hover:bg-white/5'}
+                                    `}
                                 >
                                     {/* Contenido del botón */}
                                     {isLoadingThis ? (
@@ -144,15 +189,15 @@ export default function ReactionButton({ postId, currentUserId }: ReactionButton
                                     )}
 
                                     {/* Indicador de "activo" sutil debajo si tiene votos */}
-                                    {count > 0 && !isLoadingThis && (
-                                        <div className="absolute bottom-1 w-1 h-1 bg-white/30 rounded-full"></div>
+                                    {isSelected && !isLoadingThis && (
+                                        <div className="absolute bottom-1 w-1 h-1 bg-red-500 rounded-full"></div>
                                     )}
                                 </button>
                             );
                         })}
                     </div>
                     {/* Triángulo/Flecha del tooltip */}
-                    <div className="absolute left-6 -bottom-1.5 w-3 h-3 bg-[#0a0a0a]/90 border-r border-b border-white/10 rotate-45 transform"></div>
+                    <div className="absolute left-6 -bottom-1.5 w-3 h-3 bg-[#242526] border-r border-b border-white/10 rotate-45 transform"></div>
                 </div>
             )}
         </div>

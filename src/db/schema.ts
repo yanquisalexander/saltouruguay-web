@@ -1191,7 +1191,7 @@ export const SaltogramReactionsTable = pgTable("saltogram_reactions", {
     postId: integer("post_id").notNull().references(() => SaltogramPostsTable.id, { onDelete: "cascade" }),
     userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
     emoji: varchar("emoji", { length: 10 }).notNull(),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`current_timestamp`),
 }, (t) => ({
     uniqueUserPostEmoji: unique("unique_user_post_emoji").on(t.postId, t.userId, t.emoji),
 }));

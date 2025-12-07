@@ -1,9 +1,9 @@
 import { client } from "@/db/client";
-import { SaltogramPostsTable, SaltogramReactionsTable } from "@/db/schema";
+import { SaltogramPostsTable, SaltogramReactionsTable, UsersTable } from "@/db/schema";
 import { awardCoins, SALTOGRAM_REWARDS } from "@/services/saltogram-rewards";
 import type { APIContext } from "astro";
 import { getSession } from "auth-astro/server";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 
 const ALLOWED_EMOJIS = ["❤️", "🔥", "😂", "👍", "😮", "😢", "😡"];
 
@@ -149,7 +149,7 @@ export const POST = async ({ request, params }: APIContext) => {
 /**
  * GET - Get reactions for a post
  */
-export const GET = async ({ params }: APIContext) => {
+export const GET = async ({ request, params }: APIContext) => {
     const postId = parseInt(params.postId || "");
 
     if (isNaN(postId)) {
@@ -165,16 +165,54 @@ export const GET = async ({ params }: APIContext) => {
     }
 
     try {
-        const reactions = await client
+        const session = await getSession(request);
+        const currentUserId = session?.user?.id ? Number(session.user.id) : null;
+
+        // 1. Get counts per emoji
+        const reactionsStats = await client
             .select({
                 emoji: SaltogramReactionsTable.emoji,
                 count: sql<number>`COUNT(*)::int`,
             })
             .from(SaltogramReactionsTable)
             .where(eq(SaltogramReactionsTable.postId, postId))
-            .groupBy(SaltogramReactionsTable.emoji);
+            .groupBy(SaltogramReactionsTable.emoji)
+            .orderBy(sql`count DESC`);
 
-        return new Response(JSON.stringify({ reactions }), {
+        // 2. Get current user's reaction
+        let userReaction = null;
+        if (currentUserId) {
+            const result = await client
+                .select({ emoji: SaltogramReactionsTable.emoji })
+                .from(SaltogramReactionsTable)
+                .where(and(
+                    eq(SaltogramReactionsTable.postId, postId),
+                    eq(SaltogramReactionsTable.userId, currentUserId)
+                ))
+                .limit(1);
+            if (result.length > 0) userReaction = result[0].emoji;
+        }
+
+        // 3. Get recent reactions with user info
+        const recentReactions = await client
+            .select({
+                userId: UsersTable.id,
+                displayName: UsersTable.displayName,
+                username: UsersTable.username,
+                avatar: UsersTable.avatar,
+                emoji: SaltogramReactionsTable.emoji,
+            })
+            .from(SaltogramReactionsTable)
+            .innerJoin(UsersTable, eq(SaltogramReactionsTable.userId, UsersTable.id))
+            .where(eq(SaltogramReactionsTable.postId, postId))
+            .orderBy(desc(SaltogramReactionsTable.createdAt))
+            .limit(5);
+
+        return new Response(JSON.stringify({
+            reactions: reactionsStats,
+            userReaction,
+            recentReactions
+        }), {
             status: 200,
             headers: {
                 "Content-Type": "application/json",
