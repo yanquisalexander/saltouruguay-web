@@ -44,6 +44,7 @@ export async function uploadMedia(
     if (mimeType.startsWith('image/')) {
         try {
             body = await sharp(buffer)
+                .rotate()
                 .resize(MAX_WIDTH, MAX_HEIGHT, {
                     fit: "inside",
                     withoutEnlargement: true,
