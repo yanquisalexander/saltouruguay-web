@@ -87,7 +87,15 @@ export default function CommentSection({
     };
 
     const handleReply = (commentId: number, username: string) => {
-        setReplyingTo({ id: commentId, username });
+        const comment = comments.find(c => c.id === commentId);
+        const targetId = comment?.parentId || commentId;
+        
+        // If replying to a reply, add mention
+        if (comment?.parentId) {
+            setNewComment(`@${username} `);
+        }
+
+        setReplyingTo({ id: targetId, username });
         inputRef.current?.focus();
     };
 
