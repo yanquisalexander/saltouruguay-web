@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Send, LucideLoader2, LucideCornerDownRight, LucideX } from "lucide-preact";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { actions } from "astro:actions";
 
 interface CommentSectionProps {
     postId: number;
@@ -29,6 +30,8 @@ export default function CommentSection({
     const [submitting, setSubmitting] = useState(false);
     const [newComment, setNewComment] = useState("");
     const [replyingTo, setReplyingTo] = useState<{ id: number; username: string } | null>(null);
+    const [mentionUsers, setMentionUsers] = useState<any[]>([]);
+    const [showMentions, setShowMentions] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -36,6 +39,41 @@ export default function CommentSection({
              fetchComments();
         }
     }, [postId, preview]);
+
+    const handleInputChange = async (e: any) => {
+        const value = e.target.value;
+        setNewComment(value);
+        
+        const cursor = e.target.selectionStart;
+        const textBeforeCursor = value.slice(0, cursor);
+        const lastWord = textBeforeCursor.split(/\s/).pop();
+
+        if (lastWord && lastWord.startsWith("@") && lastWord.length > 1) {
+            const query = lastWord.slice(1);
+            const { data } = await actions.saltogram.searchUsers({ query });
+            if (data?.users && data.users.length > 0) {
+                setMentionUsers(data.users);
+                setShowMentions(true);
+            } else {
+                setShowMentions(false);
+            }
+        } else {
+            setShowMentions(false);
+        }
+    };
+
+    const handleMentionSelect = (username: string) => {
+        const cursor = inputRef.current?.selectionStart || 0;
+        const textBeforeCursor = newComment.slice(0, cursor);
+        const textAfterCursor = newComment.slice(cursor);
+        
+        const lastWordStart = textBeforeCursor.lastIndexOf("@");
+        const newText = textBeforeCursor.slice(0, lastWordStart) + `@${username} ` + textAfterCursor;
+        
+        setNewComment(newText);
+        setShowMentions(false);
+        inputRef.current?.focus();
+    };
 
     const fetchComments = async () => {
         try {
@@ -115,6 +153,29 @@ export default function CommentSection({
             {/* Input Area - Hidden in preview unless we want to allow quick comment */}
             {!preview && (
                 <form onSubmit={handleSubmit} className="relative group">
+                    {/* Mentions Popup */}
+                    {showMentions && mentionUsers.length > 0 && (
+                        <div className="absolute bottom-full left-0 mb-2 w-64 bg-[#242526] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2">
+                            {mentionUsers.map(user => (
+                                <button
+                                    key={user.id}
+                                    type="button"
+                                    onClick={() => handleMentionSelect(user.username)}
+                                    className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors text-left"
+                                >
+                                    <img 
+                                        src={user.avatar || `https://ui-avatars.com/api/?name=${user.displayName}`} 
+                                        className="w-8 h-8 rounded-full object-cover"
+                                    />
+                                    <div>
+                                        <p className="text-white text-sm font-medium">{user.displayName}</p>
+                                        <p className="text-white/40 text-xs">@{user.username}</p>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                     {replyingTo && (
                         <div className="flex items-center justify-between bg-[#242526] px-4 py-1 text-xs text-white/60 rounded-t-xl border-x border-t border-white/10 -mb-1 pb-2">
                             <span className="flex items-center gap-1">
@@ -135,7 +196,7 @@ export default function CommentSection({
                             ref={inputRef}
                             type="text"
                             value={newComment}
-                            onInput={(e) => setNewComment((e.target as HTMLInputElement).value)}
+                            onInput={handleInputChange}
                             placeholder={currentUserId ? (replyingTo ? `Responde a ${replyingTo.username}...` : "Escribe un comentario...") : "Inicia sesión para comentar"}
                             maxLength={500}
                             className="flex-1 bg-transparent text-white text-sm placeholder:text-white/30 focus:outline-none py-1"
@@ -208,6 +269,23 @@ interface CommentItemProps {
     isReply?: boolean;
 }
 
+const formatCommentText = (text: string) => {
+    return text.split(/(\s+)/).map((part, i) => {
+        if (part.startsWith("@") && part.length > 1) {
+            const username = part.slice(1);
+            // Simple regex to check if it's a valid username format (alphanumeric + underscore)
+            if (/^[a-zA-Z0-9_]+$/.test(username)) {
+                return (
+                    <a key={i} href={`/comunidad/usuarios/${username}`} className="text-blue-400 hover:underline font-medium">
+                        {part}
+                    </a>
+                );
+            }
+        }
+        return part;
+    });
+};
+
 const CommentItem = ({ comment, allComments, onReply, preview, isReply = false }: CommentItemProps) => {
     const replies = useMemo(() => 
         allComments
@@ -234,7 +312,7 @@ const CommentItem = ({ comment, allComments, onReply, preview, isReply = false }
                         </span>
                     </div>
                     <p className="text-sm text-white/80 whitespace-pre-wrap break-words leading-relaxed">
-                        {comment.text}
+                        {formatCommentText(comment.text)}
                     </p>
                 </div>
                 

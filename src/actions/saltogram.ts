@@ -2,10 +2,37 @@ import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
 import { client } from "@/db/client";
-import { SaltogramPostsTable } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { SaltogramPostsTable, UsersTable } from "@/db/schema";
+import { eq, ilike, or } from "drizzle-orm";
 
 export const saltogram = {
+    searchUsers: defineAction({
+        input: z.object({ query: z.string().min(1) }),
+        handler: async ({ query }, { request }) => {
+            const session = await getSession(request);
+            if (!session?.user) {
+                throw new ActionError({ code: "UNAUTHORIZED", message: "No autorizado" });
+            }
+
+            const users = await client
+                .select({
+                    id: UsersTable.id,
+                    username: UsersTable.username,
+                    displayName: UsersTable.displayName,
+                    avatar: UsersTable.avatar,
+                })
+                .from(UsersTable)
+                .where(
+                    or(
+                        ilike(UsersTable.username, `%${query}%`),
+                        ilike(UsersTable.displayName, `%${query}%`)
+                    )
+                )
+                .limit(5);
+
+            return { users };
+        }
+    }),
     togglePin: defineAction({
         input: z.object({ postId: z.number() }),
         handler: async ({ postId }, { request }) => {
