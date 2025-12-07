@@ -1182,6 +1182,7 @@ export const SaltogramPostsTable = pgTable("saltogram_posts", {
     isFeatured: boolean("is_featured").notNull().default(false),
     featuredUntil: timestamp("featured_until", { withTimezone: true }),
     isHidden: boolean("is_hidden").notNull().default(false),
+    metadata: jsonb("metadata"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`current_timestamp`),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`current_timestamp`),
 });

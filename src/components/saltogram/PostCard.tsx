@@ -7,6 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
+import PostMusicPlayer from "./PostMusicPlayer";
 
 interface PostCardProps {
     post: SaltogramPost;
@@ -200,6 +201,11 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                         {formatText(post.text)}
                     </p>
                 </div>
+            )}
+
+            {/* Music Player */}
+            {post.metadata?.music && (
+                <PostMusicPlayer music={post.metadata.music} />
             )}
 
             {/* Image */}

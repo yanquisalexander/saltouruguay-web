@@ -63,15 +63,15 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             
             // Vibrant gradient for progress (played part)
             const progressGradient = ctx!.createLinearGradient(0, 0, 0, 48);
-            progressGradient.addColorStop(0, '#FF0080');   // Pink
-            progressGradient.addColorStop(0.5, '#8000FF'); // Purple
-            progressGradient.addColorStop(1, '#0080FF');   // Blue
+            progressGradient.addColorStop(0, '#FFD700');   // Gold
+            progressGradient.addColorStop(0.5, '#FFA500'); // Orange
+            progressGradient.addColorStop(1, '#FF4500');   // OrangeRed
 
             // Dimmed gradient for the rest of the wave
             const waveGradient = ctx!.createLinearGradient(0, 0, 0, 48);
-            waveGradient.addColorStop(0, 'rgba(255, 0, 128, 0.5)');
-            waveGradient.addColorStop(0.5, 'rgba(128, 0, 255, 0.5)');
-            waveGradient.addColorStop(1, 'rgba(0, 128, 255, 0.5)');
+            waveGradient.addColorStop(0, 'rgba(255, 215, 0, 0.5)');
+            waveGradient.addColorStop(0.5, 'rgba(255, 165, 0, 0.5)');
+            waveGradient.addColorStop(1, 'rgba(255, 69, 0, 0.5)');
 
             const ws = WaveSurfer.create({
                 container: waveformContainerRef.current,

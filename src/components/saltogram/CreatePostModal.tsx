@@ -1,4 +1,4 @@
-import { useState, useRef } from "preact/hooks";
+import { useState, useRef, useEffect } from "preact/hooks";
 import type { SaltogramPost } from "@/types/saltogram";
 import { toast } from "sonner";
 import {
@@ -6,10 +6,15 @@ import {
     Image as ImageIcon,
     Send,
     LucideLoader2,
-    LucideUploadCloud
+    LucideUploadCloud,
+    LucideMusic,
+    LucideTrash2,
+    LucidePlay,
+    LucidePause
 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
+import MusicPicker from "./stories/MusicPicker";
 
 interface CreatePostModalProps {
     isOpen: boolean;
@@ -30,8 +35,46 @@ export default function CreatePostModal({
     const [submitting, setSubmitting] = useState(false);
     const [mentionUsers, setMentionUsers] = useState<any[]>([]);
     const [showMentions, setShowMentions] = useState(false);
+    const [showMusicPicker, setShowMusicPicker] = useState(false);
+    const [selectedMusic, setSelectedMusic] = useState<any | null>(null);
+    const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        if (selectedMusic) {
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+            audioRef.current = new Audio(selectedMusic.preview);
+            audioRef.current.onended = () => setIsPlayingPreview(false);
+        } else {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+            setIsPlayingPreview(false);
+        }
+
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+        };
+    }, [selectedMusic]);
+
+    const togglePreview = () => {
+        if (!audioRef.current) return;
+        
+        if (isPlayingPreview) {
+            audioRef.current.pause();
+            setIsPlayingPreview(false);
+        } else {
+            audioRef.current.play().catch(e => console.error("Audio play failed", e));
+            setIsPlayingPreview(true);
+        }
+    };
 
     // Auto-resize del textarea
     const adjustTextareaHeight = () => {
@@ -114,6 +157,11 @@ export default function CreatePostModal({
             const formData = new FormData();
             if (text.trim()) formData.append("text", text.trim());
             if (image) formData.append("image", image);
+            if (selectedMusic) {
+                formData.append("metadata", JSON.stringify({
+                    music: selectedMusic
+                }));
+            }
 
             const response = await fetch("/api/saltogram/posts", {
                 method: "POST",
@@ -123,7 +171,7 @@ export default function CreatePostModal({
 
             if (response.ok) {
                 onPostCreated(data.post);
-                setText(""); setImage(null); setImagePreview(null);
+                setText(""); setImage(null); setImagePreview(null); setSelectedMusic(null);
                 if (textareaRef.current) textareaRef.current.style.height = "auto";
             } else {
                 toast.error(data.error || "Error al publicar");
@@ -161,7 +209,12 @@ export default function CreatePostModal({
                 </div>
 
                 {/* Form Content */}
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar">
+                <form 
+                    onSubmit={handleSubmit} 
+                    className="flex-1 overflow-y-auto custom-scrollbar"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleDrop}
+                >
                     <div className="p-6 space-y-6">
                         {/* User Info */}
                         <div className="flex items-center gap-4">
@@ -216,9 +269,9 @@ export default function CreatePostModal({
                             </p>
                         </div>
 
-                        {/* Image Upload / Preview */}
+                        {/* Media Previews */}
                         <div className="space-y-4">
-                            {imagePreview ? (
+                            {imagePreview && (
                                 <div className="relative group rounded-2xl overflow-hidden border border-white/10">
                                     <img src={imagePreview} alt="Preview" className="w-full max-h-[400px] object-cover" />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
@@ -240,29 +293,65 @@ export default function CreatePostModal({
                                         </button>
                                     </div>
                                 </div>
-                            ) : (
-                                <div
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={handleDrop}
-                                    onClick={() => !submitting && fileInputRef.current?.click()}
-                                    className={`
-                                        relative w-full aspect-video rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden cursor-pointer group
-                                        ${submitting ? 'opacity-50 cursor-not-allowed' : 'border-white/10 bg-white/5 hover:border-purple-500/50 hover:bg-white/[0.07]'}
-                                    `}
-                                >
-                                    <div className="p-4 rounded-full bg-white/5 group-hover:bg-purple-500/10 text-white/50 group-hover:text-purple-400 transition-colors mb-3">
-                                        <ImageIcon size={32} />
+                            )}
+
+                            {selectedMusic && (
+                                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                                    <div className="relative w-12 h-12 shrink-0 group">
+                                        <img src={selectedMusic.album.cover_medium} className="w-full h-full rounded-lg object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={togglePreview}
+                                            className={`absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg transition-opacity ${isPlayingPreview ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                        >
+                                            {isPlayingPreview ? (
+                                                <LucidePause size={20} className="text-white" />
+                                            ) : (
+                                                <LucidePlay size={20} className="text-white" />
+                                            )}
+                                        </button>
                                     </div>
-                                    <span className="text-sm font-medium text-white/70 group-hover:text-white">
-                                        Arrastra una imagen o haz clic
-                                    </span>
-                                    <span className="text-xs text-white/30 mt-1">
-                                        PNG, JPG, GIF (Máx. 10MB)
-                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-white font-bold text-sm truncate">{selectedMusic.title}</p>
+                                        <p className="text-white/50 text-xs truncate">{selectedMusic.artist.name}</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedMusic(null)}
+                                        className="p-2 text-white/50 hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors"
+                                    >
+                                        <LucideTrash2 size={18} />
+                                    </button>
                                 </div>
                             )}
-                            <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} className="hidden" disabled={submitting} />
                         </div>
+
+                        {/* Add to post actions */}
+                        <div className="border border-white/10 rounded-xl p-4 flex items-center justify-between bg-white/5">
+                            <span className="text-white/70 font-medium text-sm">Añadir a tu publicación</span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className={`p-2 rounded-full transition-colors ${imagePreview ? 'text-white/20 cursor-not-allowed' : 'text-green-400 hover:bg-green-400/10'}`}
+                                    title="Foto/Video"
+                                    disabled={!!imagePreview}
+                                >
+                                    <ImageIcon size={24} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowMusicPicker(true)}
+                                    className={`p-2 rounded-full transition-colors ${selectedMusic ? 'text-white/20 cursor-not-allowed' : 'text-purple-400 hover:bg-purple-400/10'}`}
+                                    title="Música"
+                                    disabled={!!selectedMusic}
+                                >
+                                    <LucideMusic size={24} />
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} className="hidden" disabled={submitting} />
                     </div>
 
                     {/* Footer Actions */}
@@ -296,6 +385,21 @@ export default function CreatePostModal({
                     </div>
                 </form>
             </div>
+
+            {/* Music Picker Overlay */}
+            {showMusicPicker && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md h-[80vh] bg-[#242526] rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative flex flex-col">
+                         <MusicPicker 
+                            onSelect={(track) => {
+                                setSelectedMusic(track);
+                                setShowMusicPicker(false);
+                            }}
+                            onClose={() => setShowMusicPicker(false)}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

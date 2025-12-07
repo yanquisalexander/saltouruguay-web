@@ -37,6 +37,7 @@ export const GET = async ({ request, url }: APIContext) => {
                 isPinned: SaltogramPostsTable.isPinned,
                 isFeatured: SaltogramPostsTable.isFeatured,
                 featuredUntil: SaltogramPostsTable.featuredUntil,
+                metadata: SaltogramPostsTable.metadata,
                 createdAt: SaltogramPostsTable.createdAt,
                 user: {
                     id: UsersTable.id,
@@ -155,6 +156,8 @@ export const POST = async ({ request }: APIContext) => {
         const formData = await request.formData();
         const text = formData.get("text") as string | null;
         const image = formData.get("image") as File | null;
+        const metadataStr = formData.get("metadata") as string | null;
+        const metadata = metadataStr ? JSON.parse(metadataStr) : null;
 
         // Validate text length
         if (text && text.length > MAX_TEXT_LENGTH) {
@@ -211,6 +214,7 @@ export const POST = async ({ request }: APIContext) => {
                 userId,
                 text,
                 imageUrl,
+                metadata,
             })
             .returning();
 
@@ -226,6 +230,7 @@ export const POST = async ({ request }: APIContext) => {
                 imageUrl: SaltogramPostsTable.imageUrl,
                 isPinned: SaltogramPostsTable.isPinned,
                 isFeatured: SaltogramPostsTable.isFeatured,
+                metadata: SaltogramPostsTable.metadata,
                 createdAt: SaltogramPostsTable.createdAt,
                 user: {
                     id: UsersTable.id,

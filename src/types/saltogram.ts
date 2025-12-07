@@ -15,6 +15,7 @@ export interface SaltogramPost {
     isPinned: boolean;
     isFeatured: boolean;
     featuredUntil: string | null;
+    metadata?: any;
     createdAt: string;
     user: SaltogramUser;
     reactionsCount: number;
