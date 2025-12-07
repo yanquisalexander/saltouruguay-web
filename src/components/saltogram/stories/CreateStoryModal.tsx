@@ -69,15 +69,17 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
 
             // Dimmed gradient for the rest of the wave
             const waveGradient = ctx!.createLinearGradient(0, 0, 0, 48);
-            waveGradient.addColorStop(0, 'rgba(255, 215, 0, 0.5)');
-            waveGradient.addColorStop(0.5, 'rgba(255, 165, 0, 0.5)');
-            waveGradient.addColorStop(1, 'rgba(255, 69, 0, 0.5)');
+            waveGradient.addColorStop(0, 'rgba(255, 215, 0, 1)');
+            waveGradient.addColorStop(0.5, 'rgba(255, 165, 0, 1)');
+            waveGradient.addColorStop(1, 'rgba(255, 69, 0, 1)');
 
             const ws = WaveSurfer.create({
                 container: waveformContainerRef.current,
-                waveColor: waveGradient,
+                waveColor: "rgba(255, 255, 255, 1)",
                 progressColor: progressGradient,
-                cursorColor: 'rgba(255, 255, 255, 0.5)',
+                // Cursor como instagram
+                cursorWidth: 2,
+                cursorColor: 'rgba(255, 255, 255, 1)',
                 barWidth: 3,
                 barGap: 2,
                 barRadius: 3,

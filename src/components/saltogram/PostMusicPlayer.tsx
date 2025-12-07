@@ -23,15 +23,18 @@ export default function PostMusicPlayer({ music }: PostMusicPlayerProps) {
             progressGradient.addColorStop(1, '#FF4500');   // OrangeRed
 
             const waveGradient = ctx!.createLinearGradient(0, 0, 0, 40);
-            waveGradient.addColorStop(0, 'rgba(255, 215, 0, 0.3)');
-            waveGradient.addColorStop(0.5, 'rgba(255, 165, 0, 0.3)');
-            waveGradient.addColorStop(1, 'rgba(255, 69, 0, 0.3)');
+            waveGradient.addColorStop(0, 'rgba(255, 215, 0, 1)');
+            waveGradient.addColorStop(0.5, 'rgba(255, 165, 0, 1)');
+            waveGradient.addColorStop(1, 'rgba(255, 69, 0, 1)');
 
             const ws = WaveSurfer.create({
                 container: containerRef.current,
-                waveColor: waveGradient,
+                waveColor: "rgba(255, 255, 255, 1)",
                 progressColor: progressGradient,
-                cursorColor: 'transparent',
+                // Cursor como instagram
+                cursorWidth: 2,
+
+                cursorColor: 'rgba(255, 255, 255, 1)',
                 barWidth: 2,
                 barGap: 2,
                 barRadius: 2,
