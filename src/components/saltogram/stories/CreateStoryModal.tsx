@@ -60,26 +60,19 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             // Create gradients
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
+            const width = waveformContainerRef.current.clientWidth || 300;
             
-            // Vibrant gradient for progress (played part)
-            const progressGradient = ctx!.createLinearGradient(0, 0, 0, 48);
-            progressGradient.addColorStop(0, '#FFD700');   // Gold
-            progressGradient.addColorStop(0.5, '#FFA500'); // Orange
-            progressGradient.addColorStop(1, '#FF4500');   // OrangeRed
-
-            // Dimmed gradient for the rest of the wave
-            const waveGradient = ctx!.createLinearGradient(0, 0, 0, 48);
-            waveGradient.addColorStop(0, 'rgba(255, 215, 0, 1)');
-            waveGradient.addColorStop(0.5, 'rgba(255, 165, 0, 1)');
-            waveGradient.addColorStop(1, 'rgba(255, 69, 0, 1)');
+            // Instagram-like gradient for progress (played part) - Horizontal
+            const progressGradient = ctx!.createLinearGradient(0, 0, width, 0);
+            progressGradient.addColorStop(0, '#833AB4');   // Purple
+            progressGradient.addColorStop(0.5, '#FD1D1D'); // Red/Pink
+            progressGradient.addColorStop(1, '#FCAF45');   // Orange/Yellow
 
             const ws = WaveSurfer.create({
                 container: waveformContainerRef.current,
-                waveColor: "rgba(255, 255, 255, 1)",
+                waveColor: 'rgba(255, 255, 255, 0.5)',
                 progressColor: progressGradient,
-                // Cursor como instagram
-                cursorWidth: 2,
-                cursorColor: 'rgba(255, 255, 255, 1)',
+                cursorColor: 'rgba(255, 255, 255, 0.5)',
                 barWidth: 3,
                 barGap: 2,
                 barRadius: 3,

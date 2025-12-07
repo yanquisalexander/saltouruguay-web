@@ -16,34 +16,25 @@ export default function PostMusicPlayer({ music }: PostMusicPlayerProps) {
             // Create gradients
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
+            const width = containerRef.current.clientWidth || 300;
             
-            const progressGradient = ctx!.createLinearGradient(0, 0, 0, 40);
-            progressGradient.addColorStop(0, '#FFD700');   // Gold
-            progressGradient.addColorStop(0.5, '#FFA500'); // Orange
-            progressGradient.addColorStop(1, '#FF4500');   // OrangeRed
-
-            const waveGradient = ctx!.createLinearGradient(0, 0, 0, 40);
-            waveGradient.addColorStop(0, 'rgba(255, 215, 0, 1)');
-            waveGradient.addColorStop(0.5, 'rgba(255, 165, 0, 1)');
-            waveGradient.addColorStop(1, 'rgba(255, 69, 0, 1)');
+            const progressGradient = ctx!.createLinearGradient(0, 0, width, 0);
+            progressGradient.addColorStop(0, '#833AB4');   // Purple
+            progressGradient.addColorStop(0.5, '#FD1D1D'); // Red/Pink
+            progressGradient.addColorStop(1, '#FCAF45');   // Orange/Yellow
 
             const ws = WaveSurfer.create({
                 container: containerRef.current,
-                waveColor: "rgba(255, 255, 255, 1)",
+                waveColor: 'rgba(255, 255, 255, 1)',
                 progressColor: progressGradient,
-                // Cursor como instagram
-                cursorWidth: 2,
-
-                cursorColor: 'rgba(255, 255, 255, 1)',
+                cursorColor: 'transparent',
                 barWidth: 2,
                 barGap: 2,
                 barRadius: 2,
                 height: 40,
                 url: music.preview,
                 normalize: true,
-            });
-
-            ws.on('play', () => setIsPlaying(true));
+            });            ws.on('play', () => setIsPlaying(true));
             ws.on('pause', () => setIsPlaying(false));
             ws.on('finish', () => setIsPlaying(false));
 
