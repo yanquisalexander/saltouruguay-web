@@ -16,7 +16,10 @@ export const POST = async ({ request }: APIContext) => {
     try {
         const formData = await request.formData();
         const file = formData.get("file") as File | null;
-        const duration = Number(formData.get("duration") || 5);
+        let duration = Number(formData.get("duration") || 5);
+
+        // Max duration 60 seconds
+        if (duration > 60) duration = 60;
 
         if (!file) {
             return new Response(JSON.stringify({ error: "Archivo requerido" }), { status: 400 });

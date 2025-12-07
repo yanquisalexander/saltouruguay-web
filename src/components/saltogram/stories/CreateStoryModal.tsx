@@ -13,6 +13,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const [preview, setPreview] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
+    const [duration, setDuration] = useState(5);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     if (!isOpen) return null;
@@ -27,8 +28,21 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
         }
 
         setFile(selectedFile);
-        setMediaType(selectedFile.type.startsWith('video/') ? 'video' : 'image');
-        setPreview(URL.createObjectURL(selectedFile));
+        const isVideo = selectedFile.type.startsWith('video/');
+        setMediaType(isVideo ? 'video' : 'image');
+        const url = URL.createObjectURL(selectedFile);
+        setPreview(url);
+
+        if (isVideo) {
+            const video = document.createElement('video');
+            video.preload = 'metadata';
+            video.onloadedmetadata = function () {
+                setDuration(video.duration);
+            };
+            video.src = url;
+        } else {
+            setDuration(5);
+        }
     };
 
     const handleSubmit = async () => {
@@ -38,9 +52,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
         try {
             const formData = new FormData();
             formData.append("file", file);
-
-            // If video, we might want to get duration, but for now let backend handle default or client estimate
-            // For simplicity, sending default duration or letting backend decide
+            formData.append("duration", duration.toString());
 
             const response = await fetch("/api/saltogram/stories", {
                 method: "POST",
