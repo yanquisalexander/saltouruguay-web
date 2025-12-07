@@ -1220,6 +1220,35 @@ export const SaltogramReportsTable = pgTable("saltogram_reports", {
     Saltogram Relations
 */
 
+
+export const FriendsTable = pgTable("friends", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    friendId: integer("friend_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    status: varchar("status", { enum: ["pending", "accepted", "blocked"] }).notNull().default("pending"),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueFriendship: unique("unique_friendship").on(t.userId, t.friendId),
+}));
+
+/* 
+    Saltogram Relations
+*/
+
+export const friendsRelations = relations(FriendsTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [FriendsTable.userId],
+        references: [UsersTable.id],
+        relationName: "userFriends"
+    }),
+    friend: one(UsersTable, {
+        fields: [FriendsTable.friendId],
+        references: [UsersTable.id],
+        relationName: "friendUsers"
+    }),
+}));
+
 export const saltogramPostsRelations = relations(SaltogramPostsTable, ({ one, many }) => ({
     user: one(UsersTable, {
         fields: [SaltogramPostsTable.userId],

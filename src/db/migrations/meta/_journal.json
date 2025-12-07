@@ -344,6 +344,13 @@
       "when": 1765071084604,
       "tag": "0048_skinny_lady_vermin",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1765116723411,
+      "tag": "0049_lush_the_hood",
+      "breakpoints": true
     }
   ]
 }

@@ -101,20 +101,22 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
             {/* Header */}
             <div className="p-5 flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                    <img
-                        src={post.user.avatar || `https://ui-avatars.com/api/?name=${post.user.displayName}`}
-                        alt={post.user.displayName}
-                        className="size-10 rounded-full object-cover border border-white/10"
-                        loading="lazy"
-                    />
+                    <a href={`/comunidad/saltogram/u/${post.user.username}`}>
+                        <img
+                            src={post.user.avatar || `https://ui-avatars.com/api/?name=${post.user.displayName}`}
+                            alt={post.user.displayName}
+                            className="size-10 rounded-full object-cover border border-white/10"
+                            loading="lazy"
+                        />
+                    </a>
                     <div>
-                        <h3 className="font-bold text-white text-sm leading-tight hover:underline cursor-pointer">
+                        <a href={`/comunidad/saltogram/u/${post.user.username}`} className="font-bold text-white text-sm leading-tight hover:underline cursor-pointer">
                             {post.user.displayName}
-                        </h3>
+                        </a>
                         <div className="flex items-center gap-2 text-xs text-white/40">
-                            <span>@{post.user.username}</span>
+                            <a href={`/comunidad/saltogram/u/${post.user.username}`} className="hover:text-white/60">@{post.user.username}</a>
                             <span>•</span>
-                            <span>{timeAgo}</span>
+                            <a href={`/comunidad/saltogram/${post.id}`} className="hover:text-white/60 hover:underline">{timeAgo}</a>
                         </div>
                     </div>
                 </div>

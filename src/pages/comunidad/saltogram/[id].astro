@@ -1,0 +1,92 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+import PostCard from "@/components/saltogram/PostCard";
+import { client } from "@/db/client";
+import { SaltogramPostsTable, UsersTable } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
+
+const { id } = Astro.params;
+const postId = Number(id);
+
+if (isNaN(postId)) {
+  return Astro.redirect("/404");
+}
+
+const session = await getSession(Astro.request);
+const currentUserId = session?.user?.id ? Number(session.user.id) : undefined;
+const isAdmin = session?.user?.isAdmin || false;
+
+const [postData] = await client
+  .select({
+    id: SaltogramPostsTable.id,
+    userId: SaltogramPostsTable.userId,
+    text: SaltogramPostsTable.text,
+    imageUrl: SaltogramPostsTable.imageUrl,
+    isPinned: SaltogramPostsTable.isPinned,
+    isFeatured: SaltogramPostsTable.isFeatured,
+    featuredUntil: SaltogramPostsTable.featuredUntil,
+    createdAt: SaltogramPostsTable.createdAt,
+    user: {
+      id: UsersTable.id,
+      displayName: UsersTable.displayName,
+      username: UsersTable.username,
+      avatar: UsersTable.avatar,
+    },
+    reactionsCount: sql<number>`
+            (SELECT COUNT(*)::int FROM saltogram_reactions WHERE post_id = ${SaltogramPostsTable.id})
+        `,
+    commentsCount: sql<number>`
+            (SELECT COUNT(*)::int FROM saltogram_comments WHERE post_id = ${SaltogramPostsTable.id})
+        `,
+    userReaction: currentUserId
+      ? sql<string>`
+            (SELECT emoji FROM saltogram_reactions WHERE post_id = ${SaltogramPostsTable.id} AND user_id = ${currentUserId})
+        `
+      : sql<null>`NULL`,
+  })
+  .from(SaltogramPostsTable)
+  .innerJoin(UsersTable, eq(SaltogramPostsTable.userId, UsersTable.id))
+  .where(eq(SaltogramPostsTable.id, postId));
+
+if (!postData) {
+  return Astro.redirect("/404");
+}
+---
+
+<Layout title={`Post de ${postData.user.displayName} - Saltogram`}>
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5"
+    >
+    </div>
+  </div>
+
+  <div class="max-w-2xl mx-auto min-h-screen px-4 pt-24 pb-20">
+    <a
+      href="/comunidad/saltogram"
+      class="inline-flex items-center gap-2 text-white/50 hover:text-white mb-6 transition-colors"
+    >
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M19 12H5M12 19l-7-7 7-7"></path>
+      </svg>
+      Volver al feed
+    </a>
+
+    <PostCard
+      client:load
+      post={postData}
+      currentUserId={currentUserId}
+      isAdmin={isAdmin}
+    />
+  </div>
+</Layout>

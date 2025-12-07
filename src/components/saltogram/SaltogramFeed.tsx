@@ -15,9 +15,10 @@ import type { Session } from "@auth/core/types";
 
 interface SaltogramFeedProps {
     user?: Session['user'];
+    targetUserId?: number;
 }
 
-export default function SaltogramFeed({ user }: SaltogramFeedProps) {
+export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps) {
     const [posts, setPosts] = useState<SaltogramPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [hasMore, setHasMore] = useState(true);
@@ -39,6 +40,7 @@ export default function SaltogramFeed({ user }: SaltogramFeedProps) {
                 sort,
             });
             if (tag) params.append("tag", tag);
+            if (targetUserId) params.append("userId", targetUserId.toString());
 
             const response = await fetch(`/api/saltogram/posts?${params.toString()}`);
             const data = await response.json();

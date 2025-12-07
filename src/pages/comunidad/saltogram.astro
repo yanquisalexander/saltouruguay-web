@@ -105,6 +105,33 @@ const trendingTags = await getTrendingTags();
 
       {/* Sidebar (Tendencias / Sugerencias) */}
       <aside class="hidden lg:block space-y-6">
+        {/* User Profile Link */}
+        {
+          session?.user && (
+            <div class="bg-[#0a0a0a]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+              <div class="flex items-center gap-4 mb-4">
+                <img
+                  src={
+                    session.user.image ||
+                    `https://ui-avatars.com/api/?name=${session.user.name}`
+                  }
+                  alt={session.user.name}
+                  class="w-12 h-12 rounded-full border border-white/10"
+                />
+                <div>
+                  <h3 class="font-bold text-white">{session.user.name}</h3>
+                  <a
+                    href={`/comunidad/saltogram/u/${session.user.username}`}
+                    class="text-xs text-purple-400 hover:text-purple-300"
+                  >
+                    Ver mi perfil
+                  </a>
+                </div>
+              </div>
+            </div>
+          )
+        }
+
         {/* Tendencias */}
         <div
           class="bg-[#0a0a0a]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sticky top-28"

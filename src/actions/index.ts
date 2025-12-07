@@ -18,22 +18,27 @@ import { oauth } from "./users/oauth";
 import { twoFactor } from "./users/two-factor";
 import { serverTools } from "./admin/serverTools";
 import { customPages } from "./admin/customPages";
+import { friends } from "./friends";
 import { events } from "./admin/events";
-import { events as userEvents } from "./events";
-import { sendNotificationEmail } from "@/utils/email";
-import { experimental_AstroContainer } from "astro/container";
-import InscripcionExtremo from "@/email/InscripcionExtremo.astro";
-import { addRoleToUserWithoutLogging } from "@/services/discord";
-import { audio } from "./audio";
-import { voice } from "./voice";
 import { banco } from "./banco";
 import { pet } from "./pet";
 import { saltogram } from "./saltogram";
+import { events as userEvents } from "./events";
+import { experimental_AstroContainer } from "astro/container";
+import { sendNotificationEmail } from "@/utils/email";
+import { addRoleToUserWithoutLogging } from "@/services/discord";
+import InscripcionExtremo from "@/email/InscripcionExtremo.astro";
+import { audio } from "./audio";
+import { voice } from "./voice";
+
+
+
 export const server = {
     saltogram,
     userEvents,
     banco,
     pet,
+    friends,
     sendVotes: defineAction({
         input: z.object({
             votes: z.record(z.array(z.object({
