@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "preact/hooks";
 import { actions } from "astro:actions";
-import { LucideX, LucideHeart, LucideChevronLeft, LucideChevronRight, LucideEye, LucideTrash2, LucideSend, LucideStar } from "lucide-preact";
+import { LucideX, LucideHeart, LucideChevronLeft, LucideChevronRight, LucideEye, LucideTrash2, LucideSend, LucideStar, LucideLoader2 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 import { motion, AnimatePresence } from "motion/react";
 import { formatDistanceToNow } from "date-fns";
@@ -26,6 +26,8 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
 
     const [progress, setProgress] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
+    const [isBuffering, setIsBuffering] = useState(true);
+    const [isAudioFetching, setIsAudioFetching] = useState(false);
     const [liked, setLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
     const [replyText, setReplyText] = useState("");
@@ -33,13 +35,14 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
+    const imgRef = useRef<HTMLImageElement>(null);
     const progressInterval = useRef<number | null>(null);
 
     const userStories = feed[currentUserIndex];
     const story = userStories.stories[currentStoryIndex];
     const isOwner = currentUser?.id && Number(currentUser.id) === story.userId;
     const music = story.metadata?.music;
-    const [audioUrl, setAudioUrl] = useState(music?.preview);
+    const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
 
     // Reset state when user changes
     useEffect(() => {
@@ -47,6 +50,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
         const firstUnseenIndex = stories.findIndex((s: any) => !s.isSeen);
         setCurrentStoryIndex(firstUnseenIndex !== -1 ? firstUnseenIndex : 0);
         setProgress(0);
+        setIsBuffering(true);
     }, [currentUserIndex]);
 
     // Reset state when story changes
@@ -54,6 +58,17 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
         setProgress(0);
         setLiked(story.isLiked);
         setLikesCount(story.likesCount);
+
+        // Smart buffering reset
+        if (story.mediaType === 'image') {
+            if (imgRef.current?.complete) {
+                setIsBuffering(false);
+            } else {
+                setIsBuffering(true);
+            }
+        } else {
+            setIsBuffering(true);
+        }
 
         // Mark as viewed
         if (!story.isSeen && !isOwner) {
@@ -64,19 +79,31 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     // Refresh music URL
     useEffect(() => {
         if (music) {
-            setAudioUrl(music.preview);
+            setIsAudioFetching(true);
+            setAudioUrl(undefined); // Clear previous URL to prevent double load
+            
             if (music.id) {
                 fetch(`/api/deezer/track?id=${music.id}`)
                     .then(res => res.json())
                     .then(data => {
-                        if (data.preview && data.preview !== music.preview) {
+                        if (data.preview) {
                             setAudioUrl(data.preview);
+                        } else {
+                            setAudioUrl(music.preview); // Fallback
                         }
                     })
-                    .catch(err => console.error("Error refreshing music URL:", err));
+                    .catch(err => {
+                        console.error("Error refreshing music URL:", err);
+                        setAudioUrl(music.preview); // Fallback
+                    })
+                    .finally(() => setIsAudioFetching(false));
+            } else {
+                setAudioUrl(music.preview);
+                setIsAudioFetching(false);
             }
         } else {
             setAudioUrl(undefined);
+            setIsAudioFetching(false);
         }
     }, [music]);
 
@@ -109,7 +136,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
 
     // Timer Logic
     useEffect(() => {
-        if (isPaused) return;
+        if (isPaused || isBuffering || isAudioFetching) return;
 
         const duration = story.duration * 1000;
         const intervalTime = 50;
@@ -128,7 +155,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
         return () => {
             if (progressInterval.current) clearInterval(progressInterval.current);
         };
-    }, [story, isPaused, currentUserIndex, currentStoryIndex]);
+    }, [story, isPaused, isBuffering, isAudioFetching, currentUserIndex, currentStoryIndex]);
 
     const handleNext = useCallback(() => {
         if (currentStoryIndex < userStories.stories.length - 1) {
@@ -310,25 +337,38 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                     onTouchStart={() => setIsPaused(true)}
                     onTouchEnd={() => setIsPaused(false)}
                 >
+                    {(isBuffering || isAudioFetching) && (
+                        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
+                            <LucideLoader2 className="w-10 h-10 text-white animate-spin" />
+                        </div>
+                    )}
+
                     {story.mediaType === 'image' ? (
                         <img
+                            ref={imgRef}
+                            key={story.id}
                             src={story.mediaUrl}
                             className="w-full h-full object-contain"
+                            onLoad={() => setIsBuffering(false)}
                         />
                     ) : (
                         <video
                             ref={videoRef}
+                            key={story.id}
                             src={story.mediaUrl}
                             className="w-full h-full object-contain"
                             autoPlay
                             playsInline
                             muted={!!music} // Mute video if music is present
                             onEnded={handleNext}
+                            onWaiting={() => setIsBuffering(true)}
+                            onPlaying={() => setIsBuffering(false)}
+                            onCanPlay={() => setIsBuffering(false)}
                         />
                     )}
 
                     {/* Music Player & Sticker */}
-                    {music && (
+                    {music && audioUrl && (
                         <>
                             <audio
                                 ref={audioRef}
