@@ -64,9 +64,7 @@ export const stories = {
                 ),
                 with: {
                     user: true,
-                    views: {
-                        where: eq(SaltogramStoryViewsTable.userId, userId)
-                    },
+                    views: true,
                     likes: true
                 },
                 orderBy: [asc(SaltogramStoriesTable.createdAt)]
@@ -83,15 +81,21 @@ export const stories = {
                     };
                 }
 
-                const isSeen = story.views.length > 0;
+                const isSeen = story.views.some((v: any) => v.userId === userId);
                 if (!isSeen) acc[storyUserId].hasUnseen = true;
 
-                acc[storyUserId].stories.push({
+                const storyData = {
                     ...story,
                     isSeen,
                     isLiked: story.likes.some(l => l.userId === userId),
                     likesCount: story.likes.length
-                });
+                };
+
+                if (storyUserId !== userId) {
+                    (storyData as any).views = [];
+                }
+
+                acc[storyUserId].stories.push(storyData);
                 return acc;
             }, {} as Record<number, any>);
 
