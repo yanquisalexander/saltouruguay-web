@@ -1,4 +1,4 @@
-import { useState, useRef } from "preact/hooks";
+import { useState, useRef, useEffect } from "preact/hooks";
 import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo, LucideStar, LucideGlobe, LucideUsers, LucideMusic, LucideTrash2, LucideMaximize2, LucidePlay, LucidePause } from "lucide-preact";
 import { toast } from "sonner";
 import MusicPicker from "./MusicPicker";
@@ -28,6 +28,22 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const isDraggingTimeline = useRef<'start' | 'end' | 'move' | null>(null);
     const timelineStartPos = useRef(0);
     const timelineStartValues = useRef({ start: 0, duration: 0 });
+
+    useEffect(() => {
+        if (!isOpen) {
+            setFile(null);
+            setPreview(null);
+            setMediaType(null);
+            setDuration(5);
+            setVisibility('public');
+            setShowMusicPicker(false);
+            setSelectedMusic(null);
+            setStickerConfig({ x: 50, y: 50, scale: 1 });
+            setMusicStart(0);
+            setMusicDuration(15);
+            setIsPlayingPreview(false);
+        }
+    }, [isOpen]);
 
     const handleTimelinePointerDown = (e: PointerEvent, type: 'start' | 'end' | 'move') => {
         e.preventDefault();
