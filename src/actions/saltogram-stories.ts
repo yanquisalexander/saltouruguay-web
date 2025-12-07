@@ -67,7 +67,10 @@ export const stories = {
             // Fetch active stories
             const stories = await client.query.SaltogramStoriesTable.findMany({
                 where: and(
-                    or(...userIdsToFetch.map(id => eq(SaltogramStoriesTable.userId, id))),
+                    or(
+                        ...userIdsToFetch.map(id => eq(SaltogramStoriesTable.userId, id)),
+                        eq(SaltogramStoriesTable.visibility, 'public')
+                    ),
                     gt(SaltogramStoriesTable.expiresAt, now)
                 ),
                 with: {
@@ -84,6 +87,11 @@ export const stories = {
 
                 // Filter VIP stories
                 if (story.visibility === 'vip' && storyUserId !== userId && !vipCreatorIds.includes(storyUserId)) {
+                    return acc;
+                }
+
+                // Filter Friends Only stories (if not friend and not self)
+                if (story.visibility === 'friends' && storyUserId !== userId && !friendIds.includes(storyUserId)) {
                     return acc;
                 }
 
