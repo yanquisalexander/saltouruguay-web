@@ -10,8 +10,35 @@ if (!session) {
 }
 ---
 
-<Layout title="Mascota Saltana">
-  <div class="pt-20">
+<Layout
+  title="Mascota Saltana"
+  hideFooter={true}
+  hideHeader
+  mainClassname="h-dvh "
+>
+  <div class="h-full w-full relative">
+    <a
+      href="/comunidad"
+      class="absolute top-4 left-4 z-50 flex items-center justify-center p-3 sm:px-4 sm:py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white hover:bg-white/20 transition-all shadow-lg group"
+      aria-label="Volver a Comunidad"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="group-hover:-translate-x-1 transition-transform"
+      >
+        <path d="m12 19-7-7 7-7"></path>
+        <path d="M19 12H5"></path>
+      </svg>
+      <span class="font-medium hidden sm:inline ml-2">Volver a Comunidad</span>
+    </a>
     <PetApp client:only="preact" />
   </div>
 </Layout>

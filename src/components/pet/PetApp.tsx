@@ -90,7 +90,7 @@ export default function PetApp() {
     }
 
     return (
-        <div className="h-full flex flex-col min-h-screen bg-gray-950 text-white font-sans overflow-hidden relative">
+        <div className="h-full flex flex-col w-full bg-gray-950 text-white font-sans overflow-hidden relative">
             {/* Background Effects */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-violet-900/20 via-gray-950 to-gray-950 pointer-events-none"></div>
             <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#8b5cf6 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
@@ -110,7 +110,7 @@ export default function PetApp() {
                 {viewMode === 'pet' ? (
                     <div className="flex-1 flex flex-col max-w-md mx-auto w-full h-full p-4 relative">
                         {/* Header / Stats */}
-                        <div className="mt-2 mb-4 z-10 animate-fade-in-down">
+                        <div className="mt-16 mb-4 z-10 animate-fade-in-down">
                             <div className="text-center mb-4">
                                 <h2 className="text-3xl font-black text-white tracking-tight drop-shadow-lg">{pet.name}</h2>
                             </div>
