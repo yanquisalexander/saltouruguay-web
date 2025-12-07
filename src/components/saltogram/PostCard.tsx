@@ -205,7 +205,9 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
 
             {/* Music Player */}
             {post.metadata?.music && (
-                <PostMusicPlayer music={post.metadata.music} />
+                <div className="px-4 mb-3">
+                    <PostMusicPlayer music={post.metadata.music} />
+                </div>
             )}
 
             {/* Image */}

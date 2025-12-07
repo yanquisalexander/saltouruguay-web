@@ -52,7 +52,7 @@ export default function PostMusicPlayer({ music }: PostMusicPlayerProps) {
     };
 
     return (
-        <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10 mt-3 mx-4">
+        <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
             <button 
                 onClick={togglePlay}
                 className="relative group shrink-0 w-12 h-12 rounded-lg overflow-hidden"
