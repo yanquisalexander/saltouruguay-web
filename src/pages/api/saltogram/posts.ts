@@ -4,7 +4,7 @@ import { uploadImage, validateImage } from "@/services/saltogram-storage";
 import { awardCoins, SALTOGRAM_REWARDS } from "@/services/saltogram-rewards";
 import type { APIContext } from "astro";
 import { getSession } from "auth-astro/server";
-import { desc, eq, sql, and } from "drizzle-orm";
+import { desc, eq, sql, and, ilike } from "drizzle-orm";
 
 const MAX_TEXT_LENGTH = 500;
 
@@ -22,6 +22,7 @@ export const GET = async ({ request, url }: APIContext) => {
     const limit = parseInt(searchParams.get("limit") || "10");
     const sort = searchParams.get("sort") || "recent"; // recent | popular
     const userFilter = searchParams.get("userId");
+    const tag = searchParams.get("tag");
 
     const offset = (page - 1) * limit;
 
@@ -54,14 +55,17 @@ export const GET = async ({ request, url }: APIContext) => {
             .innerJoin(UsersTable, eq(SaltogramPostsTable.userId, UsersTable.id));
 
         // Build where conditions
-        const whereConditions = userFilter
-            ? and(
-                  eq(SaltogramPostsTable.isHidden, false),
-                  eq(SaltogramPostsTable.userId, parseInt(userFilter))
-              )
-            : eq(SaltogramPostsTable.isHidden, false);
+        const conditions = [eq(SaltogramPostsTable.isHidden, false)];
 
-        query = query.where(whereConditions);
+        if (userFilter) {
+            conditions.push(eq(SaltogramPostsTable.userId, parseInt(userFilter)));
+        }
+
+        if (tag) {
+            conditions.push(ilike(SaltogramPostsTable.text, `%#${tag}%`));
+        }
+
+        query = query.where(and(...conditions));
 
         // Apply sorting
         if (sort === "popular") {
@@ -160,7 +164,7 @@ export const POST = async ({ request }: APIContext) => {
         // Handle image upload if provided
         if (image) {
             const imageBuffer = Buffer.from(await image.arrayBuffer());
-            
+
             // Validate image
             await validateImage(imageBuffer);
 

@@ -1,13 +1,20 @@
-import { useState, useRef } from "react";
+import { useState, useRef } from "preact/hooks";
 import type { SaltogramPost } from "@/types/saltogram";
 import { toast } from "sonner";
-import { X, Image, Upload } from "lucide-react";
+import {
+    X,
+    Image as ImageIcon,
+    Send,
+    LucideLoader2,
+    LucideUploadCloud
+} from "lucide-preact";
+import type { Session } from "@auth/core/types";
 
 interface CreatePostModalProps {
     isOpen: boolean;
     onClose: () => void;
     onPostCreated: (post: SaltogramPost) => void;
-    user: any;
+    user: Session['user'];
 }
 
 export default function CreatePostModal({
@@ -21,77 +28,75 @@ export default function CreatePostModal({
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (file) {
-            // Check file size (max 10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                toast.error("La imagen es demasiado grande. Máximo 10MB.");
-                return;
-            }
-
-            // Check file type
-            if (!file.type.startsWith("image/")) {
-                toast.error("Por favor selecciona una imagen válida.");
-                return;
-            }
-
-            setImage(file);
-
-            // Create preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setImagePreview(e.target?.result as string);
-            };
-            reader.readAsDataURL(file);
+    // Auto-resize del textarea
+    const adjustTextareaHeight = () => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
+    };
+
+    const handleTextChange = (e: Event) => {
+        const val = (e.target as HTMLTextAreaElement).value;
+        setText(val);
+        adjustTextareaHeight();
+    };
+
+    const processFile = (file: File) => {
+        if (!file) return;
+        if (file.size > 10 * 1024 * 1024) return toast.error("Máximo 10MB.");
+        if (!file.type.startsWith("image/")) return toast.error("Solo imágenes.");
+
+        setImage(file);
+        const reader = new FileReader();
+        reader.onload = (e) => setImagePreview(e.target?.result as string);
+        reader.readAsDataURL(file);
+    };
+
+    const handleImageSelect = (e: Event) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) processFile(file);
+    };
+
+    const handleDrop = (e: DragEvent) => {
+        e.preventDefault();
+        const file = e.dataTransfer?.files?.[0];
+        if (file) processFile(file);
     };
 
     const handleRemoveImage = () => {
         setImage(null);
         setImagePreview(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: Event) => {
         e.preventDefault();
-
-        if (!text.trim() && !image) {
-            toast.error("Debes agregar texto o una imagen");
-            return;
-        }
+        if (!text.trim() && !image) return toast.error("Añade texto o imagen");
 
         setSubmitting(true);
-
         try {
             const formData = new FormData();
-            if (text.trim()) {
-                formData.append("text", text.trim());
-            }
-            if (image) {
-                formData.append("image", image);
-            }
+            if (text.trim()) formData.append("text", text.trim());
+            if (image) formData.append("image", image);
 
             const response = await fetch("/api/saltogram/posts", {
                 method: "POST",
                 body: formData,
             });
-
             const data = await response.json();
 
             if (response.ok) {
                 onPostCreated(data.post);
-                setText("");
-                setImage(null);
-                setImagePreview(null);
+                setText(""); setImage(null); setImagePreview(null);
+                if (textareaRef.current) textareaRef.current.style.height = "auto";
             } else {
-                toast.error(data.error || "Error al crear la publicación");
+                toast.error(data.error || "Error al publicar");
             }
         } catch (error) {
-            console.error("Error creating post:", error);
+            console.error(error);
             toast.error("Error al crear la publicación");
         } finally {
             setSubmitting(false);
@@ -101,124 +106,134 @@ export default function CreatePostModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-gray-900 rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            {/* Backdrop */}
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+
+            {/* Modal Panel */}
+            <div className="relative z-10 bg-[#0a0a0a] rounded-3xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl shadow-purple-900/20">
+
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-white/10">
-                    <h2 className="text-2xl font-bold text-white">
-                        Nueva Publicación
+                <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/[0.02]">
+                    <h2 className="text-2xl font-anton text-white uppercase tracking-wide">
+                        Crear Publicación
                     </h2>
                     <button
                         onClick={onClose}
-                        className="text-white/50 hover:text-white transition-colors"
+                        className="p-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                        disabled={submitting}
                     >
-                        <X size={24} />
+                        <X size={20} />
                     </button>
                 </div>
 
-                {/* Content */}
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-                    <div className="p-6 space-y-4">
+                {/* Form Content */}
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="p-6 space-y-6">
                         {/* User Info */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                             <img
-                                src={
-                                    user.avatar ||
-                                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`
-                                }
-                                alt={user.displayName}
-                                className="w-12 h-12 rounded-full border-2 border-purple-500/30"
+                                src={user.image || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
+                                alt={user.name || user.username}
+                                className="size-12 rounded-full border-2 border-purple-500/30 p-0.5"
                             />
                             <div>
-                                <p className="font-bold text-white">
-                                    {user.displayName}
-                                </p>
-                                <p className="text-sm text-white/50">
-                                    @{user.username}
-                                </p>
+                                <p className="font-bold text-white leading-none">{user.name}</p>
+                                <p className="text-sm text-white/50 font-mono">@{user.username}</p>
                             </div>
                         </div>
 
-                        {/* Text Input */}
-                        <textarea
-                            value={text}
-                            onChange={(e) => setText((e.target as HTMLTextAreaElement).value)}
-                            placeholder="¿Qué quieres compartir?"
-                            maxLength={500}
-                            rows={4}
-                            className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-white/10 focus:outline-none focus:border-purple-500 transition-colors resize-none"
-                            disabled={submitting}
-                        />
-                        <p className="text-xs text-white/40 text-right">
-                            {text.length}/500 caracteres
-                        </p>
+                        {/* Textarea Auto-resize */}
+                        <div className="relative">
+                            <textarea
+                                ref={textareaRef}
+                                value={text}
+                                onInput={handleTextChange}
+                                placeholder="¿Qué estás pensando, Saltano?"
+                                maxLength={500}
+                                rows={3}
+                                className="w-full p-0 bg-transparent text-white text-lg placeholder:text-white/30 resize-none focus:outline-none min-h-[80px] custom-scrollbar"
+                                disabled={submitting}
+                            />
+                            <p className={`text-xs text-right mt-2 font-mono transition-colors ${text.length > 450 ? 'text-red-400' : 'text-white/30'}`}>
+                                {text.length}/500
+                            </p>
+                        </div>
 
-                        {/* Image Preview */}
-                        {imagePreview && (
-                            <div className="relative">
-                                <img
-                                    src={imagePreview}
-                                    alt="Preview"
-                                    className="w-full rounded-lg max-h-96 object-cover"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleRemoveImage}
-                                    className="absolute top-2 right-2 p-2 bg-black/60 rounded-full text-white hover:bg-black/80 transition-colors"
+                        {/* Image Upload / Preview */}
+                        <div className="space-y-4">
+                            {imagePreview ? (
+                                <div className="relative group rounded-2xl overflow-hidden border border-white/10">
+                                    <img src={imagePreview} alt="Preview" className="w-full max-h-[400px] object-cover" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="p-3 bg-white/10 hover:bg-white/20 rounded-xl text-white backdrop-blur-md transition-colors"
+                                            title="Cambiar imagen"
+                                        >
+                                            <LucideUploadCloud size={24} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleRemoveImage}
+                                            className="p-3 bg-red-500/80 hover:bg-red-600/80 rounded-xl text-white backdrop-blur-md transition-colors"
+                                            title="Eliminar"
+                                        >
+                                            <X size={24} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={handleDrop}
+                                    onClick={() => !submitting && fileInputRef.current?.click()}
+                                    className={`
+                                        relative w-full aspect-video rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden cursor-pointer group
+                                        ${submitting ? 'opacity-50 cursor-not-allowed' : 'border-white/10 bg-white/5 hover:border-purple-500/50 hover:bg-white/[0.07]'}
+                                    `}
                                 >
-                                    <X size={20} />
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Image Upload */}
-                        {!imagePreview && (
-                            <div>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageSelect}
-                                    className="hidden"
-                                    disabled={submitting}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={submitting}
-                                    className="flex items-center gap-2 px-4 py-3 bg-gray-800 text-white rounded-lg border border-white/10 hover:border-purple-500 transition-colors w-full justify-center"
-                                >
-                                    <Image size={20} />
-                                    <span>Agregar imagen</span>
-                                </button>
-                            </div>
-                        )}
+                                    <div className="p-4 rounded-full bg-white/5 group-hover:bg-purple-500/10 text-white/50 group-hover:text-purple-400 transition-colors mb-3">
+                                        <ImageIcon size={32} />
+                                    </div>
+                                    <span className="text-sm font-medium text-white/70 group-hover:text-white">
+                                        Arrastra una imagen o haz clic
+                                    </span>
+                                    <span className="text-xs text-white/30 mt-1">
+                                        PNG, JPG, GIF (Máx. 10MB)
+                                    </span>
+                                </div>
+                            )}
+                            <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} className="hidden" disabled={submitting} />
+                        </div>
                     </div>
 
-                    {/* Footer */}
-                    <div className="p-6 border-t border-white/10 flex gap-3">
+                    {/* Footer Actions */}
+                    <div className="p-6 border-t border-white/5 bg-white/[0.02] flex items-center justify-end gap-4">
                         <button
                             type="button"
                             onClick={onClose}
                             disabled={submitting}
-                            className="flex-1 px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+                            className="px-6 py-2.5 text-white/70 hover:text-white font-bold transition-colors"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={submitting || (!text.trim() && !image)}
-                            className="flex-1 px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className={`
+                                relative flex items-center gap-2 px-8 py-2.5 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-purple-900/20 hover:shadow-purple-900/40 disabled:opacity-50 disabled:cursor-not-allowed hover:translate-y-0
+                                ${submitting ? '' : 'hover:-translate-y-0.5'}
+                            `}
                         >
                             {submitting ? (
                                 <>
-                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                    <span>Publicando...</span>
+                                    <LucideLoader2 className="animate-spin" size={18} /> Publicando...
                                 </>
                             ) : (
                                 <>
-                                    <Upload size={20} />
-                                    <span>Publicar</span>
+                                    Publicar <Send size={18} className="ml-1" />
                                 </>
                             )}
                         </button>

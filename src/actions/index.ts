@@ -28,7 +28,9 @@ import { audio } from "./audio";
 import { voice } from "./voice";
 import { banco } from "./banco";
 import { pet } from "./pet";
+import { saltogram } from "./saltogram";
 export const server = {
+    saltogram,
     userEvents,
     banco,
     pet,
