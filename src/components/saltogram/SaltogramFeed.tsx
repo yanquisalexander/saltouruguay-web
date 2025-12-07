@@ -11,9 +11,10 @@ import {
     LucideClock,
     LucideCamera
 } from "lucide-preact";
+import type { Session } from "@auth/core/types";
 
 interface SaltogramFeedProps {
-    user: any;
+    user?: Session['user'];
 }
 
 export default function SaltogramFeed({ user }: SaltogramFeedProps) {
@@ -186,7 +187,7 @@ export default function SaltogramFeed({ user }: SaltogramFeedProps) {
                 <div className="space-y-6">
                     {loading && posts.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4">
-                            <LucideLoader2 className="animate-spin-clockwise animate-iteration-count-infinite text-purple-500" size={40} />
+                            <LucideLoader2 class="animate-spin-clockwise animate-iteration-count-infinite text-purple-500" size={40} />
                             <p className="text-white/50 font-rubik animate-pulse">Sincronizando feed...</p>
                         </div>
                     ) : posts.length === 0 ? (
@@ -199,7 +200,7 @@ export default function SaltogramFeed({ user }: SaltogramFeedProps) {
                                 Sé el primero en compartir algo épico con la comunidad.
                             </p>
                             <button
-                                onClick={() => setIsModalOpen(true)}
+                                onClick={() => user ? setIsModalOpen(true) : toast.error("Debes iniciar sesión para publicar")}
                                 className="px-6 py-2 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors"
                             >
                                 Crear Publicación
@@ -213,7 +214,7 @@ export default function SaltogramFeed({ user }: SaltogramFeedProps) {
                                 className="animate-fade-in-up"
                                 style={{ animationDelay: `${index * 50}ms` }} // Stagger effect
                             >
-                                <PostCard post={post} currentUserId={user.id} isAdmin={user.isAdmin} />
+                                <PostCard post={post} currentUserId={user?.id} isAdmin={user?.isAdmin} />
                             </div>
                         ))
                     )}
@@ -225,12 +226,14 @@ export default function SaltogramFeed({ user }: SaltogramFeedProps) {
                     )}
                 </div>
 
-                <CreatePostModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    onPostCreated={handleNewPost}
-                    user={user}
-                />
+                {user && (
+                    <CreatePostModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        onPostCreated={handleNewPost}
+                        user={user}
+                    />
+                )}
             </div>
         </div>
     );

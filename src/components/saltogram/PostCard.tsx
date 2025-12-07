@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 interface PostCardProps {
     post: SaltogramPost;
-    currentUserId: number;
+    currentUserId?: number;
     isAdmin?: boolean;
 }
 
@@ -185,7 +185,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
             {/* Footer / Actions */}
             <div className="px-5 py-4 border-t border-white/5">
                 <div className="flex items-center gap-6">
-                    <ReactionButton postId={post.id} />
+                    <ReactionButton postId={post.id} currentUserId={currentUserId} />
 
                     <button
                         onClick={() => setShowComments(!showComments)}
@@ -208,6 +208,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                         <CommentSection
                             postId={post.id}
                             onCommentAdded={handleCommentAdded}
+                            currentUserId={currentUserId}
                         />
                     </div>
                 )}

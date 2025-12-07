@@ -8,11 +8,13 @@ import { es } from "date-fns/locale";
 interface CommentSectionProps {
     postId: number;
     onCommentAdded?: () => void;
+    currentUserId?: number;
 }
 
 export default function CommentSection({
     postId,
     onCommentAdded,
+    currentUserId,
 }: CommentSectionProps) {
     const [comments, setComments] = useState<SaltogramComment[]>([]);
     const [loading, setLoading] = useState(true);
@@ -38,6 +40,10 @@ export default function CommentSection({
 
     const handleSubmit = async (e: Event) => {
         e.preventDefault();
+        if (!currentUserId) {
+            toast.error("Debes iniciar sesión para comentar");
+            return;
+        }
         if (!newComment.trim()) return;
 
         setSubmitting(true);
@@ -76,10 +82,10 @@ export default function CommentSection({
                         type="text"
                         value={newComment}
                         onInput={(e) => setNewComment((e.target as HTMLInputElement).value)}
-                        placeholder="Escribe un comentario..."
+                        placeholder={currentUserId ? "Escribe un comentario..." : "Inicia sesión para comentar"}
                         maxLength={500}
                         className="flex-1 bg-transparent text-white text-sm placeholder:text-white/30 focus:outline-none py-1"
-                        disabled={submitting}
+                        disabled={submitting || !currentUserId}
                     />
                     <button
                         type="submit"

@@ -1,10 +1,9 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import CommunitySidebar from "@/components/CommunitySidebar";
-import PixelCurrentUser from "@/components/PixelCurrentUser";
+import { CurrentUser } from "@/components/CurrentUser"; // Usamos el CurrentUser moderno que hicimos antes
 import { getSession } from "auth-astro/server";
-import "@/assets/styles/community-layout.css";
-import "@/assets/styles/pixel-art.css";
+import { LucideLayoutGrid } from "lucide-preact";
 
 interface Props {
   title?: string;
@@ -23,41 +22,86 @@ const session = await getSession(Astro.request);
   hideHeader
   hideFooter
 >
-  <div class={`s-ui-layout-base ${hideSidebar ? "no-sidebar" : ""}`}>
-    <header class="appbar justify-between">
-      <div class="flex items-center gap-4">
-        <div
-          class="w-10 h-10 bg-blue-600 border-4 border-blue-800 flex items-center justify-center shadow-lg"
-        >
-          <img
-            src="/favicon.svg"
-            alt="Icon"
-            class="size-6 image-pixelated"
-            style="image-rendering: pixelated;"
-          />
-        </div>
-        <span class="pixel-heading text-xl text-white drop-shadow-md"
-          >{title}</span
-        >
-      </div>
+  {/* Fondo Global */}
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.02]"
+    >
+    </div>
+    <div
+      class="absolute top-0 left-0 w-[500px] h-[500px] bg-purple-900/10 blur-[120px] rounded-full pointer-events-none"
+    >
+    </div>
+  </div>
 
-      <div class="flex gap-4 items-center">
-        <PixelCurrentUser client:load user={session?.user || null} />
-      </div>
-    </header>
-
+  <div class="flex h-dvh w-full overflow-hidden">
+    {/* SIDEBAR (Izquierda) */}
     {
       !hideSidebar && (
-        <aside class="sidebar">
+        <aside class="hidden md:flex flex-col z-20 h-full">
           <CommunitySidebar client:load />
         </aside>
       )
     }
 
-    <main class="main" style={{ gridArea: "main" }}>
-      <div class="h-full w-full pixel-inset overflow-y-auto text-gray-300">
-        <slot />
-      </div>
-    </main>
+    {/* CONTENIDO PRINCIPAL (Derecha) */}
+    <div class="flex-1 flex flex-col min-w-0 relative">
+      {/* APP BAR (Header Flotante) */}
+      <header
+        class="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#050505]/80 backdrop-blur-xl z-10"
+      >
+        <div class="flex items-center gap-4">
+          {/* Mobile Toggle podría ir aquí */}
+          <div class="flex items-center gap-3">
+            <div
+              class="p-2 bg-white/5 rounded-lg border border-white/10 text-white/70"
+            >
+              <LucideLayoutGrid size={20} />
+            </div>
+            <div>
+              <h1
+                class="text-xl font-anton text-white uppercase tracking-wide leading-none"
+              >
+                {title}
+              </h1>
+              {
+                description && (
+                  <p class="text-xs text-white/40 font-rubik hidden sm:block">
+                    {description}
+                  </p>
+                )
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          {/* Reutilizamos el CurrentUser moderno */}
+          <CurrentUser
+            client:load
+            user={session?.user || null}
+            isPrerenderedPath={false}
+          />
+        </div>
+      </header>
+
+      {/* MAIN SCROLLABLE AREA */}
+      <main
+        class="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 custom-scrollbar relative"
+      >
+        <div class="max-w-6xl mx-auto h-full">
+          <slot />
+        </div>
+      </main>
+
+      {/* MOBILE NAV (Bottom Bar para móviles) */}
+      {
+        !hideSidebar && (
+          <div class="md:hidden border-t border-white/10 bg-[#050505] pb-safe">
+            <CommunitySidebar client:load mobile />
+          </div>
+        )
+      }
+    </div>
   </div>
 </Layout>

@@ -7,10 +7,6 @@ import { getSaltogramStats, getTrendingTags } from "@/lib/saltogram";
 
 const session = await getSession(Astro.request);
 
-if (!session) {
-  return Astro.redirect("/");
-}
-
 const stats = await getSaltogramStats();
 const trendingTags = await getTrendingTags();
 ---
@@ -73,25 +69,30 @@ const trendingTags = await getTrendingTags();
           </div>
         </div>
 
-        <button
-          id="create-post-btn"
-          class="group relative flex items-center gap-2 px-6 py-3 bg-white text-black hover:bg-white/90 font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] hover:-translate-y-1"
-        >
-          <span class="font-teko text-xl uppercase tracking-wide">Publicar</span
-          >
-          <span
-            class="bg-black text-white rounded p-0.5 group-hover:rotate-90 transition-transform"
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="4"><path d="M12 5v14M5 12h14"></path></svg
+        {
+          session && (
+            <button
+              id="create-post-btn"
+              class="group relative flex items-center gap-2 px-6 py-3 bg-white text-black hover:bg-white/90 font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] hover:-translate-y-1"
             >
-          </span>
-        </button>
+              <span class="font-teko text-xl uppercase tracking-wide">
+                Publicar
+              </span>
+              <span class="bg-black text-white rounded p-0.5 group-hover:rotate-90 transition-transform">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="4"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </span>
+            </button>
+          )
+        }
       </div>
     </header>
 
@@ -99,7 +100,7 @@ const trendingTags = await getTrendingTags();
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
       {/* Main Feed */}
       <main>
-        <SaltogramFeed client:load user={session.user} />
+        <SaltogramFeed client:load user={session?.user} />
       </main>
 
       {/* Sidebar (Tendencias / Sugerencias) */}

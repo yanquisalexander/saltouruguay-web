@@ -106,7 +106,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     if (fetchingUser) {
         return (
             <div className="flex items-center justify-center size-10 rounded-full bg-white/5 animate-pulse">
-                <LucideLoader2 className="animate-spin text-white/50" size={18} />
+                <LucideLoader2 class="animate-spin-clockwise animate-iteration-count-infinite text-white/50" size={18} />
             </div>
         );
     }

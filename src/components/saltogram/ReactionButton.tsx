@@ -5,11 +5,12 @@ import { LucideHeart, LucideLoader2 } from "lucide-preact";
 
 interface ReactionButtonProps {
     postId: number;
+    currentUserId?: number;
 }
 
 const EMOJIS = ["❤️", "🔥", "😂", "👍", "😮", "😢", "😡"];
 
-export default function ReactionButton({ postId }: ReactionButtonProps) {
+export default function ReactionButton({ postId, currentUserId }: ReactionButtonProps) {
     const [reactions, setReactions] = useState<SaltogramReaction[]>([]);
     const [showPicker, setShowPicker] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -40,6 +41,10 @@ export default function ReactionButton({ postId }: ReactionButtonProps) {
     };
 
     const handleReaction = async (emoji: string) => {
+        if (!currentUserId) {
+            toast.error("Debes iniciar sesión para reaccionar");
+            return;
+        }
         if (loading) return;
 
         setLoading(true);
