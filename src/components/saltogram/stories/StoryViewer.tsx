@@ -53,7 +53,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
             if (isPaused) {
                 videoRef.current.pause();
             } else {
-                videoRef.current.play().catch(() => {});
+                videoRef.current.play().catch(() => { });
             }
         }
     }, [isPaused, story.mediaType]);
