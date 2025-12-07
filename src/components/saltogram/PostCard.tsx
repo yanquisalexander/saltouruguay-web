@@ -220,15 +220,17 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                 </div>
 
                 {/* Comments Area */}
-                {showComments && (
-                    <div className="mt-2 pt-2 border-t border-white/5 animate-in slide-in-from-top-2">
-                        <CommentSection
-                            postId={post.id}
-                            onCommentAdded={handleCommentAdded}
-                            currentUserId={currentUserId}
-                        />
-                    </div>
-                )}
+                <div className="mt-2 pt-2 border-t border-white/5">
+                    <CommentSection
+                        postId={post.id}
+                        onCommentAdded={handleCommentAdded}
+                        currentUserId={currentUserId}
+                        preview={!showComments}
+                        initialComments={post.latestComments}
+                        onToggleComments={() => setShowComments(!showComments)}
+                        totalComments={commentsCount}
+                    />
+                </div>
             </div>
         </article>
     );

@@ -35,6 +35,7 @@ export const GET = async ({ params, url }: APIContext) => {
             .select({
                 id: SaltogramCommentsTable.id,
                 text: SaltogramCommentsTable.text,
+                parentId: SaltogramCommentsTable.parentId,
                 createdAt: SaltogramCommentsTable.createdAt,
                 user: {
                     id: UsersTable.id,
@@ -102,7 +103,7 @@ export const POST = async ({ request, params }: APIContext) => {
 
     try {
         const body = await request.json();
-        const { text } = body;
+        const { text, parentId } = body;
 
         if (!text || text.trim().length === 0) {
             return new Response(
@@ -156,6 +157,7 @@ export const POST = async ({ request, params }: APIContext) => {
                 postId,
                 userId,
                 text: text.trim(),
+                parentId: parentId || null,
             })
             .returning();
 
@@ -172,6 +174,7 @@ export const POST = async ({ request, params }: APIContext) => {
             .select({
                 id: SaltogramCommentsTable.id,
                 text: SaltogramCommentsTable.text,
+                parentId: SaltogramCommentsTable.parentId,
                 createdAt: SaltogramCommentsTable.createdAt,
                 user: {
                     id: UsersTable.id,

@@ -17,6 +17,7 @@ export interface SaltogramPost {
     user: SaltogramUser;
     reactionsCount: number;
     commentsCount: number;
+    latestComments?: SaltogramComment[];
 }
 
 export interface SaltogramReaction {
@@ -27,6 +28,7 @@ export interface SaltogramReaction {
 export interface SaltogramComment {
     id: number;
     text: string;
+    parentId?: number | null;
     createdAt: string;
     user: SaltogramUser;
 }

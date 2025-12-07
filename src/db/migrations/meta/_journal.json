@@ -372,6 +372,13 @@
       "when": 1765124612547,
       "tag": "0052_careful_giant_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1765126707414,
+      "tag": "0053_green_gertrude_yorkes",
+      "breakpoints": true
     }
   ]
 }

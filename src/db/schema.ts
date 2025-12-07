@@ -1,6 +1,6 @@
 import { TournamentMatchStatus, TournamentParticipantStatus, TournamentStatus, TournamentType } from "../consts/Torneos";
 import { relations, sql } from "drizzle-orm";
-import { boolean, integer, jsonb, pgEnum, pgTable, serial, text, timestamp, unique, uuid, varchar } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgEnum, pgTable, serial, text, timestamp, unique, uuid, varchar, type AnyPgColumn } from "drizzle-orm/pg-core";
 
 export const UsersTable = pgTable("users", {
     id: serial("id").primaryKey(),
@@ -1200,6 +1200,7 @@ export const SaltogramCommentsTable = pgTable("saltogram_comments", {
     id: serial("id").primaryKey(),
     postId: integer("post_id").notNull().references(() => SaltogramPostsTable.id, { onDelete: "cascade" }),
     userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    parentId: integer("parent_id").references((): AnyPgColumn => SaltogramCommentsTable.id, { onDelete: "cascade" }),
     text: text("text").notNull(),
     createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
     updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),

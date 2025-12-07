@@ -50,6 +50,29 @@ export const GET = async ({ request, url }: APIContext) => {
                 commentsCount: sql<number>`
                     (SELECT COUNT(*)::int FROM saltogram_comments WHERE post_id = ${SaltogramPostsTable.id})
                 `,
+                latestComments: sql<any[]>`
+                    (
+                        SELECT COALESCE(json_agg(c), '[]'::json)
+                        FROM (
+                            SELECT 
+                                sc.id, 
+                                sc.text, 
+                                sc.created_at as "createdAt",
+                                sc.parent_id as "parentId",
+                                json_build_object(
+                                    'id', u.id,
+                                    'displayName', u.display_name,
+                                    'username', u.username,
+                                    'avatar', u.avatar
+                                ) as user
+                            FROM saltogram_comments sc
+                            JOIN users u ON sc.user_id = u.id
+                            WHERE sc.post_id = ${SaltogramPostsTable.id} AND sc.parent_id IS NULL
+                            ORDER BY sc.created_at DESC
+                            LIMIT 2
+                        ) c
+                    )
+                `,
             })
             .from(SaltogramPostsTable)
             .innerJoin(UsersTable, eq(SaltogramPostsTable.userId, UsersTable.id));
