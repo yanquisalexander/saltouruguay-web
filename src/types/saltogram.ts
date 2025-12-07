@@ -3,6 +3,8 @@ export interface SaltogramUser {
     displayName: string;
     username: string;
     avatar: string | null;
+    admin?: boolean;
+    twitchTier?: number | null;
 }
 
 export interface SaltogramPost {

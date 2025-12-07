@@ -43,6 +43,8 @@ export const GET = async ({ request, url }: APIContext) => {
                     displayName: UsersTable.displayName,
                     username: UsersTable.username,
                     avatar: UsersTable.avatar,
+                    admin: UsersTable.admin,
+                    twitchTier: UsersTable.twitchTier,
                 },
                 reactionsCount: sql<number>`
                     (SELECT COUNT(*)::int FROM saltogram_reactions WHERE post_id = ${SaltogramPostsTable.id})
@@ -63,7 +65,9 @@ export const GET = async ({ request, url }: APIContext) => {
                                     'id', u.id,
                                     'displayName', u.display_name,
                                     'username', u.username,
-                                    'avatar', u.avatar
+                                    'avatar', u.avatar,
+                                    'admin', u.admin,
+                                    'twitchTier', u.twitch_tier
                                 ) as user
                             FROM saltogram_comments sc
                             JOIN users u ON sc.user_id = u.id

@@ -2,7 +2,7 @@ import { useState } from "preact/hooks";
 import type { SaltogramPost } from "@/types/saltogram";
 import ReactionButton from "./ReactionButton";
 import CommentSection from "./CommentSection";
-import { MessageCircle, Flag, Pin, Sparkles, MoreHorizontal, Trash2, Star, Share2 } from "lucide-preact";
+import { MessageCircle, Flag, Pin, Sparkles, MoreHorizontal, Trash2, Star, Share2, BadgeCheck, Crown } from "lucide-preact";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { actions } from "astro:actions";
@@ -131,8 +131,17 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                         />
                     </a>
                     <div>
-                        <a href={`/comunidad/saltogram/u/${post.user.username}`} className="font-semibold text-[#e4e6eb] text-[15px] leading-tight hover:underline cursor-pointer block">
+                        <a href={`/comunidad/saltogram/u/${post.user.username}`} className="font-semibold text-[#e4e6eb] text-[15px] leading-tight hover:underline cursor-pointer flex items-center gap-1">
                             {post.user.displayName}
+                            {post.user.admin && (
+                                <BadgeCheck size={16} className="text-blue-400 fill-blue-400/10" />
+                            )}
+                            {post.user.twitchTier && post.user.twitchTier > 0 && (
+                                <span className="bg-purple-500/20 text-purple-400 text-[10px] px-1.5 py-0.5 rounded-full border border-purple-500/30 flex items-center gap-0.5 ml-1">
+                                    <Crown size={10} />
+                                    <span className="font-bold">T{post.user.twitchTier}</span>
+                                </span>
+                            )}
                         </a>
                         <div className="flex items-center gap-1 text-[13px] text-[#b0b3b8] mt-0.5">
                             <a href={`/comunidad/saltogram/${post.id}`} className="hover:underline">{timeAgo}</a>

@@ -6,7 +6,13 @@ import FriendButton from "@/components/saltogram/FriendButton";
 import { client } from "@/db/client";
 import { UsersTable, FriendsTable } from "@/db/schema";
 import { eq, and, or, count } from "drizzle-orm";
-import { LucideMapPin, LucideCalendar, LucideLink } from "lucide-preact";
+import {
+  LucideMapPin,
+  LucideCalendar,
+  LucideLink,
+  LucideBadgeCheck,
+  LucideCrown,
+} from "lucide-preact";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -26,6 +32,8 @@ const user = await client.query.UsersTable.findFirst({
     displayName: true,
     avatar: true,
     createdAt: true,
+    admin: true,
+    twitchTier: true,
   },
 });
 
@@ -132,7 +140,25 @@ const friendUsers = friends.map((f) =>
 
           {/* Info */}
           <div class="flex-1 mb-2">
-            <h1 class="text-3xl font-bold text-white">{user.displayName}</h1>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-3xl font-bold text-white">{user.displayName}</h1>
+              {
+                user.admin && (
+                  <LucideBadgeCheck
+                    class="text-blue-400 fill-blue-400/10"
+                    size={28}
+                  />
+                )
+              }
+              {
+                user.twitchTier && user.twitchTier > 0 && (
+                  <span class="bg-purple-500/20 text-purple-400 text-xs px-2 py-1 rounded-full border border-purple-500/30 flex items-center gap-1">
+                    <LucideCrown size={14} />
+                    <span class="font-bold">TIER {user.twitchTier}</span>
+                  </span>
+                )
+              }
+            </div>
             <p class="text-white/60 font-medium">@{user.username}</p>
 
             <div class="flex items-center gap-4 mt-4 text-sm text-white/40">

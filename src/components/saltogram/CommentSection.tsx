@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "preact/hooks";
 import type { SaltogramComment } from "@/types/saltogram";
 import { toast } from "sonner";
-import { Send, LucideLoader2, LucideCornerDownRight, LucideX } from "lucide-preact";
+import { Send, LucideLoader2, LucideCornerDownRight, LucideX, BadgeCheck, Crown } from "lucide-preact";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { actions } from "astro:actions";
@@ -304,8 +304,17 @@ const CommentItem = ({ comment, allComments, onReply, preview, isReply = false }
             <div className="flex-1 min-w-0">
                 <div className="bg-[#1a1a1a]/50 rounded-2xl rounded-tl-none px-4 py-2 border border-white/5 group-hover:border-white/10 transition-colors inline-block max-w-full">
                     <div className="flex items-baseline gap-2 mb-0.5">
-                        <span className="font-bold text-xs text-white/90">
+                        <span className="font-bold text-xs text-white/90 flex items-center gap-1">
                             {comment.user.displayName}
+                            {comment.user.admin && (
+                                <BadgeCheck size={12} className="text-blue-400 fill-blue-400/10" />
+                            )}
+                            {comment.user.twitchTier && comment.user.twitchTier > 0 && (
+                                <span className="bg-purple-500/20 text-purple-400 text-[8px] px-1 py-0.5 rounded-full border border-purple-500/30 flex items-center gap-0.5">
+                                    <Crown size={8} />
+                                    <span className="font-bold">T{comment.user.twitchTier}</span>
+                                </span>
+                            )}
                         </span>
                         <span className="text-[10px] text-white/30">
                             {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: es })}

@@ -42,6 +42,8 @@ export const GET = async ({ params, url }: APIContext) => {
                     displayName: UsersTable.displayName,
                     username: UsersTable.username,
                     avatar: UsersTable.avatar,
+                    admin: UsersTable.admin,
+                    twitchTier: UsersTable.twitchTier,
                 },
             })
             .from(SaltogramCommentsTable)
@@ -181,6 +183,8 @@ export const POST = async ({ request, params }: APIContext) => {
                     displayName: UsersTable.displayName,
                     username: UsersTable.username,
                     avatar: UsersTable.avatar,
+                    admin: UsersTable.admin,
+                    twitchTier: UsersTable.twitchTier,
                 },
             })
             .from(SaltogramCommentsTable)
