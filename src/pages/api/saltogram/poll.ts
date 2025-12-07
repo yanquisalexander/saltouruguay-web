@@ -1,7 +1,7 @@
 import { client } from "@/db/client";
 import { SaltogramPostsTable } from "@/db/schema";
 import type { APIContext } from "astro";
-import { desc, eq, gt } from "drizzle-orm";
+import { desc, eq, gt, and } from "drizzle-orm";
 
 const POLL_TIMEOUT = 15000; // 15 seconds
 const CHECK_INTERVAL = 1000; // Check every 1 second
@@ -38,8 +38,10 @@ export const GET = async ({ request, url }: APIContext) => {
                 })
                 .from(SaltogramPostsTable)
                 .where(
-                    eq(SaltogramPostsTable.isHidden, false),
-                    gt(SaltogramPostsTable.id, lastId)
+                    and(
+                        eq(SaltogramPostsTable.isHidden, false),
+                        gt(SaltogramPostsTable.id, lastId)
+                    )
                 )
                 .orderBy(desc(SaltogramPostsTable.createdAt))
                 .limit(1);

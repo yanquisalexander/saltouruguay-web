@@ -1255,7 +1255,7 @@ export const saltogramCommentsRelations = relations(SaltogramCommentsTable, ({ o
 export const saltogramReportsRelations = relations(SaltogramReportsTable, ({ one }) => ({
     post: one(SaltogramPostsTable, {
         fields: [SaltogramReportsTable.postId],
-        references: [SaltogramReportsTable.id],
+        references: [SaltogramPostsTable.id],
     }),
     reporter: one(UsersTable, {
         fields: [SaltogramReportsTable.reporterId],

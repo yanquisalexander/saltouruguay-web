@@ -17,12 +17,20 @@ export const FEATURE_POST_DURATION_HOURS = 24;
  * Award coins to a user
  */
 export async function awardCoins(userId: number, amount: number): Promise<void> {
-    await client
-        .update(UsersTable)
-        .set({
-            coins: eq(UsersTable.coins, UsersTable.coins + amount),
-        })
-        .where(eq(UsersTable.id, userId));
+    const user = await client
+        .select({ coins: UsersTable.coins })
+        .from(UsersTable)
+        .where(eq(UsersTable.id, userId))
+        .limit(1);
+
+    if (user[0]) {
+        await client
+            .update(UsersTable)
+            .set({
+                coins: user[0].coins + amount,
+            })
+            .where(eq(UsersTable.id, userId));
+    }
 }
 
 /**

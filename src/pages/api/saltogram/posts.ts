@@ -51,18 +51,17 @@ export const GET = async ({ request, url }: APIContext) => {
                 `,
             })
             .from(SaltogramPostsTable)
-            .innerJoin(UsersTable, eq(SaltogramPostsTable.userId, UsersTable.id))
-            .where(eq(SaltogramPostsTable.isHidden, false));
+            .innerJoin(UsersTable, eq(SaltogramPostsTable.userId, UsersTable.id));
 
-        // Filter by user if specified
-        if (userFilter) {
-            query = query.where(
-                and(
-                    eq(SaltogramPostsTable.isHidden, false),
-                    eq(SaltogramPostsTable.userId, parseInt(userFilter))
-                )
-            );
-        }
+        // Build where conditions
+        const whereConditions = userFilter
+            ? and(
+                  eq(SaltogramPostsTable.isHidden, false),
+                  eq(SaltogramPostsTable.userId, parseInt(userFilter))
+              )
+            : eq(SaltogramPostsTable.isHidden, false);
+
+        query = query.where(whereConditions);
 
         // Apply sorting
         if (sort === "popular") {
