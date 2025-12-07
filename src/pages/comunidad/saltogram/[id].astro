@@ -63,10 +63,11 @@ const post = {
 <Layout
   title={`Post de ${postData.user.displayName} - Saltogram`}
   image={postData.imageUrl || undefined}
-  description={postData.text
+  description={(postData.text
     ? postData.text.substring(0, 150) +
       (postData.text.length > 150 ? "..." : "")
-    : `Publicación de ${postData.user.displayName} en Saltogram`}
+    : `Publicación de ${postData.user.displayName}`) +
+    ` | Únete a @${postData.user.username} en Saltogram`}
 >
   <div class="fixed inset-0 -z-10 bg-[#050505]">
     <div
