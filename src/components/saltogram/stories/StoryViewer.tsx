@@ -107,13 +107,6 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
         }
     }, [isPaused, music, story]);
 
-    // Set initial music time
-    useEffect(() => {
-        if (music && audioRef.current && music.config?.startTime) {
-            audioRef.current.currentTime = music.config.startTime;
-        }
-    }, [music]);
-
     // Timer Logic
     useEffect(() => {
         if (isPaused) return;
@@ -341,6 +334,11 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                                 ref={audioRef}
                                 src={audioUrl}
                                 autoPlay
+                                onLoadedMetadata={(e) => {
+                                    if (music?.config?.startTime) {
+                                        e.currentTarget.currentTime = music.config.startTime;
+                                    }
+                                }}
                                 onTimeUpdate={(e) => {
                                     const audio = e.currentTarget;
                                     const startTime = music.config?.startTime || 0;
