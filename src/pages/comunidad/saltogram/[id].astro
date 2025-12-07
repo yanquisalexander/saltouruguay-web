@@ -52,9 +52,22 @@ const [postData] = await client
 if (!postData) {
   return Astro.redirect("/404");
 }
+
+const post = {
+  ...postData,
+  createdAt: postData.createdAt.toISOString(),
+  featuredUntil: postData.featuredUntil?.toISOString() ?? null,
+};
 ---
 
-<Layout title={`Post de ${postData.user.displayName} - Saltogram`}>
+<Layout
+  title={`Post de ${postData.user.displayName} - Saltogram`}
+  image={postData.imageUrl || undefined}
+  description={postData.text
+    ? postData.text.substring(0, 150) +
+      (postData.text.length > 150 ? "..." : "")
+    : `Publicación de ${postData.user.displayName} en Saltogram`}
+>
   <div class="fixed inset-0 -z-10 bg-[#050505]">
     <div
       class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5"
@@ -84,7 +97,7 @@ if (!postData) {
 
     <PostCard
       client:load
-      post={postData}
+      post={post}
       currentUserId={currentUserId}
       isAdmin={isAdmin}
     />

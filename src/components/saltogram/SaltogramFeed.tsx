@@ -136,6 +136,43 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
                 </div>
             )}
 
+            {/* CREATE POST WIDGET (Facebook Style) */}
+            {user && (
+                <div className="bg-[#242526] rounded-xl p-4 shadow-sm border border-white/5">
+                    <div className="flex gap-3">
+                        <a href={`/comunidad/saltogram/u/${user.username}`}>
+                            <img
+                                src={user.image || `https://ui-avatars.com/api/?name=${user.name}`}
+                                alt={user.name}
+                                className="w-10 h-10 rounded-full object-cover bg-gray-700"
+                            />
+                        </a>
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex-1 bg-[#3a3b3c] hover:bg-[#4e4f50] rounded-full px-4 py-2 text-left text-[#b0b3b8] transition-colors text-sm sm:text-base"
+                        >
+                            ¿Qué estás pensando, {user.name?.split(' ')[0]}?
+                        </button>
+                    </div>
+                    <div className="border-t border-white/10 mt-3 pt-3 flex justify-between px-2">
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-white/5 rounded-lg transition-colors text-[#b0b3b8] font-medium text-sm"
+                        >
+                            <LucideCamera className="text-green-500" size={20} />
+                            <span>Foto/Video</span>
+                        </button>
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-white/5 rounded-lg transition-colors text-[#b0b3b8] font-medium text-sm"
+                        >
+                            <LucideFlame className="text-yellow-500" size={20} />
+                            <span>Sentimiento</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* FILTROS (Segmented Control) */}
             <div className="flex flex-col gap-4">
                 {tag && (

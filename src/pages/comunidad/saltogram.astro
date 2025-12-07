@@ -2,13 +2,40 @@
 import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
 import SaltogramFeed from "@/components/saltogram/SaltogramFeed";
+import FriendRequestsWidget from "@/components/saltogram/FriendRequestsWidget";
 import { LucideCamera, LucideTrendingUp } from "lucide-preact";
 import { getSaltogramStats, getTrendingTags } from "@/lib/saltogram";
+import { client } from "@/db/client";
+import { FriendsTable, UsersTable } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 
 const session = await getSession(Astro.request);
 
 const stats = await getSaltogramStats();
 const trendingTags = await getTrendingTags();
+
+const friendRequests = session?.user?.id
+  ? await client
+      .select({
+        id: FriendsTable.id,
+        createdAt: FriendsTable.createdAt,
+        user: {
+          id: UsersTable.id,
+          displayName: UsersTable.displayName,
+          username: UsersTable.username,
+          avatar: UsersTable.avatar,
+        },
+      })
+      .from(FriendsTable)
+      .innerJoin(UsersTable, eq(FriendsTable.userId, UsersTable.id))
+      .where(
+        and(
+          eq(FriendsTable.friendId, Number(session.user.id)),
+          eq(FriendsTable.status, "pending")
+        )
+      )
+      .limit(3)
+  : [];
 ---
 
 <Layout title="Saltogram - Social">
@@ -68,31 +95,6 @@ const trendingTags = await getTrendingTags();
             >
           </div>
         </div>
-
-        {
-          session && (
-            <button
-              id="create-post-btn"
-              class="group relative flex items-center gap-2 px-6 py-3 bg-white text-black hover:bg-white/90 font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] hover:-translate-y-1"
-            >
-              <span class="font-teko text-xl uppercase tracking-wide">
-                Publicar
-              </span>
-              <span class="bg-black text-white rounded p-0.5 group-hover:rotate-90 transition-transform">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="4"
-                >
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-              </span>
-            </button>
-          )
-        }
       </div>
     </header>
 
@@ -105,6 +107,16 @@ const trendingTags = await getTrendingTags();
 
       {/* Sidebar (Tendencias / Sugerencias) */}
       <aside class="hidden lg:block space-y-6">
+        {/* Friend Requests */}
+        {
+          friendRequests.length > 0 && (
+            <FriendRequestsWidget
+              client:load
+              initialRequests={friendRequests}
+            />
+          )
+        }
+
         {/* User Profile Link */}
         {
           session?.user && (

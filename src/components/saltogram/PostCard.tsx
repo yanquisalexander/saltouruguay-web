@@ -72,14 +72,24 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
         });
     };
 
+    const handleShare = async () => {
+        const url = `${window.location.origin}/comunidad/saltogram/${post.id}`;
+        try {
+            await navigator.clipboard.writeText(url);
+            toast.success("Enlace copiado al portapapeles");
+        } catch (err) {
+            toast.error("Error al copiar enlace");
+        }
+    };
+
     if (isDeleted) return null;
 
     return (
         <article className={`
-            relative bg-[#0f0f11] rounded-2xl border transition-all duration-300
+            relative bg-[#242526] rounded-xl shadow-sm transition-all duration-300
             ${isFeatured
-                ? 'border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.05)]'
-                : 'border-white/10 hover:border-white/20 hover:bg-[#121214]'
+                ? 'border border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.05)]'
+                : 'border border-white/5'
             }
         `}>
             {/* Badges Flotantes */}
@@ -99,24 +109,24 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
             )}
 
             {/* Header */}
-            <div className="p-5 flex items-start justify-between">
+            <div className="p-4 flex items-start justify-between">
                 <div className="flex items-center gap-3">
                     <a href={`/comunidad/saltogram/u/${post.user.username}`}>
                         <img
                             src={post.user.avatar || `https://ui-avatars.com/api/?name=${post.user.displayName}`}
                             alt={post.user.displayName}
-                            className="size-10 rounded-full object-cover border border-white/10"
+                            className="size-10 rounded-full object-cover border border-white/5"
                             loading="lazy"
                         />
                     </a>
                     <div>
-                        <a href={`/comunidad/saltogram/u/${post.user.username}`} className="font-bold text-white text-sm leading-tight hover:underline cursor-pointer">
+                        <a href={`/comunidad/saltogram/u/${post.user.username}`} className="font-semibold text-[#e4e6eb] text-[15px] leading-tight hover:underline cursor-pointer block">
                             {post.user.displayName}
                         </a>
-                        <div className="flex items-center gap-2 text-xs text-white/40">
-                            <a href={`/comunidad/saltogram/u/${post.user.username}`} className="hover:text-white/60">@{post.user.username}</a>
-                            <span>•</span>
-                            <a href={`/comunidad/saltogram/${post.id}`} className="hover:text-white/60 hover:underline">{timeAgo}</a>
+                        <div className="flex items-center gap-1 text-[13px] text-[#b0b3b8] mt-0.5">
+                            <a href={`/comunidad/saltogram/${post.id}`} className="hover:underline">{timeAgo}</a>
+                            <span>·</span>
+                            <span className="text-xs">@{post.user.username}</span>
                         </div>
                     </div>
                 </div>
@@ -125,7 +135,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                 <div className="relative">
                     <button
                         onClick={() => setShowMenu(!showMenu)}
-                        className="p-2 text-white/40 hover:text-white hover:bg-white/5 rounded-full transition-colors"
+                        className="p-2 text-[#b0b3b8] hover:bg-white/10 rounded-full transition-colors"
                         aria-label="Opciones"
                     >
                         <MoreHorizontal size={20} />
@@ -134,13 +144,13 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                     {showMenu && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)}></div>
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-150">
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-[#242526] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-150">
                                 {isAdmin && (
                                     <>
-                                        <button onClick={handlePin} className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/10 flex items-center gap-2">
+                                        <button onClick={handlePin} className="w-full px-4 py-2.5 text-left text-sm text-[#e4e6eb] hover:bg-white/5 flex items-center gap-2">
                                             <Pin size={16} /> {isPinned ? "Desfijar" : "Fijar"}
                                         </button>
-                                        <button onClick={handleFeature} className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/10 flex items-center gap-2">
+                                        <button onClick={handleFeature} className="w-full px-4 py-2.5 text-left text-sm text-[#e4e6eb] hover:bg-white/5 flex items-center gap-2">
                                             <Star size={16} /> {isFeatured ? "Quitar destacado" : "Destacar"}
                                         </button>
                                         <div className="h-px bg-white/10 my-1"></div>
@@ -153,7 +163,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                                 )}
                                 <button
                                     onClick={() => { toast.success("Reporte enviado"); setShowMenu(false); }}
-                                    className="w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/10 flex items-center gap-2"
+                                    className="w-full px-4 py-2.5 text-left text-sm text-[#e4e6eb] hover:bg-white/5 flex items-center gap-2"
                                 >
                                     <Flag size={16} /> Reportar
                                 </button>
@@ -165,8 +175,8 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
 
             {/* Content Text */}
             {post.text && (
-                <div className="px-5 pb-3">
-                    <p className="text-white/90 text-base whitespace-pre-wrap break-words leading-relaxed font-rubik">
+                <div className="px-4 pb-3">
+                    <p className="text-[#e4e6eb] text-[15px] whitespace-pre-wrap break-words leading-relaxed font-normal">
                         {formatText(post.text)}
                     </p>
                 </div>
@@ -174,7 +184,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
 
             {/* Image */}
             {post.imageUrl && (
-                <div className="relative w-full bg-black/50">
+                <div className="relative w-full bg-black">
                     <img
                         src={post.imageUrl}
                         alt="Post content"
@@ -185,28 +195,33 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
             )}
 
             {/* Footer / Actions */}
-            <div className="px-5 py-4 border-t border-white/5">
-                <div className="flex items-center gap-6">
-                    <ReactionButton postId={post.id} currentUserId={currentUserId} />
+            <div className="px-4 py-1 border-t border-white/10">
+                <div className="flex items-center justify-between gap-1">
+                    <div className="flex-1 flex justify-center hover:bg-white/5 rounded-lg py-1 transition-colors">
+                        <ReactionButton postId={post.id} currentUserId={currentUserId} />
+                    </div>
 
                     <button
                         onClick={() => setShowComments(!showComments)}
-                        className="flex items-center gap-2 text-white/60 hover:text-white transition-colors group"
+                        className="flex-1 flex items-center justify-center gap-2 py-2 text-[#b0b3b8] hover:bg-white/5 rounded-lg transition-colors group"
                     >
-                        <div className="p-1.5 rounded-full group-hover:bg-white/10 transition-colors">
-                            <MessageCircle size={20} />
-                        </div>
-                        <span className="text-sm font-medium">{commentsCount}</span>
+                        <MessageCircle size={20} />
+                        <span className="text-[15px] font-medium">Comentar</span>
                     </button>
 
-                    <button className="ml-auto p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-full transition-colors" title="Compartir">
+                    <button
+                        onClick={handleShare}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 text-[#b0b3b8] hover:bg-white/5 rounded-lg transition-colors"
+                        title="Copiar enlace"
+                    >
                         <Share2 size={20} />
+                        <span className="text-[15px] font-medium">Compartir</span>
                     </button>
                 </div>
 
                 {/* Comments Area */}
                 {showComments && (
-                    <div className="mt-4 pt-4 border-t border-white/5 animate-in slide-in-from-top-2">
+                    <div className="mt-2 pt-2 border-t border-white/5 animate-in slide-in-from-top-2">
                         <CommentSection
                             postId={post.id}
                             onCommentAdded={handleCommentAdded}
