@@ -3,7 +3,7 @@ import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
 import { client } from "@/db/client";
 import { SaltogramStoriesTable, SaltogramStoryViewsTable, SaltogramStoryLikesTable, FriendsTable, UsersTable } from "@/db/schema";
-import { eq, and, or, gt, desc, sql } from "drizzle-orm";
+import { eq, and, or, gt, desc, asc, sql } from "drizzle-orm";
 
 export const stories = {
     create: defineAction({
@@ -69,7 +69,7 @@ export const stories = {
                     },
                     likes: true
                 },
-                orderBy: [desc(SaltogramStoriesTable.createdAt)]
+                orderBy: [asc(SaltogramStoriesTable.createdAt)]
             });
 
             // Group by user

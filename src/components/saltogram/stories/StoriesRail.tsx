@@ -91,15 +91,15 @@ export default function StoriesRail({ user }: StoriesRailProps) {
                         onClick={() => handleStoryClick(index)}
                         className="flex-shrink-0 w-28 h-48 relative rounded-xl overflow-hidden cursor-pointer group snap-start"
                     >
-                        {/* Background Image (First story thumbnail) */}
-                        {item.stories[0].mediaType === 'image' ? (
+                        {/* Background Image (Last story thumbnail - Newest) */}
+                        {item.stories[item.stories.length - 1].mediaType === 'image' ? (
                             <img
-                                src={item.stories[0].mediaUrl}
+                                src={item.stories[item.stories.length - 1].mediaUrl}
                                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                         ) : (
                             <video
-                                src={item.stories[0].mediaUrl}
+                                src={item.stories[item.stories.length - 1].mediaUrl}
                                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                         )}
