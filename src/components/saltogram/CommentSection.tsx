@@ -276,7 +276,7 @@ const formatCommentText = (text: string) => {
             // Simple regex to check if it's a valid username format (alphanumeric + underscore)
             if (/^[a-zA-Z0-9_]+$/.test(username)) {
                 return (
-                    <a key={i} href={`/comunidad/usuarios/${username}`} className="text-blue-400 hover:underline font-medium">
+                    <a key={i} href={`/comunidad/saltogram/u/${username}`} className="text-blue-400 hover:underline font-medium">
                         {part}
                     </a>
                 );
