@@ -20,8 +20,73 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const [selectedMusic, setSelectedMusic] = useState<any | null>(null);
     const [stickerConfig, setStickerConfig] = useState({ x: 50, y: 50, scale: 1 });
     const [musicStart, setMusicStart] = useState(0);
+    const [musicDuration, setMusicDuration] = useState(15);
     const audioPreviewRef = useRef<HTMLAudioElement>(null);
     const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+    
+    const timelineRef = useRef<HTMLDivElement>(null);
+    const isDraggingTimeline = useRef<'start' | 'end' | 'move' | null>(null);
+    const timelineStartPos = useRef(0);
+    const timelineStartValues = useRef({ start: 0, duration: 0 });
+
+    const handleTimelinePointerDown = (e: PointerEvent, type: 'start' | 'end' | 'move') => {
+        e.preventDefault();
+        e.stopPropagation();
+        const target = e.currentTarget as HTMLElement;
+        target.setPointerCapture(e.pointerId);
+        
+        isDraggingTimeline.current = type;
+        timelineStartPos.current = e.clientX;
+        timelineStartValues.current = { start: musicStart, duration: musicDuration };
+    };
+
+    const handleTimelinePointerMove = (e: PointerEvent) => {
+        if (!isDraggingTimeline.current || !timelineRef.current) return;
+        e.stopPropagation();
+        
+        const rect = timelineRef.current.getBoundingClientRect();
+        const deltaPixels = e.clientX - timelineStartPos.current;
+        const deltaSeconds = (deltaPixels / rect.width) * 30;
+        
+        if (isDraggingTimeline.current === 'move') {
+            let newStart = timelineStartValues.current.start + deltaSeconds;
+            newStart = Math.max(0, Math.min(30 - timelineStartValues.current.duration, newStart));
+            setMusicStart(newStart);
+            if (audioPreviewRef.current && !isPlayingPreview) audioPreviewRef.current.currentTime = newStart;
+        } else if (isDraggingTimeline.current === 'start') {
+            let newStart = timelineStartValues.current.start + deltaSeconds;
+            let newDuration = timelineStartValues.current.duration - deltaSeconds;
+            
+            if (newDuration < 5) {
+                newStart = timelineStartValues.current.start + timelineStartValues.current.duration - 5;
+                newDuration = 5;
+            }
+            if (newStart < 0) {
+                newStart = 0;
+                newDuration = timelineStartValues.current.start + timelineStartValues.current.duration;
+            }
+            
+            setMusicStart(newStart);
+            setMusicDuration(newDuration);
+            if (audioPreviewRef.current && !isPlayingPreview) audioPreviewRef.current.currentTime = newStart;
+        } else if (isDraggingTimeline.current === 'end') {
+            let newDuration = timelineStartValues.current.duration + deltaSeconds;
+            if (newDuration < 5) newDuration = 5;
+            if (timelineStartValues.current.start + newDuration > 30) {
+                newDuration = 30 - timelineStartValues.current.start;
+            }
+            setMusicDuration(newDuration);
+        }
+    };
+
+    const handleTimelinePointerUp = (e: PointerEvent) => {
+        const target = e.currentTarget as HTMLElement;
+        target.releasePointerCapture(e.pointerId);
+        isDraggingTimeline.current = null;
+        if (audioPreviewRef.current && isPlayingPreview) {
+             audioPreviewRef.current.currentTime = musicStart;
+        }
+    };
     
     const fileInputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -129,7 +194,8 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
         try {
             const formData = new FormData();
             formData.append("file", file);
-            formData.append("duration", duration.toString());
+            const finalDuration = selectedMusic ? musicDuration : duration;
+            formData.append("duration", finalDuration.toString());
             formData.append("visibility", visibility);
             
             if (selectedMusic) {
@@ -138,7 +204,8 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                         ...selectedMusic,
                         config: {
                             ...stickerConfig,
-                            startTime: musicStart
+                            startTime: musicStart,
+                            duration: musicDuration
                         }
                     }
                 }));
@@ -254,11 +321,13 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
 
                             {/* Music Controls */}
                             {selectedMusic && (
-                                <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md rounded-xl p-3 flex flex-col gap-2 z-30 animate-in slide-in-from-bottom-10">
-                                    <div className="flex items-center justify-between text-white/80 text-xs mb-1">
-                                        <span>Fragmento de canción</span>
+                                <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md rounded-xl p-3 flex flex-col gap-3 z-30 animate-in slide-in-from-bottom-10">
+                                    <div className="flex items-center justify-between text-white/80 text-xs">
                                         <span>{musicStart.toFixed(1)}s</span>
+                                        <span className="font-bold text-white">{musicDuration.toFixed(1)}s</span>
+                                        <span>{(musicStart + musicDuration).toFixed(1)}s</span>
                                     </div>
+
                                     <div className="flex items-center gap-3">
                                         <button 
                                             onClick={(e) => {
@@ -269,49 +338,81 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                                                     setIsPlayingPreview(!isPlayingPreview);
                                                 }
                                             }}
-                                            className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center shrink-0 hover:scale-105 transition-transform"
+                                            className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shrink-0 hover:scale-105 transition-transform"
                                         >
-                                            {isPlayingPreview ? <LucidePause size={16} /> : <LucidePlay size={16} />}
+                                            {isPlayingPreview ? <LucidePause size={20} /> : <LucidePlay size={20} />}
                                         </button>
-                                        <input 
-                                            type="range" 
-                                            min="0" 
-                                            max="30"
-                                            step="0.1"
-                                            value={musicStart}
-                                            onInput={(e) => {
-                                                const val = Number(e.currentTarget.value);
-                                                setMusicStart(val);
-                                                if (audioPreviewRef.current) {
-                                                    audioPreviewRef.current.currentTime = val;
-                                                    if (!isPlayingPreview) {
-                                                        audioPreviewRef.current.play();
-                                                        setIsPlayingPreview(true);
-                                                    }
-                                                }
-                                            }}
-                                            className="flex-1 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
-                                        />
+
+                                        {/* Timeline Editor */}
+                                        <div 
+                                            ref={timelineRef}
+                                            className="relative flex-1 h-12 bg-white/10 rounded-lg overflow-hidden cursor-pointer touch-none select-none"
+                                            onPointerMove={handleTimelinePointerMove}
+                                            onPointerUp={handleTimelinePointerUp}
+                                            onPointerLeave={handleTimelinePointerUp}
+                                        >
+                                            {/* Background Waveform (fake bars) */}
+                                            <div className="absolute inset-0 flex items-center justify-between px-1 opacity-30 pointer-events-none">
+                                                {Array.from({ length: 40 }).map((_, i) => (
+                                                    <div key={i} className="w-1 bg-white rounded-full" style={{ height: `${20 + Math.random() * 60}%` }} />
+                                                ))}
+                                            </div>
+
+                                            {/* Selection Window */}
+                                            <div 
+                                                className="absolute top-0 bottom-0 bg-blue-500/30 border-y-2 border-blue-500 group cursor-grab active:cursor-grabbing"
+                                                style={{
+                                                    left: `${(musicStart / 30) * 100}%`,
+                                                    width: `${(musicDuration / 30) * 100}%`
+                                                }}
+                                                onPointerDown={(e) => handleTimelinePointerDown(e, 'move')}
+                                            >
+                                                {/* Left Handle */}
+                                                <div 
+                                                    className="absolute left-0 top-0 bottom-0 w-4 -ml-2 cursor-ew-resize z-10 flex items-center justify-center group/handle"
+                                                    onPointerDown={(e) => handleTimelinePointerDown(e, 'start')}
+                                                >
+                                                    <div className="w-1.5 h-6 bg-white rounded-full shadow-sm group-hover/handle:scale-110 transition-transform" />
+                                                </div>
+
+                                                {/* Right Handle */}
+                                                <div 
+                                                    className="absolute right-0 top-0 bottom-0 w-4 -mr-2 cursor-ew-resize z-10 flex items-center justify-center group/handle"
+                                                    onPointerDown={(e) => handleTimelinePointerDown(e, 'end')}
+                                                >
+                                                    <div className="w-1.5 h-6 bg-white rounded-full shadow-sm group-hover/handle:scale-110 transition-transform" />
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
+
                                     <audio 
                                         ref={audioPreviewRef} 
                                         src={selectedMusic.preview} 
                                         loop 
                                         onPlay={() => setIsPlayingPreview(true)}
                                         onPause={() => setIsPlayingPreview(false)}
+                                        onTimeUpdate={(e) => {
+                                            const audio = e.currentTarget;
+                                            if (audio.currentTime >= musicStart + musicDuration) {
+                                                audio.currentTime = musicStart;
+                                            }
+                                        }}
                                     />
                                 </div>
                             )}
 
                             {/* Tools Overlay */}
                             <div className="absolute top-4 right-4 flex flex-col gap-3 z-20">
-                                <button 
-                                    onClick={() => setShowMusicPicker(true)}
-                                    className="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
-                                    title="Añadir música"
-                                >
-                                    <LucideMusic size={20} />
-                                </button>
+                                {mediaType !== 'video' && (
+                                    <button 
+                                        onClick={() => setShowMusicPicker(true)}
+                                        className="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
+                                        title="Añadir música"
+                                    >
+                                        <LucideMusic size={20} />
+                                    </button>
+                                )}
                                 <button 
                                     onClick={() => { setFile(null); setPreview(null); setSelectedMusic(null); }}
                                     className="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-all"
