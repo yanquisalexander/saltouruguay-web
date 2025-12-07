@@ -78,10 +78,21 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
             if (isPaused) {
                 audioRef.current.pause();
             } else {
+                // If starting playback, ensure we start from the configured start time
+                // But only if we are just starting (currentTime is 0 or close to it?)
+                // Actually, we want to loop the fragment if needed?
+                // For now, just play. The initial time is set in another effect.
                 audioRef.current.play().catch(() => { });
             }
         }
     }, [isPaused, music, story]);
+
+    // Set initial music time
+    useEffect(() => {
+        if (music && audioRef.current && music.config?.startTime) {
+            audioRef.current.currentTime = music.config.startTime;
+        }
+    }, [music]);
 
     // Timer Logic
     useEffect(() => {

@@ -1,5 +1,5 @@
 import { useState, useRef } from "preact/hooks";
-import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo, LucideStar, LucideGlobe, LucideUsers, LucideMusic, LucideTrash2, LucideMaximize2 } from "lucide-preact";
+import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo, LucideStar, LucideGlobe, LucideUsers, LucideMusic, LucideTrash2, LucideMaximize2, LucidePlay, LucidePause } from "lucide-preact";
 import { toast } from "sonner";
 import MusicPicker from "./MusicPicker";
 
@@ -19,6 +19,9 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const [showMusicPicker, setShowMusicPicker] = useState(false);
     const [selectedMusic, setSelectedMusic] = useState<any | null>(null);
     const [stickerConfig, setStickerConfig] = useState({ x: 50, y: 50, scale: 1 });
+    const [musicStart, setMusicStart] = useState(0);
+    const audioPreviewRef = useRef<HTMLAudioElement>(null);
+    const [isPlayingPreview, setIsPlayingPreview] = useState(false);
     
     const fileInputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -133,7 +136,10 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                 formData.append("metadata", JSON.stringify({ 
                     music: {
                         ...selectedMusic,
-                        config: stickerConfig
+                        config: {
+                            ...stickerConfig,
+                            startTime: musicStart
+                        }
                     }
                 }));
             }
@@ -246,6 +252,57 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                                 </div>
                             )}
 
+                            {/* Music Controls */}
+                            {selectedMusic && (
+                                <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md rounded-xl p-3 flex flex-col gap-2 z-30 animate-in slide-in-from-bottom-10">
+                                    <div className="flex items-center justify-between text-white/80 text-xs mb-1">
+                                        <span>Fragmento de canción</span>
+                                        <span>{musicStart.toFixed(1)}s</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (audioPreviewRef.current) {
+                                                    if (isPlayingPreview) audioPreviewRef.current.pause();
+                                                    else audioPreviewRef.current.play();
+                                                    setIsPlayingPreview(!isPlayingPreview);
+                                                }
+                                            }}
+                                            className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center shrink-0 hover:scale-105 transition-transform"
+                                        >
+                                            {isPlayingPreview ? <LucidePause size={16} /> : <LucidePlay size={16} />}
+                                        </button>
+                                        <input 
+                                            type="range" 
+                                            min="0" 
+                                            max="30"
+                                            step="0.1"
+                                            value={musicStart}
+                                            onInput={(e) => {
+                                                const val = Number(e.currentTarget.value);
+                                                setMusicStart(val);
+                                                if (audioPreviewRef.current) {
+                                                    audioPreviewRef.current.currentTime = val;
+                                                    if (!isPlayingPreview) {
+                                                        audioPreviewRef.current.play();
+                                                        setIsPlayingPreview(true);
+                                                    }
+                                                }
+                                            }}
+                                            className="flex-1 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
+                                        />
+                                    </div>
+                                    <audio 
+                                        ref={audioPreviewRef} 
+                                        src={selectedMusic.preview} 
+                                        loop 
+                                        onPlay={() => setIsPlayingPreview(true)}
+                                        onPause={() => setIsPlayingPreview(false)}
+                                    />
+                                </div>
+                            )}
+
                             {/* Tools Overlay */}
                             <div className="absolute top-4 right-4 flex flex-col gap-3 z-20">
                                 <button 
@@ -271,6 +328,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                         <MusicPicker 
                             onSelect={(track) => {
                                 setSelectedMusic(track);
+                                setMusicStart(0);
                                 setShowMusicPicker(false);
                             }}
                             onClose={() => setShowMusicPicker(false)}
