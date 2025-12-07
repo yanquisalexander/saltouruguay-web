@@ -7,6 +7,8 @@ import { client } from "@/db/client";
 import { UsersTable, FriendsTable } from "@/db/schema";
 import { eq, and, or, count } from "drizzle-orm";
 import { LucideMapPin, LucideCalendar, LucideLink } from "lucide-preact";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 const { username } = Astro.params;
 const session = await getSession(Astro.request);
@@ -136,11 +138,11 @@ const friendUsers = friends.map((f) =>
             <div class="flex items-center gap-4 mt-4 text-sm text-white/40">
               <div class="flex items-center gap-1">
                 <LucideCalendar size={14} />
-                <span
-                  >Se unió en {
-                    new Date(user.createdAt).toLocaleDateString()
-                  }</span
-                >
+                <span>
+                  Se unió el {
+                    format(new Date(user.createdAt), "PPP", { locale: es })
+                  }
+                </span>
               </div>
               <div class="flex items-center gap-1">
                 <span>{friendsCount} amigos</span>
