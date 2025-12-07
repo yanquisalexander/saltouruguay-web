@@ -1,6 +1,6 @@
 import { client } from "@/db/client";
 import { SaltogramStoriesTable } from "@/db/schema";
-import { uploadImage, validateImage } from "@/services/saltogram-storage";
+import { uploadMedia } from "@/services/saltogram-storage";
 import type { APIContext } from "astro";
 import { getSession } from "auth-astro/server";
 
@@ -25,8 +25,8 @@ export const POST = async ({ request }: APIContext) => {
         const buffer = Buffer.from(await file.arrayBuffer());
 
         // Basic validation (reuse existing or simple check)
-        if (file.size > 10 * 1024 * 1024) { // 10MB limit
-            return new Response(JSON.stringify({ error: "Archivo muy grande (max 10MB)" }), { status: 400 });
+        if (file.size > 50 * 1024 * 1024) { // 50MB limit for videos
+            return new Response(JSON.stringify({ error: "Archivo muy grande (max 50MB)" }), { status: 400 });
         }
 
         // Determine type
@@ -34,9 +34,7 @@ export const POST = async ({ request }: APIContext) => {
         const mediaType = isVideo ? "video" : "image";
 
         // Upload
-        // Note: uploadImage might be optimized for images, but let's assume it handles generic uploads or we might need a separate one for videos.
-        // For now, reusing uploadImage assuming it uploads to S3/R2 and returns a URL.
-        const uploadResult = await uploadImage(buffer, file.name, userId);
+        const uploadResult = await uploadMedia(buffer, file.name, userId, file.type);
         const mediaUrl = uploadResult.url;
 
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);

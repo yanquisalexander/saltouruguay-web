@@ -3,7 +3,7 @@ import sharp from "sharp";
 
 const s3Client = new S3Client({
     region: "auto",
-    endpoint: process.env.R2_PUBLIC_URL 
+    endpoint: process.env.R2_PUBLIC_URL
         ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
         : undefined,
     credentials: {
@@ -23,44 +23,57 @@ export interface UploadImageResult {
 }
 
 /**
- * Compress and upload an image to R2
- * @param imageBuffer - The image buffer to upload
+ * Upload a file (image or video) to R2
+ * @param buffer - The file buffer
  * @param fileName - The name of the file
  * @param userId - The user ID of the uploader
- * @returns The public URL of the uploaded image
+ * @param mimeType - The MIME type of the file
+ * @returns The public URL of the uploaded file
  */
-export async function uploadImage(
-    imageBuffer: Buffer,
+export async function uploadMedia(
+    buffer: Buffer,
     fileName: string,
-    userId: number
+    userId: number,
+    mimeType: string
 ): Promise<UploadImageResult> {
-    // Compress and resize the image
-    const compressedBuffer = await sharp(imageBuffer)
-        .resize(MAX_WIDTH, MAX_HEIGHT, {
-            fit: "inside",
-            withoutEnlargement: true,
-        })
-        .jpeg({ quality: QUALITY })
-        .toBuffer();
+    let body = buffer;
+    let contentType = mimeType;
+    let extension = fileName.split('.').pop() || 'bin';
 
-    // Generate a unique key for the image
+    // Optimize images
+    if (mimeType.startsWith('image/')) {
+        try {
+            body = await sharp(buffer)
+                .resize(MAX_WIDTH, MAX_HEIGHT, {
+                    fit: "inside",
+                    withoutEnlargement: true,
+                })
+                .jpeg({ quality: QUALITY })
+                .toBuffer();
+            contentType = "image/jpeg";
+            extension = "jpg";
+        } catch (e) {
+            console.warn("Could not optimize image, uploading original", e);
+        }
+    }
+
+    // Generate a unique key
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
-    const extension = "jpg";
     const key = `saltogram/${userId}/${timestamp}-${randomString}.${extension}`;
 
     // Upload to R2
     const command = new PutObjectCommand({
         Bucket: BUCKET_NAME,
         Key: key,
-        Body: compressedBuffer,
-        ContentType: "image/jpeg",
+        Body: body,
+        ContentType: contentType,
     });
 
     await s3Client.send(command);
 
     // Return the public URL
-    const publicUrl = process.env.R2_PUBLIC_URL 
+    const publicUrl = process.env.R2_PUBLIC_URL
         ? `${process.env.R2_PUBLIC_URL}/${key}`
         : `https://${BUCKET_NAME}.${process.env.R2_ACCOUNT_ID}.r2.dev/${key}`;
 
@@ -71,6 +84,18 @@ export async function uploadImage(
 }
 
 /**
+ * Compress and upload an image to R2
+ * @deprecated Use uploadMedia instead
+ */
+export async function uploadImage(
+    imageBuffer: Buffer,
+    fileName: string,
+    userId: number
+): Promise<UploadImageResult> {
+    return uploadMedia(imageBuffer, fileName, userId, "image/jpeg");
+}
+
+/**
  * Validates an image file
  * @param buffer - The image buffer
  * @returns true if valid, throws error otherwise
@@ -78,7 +103,7 @@ export async function uploadImage(
 export async function validateImage(buffer: Buffer): Promise<boolean> {
     try {
         const metadata = await sharp(buffer).metadata();
-        
+
         // Check if it's a valid image format
         if (!metadata.format || !['jpeg', 'jpg', 'png', 'webp'].includes(metadata.format)) {
             throw new Error("Formato de imagen no válido. Solo se permiten JPEG, PNG y WebP.");
