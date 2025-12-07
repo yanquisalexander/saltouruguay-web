@@ -167,7 +167,16 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
             <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
+                exit={{ y: "100%", opacity: 0 }}
                 transition={{ type: "spring", duration: 0.3 }}
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={{ top: 0, bottom: 0.5 }}
+                onDragEnd={(_, info) => {
+                    if (info.offset.y > 100) {
+                        onClose();
+                    }
+                }}
                 className="relative w-full max-w-md h-full md:h-[90vh] md:rounded-2xl overflow-hidden bg-[#1a1a1a] flex flex-col"
             >
 
