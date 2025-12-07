@@ -39,7 +39,7 @@ export const stories = {
         handler: async (_, { request }) => {
             const session = await getSession(request);
             if (!session?.user?.id) {
-                return { stories: [] };
+                return { feed: [] };
             }
 
             const userId = Number(session.user.id);
