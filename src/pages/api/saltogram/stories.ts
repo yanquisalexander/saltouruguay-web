@@ -16,7 +16,7 @@ export const POST = async ({ request }: APIContext) => {
     try {
         const formData = await request.formData();
         const file = formData.get("file") as File | null;
-        let duration = Number(formData.get("duration") || 5);
+        let duration = Math.round(Number(formData.get("duration") || 5));
 
         // Max duration 60 seconds
         if (duration > 60) duration = 60;
