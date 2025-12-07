@@ -321,15 +321,15 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                                 ref={audioRef}
                                 src={music.preview}
                                 autoPlay
-                                loop
                                 onTimeUpdate={(e) => {
-                                    // Loop the fragment if needed, though story duration should handle the cut
                                     const audio = e.currentTarget;
                                     const startTime = music.config?.startTime || 0;
                                     const duration = music.config?.duration || 15;
                                     
+                                    // Stop if we exceed the duration (plus a small buffer)
+                                    // We don't loop here because the story should end
                                     if (audio.currentTime >= startTime + duration) {
-                                        audio.currentTime = startTime;
+                                        audio.pause();
                                     }
                                 }}
                             />

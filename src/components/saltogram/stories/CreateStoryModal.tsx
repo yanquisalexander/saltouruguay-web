@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "preact/hooks";
 import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo, LucideStar, LucideGlobe, LucideUsers, LucideMusic, LucideTrash2, LucideMaximize2, LucidePlay, LucidePause } from "lucide-preact";
 import { toast } from "sonner";
+import WaveSurfer from 'wavesurfer.js';
+import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js';
 import MusicPicker from "./MusicPicker";
 
 interface CreateStoryModalProps {
@@ -21,13 +23,11 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const [stickerConfig, setStickerConfig] = useState({ x: 50, y: 50, scale: 1 });
     const [musicStart, setMusicStart] = useState(0);
     const [musicDuration, setMusicDuration] = useState(15);
-    const audioPreviewRef = useRef<HTMLAudioElement>(null);
     const [isPlayingPreview, setIsPlayingPreview] = useState(false);
     
-    const timelineRef = useRef<HTMLDivElement>(null);
-    const isDraggingTimeline = useRef<'start' | 'end' | 'move' | null>(null);
-    const timelineStartPos = useRef(0);
-    const timelineStartValues = useRef({ start: 0, duration: 0 });
+    const waveformContainerRef = useRef<HTMLDivElement>(null);
+    const wavesurferRef = useRef<WaveSurfer | null>(null);
+    const regionsPluginRef = useRef<RegionsPlugin | null>(null);
 
     useEffect(() => {
         if (!isOpen) {
@@ -42,65 +42,100 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             setMusicStart(0);
             setMusicDuration(15);
             setIsPlayingPreview(false);
+            
+            if (wavesurferRef.current) {
+                wavesurferRef.current.destroy();
+                wavesurferRef.current = null;
+            }
         }
     }, [isOpen]);
 
-    const handleTimelinePointerDown = (e: PointerEvent, type: 'start' | 'end' | 'move') => {
-        e.preventDefault();
-        e.stopPropagation();
-        const target = e.currentTarget as HTMLElement;
-        target.setPointerCapture(e.pointerId);
-        
-        isDraggingTimeline.current = type;
-        timelineStartPos.current = e.clientX;
-        timelineStartValues.current = { start: musicStart, duration: musicDuration };
-    };
+    // Initialize WaveSurfer when music is selected
+    useEffect(() => {
+        if (selectedMusic && waveformContainerRef.current) {
+            if (wavesurferRef.current) {
+                wavesurferRef.current.destroy();
+            }
 
-    const handleTimelinePointerMove = (e: PointerEvent) => {
-        if (!isDraggingTimeline.current || !timelineRef.current) return;
-        e.stopPropagation();
-        
-        const rect = timelineRef.current.getBoundingClientRect();
-        const deltaPixels = e.clientX - timelineStartPos.current;
-        const deltaSeconds = (deltaPixels / rect.width) * 30;
-        
-        if (isDraggingTimeline.current === 'move') {
-            let newStart = timelineStartValues.current.start + deltaSeconds;
-            newStart = Math.max(0, Math.min(30 - timelineStartValues.current.duration, newStart));
-            setMusicStart(newStart);
-            if (audioPreviewRef.current && !isPlayingPreview) audioPreviewRef.current.currentTime = newStart;
-        } else if (isDraggingTimeline.current === 'start') {
-            let newStart = timelineStartValues.current.start + deltaSeconds;
-            let newDuration = timelineStartValues.current.duration - deltaSeconds;
+            // Create gradients
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
             
-            if (newDuration < 5) {
-                newStart = timelineStartValues.current.start + timelineStartValues.current.duration - 5;
-                newDuration = 5;
-            }
-            if (newStart < 0) {
-                newStart = 0;
-                newDuration = timelineStartValues.current.start + timelineStartValues.current.duration;
-            }
+            // Vibrant gradient for progress (played part)
+            const progressGradient = ctx!.createLinearGradient(0, 0, 0, 48);
+            progressGradient.addColorStop(0, '#FF0080');   // Pink
+            progressGradient.addColorStop(0.5, '#8000FF'); // Purple
+            progressGradient.addColorStop(1, '#0080FF');   // Blue
+
+            // Dimmed gradient for the rest of the wave
+            const waveGradient = ctx!.createLinearGradient(0, 0, 0, 48);
+            waveGradient.addColorStop(0, 'rgba(255, 0, 128, 0.5)');
+            waveGradient.addColorStop(0.5, 'rgba(128, 0, 255, 0.5)');
+            waveGradient.addColorStop(1, 'rgba(0, 128, 255, 0.5)');
+
+            const ws = WaveSurfer.create({
+                container: waveformContainerRef.current,
+                waveColor: waveGradient,
+                progressColor: progressGradient,
+                cursorColor: 'rgba(255, 255, 255, 0.5)',
+                barWidth: 3,
+                barGap: 2,
+                barRadius: 3,
+                height: 48,
+                url: selectedMusic.preview,
+                normalize: true,
+            });
+
+            const wsRegions = RegionsPlugin.create();
+            ws.registerPlugin(wsRegions);
+            regionsPluginRef.current = wsRegions;
+
+            ws.on('decode', () => {
+                // Create the initial region
+                wsRegions.addRegion({
+                    start: 0,
+                    end: 15,
+                    color: 'rgba(255, 255, 255, 0.1)',
+                    drag: true,
+                    resize: true,
+                    minLength: 5,
+                    maxLength: 30,
+                });
+                
+                // Auto-play when ready
+                ws.play();
+                setIsPlayingPreview(true);
+            });
+
+            wsRegions.on('region-updated', (region) => {
+                setMusicStart(region.start);
+                setMusicDuration(region.end - region.start);
+                // Loop playback within region
+                region.play();
+                setIsPlayingPreview(true);
+            });
+
+            wsRegions.on('region-clicked', (region, e) => {
+                e.stopPropagation();
+                region.play();
+                setIsPlayingPreview(true);
+            });
             
-            setMusicStart(newStart);
-            setMusicDuration(newDuration);
-            if (audioPreviewRef.current && !isPlayingPreview) audioPreviewRef.current.currentTime = newStart;
-        } else if (isDraggingTimeline.current === 'end') {
-            let newDuration = timelineStartValues.current.duration + deltaSeconds;
-            if (newDuration < 5) newDuration = 5;
-            if (timelineStartValues.current.start + newDuration > 30) {
-                newDuration = 30 - timelineStartValues.current.start;
-            }
-            setMusicDuration(newDuration);
+            ws.on('play', () => setIsPlayingPreview(true));
+            ws.on('pause', () => setIsPlayingPreview(false));
+
+            wavesurferRef.current = ws;
+
+            return () => {
+                ws.destroy();
+            };
         }
-    };
+    }, [selectedMusic]);
 
-    const handleTimelinePointerUp = (e: PointerEvent) => {
-        const target = e.currentTarget as HTMLElement;
-        target.releasePointerCapture(e.pointerId);
-        isDraggingTimeline.current = null;
-        if (audioPreviewRef.current && isPlayingPreview) {
-             audioPreviewRef.current.currentTime = musicStart;
+    const togglePlayback = (e: Event) => {
+        e.stopPropagation();
+        if (wavesurferRef.current) {
+            wavesurferRef.current.playPause();
         }
     };
     
@@ -346,75 +381,18 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
 
                                     <div className="flex items-center gap-3">
                                         <button 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (audioPreviewRef.current) {
-                                                    if (isPlayingPreview) audioPreviewRef.current.pause();
-                                                    else audioPreviewRef.current.play();
-                                                    setIsPlayingPreview(!isPlayingPreview);
-                                                }
-                                            }}
+                                            onClick={togglePlayback}
                                             className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shrink-0 hover:scale-105 transition-transform"
                                         >
                                             {isPlayingPreview ? <LucidePause size={20} /> : <LucidePlay size={20} />}
                                         </button>
 
-                                        {/* Timeline Editor */}
+                                        {/* WaveSurfer Container */}
                                         <div 
-                                            ref={timelineRef}
-                                            className="relative flex-1 h-12 bg-white/10 rounded-lg overflow-hidden cursor-pointer touch-none select-none"
-                                            onPointerMove={handleTimelinePointerMove}
-                                            onPointerUp={handleTimelinePointerUp}
-                                            onPointerLeave={handleTimelinePointerUp}
-                                        >
-                                            {/* Background Waveform (fake bars) */}
-                                            <div className="absolute inset-0 flex items-center justify-between px-1 opacity-30 pointer-events-none">
-                                                {Array.from({ length: 40 }).map((_, i) => (
-                                                    <div key={i} className="w-1 bg-white rounded-full" style={{ height: `${20 + Math.random() * 60}%` }} />
-                                                ))}
-                                            </div>
-
-                                            {/* Selection Window */}
-                                            <div 
-                                                className="absolute top-0 bottom-0 bg-blue-500/30 border-y-2 border-blue-500 group cursor-grab active:cursor-grabbing"
-                                                style={{
-                                                    left: `${(musicStart / 30) * 100}%`,
-                                                    width: `${(musicDuration / 30) * 100}%`
-                                                }}
-                                                onPointerDown={(e) => handleTimelinePointerDown(e, 'move')}
-                                            >
-                                                {/* Left Handle */}
-                                                <div 
-                                                    className="absolute left-0 top-0 bottom-0 w-4 -ml-2 cursor-ew-resize z-10 flex items-center justify-center group/handle"
-                                                    onPointerDown={(e) => handleTimelinePointerDown(e, 'start')}
-                                                >
-                                                    <div className="w-1.5 h-6 bg-white rounded-full shadow-sm group-hover/handle:scale-110 transition-transform" />
-                                                </div>
-
-                                                {/* Right Handle */}
-                                                <div 
-                                                    className="absolute right-0 top-0 bottom-0 w-4 -mr-2 cursor-ew-resize z-10 flex items-center justify-center group/handle"
-                                                    onPointerDown={(e) => handleTimelinePointerDown(e, 'end')}
-                                                >
-                                                    <div className="w-1.5 h-6 bg-white rounded-full shadow-sm group-hover/handle:scale-110 transition-transform" />
-                                                </div>
-                                            </div>
-                                        </div>
+                                            ref={waveformContainerRef}
+                                            className="relative flex-1 h-12 bg-white/10 rounded-lg overflow-hidden cursor-pointer"
+                                        />
                                     </div>
-
-                                    <audio 
-                                        ref={audioPreviewRef} 
-                                        src={selectedMusic.preview} 
-                                        loop 
-                                        onPlay={() => setIsPlayingPreview(true)}
-                                        onPause={() => setIsPlayingPreview(false)}
-                                        onTimeUpdate={(e) => {
-                                            const audio = e.currentTarget;
-                                            if (audio.currentTime >= musicStart + musicDuration) {
-                                                audio.currentTime = musicStart;
-                                            }
-                                        }}
-                                    />
                                 </div>
                             )}
 
