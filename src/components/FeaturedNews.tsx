@@ -13,8 +13,8 @@ const NEWS = [
         Votaciones abiertas! Ayúdanos a elegir a los mejores miembros de la comunidad del año.
     `,
         tags: ["Awards"],
-        background: { img: "/images/ads/mc-extremo.webp" },
-        navImage: "/images/ads/mc-extremo.webp",
+        background: { img: "/images/ads/awards.webp" },
+        navImage: "/images/ads/awards.webp",
         ctaLink: { text: "¡Vota ahora!", url: "/awards", newTab: false }
     },
     {
