@@ -1268,6 +1268,20 @@ export const SaltogramStoryLikesTable = pgTable("saltogram_story_likes", {
     uniqueStoryLike: unique("unique_story_like").on(t.storyId, t.userId),
 }));
 
+export const SaltogramNotesTable = pgTable("saltogram_notes", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    text: varchar("text", { length: 60 }),
+    musicUrl: text("music_url"),
+    musicTrackId: text("music_track_id"),
+    musicTitle: text("music_title"),
+    musicArtist: text("music_artist"),
+    musicCover: text("music_cover"),
+    visibility: varchar("visibility", { enum: ["public", "friends", "vip"] }).notNull().default("public"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`current_timestamp`),
+});
+
 /* 
     Saltogram Relations
 */
@@ -1375,6 +1389,13 @@ export const saltogramStoryLikesRelations = relations(SaltogramStoryLikesTable, 
     }),
     user: one(UsersTable, {
         fields: [SaltogramStoryLikesTable.userId],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const saltogramNotesRelations = relations(SaltogramNotesTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [SaltogramNotesTable.userId],
         references: [UsersTable.id],
     }),
 }));

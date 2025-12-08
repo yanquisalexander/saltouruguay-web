@@ -26,6 +26,7 @@ import { saltogram } from "./saltogram";
 import { stories } from "./saltogram-stories";
 import { messages } from "./saltogram-messages";
 import { vip } from "./saltogram-vip";
+import { notes } from "./saltogram-notes";
 import { events as userEvents } from "./events";
 import { experimental_AstroContainer } from "astro/container";
 import { sendNotificationEmail } from "@/utils/email";
@@ -41,6 +42,7 @@ export const server = {
     stories,
     messages,
     vip,
+    notes,
     userEvents,
     banco,
     pet,

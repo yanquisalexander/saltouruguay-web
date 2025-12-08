@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "preact/hooks";
 import type { SaltogramPost } from "@/types/saltogram";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
+import NotesTray from "./notes/NotesTray";
 import { toast } from "sonner";
 import {
     LucideLoader2,
@@ -172,6 +173,9 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
                     </div>
                 </div>
             )}
+
+            {/* NOTES TRAY */}
+            <NotesTray user={user} />
 
             {/* FILTROS (Segmented Control) */}
             <div className="flex flex-col gap-4">
