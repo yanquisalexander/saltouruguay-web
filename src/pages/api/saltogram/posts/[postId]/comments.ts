@@ -174,7 +174,7 @@ export const POST = async ({ request, params }: APIContext) => {
                 type: "saltogram_comment",
                 title: "Nuevo comentario",
                 message: `${auth.user.displayName} comentó en tu publicación`,
-                link: `/saltogram?post=${postId}`,
+                link: `/comunidad/saltogram/${postId}`,
                 image: auth.user.avatar || undefined
             });
         }
@@ -191,7 +191,7 @@ export const POST = async ({ request, params }: APIContext) => {
                     type: "saltogram_reply",
                     title: "Nueva respuesta",
                     message: `${auth.user.displayName} respondió a tu comentario`,
-                    link: `/saltogram?post=${postId}`,
+                    link: `/comunidad/saltogram/${postId}`,
                     image: auth.user.avatar || undefined
                 });
             }
