@@ -92,6 +92,8 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
 
     // Refresh music URL
     useEffect(() => {
+        let isMounted = true;
+
         if (music) {
             setIsAudioFetching(true);
             setAudioUrl(undefined); // Clear previous URL to prevent double load
@@ -100,6 +102,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                 fetch(`/api/deezer/track?id=${music.id}`)
                     .then(res => res.json())
                     .then(data => {
+                        if (!isMounted) return;
                         if (data.preview) {
                             setAudioUrl(data.preview);
                         } else {
@@ -107,10 +110,13 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                         }
                     })
                     .catch(err => {
+                        if (!isMounted) return;
                         console.error("Error refreshing music URL:", err);
                         setAudioUrl(music.preview); // Fallback
                     })
-                    .finally(() => setIsAudioFetching(false));
+                    .finally(() => {
+                        if (isMounted) setIsAudioFetching(false);
+                    });
             } else {
                 setAudioUrl(music.preview);
                 setIsAudioFetching(false);
@@ -119,6 +125,10 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
             setAudioUrl(undefined);
             setIsAudioFetching(false);
         }
+
+        return () => {
+            isMounted = false;
+        };
     }, [music]);
 
     // Control video playback
