@@ -2,7 +2,7 @@ import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
-import { SaltogramMessagesTable, SaltogramStoriesTable } from "@/db/schema";
+import { SaltogramMessagesTable, SaltogramStoriesTable, UsersTable } from "@/db/schema";
 import { eq, and, or, desc } from "drizzle-orm";
 
 export const messages = {
@@ -62,11 +62,21 @@ export const messages = {
                 limit: 50
             });
 
-            return { messages: messages.reverse() };
+            const partner = await client.query.UsersTable.findFirst({
+                where: eq(UsersTable.id, otherUserId),
+                columns: {
+                    id: true,
+                    username: true,
+                    displayName: true,
+                    avatar: true,
+                }
+            });
+
+            return { messages: messages.reverse(), partner };
         }
     }),
 
-    getInbox: defineAction({
+    getConversations: defineAction({
         handler: async (_, { request }) => {
             const auth = await getAuthenticatedUser(request);
             if (!auth) {

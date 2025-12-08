@@ -24,6 +24,7 @@ import { DebugInfo } from "@/components/DebugInfo";
 import { ClientRouter } from "astro:transitions";
 import StingerGsap from "@/components/StingerGsap";
 import PushNotificationBanner from "@/components/PushNotificationBanner";
+import ChatDock from "@/components/saltogram/direct/ChatDock";
 interface Props {
   title?: string;
   description?: string;
@@ -36,7 +37,7 @@ interface Props {
   customId?: string;
 }
 
-//const session = await getSession(Astro.request);
+const session = await getSession(Astro.request);
 if (!Astro.props.preload) Astro.props.preload = [];
 
 const {
@@ -50,8 +51,6 @@ const {
   mainClassname = "px-6 sm:px-10 pt-24",
   customId,
 } = Astro.props;
-
-const session = await getSession(Astro.request);
 
 preload?.push({
   href: "/favicon.svg",
@@ -170,6 +169,12 @@ preload?.push({
         }
       }
     </style>
+
+    {
+      session?.user && (
+        <ChatDock client:only currentUser={session.user} transition:persist />
+      )
+    }
 
     <Toaster
       expand={true}

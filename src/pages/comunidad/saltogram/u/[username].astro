@@ -3,6 +3,7 @@ import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
 import SaltogramFeed from "@/components/saltogram/SaltogramFeed";
 import FriendButton from "@/components/saltogram/FriendButton";
+import MessageButton from "@/components/saltogram/MessageButton";
 import { client } from "@/db/client";
 import { UsersTable, FriendsTable } from "@/db/schema";
 import { eq, and, or, count } from "drizzle-orm";
@@ -180,12 +181,15 @@ const friendUsers = friends.map((f) =>
           <div class="mb-4 flex gap-3">
             {
               currentUserId && currentUserId !== user.id && (
-                <FriendButton
-                  client:load
-                  friendId={user.id}
-                  initialStatus={friendStatus}
-                  requestId={requestId}
-                />
+                <>
+                  <FriendButton
+                    client:load
+                    friendId={user.id}
+                    initialStatus={friendStatus}
+                    requestId={requestId}
+                  />
+                  <MessageButton client:load user={user} />
+                </>
               )
             }
             {

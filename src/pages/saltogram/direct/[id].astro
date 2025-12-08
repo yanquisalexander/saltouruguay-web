@@ -1,0 +1,17 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import MobileChatWindow from "@/components/saltogram/direct/MobileChatWindow";
+import { getSession } from "auth-astro/server";
+
+const { id } = Astro.params;
+const session = await getSession(Astro.request);
+
+if (!session) return Astro.redirect("/");
+if (!id) return Astro.redirect("/saltogram/direct");
+---
+
+<Layout title="Chat" hideFooter={true}>
+  <div class="max-w-md mx-auto h-[calc(100vh-64px)] bg-white dark:bg-zinc-900">
+    <MobileChatWindow client:load otherUserId={id} currentUser={session.user} />
+  </div>
+</Layout>
