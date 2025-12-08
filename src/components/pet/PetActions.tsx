@@ -2,6 +2,7 @@ import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { toast } from 'sonner';
+import { petToast } from '@/utils/petToast';
 import { motion } from 'motion/react';
 import { type RefObject } from 'preact';
 import {
@@ -81,7 +82,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
             const { error, data } = await actions.pet.feedPet({ itemId: idToUse });
 
             if (data?.success) {
-                toast.success('¡Mascota alimentada!');
+                petToast.success('¡Mascota alimentada!', '🍎');
                 playSound({ sound: STREAMER_WARS_SOUNDS.PET_EAT, volume: 0.5 });
                 await loadInventory();
                 onActionComplete();
@@ -90,10 +91,10 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
             }
 
             if (error) {
-                toast.error(error.message || 'Error al alimentar la mascota');
+                petToast.error(error.message || 'Error al alimentar la mascota');
             }
         } catch (error: any) {
-            toast.error(error.message || 'Error al alimentar la mascota');
+            petToast.error(error.message || 'Error al alimentar la mascota');
         } finally {
             setPerforming(null);
         }
@@ -131,12 +132,12 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
             const result = await actions.pet.cleanPet();
 
             if (result.data?.success) {
-                toast.success('¡Mascota limpia!');
+                petToast.success('¡Mascota limpia!', '🧼');
                 playSound({ sound: STREAMER_WARS_SOUNDS.PET_SHOWER, volume: 0.5 });
                 onActionComplete();
             }
         } catch (error: any) {
-            toast.error(error.message || 'Error al limpiar la mascota');
+            petToast.error(error.message || 'Error al limpiar la mascota');
         } finally {
             setPerforming(null);
         }
@@ -148,7 +149,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
             const result = await actions.pet.playWithPet({ itemId: selectedToyItem || undefined });
 
             if (result.data?.success) {
-                toast.success('¡Jugaste con tu mascota!');
+                petToast.success('¡Jugaste con tu mascota!', '🎮');
                 if (selectedToyItem) {
                     await loadInventory();
                 }
@@ -156,7 +157,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
                 setShowToySelector(false);
             }
         } catch (error: any) {
-            toast.error(error.message || 'Error al jugar con la mascota');
+            petToast.error(error.message || 'Error al jugar con la mascota');
         } finally {
             setPerforming(null);
         }
@@ -169,11 +170,12 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
                 const result = await actions.pet.wakePet();
 
                 if (result.data?.success) {
-                    toast.success('¡Buenos días!');
+                    playSound({ sound: STREAMER_WARS_SOUNDS.PET_AWAKE, volume: 0.5 });
+                    petToast.success('¡Buenos días!', '☀️');
                     onActionComplete();
                 }
             } catch (error: any) {
-                toast.error(error.message || 'Error al despertar la mascota');
+                petToast.error(error.message || 'Error al despertar la mascota');
             } finally {
                 setPerforming(null);
             }
@@ -183,11 +185,11 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
                 const result = await actions.pet.putPetToSleep();
 
                 if (result.data?.success) {
-                    toast.success('¡A dormir!');
+                    petToast.success('¡A dormir!', '💤');
                     onActionComplete();
                 }
             } catch (error: any) {
-                toast.error(error.message || 'Error al dormir la mascota');
+                petToast.error(error.message || 'Error al dormir la mascota');
             } finally {
                 setPerforming(null);
             }

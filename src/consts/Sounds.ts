@@ -48,6 +48,8 @@ export const STREAMER_WARS_SOUNDS = {
     PET_EAT: 'pet-eat',
     PET_SHOWER: 'pet-shower',
     PET_SLEEP: 'pet-sleep',
+    PET_AWAKE: 'pet-awake',
+    PET_ITEM_PURCHASE: 'pet-shop',
 }
 
 

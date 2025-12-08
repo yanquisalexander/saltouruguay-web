@@ -2,9 +2,11 @@ import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { toast } from 'sonner';
+import { petToast } from '@/utils/petToast';
 import { LucideShoppingCart, LucideCoins, LucideLoader2 } from 'lucide-preact';
 
 import type { InventoryItem } from './PetActions';
+import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
 interface PetStoreProps {
     onItemPurchased: () => void;
@@ -88,12 +90,13 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
             const result = await actions.pet.purchaseItem({ itemId, quantity: 1 });
 
             if (result.data?.success) {
-                toast.success(`¡Compraste ${itemName}!`);
+                petToast.success(`¡Compraste ${itemName}!`, '🛍️');
                 await loadInventory();
                 onItemPurchased();
+                playSound({ sound: STREAMER_WARS_SOUNDS.PET_ITEM_PURCHASE, volume: 0.5 });
             }
         } catch (error: any) {
-            toast.error(error.message || 'Error al comprar el item');
+            petToast.error(error.message || 'Error al comprar el item');
         } finally {
             setPurchasing(null);
         }
@@ -105,11 +108,11 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
             const result = await actions.pet.equipItem({ itemId });
 
             if (result.data?.success) {
-                toast.success(`¡Equipaste ${itemName}!`);
+                petToast.success(`¡Equipaste ${itemName}!`, '✨');
                 onItemPurchased(); // Refresh pet
             }
         } catch (error: any) {
-            toast.error(error.message || 'Error al equipar el item');
+            petToast.error(error.message || 'Error al equipar el item');
         } finally {
             setEquipping(null);
         }
@@ -201,11 +204,33 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
                                 >
                                     {/* Item Icon/Preview */}
                                     <div className="w-full aspect-square bg-gradient-to-br from-white/5 to-white/0 rounded-2xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform duration-500">
-                                        {item.category === 'food' && '🍔'}
-                                        {item.category === 'toy' && '🎮'}
-                                        {item.category === 'furniture' && '🪑'}
-                                        {item.category === 'clothing' && '👕'}
-                                        {item.category === 'accessory' && '🎩'}
+                                        {item.category === 'food' && (
+                                            item.name.toLowerCase().includes('manzana') ? '🍎' :
+                                                item.name.toLowerCase().includes('sandwich') ? '🥪' :
+                                                    item.name.toLowerCase().includes('pizza') ? '🍕' :
+                                                        item.name.toLowerCase().includes('asado') ? '🍖' :
+                                                            item.name.toLowerCase().includes('chivito') ? '🍔' : '🍔'
+                                        )}
+                                        {item.category === 'toy' && (
+                                            item.name.toLowerCase().includes('pelota') ? '⚽' :
+                                                item.name.toLowerCase().includes('frisbee') ? '🥏' :
+                                                    item.name.toLowerCase().includes('consola') ? '🎮' : '🎮'
+                                        )}
+                                        {item.category === 'furniture' && (
+                                            item.name.toLowerCase().includes('silla') ? '🪑' :
+                                                item.name.toLowerCase().includes('mesa') ? '🪵' :
+                                                    item.name.toLowerCase().includes('sofá') ? '🛋️' :
+                                                        item.name.toLowerCase().includes('tv') ? '📺' : '🪑'
+                                        )}
+                                        {item.category === 'clothing' && (
+                                            item.name.toLowerCase().includes('camiseta') ? '👕' :
+                                                item.name.toLowerCase().includes('traje') ? '🕴️' : '👕'
+                                        )}
+                                        {item.category === 'accessory' && (
+                                            item.name.toLowerCase().includes('gorra') ? '🧢' :
+                                                item.name.toLowerCase().includes('lentes') ? '🕶️' :
+                                                    item.name.toLowerCase().includes('corona') ? '👑' : '🎩'
+                                        )}
                                         {item.category === 'eyes' && '👀'}
                                         {item.category === 'mouth' && '👄'}
                                         {item.category === 'skin' && '🎨'}
