@@ -95,7 +95,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
         if (music) {
             setIsAudioFetching(true);
             setAudioUrl(undefined); // Clear previous URL to prevent double load
-            
+
             if (music.id) {
                 fetch(`/api/deezer/track?id=${music.id}`)
                     .then(res => res.json())
@@ -302,7 +302,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
             >
 
                 {/* Progress Bars */}
-                <div className="absolute top-0 left-0 right-0 z-20 flex gap-1 p-2">
+                <div className="absolute top-0 left-0 right-0 z-50 flex gap-1 p-2">
                     {userStories.stories.map((s: any, idx: number) => (
                         <div key={s.id} className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden">
                             <div
@@ -317,7 +317,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                 </div>
 
                 {/* Header */}
-                <div className="absolute top-6 left-0 right-0 z-20 p-4 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent">
+                <div className="absolute top-6 left-0 right-0 z-50 p-4 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent">
                     <div className="flex items-center gap-3">
                         <img
                             src={userStories.user.avatar || `https://ui-avatars.com/api/?name=${userStories.user.displayName}`}
@@ -401,7 +401,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                                     const audio = e.currentTarget;
                                     const startTime = music.config?.startTime || 0;
                                     const duration = music.config?.duration || 15;
-                                    
+
                                     // Stop if we exceed the duration (plus a small buffer)
                                     // We don't loop here because the story should end
                                     if (audio.currentTime >= startTime + duration) {
@@ -409,7 +409,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                                     }
                                 }}
                             />
-                            <div 
+                            <div
                                 className="absolute bg-white/90 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 shadow-xl z-20 max-w-[80%] pointer-events-none"
                                 style={{
                                     left: music.config ? `${music.config.x}%` : '50%',
@@ -440,6 +440,28 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                         </>
                     )}
 
+                    {/* Text Elements */}
+                    {story.metadata?.texts?.map((text: any) => (
+                        <div
+                            key={text.id}
+                            className={`absolute pointer-events-none ${text.font}`}
+                            style={{
+                                left: `${text.x}%`,
+                                top: `${text.y}%`,
+                                transform: `translate(-50%, -50%) scale(${text.scale}) rotate(${text.rotation}deg)`,
+                                color: text.color,
+                                backgroundColor: text.backgroundColor,
+                                padding: '0.5rem',
+                                borderRadius: '0.5rem',
+                                zIndex: 30
+                            }}
+                        >
+                            <span className="whitespace-pre-wrap text-2xl font-bold drop-shadow-lg">
+                                {text.content}
+                            </span>
+                        </div>
+                    ))}
+
                     {/* Navigation Zones */}
                     <div className="absolute inset-0 flex">
                         <div className="w-1/3 h-full" onClick={(e) => { e.stopPropagation(); handlePrev(); }} />
@@ -449,10 +471,10 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                 </div>
 
                 {/* Footer / Interactions */}
-                <div className="absolute bottom-0 left-0 right-0 z-20 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                <div className="absolute bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-black/80 to-transparent">
                     {/* Swipe Up Indicator (Only for owner) */}
                     {isOwner && !showViewers && (
-                        <motion.div 
+                        <motion.div
                             className="absolute -top-10 left-0 right-0 flex flex-col items-center justify-center text-white/50 pointer-events-none"
                             animate={{ y: [0, -5, 0] }}
                             transition={{ repeat: Infinity, duration: 1.5 }}
@@ -505,9 +527,9 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                         <div className="flex items-center gap-4 ml-auto">
                             {isOwner ? (
                                 <>
-                                    <button 
+                                    <button
                                         onClick={(e) => { e.stopPropagation(); setShowViewers(true); }}
-                                        className="flex items-center gap-1 text-white/80 mr-2 hover:text-white transition-colors" 
+                                        className="flex items-center gap-1 text-white/80 mr-2 hover:text-white transition-colors"
                                         title={`${story.views.length} vistas`}
                                     >
                                         <LucideEye size={20} />
@@ -597,7 +619,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                             }}
                         >
                             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mt-3 mb-2" />
-                            
+
                             <div className="p-4 border-b border-white/10 flex items-center justify-between">
                                 <h3 className="text-white font-bold text-lg flex items-center gap-2">
                                     <LucideEye size={20} />
@@ -614,8 +636,8 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                                         {viewersList.map((viewer: any) => (
                                             <div key={viewer.userId} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-xl transition-colors">
                                                 <div className="flex items-center gap-3">
-                                                    <img 
-                                                        src={viewer.user?.avatar || `https://ui-avatars.com/api/?name=${viewer.user?.displayName || 'User'}`} 
+                                                    <img
+                                                        src={viewer.user?.avatar || `https://ui-avatars.com/api/?name=${viewer.user?.displayName || 'User'}`}
                                                         className="w-10 h-10 rounded-full border border-white/10"
                                                     />
                                                     <div>
