@@ -1,0 +1,157 @@
+---
+import { CATEGORIES } from "@/awards/Categories";
+import { getGroupedVotes } from "@/utils/awards-vote-system";
+import { LucideTrophy, LucideBarChart3, LucideCrown } from "lucide-preact";
+
+const groupedVotes = await getGroupedVotes();
+
+// Función helper para fallback de avatar
+const getAvatarUrl = (name: string) =>
+  `/images/nominees/${name.toLowerCase()}.webp`;
+---
+
+<section class="max-w-7xl mx-auto px-4 py-12">
+  {/* Header de Sección */}
+  <header
+    class="mb-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b border-white/10 pb-6"
+  >
+    <div>
+      <h2
+        class="text-3xl md:text-4xl font-anton uppercase text-white tracking-wide flex items-center gap-3"
+      >
+        <LucideBarChart3 class="text-blue-500" /> Votos de la Comunidad
+      </h2>
+      <p class="text-white/60 font-rubik mt-2 max-w-xl">
+        Monitorizando los votos de la comunidad.
+      </p>
+    </div>
+  </header>
+
+  {/* Grid de Categorías */}
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {
+      Object.entries(groupedVotes).map(([category, votes]) => {
+        // Ordenar por puntos descendente
+        const sortedVotes = votes.sort(
+          (a, b) => b.roundTotalPoints - a.roundTotalPoints
+        );
+        const leader = sortedVotes[0];
+        const categoryName = CATEGORIES.find(
+          (cat) => cat.id === category
+        )?.name;
+        const totalCategoryPoints = Math.max(
+          ...votes.map((v) => v.roundTotalPoints)
+        ); // Para escalar las barras
+
+        return (
+          <article class="flex flex-col bg-[#0a0a0a]/60 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden shadow-xl transition-all hover:border-white/20">
+            {/* Header Categoría */}
+            <div class="p-5 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+              <h3 class="text-xl font-anton text-white uppercase tracking-wide flex items-center gap-2">
+                <LucideTrophy size={18} class="text-yellow-500/80" />
+                {categoryName}
+              </h3>
+              <span class="text-xs font-rubik font-bold text-white/30 uppercase tracking-widest bg-white/5 px-2 py-1 rounded">
+                {votes.length} Nominados
+              </span>
+            </div>
+
+            {/* Lista de Nominados */}
+            <div class="p-5 flex flex-col gap-4">
+              {sortedVotes.map((vote, index) => {
+                const isLeader = index === 0;
+                const percentage = vote.percentage.toFixed(1);
+                // Calculamos el ancho relativo al líder para que la barra se vea bien
+                const relativeWidth =
+                  (vote.roundTotalPoints / (leader.roundTotalPoints || 1)) *
+                  100;
+
+                return (
+                  <div class={`relative group ${isLeader ? "mb-2" : ""}`}>
+                    {/* Tarjeta del Nominado */}
+                    <div
+                      class={`
+                        relative z-10 flex items-center gap-4 p-3 rounded-xl border transition-all
+                        ${
+                          isLeader
+                            ? "bg-gradient-to-r from-yellow-500/10 to-transparent border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.1)]"
+                            : "bg-white/5 border-white/5 hover:bg-white/10"
+                        }
+                    `}
+                    >
+                      {/* Rank & Avatar */}
+                      <div class="flex items-center gap-3 shrink-0">
+                        <span
+                          class={`font-mono font-bold text-lg w-6 text-center ${isLeader ? "text-yellow-500" : "text-white/30"}`}
+                        >
+                          #{index + 1}
+                        </span>
+                        <div class="relative">
+                          <img
+                            src={getAvatarUrl(vote.displayName)}
+                            alt={vote.displayName}
+                            class={`rounded-full object-cover bg-black ${isLeader ? "size-12 ring-2 ring-yellow-500" : "size-10 grayscale group-hover:grayscale-0 transition-all"}`}
+                            onerror={`this.src='https://ui-avatars.com/api/?name=${vote.displayName}&background=random&color=fff'`}
+                          />
+                          {isLeader && (
+                            <div class="absolute -top-3 -right-2 text-yellow-500 drop-shadow-md animate-bounce-small">
+                              <LucideCrown size={20} fill="currentColor" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Info & Bar */}
+                      <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-baseline mb-1">
+                          <span
+                            class={`font-bold truncate ${isLeader ? "text-white text-lg" : "text-white/80"}`}
+                          >
+                            {vote.displayName}
+                          </span>
+                          <div class="flex items-center gap-2 text-xs">
+                            <span class="text-white/60 font-mono">
+                              {vote.votes} votos
+                            </span>
+                            <span
+                              class={`font-bold ${isLeader ? "text-yellow-400" : "text-white"}`}
+                            >
+                              {percentage}%
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Progress Bar Container */}
+                        <div class="h-2 w-full bg-black/50 rounded-full overflow-hidden">
+                          <div
+                            class={`h-full rounded-full transition-all duration-1000 ease-out ${isLeader ? "bg-yellow-500" : "bg-blue-500/60"}`}
+                            style={`width: ${percentage}%`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </article>
+        );
+      })
+    }
+  </div>
+</section>
+
+<style>
+  .animate-bounce-small {
+    animation: bounce-small 2s infinite;
+  }
+  @keyframes bounce-small {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
+</style>

@@ -22,6 +22,7 @@ import cacheService from "@/services/cache";
 import { GeminiService } from "@/services/gemini";
 import { markdown } from "@astropub/md";
 import { DateTime } from "luxon";
+import AwardsCurrentVotes from "@/components/admin/AwardsCurrentVotes.astro";
 
 const session = await getSession(Astro.request);
 
@@ -303,6 +304,11 @@ const cardBase =
           </div>
         )
       }
+
+      <div class="lg:col-span-3">
+        {/* 3. AWARDS LIVE VOTES (Ocupa 3 columnas) */}
+        <AwardsCurrentVotes />
+      </div>
     </div>
   </div>
 </AdminLayout>
