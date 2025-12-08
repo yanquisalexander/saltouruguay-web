@@ -1,0 +1,217 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { client } from "@/db/client";
+import { OAuthApplicationsTable } from "@/db/schema";
+import { getSession } from "auth-astro/server";
+import { checkAdmin } from "@/lib/checkAdmin";
+import { eq } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
+
+const { id } = Astro.params;
+const session = await getSession(Astro.request);
+const checkResult = await checkAdmin(session);
+if (checkResult) return checkResult;
+
+if (!id) return Astro.redirect("/admin/developer/apps");
+
+let app = await client.query.OAuthApplicationsTable.findFirst({
+  where: eq(OAuthApplicationsTable.id, id),
+});
+
+if (!app) return Astro.redirect("/admin/developer/apps");
+
+let message = "";
+let error = "";
+
+if (Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+    const action = formData.get("action");
+
+    if (action === "update") {
+      const name = formData.get("name")?.toString();
+      const redirectUrisStr = formData.get("redirectUris")?.toString();
+
+      if (!name || !redirectUrisStr) throw new Error("Campos requeridos");
+
+      const redirectUris = redirectUrisStr
+        .split(",")
+        .map((u) => u.trim())
+        .filter(Boolean);
+
+      await client
+        .update(OAuthApplicationsTable)
+        .set({ name, redirectUris, updatedAt: new Date() })
+        .where(eq(OAuthApplicationsTable.id, id));
+
+      message = "Aplicación actualizada correctamente";
+    } else if (action === "regenerate_secret") {
+      const newSecret = randomBytes(32).toString("hex");
+      await client
+        .update(OAuthApplicationsTable)
+        .set({ clientSecret: newSecret, updatedAt: new Date() })
+        .where(eq(OAuthApplicationsTable.id, id));
+
+      message = "Client Secret regenerado exitosamente";
+    } else if (action === "delete") {
+      await client
+        .delete(OAuthApplicationsTable)
+        .where(eq(OAuthApplicationsTable.id, id));
+      return Astro.redirect("/admin/developer/apps");
+    }
+
+    // Refresh data
+    app = await client.query.OAuthApplicationsTable.findFirst({
+      where: eq(OAuthApplicationsTable.id, id),
+    });
+  } catch (e) {
+    error = e instanceof Error ? e.message : "Error desconocido";
+  }
+}
+---
+
+<AdminLayout title={`Editar ${app?.name}`}>
+  <div class="max-w-4xl mx-auto">
+    <div class="flex items-center gap-4 mb-8">
+      <a href="/admin/developer/apps" class="text-gray-400 hover:text-white">
+        &larr; Volver
+      </a>
+      <h1 class="text-3xl font-bold text-white">Editar Aplicación</h1>
+    </div>
+
+    {
+      message && (
+        <div class="bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-lg mb-6">
+          {message}
+        </div>
+      )
+    }
+
+    {
+      error && (
+        <div class="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg mb-6">
+          {error}
+        </div>
+      )
+    }
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="lg:col-span-2 space-y-8">
+        <!-- Main Settings -->
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+          <h2 class="text-xl font-bold text-white mb-6">
+            Configuración General
+          </h2>
+          <form method="POST" class="space-y-6">
+            <input type="hidden" name="action" value="update" />
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">
+                Nombre
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={app?.name}
+                required
+                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">
+                Redirect URIs
+              </label>
+              <textarea
+                name="redirectUris"
+                required
+                rows="3"
+                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
+                >{app?.redirectUris.join(", ")}</textarea
+              >
+            </div>
+
+            <div class="flex justify-end">
+              <button
+                type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="bg-red-900/10 border border-red-900/30 rounded-xl p-6">
+          <h2 class="text-xl font-bold text-red-400 mb-6">Zona de Peligro</h2>
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="font-medium text-white">Eliminar Aplicación</h3>
+              <p class="text-sm text-gray-400">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <form method="POST" onsubmit="return confirm('¿Estás seguro?');">
+              <input type="hidden" name="action" value="delete" />
+              <button
+                type="submit"
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Eliminar
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <!-- Credentials -->
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+          <h2 class="text-xl font-bold text-white mb-6">Credenciales</h2>
+
+          <div class="space-y-4">
+            <div>
+              <label
+                class="block text-xs font-medium text-gray-500 uppercase mb-1"
+              >
+                Client ID
+              </label>
+              <div class="flex gap-2">
+                <code
+                  class="flex-1 bg-gray-900 p-2 rounded text-sm font-mono text-blue-400 break-all"
+                >
+                  {app?.clientId}
+                </code>
+              </div>
+            </div>
+
+            <div>
+              <label
+                class="block text-xs font-medium text-gray-500 uppercase mb-1"
+              >
+                Client Secret
+              </label>
+              <div class="bg-gray-900 p-2 rounded mb-2">
+                <code class="text-sm font-mono text-yellow-400 break-all">
+                  {app?.clientSecret}
+                </code>
+              </div>
+              <form
+                method="POST"
+                onsubmit="return confirm('Esto invalidará el secreto anterior. ¿Continuar?');"
+              >
+                <input type="hidden" name="action" value="regenerate_secret" />
+                <button
+                  type="submit"
+                  class="text-sm text-gray-400 hover:text-white underline"
+                >
+                  Regenerar Secreto
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

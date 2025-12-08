@@ -2,7 +2,7 @@ import { client } from "@/db/client";
 import { SaltogramPostsTable, SaltogramReactionsTable, UsersTable } from "@/db/schema";
 import { awardCoins, SALTOGRAM_REWARDS } from "@/services/saltogram-rewards";
 import type { APIContext } from "astro";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { eq, and, sql, desc } from "drizzle-orm";
 
 const ALLOWED_EMOJIS = ["❤️", "🔥", "😂", "👍", "😮", "😢", "😡"];
@@ -11,9 +11,9 @@ const ALLOWED_EMOJIS = ["❤️", "🔥", "😂", "👍", "😮", "😢", "😡"
  * POST - Add or remove a reaction
  */
 export const POST = async ({ request, params }: APIContext) => {
-    const session = await getSession(request);
+    const auth = await getAuthenticatedUser(request);
 
-    if (!session?.user) {
+    if (!auth) {
         return new Response(JSON.stringify({ error: "No autorizado" }), {
             status: 401,
             headers: {
@@ -22,7 +22,7 @@ export const POST = async ({ request, params }: APIContext) => {
         });
     }
 
-    const userId = session.user.id;
+    const userId = auth.user.id;
     const postId = parseInt(params.postId || "");
 
     if (isNaN(postId)) {
@@ -111,9 +111,22 @@ export const POST = async ({ request, params }: APIContext) => {
                 emoji,
             });
 
+            import { createNotification } from "@/actions/notifications";
+
+            // ...existing code...
+
             // Award coins to the post author (if not reacting to own post)
             if (post[0].userId !== userId) {
                 await awardCoins(post[0].userId, SALTOGRAM_REWARDS.RECEIVE_REACTION);
+
+                // Send Notification
+                await createNotification(post[0].userId, {
+                    type: "saltogram_reaction",
+                    title: "Nueva reacción",
+                    message: `${auth.user.displayName} reaccionó con ${emoji} a tu publicación`,
+                    link: `/saltogram?post=${postId}`,
+                    image: auth.user.avatar || undefined
+                });
             }
 
             // Award coins to the user who reacted
@@ -165,8 +178,8 @@ export const GET = async ({ request, params }: APIContext) => {
     }
 
     try {
-        const session = await getSession(request);
-        const currentUserId = session?.user?.id ? Number(session.user.id) : null;
+        const auth = await getAuthenticatedUser(request);
+        const currentUserId = auth?.user?.id || null;
 
         // 1. Get counts per emoji
         const reactionsStats = await client

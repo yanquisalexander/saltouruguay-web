@@ -2,16 +2,16 @@ import { client } from "@/db/client";
 import { SaltogramStoriesTable } from "@/db/schema";
 import { uploadMedia } from "@/services/saltogram-storage";
 import type { APIContext } from "astro";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 export const POST = async ({ request }: APIContext) => {
-    const session = await getSession(request);
+    const auth = await getAuthenticatedUser(request);
 
-    if (!session?.user) {
+    if (!auth) {
         return new Response(JSON.stringify({ error: "No autorizado" }), { status: 401 });
     }
 
-    const userId = Number(session.user.id);
+    const userId = auth.user.id;
 
     try {
         const formData = await request.formData();

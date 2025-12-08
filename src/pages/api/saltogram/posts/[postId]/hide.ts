@@ -1,16 +1,16 @@
 import { client } from "@/db/client";
 import { SaltogramPostsTable, UsersTable } from "@/db/schema";
 import type { APIContext } from "astro";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
 /**
  * POST - Hide/unhide a post (Admin only)
  */
 export const POST = async ({ request, params }: APIContext) => {
-    const session = await getSession(request);
+    const auth = await getAuthenticatedUser(request);
 
-    if (!session?.user) {
+    if (!auth) {
         return new Response(JSON.stringify({ error: "No autorizado" }), {
             status: 401,
             headers: {
@@ -19,16 +19,7 @@ export const POST = async ({ request, params }: APIContext) => {
         });
     }
 
-    const userId = session.user.id;
-
-    // Check if user is admin
-    const user = await client
-        .select({ admin: UsersTable.admin })
-        .from(UsersTable)
-        .where(eq(UsersTable.id, userId))
-        .limit(1);
-
-    if (!user[0]?.admin) {
+    if (!auth.user.admin) {
         return new Response(
             JSON.stringify({ error: "No tienes permisos de administrador" }),
             {

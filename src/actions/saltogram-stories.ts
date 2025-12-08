@@ -1,6 +1,6 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
 import { SaltogramStoriesTable, SaltogramStoryViewsTable, SaltogramStoryLikesTable, FriendsTable, UsersTable, SaltogramVipListTable } from "@/db/schema";
 import { eq, and, or, gt, desc, asc, sql } from "drizzle-orm";
@@ -14,12 +14,12 @@ export const stories = {
             visibility: z.enum(["public", "friends", "vip"]).default("public"),
         }),
         handler: async ({ mediaUrl, mediaType, duration, visibility }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
             }
 
-            const userId = Number(session.user.id);
+            const userId = auth.user.id;
             const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
             const [story] = await client.insert(SaltogramStoriesTable)
@@ -39,12 +39,12 @@ export const stories = {
 
     getFeed: defineAction({
         handler: async (_, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
                 return { feed: [] };
             }
 
-            const userId = Number(session.user.id);
+            const userId = auth.user.id;
             const now = new Date();
 
             // Get friends IDs
@@ -150,10 +150,10 @@ export const stories = {
     view: defineAction({
         input: z.object({ storyId: z.number() }),
         handler: async ({ storyId }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) return;
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) return;
 
-            const userId = Number(session.user.id);
+            const userId = auth.user.id;
 
             await client.insert(SaltogramStoryViewsTable)
                 .values({ storyId, userId })
@@ -167,12 +167,12 @@ export const stories = {
     toggleLike: defineAction({
         input: z.object({ storyId: z.number() }),
         handler: async ({ storyId }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
             }
 
-            const userId = Number(session.user.id);
+            const userId = auth.user.id;
 
             const existing = await client.query.SaltogramStoryLikesTable.findFirst({
                 where: and(
@@ -196,19 +196,19 @@ export const stories = {
     delete: defineAction({
         input: z.object({ storyId: z.number() }),
         handler: async ({ storyId }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
             }
 
-            const userId = Number(session.user.id);
+            const userId = auth.user.id;
 
             const story = await client.query.SaltogramStoriesTable.findFirst({
                 where: eq(SaltogramStoriesTable.id, storyId)
             });
 
             if (!story) throw new ActionError({ code: "NOT_FOUND", message: "Historia no encontrada" });
-            if (story.userId !== userId && !session.user.isAdmin) {
+            if (story.userId !== userId && !auth.user.admin) {
                 throw new ActionError({ code: "FORBIDDEN", message: "No tienes permiso" });
             }
 

@@ -1,6 +1,6 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
 import { SaltogramPostsTable, UsersTable } from "@/db/schema";
 import { eq, ilike, or } from "drizzle-orm";
@@ -9,8 +9,8 @@ export const saltogram = {
     searchUsers: defineAction({
         input: z.object({ query: z.string().min(1) }),
         handler: async ({ query }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "No autorizado" });
             }
 
@@ -36,8 +36,8 @@ export const saltogram = {
     togglePin: defineAction({
         input: z.object({ postId: z.number() }),
         handler: async ({ postId }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.isAdmin) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth?.user?.admin) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "No autorizado" });
             }
 
@@ -59,8 +59,8 @@ export const saltogram = {
     toggleFeature: defineAction({
         input: z.object({ postId: z.number() }),
         handler: async ({ postId }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.isAdmin) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth?.user?.admin) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "No autorizado" });
             }
 
@@ -82,7 +82,7 @@ export const saltogram = {
     deletePost: defineAction({
         input: z.object({ postId: z.number() }),
         handler: async ({ postId }, { request }) => {
-            const session = await getSession(request);
+            const auth = await getAuthenticatedUser(request);
 
             const post = await client.query.SaltogramPostsTable.findFirst({
                 where: eq(SaltogramPostsTable.id, postId)
@@ -90,7 +90,7 @@ export const saltogram = {
 
             if (!post) throw new ActionError({ code: "NOT_FOUND", message: "Post no encontrado" });
 
-            if (!session?.user?.isAdmin && Number(session?.user?.id) !== post.userId) {
+            if (!auth?.user?.admin && auth?.user?.id !== post.userId) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "No autorizado" });
             }
 

@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "preact/hooks";
+import { actions } from "astro:actions";
 import {
     LucideBell,
     LucideCheckCheck,
     LucideX,
     LucideInbox,
     LucideExternalLink,
-    LucideMegaphone
+    LucideMegaphone,
+    LucideRadio
 } from "lucide-preact";
 
 // --- TYPES ---
@@ -20,13 +22,14 @@ interface NotificationTag {
 }
 
 interface Notification {
-    id: string;
+    id: string | number;
     title: string;
     description: string;
     imageURL?: string;
     link: NotificationLink;
     tags: NotificationTag[];
-    date?: string; // Opcional: para mostrar cuándo llegó
+    date?: string;
+    isDynamic?: boolean;
 }
 
 interface NotificationState {
@@ -44,31 +47,124 @@ const NOTIFICATIONS_DATA: Notification[] = [
         link: { title: "Descubre más", url: "#" },
         tags: [{ type: "info", title: "Novedad" }],
     }
-    /* {
-        id: "saltocraft-promo",
-        title: "¡SaltoCraft III Extremo!",
-        description: "Las inscripciones ya están abiertas. ¿Tienes lo necesario para sobrevivir?",
-        imageURL: "/images/ads/mc-extremo.webp",
-        link: { title: "Ver detalles", url: "/torneos" },
-        tags: [{ type: "ads", title: "Torneo" }],
-        date: "Hace 2 horas"
-    } */
 ];
 
+// Helper to convert VAPID key
+function urlBase64ToUint8Array(base64String: string) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
 export const Notifications = () => {
-    const [state, setState] = useState<NotificationState>({ read: [], unread: NOTIFICATIONS_DATA });
+    const [state, setState] = useState<NotificationState>({ read: [], unread: [] });
     const [isOpen, setIsOpen] = useState(false);
+    const [pushEnabled, setPushEnabled] = useState(false);
+    const [loadingPush, setLoadingPush] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
     // Cargar estado inicial
     useEffect(() => {
-        const storedReadIds = JSON.parse(localStorage.getItem("notifications-read-ids") || "[]");
+        const loadNotifications = async () => {
+            // 1. Load Static
+            const storedReadIds = JSON.parse(localStorage.getItem("notifications-read-ids") || "[]");
+            const staticRead = NOTIFICATIONS_DATA.filter(n => storedReadIds.includes(n.id));
+            const staticUnread = NOTIFICATIONS_DATA.filter(n => !storedReadIds.includes(n.id));
 
-        const read = NOTIFICATIONS_DATA.filter(n => storedReadIds.includes(n.id));
-        const unread = NOTIFICATIONS_DATA.filter(n => !storedReadIds.includes(n.id));
+            // 2. Load Dynamic
+            let dynamicUnread: Notification[] = [];
+            let dynamicRead: Notification[] = [];
 
-        setState({ read, unread });
+            try {
+                const { data, error } = await actions.notifications.get();
+                if (data && data.notifications) {
+                    const mapped = data.notifications.map((n: any) => ({
+                        id: n.id,
+                        title: n.title,
+                        description: n.message,
+                        imageURL: n.image,
+                        link: { title: "Ver", url: n.link || "#" },
+                        tags: [{ type: "info", title: n.type || "Info" }],
+                        date: new Date(n.createdAt).toLocaleDateString(),
+                        isDynamic: true,
+                        read: n.read
+                    }));
+
+                    dynamicUnread = mapped.filter((n: any) => !n.read);
+                    dynamicRead = mapped.filter((n: any) => n.read);
+                }
+            } catch (e) {
+                console.error("Error loading dynamic notifications", e);
+            }
+
+            setState({
+                read: [...staticRead, ...dynamicRead],
+                unread: [...staticUnread, ...dynamicUnread]
+            });
+        };
+
+        loadNotifications();
+        checkPushSubscription();
     }, []);
+
+    const checkPushSubscription = async () => {
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+            setPushEnabled(!!subscription);
+        }
+    };
+
+    const enablePushNotifications = async () => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            alert("Push notifications not supported");
+            return;
+        }
+
+        setLoadingPush(true);
+        try {
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            await navigator.serviceWorker.ready;
+
+            const vapidKey = import.meta.env.PUBLIC_VAPID_KEY;
+            if (!vapidKey) {
+                console.warn("PUBLIC_VAPID_KEY not set");
+                return;
+            }
+
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidKey)
+            });
+
+            // Send to server
+            const keys = subscription.toJSON().keys;
+            if (keys && keys.p256dh && keys.auth) {
+                await actions.notifications.subscribe({
+                    endpoint: subscription.endpoint,
+                    keys: {
+                        p256dh: keys.p256dh,
+                        auth: keys.auth
+                    }
+                });
+                setPushEnabled(true);
+            }
+        } catch (e) {
+            console.error("Error enabling push", e);
+            alert("Error enabling notifications. Check console.");
+        } finally {
+            setLoadingPush(false);
+        }
+    };
 
     // Click Outside
     useEffect(() => {
@@ -81,15 +177,23 @@ export const Notifications = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const markAllAsRead = () => {
+    const markAllAsRead = async () => {
         if (state.unread.length === 0) return;
 
+        // Optimistic update
         const newRead = [...state.unread, ...state.read];
         setState({ read: newRead, unread: [] });
 
-        // Guardamos solo IDs para ahorrar espacio
-        const readIds = newRead.map(n => n.id);
-        localStorage.setItem("notifications-read-ids", JSON.stringify(readIds));
+        // 1. Mark Static
+        const staticIds = state.unread.filter(n => !n.isDynamic).map(n => n.id);
+        const storedReadIds = JSON.parse(localStorage.getItem("notifications-read-ids") || "[]");
+        localStorage.setItem("notifications-read-ids", JSON.stringify([...storedReadIds, ...staticIds]));
+
+        // 2. Mark Dynamic
+        const dynamicIds = state.unread.filter(n => n.isDynamic).map(n => n.id as number);
+        if (dynamicIds.length > 0) {
+            await actions.notifications.markRead({ notificationIds: dynamicIds });
+        }
     };
 
     const toggleOpen = () => setIsOpen(!isOpen);
@@ -126,15 +230,28 @@ export const Notifications = () => {
                         {/* Header */}
                         <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/[0.02]">
                             <h3 className="font-anton text-lg tracking-wide text-white">Notificaciones</h3>
-                            {state.unread.length > 0 && (
-                                <button
-                                    onClick={markAllAsRead}
-                                    className="text-[10px] uppercase font-bold tracking-widest text-white/50 hover:text-yellow-400 flex items-center gap-1 transition-colors"
-                                    title="Marcar todas como leídas"
-                                >
-                                    <LucideCheckCheck size={14} /> Marcar Leídas
-                                </button>
-                            )}
+                            <div className="flex gap-3">
+                                {!pushEnabled && (
+                                    <button
+                                        onClick={enablePushNotifications}
+                                        disabled={loadingPush}
+                                        className="text-[10px] uppercase font-bold tracking-widest text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors disabled:opacity-50"
+                                        title="Activar notificaciones push"
+                                    >
+                                        <LucideRadio size={14} className={loadingPush ? "animate-spin" : ""} />
+                                        {loadingPush ? "Activando..." : "Activar Push"}
+                                    </button>
+                                )}
+                                {state.unread.length > 0 && (
+                                    <button
+                                        onClick={markAllAsRead}
+                                        className="text-[10px] uppercase font-bold tracking-widest text-white/50 hover:text-yellow-400 flex items-center gap-1 transition-colors"
+                                        title="Marcar todas como leídas"
+                                    >
+                                        <LucideCheckCheck size={14} /> Marcar Leídas
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Body Scrollable */}

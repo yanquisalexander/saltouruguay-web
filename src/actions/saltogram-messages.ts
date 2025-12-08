@@ -1,6 +1,6 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
 import { SaltogramMessagesTable, SaltogramStoriesTable } from "@/db/schema";
 import { eq, and, or, desc } from "drizzle-orm";
@@ -14,12 +14,12 @@ export const messages = {
             reaction: z.string().optional(),
         }),
         handler: async ({ receiverId, content, storyId, reaction }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
             }
 
-            const senderId = Number(session.user.id);
+            const senderId = auth.user.id;
 
             if (!content && !reaction) {
                 throw new ActionError({ code: "BAD_REQUEST", message: "El mensaje debe tener contenido o reacción" });
@@ -43,12 +43,12 @@ export const messages = {
             otherUserId: z.number(),
         }),
         handler: async ({ otherUserId }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
             }
 
-            const userId = Number(session.user.id);
+            const userId = auth.user.id;
 
             const messages = await client.query.SaltogramMessagesTable.findMany({
                 where: or(
@@ -68,12 +68,12 @@ export const messages = {
 
     getInbox: defineAction({
         handler: async (_, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
                 return { conversations: [] };
             }
 
-            const userId = Number(session.user.id);
+            const userId = auth.user.id;
 
             // Fetch all messages involving the user
             const allMessages = await client.query.SaltogramMessagesTable.findMany({

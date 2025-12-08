@@ -6,16 +6,16 @@ import {
     FEATURE_POST_DURATION_HOURS,
 } from "@/services/saltogram-rewards";
 import type { APIContext } from "astro";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
 /**
  * POST - Feature a post by spending coins
  */
 export const POST = async ({ request, params }: APIContext) => {
-    const session = await getSession(request);
+    const auth = await getAuthenticatedUser(request);
 
-    if (!session?.user) {
+    if (!auth) {
         return new Response(JSON.stringify({ error: "No autorizado" }), {
             status: 401,
             headers: {
@@ -24,7 +24,7 @@ export const POST = async ({ request, params }: APIContext) => {
         });
     }
 
-    const userId = session.user.id;
+    const userId = auth.user.id;
     const postId = parseInt(params.postId || "");
 
     if (isNaN(postId)) {

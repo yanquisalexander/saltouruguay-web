@@ -400,6 +400,13 @@
       "when": 1765197040961,
       "tag": "0056_mixed_outlaw_kid",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1765199470660,
+      "tag": "0057_flawless_jack_murdock",
+      "breakpoints": true
     }
   ]
 }

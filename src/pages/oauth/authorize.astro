@@ -1,0 +1,163 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { client } from "@/db/client";
+import { OAuthApplicationsTable, OAuthCodesTable } from "@/db/schema";
+import { getSession } from "auth-astro/server";
+import { eq } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
+import { OAUTH_SCOPES, type OAuthScope } from "@/consts/OAuthScopes";
+
+const session = await getSession(Astro.request);
+
+// 1. Validate Parameters
+const url = new URL(Astro.request.url);
+const clientId = url.searchParams.get("client_id");
+const redirectUri = url.searchParams.get("redirect_uri");
+const responseType = url.searchParams.get("response_type");
+const scope = url.searchParams.get("scope") || "";
+const state = url.searchParams.get("state");
+const codeChallenge = url.searchParams.get("code_challenge");
+const codeChallengeMethod = url.searchParams.get("code_challenge_method");
+
+let error = "";
+
+if (!clientId || !redirectUri || !responseType) {
+  error =
+    "Faltan parámetros requeridos (client_id, redirect_uri, response_type)";
+} else if (responseType !== "code") {
+  error = "response_type debe ser 'code'";
+} else if (!codeChallenge) {
+  error = "PKCE es requerido (code_challenge faltante)";
+}
+
+// 2. Validate App
+let app;
+if (!error) {
+  app = await client.query.OAuthApplicationsTable.findFirst({
+    where: eq(OAuthApplicationsTable.clientId, clientId!),
+  });
+
+  if (!app) {
+    error = "Aplicación no encontrada";
+  } else if (!app.redirectUris.includes(redirectUri!)) {
+    error = "redirect_uri no autorizada para esta aplicación";
+  }
+}
+
+// 3. Check Auth
+if (!session && !error) {
+  return Astro.redirect(
+    `/signin?callbackUrl=${encodeURIComponent(Astro.request.url)}`
+  );
+}
+
+// 4. Handle Consent (POST)
+if (Astro.request.method === "POST" && !error && session && app) {
+  const code = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  // Get user ID from email (since session only has email usually)
+  const user = await client.query.UsersTable.findFirst({
+    where: eq(UsersTable.email, session.user.email!),
+  });
+
+  if (user) {
+    await client.insert(OAuthCodesTable).values({
+      code,
+      clientId: clientId!,
+      userId: user.id,
+      expiresAt,
+      redirectUri: redirectUri!,
+      scopes: scope.split(" ").filter(Boolean),
+      codeChallenge: codeChallenge!,
+      codeChallengeMethod: codeChallengeMethod || "plain",
+    });
+
+    const redirectUrl = new URL(redirectUri!);
+    redirectUrl.searchParams.set("code", code);
+    if (state) redirectUrl.searchParams.set("state", state);
+
+    return Astro.redirect(redirectUrl.toString());
+  }
+}
+
+// Parse scopes for display
+const requestedScopes = scope
+  .split(" ")
+  .filter((s) => s in OAUTH_SCOPES) as OAuthScope[];
+
+import { UsersTable } from "@/db/schema";
+---
+
+<Layout title="Autorizar Aplicación">
+  <div class="min-h-screen flex items-center justify-center bg-[#09090b] p-4">
+    <div
+      class="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl"
+    >
+      {
+        error ? (
+          <div class="text-center">
+            <div class="text-red-500 text-5xl mb-4">⚠️</div>
+            <h1 class="text-xl font-bold text-white mb-2">
+              Error de Autorización
+            </h1>
+            <p class="text-gray-400">{error}</p>
+          </div>
+        ) : (
+          <div>
+            <div class="text-center mb-8">
+              <div class="size-16 bg-blue-600 rounded-xl mx-auto flex items-center justify-center mb-4 text-2xl font-bold text-white">
+                {app?.name.charAt(0).toUpperCase()}
+              </div>
+              <h1 class="text-2xl font-bold text-white mb-2">
+                {app?.name} quiere acceder a tu cuenta
+              </h1>
+              <p class="text-gray-400 text-sm">
+                Logueado como{" "}
+                <span class="text-white font-medium">
+                  {session?.user?.name}
+                </span>
+              </p>
+            </div>
+
+            <div class="space-y-4 mb-8">
+              <p class="text-sm text-gray-400 uppercase font-medium tracking-wider">
+                Esta aplicación podrá:
+              </p>
+              <ul class="space-y-3">
+                {requestedScopes.length > 0 ? (
+                  requestedScopes.map((s) => (
+                    <li class="flex items-start gap-3 text-gray-300">
+                      <span class="text-green-500 mt-0.5">✓</span>
+                      {OAUTH_SCOPES[s]}
+                    </li>
+                  ))
+                ) : (
+                  <li class="flex items-start gap-3 text-gray-300">
+                    <span class="text-green-500 mt-0.5">✓</span>
+                    Acceder a tu identidad básica
+                  </li>
+                )}
+              </ul>
+            </div>
+
+            <form method="POST" class="space-y-3">
+              <button
+                type="submit"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors"
+              >
+                Autorizar
+              </button>
+              <a
+                href="/"
+                class="block w-full text-center bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-3 rounded-xl transition-colors"
+              >
+                Cancelar
+              </a>
+            </form>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</Layout>

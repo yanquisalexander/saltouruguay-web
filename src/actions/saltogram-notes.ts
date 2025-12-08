@@ -1,6 +1,6 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
 import { SaltogramNotesTable, FriendsTable, SaltogramVipListTable } from "@/db/schema";
 import { eq, and, or, gt, desc } from "drizzle-orm";
@@ -17,12 +17,12 @@ export const notes = {
             visibility: z.enum(["public", "friends", "vip"]).default("public"),
         }),
         handler: async ({ text, musicUrl, musicTrackId, musicTitle, musicArtist, musicCover, visibility }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
             }
 
-            const userId = Number(session.user.id);
+            const userId = auth.user.id;
             const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
             // Delete existing notes for this user
@@ -49,12 +49,12 @@ export const notes = {
 
     delete: defineAction({
         handler: async (_, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
             }
 
-            const userId = Number(session.user.id);
+            const userId = auth.user.id;
 
             await client.delete(SaltogramNotesTable)
                 .where(eq(SaltogramNotesTable.userId, userId));
@@ -65,12 +65,12 @@ export const notes = {
 
     getFeed: defineAction({
         handler: async (_, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
                 return { notes: [] };
             }
 
-            const userId = Number(session.user.id);
+            const userId = auth.user.id;
             const now = new Date();
 
             // Get friends IDs

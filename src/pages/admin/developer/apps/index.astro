@@ -1,0 +1,63 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { client } from "@/db/client";
+import { OAuthApplicationsTable } from "@/db/schema";
+import { getSession } from "auth-astro/server";
+import { checkAdmin } from "@/lib/checkAdmin";
+import { LucidePlus, LucideSettings } from "lucide-preact";
+
+const session = await getSession(Astro.request);
+const checkResult = await checkAdmin(session);
+if (checkResult) return checkResult;
+
+const apps = await client.select().from(OAuthApplicationsTable);
+---
+
+<AdminLayout title="OAuth Apps">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-white">OAuth Applications</h1>
+      <p class="text-gray-400">Administra las aplicaciones OAuth del sistema</p>
+    </div>
+    <a
+      href="/admin/developer/apps/new"
+      class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+    >
+      <LucidePlus size={20} />
+      Nueva App
+    </a>
+  </div>
+
+  <div class="grid gap-4">
+    {
+      apps.length === 0 && (
+        <div class="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
+          <p class="text-gray-400">No hay aplicaciones creadas</p>
+        </div>
+      )
+    }
+
+    {
+      apps.map((app) => (
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6 flex justify-between items-center">
+          <div>
+            <h3 class="text-xl font-bold text-white mb-1">{app.name}</h3>
+            <div class="flex gap-4 text-sm text-gray-400">
+              <span class="font-mono bg-gray-900 px-2 py-0.5 rounded">
+                ID: {app.clientId}
+              </span>
+              <span>•</span>
+              <span>{app.redirectUris.length} Redirect URIs</span>
+            </div>
+          </div>
+          <a
+            href={`/admin/developer/apps/${app.id}`}
+            class="p-2 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-white transition-colors"
+          >
+            <LucideSettings size={20} />
+          </a>
+        </div>
+      ))
+    }
+  </div>
+</AdminLayout>

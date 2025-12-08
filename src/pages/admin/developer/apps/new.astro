@@ -1,0 +1,118 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { client } from "@/db/client";
+import { OAuthApplicationsTable, UsersTable } from "@/db/schema";
+import { getSession } from "auth-astro/server";
+import { checkAdmin } from "@/lib/checkAdmin";
+import { eq } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
+
+const session = await getSession(Astro.request);
+const checkResult = await checkAdmin(session);
+if (checkResult) return checkResult;
+
+let error = "";
+
+if (Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+    const name = formData.get("name")?.toString();
+    const redirectUrisStr = formData.get("redirectUris")?.toString();
+
+    if (!name || !redirectUrisStr) {
+      throw new Error("Todos los campos son requeridos");
+    }
+
+    const redirectUris = redirectUrisStr
+      .split(",")
+      .map((u) => u.trim())
+      .filter(Boolean);
+
+    if (redirectUris.length === 0) {
+      throw new Error("Debes especificar al menos una URI de redirección");
+    }
+
+    // Get current user ID
+    const user = await client.query.UsersTable.findFirst({
+      where: eq(UsersTable.email, session.user.email!),
+    });
+
+    if (!user) throw new Error("Usuario no encontrado");
+
+    const clientId = randomBytes(16).toString("hex");
+    const clientSecret = randomBytes(32).toString("hex");
+
+    await client.insert(OAuthApplicationsTable).values({
+      name,
+      clientId,
+      clientSecret,
+      redirectUris,
+      userId: user.id,
+    });
+
+    return Astro.redirect("/admin/developer/apps");
+  } catch (e) {
+    error = e instanceof Error ? e.message : "Error desconocido";
+  }
+}
+---
+
+<AdminLayout title="Nueva App OAuth">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold text-white mb-8">Nueva Aplicación OAuth</h1>
+
+    {
+      error && (
+        <div class="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg mb-6">
+          {error}
+        </div>
+      )
+    }
+
+    <form method="POST" class="space-y-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-400 mb-2">
+          Nombre de la Aplicación
+        </label>
+        <input
+          type="text"
+          name="name"
+          required
+          class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          placeholder="Mi Aplicación Increíble"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-400 mb-2">
+          Redirect URIs (separadas por coma)
+        </label>
+        <textarea
+          name="redirectUris"
+          required
+          rows="3"
+          class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-mono text-sm"
+          placeholder="https://myapp.com/callback, http://localhost:3000/callback"
+        ></textarea>
+        <p class="text-xs text-gray-500 mt-1">
+          Las URLs a las que se redirigirá al usuario después de autorizar.
+        </p>
+      </div>
+
+      <div class="flex justify-end gap-4 pt-4">
+        <a
+          href="/admin/developer/apps"
+          class="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+        >
+          Cancelar
+        </a>
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+        >
+          Crear Aplicación
+        </button>
+      </div>
+    </form>
+  </div>
+</AdminLayout>

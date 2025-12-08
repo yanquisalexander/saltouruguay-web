@@ -3,7 +3,7 @@ import { SaltogramPostsTable, UsersTable } from "@/db/schema";
 import { uploadImage, validateImage } from "@/services/saltogram-storage";
 import { awardCoins, SALTOGRAM_REWARDS } from "@/services/saltogram-rewards";
 import type { APIContext } from "astro";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { desc, eq, sql, and, ilike } from "drizzle-orm";
 
 const MAX_TEXT_LENGTH = 500;
@@ -12,10 +12,10 @@ const MAX_TEXT_LENGTH = 500;
  * GET - Get feed posts with pagination
  */
 export const GET = async ({ request, url }: APIContext) => {
-    const session = await getSession(request);
+    const auth = await getAuthenticatedUser(request);
 
     // Allow viewing posts without login, but some features may be limited
-    const userId = session?.user?.id;
+    const userId = auth?.user?.id;
 
     const searchParams = url.searchParams;
     const page = parseInt(searchParams.get("page") || "1");
@@ -139,9 +139,9 @@ export const GET = async ({ request, url }: APIContext) => {
  * POST - Create a new post
  */
 export const POST = async ({ request }: APIContext) => {
-    const session = await getSession(request);
+    const auth = await getAuthenticatedUser(request);
 
-    if (!session?.user) {
+    if (!auth) {
         return new Response(JSON.stringify({ error: "No autorizado" }), {
             status: 401,
             headers: {
@@ -150,7 +150,7 @@ export const POST = async ({ request }: APIContext) => {
         });
     }
 
-    const userId = session.user.id;
+    const userId = auth.user.id;
 
     try {
         const formData = await request.formData();

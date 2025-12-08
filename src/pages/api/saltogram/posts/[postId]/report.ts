@@ -1,16 +1,16 @@
 import { client } from "@/db/client";
 import { SaltogramPostsTable, SaltogramReportsTable } from "@/db/schema";
 import type { APIContext } from "astro";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { eq, and } from "drizzle-orm";
 
 /**
  * POST - Report a post
  */
 export const POST = async ({ request, params }: APIContext) => {
-    const session = await getSession(request);
+    const auth = await getAuthenticatedUser(request);
 
-    if (!session?.user) {
+    if (!auth) {
         return new Response(JSON.stringify({ error: "No autorizado" }), {
             status: 401,
             headers: {
@@ -19,7 +19,7 @@ export const POST = async ({ request, params }: APIContext) => {
         });
     }
 
-    const userId = session.user.id;
+    const userId = auth.user.id;
     const postId = parseInt(params.postId || "");
 
     if (isNaN(postId)) {

@@ -1429,3 +1429,62 @@ export const saltogramVipListRelations = relations(SaltogramVipListTable, ({ one
         relationName: "vipListMember"
     }),
 }));
+
+export const OAuthApplicationsTable = pgTable("oauth_applications", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: varchar("name").notNull(),
+    clientId: varchar("client_id").unique().notNull(),
+    clientSecret: varchar("client_secret").notNull(),
+    redirectUris: text("redirect_uris").array().notNull(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const OAuthCodesTable = pgTable("oauth_codes", {
+    code: varchar("code").primaryKey(),
+    clientId: varchar("client_id").notNull().references(() => OAuthApplicationsTable.clientId, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at").notNull(),
+    redirectUri: varchar("redirect_uri"),
+    scopes: text("scopes").array(),
+    codeChallenge: varchar("code_challenge"),
+    codeChallengeMethod: varchar("code_challenge_method"),
+});
+
+export const OAuthTokensTable = pgTable("oauth_tokens", {
+    accessToken: varchar("access_token").primaryKey(),
+    refreshToken: varchar("refresh_token").unique(),
+    clientId: varchar("client_id").notNull().references(() => OAuthApplicationsTable.clientId, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at").notNull(),
+    scopes: text("scopes").array(),
+});
+
+export const NotificationsTable = pgTable("notifications", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    type: varchar("type").notNull(), // 'info', 'success', 'warning', 'error', 'saltogram_like', 'saltogram_comment', etc.
+    title: varchar("title").notNull(),
+    message: text("message").notNull(),
+    link: varchar("link"),
+    image: varchar("image"),
+    read: boolean("read").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const PushSubscriptionsTable = pgTable("push_subscriptions", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: varchar("p256dh").notNull(),
+    auth: varchar("auth").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const oauthApplicationsRelations = relations(OAuthApplicationsTable, ({ one }) => ({
+    owner: one(UsersTable, {
+        fields: [OAuthApplicationsTable.userId],
+        references: [UsersTable.id],
+    }),
+}));

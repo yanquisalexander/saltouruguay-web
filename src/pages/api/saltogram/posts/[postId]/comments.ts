@@ -2,7 +2,7 @@ import { client } from "@/db/client";
 import { SaltogramPostsTable, SaltogramCommentsTable, UsersTable } from "@/db/schema";
 import { awardCoins, SALTOGRAM_REWARDS } from "@/services/saltogram-rewards";
 import type { APIContext } from "astro";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { eq, desc } from "drizzle-orm";
 
 const MAX_COMMENT_LENGTH = 500;
@@ -77,9 +77,9 @@ export const GET = async ({ params, url }: APIContext) => {
  * POST - Add a comment to a post
  */
 export const POST = async ({ request, params }: APIContext) => {
-    const session = await getSession(request);
+    const auth = await getAuthenticatedUser(request);
 
-    if (!session?.user) {
+    if (!auth) {
         return new Response(JSON.stringify({ error: "No autorizado" }), {
             status: 401,
             headers: {
@@ -88,7 +88,7 @@ export const POST = async ({ request, params }: APIContext) => {
         });
     }
 
-    const userId = session.user.id;
+    const userId = auth.user.id;
     const postId = parseInt(params.postId || "");
 
     if (isNaN(postId)) {
@@ -163,9 +163,37 @@ export const POST = async ({ request, params }: APIContext) => {
             })
             .returning();
 
-        // Award coins to the post author (if not commenting on own post)
+        import { createNotification } from "@/actions/notifications";
+
+        // 1. Notify Post Author (if not own post)
         if (post[0].userId !== userId) {
             await awardCoins(post[0].userId, SALTOGRAM_REWARDS.RECEIVE_COMMENT);
+
+            await createNotification(post[0].userId, {
+                type: "saltogram_comment",
+                title: "Nuevo comentario",
+                message: `${auth.user.displayName} comentó en tu publicación`,
+                link: `/saltogram?post=${postId}`,
+                image: auth.user.avatar || undefined
+            });
+        }
+
+        // 2. Notify Parent Comment Author (if it's a reply and not replying to self)
+        if (parentId) {
+            const parentComment = await client.query.SaltogramCommentsTable.findFirst({
+                where: eq(SaltogramCommentsTable.id, parentId)
+            });
+
+            if (parentComment && parentComment.userId !== userId && parentComment.userId !== post[0].userId) {
+                // We check !== post[0].userId to avoid double notification if the post author is also the parent comment author
+                await createNotification(parentComment.userId, {
+                    type: "saltogram_reply",
+                    title: "Nueva respuesta",
+                    message: `${auth.user.displayName} respondió a tu comentario`,
+                    link: `/saltogram?post=${postId}`,
+                    image: auth.user.avatar || undefined
+                });
+            }
         }
 
         // Award coins to the commenter

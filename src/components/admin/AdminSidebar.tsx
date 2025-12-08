@@ -47,6 +47,12 @@ const categories = [
         ],
     },
     {
+        title: "DEVELOPER",
+        links: [
+            { label: "OAuth Apps", url: "/admin/developer/apps", icon: "code" }
+        ]
+    },
+    {
         title: "SISTEMA",
         links: [
             { label: "Twitch Events", url: "/admin/system/twitch-events", icon: "code" }

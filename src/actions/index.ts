@@ -34,10 +34,12 @@ import { addRoleToUserWithoutLogging } from "@/services/discord";
 import InscripcionExtremo from "@/email/InscripcionExtremo.astro";
 import { audio } from "./audio";
 import { voice } from "./voice";
+import { notifications } from "./notifications";
 
 
 
 export const server = {
+    notifications,
     saltogram,
     stories,
     messages,
