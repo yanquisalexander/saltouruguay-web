@@ -9,7 +9,7 @@ if (!session) {
   return Astro.redirect("/");
 }
 
-const { data, error } = await Astro.callAction(actions.messages.getInbox, {});
+const { data, error } = await Astro.callAction(actions.messages.getConversations, {});
 const conversations = data?.conversations || [];
 ---
 
