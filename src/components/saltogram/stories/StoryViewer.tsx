@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "preact/hooks";
 import { actions } from "astro:actions";
-import { LucideX, LucideHeart, LucideChevronLeft, LucideChevronRight, LucideEye, LucideTrash2, LucideSend, LucideStar, LucideLoader2, LucideChevronUp } from "lucide-preact";
+import { LucideX, LucideHeart, LucideChevronLeft, LucideChevronRight, LucideEye, LucideTrash2, LucideSend, LucideStar, LucideLoader2, LucideChevronUp, LucideExternalLink } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 import { motion, AnimatePresence } from "motion/react";
 import { formatDistanceToNow } from "date-fns";
@@ -33,6 +33,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     const [replyText, setReplyText] = useState("");
     const [showReactions, setShowReactions] = useState(false);
     const [showViewers, setShowViewers] = useState(false);
+    const [showMusicPopup, setShowMusicPopup] = useState(false);
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
@@ -72,6 +73,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
         setLiked(story.isLiked);
         setLikesCount(story.likesCount);
         setShowViewers(false);
+        setShowMusicPopup(false);
 
         // Smart buffering reset
         if (story.mediaType === 'image') {
@@ -395,62 +397,84 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                         />
                     )}
 
-                    {/* Music Player & Sticker */}
+                    {/* Music Player */}
                     {music && audioUrl && (
-                        <>
-                            <audio
-                                ref={audioRef}
-                                src={audioUrl}
-                                autoPlay
-                                onLoadedMetadata={(e) => {
-                                    if (music?.config?.startTime) {
-                                        e.currentTarget.currentTime = music.config.startTime;
-                                    }
-                                }}
-                                onTimeUpdate={(e) => {
-                                    const audio = e.currentTarget;
-                                    const startTime = music.config?.startTime || 0;
-                                    const duration = music.config?.duration || 15;
+                        <audio
+                            ref={audioRef}
+                            src={audioUrl}
+                            autoPlay
+                            onLoadedMetadata={(e) => {
+                                if (music?.config?.startTime) {
+                                    e.currentTarget.currentTime = music.config.startTime;
+                                }
+                            }}
+                            onTimeUpdate={(e) => {
+                                const audio = e.currentTarget;
+                                const startTime = music.config?.startTime || 0;
+                                const duration = music.config?.duration || 15;
 
-                                    // Stop if we exceed the duration (plus a small buffer)
-                                    // We don't loop here because the story should end
-                                    if (audio.currentTime >= startTime + duration) {
-                                        audio.pause();
-                                    }
-                                }}
-                            />
-                            <div
-                                className="absolute bg-white/90 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 shadow-xl z-20 max-w-[80%] pointer-events-none"
-                                style={{
-                                    left: music.config ? `${music.config.x}%` : '50%',
-                                    top: music.config ? `${music.config.y}%` : '50%',
-                                    transform: `translate(-50%, -50%) scale(${music.config ? music.config.scale : 1})`
-                                }}
-                            >
-                                <img src={music.album.cover_medium} className="w-12 h-12 rounded-md shadow-sm" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-black text-sm truncate">{music.title}</p>
-                                    <p className="text-black/60 text-xs truncate">{music.artist.name}</p>
-                                </div>
-                                <div className="w-1 h-8 bg-black/10 rounded-full mx-1" />
-                                <div className="flex gap-0.5 items-end h-4">
-                                    {[1, 2, 3, 4].map(i => (
-                                        <div
-                                            key={i}
-                                            className="w-1 bg-pink-500 rounded-full animate-music-bar"
-                                            style={{
-                                                height: isPaused ? '20%' : `${Math.random() * 100}%`,
-                                                animation: isPaused ? 'none' : `music-bar 0.5s ease-in-out infinite alternate`,
-                                                animationDelay: `${i * 0.1}s`
-                                            }}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        </>
+                                // Stop if we exceed the duration (plus a small buffer)
+                                // We don't loop here because the story should end
+                                if (audio.currentTime >= startTime + duration) {
+                                    audio.pause();
+                                }
+                            }}
+                        />
                     )}
 
-                    {/* Text Elements */}
+                    {/* Music Sticker */}
+                    {music && (
+                        <div
+                            className="absolute bg-white/90 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 shadow-xl z-40 max-w-[80%] cursor-pointer transition-transform active:scale-95"
+                            style={{
+                                left: music.config ? `${music.config.x}%` : '50%',
+                                top: music.config ? `${music.config.y}%` : '50%',
+                                transform: `translate(-50%, -50%) scale(${music.config ? music.config.scale : 1}) rotate(${music.config?.rotation || 0}deg)`
+                            }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowMusicPopup(!showMusicPopup);
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                        >
+                            <img src={music.album.cover_medium} className="w-12 h-12 rounded-md shadow-sm pointer-events-none" />
+                            <div className="flex-1 min-w-0 pointer-events-none">
+                                <p className="font-bold text-black text-sm truncate">{music.title}</p>
+                                <p className="text-black/60 text-xs truncate">{music.artist.name}</p>
+                            </div>
+                            <div className="w-1 h-8 bg-black/10 rounded-full mx-1 pointer-events-none" />
+                            <div className="flex gap-0.5 items-end h-4 pointer-events-none">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div
+                                        key={i}
+                                        className="w-1 bg-pink-500 rounded-full animate-music-bar"
+                                        style={{
+                                            height: isPaused ? '20%' : `${Math.random() * 100}%`,
+                                            animation: isPaused ? 'none' : `music-bar 0.5s ease-in-out infinite alternate`,
+                                            animationDelay: `${i * 0.1}s`
+                                        }}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Popup */}
+                            {showMusicPopup && (
+                                <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-[#242526] text-white text-xs font-bold py-2 px-4 rounded-xl shadow-xl whitespace-nowrap flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200 border border-white/10 z-50">
+                                    <a
+                                        href={music.link || `https://www.deezer.com/search/${encodeURIComponent(music.title + " " + music.artist.name)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 hover:text-blue-400 transition-colors"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <span>Ver en Deezer</span>
+                                        <LucideExternalLink size={14} />
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+                    )}                    {/* Text Elements */}
                     {story.metadata?.texts?.map((text: any) => (
                         <div
                             key={text.id}

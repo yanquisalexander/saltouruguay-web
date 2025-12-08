@@ -47,7 +47,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const [visibility, setVisibility] = useState<'public' | 'friends' | 'vip'>('public');
     const [showMusicPicker, setShowMusicPicker] = useState(false);
     const [selectedMusic, setSelectedMusic] = useState<any | null>(null);
-    const [stickerConfig, setStickerConfig] = useState({ x: 50, y: 50, scale: 1 });
+    const [stickerConfig, setStickerConfig] = useState({ x: 50, y: 50, scale: 1, rotation: 0 });
     const [musicStart, setMusicStart] = useState(0);
     const [musicDuration, setMusicDuration] = useState(15);
     const [isPlayingPreview, setIsPlayingPreview] = useState(false);
@@ -74,7 +74,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             setVisibility('public');
             setShowMusicPicker(false);
             setSelectedMusic(null);
-            setStickerConfig({ x: 50, y: 50, scale: 1 });
+            setStickerConfig({ x: 50, y: 50, scale: 1, rotation: 0 });
             setMusicStart(0);
             setMusicDuration(15);
             setIsPlayingPreview(false);
@@ -548,7 +548,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                                     style={{
                                         left: `${stickerConfig.x}%`,
                                         top: `${stickerConfig.y}%`,
-                                        transform: `translate(-50%, -50%) scale(${stickerConfig.scale})`,
+                                        transform: `translate(-50%, -50%) scale(${stickerConfig.scale}) rotate(${stickerConfig.rotation}deg)`,
                                         zIndex: 10
                                     }}
                                     onPointerDown={handleDragStart}
@@ -574,6 +574,31 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                                     >
                                         <LucideX size={12} />
                                     </button>
+
+                                    {/* Rotate Handle */}
+                                    <div
+                                        className="absolute -top-6 left-1/2 -translate-x-1/2 bg-white text-black rounded-full p-1.5 shadow-md cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                        onPointerDown={(e) => {
+                                            e.stopPropagation();
+                                            const startX = e.clientX;
+                                            const startRotation = stickerConfig.rotation;
+
+                                            const handleRotate = (moveEvent: PointerEvent) => {
+                                                const deltaX = moveEvent.clientX - startX;
+                                                setStickerConfig(prev => ({ ...prev, rotation: startRotation + deltaX }));
+                                            };
+
+                                            const handleUp = () => {
+                                                window.removeEventListener('pointermove', handleRotate);
+                                                window.removeEventListener('pointerup', handleUp);
+                                            };
+
+                                            window.addEventListener('pointermove', handleRotate);
+                                            window.addEventListener('pointerup', handleUp);
+                                        }}
+                                    >
+                                        <LucideRotateCw size={12} />
+                                    </div>
 
                                     {/* Resize Handle */}
                                     <div
