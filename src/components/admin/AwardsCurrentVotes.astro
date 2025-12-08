@@ -88,7 +88,7 @@ const getAvatarUrl = (name: string) =>
                         </span>
                         <div class="relative">
                           <img
-                            src={getAvatarUrl(vote.displayName)}
+                            src={getAvatarUrl(vote.nomineeId)}
                             alt={vote.displayName}
                             class={`rounded-full object-cover bg-black ${isLeader ? "size-12 ring-2 ring-yellow-500" : "size-10 grayscale group-hover:grayscale-0 transition-all"}`}
                             onerror={`this.src='https://ui-avatars.com/api/?name=${vote.displayName}&background=random&color=fff'`}
