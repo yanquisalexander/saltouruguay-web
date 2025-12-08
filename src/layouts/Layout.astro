@@ -23,6 +23,7 @@ import KonamiCode from "@/components/KonamiCode.astro";
 import { DebugInfo } from "@/components/DebugInfo";
 import { ClientRouter } from "astro:transitions";
 import StingerGsap from "@/components/StingerGsap";
+import PushNotificationBanner from "@/components/PushNotificationBanner";
 interface Props {
   title?: string;
   description?: string;
@@ -181,6 +182,7 @@ preload?.push({
     <KonamiCode />
 
     <DebugInfo client:load transition:name="debug-info" transition:persist />
+    <PushNotificationBanner client:idle />
 
     <img
       src="https://librecounter.org/counter.svg"

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "preact/hooks";
 import { actions } from "astro:actions";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
     LucideBell,
     LucideCheckCheck,
@@ -49,27 +50,10 @@ const NOTIFICATIONS_DATA: Notification[] = [
     }
 ];
 
-// Helper to convert VAPID key
-function urlBase64ToUint8Array(base64String: string) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-        .replace(/\-/g, '+')
-        .replace(/_/g, '/');
-
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-}
-
 export const Notifications = () => {
     const [state, setState] = useState<NotificationState>({ read: [], unread: [] });
     const [isOpen, setIsOpen] = useState(false);
-    const [pushEnabled, setPushEnabled] = useState(false);
-    const [loadingPush, setLoadingPush] = useState(false);
+    const { isSubscribed, loading: loadingPush, subscribe } = usePushNotifications();
     const ref = useRef<HTMLDivElement>(null);
 
     // Cargar estado inicial
@@ -113,58 +97,7 @@ export const Notifications = () => {
         };
 
         loadNotifications();
-        checkPushSubscription();
     }, []);
-
-    const checkPushSubscription = async () => {
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            const registration = await navigator.serviceWorker.ready;
-            const subscription = await registration.pushManager.getSubscription();
-            setPushEnabled(!!subscription);
-        }
-    };
-
-    const enablePushNotifications = async () => {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-            alert("Push notifications not supported");
-            return;
-        }
-
-        setLoadingPush(true);
-        try {
-            const registration = await navigator.serviceWorker.register('/sw.js');
-            await navigator.serviceWorker.ready;
-
-            const vapidKey = import.meta.env.PUBLIC_VAPID_KEY;
-            if (!vapidKey) {
-                console.warn("PUBLIC_VAPID_KEY not set");
-                return;
-            }
-
-            const subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(vapidKey)
-            });
-
-            // Send to server
-            const keys = subscription.toJSON().keys;
-            if (keys && keys.p256dh && keys.auth) {
-                await actions.notifications.subscribe({
-                    endpoint: subscription.endpoint,
-                    keys: {
-                        p256dh: keys.p256dh,
-                        auth: keys.auth
-                    }
-                });
-                setPushEnabled(true);
-            }
-        } catch (e) {
-            console.error("Error enabling push", e);
-            alert("Error enabling notifications. Check console.");
-        } finally {
-            setLoadingPush(false);
-        }
-    };
 
     // Click Outside
     useEffect(() => {
@@ -231,9 +164,9 @@ export const Notifications = () => {
                         <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/[0.02]">
                             <h3 className="font-anton text-lg tracking-wide text-white">Notificaciones</h3>
                             <div className="flex gap-3">
-                                {!pushEnabled && (
+                                {!isSubscribed && (
                                     <button
-                                        onClick={enablePushNotifications}
+                                        onClick={subscribe}
                                         disabled={loadingPush}
                                         className="text-[10px] uppercase font-bold tracking-widest text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors disabled:opacity-50"
                                         title="Activar notificaciones push"
