@@ -45,6 +45,12 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
                     }
                     return prev;
                 });
+
+                // Mark messages as read if there are unread messages from the other user
+                const hasUnread = data.messages.some((m: any) => m.senderId === otherUser.id && !m.isRead);
+                if (hasUnread) {
+                    await actions.messages.markAsRead({ otherUserId: otherUser.id });
+                }
             }
         } catch (e) {
             console.error(e);
@@ -98,11 +104,10 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
                             src={otherUser.avatar || `https://ui-avatars.com/api/?name=${otherUser.displayName}`}
                             className="w-8 h-8 rounded-full border border-border"
                         />
-                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-card"></div>
-                    </div>
+                        {/*                         <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-card"></div>
+ */}                    </div>
                     <div>
                         <h3 className="text-card-foreground font-bold text-sm leading-tight hover:underline">{otherUser.displayName}</h3>
-                        <p className="text-muted-foreground text-[10px]">Activo ahora</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -137,11 +142,11 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
                         const isLastInGroup = !nextMsg || nextMsg.senderId !== msg.senderId;
 
                         return (
-                            <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-2' : 'mt-0.5'}`}>
+                            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${isFirstInGroup ? 'mt-2' : 'mt-0.5'}`}>
                                 <div
                                     className={`max-w-[85%] px-3 py-2 text-sm shadow-sm break-words ${isMe
-                                            ? 'bg-gradient-to-br from-electric-violet-600 to-electric-violet-500 text-white'
-                                            : 'bg-muted text-foreground'
+                                        ? 'bg-gradient-to-br from-electric-violet-600 to-electric-violet-500 text-white'
+                                        : 'bg-muted text-foreground'
                                         }`}
                                     style={{
                                         borderRadius: '18px',
@@ -153,6 +158,9 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
                                 >
                                     {msg.content}
                                 </div>
+                                {isMe && index === messages.length - 1 && msg.isRead && (
+                                    <span className="text-[10px] text-muted-foreground mr-1 mt-0.5 animate-in fade-in duration-300">Leído</span>
+                                )}
                             </div>
                         );
                     })

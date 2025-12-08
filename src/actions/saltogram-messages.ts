@@ -121,5 +121,29 @@ export const messages = {
 
             return { conversations: Array.from(conversationsMap.values()) };
         }
+    }),
+
+    markAsRead: defineAction({
+        input: z.object({
+            otherUserId: z.number(),
+        }),
+        handler: async ({ otherUserId }, { request }) => {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
+                throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
+            }
+
+            const userId = auth.user.id;
+
+            await client.update(SaltogramMessagesTable)
+                .set({ isRead: true })
+                .where(and(
+                    eq(SaltogramMessagesTable.senderId, otherUserId),
+                    eq(SaltogramMessagesTable.receiverId, userId),
+                    eq(SaltogramMessagesTable.isRead, false)
+                ));
+
+            return { success: true };
+        }
     })
 };
