@@ -9,15 +9,44 @@ interface NoteBottomSheetProps {
 
 export default function NoteBottomSheet({ note, onClose }: NoteBottomSheetProps) {
     const [isPlaying, setIsPlaying] = useState(false);
+    const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
-        if (note?.musicUrl) {
-            audioRef.current = new Audio(note.musicUrl);
+        if (note?.musicTrackId) {
+            // Fetch fresh URL using ID to avoid expiration
+            fetch(`/api/deezer/track?id=${note.musicTrackId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.preview) {
+                        setAudioUrl(data.preview);
+                    } else {
+                        setAudioUrl(note.musicUrl);
+                    }
+                })
+                .catch((err) => {
+                    console.error("Error fetching track:", err);
+                    setAudioUrl(note.musicUrl);
+                });
+        } else if (note?.musicUrl) {
+            setAudioUrl(note.musicUrl);
+        } else {
+            setAudioUrl(null);
+        }
+    }, [note]);
+
+    useEffect(() => {
+        if (audioUrl) {
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+            audioRef.current = new Audio(audioUrl);
             audioRef.current.onended = () => setIsPlaying(false);
-            // Auto-play when opening? Maybe better to let user choose, or auto-play like stories.
-            // Let's auto-play for better experience
-            audioRef.current.play().then(() => setIsPlaying(true)).catch(() => { });
+
+            // Auto-play
+            audioRef.current.play()
+                .then(() => setIsPlaying(true))
+                .catch(() => setIsPlaying(false));
         }
 
         return () => {
@@ -26,7 +55,7 @@ export default function NoteBottomSheet({ note, onClose }: NoteBottomSheetProps)
                 audioRef.current = null;
             }
         };
-    }, [note]);
+    }, [audioUrl]);
 
     const togglePlay = () => {
         if (!audioRef.current) return;
@@ -62,7 +91,7 @@ export default function NoteBottomSheet({ note, onClose }: NoteBottomSheetProps)
                     drag="y"
                     dragConstraints={{ top: 0 }}
                     dragElastic={0.2}
-                    onDragEnd={(_, info) => {
+                    onDragEnd={(_: any, info: any) => {
                         if (info.offset.y > 100) onClose();
                     }}
                     className="relative w-full max-w-md bg-[#242526] rounded-t-3xl overflow-hidden pointer-events-auto border-t border-white/10 pb-8"
