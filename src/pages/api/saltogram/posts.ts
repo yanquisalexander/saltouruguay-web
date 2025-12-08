@@ -1,10 +1,11 @@
 import { client } from "@/db/client";
-import { SaltogramPostsTable, UsersTable } from "@/db/schema";
+import { SaltogramPostsTable, UsersTable, FriendsTable } from "@/db/schema";
 import { uploadImage, validateImage } from "@/services/saltogram-storage";
 import { awardCoins, SALTOGRAM_REWARDS } from "@/services/saltogram-rewards";
 import type { APIContext } from "astro";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { desc, eq, sql, and, ilike } from "drizzle-orm";
+import { desc, eq, sql, and, ilike, or } from "drizzle-orm";
+import { createNotification } from "@/actions/notifications";
 
 const MAX_TEXT_LENGTH = 500;
 
@@ -220,6 +221,41 @@ export const POST = async ({ request }: APIContext) => {
 
         // Award coins for creating post
         await awardCoins(userId, SALTOGRAM_REWARDS.CREATE_POST);
+
+        // --- NOTIFY FRIENDS ---
+        try {
+            const friends = await client
+                .select({
+                    userId: FriendsTable.userId,
+                    friendId: FriendsTable.friendId,
+                })
+                .from(FriendsTable)
+                .where(
+                    and(
+                        eq(FriendsTable.status, "accepted"),
+                        or(
+                            eq(FriendsTable.userId, userId),
+                            eq(FriendsTable.friendId, userId)
+                        )
+                    )
+                );
+
+            const friendIds = friends.map(f => f.userId === userId ? f.friendId : f.userId);
+
+            // Send notifications in background
+            Promise.all(friendIds.map(friendId =>
+                createNotification(friendId, {
+                    type: "saltogram_post",
+                    title: "Nueva publicación",
+                    message: `${auth.user.displayName} ha publicado algo nuevo`,
+                    link: `/saltogram?post=${newPost.id}`,
+                    image: auth.user.avatar || undefined
+                })
+            )).catch(err => console.error("Error sending friend notifications:", err));
+
+        } catch (error) {
+            console.error("Error fetching friends for notification:", error);
+        }
 
         // Fetch the complete post with user data
         const [completePost] = await client
