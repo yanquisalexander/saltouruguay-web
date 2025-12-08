@@ -4,13 +4,16 @@ import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
 import { client } from "@/db/client";
 import { EventsTable } from "@/db/schema";
-import { gt, asc } from "drizzle-orm";
+import { gt, asc, or, isNotNull, and } from "drizzle-orm";
 
 export const events = {
     getUpcoming: defineAction({
         handler: async () => {
             const events = await client.query.EventsTable.findMany({
-                where: gt(EventsTable.endDate, new Date()),
+                where: or(
+                    gt(EventsTable.startDate, new Date()),
+                    and(isNotNull(EventsTable.endDate), gt(EventsTable.endDate, new Date()))
+                ),
                 orderBy: [asc(EventsTable.startDate)],
                 limit: 10,
                 columns: {

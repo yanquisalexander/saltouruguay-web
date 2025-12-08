@@ -19,7 +19,7 @@ import { twoFactor } from "./users/two-factor";
 import { serverTools } from "./admin/serverTools";
 import { customPages } from "./admin/customPages";
 import { friends } from "./friends";
-import { events } from "./admin/events";
+import { events as adminEvents } from "./admin/events";
 import { banco } from "./banco";
 import { pet } from "./pet";
 import { saltogram } from "./saltogram";
@@ -27,7 +27,7 @@ import { stories } from "./saltogram-stories";
 import { messages } from "./saltogram-messages";
 import { vip } from "./saltogram-vip";
 import { notes } from "./saltogram-notes";
-import { events as userEvents } from "./events";
+import { events } from "./events";
 import { experimental_AstroContainer } from "astro/container";
 import { sendNotificationEmail } from "@/utils/email";
 import { addRoleToUserWithoutLogging } from "@/services/discord";
@@ -45,7 +45,7 @@ export const server = {
     messages,
     vip,
     notes,
-    userEvents,
+    events,
     banco,
     pet,
     friends,
@@ -374,7 +374,7 @@ export const server = {
         users,
         serverTools,
         customPages,
-        events,
+        events: adminEvents,
         launchCinematic: defineAction({
             input: z.object({
                 url: z.string().url(),
