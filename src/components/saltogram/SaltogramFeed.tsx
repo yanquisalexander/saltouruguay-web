@@ -63,7 +63,8 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
         if (posts.length === 0) return;
         const poll = async () => {
             try {
-                const lastPostId = posts[0]?.id || 0;
+                // Fix: Usar el ID máximo en lugar del primero para evitar problemas con posts fijados
+                const lastPostId = posts.reduce((max, p) => (p.id > max ? p.id : max), 0);
                 const response = await fetch(`/api/saltogram/poll?lastPostId=${lastPostId}`);
                 const data = await response.json();
                 if (data.hasNewPosts) setHasNewPosts(true);
@@ -144,7 +145,7 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
                         <a href={`/comunidad/saltogram/u/${user.username}`}>
                             <img
                                 src={user.image || `https://ui-avatars.com/api/?name=${user.name}`}
-                                alt={user.name}
+                                alt={user.name || "User"}
                                 className="w-10 h-10 rounded-full object-cover bg-gray-700"
                             />
                         </a>
