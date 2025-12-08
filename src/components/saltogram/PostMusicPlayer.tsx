@@ -37,7 +37,7 @@ export default function PostMusicPlayer({ music }: PostMusicPlayerProps) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const width = containerRef.current.clientWidth || 300;
-            
+
             const progressGradient = ctx!.createLinearGradient(0, 0, width, 0);
             progressGradient.addColorStop(0, '#833AB4');   // Purple
             progressGradient.addColorStop(0.5, '#FD1D1D'); // Red/Pink
@@ -51,10 +51,10 @@ export default function PostMusicPlayer({ music }: PostMusicPlayerProps) {
                 barWidth: 2,
                 barGap: 2,
                 barRadius: 2,
-                height: 40,
+                height: 30,
                 url: audioUrl,
-                normalize: true,
-            });            ws.on('play', () => setIsPlaying(true));
+                normalize: false,
+            }); ws.on('play', () => setIsPlaying(true));
             ws.on('pause', () => setIsPlaying(false));
             ws.on('finish', () => setIsPlaying(false));
 
@@ -73,7 +73,7 @@ export default function PostMusicPlayer({ music }: PostMusicPlayerProps) {
 
     return (
         <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
-            <button 
+            <button
                 onClick={togglePlay}
                 className="relative group shrink-0 w-12 h-12 rounded-lg overflow-hidden"
             >
@@ -86,7 +86,7 @@ export default function PostMusicPlayer({ music }: PostMusicPlayerProps) {
                     )}
                 </div>
             </button>
-            
+
             <div className="flex-1 min-w-0 flex flex-col justify-center h-12">
                 <div className="flex items-center justify-between mb-1">
                     <div className="truncate pr-2">
