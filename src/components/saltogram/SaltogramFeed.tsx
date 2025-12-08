@@ -138,7 +138,7 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
             )}
 
             {/* CREATE POST WIDGET (Facebook Style) */}
-            {user && (
+            {user && !targetUserId && (
                 <div className="bg-[#242526] rounded-xl p-4 shadow-sm border border-white/5">
                     <div className="flex gap-3">
                         <a href={`/comunidad/saltogram/u/${user.username}`}>
@@ -175,7 +175,7 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
             )}
 
             {/* NOTES TRAY */}
-            <NotesTray user={user} />
+            {!targetUserId && <NotesTray user={user} />}
 
             {/* FILTROS (Segmented Control) */}
             <div className="flex flex-col gap-4">
