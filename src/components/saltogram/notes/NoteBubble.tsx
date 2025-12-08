@@ -19,15 +19,25 @@ export default function NoteBubble({ note, user, isCurrentUser, onClick }: NoteB
             {/* Bubble */}
             <div className="absolute -top-10 z-10 transition-transform duration-200 group-hover:-translate-y-1">
                 {note ? (
-                    <div className="bg-white text-black px-3 py-2 rounded-2xl rounded-bl-none shadow-lg min-w-[68px] max-w-[100px] text-center relative animate-fade-in-up duration-300 border border-gray-200">
-                        {note.musicUrl && (
-                            <div className="absolute -top-2 -right-2 bg-blue-500 text-white p-1 rounded-full shadow-sm z-20">
-                                <LucideMusic size={10} />
-                            </div>
+                    <div className="bg-white text-black px-3 py-2 rounded-2xl rounded-bl-none shadow-lg min-w-[80px] max-w-[120px] text-center relative animate-fade-in-up duration-300 border border-gray-200 flex flex-col items-center justify-center gap-0.5">
+                        {note.musicTitle ? (
+                            <>
+                                <div className="flex items-center justify-center gap-1 w-full">
+                                    <LucideMusic size={10} className="text-black shrink-0" />
+                                    <span className="text-[10px] font-bold leading-tight truncate">{note.musicTitle}</span>
+                                </div>
+                                <span className="text-[9px] text-gray-500 leading-tight truncate w-full block">{note.musicArtist}</span>
+                                {note.text && (
+                                    <p className="text-[11px] font-medium leading-tight break-words line-clamp-2 mt-0.5 w-full">
+                                        {note.text}
+                                    </p>
+                                )}
+                            </>
+                        ) : (
+                            <p className="text-[11px] font-medium leading-tight break-words line-clamp-3">
+                                {note.text || "..."}
+                            </p>
                         )}
-                        <p className="text-[11px] font-medium leading-tight break-words line-clamp-3">
-                            {note.text || (note.musicTitle ? `🎵 ${note.musicTitle}` : "...")}
-                        </p>
                     </div>
                 ) : isCurrentUser ? (
                     <div className="bg-white/10 backdrop-blur-md text-gray-300 px-3 py-1.5 rounded-2xl rounded-bl-none shadow-lg text-center border border-white/10">
