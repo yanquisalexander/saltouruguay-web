@@ -4,6 +4,8 @@ import { awardCoins, SALTOGRAM_REWARDS } from "@/services/saltogram-rewards";
 import type { APIContext } from "astro";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { eq, desc } from "drizzle-orm";
+import { createNotification } from "@/actions/notifications";
+
 
 const MAX_COMMENT_LENGTH = 500;
 
@@ -163,7 +165,6 @@ export const POST = async ({ request, params }: APIContext) => {
             })
             .returning();
 
-        import { createNotification } from "@/actions/notifications";
 
         // 1. Notify Post Author (if not own post)
         if (post[0].userId !== userId) {

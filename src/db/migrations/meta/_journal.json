@@ -407,6 +407,13 @@
       "when": 1765199470660,
       "tag": "0057_flawless_jack_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1765199936643,
+      "tag": "0058_harsh_logan",
+      "breakpoints": true
     }
   ]
 }

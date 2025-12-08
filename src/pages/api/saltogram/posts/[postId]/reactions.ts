@@ -4,6 +4,8 @@ import { awardCoins, SALTOGRAM_REWARDS } from "@/services/saltogram-rewards";
 import type { APIContext } from "astro";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { eq, and, sql, desc } from "drizzle-orm";
+import { createNotification } from "@/actions/notifications";
+
 
 const ALLOWED_EMOJIS = ["❤️", "🔥", "😂", "👍", "😮", "😢", "😡"];
 
@@ -111,7 +113,6 @@ export const POST = async ({ request, params }: APIContext) => {
                 emoji,
             });
 
-            import { createNotification } from "@/actions/notifications";
 
             // ...existing code...
 
