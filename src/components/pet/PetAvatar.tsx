@@ -7,6 +7,8 @@ interface PetAvatarProps {
         skinId: string | null;
         hatId: string | null;
         accessoryId: string | null;
+        eyesId: string | null;
+        mouthId: string | null;
     };
     stats: {
         hunger: number;

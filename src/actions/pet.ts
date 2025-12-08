@@ -356,4 +356,32 @@ export const pet = {
             }
         },
     }),
+
+    /**
+     * Equip item
+     */
+    equipItem: defineAction({
+        input: z.object({
+            itemId: z.number(),
+        }),
+        handler: async (input, context) => {
+            const session = await getSession(context.request);
+            if (!session?.user?.id) {
+                throw new ActionError({
+                    code: 'UNAUTHORIZED',
+                    message: 'Debes iniciar sesión para equipar items',
+                });
+            }
+
+            try {
+                const result = await PetService.equipItem(session.user.id, input.itemId);
+                return result;
+            } catch (error: any) {
+                throw new ActionError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: error.message || 'Error al equipar el item',
+                });
+            }
+        },
+    }),
 };

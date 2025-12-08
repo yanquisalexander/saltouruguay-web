@@ -28,6 +28,9 @@ const CATEGORY_LABELS: Record<string, string> = {
     furniture: '🪑 Muebles',
     clothing: '👕 Ropa',
     accessory: '🎩 Accesorios',
+    eyes: '👀 Ojos',
+    mouth: '👄 Boca',
+    skin: '🎨 Piel',
 };
 
 const RARITY_COLORS: Record<string, string> = {
@@ -44,6 +47,8 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
     const [purchasing, setPurchasing] = useState<number | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
+    const [viewMode, setViewMode] = useState<'store' | 'inventory'>('store');
+    const [equipping, setEquipping] = useState<number | null>(null);
 
     useEffect(() => {
         loadStoreItems();
@@ -94,12 +99,28 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
         }
     };
 
+    const handleEquip = async (itemId: number, itemName: string) => {
+        try {
+            setEquipping(itemId);
+            const result = await actions.pet.equipItem({ itemId });
+
+            if (result.data?.success) {
+                toast.success(`¡Equipaste ${itemName}!`);
+                onItemPurchased(); // Refresh pet
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Error al equipar el item');
+        } finally {
+            setEquipping(null);
+        }
+    };
+
     const getItemQuantity = (itemId: number) => {
         const item = inventory.find(inv => inv.itemId === itemId);
         return item ? item.quantity : 0;
     };
 
-    const categories = ['all', 'food', 'toy', 'furniture', 'clothing', 'accessory'];
+    const categories = ['all', 'food', 'toy', 'furniture', 'clothing', 'accessory', 'eyes', 'mouth', 'skin'];
 
     return (
         <div className="p-6 md:p-8">
@@ -119,8 +140,8 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
                     <button
                         onClick={() => setSelectedCategory('all')}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${selectedCategory === 'all'
-                                ? 'bg-white text-black shadow-lg scale-105'
-                                : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                            ? 'bg-white text-black shadow-lg scale-105'
+                            : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
                             }`}
                     >
                         Todo
@@ -130,8 +151,8 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${selectedCategory === cat
-                                    ? 'bg-white text-black shadow-lg scale-105'
-                                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                                ? 'bg-white text-black shadow-lg scale-105'
+                                : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
                                 }`}
                         >
                             {CATEGORY_LABELS[cat]}
@@ -185,6 +206,9 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
                                         {item.category === 'furniture' && '🪑'}
                                         {item.category === 'clothing' && '👕'}
                                         {item.category === 'accessory' && '🎩'}
+                                        {item.category === 'eyes' && '👀'}
+                                        {item.category === 'mouth' && '👄'}
+                                        {item.category === 'skin' && '🎨'}
                                     </div>
 
                                     {/* Item Info */}
@@ -195,7 +219,7 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
                                             </h4>
                                             {quantity > 0 && (
                                                 <span className="bg-yellow-500/20 text-yellow-300 text-xs font-bold px-2 py-1 rounded-full border border-yellow-500/30">
-                                                    x{quantity}
+                                                    {item.isConsumable ? `x${quantity}` : 'En posesión'}
                                                 </span>
                                             )}
                                         </div>
@@ -212,7 +236,7 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
                                         )}
                                     </div>
 
-                                    {/* Price and Buy Button */}
+                                    {/* Price and Buy/Equip Button */}
                                     <div className="flex items-center justify-between gap-3 pt-4 border-t border-white/10">
                                         <div className="flex items-center gap-1.5">
                                             <LucideCoins size={18} className="text-yellow-400" />
@@ -220,20 +244,38 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
                                                 {item.price}
                                             </span>
                                         </div>
-                                        <button
-                                            onClick={() => handlePurchase(item.id, item.price, item.name)}
-                                            disabled={purchasing !== null}
-                                            className="flex-1 bg-white text-black hover:bg-gray-200 disabled:bg-gray-500 disabled:cursor-not-allowed font-bold py-2 px-4 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            {purchasing === item.id ? (
-                                                <LucideLoader2 size={16} className="animate-spin" />
-                                            ) : (
-                                                <>
-                                                    <LucideShoppingCart size={16} />
-                                                    Comprar
-                                                </>
-                                            )}
-                                        </button>
+
+                                        {!item.isConsumable && quantity > 0 ? (
+                                            <button
+                                                onClick={() => handleEquip(item.id, item.name)}
+                                                disabled={equipping !== null}
+                                                className="flex-1 bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                {equipping === item.id ? (
+                                                    <LucideLoader2 size={16} className="animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <span className="text-lg">✨</span>
+                                                        Equipar
+                                                    </>
+                                                )}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handlePurchase(item.id, item.price, item.name)}
+                                                disabled={purchasing !== null}
+                                                className="flex-1 bg-white text-black hover:bg-gray-200 disabled:bg-gray-500 disabled:cursor-not-allowed font-bold py-2 px-4 rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                {purchasing === item.id ? (
+                                                    <LucideLoader2 size={16} className="animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <LucideShoppingCart size={16} />
+                                                        Comprar
+                                                    </>
+                                                )}
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             );

@@ -37,6 +37,8 @@ interface PetAppearance {
     skinId: string | null;
     hatId: string | null;
     accessoryId: string | null;
+    eyesId: string | null;
+    mouthId: string | null;
 }
 
 export class PetService {
@@ -583,6 +585,20 @@ export class PetService {
                     throw new Error('Item is not available for purchase');
                 }
 
+                // Check if user already has the item if it's not consumable
+                if (!item.isConsumable) {
+                    const existingItem = await tx.query.PetUserInventoryTable.findFirst({
+                        where: and(
+                            eq(PetUserInventoryTable.userId, userId),
+                            eq(PetUserInventoryTable.itemId, itemId)
+                        ),
+                    });
+
+                    if (existingItem && existingItem.quantity > 0) {
+                        throw new Error('Ya tienes este artículo cosmético');
+                    }
+                }
+
                 const totalCost = item.price * quantity;
 
                 // Check user balance via BancoSaltanoService
@@ -737,6 +753,90 @@ export class PetService {
             return { success: true };
         } catch (error) {
             console.error('Error updating house layout:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Equip an item (cosmetic)
+     */
+    static async equipItem(userId: number, itemId: number) {
+        try {
+            return await db.transaction(async (tx) => {
+                // 1. Check if user owns the item
+                const inventoryItem = await tx.query.PetUserInventoryTable.findFirst({
+                    where: and(
+                        eq(PetUserInventoryTable.userId, userId),
+                        eq(PetUserInventoryTable.itemId, itemId)
+                    ),
+                    with: {
+                        item: true,
+                    },
+                });
+
+                if (!inventoryItem || inventoryItem.quantity < 1) {
+                    throw new Error('No tienes este item');
+                }
+
+                const item = inventoryItem.item;
+
+                // 2. Check if item is equippable
+                const equippableCategories = ['clothing', 'accessory', 'eyes', 'mouth', 'skin'];
+                if (!equippableCategories.includes(item.category)) {
+                    throw new Error('Este item no se puede equipar');
+                }
+
+                // 3. Get current pet
+                const pet = await tx.query.PetsTable.findFirst({
+                    where: eq(PetsTable.ownerId, userId),
+                });
+
+                if (!pet) {
+                    throw new Error('Mascota no encontrada');
+                }
+
+                // 4. Update appearance
+                const currentAppearance = pet.appearance as PetAppearance;
+                const newAppearance = { ...currentAppearance };
+
+                // Map category to appearance field
+                // We assume item.iconUrl holds the sprite identifier or value
+                switch (item.category) {
+                    case 'clothing':
+                        // Clothing changes color for now
+                        if (item.iconUrl) newAppearance.color = item.iconUrl;
+                        break;
+                    case 'skin':
+                        // Skin changes body shape (A, B, C, D, E, F)
+                        if (item.iconUrl) newAppearance.skinId = item.iconUrl;
+                        break;
+                    case 'eyes':
+                        if (item.iconUrl) newAppearance.eyesId = item.iconUrl;
+                        break;
+                    case 'mouth':
+                        if (item.iconUrl) newAppearance.mouthId = item.iconUrl;
+                        break;
+                    case 'accessory':
+                        // Check if it's a hat or general accessory
+                        if (item.name.toLowerCase().includes('gorra') || item.name.toLowerCase().includes('sombrero') || item.name.toLowerCase().includes('corona')) {
+                            newAppearance.hatId = item.iconUrl;
+                        } else {
+                            newAppearance.accessoryId = item.iconUrl;
+                        }
+                        break;
+                }
+
+                await tx.update(PetsTable)
+                    .set({
+                        appearance: newAppearance,
+                        updatedAt: new Date(),
+                    })
+                    .where(eq(PetsTable.ownerId, userId));
+
+                return { success: true, appearance: newAppearance };
+            });
+        } catch (error) {
+            console.error('Error equipping item:', error);
             throw error;
         }
     }

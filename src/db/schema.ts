@@ -1050,6 +1050,9 @@ export const petItemCategoryEnum = pgEnum('pet_item_category', [
     'furniture', // Decorations for the house
     'clothing',  // Cosmetic items for the pet
     'accessory', // Hats, glasses, etc.
+    'eyes',      // Custom eyes
+    'mouth',     // Custom mouth
+    'skin',      // Custom body skin
 ]);
 
 // Pet item rarity
@@ -1088,6 +1091,8 @@ export const PetsTable = pgTable('pets', {
         skinId: null,
         hatId: null,
         accessoryId: null,
+        eyesId: null,
+        mouthId: null,
     }),
     // Stats (0-100 scale)
     hunger: integer('hunger').notNull().default(100),

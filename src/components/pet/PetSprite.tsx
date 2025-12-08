@@ -9,6 +9,8 @@ interface PetSpriteProps {
         skinId: string | null;
         hatId: string | null;
         accessoryId: string | null;
+        eyesId?: string | null;
+        mouthId?: string | null;
     };
     stats: {
         hunger: number;
@@ -68,6 +70,11 @@ export default function PetSprite({ appearance, stats, isEating, isSleeping }: P
     else if (stats.energy < 30) eyeType = 'eye_dead';
     else if (stats.hunger < 30) eyeType = 'eye_psycho_light';
 
+    // Override with custom eyes if set (and not sleeping)
+    if (!isSleeping && appearance.eyesId) {
+        eyeType = appearance.eyesId;
+    }
+
     // Override with accessory if it's an eye type
     if (appearance.accessoryId && appearance.accessoryId.startsWith('eye_')) {
         eyeType = appearance.accessoryId;
@@ -80,6 +87,11 @@ export default function PetSprite({ appearance, stats, isEating, isSleeping }: P
     if (isEating) mouthSprite = 'mouthA'; // Open mouth
     else if (stats.happiness < 40) mouthSprite = 'mouth_closed_sad';
     else if (stats.hunger < 40) mouthSprite = 'mouth_closed_teeth';
+
+    // Override with custom mouth
+    if (!isEating && appearance.mouthId) {
+        mouthSprite = appearance.mouthId;
+    }
 
     // Hat/Detail sprite
     const hatSprite = appearance.hatId ? `detail_${spriteColor}_${appearance.hatId}` : null;

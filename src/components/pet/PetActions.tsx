@@ -11,6 +11,7 @@ import {
     LucideGamepad2,
     LucideX
 } from 'lucide-preact';
+import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
 interface PetActionsProps {
     petId: number;
@@ -25,6 +26,7 @@ interface PetActionsProps {
     petRef?: RefObject<HTMLDivElement>;
     onEatStart?: () => void;
     onEatEnd?: () => void;
+    onOpenStore?: () => void;
 }
 
 export interface InventoryItem {
@@ -39,7 +41,7 @@ export interface InventoryItem {
     };
 }
 
-export default function PetActions({ petId, stats, isSleeping, onActionComplete, petRef, onEatStart, onEatEnd }: PetActionsProps) {
+export default function PetActions({ petId, stats, isSleeping, onActionComplete, petRef, onEatStart, onEatEnd, onOpenStore }: PetActionsProps) {
     const [performing, setPerforming] = useState<string | null>(null);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [selectedFoodItem, setSelectedFoodItem] = useState<number | null>(null);
@@ -80,6 +82,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
 
             if (data?.success) {
                 toast.success('¡Mascota alimentada!');
+                playSound({ sound: STREAMER_WARS_SOUNDS.PET_EAT, volume: 0.5 });
                 await loadInventory();
                 onActionComplete();
                 // Don't close selector immediately to allow feeding more
@@ -129,6 +132,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
 
             if (result.data?.success) {
                 toast.success('¡Mascota limpia!');
+                playSound({ sound: STREAMER_WARS_SOUNDS.PET_SHOWER, volume: 0.5 });
                 onActionComplete();
             }
         } catch (error: any) {
@@ -200,7 +204,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
         <button
             onClick={onClick}
             disabled={disabled}
-            className="flex flex-col items-center gap-2 group w-full"
+            className={`flex flex-col items-center gap-2 group w-full disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 disabled:active:border-b-4 disabled:grayscale-[0.5]`}
         >
             <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-3xl ${bgClass} ${colorClass} flex items-center justify-center shadow-lg ${borderClass} border border-b-4 active:border-b active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:border-b-4 backdrop-blur-sm`}>
                 <Icon size={28} strokeWidth={2.5} />
@@ -254,7 +258,10 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
                             <div className="text-center py-8">
                                 <p className="text-gray-400 mb-4">No tienes comida.</p>
                                 <button
-                                    onClick={() => setShowFoodSelector(false)}
+                                    onClick={() => {
+                                        setShowFoodSelector(false);
+                                        onOpenStore?.();
+                                    }}
                                     className="text-violet-400 font-bold text-sm hover:text-violet-300"
                                 >
                                     Ir a la tienda
@@ -269,7 +276,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
                                         dragSnapToOrigin
                                         whileDrag={{ scale: 1.2, zIndex: 1000 }}
                                         onDragStart={() => onEatStart?.()}
-                                        onDragEnd={(e, info) => handleDragEnd(e, info, item)}
+                                        onDragEnd={(e: any, info: any) => handleDragEnd(e, info, item)}
                                         className="flex-shrink-0 w-20 h-20 bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center gap-1 cursor-grab active:cursor-grabbing hover:border-violet-500/50 hover:bg-white/10 transition-colors relative shadow-lg touch-none"
                                     >
                                         <span className="text-3xl drop-shadow-md">🍎</span>

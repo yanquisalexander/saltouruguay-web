@@ -8,6 +8,7 @@ import PetActions from './PetActions';
 import PetStore from './PetStore';
 import AdoptPet from './AdoptPet';
 import { LucideShoppingBag, LucideHome, LucideLoader2 } from 'lucide-preact';
+import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
 interface Pet {
     id: number;
@@ -17,6 +18,8 @@ interface Pet {
         skinId: string | null;
         hatId: string | null;
         accessoryId: string | null;
+        eyesId: string | null;
+        mouthId: string | null;
     };
     currentStats: {
         hunger: number;
@@ -48,6 +51,25 @@ export default function PetApp() {
     useEffect(() => {
         loadPet();
     }, [refreshTrigger]);
+
+    // Sleep sound effect
+    useEffect(() => {
+        let sleepSoundInterval: NodeJS.Timeout;
+
+        if (pet?.sleepingSince && viewMode === 'pet') {
+            // Play immediately
+            playSound({ sound: STREAMER_WARS_SOUNDS.PET_SLEEP, volume: 0.3 });
+
+            // Then every 8 seconds (to not be too annoying)
+            sleepSoundInterval = setInterval(() => {
+                playSound({ sound: STREAMER_WARS_SOUNDS.PET_SLEEP, volume: 0.3 });
+            }, 8000);
+        }
+
+        return () => {
+            if (sleepSoundInterval) clearInterval(sleepSoundInterval);
+        };
+    }, [pet?.sleepingSince, viewMode]);
 
     const loadPet = async (showLoading = true) => {
         try {
@@ -163,6 +185,7 @@ export default function PetApp() {
                                 petRef={petRef}
                                 onEatStart={() => setIsEating(true)}
                                 onEatEnd={() => setIsEating(false)}
+                                onOpenStore={() => setViewMode('store')}
                             />
                         </div>
                     </div>
