@@ -170,12 +170,6 @@ preload?.push({
       }
     </style>
 
-    {
-      session?.user && (
-        <ChatDock client:only currentUser={session.user} transition:persist />
-      )
-    }
-
     <Toaster
       expand={true}
       theme="dark"
