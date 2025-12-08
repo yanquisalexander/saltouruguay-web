@@ -2,8 +2,27 @@ import { cancelAssistanceToEvent, confirmAssistanceToEvent } from "@/lib/events"
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
+import { client } from "@/db/client";
+import { EventsTable } from "@/db/schema";
+import { gt, asc } from "drizzle-orm";
 
 export const events = {
+    getUpcoming: defineAction({
+        handler: async () => {
+            const events = await client.query.EventsTable.findMany({
+                where: gt(EventsTable.endDate, new Date()),
+                orderBy: [asc(EventsTable.startDate)],
+                limit: 10,
+                columns: {
+                    id: true,
+                    name: true,
+                    startDate: true,
+                    cover: true
+                }
+            });
+            return { events };
+        }
+    }),
     assistToEvent: defineAction({
         input: z.object({
             eventId: z.number(),

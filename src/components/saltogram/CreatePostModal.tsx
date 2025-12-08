@@ -10,11 +10,13 @@ import {
     LucideMusic,
     LucideTrash2,
     LucidePlay,
-    LucidePause
+    LucidePause,
+    LucideCalendar
 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
 import MusicPicker from "./stories/MusicPicker";
+import EventPicker from "./EventPicker";
 
 interface CreatePostModalProps {
     isOpen: boolean;
@@ -36,7 +38,9 @@ export default function CreatePostModal({
     const [mentionUsers, setMentionUsers] = useState<any[]>([]);
     const [showMentions, setShowMentions] = useState(false);
     const [showMusicPicker, setShowMusicPicker] = useState(false);
+    const [showEventPicker, setShowEventPicker] = useState(false);
     const [selectedMusic, setSelectedMusic] = useState<any | null>(null);
+    const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
     const [isPlayingPreview, setIsPlayingPreview] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -66,7 +70,7 @@ export default function CreatePostModal({
 
     const togglePreview = () => {
         if (!audioRef.current) return;
-        
+
         if (isPlayingPreview) {
             audioRef.current.pause();
             setIsPlayingPreview(false);
@@ -111,10 +115,10 @@ export default function CreatePostModal({
         const cursor = textareaRef.current?.selectionStart || 0;
         const textBeforeCursor = text.slice(0, cursor);
         const textAfterCursor = text.slice(cursor);
-        
+
         const lastWordStart = textBeforeCursor.lastIndexOf("@");
         const newText = textBeforeCursor.slice(0, lastWordStart) + `@${username} ` + textAfterCursor;
-        
+
         setText(newText);
         setShowMentions(false);
         textareaRef.current?.focus();
@@ -157,10 +161,13 @@ export default function CreatePostModal({
             const formData = new FormData();
             if (text.trim()) formData.append("text", text.trim());
             if (image) formData.append("image", image);
-            if (selectedMusic) {
-                formData.append("metadata", JSON.stringify({
-                    music: selectedMusic
-                }));
+
+            const metadata: any = {};
+            if (selectedMusic) metadata.music = selectedMusic;
+            if (selectedEvent) metadata.event = selectedEvent;
+
+            if (Object.keys(metadata).length > 0) {
+                formData.append("metadata", JSON.stringify(metadata));
             }
 
             const response = await fetch("/api/saltogram/posts", {
@@ -171,7 +178,7 @@ export default function CreatePostModal({
 
             if (response.ok) {
                 onPostCreated(data.post);
-                setText(""); setImage(null); setImagePreview(null); setSelectedMusic(null);
+                setText(""); setImage(null); setImagePreview(null); setSelectedMusic(null); setSelectedEvent(null);
                 if (textareaRef.current) textareaRef.current.style.height = "auto";
             } else {
                 toast.error(data.error || "Error al publicar");
@@ -209,8 +216,8 @@ export default function CreatePostModal({
                 </div>
 
                 {/* Form Content */}
-                <form 
-                    onSubmit={handleSubmit} 
+                <form
+                    onSubmit={handleSubmit}
                     className="flex-1 overflow-y-auto custom-scrollbar"
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={handleDrop}
@@ -241,8 +248,8 @@ export default function CreatePostModal({
                                             onClick={() => handleMentionSelect(user.username)}
                                             className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors text-left"
                                         >
-                                            <img 
-                                                src={user.avatar || `https://ui-avatars.com/api/?name=${user.displayName}`} 
+                                            <img
+                                                src={user.avatar || `https://ui-avatars.com/api/?name=${user.displayName}`}
                                                 className="w-8 h-8 rounded-full object-cover"
                                             />
                                             <div>
@@ -296,31 +303,54 @@ export default function CreatePostModal({
                             )}
 
                             {selectedMusic && (
-                                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
-                                    <div className="relative w-12 h-12 shrink-0 group">
-                                        <img src={selectedMusic.album.cover_medium} className="w-full h-full rounded-lg object-cover" />
+                                <div className="flex items-center gap-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl relative group">
+                                    <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+                                        <img src={selectedMusic.album.cover_medium} className="w-full h-full object-cover rounded-lg" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-white font-bold truncate">{selectedMusic.title}</p>
+                                        <p className="text-white/50 text-sm truncate">{selectedMusic.artist.name}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
                                         <button
                                             type="button"
                                             onClick={togglePreview}
-                                            className={`absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg transition-opacity ${isPlayingPreview ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                            className="p-2 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-colors"
                                         >
-                                            {isPlayingPreview ? (
-                                                <LucidePause size={20} className="text-white" />
-                                            ) : (
-                                                <LucidePlay size={20} className="text-white" />
-                                            )}
+                                            {isPlayingPreview ? <LucidePause size={20} /> : <LucidePlay size={20} />}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedMusic(null)}
+                                            className="p-2 hover:bg-red-500/20 rounded-full text-white/30 hover:text-red-400 transition-colors"
+                                        >
+                                            <LucideTrash2 size={20} />
                                         </button>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-white font-bold text-sm truncate">{selectedMusic.title}</p>
-                                        <p className="text-white/50 text-xs truncate">{selectedMusic.artist.name}</p>
+                                </div>
+                            )}
+
+                            {selectedEvent && (
+                                <div className="flex items-center gap-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl relative group">
+                                    <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0 overflow-hidden">
+                                        {selectedEvent.cover ? (
+                                            <img src={selectedEvent.cover} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <LucideCalendar className="text-purple-400" size={24} />
+                                        )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-white font-bold truncate">{selectedEvent.name}</p>
+                                        <p className="text-white/50 text-sm truncate">
+                                            {new Date(selectedEvent.startDate).toLocaleDateString()}
+                                        </p>
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => setSelectedMusic(null)}
-                                        className="p-2 text-white/50 hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors"
+                                        onClick={() => setSelectedEvent(null)}
+                                        className="p-2 hover:bg-red-500/20 rounded-full text-white/30 hover:text-red-400 transition-colors"
                                     >
-                                        <LucideTrash2 size={18} />
+                                        <LucideTrash2 size={20} />
                                     </button>
                                 </div>
                             )}
@@ -348,9 +378,18 @@ export default function CreatePostModal({
                                 >
                                     <LucideMusic size={24} />
                                 </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEventPicker(true)}
+                                    className={`p-2 rounded-full transition-colors ${selectedEvent ? 'text-white/20 cursor-not-allowed' : 'text-purple-400 hover:bg-purple-400/10'}`}
+                                    title="Eventos"
+                                    disabled={!!selectedEvent}
+                                >
+                                    <LucideCalendar size={24} />
+                                </button>
                             </div>
                         </div>
-                        
+
                         <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} className="hidden" disabled={submitting} />
                     </div>
 
@@ -390,12 +429,27 @@ export default function CreatePostModal({
             {showMusicPicker && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
                     <div className="w-full max-w-md h-[80vh] bg-[#242526] rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative flex flex-col">
-                         <MusicPicker 
+                        <MusicPicker
                             onSelect={(track) => {
                                 setSelectedMusic(track);
                                 setShowMusicPicker(false);
                             }}
                             onClose={() => setShowMusicPicker(false)}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Event Picker Overlay */}
+            {showEventPicker && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md h-[60vh] bg-[#242526] rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative flex flex-col">
+                        <EventPicker
+                            onSelect={(event) => {
+                                setSelectedEvent(event);
+                                setShowEventPicker(false);
+                            }}
+                            onClose={() => setShowEventPicker(false)}
                         />
                     </div>
                 </div>

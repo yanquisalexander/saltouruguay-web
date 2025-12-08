@@ -3,12 +3,20 @@ import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
 import SaltogramFeed from "@/components/saltogram/SaltogramFeed";
 import FriendRequestsWidget from "@/components/saltogram/FriendRequestsWidget";
+import SuggestedUsersWidget from "@/components/saltogram/SuggestedUsersWidget";
 import StoriesRail from "@/components/saltogram/stories/StoriesRail";
-import { LucideCamera, LucideTrendingUp, LucideSend } from "lucide-preact";
+import {
+  LucideCamera,
+  LucideTrendingUp,
+  LucideSend,
+  LucideGamepad2,
+  LucideMic,
+  LucideCalendar,
+} from "lucide-preact";
 import { getSaltogramStats, getTrendingTags } from "@/lib/saltogram";
 import { client } from "@/db/client";
 import { FriendsTable, UsersTable } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, notInArray, sql } from "drizzle-orm";
 
 const session = await getSession(Astro.request);
 
@@ -37,6 +45,40 @@ const friendRequests = session?.user?.id
       )
       .limit(3)
   : [];
+
+// Fetch Suggested Users (Not friends, not self)
+let suggestedUsers: any[] = [];
+if (session?.user?.id) {
+  const currentUserId = Number(session.user.id);
+
+  // Get IDs to exclude (self + friends + pending)
+  const friends1 = await client
+    .select({ id: FriendsTable.friendId })
+    .from(FriendsTable)
+    .where(eq(FriendsTable.userId, currentUserId));
+  const friends2 = await client
+    .select({ id: FriendsTable.userId })
+    .from(FriendsTable)
+    .where(eq(FriendsTable.friendId, currentUserId));
+
+  const excludeIds = [
+    currentUserId,
+    ...friends1.map((f) => f.id),
+    ...friends2.map((f) => f.id),
+  ];
+
+  suggestedUsers = await client
+    .select({
+      id: UsersTable.id,
+      displayName: UsersTable.displayName,
+      username: UsersTable.username,
+      avatar: UsersTable.avatar,
+    })
+    .from(UsersTable)
+    .where(notInArray(UsersTable.id, excludeIds))
+    .limit(3)
+    .orderBy(sql`RANDOM()`);
+}
 ---
 
 <Layout title="Saltogram - Social">
@@ -154,6 +196,40 @@ const friendRequests = session?.user?.id
             </div>
           )
         }
+
+        {/* Suggested Users */}
+        {
+          suggestedUsers.length > 0 && (
+            <SuggestedUsersWidget client:idle users={suggestedUsers} />
+          )
+        }
+
+        {/* Quick Links */}
+        <div
+          class="bg-[#0a0a0a]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6"
+        >
+          <h3
+            class="text-lg font-anton text-white uppercase tracking-wide mb-4"
+          >
+            Explorar
+          </h3>
+          <div class="space-y-2">
+            <a
+              href="/eventos"
+              class="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+            >
+              <div
+                class="p-2 bg-yellow-500/20 text-yellow-400 rounded-lg group-hover:scale-110 transition-transform"
+              >
+                <LucideCalendar size={20} />
+              </div>
+              <div>
+                <p class="text-sm font-bold text-white">Eventos</p>
+                <p class="text-xs text-white/40">Próximas actividades</p>
+              </div>
+            </a>
+          </div>
+        </div>
 
         {/* Tendencias */}
         <div

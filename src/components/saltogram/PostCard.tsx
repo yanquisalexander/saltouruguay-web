@@ -2,7 +2,7 @@ import { useState } from "preact/hooks";
 import type { SaltogramPost } from "@/types/saltogram";
 import ReactionButton from "./ReactionButton";
 import CommentSection from "./CommentSection";
-import { MessageCircle, Flag, Pin, Sparkles, MoreHorizontal, Trash2, Star, Share2, BadgeCheck, Crown } from "lucide-preact";
+import { MessageCircle, Flag, Pin, Sparkles, MoreHorizontal, Trash2, Star, Share2, BadgeCheck, Crown, LucideCalendar } from "lucide-preact";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { actions } from "astro:actions";
@@ -207,6 +207,27 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
             {post.metadata?.music && (
                 <div className="px-4 mb-3">
                     <PostMusicPlayer music={post.metadata.music} />
+                </div>
+            )}
+
+            {/* Event Attachment */}
+            {post.metadata?.event && (
+                <div className="px-4 mb-3">
+                    <a href={`/eventos/${post.metadata.event.id}`} className="flex items-center gap-4 p-3 bg-purple-900/10 border border-purple-500/20 rounded-xl hover:bg-purple-900/20 transition-colors group">
+                        <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0 overflow-hidden">
+                            {post.metadata.event.cover ? (
+                                <img src={post.metadata.event.cover} className="w-full h-full object-cover" />
+                            ) : (
+                                <LucideCalendar className="text-purple-400" size={24} />
+                            )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-white font-bold truncate group-hover:text-purple-400 transition-colors">{post.metadata.event.name}</p>
+                            <p className="text-white/50 text-sm truncate">
+                                {new Date(post.metadata.event.startDate).toLocaleDateString()}
+                            </p>
+                        </div>
+                    </a>
                 </div>
             )}
 
