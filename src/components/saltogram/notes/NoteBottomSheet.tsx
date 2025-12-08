@@ -1,16 +1,24 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { motion, AnimatePresence } from "motion/react";
-import { LucideX, LucideMusic, LucidePlay, LucidePause, LucideMessageCircle } from "lucide-preact";
+import { LucideX, LucideMusic, LucidePlay, LucidePause, LucideMessageCircle, LucideTrash2, LucideRefreshCw } from "lucide-preact";
+import { actions } from "astro:actions";
+import { toast } from "sonner";
 
 interface NoteBottomSheetProps {
     note: any;
     onClose: () => void;
+    currentUser?: any;
+    onDelete?: () => void;
+    onReplace?: () => void;
 }
 
-export default function NoteBottomSheet({ note, onClose }: NoteBottomSheetProps) {
+export default function NoteBottomSheet({ note, onClose, currentUser, onDelete, onReplace }: NoteBottomSheetProps) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const isOwner = currentUser?.id && note?.userId === Number(currentUser.id);
 
     useEffect(() => {
         if (note?.musicTrackId) {
@@ -65,6 +73,25 @@ export default function NoteBottomSheet({ note, onClose }: NoteBottomSheetProps)
         } else {
             audioRef.current.play();
             setIsPlaying(true);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!confirm("¿Seguro que quieres eliminar tu nota?")) return;
+
+        setIsDeleting(true);
+        try {
+            const { error } = await actions.notes.delete({});
+            if (error) throw error;
+
+            toast.success("Nota eliminada");
+            onDelete?.();
+            onClose();
+        } catch (e) {
+            console.error(e);
+            toast.error("Error al eliminar");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -165,9 +192,29 @@ export default function NoteBottomSheet({ note, onClose }: NoteBottomSheetProps)
 
                         {/* Actions */}
                         <div className="flex gap-4 w-full">
-                            <button className="flex-1 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors">
-                                Responder
-                            </button>
+                            {isOwner ? (
+                                <>
+                                    <button
+                                        onClick={onReplace}
+                                        className="flex-1 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <LucideRefreshCw size={20} />
+                                        Reemplazar
+                                    </button>
+                                    <button
+                                        onClick={handleDelete}
+                                        disabled={isDeleting}
+                                        className="flex-1 py-3 bg-red-500/10 text-red-500 font-bold rounded-xl hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        <LucideTrash2 size={20} />
+                                        {isDeleting ? "Eliminando..." : "Eliminar"}
+                                    </button>
+                                </>
+                            ) : (
+                                <button className="flex-1 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors">
+                                    Responder
+                                </button>
+                            )}
                             {/* <button className="p-3 bg-[#3a3b3c] text-white rounded-xl hover:bg-[#4e4f50] transition-colors">
                                 <LucideHeart size={20} />
                             </button> */}

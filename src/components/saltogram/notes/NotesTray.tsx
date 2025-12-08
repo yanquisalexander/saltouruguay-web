@@ -77,6 +77,12 @@ export default function NotesTray({ user }: NotesTrayProps) {
             <NoteBottomSheet
                 note={selectedNote}
                 onClose={() => setSelectedNote(null)}
+                currentUser={user}
+                onDelete={fetchNotes}
+                onReplace={() => {
+                    setSelectedNote(null);
+                    setIsModalOpen(true);
+                }}
             />
         </div>
     );
