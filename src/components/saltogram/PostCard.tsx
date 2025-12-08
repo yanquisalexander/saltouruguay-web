@@ -213,18 +213,27 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
             {/* Event Attachment */}
             {post.metadata?.event && (
                 <div className="px-4 mb-3">
-                    <a href={`/eventos/${post.metadata.event.id}`} className="flex items-center gap-4 p-3 bg-purple-900/10 border border-purple-500/20 rounded-xl hover:bg-purple-900/20 transition-colors group">
-                        <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0 overflow-hidden">
+                    <a href={`/eventos/${post.metadata.event.id}`} className="flex items-center gap-4 p-3 bg-purple-900/10 border border-purple-500/20 rounded-xl hover:bg-purple-900/20 transition-colors group overflow-hidden relative">
+                        {/* Background blur effect if cover exists */}
+                        {post.metadata.event.cover && (
+                            <div className="absolute inset-0 opacity-20 pointer-events-none">
+                                <img src={post.metadata.event.cover} className="w-full h-full object-cover blur-xl" />
+                            </div>
+                        )}
+
+                        <div className="w-20 h-20 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0 overflow-hidden border border-white/10 relative z-10">
                             {post.metadata.event.cover ? (
                                 <img src={post.metadata.event.cover} className="w-full h-full object-cover" />
                             ) : (
-                                <LucideCalendar className="text-purple-400" size={24} />
+                                <LucideCalendar className="text-purple-400" size={32} />
                             )}
                         </div>
-                        <div className="min-w-0 flex-1">
-                            <p className="text-white font-bold truncate group-hover:text-purple-400 transition-colors">{post.metadata.event.name}</p>
-                            <p className="text-white/50 text-sm truncate">
-                                {new Date(post.metadata.event.startDate).toLocaleDateString()}
+                        <div className="min-w-0 flex-1 relative z-10">
+                            <p className="text-purple-300 text-xs font-bold uppercase tracking-wider mb-0.5">Evento</p>
+                            <p className="text-white font-bold text-lg truncate group-hover:text-purple-400 transition-colors">{post.metadata.event.name}</p>
+                            <p className="text-white/60 text-sm flex items-center gap-1">
+                                <LucideCalendar size={14} />
+                                {formatDistanceToNow(new Date(post.metadata.event.startDate), { addSuffix: true, locale: es })}
                             </p>
                         </div>
                     </a>
