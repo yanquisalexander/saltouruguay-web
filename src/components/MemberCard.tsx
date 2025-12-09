@@ -1,8 +1,7 @@
 import "atropos/css";
 import "@/components/styles/member-card.css";
 import { cn } from '@/lib/utils';
-import { Tooltip } from "./Tooltip";
-import { LucideLockKeyhole } from "lucide-preact";
+import { LucideLock, LucideTrash2, LucideQrCode, LucideSwords, LucideCrown } from "lucide-preact";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
 
 interface Props {
@@ -21,8 +20,6 @@ interface Props {
     skin?: string;
 }
 
-
-
 export const MemberCard = ({
     number,
     user,
@@ -31,168 +28,163 @@ export const MemberCard = ({
     selectedStickers,
     skin = 'classic',
 }: Props) => {
-    const { username = 'Unknown User', avatar = '' } = user;
-    const memberCardNumber = `#${number != null ? number.toString().padStart(5, "0") : ""}`;
+    const { username = 'Unknown', avatar = '' } = user;
+    const paddedNumber = number != null ? number.toString().padStart(5, "0") : "00000";
+    const bgImage = MemberCardSkins.find((s) => s.id === skin)?.image;
 
-    const memberCardBg = MemberCardSkins.find((s) => s.id === skin)?.image;
+    const isStreamerWars = skin === 'guerra-streamers';
+
+    const theme = {
+        border: isStreamerWars ? 'border-lime-400/50' : 'border-white/20',
+        glow: isStreamerWars ? 'shadow-[0_0_40px_rgba(163,230,53,0.15)]' : 'shadow-2xl',
+        accentText: isStreamerWars ? 'text-lime-400' : 'text-yellow-400',
+        accentBg: isStreamerWars ? 'bg-lime-400/10' : 'bg-white/10',
+        badgeBorder: isStreamerWars ? 'border-lime-400/30' : 'border-white/10',
+        title: isStreamerWars ? 'PARTICIPANTE GUERRA DE STREAMERS' : 'MIEMBRO SALTANO',
+        icon: isStreamerWars ? <LucideSwords size={14} /> : <LucideCrown size={14} />
+    };
 
     return (
-        <div className={cn("block h-full overflow-hidden rounded-[60px] border p-5 aspect-none w-full md:aspect-[2/1] border-white/30 bg-white/10 transition duration-500 ease-in-out", className)}>
-            <div className={`relative h-full overflow-hidden border rounded-[40px] member-card-gradient-bg grid md:flex border-white/80 transition duration-500 ease-in-out skin-${skin}`}>
-                <div className="absolute w-1/2 rotate-45 h-[300%] left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#41b3ff00] via-[#b0a9ff13] to-[#41b3ff00]"></div>
-                <span className="h-full font-mono text-center text-white font-bold member-card-dash-border-top row-[3/4] px-4 py-4 md:py-0 text-4xl md:px-4 md:text-3xl md:[writing-mode:vertical-lr] md:member-card-dash-border">
-                    {memberCardNumber}
-                </span>
-                <div className="-rotate-12 md:w-auto row-[2/3] mb-8 md:mb-0 left-0 mx-auto md:mx-0 h-32 relative flex justify-center w-full md:block bottom-0 md:left-[25%] md:bottom-[20%] md:absolute">
+        <div className={cn(
+            "relative w-full aspect-[1.95/1] rounded-[24px] overflow-hidden select-none transition-all duration-500 bg-[#0f0f11]",
+            theme.glow,
+            className
+        )}>
+            {/* --- CAPA 1: FONDO --- */}
+            <div className={`absolute inset-0 member-card-gradient-bg skin-${skin}`}>
+                <div className="absolute inset-0">
                     <img
-                        src={memberCardBg ?? MemberCardSkins[0].image}
-                        className="w-auto h-full md:h-auto opacity-60 size-40 md:size-60"
+                        src={bgImage}
+                        className="w-full h-full object-cover opacity-60 mix-blend-overlay transition-transform duration-700 hover:scale-105"
                         alt=""
                     />
                 </div>
-                <div className="z-10 grid w-full h-auto md:h-full pt-5 md:pt-0 grid-rows-[1fr_auto] md:grid-rows-2">
-                    <div className="grid md:grid-cols-2">
-                        <div className="h-max">
-                            <div className="flex justify-start font-mono gap-4 text-white gap-y-2 p-5 flex-col md:items-start md:flex-row md:p-6 items-center text-center md:text-left">
+
+                <div className="absolute inset-0 bg-[url('/images/noise.png')] opacity-[0.04] mix-blend-overlay pointer-events-none"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-black/80"></div>
+                <div className={`absolute inset-0 border-[3px] rounded-[24px] pointer-events-none ${theme.border} opacity-80`}></div>
+            </div>
+
+            {/* --- CAPA 2: CONTENIDO --- */}
+            <div className="relative z-10 w-full h-full flex flex-col justify-between p-6 md:p-8">
+
+                {/* --- HEADER --- */}
+                <div className="flex justify-between items-start">
+                    <div className="flex gap-5 items-center">
+                        <div className="relative group/avatar">
+                            <div className={`
+                                size-20 md:size-24 rounded-2xl overflow-hidden border-[3px] shadow-lg
+                                ${isStreamerWars ? 'border-lime-400 shadow-lime-900/20' : 'border-white/30'}
+                            `}>
                                 <img
                                     src={avatar}
                                     crossOrigin="anonymous"
-                                    className={`block aspect-square rounded-full size-20 transition-all md:size-[70px] object-cover ${skin === 'guerra-streamers' ? 'border-2 border-dotted border-l-lime-400 border-t-lime-500 border-r-lime-600 p-0.5 border-b-lime-700' : ''}`}
-                                    alt={`${username}'s avatar`}
-                                    width="78"
-                                    height="78"
+                                    className="w-full h-full object-cover"
+                                    alt={username}
                                 />
-                                <div className="flex flex-col items-center md:items-start">
-                                    <p className="text-xl font-bold">
-                                        {username}
-                                    </p>
-                                    <span className="block px-3 py-1 mt-1 text-xs font-medium rounded-full w-max text-white/80 bg-black/10">
+                            </div>
 
-                                        {(skin === 'guerra-streamers' && (user.playerNumber)) ? 'Participante de Guerra de Streamers' : 'Miembro Saltano'}
-                                        <span className="inline-block">
-                                            <span dangerouslySetInnerHTML={{ __html: '&nbsp;' }} />
-                                            ⭐️</span>
-                                    </span>
-                                    {
-                                        skin === 'guerra-streamers' && user.playerNumber != null && (
-                                            <div>
-
-
-                                                <span className="block px-3 z-10  py-1 mt-1 text-xl font-atomic font-medium rounded-full w-max text-lime-400 bg-black/10">
-                                                    Jugador #{user.playerNumber.toString().padStart(3, '0')}
-                                                </span>
-                                            </div>
-                                        )
-                                    }
+                            {isStreamerWars && user.playerNumber && (
+                                <div className="absolute -bottom-3 -right-2 bg-black text-lime-400 border border-lime-500 font-mono text-xs font-bold px-2 py-0.5 rounded-md shadow-lg transform rotate-[-2deg]">
+                                    P-{user.playerNumber.toString().padStart(3, '0')}
                                 </div>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col">
+                            <h2 className="text-3xl md:text-4xl font-anton text-white uppercase tracking-wide leading-none drop-shadow-lg truncate max-w-[250px]">
+                                {username}
+                            </h2>
+
+                            <div className={`
+                                flex items-center gap-2 mt-2 px-3 py-1 rounded-lg w-max border backdrop-blur-sm
+                                ${theme.accentBg} ${theme.badgeBorder} ${theme.accentText}
+                            `}>
+                                {theme.icon}
+                                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest">
+                                    {theme.title}
+                                </span>
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-row-reverse items-center h-auto gap-2 mx-auto md:mr-4 md:ml-0">
-                        {selectedStickers?.list &&
-                            selectedStickers.list.map((sticker, index) => (
-                                <div
-                                    key={index}
-                                    className={cn(
-                                        'relative h-auto group justify-center flex text-white items-center opacity-80',
-                                    )}
-                                >
-                                    {sticker && index < selectedStickers.limit &&
-                                        handleRemoveSticker != null && (
-                                            <button
-                                                onClick={() => handleRemoveSticker(index)}
-                                                title='Borrar sticker'
-                                                aria-label='Borrar Sticker'
-                                                className='absolute top-0 right-0 items-center justify-center hidden w-4 h-4 text-sm transition-transform border rounded-full group-hover:flex hover:scale-125 bg-red-400/60 justify-items-center border-white/60'
-                                            >
-                                                <svg
-                                                    xmlns='http://www.w3.org/2000/svg'
-                                                    width='24'
-                                                    height='24'
-                                                    viewBox='0 0 24 24'
-                                                    fill='none'
-                                                    stroke='currentColor'
-                                                    strokeWidth='2'
-                                                    strokeLinecap='round'
-                                                    strokeLinejoin='round'
-                                                    className='w-3 h-3'
-                                                >
-                                                    <line x1='18' y1='6' x2='6' y2='18'></line>
-                                                    <line x1='6' y1='6' x2='18' y2='18'></line>
-                                                </svg>
-                                            </button>
-                                        )}
-                                    {index < selectedStickers.limit ? (
-                                        <div
-                                            className={cn(
-                                                'p-2',
-                                                !sticker && handleRemoveSticker && 'bg-white/10 border w-12 h-12 border-dashed rounded-lg'
-                                            )}
-                                        >
-                                            {sticker && (
-                                                <img
-                                                    src={`/images/stickers/${sticker}.webp`}
-                                                    className='w-12 h-12'
-                                                    alt='sticker'
-                                                />
-                                            )}
-                                        </div>
-                                    ) : (
-                                        handleRemoveSticker && (
-                                            <Tooltip
-                                                tooltipClassName='w-[200px]'
-                                                key={index}
-                                                tooltipPosition='top'
-                                                text={`Desbloquea con Tier ${index + 1} en Twitch`}
-                                                offsetNumber={16}
-                                            >
-                                                <div
-                                                    className='flex items-center justify-center w-12 h-12 p-2 border border-dashed rounded-lg opacity-40'
-                                                >
-                                                    <LucideLockKeyhole size={24} />
-                                                </div>
-                                            </Tooltip>
-                                        )
-                                    )}
 
-                                </div>
-                            ))}
-                    </div>
-                    <div className="grid self-end gap-4 grid-cols-1 md:grid-cols-[1fr_auto]">
-                        <a
-                            href="https://www.twitch.tv/SaltoUruguayServer"
-                            target="_blank"
-                            rel="nofollow"
-                            className="flex items-center justify-self-end justify-end gap-2 p-5 font-bold text-white w-max hover:text-black transition-colors pt-0 text-md md:text-base mx-auto md:mx-0 md:pt-5"
-                        >
-                            <svg
-                                width="2400"
-                                height="2800"
-                                viewBox="0 0 2400 2800"
-                                fill="none"
-                                className="h-auto w-4"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <g clipPath="url(#clip0_33_542)">
-                                    <path
-                                        d="M500 0L0 500V2300H600V2800L1100 2300H1500L2400 1400V0H500ZM2200 1300L1800 1700H1400L1050 2050V1700H600V200H2200V1300Z"
-                                        fill="currentColor"
-                                    ></path>
-                                    <path
-                                        d="M1700 550H1900V1150H1700V550ZM1150 550H1350V1150H1150V550Z"
-                                        fill="currentColor"
-                                    ></path>
-                                </g>
-                                <defs>
-                                    <clipPath id="clip0_33_542">
-                                        <rect width="2400" height="2800" fill="currentColor"></rect>
-                                    </clipPath>
-                                </defs>
-                            </svg>
-                            twitch.tv/SaltoUruguayServer
-                        </a>
+                    <div className="text-right opacity-30">
+                        <span className="block text-[10px] font-mono uppercase tracking-[0.3em] mb-1">
+                            Identification
+                        </span>
+                        <span className="font-anton text-5xl md:text-6xl text-white tracking-tighter leading-none">
+                            #{paddedNumber}
+                        </span>
                     </div>
                 </div>
+
+                {/* --- FOOTER --- */}
+                <div className="flex items-end justify-between">
+
+                    {/* Stickers Zone */}
+                    <div className="flex flex-col gap-2">
+                        <span className="text-[9px] text-white/30 uppercase tracking-widest font-bold ml-1">
+                            Achievements / Stickers
+                        </span>
+                        <div className="flex items-center gap-3 p-2 bg-black/40 rounded-2xl border border-white/5 backdrop-blur-sm">
+                            {selectedStickers?.list.map((sticker, index) => {
+                                const isLocked = index >= selectedStickers.limit;
+                                return (
+                                    <div key={index} className="relative group z-[999]">
+                                        <div className={`
+                        size-12 md:size-14 rounded-xl flex items-center justify-center transition-all
+                        ${isLocked
+                                                ? 'bg-white/5 border border-white/5'
+                                                : 'bg-gradient-to-b from-white/10 to-transparent border border-white/10 shadow-inner'
+                                            }
+                    `}>
+                                            {sticker ? (
+                                                <img
+                                                    src={`/images/stickers/${sticker}.webp`}
+                                                    className="w-9 h-9 object-contain drop-shadow-lg transform group-hover:scale-110 transition-transform duration-300"
+                                                    alt="sticker"
+                                                />
+                                            ) : (
+                                                isLocked && <LucideLock size={16} className="text-white/10" />
+                                            )}
+                                        </div>
+
+                                        {sticker && handleRemoveSticker && (
+                                            <button
+                                                onClick={(e) => {
+                                                    console.log("Sticker removed:", index);
+                                                    e.stopPropagation();
+                                                    handleRemoveSticker(index);
+                                                }}
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                                onTouchStart={(e) => e.stopPropagation()}
+                                                className="absolute -top-2 -right-2 z-[100] bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:bg-red-600 hover:scale-110 cursor-pointer flex items-center justify-center"
+                                                title="Quitar Sticker"
+                                                type="button"
+                                            >
+                                                <LucideTrash2 size={12} />
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-2 opacity-80">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10">
+                            <img src="/favicon.svg" className="w-5 h-5 opacity-90" alt="" />
+                            <span className="text-[10px] md:text-xs font-bold text-white uppercase tracking-widest">
+                                Salto Uruguay
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[9px] text-white/40 font-mono">
+                            <LucideQrCode size={12} />
+                            <span>VERIFIED MEMBER</span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     );
