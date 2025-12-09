@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { LucideX, LucideMusic, LucidePlay, LucidePause, LucideMessageCircle, LucideTrash2, LucideRefreshCw } from "lucide-preact";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface NoteBottomSheetProps {
     note: any;
@@ -143,6 +145,9 @@ export default function NoteBottomSheet({ note, onClose, currentUser, onDelete, 
                             <div className="text-center">
                                 <h3 className="text-lg font-bold text-white">{note.user.displayName || note.user.name}</h3>
                                 <p className="text-sm text-gray-400">@{note.user.username}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true, locale: es })}
+                                </p>
                             </div>
                         </div>
 
