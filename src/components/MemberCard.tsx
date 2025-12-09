@@ -1,7 +1,7 @@
 import "atropos/css";
 import "@/components/styles/member-card.css";
 import { cn } from '@/lib/utils';
-import { LucideLock, LucideTrash2, LucideQrCode, LucideSwords, LucideCrown } from "lucide-preact";
+import { LucideLock, LucideTrash2, LucideQrCode, LucideSwords, LucideCrown, LucideTrophy } from "lucide-preact";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
 
 interface Props {
@@ -33,15 +33,16 @@ export const MemberCard = ({
     const bgImage = MemberCardSkins.find((s) => s.id === skin)?.image;
 
     const isStreamerWars = skin === 'guerra-streamers';
+    const isAwards = skin === 'awards';
 
     const theme = {
-        border: isStreamerWars ? 'border-lime-400/50' : 'border-white/20',
-        glow: isStreamerWars ? 'shadow-[0_0_40px_rgba(163,230,53,0.15)]' : 'shadow-2xl',
-        accentText: isStreamerWars ? 'text-lime-400' : 'text-yellow-400',
-        accentBg: isStreamerWars ? 'bg-lime-400/10' : 'bg-white/10',
-        badgeBorder: isStreamerWars ? 'border-lime-400/30' : 'border-white/10',
-        title: isStreamerWars ? 'PARTICIPANTE GUERRA DE STREAMERS' : 'MIEMBRO SALTANO',
-        icon: isStreamerWars ? <LucideSwords size={14} /> : <LucideCrown size={14} />
+        border: isStreamerWars ? 'border-lime-400/50' : isAwards ? 'border-amber-400/50' : 'border-white/20',
+        glow: isStreamerWars ? 'shadow-[0_0_40px_rgba(163,230,53,0.15)]' : isAwards ? 'shadow-[0_0_40px_rgba(251,191,36,0.15)]' : 'shadow-2xl',
+        accentText: isStreamerWars ? 'text-lime-400' : isAwards ? 'text-amber-400' : 'text-yellow-400',
+        accentBg: isStreamerWars ? 'bg-lime-400/10' : isAwards ? 'bg-amber-400/10' : 'bg-white/10',
+        badgeBorder: isStreamerWars ? 'border-lime-400/30' : isAwards ? 'border-amber-400/30' : 'border-white/10',
+        title: isStreamerWars ? 'PARTICIPANTE GUERRA DE STREAMERS' : isAwards ? 'NOMINADO SALTO AWARDS' : 'MIEMBRO SALTANO',
+        icon: isStreamerWars ? <LucideSwords size={14} /> : isAwards ? <LucideTrophy size={14} /> : <LucideCrown size={14} />
     };
 
     return (
@@ -74,7 +75,7 @@ export const MemberCard = ({
                         <div className="relative group/avatar">
                             <div className={`
                                 size-20 md:size-24 rounded-2xl overflow-hidden border-[3px] shadow-lg
-                                ${isStreamerWars ? 'border-lime-400 shadow-lime-900/20' : 'border-white/30'}
+                                ${isStreamerWars ? 'border-lime-400 shadow-lime-900/20' : isAwards ? 'border-amber-400 shadow-amber-900/20' : 'border-white/30'}
                             `}>
                                 <img
                                     src={avatar}
