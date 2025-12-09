@@ -199,7 +199,7 @@ export const stories = {
                         .where(and(
                             eq(NotificationsTable.userId, story.userId),
                             eq(NotificationsTable.type, 'story_like'),
-                            eq(NotificationsTable.link, `/saltogram?story=${storyId}`),
+                            eq(NotificationsTable.link, `/comunidad/saltogram?story=${storyId}`),
                             eq(NotificationsTable.message, `A ${auth.user.username} le gustó tu historia.`)
                         ));
                 }
@@ -215,7 +215,7 @@ export const stories = {
                         type: 'story_like',
                         title: 'Nuevo Me Gusta',
                         message: `A ${auth.user.username} le gustó tu historia.`,
-                        link: `/saltogram?story=${storyId}`,
+                        link: `/comunidad/saltogram?story=${storyId}`,
                         image: auth.user.avatar,
                     });
                 }
