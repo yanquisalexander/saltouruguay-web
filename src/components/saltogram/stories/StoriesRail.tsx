@@ -2,6 +2,7 @@ import { useState, useEffect } from "preact/hooks";
 import { actions } from "astro:actions";
 import { LucidePlus, LucideLoader2 } from "lucide-preact";
 import { AnimatePresence } from "motion/react";
+import { toast } from "sonner";
 import StoryViewer from "./StoryViewer";
 import CreateStoryModal from "./CreateStoryModal";
 import type { Session } from "@auth/core/types";
@@ -43,6 +44,10 @@ export default function StoriesRail({ user }: StoriesRailProps) {
                             setSelectedUserIndex(userIndex);
 
                             // Remove param
+                            const newUrl = window.location.pathname;
+                            window.history.replaceState({}, '', newUrl);
+                        } else {
+                            toast.error("Esta historia no está disponible");
                             const newUrl = window.location.pathname;
                             window.history.replaceState({}, '', newUrl);
                         }
