@@ -15,6 +15,7 @@ export default function StoriesRail({ user }: StoriesRailProps) {
     const [loading, setLoading] = useState(true);
     const [selectedUserIndex, setSelectedUserIndex] = useState<number | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [initialStoryId, setInitialStoryId] = useState<number | undefined>(undefined);
 
     useEffect(() => {
         fetchStories();
@@ -25,6 +26,28 @@ export default function StoriesRail({ user }: StoriesRailProps) {
             const { data, error } = await actions.stories.getFeed();
             if (data) {
                 setFeed(data.feed);
+
+                // Check for story param
+                const urlParams = new URLSearchParams(window.location.search);
+                const storyIdParam = urlParams.get('story');
+
+                if (storyIdParam) {
+                    const storyId = parseInt(storyIdParam);
+                    if (!isNaN(storyId)) {
+                        const userIndex = data.feed.findIndex((item: any) =>
+                            item.stories.some((s: any) => s.id === storyId)
+                        );
+
+                        if (userIndex !== -1) {
+                            setInitialStoryId(storyId);
+                            setSelectedUserIndex(userIndex);
+
+                            // Remove param
+                            const newUrl = window.location.pathname;
+                            window.history.replaceState({}, '', newUrl);
+                        }
+                    }
+                }
             }
         } catch (e) {
             console.error(e);
@@ -39,6 +62,7 @@ export default function StoriesRail({ user }: StoriesRailProps) {
 
     const handleCloseViewer = () => {
         setSelectedUserIndex(null);
+        setInitialStoryId(undefined);
         fetchStories(); // Refresh to update seen status
     };
 
@@ -133,6 +157,7 @@ export default function StoriesRail({ user }: StoriesRailProps) {
                         initialUserIndex={selectedUserIndex}
                         onClose={handleCloseViewer}
                         currentUser={user}
+                        initialStoryId={initialStoryId}
                     />
                 )}
             </AnimatePresence>

@@ -12,14 +12,21 @@ interface StoryViewerProps {
     initialUserIndex: number;
     onClose: () => void;
     currentUser?: Session['user'];
+    initialStoryId?: number;
 }
 
-export default function StoryViewer({ feed, initialUserIndex, onClose, currentUser }: StoryViewerProps) {
+export default function StoryViewer({ feed, initialUserIndex, onClose, currentUser, initialStoryId }: StoryViewerProps) {
     const [currentUserIndex, setCurrentUserIndex] = useState(initialUserIndex);
 
     // Initialize with first unseen story or 0
     const [currentStoryIndex, setCurrentStoryIndex] = useState(() => {
         const stories = feed[initialUserIndex].stories;
+
+        if (initialStoryId) {
+            const index = stories.findIndex((s: any) => s.id === initialStoryId);
+            if (index !== -1) return index;
+        }
+
         const firstUnseenIndex = stories.findIndex((s: any) => !s.isSeen);
         return firstUnseenIndex !== -1 ? firstUnseenIndex : 0;
     });
@@ -58,7 +65,13 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     }) : [];
 
     // Reset state when user changes
+    const isFirstRender = useRef(true);
     useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
         const stories = feed[currentUserIndex].stories;
         const firstUnseenIndex = stories.findIndex((s: any) => !s.isSeen);
         setCurrentStoryIndex(firstUnseenIndex !== -1 ? firstUnseenIndex : 0);

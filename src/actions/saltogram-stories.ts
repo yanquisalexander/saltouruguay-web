@@ -2,7 +2,7 @@ import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
-import { SaltogramStoriesTable, SaltogramStoryViewsTable, SaltogramStoryLikesTable, FriendsTable, UsersTable, SaltogramVipListTable } from "@/db/schema";
+import { SaltogramStoriesTable, SaltogramStoryViewsTable, SaltogramStoryLikesTable, FriendsTable, UsersTable, SaltogramVipListTable, NotificationsTable } from "@/db/schema";
 import { eq, and, or, gt, desc, asc, sql } from "drizzle-orm";
 
 export const stories = {
@@ -174,6 +174,15 @@ export const stories = {
 
             const userId = auth.user.id;
 
+            const story = await client.query.SaltogramStoriesTable.findFirst({
+                where: eq(SaltogramStoriesTable.id, storyId),
+                columns: { userId: true }
+            });
+
+            if (!story) {
+                throw new ActionError({ code: "NOT_FOUND", message: "Historia no encontrada" });
+            }
+
             const existing = await client.query.SaltogramStoryLikesTable.findFirst({
                 where: and(
                     eq(SaltogramStoryLikesTable.storyId, storyId),
@@ -184,10 +193,33 @@ export const stories = {
             if (existing) {
                 await client.delete(SaltogramStoryLikesTable)
                     .where(eq(SaltogramStoryLikesTable.id, existing.id));
+
+                if (story.userId !== userId) {
+                    await client.delete(NotificationsTable)
+                        .where(and(
+                            eq(NotificationsTable.userId, story.userId),
+                            eq(NotificationsTable.type, 'story_like'),
+                            eq(NotificationsTable.link, `/saltogram?story=${storyId}`),
+                            eq(NotificationsTable.message, `A ${auth.user.username} le gustó tu historia.`)
+                        ));
+                }
+
                 return { liked: false };
             } else {
                 await client.insert(SaltogramStoryLikesTable)
                     .values({ storyId, userId });
+
+                if (story.userId !== userId) {
+                    await client.insert(NotificationsTable).values({
+                        userId: story.userId,
+                        type: 'story_like',
+                        title: 'Nuevo Me Gusta',
+                        message: `A ${auth.user.username} le gustó tu historia.`,
+                        link: `/saltogram?story=${storyId}`,
+                        image: auth.user.avatar,
+                    });
+                }
+
                 return { liked: true };
             }
         }
