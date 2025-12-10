@@ -51,6 +51,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     const story = userStories.stories[currentStoryIndex];
     const isOwner = currentUser?.id && Number(currentUser.id) === story.userId;
     const music = story.metadata?.music;
+    const isMentioned = story.metadata?.texts?.some((t: any) => t.mentionUserId && String(t.mentionUserId) === currentUser?.id);
     const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
 
     // Process viewers list (merge views and likes)
@@ -491,7 +492,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                     {story.metadata?.texts?.map((text: any) => (
                         <div
                             key={text.id}
-                            className={`absolute pointer-events-none ${text.font}`}
+                            className={`absolute ${text.mentionUserId ? 'pointer-events-auto cursor-pointer active:scale-95 transition-transform' : 'pointer-events-none'} ${text.font}`}
                             style={{
                                 left: `${text.x}%`,
                                 top: `${text.y}%`,
@@ -501,6 +502,12 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                                 padding: '0.5rem',
                                 borderRadius: '0.5rem',
                                 zIndex: 30
+                            }}
+                            onClick={(e) => {
+                                if (text.mentionUserId) {
+                                    e.stopPropagation();
+                                    window.location.href = `/saltogram/profile/${text.mentionUsername}`;
+                                }
                             }}
                         >
                             <span className="whitespace-pre-wrap text-2xl font-bold drop-shadow-lg">
@@ -519,6 +526,22 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
 
                 {/* Footer / Interactions */}
                 <div className="absolute bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                    {/* Mentioned Repost Button */}
+                    {isMentioned && (
+                        <div className="flex justify-center mb-4 pointer-events-auto">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toast.info("Función de repostear próximamente");
+                                }}
+                                className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-full font-bold text-sm shadow-lg flex items-center gap-2 transition-transform active:scale-95"
+                            >
+                                <LucideSend size={16} className="rotate-45" />
+                                Añadir a tu historia
+                            </button>
+                        </div>
+                    )}
+
                     {/* Swipe Up Indicator (Only for owner) */}
                     {isOwner && !showViewers && (
                         <motion.div

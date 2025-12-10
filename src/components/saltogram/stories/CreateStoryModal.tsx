@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "preact/hooks";
-import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo, LucideStar, LucideGlobe, LucideUsers, LucideMusic, LucideTrash2, LucideMaximize2, LucidePlay, LucidePause, LucideType, LucideRotateCw } from "lucide-preact";
+import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo, LucideStar, LucideGlobe, LucideUsers, LucideMusic, LucideTrash2, LucideMaximize2, LucidePlay, LucidePause, LucideType, LucideRotateCw, LucideAtSign } from "lucide-preact";
 import { toast } from "sonner";
 import WaveSurfer from 'wavesurfer.js';
 import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js';
 import MusicPicker from "./MusicPicker";
+import UserPicker from "./UserPicker";
 
 interface CreateStoryModalProps {
     isOpen: boolean;
@@ -21,6 +22,8 @@ interface TextElement {
     color: string;
     backgroundColor: string;
     font: string;
+    mentionUserId?: number;
+    mentionUsername?: string;
 }
 
 const FONTS = [
@@ -46,6 +49,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const [duration, setDuration] = useState(5);
     const [visibility, setVisibility] = useState<'public' | 'friends' | 'vip'>('public');
     const [showMusicPicker, setShowMusicPicker] = useState(false);
+    const [showUserPicker, setShowUserPicker] = useState(false);
     const [selectedMusic, setSelectedMusic] = useState<any | null>(null);
     const [stickerConfig, setStickerConfig] = useState({ x: 50, y: 50, scale: 1, rotation: 0 });
     const [musicStart, setMusicStart] = useState(0);
@@ -73,6 +77,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             setDuration(5);
             setVisibility('public');
             setShowMusicPicker(false);
+            setShowUserPicker(false);
             setSelectedMusic(null);
             setStickerConfig({ x: 50, y: 50, scale: 1, rotation: 0 });
             setMusicStart(0);
@@ -326,6 +331,11 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
         const startTop = text.y;
 
         const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
+            // Prevent default browser behavior (scrolling/zooming)
+            if (moveEvent.cancelable) {
+                moveEvent.preventDefault();
+            }
+
             // Handle Pinch/Zoom with 2 fingers
             if ('touches' in moveEvent && moveEvent.touches.length === 2) {
                 const touch1 = moveEvent.touches[0];
@@ -355,9 +365,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             }
 
             const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
-            const currentY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
-
-            const container = document.getElementById('story-preview-container');
+            const currentY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY; const container = document.getElementById('story-preview-container');
             if (!container) return;
 
             const rect = container.getBoundingClientRect();
@@ -473,7 +481,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                         <div
                             ref={containerRef}
                             id="story-preview-container"
-                            className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden"
+                            className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden touch-none"
                             onClick={() => {
                                 setEditingTextId(null);
                                 setActiveElementId(null);
@@ -775,6 +783,13 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                                 >
                                     <LucideType size={20} />
                                 </button>
+                                <button
+                                    onClick={() => setShowUserPicker(true)}
+                                    className="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
+                                    title="Mencionar usuario"
+                                >
+                                    <LucideAtSign size={20} />
+                                </button>
                                 {mediaType !== 'video' && (
                                     <button
                                         onClick={() => setShowMusicPicker(true)}
@@ -804,6 +819,31 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                                 setShowMusicPicker(false);
                             }}
                             onClose={() => setShowMusicPicker(false)}
+                        />
+                    )}
+
+                    {/* User Picker Overlay */}
+                    {showUserPicker && (
+                        <UserPicker
+                            onSelect={(user) => {
+                                const newText: TextElement = {
+                                    id: crypto.randomUUID(),
+                                    content: `@${user.username}`,
+                                    x: 50,
+                                    y: 50,
+                                    scale: 1,
+                                    rotation: 0,
+                                    color: '#ffffff',
+                                    backgroundColor: 'rgba(0,0,0,0.5)', // Default dark background for mentions
+                                    font: FONTS[1].class, // Modern font
+                                    mentionUserId: user.id,
+                                    mentionUsername: user.username
+                                };
+                                setTexts([...texts, newText]);
+                                setActiveElementId(newText.id);
+                                setShowUserPicker(false);
+                            }}
+                            onClose={() => setShowUserPicker(false)}
                         />
                     )}
                 </div>
