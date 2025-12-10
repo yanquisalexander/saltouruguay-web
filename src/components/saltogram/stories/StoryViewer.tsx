@@ -51,7 +51,13 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     const story = userStories.stories[currentStoryIndex];
     const isOwner = currentUser?.id && Number(currentUser.id) === story.userId;
     const music = story.metadata?.music;
-    const isMentioned = story.metadata?.texts?.some((t: any) => t.mentionUserId && String(t.mentionUserId) === currentUser?.id);
+    const isMentioned = story.metadata?.texts?.some((t: any) => {
+        if (t.mentionUserId && String(t.mentionUserId) === currentUser?.id) return true;
+        if (t.mentions && Array.isArray(t.mentions)) {
+            return t.mentions.some((m: any) => String(m.userId) === currentUser?.id);
+        }
+        return false;
+    });
     const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
 
     // Process viewers list (merge views and likes)
@@ -492,7 +498,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                     {story.metadata?.texts?.map((text: any) => (
                         <div
                             key={text.id}
-                            className={`absolute ${text.mentionUserId ? 'pointer-events-auto cursor-pointer active:scale-95 transition-transform' : 'pointer-events-none'} ${text.font}`}
+                            className={`absolute ${(text.mentionUserId || (text.mentions && text.mentions.length > 0)) ? 'pointer-events-auto cursor-pointer active:scale-95 transition-transform' : 'pointer-events-none'} ${text.font}`}
                             style={{
                                 left: `${text.x}%`,
                                 top: `${text.y}%`,
@@ -507,6 +513,9 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                                 if (text.mentionUserId) {
                                     e.stopPropagation();
                                     window.location.href = `/saltogram/profile/${text.mentionUsername}`;
+                                } else if (text.mentions && text.mentions.length > 0) {
+                                    e.stopPropagation();
+                                    window.location.href = `/saltogram/profile/${text.mentions[0].username}`;
                                 }
                             }}
                         >

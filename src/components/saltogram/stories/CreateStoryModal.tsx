@@ -24,6 +24,7 @@ interface TextElement {
     font: string;
     mentionUserId?: number;
     mentionUsername?: string;
+    mentions?: { userId: number, username: string }[];
 }
 
 const FONTS = [
@@ -826,22 +827,50 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                     {showUserPicker && (
                         <UserPicker
                             onSelect={(user) => {
-                                const newText: TextElement = {
-                                    id: crypto.randomUUID(),
-                                    content: `@${user.username}`,
-                                    x: 50,
-                                    y: 50,
-                                    scale: 1,
-                                    rotation: 0,
-                                    color: '#ffffff',
-                                    backgroundColor: 'rgba(0,0,0,0.5)', // Default dark background for mentions
-                                    font: FONTS[1].class, // Modern font
-                                    mentionUserId: user.id,
-                                    mentionUsername: user.username
-                                };
-                                setTexts([...texts, newText]);
-                                setActiveElementId(newText.id);
-                                setShowUserPicker(false);
+                                if (editingTextId) {
+                                    setTexts(texts.map(t => {
+                                        if (t.id === editingTextId) {
+                                            const newContent = t.content ? `${t.content} @${user.username}` : `@${user.username}`;
+                                            const newMentions = [...(t.mentions || [])];
+                                            if (!newMentions.some(m => m.userId === user.id)) {
+                                                newMentions.push({ userId: user.id, username: user.username });
+                                            }
+
+                                            const updates: any = {
+                                                content: newContent,
+                                                mentions: newMentions
+                                            };
+
+                                            // Legacy support / Primary mention
+                                            if (!t.mentionUserId) {
+                                                updates.mentionUserId = user.id;
+                                                updates.mentionUsername = user.username;
+                                            }
+
+                                            return { ...t, ...updates };
+                                        }
+                                        return t;
+                                    }));
+                                    setShowUserPicker(false);
+                                } else {
+                                    const newText: TextElement = {
+                                        id: crypto.randomUUID(),
+                                        content: `@${user.username}`,
+                                        x: 50,
+                                        y: 50,
+                                        scale: 1,
+                                        rotation: 0,
+                                        color: '#ffffff',
+                                        backgroundColor: 'rgba(0,0,0,0.5)', // Default dark background for mentions
+                                        font: FONTS[1].class, // Modern font
+                                        mentionUserId: user.id,
+                                        mentionUsername: user.username,
+                                        mentions: [{ userId: user.id, username: user.username }]
+                                    };
+                                    setTexts([...texts, newText]);
+                                    setActiveElementId(newText.id);
+                                    setShowUserPicker(false);
+                                }
                             }}
                             onClose={() => setShowUserPicker(false)}
                         />
