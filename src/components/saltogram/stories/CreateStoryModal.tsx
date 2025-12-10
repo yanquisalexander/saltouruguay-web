@@ -179,6 +179,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const isResizing = useRef(false);
     const startPos = useRef({ x: 0, y: 0 });
     const startConfig = useRef({ x: 0, y: 0, scale: 1 });
+    const initialPinch = useRef<{ dist: number, angle: number, startScale: number, startRotation: number } | null>(null);
 
     if (!isOpen) return null;
 
@@ -312,6 +313,10 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const handleTextDragStart = (e: MouseEvent | TouchEvent, id: string) => {
         e.stopPropagation();
         setActiveElementId(id);
+
+        // Reset pinch state
+        initialPinch.current = null;
+
         const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
         const startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
         const text = texts.find(t => t.id === id);
@@ -321,6 +326,34 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
         const startTop = text.y;
 
         const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
+            // Handle Pinch/Zoom with 2 fingers
+            if ('touches' in moveEvent && moveEvent.touches.length === 2) {
+                const touch1 = moveEvent.touches[0];
+                const touch2 = moveEvent.touches[1];
+
+                const dist = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
+                const angle = Math.atan2(touch2.clientY - touch1.clientY, touch2.clientX - touch1.clientX) * 180 / Math.PI;
+
+                if (!initialPinch.current) {
+                    initialPinch.current = {
+                        dist,
+                        angle,
+                        startScale: text.scale,
+                        startRotation: text.rotation
+                    };
+                    return;
+                }
+
+                const scaleChange = dist / initialPinch.current.dist;
+                const angleChange = angle - initialPinch.current.angle;
+
+                handleUpdateText(id, {
+                    scale: Math.max(0.5, Math.min(5, initialPinch.current.startScale * scaleChange)),
+                    rotation: initialPinch.current.startRotation + angleChange
+                });
+                return;
+            }
+
             const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
             const currentY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
 
@@ -404,7 +437,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-[#242526] w-full max-w-md h-[85vh] rounded-2xl overflow-hidden shadow-2xl border border-white/10 animate-in fade-in zoom-in-95 duration-200 flex flex-col relative">
+            <div className="bg-[#242526] w-full max-w-[400px] aspect-[9/16] max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl border border-white/10 animate-in fade-in zoom-in-95 duration-200 flex flex-col relative">
 
                 {/* Header */}
                 <div className="p-4 border-b border-white/10 flex justify-between items-center shrink-0 z-10 bg-[#242526]">
@@ -622,37 +655,52 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                                         type="text"
                                         value={textInput}
                                         onChange={(e) => {
-                                            const val = (e.target as HTMLInputElement).value;
-                                            setTextInput(val);
-                                            handleUpdateText(editingTextId, { content: val });
+                                            const target = e.target as HTMLInputElement;
+                                            setTextInput(target.value);
+                                            handleUpdateText(editingTextId, { content: target.value });
                                         }}
                                         className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/50 focus:outline-none focus:border-white/50"
                                         placeholder="Escribe algo..."
                                         autoFocus
                                     />
 
-                                    <div className="flex flex-col gap-2">
+                                    {/* Size Slider */}
+                                    <div className="flex items-center gap-3 px-1">
+                                        <span className="text-white/60 text-xs font-medium">Tamaño</span>
+                                        <input
+                                            type="range"
+                                            min="0.5"
+                                            max="4"
+                                            step="0.1"
+                                            value={texts.find(t => t.id === editingTextId)?.scale || 1}
+                                            onChange={(e) => {
+                                                const target = e.target as HTMLInputElement;
+                                                handleUpdateText(editingTextId, { scale: parseFloat(target.value) });
+                                            }}
+                                            className="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
+                                        />
+                                    </div>
+
+                                    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
                                         <label className="text-xs text-white/60 font-medium uppercase">Fuente</label>
-                                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                            {FONTS.map((font) => (
-                                                <button
-                                                    key={font.name}
-                                                    onClick={() => {
-                                                        setSelectedFont(font.class);
-                                                        handleUpdateText(editingTextId, { font: font.class });
-                                                    }}
-                                                    className={`
-                                                        px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-all
-                                                        ${selectedFont === font.class
-                                                            ? 'bg-white text-black font-bold'
-                                                            : 'bg-white/10 text-white hover:bg-white/20'}
-                                                        ${font.class}
-                                                    `}
-                                                >
-                                                    {font.name}
-                                                </button>
-                                            ))}
-                                        </div>
+                                        {FONTS.map((font) => (
+                                            <button
+                                                key={font.name}
+                                                onClick={() => {
+                                                    setSelectedFont(font.class);
+                                                    handleUpdateText(editingTextId, { font: font.class });
+                                                }}
+                                                className={`
+                                                    px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-all
+                                                    ${selectedFont === font.class
+                                                        ? 'bg-white text-black font-bold'
+                                                        : 'bg-white/10 text-white hover:bg-white/20'}
+                                                    ${font.class}
+                                                `}
+                                            >
+                                                {font.name}
+                                            </button>
+                                        ))}
                                     </div>
 
                                     <div className="flex flex-col gap-2">
