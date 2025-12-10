@@ -83,7 +83,7 @@ const getBadgeStyles = (label: string) => {
             </a>
 
             {/* Nav Escritorio (Izquierda) */}
-            <nav class="hidden md:flex items-center gap-1 ml-auto mr-4">
+            <nav class="hidden md:flex items-center gap-1 gap-x-4 ml-auto mr-4">
               {evenLinks.map((link) =>
                 link.soon ? (
                   <div class={`${navLinkBase} opacity-50 cursor-not-allowed`}>
@@ -137,7 +137,7 @@ const getBadgeStyles = (label: string) => {
           {/* --- DERECHA --- */}
           <div class="flex items-center flex-1 gap-4">
             {/* Nav Escritorio (Derecha) */}
-            <nav class="hidden md:flex items-center gap-1 mr-auto ml-4">
+            <nav class="hidden md:flex items-center gap-1 gap-x-4 mr-auto ml-4">
               {oddLinks.map((link) =>
                 link.soon ? (
                   <div class={`${navLinkBase} opacity-50 cursor-not-allowed`}>
