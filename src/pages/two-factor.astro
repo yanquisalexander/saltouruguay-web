@@ -2,104 +2,235 @@
 // OTP.astro
 import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
+import { LucideShieldCheck, LucideLock, LucideArrowRight } from "lucide-preact";
 
 const session = await getSession(Astro.request);
 
 if (!session) {
-  return new Response(null, {
-    status: 404,
-  });
+  return Astro.redirect("/");
 }
-
-// Aquí podrías agregar lógica adicional, por ejemplo, redirigir si el usuario ya está verificado
 ---
 
-<Layout title="Verificación de OTP" hideFooter hideHeader>
-  <div
-    class="bg-black/20 rounded-2xl mt-32 p-8 flex flex-col items-center border border-white/20 ring-4 ring-black/20 border-dotted mx-auto max-w-md"
-  >
-    <img src="/favicon.svg" alt="Logo" class="h-16 w-16 mx-auto mb-4" />
-    <h1 class="text-xl mb-4 font-rubik font-medium">Verifica tu código OTP</h1>
-
+<Layout
+  title="Verificación de Seguridad"
+  hideFooter
+  hideHeader
+  CORRECCIÓN:
+  Centrado
+  perfecto
+  sin
+  padding
+  extra
+  mainClassname="flex flex-col items-center justify-center min-h-dvh w-full relative overflow-hidden"
+>
+  {/* Fondo Ambiental */}
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
     <div
-      class="flex items-center gap-3 bg-zinc-900 p-2 px-6 rounded-lg mx-auto"
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"
     >
-      <img
-        src={session.user.image}
-        alt={session.user.name}
-        class="rounded-full size-10"
-      />
-      <div class="flex flex-col">
-        <p class="text-sm font-medium">{session.user.name}</p>
-        <p class="text-gray-400 text-xs">{session.user.email}</p>
-      </div>
     </div>
-    <p class="text-center text-gray-200 mb-4 mt-4">
-      Ingresa el código OTP que te proporcionó tu aplicación autenticadora.
-    </p>
-    <form id="otp-form" class="w-full flex flex-col gap-4">
-      <input
-        type="text"
-        id="otp-code"
-        placeholder="Código OTP (6 dígitos)"
-        class="w-full p-2 rounded-md border border-gray-300 bg-black/20 text-white text-center"
-        maxlength="6"
-        required
-      />
-      <button
-        type="submit"
-        id="otp-button"
-        class="bg-blue-500 p-2 rounded-md text-white hover:bg-blue-600 transition"
+    <div
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-900/10 blur-[120px] rounded-full pointer-events-none"
+    >
+    </div>
+  </div>
+
+  <div class="w-full max-w-md animate-in fade-in zoom-in-95 duration-500 p-4">
+    {/* Tarjeta Principal */}
+    <div
+      class="relative bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl shadow-blue-900/10 overflow-hidden"
+    >
+      {/* Glow superior */}
+      <div
+        class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50"
       >
-        Verificar OTP
-      </button>
-    </form>
-    <p class="text-center text-gray-200 mt-4">
-      Si tienes problemas, contacta con soporte.
-    </p>
+      </div>
+
+      {/* Header */}
+      <div class="text-center mb-8">
+        <div
+          class="inline-flex items-center justify-center p-4 bg-blue-500/10 rounded-2xl text-blue-400 mb-4 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)]"
+        >
+          <LucideShieldCheck size={32} />
+        </div>
+        <h1 class="text-2xl font-anton text-white uppercase tracking-wide">
+          Control de Seguridad
+        </h1>
+        <p class="text-white/50 text-sm mt-2 font-rubik">
+          Protección de Doble Factor (2FA) requerida
+        </p>
+      </div>
+
+      {/* User Badge */}
+      <div
+        class="flex items-center gap-4 bg-white/5 border border-white/5 p-3 rounded-xl mb-8"
+      >
+        <img
+          src={session.user.image || "/og.webp"}
+          alt={session.user.name}
+          class="size-10 rounded-lg object-cover border border-white/10"
+        />
+        <div class="flex-col overflow-hidden min-w-0 flex-1">
+          <p class="text-sm font-bold text-white truncate">
+            {session.user.name}
+          </p>
+          <p class="text-xs text-white/40 truncate font-mono">
+            {session.user.email}
+          </p>
+        </div>
+        <div
+          class="ml-auto p-2 bg-green-500/10 rounded-lg border border-green-500/20"
+        >
+          <LucideLock size={14} class="text-green-500" />
+        </div>
+      </div>
+
+      {/* Formulario */}
+      <form id="otp-form" class="flex flex-col gap-6">
+        <div class="space-y-2">
+          <label
+            for="otp-code"
+            class="text-xs font-bold text-white/40 uppercase tracking-widest pl-1"
+          >
+            Código de Autenticación
+          </label>
+          <div class="relative group">
+            <input
+              type="text"
+              id="otp-code"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              placeholder="000 000"
+              maxlength="6"
+              class="w-full bg-[#050505] border border-white/10 focus:border-blue-500 rounded-xl py-4 text-center text-3xl font-mono tracking-[0.5em] text-white placeholder:text-white/10 outline-none transition-all shadow-inner focus:shadow-[0_0_20px_rgba(59,130,246,0.1)]"
+              required
+              autofocus
+            />
+          </div>
+          <p class="text-xs text-center text-white/30">
+            Abre tu app autenticadora (Google Auth, Authy)
+          </p>
+        </div>
+
+        <button
+          type="submit"
+          id="otp-button"
+          class="group relative flex items-center justify-center w-full py-3.5 bg-white text-black hover:bg-blue-500 hover:text-white font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden shadow-lg shadow-white/5"
+        >
+          <span class="relative z-10 flex items-center gap-2">
+            Verificar Acceso
+            <LucideArrowRight
+              size={18}
+              className="group-hover:translate-x-1 transition-transform"
+            />
+          </span>
+        </button>
+      </form>
+    </div>
+
+    {/* Footer Links */}
+    <div class="text-center mt-6">
+      <p class="text-xs text-white/30">
+        ¿Perdiste tu acceso? <a
+          href="#"
+          class="text-white hover:underline decoration-white/30 underline-offset-2 transition-colors"
+          >Contactar Soporte</a
+        >
+      </p>
+    </div>
   </div>
 </Layout>
 
 <script>
   import { $ } from "@/lib/dom-selector";
-  import type { ActionError } from "astro:actions";
   import { actions } from "astro:actions";
   import { navigate } from "astro:transitions/client";
   import { toast } from "sonner";
 
   document.addEventListener("astro:page-load", () => {
-    const otpForm = $("#otp-form");
-    const otpCodeInput = $("#otp-code") as HTMLInputElement;
+    const otpForm = $("#otp-form") as HTMLFormElement;
+    const otpInput = $("#otp-code") as HTMLInputElement;
+    const otpBtn = $("#otp-button") as HTMLButtonElement;
 
-    if (!otpForm || !otpCodeInput) return;
+    if (!otpForm || !otpInput) return;
+
+    // Formateo visual del input (solo números)
+    otpInput.addEventListener("input", (e) => {
+      const target = e.target as HTMLInputElement;
+      target.value = target.value.replace(/\D/g, "");
+    });
 
     otpForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const otpCode = otpCodeInput.value.trim();
+      const code = otpInput.value.trim();
 
-      // Validación básica: comprobamos que el OTP tenga 6 dígitos
-      if (otpCode.length !== 6) {
-        return toast.error("El código OTP debe tener 6 dígitos.");
+      if (code.length !== 6) {
+        toast.error("El código debe tener 6 dígitos");
+        otpInput.classList.add(
+          "border-red-500",
+          "animate-shake",
+          "text-red-500"
+        );
+        setTimeout(
+          () =>
+            otpInput.classList.remove(
+              "border-red-500",
+              "animate-shake",
+              "text-red-500"
+            ),
+          500
+        );
+        return;
       }
 
+      // Estado de carga
+      const originalBtnContent = otpBtn.innerHTML;
+      otpBtn.disabled = true;
+      otpBtn.innerHTML = `<span class="animate-spin mr-2">⏳</span> Verificando...`;
+
       try {
-        // Enviamos la verificación del OTP a una acción del servidor
-        toast.promise(
-          actions.users.twoFactor.verifyTwoFactor({ code: otpCode }),
-          {
-            loading: "Verificando OTP...",
-            success: () => {
-              // Si la verificación es exitosa, redirigimos a la página principal o al dashboard
-              navigate("/");
-              return "Código OTP verificado con éxito.";
-            },
-            error: (err: ActionError) =>
-              `Error al verificar OTP: ${err.message}`,
-          }
+        const { error } = await actions.users.twoFactor.verifyTwoFactor({
+          code,
+        });
+
+        if (error) throw new Error(error.message);
+
+        toast.success("¡Identidad verificada!");
+        // Pequeño delay para feedback visual positivo
+        otpBtn.innerHTML = `<span class="text-green-600 font-bold">¡ACCESO CONCEDIDO!</span>`;
+        setTimeout(() => navigate("/"), 500);
+      } catch (err: any) {
+        toast.error(err.message || "Código incorrecto o expirado");
+        otpInput.value = "";
+        otpInput.focus();
+        otpBtn.disabled = false;
+        otpBtn.innerHTML = originalBtnContent;
+
+        // Feedback visual de error en el input
+        otpInput.classList.add("border-red-500", "animate-shake");
+        setTimeout(
+          () => otpInput.classList.remove("border-red-500", "animate-shake"),
+          500
         );
-      } catch (err) {
-        toast.error("Error inesperado al verificar el OTP.");
       }
     });
   });
 </script>
+
+<style>
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-5px);
+    }
+    75% {
+      transform: translateX(5px);
+    }
+  }
+  .animate-shake {
+    animation: shake 0.2s ease-in-out 0 2;
+  }
+</style>

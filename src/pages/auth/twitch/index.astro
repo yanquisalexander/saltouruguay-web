@@ -1,94 +1,143 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
-import { LucideChevronsLeftRightEllipsis } from "lucide-preact";
+import { LucideLoader2, LucideArrowRight } from "lucide-preact";
 
 const session = await getSession(Astro.request);
 
 if (session) {
-  Astro.redirect("/");
+  return Astro.redirect("/");
 }
 ---
 
-<Layout title="Iniciando sesión..." hideHeader hideFooter>
-  <div class="flex items-center flex-col min-h-dvh">
-    <header class="pt-12">
-      <div class="relative">
-        <img
-          src="/favicon.svg"
-          alt="SaltoUruguayServer"
-          draggable="false"
-          class="h-16 w-auto object-contain aspect-square"
-        />
-        <img
-          src="/favicon.svg"
-          alt="SaltoUruguayServer"
-          draggable="false"
-          class="absolute blur-md transform scale-110 saturate-150 z-[-1] top-0 left-0 h-16 w-auto object-contain aspect-square"
-        />
-      </div>
-    </header>
+<Layout
+  title="Iniciando sesión..."
+  hideHeader
+  hideFooter
+  mainClassname="flex flex-col items-center justify-center min-h-dvh w-full relative overflow-hidden"
+>
+  {/* Fondo Ambiental */}
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"
+    >
+    </div>
+    <div
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-900/10 blur-[150px] rounded-full pointer-events-none"
+    >
+    </div>
+  </div>
 
-    <div class="flex mt-20 items-center justify-center flex-col">
-      <div
-        class="bg-black/20 rounded-2xl p-8 flex flex-col items-center border border-white/20 ring-4 ring-black/20 border-dotted mx-4"
-      >
-        <div class="flex items-center mb-4 justify-between gap-4 relative">
+  {/* Contenedor de la Tarjeta */}
+  <div class="w-full max-w-md p-4 animate-in fade-in zoom-in-95 duration-500">
+    {/* Tarjeta de Conexión */}
+    <div
+      class="relative bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl shadow-purple-900/20 overflow-hidden"
+    >
+      {/* Efecto de carga superior */}
+      <div class="absolute top-0 left-0 h-1 w-full bg-white/5 overflow-hidden">
+        <div class="h-full bg-purple-500 animate-loading-bar"></div>
+      </div>
+
+      {/* Visualización de Conexión */}
+      <div class="flex items-center justify-between mb-8 px-4">
+        {/* Logo Salto */}
+        <div class="relative group">
+          <div
+            class="absolute inset-0 bg-blue-500/20 blur-xl rounded-full opacity-50 group-hover:opacity-80 transition-opacity"
+          >
+          </div>
           <img
             src="/favicon.svg"
             alt="SaltoUruguayServer"
-            class="h-16 w-auto object-contain aspect-square"
-          />
-          <LucideChevronsLeftRightEllipsis
-            class="h-8 w-auto object-contain aspect-square text-zinc-500 animate-pulse"
-          />
-          <img
-            src="/twitch-icon.png"
-            alt="Twitch"
-            class="h-16 w-auto object-contain aspect-square"
+            class="relative size-16 object-contain drop-shadow-lg"
           />
         </div>
 
-        <p class="text-base flex-col mt-2 flex items-center gap-2">
-          <svg
-            class="animate-rotate-360 animate-iteration-count-infinite h-4 w-4 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
+        {/* Flechas Animadas */}
+        <div class="flex flex-col items-center gap-1 text-white/20">
+          <div class="flex gap-1 animate-pulse">
+            <div class="size-1.5 rounded-full bg-purple-500"></div>
+            <div class="size-1.5 rounded-full bg-purple-500/50"></div>
+            <div class="size-1.5 rounded-full bg-purple-500/20"></div>
+          </div>
+          <LucideArrowRight size={20} class="text-purple-500/50" />
+        </div>
+
+        {/* Logo Twitch (Imagen Original) */}
+        <div class="relative group">
+          <div
+            class="absolute inset-0 bg-purple-500/20 blur-xl rounded-full opacity-50 group-hover:opacity-80 transition-opacity"
           >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"></circle>
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
-          Conectando con Twitch...
-        </p>
-        <p
-          class="text-white/75 text-sm text-balance text-center mt-4 max-w-[48ch]"
+          </div>
+          <img
+            src="/twitch-icon.png"
+            alt="Twitch"
+            class="relative size-16 object-contain drop-shadow-lg"
+          />
+        </div>
+      </div>
+
+      {/* Textos */}
+      <div class="text-center space-y-3">
+        <h1
+          class="text-2xl font-anton text-white uppercase tracking-wide flex items-center justify-center gap-2"
         >
-          Con tu cuenta de Twitch podrás acceder a todas las secciones del sitio
-          y disfrutar de contenido exclusivo.
-        </p>
+          <LucideLoader2 size={24} class="animate-spin text-purple-500" />
+          Conectando...
+        </h1>
+
+        <div class="space-y-1">
+          <p class="text-white/80 font-bold text-sm">
+            Solicitando acceso a Twitch
+          </p>
+          <p
+            class="text-white/40 text-xs font-rubik max-w-xs mx-auto leading-relaxed"
+          >
+            Con tu cuenta podrás acceder a los beneficios exclusivos, votar en
+            los premios y participar en la comunidad.
+          </p>
+        </div>
       </div>
     </div>
+
+    {/* Mensaje de ayuda sutil */}
+    <p
+      class="text-center mt-6 text-[10px] text-white/20 font-mono uppercase tracking-widest"
+    >
+      Redireccionando de forma segura
+    </p>
   </div>
 </Layout>
 
+<style>
+  @keyframes loading-bar {
+    0% {
+      width: 0%;
+      transform: translateX(-100%);
+    }
+    50% {
+      width: 50%;
+    }
+    100% {
+      width: 100%;
+      transform: translateX(100%);
+    }
+  }
+  .animate-loading-bar {
+    animation: loading-bar 1.5s infinite linear;
+  }
+</style>
+
 <script>
   const { signIn } = await import("auth-astro/client");
-  signIn(
-    "twitch",
-    // @ts-expect-error - TS doesn't know about signIn
-    { callbackUrl: "/auth/twitch/callback" },
-    {
-      ipAddress: "tururu",
-    }
-  );
+
+  setTimeout(() => {
+    signIn(
+      "twitch",
+      // @ts-expect-error
+      { callbackUrl: "/auth/twitch/callback" },
+      { ipAddress: "tururu" }
+    );
+  }, 800);
 </script>
