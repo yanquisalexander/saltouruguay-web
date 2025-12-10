@@ -4,8 +4,9 @@ import { getSession } from "auth-astro/server";
 import { LucideLoader2, LucideArrowRight } from "lucide-preact";
 
 const session = await getSession(Astro.request);
+console.log("Twitch auth init session:", session);
 
-if (session) {
+if (session && session.user) {
   return Astro.redirect("/");
 }
 ---

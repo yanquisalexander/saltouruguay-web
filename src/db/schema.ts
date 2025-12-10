@@ -247,283 +247,6 @@ export const CustomPagesTable = pgTable("custom_pages", {
     uniquePermalink: unique("permalink").on(t.permalink),
 }))
 
-/* 
-    Tournaments system
-*/
-
-// Tipos de torneo más comunes
-
-
-// Tabla principal de torneos
-export const TournamentsTable = pgTable("tournaments", {
-    id: serial("id").primaryKey(),
-    name: varchar("name", { length: 255 }).notNull(),
-    description: text("description"),
-    tournamentType: varchar("tournament_type", {
-        enum: Object.values(TournamentType) as [string, ...string[]]
-    }).notNull(),
-    maxParticipants: integer("max_participants").default(100),
-    organizerId: integer("organizer_id")
-        .references(() => UsersTable.id)
-        .notNull(),
-    isPublic: boolean("is_public").notNull().default(false),
-    signupEndDate: timestamp("signup_end_date"),
-    startDate: timestamp("start_date"),
-    endDate: timestamp("end_date"),
-    status: varchar("status", {
-        enum: Object.values(TournamentStatus) as [string, ...string[]]
-    }).notNull().default(TournamentStatus.DRAFT),
-    config: jsonb("config").default({}),
-    gameName: varchar("game_name", { length: 255 }),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
-});
-
-// Tabla de equipos de torneo
-export const TournamentTeamsTable = pgTable("tournament_teams", {
-    id: serial("id").primaryKey(),
-    name: varchar("name", { length: 255 }).notNull(),
-    logo: varchar("logo"),
-    captainId: integer("captain_id").references(() => UsersTable.id).notNull(),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
-});
-
-// Miembros de equipo
-export const TournamentTeamMembersTable = pgTable("tournament_team_members", {
-    id: serial("id").primaryKey(),
-    teamId: integer("team_id").notNull().references(() => TournamentTeamsTable.id),
-    userId: integer("user_id").notNull().references(() => UsersTable.id),
-    role: varchar("role", { length: 50 }).default('member'),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-});
-
-// Participantes del torneo (equipos o individuales)
-export const TournamentParticipantsTable = pgTable("tournament_participants", {
-    id: serial("id").primaryKey(),
-    tournamentId: integer("tournament_id").notNull().references(() => TournamentsTable.id),
-    // Uno de estos debe estar presente (a nivel de aplicación)
-    userId: integer("user_id").references(() => UsersTable.id),
-    teamId: integer("team_id").references(() => TournamentTeamsTable.id),
-    displayName: varchar("display_name", { length: 255 }).notNull(),
-    seed: integer("seed"),
-    status: varchar("status", {
-        enum: Object.values(TournamentParticipantStatus) as [string, ...string[]]
-    }).notNull().default(TournamentParticipantStatus.PENDING),
-    checkedIn: boolean("checked_in").default(false),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
-});
-
-// Etapas del torneo (para grupo+eliminación)
-export const TournamentStagesTable = pgTable("tournament_stages", {
-    id: serial("id").primaryKey(),
-    tournamentId: integer("tournament_id").notNull().references(() => TournamentsTable.id),
-    name: varchar("name", { length: 255 }).notNull(),
-    stageType: varchar("stage_type", {
-        enum: Object.values(TournamentType) as [string, ...string[]]
-    }).notNull(),
-    order: integer("order").notNull(), // Secuencia de las etapas
-    status: varchar("status", {
-        enum: ['pending', 'active', 'completed']
-    }).notNull().default('pending'),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-});
-
-// Grupos (para etapas de grupos o swiss)
-export const TournamentGroupsTable = pgTable("tournament_groups", {
-    id: serial("id").primaryKey(),
-    tournamentId: integer("tournament_id").notNull().references(() => TournamentsTable.id),
-    stageId: integer("stage_id").references(() => TournamentStagesTable.id),
-    name: varchar("name", { length: 255 }).notNull(),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-});
-
-// Asignación de participantes a grupos
-export const TournamentGroupParticipantsTable = pgTable("tournament_group_participants", {
-    id: serial("id").primaryKey(),
-    groupId: integer("group_id").notNull().references(() => TournamentGroupsTable.id),
-    participantId: integer("participant_id").notNull().references(() => TournamentParticipantsTable.id),
-    stats: jsonb("stats").default({}), // Para estadísticas como puntos, victorias, etc.
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-});
-
-// Rondas del torneo
-export const TournamentRoundsTable = pgTable("tournament_rounds", {
-    id: serial("id").primaryKey(),
-    tournamentId: integer("tournament_id").notNull().references(() => TournamentsTable.id),
-    stageId: integer("stage_id").references(() => TournamentStagesTable.id),
-    number: integer("number").notNull(),
-    name: varchar("name", { length: 255 }),
-    status: varchar("status", {
-        enum: ['pending', 'active', 'completed']
-    }).notNull().default('pending'),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-});
-
-// Partidas del torneo
-export const TournamentMatchesTable = pgTable("tournament_matches", {
-    id: serial("id").primaryKey(),
-    tournamentId: integer("tournament_id").notNull().references(() => TournamentsTable.id),
-    stageId: integer("stage_id").references(() => TournamentStagesTable.id),
-    roundId: integer("round_id").notNull().references(() => TournamentRoundsTable.id),
-    groupId: integer("group_id").references(() => TournamentGroupsTable.id), // Opcional
-    matchNumber: integer("match_number").notNull(),
-    bestOf: integer("best_of").default(1),
-    status: varchar("status", {
-        enum: Object.values(TournamentMatchStatus) as [string, ...string[]]
-    }).notNull().default(TournamentMatchStatus.PENDING),
-    scheduledTime: timestamp("scheduled_time"),
-    // Para brackets: winner va a siguiente partida
-    nextMatchId: integer("next_match_id"),
-    nextMatchForLoserId: integer("next_match_for_loser_id"),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
-});
-
-// Participantes de partidas
-export const TournamentMatchParticipantsTable = pgTable("tournament_match_participants", {
-    id: serial("id").primaryKey(),
-    matchId: integer("match_id").notNull().references(() => TournamentMatchesTable.id),
-    participantId: integer("participant_id").notNull().references(() => TournamentParticipantsTable.id),
-    position: integer("position").default(0), // 0=lado izquierdo, 1=lado derecho en un bracket
-    score: integer("score").default(0),
-    isWinner: boolean("is_winner").default(false),
-    status: varchar("status", {
-        enum: ['pending', 'ready', 'completed', 'forfeited']
-    }).notNull().default('pending'),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-});
-
-// Juegos individuales (para matches "best of X")
-export const TournamentGamesTable = pgTable("tournament_games", {
-    id: serial("id").primaryKey(),
-    matchId: integer("match_id").notNull().references(() => TournamentMatchesTable.id),
-    gameNumber: integer("game_number").notNull(),
-    winnerId: integer("winner_id").references(() => TournamentParticipantsTable.id),
-    // Detalles como mapa, modo, etc.
-    details: jsonb("details").default({}),
-    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
-});
-
-
-export const TournamentsRelations = relations(TournamentsTable, ({ one, many }) => ({
-    organizer: one(UsersTable, {
-        fields: [TournamentsTable.organizerId],
-        references: [UsersTable.id],
-    }),
-    participants: many(TournamentParticipantsTable),
-    teams: many(TournamentTeamsTable),
-    stages: many(TournamentStagesTable),
-}));
-export const TournamentParticipantsRelations = relations(TournamentParticipantsTable, ({ one, many }) => ({
-    tournament: one(TournamentsTable, {
-        fields: [TournamentParticipantsTable.tournamentId],
-        references: [TournamentsTable.id],
-    }),
-    user: one(UsersTable, {
-        fields: [TournamentParticipantsTable.userId],
-        references: [UsersTable.id],
-    }),
-    team: one(TournamentTeamsTable, {
-        fields: [TournamentParticipantsTable.teamId],
-        references: [TournamentTeamsTable.id],
-    }),
-    matches: many(TournamentMatchParticipantsTable),
-}));
-
-export const TournamentTeamsRelations = relations(TournamentTeamsTable, ({ one, many }) => ({
-    captain: one(UsersTable, {
-        fields: [TournamentTeamsTable.captainId],
-        references: [UsersTable.id],
-    }),
-    members: many(TournamentTeamMembersTable),
-}));
-
-export const TournamentTeamMembersRelations = relations(TournamentTeamMembersTable, ({ one }) => ({
-    team: one(TournamentTeamsTable, {
-        fields: [TournamentTeamMembersTable.teamId],
-        references: [TournamentTeamsTable.id],
-    }),
-    user: one(UsersTable, {
-        fields: [TournamentTeamMembersTable.userId],
-        references: [UsersTable.id],
-    }),
-}));
-
-export const TournamentStagesRelations = relations(TournamentStagesTable, ({ one, many }) => ({
-    tournament: one(TournamentsTable, {
-        fields: [TournamentStagesTable.tournamentId],
-        references: [TournamentsTable.id],
-    }),
-    groups: many(TournamentGroupsTable),
-    matches: many(TournamentMatchesTable),
-}));
-
-export const TournamentGroupsRelations = relations(TournamentGroupsTable, ({ one, many }) => ({
-    tournament: one(TournamentsTable, {
-        fields: [TournamentGroupsTable.tournamentId],
-        references: [TournamentsTable.id],
-    }),
-    participants: many(TournamentGroupParticipantsTable),
-}));
-
-export const TournamentGroupParticipantsRelations = relations(TournamentGroupParticipantsTable, ({ one }) => ({
-    group: one(TournamentGroupsTable, {
-        fields: [TournamentGroupParticipantsTable.groupId],
-        references: [TournamentGroupsTable.id],
-    }),
-    participant: one(TournamentParticipantsTable, {
-        fields: [TournamentGroupParticipantsTable.participantId],
-        references: [TournamentParticipantsTable.id],
-    }),
-}));
-
-export const TournamentRoundsRelations = relations(TournamentRoundsTable, ({ one, many }) => ({
-    tournament: one(TournamentsTable, {
-        fields: [TournamentRoundsTable.tournamentId],
-        references: [TournamentsTable.id],
-    }),
-    matches: many(TournamentMatchesTable),
-}));
-
-export const TournamentMatchesRelations = relations(TournamentMatchesTable, ({ one, many }) => ({
-    tournament: one(TournamentsTable, {
-        fields: [TournamentMatchesTable.tournamentId],
-        references: [TournamentsTable.id],
-    }),
-    stage: one(TournamentStagesTable, {
-        fields: [TournamentMatchesTable.stageId],
-        references: [TournamentStagesTable.id],
-    }),
-    round: one(TournamentRoundsTable, {
-        fields: [TournamentMatchesTable.roundId],
-        references: [TournamentRoundsTable.id],
-    }),
-    group: one(TournamentGroupsTable, {
-        fields: [TournamentMatchesTable.groupId],
-        references: [TournamentGroupsTable.id],
-    }),
-    participants: many(TournamentMatchParticipantsTable),
-}));
-
-export const TournamentMatchParticipantsRelations = relations(TournamentMatchParticipantsTable, ({ one }) => ({
-    match: one(TournamentMatchesTable, {
-        fields: [TournamentMatchParticipantsTable.matchId],
-        references: [TournamentMatchesTable.id],
-    }),
-    participant: one(TournamentParticipantsTable, {
-        fields: [TournamentMatchParticipantsTable.participantId],
-        references: [TournamentParticipantsTable.id],
-    }),
-}));
-
-export const TournamentGamesRelations = relations(TournamentGamesTable, ({ one }) => ({
-    match: one(TournamentMatchesTable, {
-        fields: [TournamentGamesTable.matchId],
-        references: [TournamentMatchesTable.id],
-    }),
-}));
 
 
 /* 
@@ -1491,5 +1214,96 @@ export const oauthApplicationsRelations = relations(OAuthApplicationsTable, ({ o
     owner: one(UsersTable, {
         fields: [OAuthApplicationsTable.userId],
         references: [UsersTable.id],
+    }),
+}));
+
+// --- TOURNAMENTS SYSTEM ---
+
+export const TournamentsTable = pgTable("tournaments", {
+    id: serial("id").primaryKey(),
+    name: varchar("name", { length: 100 }).notNull(),
+    description: text("description"),
+    bannerUrl: varchar("banner_url"),
+    format: varchar("format", { length: 20 }).notNull(), // 'single_elimination', 'double_elimination', 'round_robin', 'groups'
+    status: varchar("status", { length: 20 }).notNull().default('draft'), // 'draft', 'registration', 'in_progress', 'completed'
+    privacy: varchar("privacy", { length: 10 }).notNull().default('public'), // 'public', 'private'
+    maxParticipants: integer("max_participants"),
+    startDate: timestamp("start_date"),
+    endDate: timestamp("end_date"),
+    config: jsonb("config").default({}), // Scoring rules, tiebreakers, etc.
+    creatorId: integer("creator_id").notNull().references(() => UsersTable.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const TournamentParticipantsTable = pgTable("tournament_participants", {
+    id: serial("id").primaryKey(),
+    tournamentId: integer("tournament_id").notNull().references(() => TournamentsTable.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    seed: integer("seed"), // Ranking inicial
+    status: varchar("status", { length: 20 }).notNull().default('pending'), // 'pending', 'confirmed', 'disqualified'
+    teamName: varchar("team_name"), // Optional, if we want to allow custom names per tournament
+    metadata: jsonb("metadata").default({}),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+    unq: unique().on(t.tournamentId, t.userId),
+}));
+
+export const TournamentMatchesTable = pgTable("tournament_matches", {
+    id: serial("id").primaryKey(),
+    tournamentId: integer("tournament_id").notNull().references(() => TournamentsTable.id, { onDelete: "cascade" }),
+    round: integer("round").notNull(), // 1, 2, 3... or Group Number
+    matchOrder: integer("match_order").notNull(), // Order within the round
+    player1Id: integer("player1_id").references(() => UsersTable.id), // Nullable for TBD
+    player2Id: integer("player2_id").references(() => UsersTable.id), // Nullable for TBD
+    score1: integer("score1").default(0),
+    score2: integer("score2").default(0),
+    winnerId: integer("winner_id").references(() => UsersTable.id),
+    nextMatchId: integer("next_match_id"), // Pointer to where the winner goes
+    status: varchar("status", { length: 20 }).notNull().default('pending'), // 'pending', 'scheduled', 'in_progress', 'completed', 'disputed'
+    startTime: timestamp("start_time"),
+    metadata: jsonb("metadata").default({}), // For specific game details, maps, etc.
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const tournamentsRelations = relations(TournamentsTable, ({ one, many }) => ({
+    creator: one(UsersTable, {
+        fields: [TournamentsTable.creatorId],
+        references: [UsersTable.id],
+    }),
+    participants: many(TournamentParticipantsTable),
+    matches: many(TournamentMatchesTable),
+}));
+
+export const tournamentParticipantsRelations = relations(TournamentParticipantsTable, ({ one }) => ({
+    tournament: one(TournamentsTable, {
+        fields: [TournamentParticipantsTable.tournamentId],
+        references: [TournamentsTable.id],
+    }),
+    user: one(UsersTable, {
+        fields: [TournamentParticipantsTable.userId],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const tournamentMatchesRelations = relations(TournamentMatchesTable, ({ one }) => ({
+    tournament: one(TournamentsTable, {
+        fields: [TournamentMatchesTable.tournamentId],
+        references: [TournamentsTable.id],
+    }),
+    player1: one(UsersTable, {
+        fields: [TournamentMatchesTable.player1Id],
+        references: [UsersTable.id],
+        relationName: "player1Matches"
+    }),
+    player2: one(UsersTable, {
+        fields: [TournamentMatchesTable.player2Id],
+        references: [UsersTable.id],
+        relationName: "player2Matches"
+    }),
+    winner: one(UsersTable, {
+        fields: [TournamentMatchesTable.winnerId],
+        references: [UsersTable.id],
+        relationName: "wonMatches"
     }),
 }));

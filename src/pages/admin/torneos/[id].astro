@@ -1,0 +1,207 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { checkAdmin } from "@/lib/checkAdmin";
+import { getSession } from "auth-astro/server";
+import { client as db } from "@/db/client";
+import { TournamentsTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import {
+  LucideArrowLeft,
+  LucideTrash2,
+  LucideSave,
+  LucideUsers,
+  LucideTrophy,
+  LucideSettings,
+  LucidePlay,
+  LucidePause,
+  LucideRefreshCw,
+} from "lucide-preact";
+import TournamentParticipantsManager from "@/components/admin/tournaments/TournamentParticipantsManager";
+import TournamentSettingsForm from "@/components/admin/tournaments/TournamentSettingsForm";
+
+const { id } = Astro.params;
+const tournamentId = parseInt(id!);
+
+if (isNaN(tournamentId)) {
+  return Astro.redirect("/admin/torneos");
+}
+
+const session = await getSession(Astro.request);
+const checkResult = await checkAdmin(session);
+if (checkResult) return checkResult;
+
+const tournament = await db.query.TournamentsTable.findFirst({
+  where: eq(TournamentsTable.id, tournamentId),
+  with: {
+    participants: {
+      with: { user: true },
+    },
+    creator: true,
+  },
+});
+
+if (!tournament) {
+  return Astro.redirect("/admin/torneos");
+}
+---
+
+<AdminLayout title={`Gestionar: ${tournament.name}`}>
+  <div class="mb-8">
+    <a
+      href="/admin/torneos"
+      class="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors"
+    >
+      <LucideArrowLeft className="w-4 h-4" /> Volver a la lista
+    </a>
+
+    <div
+      class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+    >
+      <div>
+        <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+          {tournament.name}
+          <span
+            class={`text-sm px-2 py-1 rounded font-mono uppercase border
+                        ${
+                          tournament.status === "registration"
+                            ? "bg-green-500/20 text-green-400 border-green-500/30"
+                            : tournament.status === "in_progress"
+                              ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
+                              : "bg-gray-500/20 text-gray-400 border-gray-500/30"
+                        }`}
+          >
+            {tournament.status}
+          </span>
+        </h1>
+        <p class="text-gray-400 text-sm mt-1">
+          ID: {tournament.id} • Creado por {tournament.creator.displayName}
+        </p>
+      </div>
+
+      <div class="flex gap-2">
+        <a
+          href={`/torneos/${tournament.id}`}
+          target="_blank"
+          class="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+        >
+          <LucideTrophy className="w-4 h-4" /> Ver Público
+        </a>
+        <button
+          id="delete-tournament-btn"
+          data-id={tournament.id}
+          class="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg font-medium transition-colors flex items-center gap-2"
+        >
+          <LucideTrash2 className="w-4 h-4" /> Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    {/* Left Column: Settings */}
+    <div class="space-y-8">
+      <div class="bg-[#1a1b1e] border border-white/10 rounded-xl p-6">
+        <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <LucideSettings className="text-violet-400" /> Configuración
+        </h2>
+        <TournamentSettingsForm client:load tournament={tournament as any} />
+      </div>
+
+      <div class="bg-[#1a1b1e] border border-white/10 rounded-xl p-6">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <LucidePlay className="text-yellow-400" /> Acciones Rápidas
+        </h2>
+        <div class="space-y-3">
+          {
+            tournament.status === "registration" && (
+              <button
+                id="start-tournament-btn"
+                data-id={tournament.id}
+                class="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold transition-colors flex justify-center items-center gap-2"
+              >
+                <LucidePlay className="w-4 h-4" /> Iniciar Torneo
+              </button>
+            )
+          }
+          {
+            tournament.status === "in_progress" && (
+              <button
+                class="w-full py-3 bg-yellow-600/20 text-yellow-500 border border-yellow-500/30 rounded-lg font-bold cursor-not-allowed flex justify-center items-center gap-2"
+                disabled
+              >
+                <LucidePause className="w-4 h-4" /> Pausar (WIP)
+              </button>
+            )
+          }
+          <button
+            class="w-full py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg font-medium transition-colors flex justify-center items-center gap-2"
+            onclick="window.location.reload()"
+          >
+            <LucideRefreshCw className="w-4 h-4" /> Recargar Datos
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* Right Column: Participants & Bracket Info */}
+    <div class="lg:col-span-2 space-y-8">
+      <div class="bg-[#1a1b1e] border border-white/10 rounded-xl p-6">
+        <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <LucideUsers className="text-blue-400" /> Participantes ({
+            tournament.participants.length
+          })
+        </h2>
+        <TournamentParticipantsManager
+          client:load
+          participants={tournament.participants as any}
+          tournamentId={tournament.id}
+        />
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  import { actions } from "astro:actions";
+  import { navigate } from "astro:transitions/client";
+  import { toast } from "sonner";
+
+  const deleteBtn = document.getElementById("delete-tournament-btn");
+  const startBtn = document.getElementById("start-tournament-btn");
+
+  if (deleteBtn) {
+    deleteBtn.addEventListener("click", async () => {
+      if (
+        confirm(
+          "¿ESTÁS SEGURO? Esta acción eliminará el torneo y todos sus datos permanentemente."
+        )
+      ) {
+        const id = parseInt(deleteBtn.dataset.id!);
+        const { error } = await actions.tournaments.delete({
+          tournamentId: id,
+        });
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Torneo eliminado");
+          window.location.href = "/admin/torneos";
+        }
+      }
+    });
+  }
+
+  if (startBtn) {
+    startBtn.addEventListener("click", async () => {
+      if (confirm("¿Iniciar torneo ahora? Se generará el bracket.")) {
+        const id = parseInt(startBtn.dataset.id!);
+        const { error } = await actions.tournaments.start({ tournamentId: id });
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Torneo iniciado");
+          window.location.reload();
+        }
+      }
+    });
+  }
+</script>

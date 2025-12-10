@@ -1,90 +1,160 @@
 ---
-import { fetchTorneos, TORNEOS } from "@/consts/Torneos";
 import Layout from "@/layouts/Layout.astro";
+import TournamentList from "@/components/tournaments/TournamentList";
+import TournamentAdminControls from "@/components/tournaments/TournamentAdminControls";
+import { client as db } from "@/db/client";
+import { TournamentsTable } from "@/db/schema";
+import { desc } from "drizzle-orm";
+import { getSession } from "auth-astro/server";
+import { LucideTrophy, LucideSwords, LucideUsers } from "lucide-preact";
 
-interface Torneo {
-  slug: string;
-  title: string;
-  excerpt: string;
-  link: string;
-  featuredImage: string;
-}
+const session = await getSession(Astro.request);
+const user = session?.user;
+const isAdmin = user?.isAdmin === true; // Validación de seguridad
 
-const torneos = (await fetchTorneos()) as Torneo[];
+// Fetch tournaments
+const tournamentsData = await db.query.TournamentsTable.findMany({
+  orderBy: [desc(TournamentsTable.createdAt)],
+  with: {
+    participants: true,
+  },
+});
+
+// Transform data & Calculate Stats
+let totalPlayers = 0;
+let activeTournaments = 0;
+
+const tournaments = tournamentsData.map((t) => {
+  const count = t.participants.length;
+  totalPlayers += count;
+  if (t.status === "registration" || t.status === "in_progress")
+    activeTournaments++;
+
+  return {
+    ...t,
+    participantsCount: count,
+    currentUserJoined: user
+      ? t.participants.some((p) => p.userId === Number(user.id))
+      : false,
+    participants: undefined, // Optimizacion de payload
+  };
+});
 ---
 
-<Layout title="Torneos">
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
-    <header class="relative z-10 flex flex-col justify-center h-full mb-12">
-      <div class="flex items-center gap-x-4">
-        <div
-          class="relative animate-fade-in-up"
-          style="--floating-duration: 5000ms"
-        >
-          <img
-            src="/images/logo_salto.webp"
-            alt="SaltoUruguayServer"
-            class="size-20 md:size-24 w-auto object-contain aspect-square animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)] saturate-150"
-          />
-          <img
-            src="/images/logo_salto.webp"
-            alt="SaltoUruguayServer"
-            class="absolute blur-md brightness-125 saturate-200 inset-0 size-20 md:size-24 w-auto object-contain aspect-square z-[-1] animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)]"
-          />
-        </div>
-        <div class="flex flex-col justify-center gap-y-1">
-          <h1
-            class="flex w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-rubik tracking-wider uppercase font-bold text-white mix-blend-screen bg-yellow-500 !skew-x-[-20deg]"
-          >
-            <span class="flex !skew-x-[20deg] transform"> Torneos </span>
-          </h1>
-          <h2
-            class="text-lg animate-fade-in-up animate-delay-300 font-rubik uppercase text-white mix-blend-screen mb-5"
-          >
-            ¡Participa en nuestros <span class="text-blue-400">torneos</span> y gana
-            premios increíbles!
-          </h2>
-        </div>
-      </div>
-    </header>
-
-    <div class="flex flex-col gap-4">
-      {
-        torneos.map((torneo) => (
-          <a
-            class="flex flex-col h-48 w-full border-2 gap-4 shadow-md group relative overflow-hidden border-t-2 last:border-b-2 border-blue-200"
-            href={`/torneos/${torneo.slug}`}
-          >
-            <img
-              src={torneo.featuredImage}
-              alt={torneo.title}
-              class="w-full h-full object-cover  absolute inset-0 -z-10 transition group-hover:scale-110 duration-500"
-            />
-            <div class="absolute flex flex-col justify-end w-full z-10 inset-0 group-hover:items-center group-hover:justify-center group-hover:bg-blue-600/80 transition duration-700 bg-black/60 p-4">
-              <h3 class="group-hover:translate-x-4 duration-700 transition transform text-3xl font-bold text-white">
-                {torneo.title}
-              </h3>
-              <p class="text-sm font-rubik text-brand-gray group-hover:translate-x-4 duration-700 transition transform">
-                {torneo.excerpt.length > 100
-                  ? `${torneo.excerpt.slice(0, 100)}...`
-                  : torneo.excerpt}
-              </p>
-            </div>
-          </a>
-        ))
-      }
+<Layout
+  title="Torneos | Salto Uruguay"
+  description="Compite en los torneos oficiales de la comunidad."
+>
+  {/* Fondo Ambiental */}
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"
+    >
+    </div>
+    <div
+      class="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-900/10 blur-[150px] rounded-full pointer-events-none"
+    >
+    </div>
+    <div
+      class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[150px] rounded-full pointer-events-none"
+    >
     </div>
   </div>
 
-  <script>
-    import { $ } from "@/lib/dom-selector";
-    import "@appnest/masonry-layout";
-    import { type MasonryLayout } from "@appnest/masonry-layout";
+  <div class="container mx-auto px-4 py-8 mt-20 min-h-screen pb-20">
+    {/* --- HEADER HERO --- */}
+    <header class="relative mb-12">
+      <div class="flex flex-col md:flex-row justify-between items-end gap-6">
+        {/* Título y Stats */}
+        <div class="flex-1">
+          <div
+            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold uppercase tracking-widest mb-4"
+          >
+            <LucideTrophy size={14} /> Competitivo Oficial
+          </div>
 
-    document.addEventListener("astro:page-load", () => {
-      const $masonryLayout = $("masonry-layout") as MasonryLayout;
+          <h1
+            class="text-5xl md:text-7xl font-anton text-white uppercase tracking-tight mb-4 drop-shadow-xl"
+          >
+            Zona de <span
+              class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500"
+              >Torneos</span
+            >
+          </h1>
 
-      $masonryLayout.layout();
-    });
-  </script>
+          <p class="text-white/60 font-rubik text-lg max-w-xl leading-relaxed">
+            Demuestra tu habilidad, escala en el ranking y gana premios
+            exclusivos. La gloria te espera en la arena.
+          </p>
+
+          {/* Stats Rápidos */}
+          <div class="flex gap-6 mt-8">
+            <div class="flex items-center gap-3">
+              <div class="p-2 bg-white/5 rounded-lg text-white/50">
+                <LucideSwords size={20} />
+              </div>
+              <div>
+                <span class="block text-2xl font-bold text-white leading-none"
+                  >{activeTournaments}</span
+                >
+                <span class="text-xs text-white/40 uppercase tracking-wider"
+                  >Activos</span
+                >
+              </div>
+            </div>
+            <div class="w-px h-10 bg-white/10"></div>
+            <div class="flex items-center gap-3">
+              <div class="p-2 bg-white/5 rounded-lg text-white/50">
+                <LucideUsers size={20} />
+              </div>
+              <div>
+                <span class="block text-2xl font-bold text-white leading-none"
+                  >{totalPlayers}</span
+                >
+                <span class="text-xs text-white/40 uppercase tracking-wider"
+                  >Jugadores</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Acciones (Solo Admin) */}
+        {
+          isAdmin && (
+            <div class="shrink-0">
+              <TournamentAdminControls client:visible />
+            </div>
+          )
+        }
+      </div>
+    </header>
+
+    {/* Separador */}
+    <div
+      class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-12"
+    >
+    </div>
+
+    {/* --- LISTA DE TORNEOS --- */}
+    <main>
+      {
+        tournaments.length > 0 ? (
+          <TournamentList client:load tournaments={tournaments as any} />
+        ) : (
+          <div class="flex flex-col items-center justify-center py-20 text-center border border-white/5 rounded-3xl bg-white/[0.02]">
+            <div class="bg-white/5 p-6 rounded-full mb-4">
+              <LucideTrophy size={48} class="text-white/20" />
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">
+              No hay torneos activos
+            </h3>
+            <p class="text-white/50">
+              Mantente atento a las próximas competiciones.
+            </p>
+          </div>
+        )
+      }
+    </main>
+  </div>
 </Layout>

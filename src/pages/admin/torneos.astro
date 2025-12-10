@@ -1,0 +1,144 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { checkAdmin } from "@/lib/checkAdmin";
+import { getSession } from "auth-astro/server";
+import { client as db } from "@/db/client";
+import { TournamentsTable } from "@/db/schema";
+import { desc } from "drizzle-orm";
+import {
+  LucidePlus,
+  LucideTrophy,
+  LucideUsers,
+  LucideCalendar,
+  LucideEye,
+} from "lucide-preact";
+
+const session = await getSession(Astro.request);
+const checkResult = await checkAdmin(session);
+if (checkResult) return checkResult;
+
+const tournaments = await db.query.TournamentsTable.findMany({
+  orderBy: [desc(TournamentsTable.createdAt)],
+  with: {
+    participants: true,
+    creator: true,
+  },
+});
+---
+
+<AdminLayout title="Gestión de Torneos">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-white mb-2">Torneos</h1>
+      <p class="text-gray-400">Administra los torneos de la plataforma.</p>
+    </div>
+    <a
+      href="/torneos"
+      target="_blank"
+      class="bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors"
+    >
+      <LucidePlus className="w-5 h-5" />
+      Crear Nuevo (Vista Pública)
+    </a>
+  </div>
+
+  <div class="bg-[#1a1b1e] border border-white/10 rounded-xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr
+            class="bg-white/5 border-b border-white/10 text-gray-400 text-sm uppercase tracking-wider"
+          >
+            <th class="p-4 font-medium">Nombre</th>
+            <th class="p-4 font-medium">Estado</th>
+            <th class="p-4 font-medium">Formato</th>
+            <th class="p-4 font-medium">Participantes</th>
+            <th class="p-4 font-medium">Creador</th>
+            <th class="p-4 font-medium">Fecha</th>
+            <th class="p-4 font-medium text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          {
+            tournaments.map((tournament) => (
+              <tr class="hover:bg-white/5 transition-colors">
+                <td class="p-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded bg-white/10 flex items-center justify-center overflow-hidden">
+                      {tournament.bannerUrl ? (
+                        <img
+                          src={tournament.bannerUrl}
+                          alt=""
+                          class="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <LucideTrophy className="w-5 h-5 text-gray-500" />
+                      )}
+                    </div>
+                    <div>
+                      <div class="font-bold text-white">{tournament.name}</div>
+                      <div class="text-xs text-gray-500">
+                        ID: {tournament.id}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td class="p-4">
+                  <span
+                    class={`px-2 py-1 rounded text-xs font-bold uppercase
+                                    ${
+                                      tournament.status === "registration"
+                                        ? "bg-green-500/20 text-green-400"
+                                        : tournament.status === "in_progress"
+                                          ? "bg-blue-500/20 text-blue-400"
+                                          : tournament.status === "completed"
+                                            ? "bg-gray-500/20 text-gray-400"
+                                            : "bg-yellow-500/20 text-yellow-400"
+                                    }`}
+                  >
+                    {tournament.status}
+                  </span>
+                </td>
+                <td class="p-4 text-gray-300 capitalize">
+                  {tournament.format.replace("_", " ")}
+                </td>
+                <td class="p-4 text-gray-300">
+                  <div class="flex items-center gap-1">
+                    <LucideUsers className="w-4 h-4 text-gray-500" />
+                    {tournament.participants.length} /{" "}
+                    {tournament.maxParticipants || "∞"}
+                  </div>
+                </td>
+                <td class="p-4 text-gray-300">
+                  {tournament.creator.displayName}
+                </td>
+                <td class="p-4 text-gray-300 text-sm">
+                  {new Date(tournament.createdAt).toLocaleDateString()}
+                </td>
+                <td class="p-4 text-right">
+                  <a
+                    href={`/torneos/${tournament.id}`}
+                    target="_blank"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                    title="Ver Torneo"
+                  >
+                    <LucideEye className="w-4 h-4" />
+                  </a>
+                </td>
+              </tr>
+            ))
+          }
+          {
+            tournaments.length === 0 && (
+              <tr>
+                <td colspan="7" class="p-8 text-center text-gray-500">
+                  No hay torneos registrados.
+                </td>
+              </tr>
+            )
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</AdminLayout>

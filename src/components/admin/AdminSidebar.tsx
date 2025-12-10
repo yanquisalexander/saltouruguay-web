@@ -42,6 +42,7 @@ const categories = [
         title: "GESTIÓN",
         links: [
             { label: "Eventos", url: "/admin/eventos", icon: "calendar" },
+            { label: "Torneos", url: "/admin/torneos", icon: "trophy" },
             { label: "MC Extremo", url: "/admin/mc-extremo", icon: "swords" },
             { label: "Streamer Wars", url: "/admin/guerra-streamers", icon: "gamepad" },
         ],

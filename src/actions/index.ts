@@ -35,10 +35,12 @@ import InscripcionExtremo from "@/email/InscripcionExtremo.astro";
 import { audio } from "./audio";
 import { voice } from "./voice";
 import { notifications } from "./notifications";
+import { tournaments } from "./tournaments";
 
 
 
 export const server = {
+    tournaments,
     notifications,
     saltogram,
     stories,
