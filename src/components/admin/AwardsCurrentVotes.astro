@@ -47,10 +47,19 @@ const getAvatarUrl = (name: string) =>
           <article class="flex flex-col bg-[#0a0a0a]/60 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden shadow-xl transition-all hover:border-white/20">
             {/* Header Categoría */}
             <div class="p-5 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
-              <h3 class="text-xl font-anton text-white uppercase tracking-wide flex items-center gap-2">
-                <LucideTrophy size={18} class="text-yellow-500/80" />
-                {categoryName}
-              </h3>
+              <div class="flex items-center gap-4">
+                <h3 class="text-xl font-anton text-white uppercase tracking-wide flex items-center gap-2">
+                  <LucideTrophy size={18} class="text-yellow-500/80" />
+                  {categoryName}
+                </h3>
+                <button
+                  data-compare-category={category}
+                  data-category-name={categoryName}
+                  class="text-xs font-rubik font-bold text-white/50 hover:text-white uppercase tracking-widest bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-colors flex items-center gap-1"
+                >
+                  <LucideBarChart3 size={12} /> Comparar
+                </button>
+              </div>
               <span class="text-xs font-rubik font-bold text-white/30 uppercase tracking-widest bg-white/5 px-2 py-1 rounded">
                 {votes.length} Nominados
               </span>
@@ -259,6 +268,7 @@ const getAvatarUrl = (name: string) =>
     const dialog = $("#votes-evolution-dialog") as HTMLDialogElement;
     const closeBtn = $("#dialog-close");
     const cards = $$("[data-nominee-card]");
+    const compareBtns = $$("[data-compare-category]");
     const nomineeNameEl = $("#dialog-nominee-name");
     const loader = $("#chart-loader");
     const canvas = $("#vote-evolution-chart") as HTMLCanvasElement;
@@ -273,39 +283,85 @@ const getAvatarUrl = (name: string) =>
     let currentData: any = null;
     let activeTab = "points";
 
+    const COLORS = [
+      "#eab308", // yellow-500
+      "#3b82f6", // blue-500
+      "#ef4444", // red-500
+      "#22c55e", // green-500
+      "#a855f7", // purple-500
+      "#f97316", // orange-500
+      "#ec4899", // pink-500
+      "#06b6d4", // cyan-500
+    ];
+
     const updateChart = (type: string) => {
       if (!chartInstance || !currentData) return;
 
       const isCumulative = cumulativeToggle?.checked ?? true;
       const isPoints = type === "points";
 
-      let datasetData;
-      if (isPoints) {
-        datasetData = isCumulative
-          ? currentData.pointsData
-          : currentData.dailyPointsData;
+      const newDatasets: any[] = [];
+
+      if (currentData.datasets) {
+        // Multiple nominees (Comparison)
+        currentData.datasets.forEach((ds: any, index: number) => {
+          let data;
+          if (isPoints) {
+            data = isCumulative ? ds.pointsData : ds.dailyPointsData;
+          } else {
+            data = isCumulative ? ds.votesData : ds.dailyVotesData;
+          }
+
+          const color = COLORS[index % COLORS.length];
+
+          newDatasets.push({
+            label: ds.label,
+            data: data,
+            borderColor: color,
+            backgroundColor: color + "1A", // 10% opacity
+            borderWidth: 2,
+            pointBackgroundColor: color,
+            pointHoverBorderColor: color,
+            fill: false,
+            tension: 0.4,
+          });
+        });
       } else {
-        datasetData = isCumulative
-          ? currentData.votesData
-          : currentData.dailyVotesData;
+        // Single nominee
+        let datasetData;
+        if (isPoints) {
+          datasetData = isCumulative
+            ? currentData.pointsData
+            : currentData.dailyPointsData;
+        } else {
+          datasetData = isCumulative
+            ? currentData.votesData
+            : currentData.dailyVotesData;
+        }
+
+        const labelPrefix = isCumulative ? "Acumulados" : "Diarios";
+        const label = isPoints
+          ? `Puntos ${labelPrefix}`
+          : `Votos ${labelPrefix}`;
+        const color = isPoints ? "#eab308" : "#3b82f6"; // yellow-500 vs blue-500
+        const bgColor = isPoints
+          ? "rgba(234, 179, 8, 0.1)"
+          : "rgba(59, 130, 246, 0.1)";
+
+        newDatasets.push({
+          label: label,
+          data: datasetData,
+          borderColor: color,
+          backgroundColor: bgColor,
+          borderWidth: 3,
+          pointBackgroundColor: color,
+          pointHoverBorderColor: color,
+          fill: true,
+          tension: 0.4,
+        });
       }
 
-      const labelPrefix = isCumulative ? "Acumulados" : "Diarios";
-      const label = isPoints ? `Puntos ${labelPrefix}` : `Votos ${labelPrefix}`;
-      const color = isPoints ? "#eab308" : "#3b82f6"; // yellow-500 vs blue-500
-      const bgColor = isPoints
-        ? "rgba(234, 179, 8, 0.1)"
-        : "rgba(59, 130, 246, 0.1)";
-
-      chartInstance.data.datasets[0].data = datasetData;
-      chartInstance.data.datasets[0].label = label;
-      chartInstance.data.datasets[0].borderColor = color;
-      chartInstance.data.datasets[0].backgroundColor = bgColor;
-      // @ts-ignore
-      chartInstance.data.datasets[0].pointBackgroundColor = color;
-      // @ts-ignore
-      chartInstance.data.datasets[0].pointHoverBorderColor = color;
-
+      chartInstance.data.datasets = newDatasets;
       chartInstance.update();
 
       // Update tabs UI
@@ -337,6 +393,108 @@ const getAvatarUrl = (name: string) =>
       });
     });
 
+    // Helper to reset UI state
+    const resetUI = () => {
+      activeTab = "points";
+      if (cumulativeToggle) cumulativeToggle.checked = true;
+
+      tabs.forEach((tab) => {
+        const tabType = tab.getAttribute("data-tab");
+        if (tabType === "points") {
+          tab.className =
+            "px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wide transition-all bg-yellow-500 text-black";
+        } else {
+          tab.className =
+            "px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wide transition-all bg-white/5 text-white/50 hover:bg-white/10 hover:text-white";
+        }
+      });
+    };
+
+    // Compare Buttons Handler
+    compareBtns.forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation(); // Prevent bubbling if inside another clickable
+        const categoryId = btn.getAttribute("data-compare-category");
+        const categoryName = btn.getAttribute("data-category-name");
+
+        if (!categoryId) return;
+
+        if (nomineeNameEl)
+          nomineeNameEl.textContent = `Comparativa - ${categoryName}`;
+
+        dialog.showModal();
+        resetUI();
+
+        if (loader) loader.style.display = "flex";
+
+        try {
+          const response = await fetch(
+            `/api/votes-evolution/${categoryId}/all`
+          );
+          const data = await response.json();
+          currentData = data;
+
+          if (chartInstance) {
+            chartInstance.destroy();
+          }
+
+          if (data.error) {
+            console.error(data.error);
+            return;
+          }
+
+          chartInstance = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: data.labels,
+              datasets: [], // Will be populated by updateChart
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: true, // Show legend for comparison
+                  labels: { color: "#fff" },
+                },
+                tooltip: {
+                  mode: "index",
+                  intersect: false,
+                  backgroundColor: "rgba(0, 0, 0, 0.8)",
+                  titleColor: "#fff",
+                  bodyColor: "#fff",
+                  borderColor: "rgba(255, 255, 255, 0.1)",
+                  borderWidth: 1,
+                },
+              },
+              scales: {
+                x: {
+                  grid: { color: "rgba(255, 255, 255, 0.05)" },
+                  ticks: { color: "rgba(255, 255, 255, 0.5)" },
+                },
+                y: {
+                  beginAtZero: true,
+                  grid: { color: "rgba(255, 255, 255, 0.05)" },
+                  ticks: { color: "rgba(255, 255, 255, 0.5)" },
+                },
+              },
+              interaction: {
+                mode: "nearest",
+                axis: "x",
+                intersect: false,
+              },
+            },
+          });
+
+          updateChart("points"); // Initial render
+        } catch (error) {
+          console.error("Error loading comparison chart", error);
+        } finally {
+          if (loader) loader.style.display = "none";
+        }
+      });
+    });
+
     cards.forEach((card) => {
       card.addEventListener("click", async () => {
         const nomineeId = card.getAttribute("data-nominee-id");
@@ -349,21 +507,7 @@ const getAvatarUrl = (name: string) =>
           nomineeNameEl.textContent = nomineeName || "Nominado";
 
         dialog.showModal();
-
-        // Reset tabs to points and toggle to cumulative
-        activeTab = "points";
-        if (cumulativeToggle) cumulativeToggle.checked = true;
-
-        tabs.forEach((tab) => {
-          const tabType = tab.getAttribute("data-tab");
-          if (tabType === "points") {
-            tab.className =
-              "px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wide transition-all bg-yellow-500 text-black";
-          } else {
-            tab.className =
-              "px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wide transition-all bg-white/5 text-white/50 hover:bg-white/10 hover:text-white";
-          }
-        });
+        resetUI();
 
         // Show loader
         if (loader) loader.style.display = "flex";
@@ -388,21 +532,7 @@ const getAvatarUrl = (name: string) =>
             type: "line",
             data: {
               labels: data.labels,
-              datasets: [
-                {
-                  label: "Puntos Acumulados",
-                  data: data.pointsData,
-                  borderColor: "#eab308", // yellow-500
-                  backgroundColor: "rgba(234, 179, 8, 0.1)",
-                  borderWidth: 3,
-                  pointBackgroundColor: "#eab308",
-                  pointBorderColor: "#fff",
-                  pointHoverBackgroundColor: "#fff",
-                  pointHoverBorderColor: "#eab308",
-                  fill: true,
-                  tension: 0.4,
-                },
-              ],
+              datasets: [], // Will be populated by updateChart
             },
             options: {
               responsive: true,
@@ -447,6 +577,8 @@ const getAvatarUrl = (name: string) =>
               },
             },
           });
+
+          updateChart("points"); // Initial render
         } catch (error) {
           console.error("Error loading chart data", error);
         } finally {
