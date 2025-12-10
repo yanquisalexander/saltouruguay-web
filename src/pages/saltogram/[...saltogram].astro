@@ -84,7 +84,6 @@ if (saltogramSegments[0] === "u" && saltogramSegments[1]) {
       username: UsersTable.username,
       displayName: UsersTable.displayName,
       avatar: UsersTable.avatar,
-      bio: UsersTable.bio,
       tier: UsersTable.twitchTier,
       admin: UsersTable.admin,
     },
@@ -155,14 +154,24 @@ if (saltogramSegments[0] === "post" && saltogramSegments[1]) {
 }
 
 const pageTitle = initialPost
-  ? `${initialPost.user.displayName} en Saltogram`
+  ? `${initialPost.user.displayName}: "${initialPost.text ? (initialPost.text.length > 30 ? initialPost.text.slice(0, 30) + "..." : initialPost.text) : "Publicación"}"`
   : initialProfileUser
-    ? `${initialProfileUser.displayName} - Saltogram`
+    ? `${initialProfileUser.displayName} (@${initialProfileUser.username})`
     : "Saltogram";
+
+const pageDescription = initialPost
+  ? initialPost.text || `Mira la publicación de ${initialPost.user.displayName}`
+  : initialProfileUser
+    ? `Perfil de ${initialProfileUser.displayName} en Saltogram`
+    : "La red social de la comunidad de Salto Uruguay";
+
+const pageImage = initialPost?.imageUrl || initialProfileUser?.avatar;
 ---
 
 <Layout
   title={pageTitle}
+  description={pageDescription}
+  image={pageImage}
   hideFooter={true}
   hideHeader={true}
   mainClassname="px-4 sm:px-8 pt-4 pb-16"

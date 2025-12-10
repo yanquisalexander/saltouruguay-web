@@ -85,7 +85,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
     };
 
     const handleShare = async () => {
-        const url = `${window.location.origin}/saltogram/${post.id}`;
+        const url = `${window.location.origin}/saltogram/post/${post.id}`;
         try {
             await navigator.clipboard.writeText(url);
             toast.success("Enlace copiado al portapapeles");

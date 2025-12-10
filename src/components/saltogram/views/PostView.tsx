@@ -75,7 +75,6 @@ export default function PostView({ user, postId, initialPost }: PostViewProps) {
                 <PostCard post={post} currentUserId={user?.id} isAdmin={user?.isAdmin} />
             </div>
 
-            <SaltogramFeed user={user} />
         </section>
     );
 }
