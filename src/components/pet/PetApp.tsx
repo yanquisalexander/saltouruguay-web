@@ -36,6 +36,7 @@ interface Pet {
     lastInteraction: Date;
     sleepingSince: Date | null;
     createdAt: Date;
+    isDead?: boolean;
 }
 
 type ViewMode = 'pet' | 'store';
@@ -96,6 +97,25 @@ export default function PetApp() {
         await loadPet(false);
     };
 
+    const handleBuryPet = async () => {
+        if (!confirm('¿Estás seguro de que quieres despedirte de tu mascota?')) return;
+
+        try {
+            setLoading(true);
+            const result = await actions.pet.buryPet();
+            if (result.data?.success) {
+                setPet(null);
+                toast.success('Te has despedido de tu mascota.');
+                // Recargar para permitir adoptar una nueva mascota
+                await loadPet(false);
+            }
+        } catch (error) {
+            console.error('Error burying pet:', error);
+            toast.error('Error al despedirse de la mascota');
+            setLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-96">
@@ -109,6 +129,37 @@ export default function PetApp() {
 
     if (!pet) {
         return <AdoptPet onPetCreated={handlePetCreated} />;
+    }
+
+    if (pet.isDead) {
+        return (
+            <div className="h-full flex flex-col w-full bg-gray-950 text-white font-sans items-center justify-center p-4 relative overflow-hidden">
+                {/* Background */}
+                <div className="absolute inset-0 bg-black z-0"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black opacity-50"></div>
+
+                <div className="z-10 text-center flex flex-col items-center gap-6 animate-fade-in max-w-md mx-auto">
+                    <div className="text-8xl mb-4 animate-bounce grayscale opacity-50">🪦</div>
+                    <h2 className="text-5xl font-black text-gray-500 tracking-tighter">R.I.P.</h2>
+                    <div className="bg-gray-900/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-800">
+                        <p className="text-xl text-gray-300 font-medium">
+                            <span className="text-violet-400 font-bold">{pet.name}</span> ha pasado a mejor vida.
+                        </p>
+                        <p className="text-sm text-gray-500 mt-2">
+                            No recibió los cuidados necesarios a tiempo.
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={handleBuryPet}
+                        className="mt-8 bg-gray-800 hover:bg-gray-700 text-white px-8 py-4 rounded-full font-bold transition-all border border-gray-600 hover:border-gray-400 shadow-lg hover:shadow-gray-900/50 flex items-center gap-2 group"
+                    >
+                        <span>Despedirse y Continuar</span>
+                        <span className="group-hover:translate-x-1 transition-transform">→</span>
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     return (

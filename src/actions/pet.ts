@@ -384,4 +384,29 @@ export const pet = {
             }
         },
     }),
+
+    /**
+     * Bury the pet (delete it)
+     */
+    buryPet: defineAction({
+        handler: async (_, context) => {
+            const session = await getSession(context.request);
+            if (!session?.user?.id) {
+                throw new ActionError({
+                    code: 'UNAUTHORIZED',
+                    message: 'Debes iniciar sesión para enterrar tu mascota',
+                });
+            }
+
+            try {
+                const result = await PetService.deletePet(session.user.id);
+                return result;
+            } catch (error: any) {
+                throw new ActionError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: error.message || 'Error al enterrar la mascota',
+                });
+            }
+        },
+    }),
 };

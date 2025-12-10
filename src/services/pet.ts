@@ -12,10 +12,10 @@ import { BancoSaltanoService } from './banco-saltano';
 
 // Decay rates per hour (serverless lazy evaluation)
 const DECAY_RATES = {
-    hunger: 5,    // -5 per hour
-    energy: 3,    // -3 per hour
-    hygiene: 4,   // -4 per hour
-    happiness: 2, // -2 per hour
+    hunger: 15,    // -15 per hour (approx 6.5h to starve)
+    energy: 10,    // -10 per hour (10h to sleep)
+    hygiene: 8,    // -8 per hour (12.5h to dirty)
+    happiness: 10, // -10 per hour (10h to sad)
 };
 
 const SLEEP_RECOVERY_RATE = 30; // +30 energy per hour while sleeping
@@ -171,6 +171,7 @@ export class PetService {
                     hygiene: pet.hygiene,
                     happiness: pet.happiness,
                 },
+                isDead: currentStats.hunger <= 0,
             };
         } catch (error) {
             console.error('Error getting pet:', error);
@@ -228,6 +229,10 @@ export class PetService {
                     },
                     pet.lastInteraction
                 );
+
+                if (currentStats.hunger <= 0) {
+                    throw new Error('Tu mascota ha fallecido :(');
+                }
 
                 if (currentStats.hunger >= MAX_STAT) {
                     throw new Error('Tu mascota está llena, no tiene hambre.');
@@ -307,6 +312,10 @@ export class PetService {
                     pet.lastInteraction
                 );
 
+                if (currentStats.hunger <= 0) {
+                    throw new Error('Tu mascota ha fallecido :(');
+                }
+
                 if (currentStats.hygiene >= MAX_STAT) {
                     throw new Error('Tu mascota ya está limpia y reluciente.');
                 }
@@ -369,6 +378,10 @@ export class PetService {
                     },
                     pet.lastInteraction
                 );
+
+                if (currentStats.hunger <= 0) {
+                    throw new Error('Tu mascota ha fallecido :(');
+                }
 
                 let happinessBonus = 15;
                 let energyCost = 10;
@@ -471,6 +484,10 @@ export class PetService {
                     },
                     pet.lastInteraction
                 );
+
+                if (currentStats.hunger <= 0) {
+                    throw new Error('Tu mascota ha fallecido :(');
+                }
 
                 if (currentStats.energy >= MAX_STAT) {
                     throw new Error('Tu mascota no tiene sueño, ¡quiere jugar!');
@@ -837,6 +854,22 @@ export class PetService {
             });
         } catch (error) {
             console.error('Error equipping item:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete pet (bury)
+     */
+    static async deletePet(userId: number) {
+        try {
+            await db.delete(PetsTable).where(eq(PetsTable.ownerId, userId));
+            // Also delete house
+            await db.delete(PetHousesTable).where(eq(PetHousesTable.ownerId, userId));
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error deleting pet:', error);
             throw error;
         }
     }

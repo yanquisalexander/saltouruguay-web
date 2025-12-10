@@ -92,6 +92,9 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
 
             if (error) {
                 petToast.error(error.message || 'Error al alimentar la mascota');
+                if (error.message?.includes('fallecido')) {
+                    onActionComplete();
+                }
             }
         } catch (error: any) {
             petToast.error(error.message || 'Error al alimentar la mascota');
@@ -129,12 +132,19 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
     const handleClean = async () => {
         try {
             setPerforming('clean');
-            const result = await actions.pet.cleanPet();
+            const { data, error } = await actions.pet.cleanPet();
 
-            if (result.data?.success) {
+            if (data?.success) {
                 petToast.success('¡Mascota limpia!', '🧼');
                 playSound({ sound: STREAMER_WARS_SOUNDS.PET_SHOWER, volume: 0.5 });
                 onActionComplete();
+            }
+
+            if (error) {
+                petToast.error(error.message || 'Error al limpiar la mascota');
+                if (error.message?.includes('fallecido')) {
+                    onActionComplete();
+                }
             }
         } catch (error: any) {
             petToast.error(error.message || 'Error al limpiar la mascota');
@@ -146,15 +156,22 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
     const handlePlay = async () => {
         try {
             setPerforming('play');
-            const result = await actions.pet.playWithPet({ itemId: selectedToyItem || undefined });
+            const { data, error } = await actions.pet.playWithPet({ itemId: selectedToyItem || undefined });
 
-            if (result.data?.success) {
+            if (data?.success) {
                 petToast.success('¡Jugaste con tu mascota!', '🎮');
                 if (selectedToyItem) {
                     await loadInventory();
                 }
                 onActionComplete();
                 setShowToySelector(false);
+            }
+
+            if (error) {
+                petToast.error(error.message || 'Error al jugar con la mascota');
+                if (error.message?.includes('fallecido')) {
+                    onActionComplete();
+                }
             }
         } catch (error: any) {
             petToast.error(error.message || 'Error al jugar con la mascota');
@@ -167,12 +184,19 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
         if (isSleeping) {
             try {
                 setPerforming('wake');
-                const result = await actions.pet.wakePet();
+                const { data, error } = await actions.pet.wakePet();
 
-                if (result.data?.success) {
+                if (data?.success) {
                     playSound({ sound: STREAMER_WARS_SOUNDS.PET_AWAKE, volume: 0.5 });
                     petToast.success('¡Buenos días!', '☀️');
                     onActionComplete();
+                }
+
+                if (error) {
+                    petToast.error(error.message || 'Error al despertar la mascota');
+                    if (error.message?.includes('fallecido')) {
+                        onActionComplete();
+                    }
                 }
             } catch (error: any) {
                 petToast.error(error.message || 'Error al despertar la mascota');
@@ -182,11 +206,18 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
         } else {
             try {
                 setPerforming('sleep');
-                const result = await actions.pet.putPetToSleep();
+                const { data, error } = await actions.pet.putPetToSleep();
 
-                if (result.data?.success) {
+                if (data?.success) {
                     petToast.success('¡A dormir!', '💤');
                     onActionComplete();
+                }
+
+                if (error) {
+                    petToast.error(error.message || 'Error al dormir la mascota');
+                    if (error.message?.includes('fallecido')) {
+                        onActionComplete();
+                    }
                 }
             } catch (error: any) {
                 petToast.error(error.message || 'Error al dormir la mascota');
