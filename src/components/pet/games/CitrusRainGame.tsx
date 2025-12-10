@@ -177,9 +177,11 @@ export default function CitrusRainGame({ onComplete, onClose }: CitrusRainGamePr
                         <span className="text-2xl">🍊</span>
                         <span className="font-bold text-white">Lluvia de Cítricos</span>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-white/70 hover:text-white">
-                        <LucideX size={24} />
-                    </button>
+                    {gameState !== 'playing' && (
+                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-white/70 hover:text-white">
+                            <LucideX size={24} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Game Area */}
