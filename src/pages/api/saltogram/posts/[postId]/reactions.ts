@@ -125,7 +125,7 @@ export const POST = async ({ request, params }: APIContext) => {
                     type: "saltogram_reaction",
                     title: "Nueva reacción",
                     message: `${auth.user.displayName} reaccionó con ${emoji} a tu publicación`,
-                    link: `/comunidad/saltogram/${postId}`,
+                    link: `/saltogram/${postId}`,
                     image: auth.user.avatar || undefined
                 });
             }

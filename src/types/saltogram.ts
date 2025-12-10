@@ -35,3 +35,64 @@ export interface SaltogramComment {
     createdAt: string;
     user: SaltogramUser;
 }
+
+export interface FriendRequest {
+    id: number;
+    createdAt: string | Date;
+    user: {
+        id: number;
+        displayName: string;
+        username: string;
+        avatar: string | null;
+    };
+}
+
+export interface FriendRequestState {
+    id: number;
+    createdAt: Date;
+    user: {
+        id: number;
+        displayName: string;
+        username: string;
+        avatar: string | null;
+    };
+}
+
+export interface SuggestedUser {
+    id: number;
+    displayName: string;
+    username: string;
+    avatar: string | null;
+}
+
+export interface TrendingTag {
+    tag: string;
+    count: number;
+}
+
+export interface ProfileUser {
+    id: number;
+    username: string;
+    displayName: string;
+    avatar: string | null;
+    bio?: string | null;
+    friendsCount?: number;
+    tier?: number | null;
+    admin?: boolean;
+}
+
+export interface ConversationPreview {
+    user: {
+        id: number;
+        displayName: string;
+        username: string;
+        avatar: string | null;
+    };
+    lastMessage: {
+        content: string | null;
+        createdAt: string;
+        senderId: number;
+        reaction?: string | null;
+    };
+    unreadCount: number;
+}

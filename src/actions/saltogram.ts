@@ -2,10 +2,79 @@ import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
-import { SaltogramPostsTable, UsersTable } from "@/db/schema";
-import { eq, ilike, or } from "drizzle-orm";
+import { SaltogramPostsTable, UsersTable, SaltogramMessagesTable, FriendsTable, NotificationsTable } from "@/db/schema";
+import { eq, ilike, or, and, count, gt } from "drizzle-orm";
 
 export const saltogram = {
+    poll: defineAction({
+        input: z.object({
+            lastPostId: z.number().optional(),
+        }),
+        handler: async ({ lastPostId }, { request }) => {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) {
+                return {
+                    unreadMessages: 0,
+                    friendRequests: 0,
+                    unreadNotifications: 0,
+                    hasNewPosts: false
+                };
+            }
+
+            const userId = auth.user.id;
+
+            // 1. Unread Messages
+            const [messagesResult] = await client
+                .select({ count: count() })
+                .from(SaltogramMessagesTable)
+                .where(
+                    and(
+                        eq(SaltogramMessagesTable.receiverId, userId),
+                        eq(SaltogramMessagesTable.isRead, false)
+                    )
+                );
+
+            // 2. Friend Requests
+            const [requestsResult] = await client
+                .select({ count: count() })
+                .from(FriendsTable)
+                .where(
+                    and(
+                        eq(FriendsTable.friendId, userId),
+                        eq(FriendsTable.status, "pending")
+                    )
+                );
+
+            // 3. Unread Notifications
+            const [notificationsResult] = await client
+                .select({ count: count() })
+                .from(NotificationsTable)
+                .where(
+                    and(
+                        eq(NotificationsTable.userId, userId),
+                        eq(NotificationsTable.read, false)
+                    )
+                );
+
+            // 4. New Posts (if lastPostId provided)
+            let hasNewPosts = false;
+            if (lastPostId) {
+                const [postsResult] = await client
+                    .select({ count: count() })
+                    .from(SaltogramPostsTable)
+                    .where(gt(SaltogramPostsTable.id, lastPostId));
+
+                hasNewPosts = (postsResult?.count ?? 0) > 0;
+            }
+
+            return {
+                unreadMessages: messagesResult?.count ?? 0,
+                friendRequests: requestsResult?.count ?? 0,
+                unreadNotifications: notificationsResult?.count ?? 0,
+                hasNewPosts
+            };
+        }
+    }),
     searchUsers: defineAction({
         input: z.object({ query: z.string().min(1) }),
         handler: async ({ query }, { request }) => {

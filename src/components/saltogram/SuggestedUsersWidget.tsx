@@ -47,7 +47,7 @@ export default function SuggestedUsersWidget({ users }: Props) {
 
                     return (
                         <div key={user.id} className="flex items-center justify-between group">
-                            <a href={`/comunidad/saltogram/u/${user.username}`} className="flex items-center gap-3">
+                            <a href={`/saltogram/u/${user.username}`} className="flex items-center gap-3">
                                 <img
                                     src={user.avatar || `https://ui-avatars.com/api/?name=${user.displayName}`}
                                     alt={user.displayName}

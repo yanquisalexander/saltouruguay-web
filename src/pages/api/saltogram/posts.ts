@@ -248,7 +248,7 @@ export const POST = async ({ request }: APIContext) => {
                     type: "saltogram_post",
                     title: "Nueva publicación",
                     message: `${auth.user.displayName} ha publicado algo nuevo`,
-                    link: `/comunidad/saltogram/${newPost.id}`,
+                    link: `/saltogram/${newPost.id}`,
                     image: auth.user.avatar || undefined
                 })
             )).catch(err => console.error("Error sending friend notifications:", err));

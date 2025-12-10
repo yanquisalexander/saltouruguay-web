@@ -50,7 +50,7 @@ const NOTIFICATIONS_DATA: Notification[] = [
     }
 ];
 
-export const Notifications = () => {
+export const Notifications = ({ unreadCount }: { unreadCount?: number }) => {
     const [state, setState] = useState<NotificationState>({ read: [], unread: [] });
     const [isOpen, setIsOpen] = useState(false);
     const { isSubscribed, loading: loadingPush, subscribe } = usePushNotifications();
@@ -97,7 +97,7 @@ export const Notifications = () => {
         };
 
         loadNotifications();
-    }, []);
+    }, [unreadCount]); // Reload when unreadCount changes (from polling)
 
     // Click Outside
     useEffect(() => {

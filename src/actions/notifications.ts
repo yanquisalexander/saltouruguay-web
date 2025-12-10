@@ -3,7 +3,7 @@ import { z } from "astro:schema";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
 import { NotificationsTable, PushSubscriptionsTable } from "@/db/schema";
-import { eq, and, desc, lt } from "drizzle-orm";
+import { eq, and, desc, lt, count } from "drizzle-orm";
 import webpush from "web-push";
 
 // Configure Web Push
@@ -100,6 +100,27 @@ export const notifications = {
                 });
 
             return { success: true };
+        }
+    }),
+
+    getUnreadCount: defineAction({
+        handler: async (_, { request }) => {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth) return { count: 0 };
+
+            const userId = auth.user.id;
+
+            const [result] = await client
+                .select({ count: count() })
+                .from(NotificationsTable)
+                .where(
+                    and(
+                        eq(NotificationsTable.userId, userId),
+                        eq(NotificationsTable.read, false)
+                    )
+                );
+
+            return { count: result?.count ?? 0 };
         }
     }),
 

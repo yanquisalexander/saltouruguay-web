@@ -203,6 +203,9 @@ importers:
       preact-calendar:
         specifier: ^1.2.0
         version: 1.2.0(preact@10.26.4)
+      preact-router:
+        specifier: ^4.1.2
+        version: 4.1.2(preact@10.26.4)
       pusher:
         specifier: ^5.2.0
         version: 5.2.0
@@ -4570,6 +4573,11 @@ packages:
     resolution: {integrity: sha512-VJ++Pkzv6+ZOmeN/9Qvx0mRdXqnei1Lo3uu9bGvYHhoMI1VUkDT44hcpGbiokl/kuuYTayYa3yvmYTLZMplfMA==}
     peerDependencies:
       preact: '>=10 || >= 11.0.0-0'
+
+  preact-router@4.1.2:
+    resolution: {integrity: sha512-uICUaUFYh+XQ+6vZtQn1q+X6rSqwq+zorWOCLWPF5FAsQh3EJ+RsDQ9Ee+fjk545YWQHfUxhrBAaemfxEnMOUg==}
+    peerDependencies:
+      preact: '>=10'
 
   preact@10.24.3:
     resolution: {integrity: sha512-Z2dPnBnMUfyQfSQ+GBdsGa16hz35YmLmtTLhM169uW944hYL6xzTYkJjC07j+Wosz733pMWx0fgON3JNw1jJQA==}
@@ -10849,6 +10857,10 @@ snapshots:
       preact: 10.24.3
 
   preact-render-to-string@6.6.2(preact@10.26.4):
+    dependencies:
+      preact: 10.26.4
+
+  preact-router@4.1.2(preact@10.26.4):
     dependencies:
       preact: 10.26.4
 

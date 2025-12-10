@@ -11,7 +11,7 @@ export default function InboxList({ conversations }: InboxListProps) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center px-4">
                 <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/40"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/40"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">Tus mensajes</h3>
                 <p className="text-white/50 max-w-xs">
@@ -26,7 +26,7 @@ export default function InboxList({ conversations }: InboxListProps) {
             {conversations.map((conv) => (
                 <a
                     key={conv.user.id}
-                    href={`/comunidad/saltogram/direct/${conv.user.id}`}
+                    href={`/saltogram/direct/${conv.user.id}`}
                     className="flex items-center gap-3 p-4 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
                 >
                     <div className="relative">
@@ -41,7 +41,7 @@ export default function InboxList({ conversations }: InboxListProps) {
                             </div>
                         )}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-baseline mb-1">
                             <h3 className={`text-white truncate ${conv.unreadCount > 0 ? 'font-bold' : 'font-medium'}`}>
@@ -51,13 +51,13 @@ export default function InboxList({ conversations }: InboxListProps) {
                                 {formatDistanceToNow(new Date(conv.lastMessage.createdAt), { addSuffix: false, locale: es })}
                             </span>
                         </div>
-                        
+
                         <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'text-white font-medium' : 'text-white/60'}`}>
                             {conv.lastMessage.senderId === conv.user.id ? '' : 'Tú: '}
                             {conv.lastMessage.content || (conv.lastMessage.reaction ? `Reaccionó ${conv.lastMessage.reaction}` : 'Envió una historia')}
                         </p>
                     </div>
-                    
+
                     {conv.unreadCount > 0 && (
                         <div className="text-blue-500">
                             <LucideCircle size={10} fill="currentColor" />

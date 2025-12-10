@@ -1,0 +1,92 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+import { getSaltogramStats, getTrendingTags } from "@/lib/saltogram";
+import { client } from "@/db/client";
+import { FriendsTable, UsersTable } from "@/db/schema";
+import { eq, and, notInArray, sql } from "drizzle-orm";
+import SaltogramApp from "@/components/saltogram/SaltogramApp";
+
+const session = await getSession(Astro.request);
+
+const stats = await getSaltogramStats();
+const trendingTags = await getTrendingTags();
+
+const friendRequests = session?.user?.id
+  ? await client
+      .select({
+        id: FriendsTable.id,
+        createdAt: FriendsTable.createdAt,
+        user: {
+          id: UsersTable.id,
+          displayName: UsersTable.displayName,
+          username: UsersTable.username,
+          avatar: UsersTable.avatar,
+        },
+      })
+      .from(FriendsTable)
+      .innerJoin(UsersTable, eq(FriendsTable.userId, UsersTable.id))
+      .where(
+        and(
+          eq(FriendsTable.friendId, Number(session.user.id)),
+          eq(FriendsTable.status, "pending")
+        )
+      )
+      .limit(3)
+  : [];
+
+// Fetch Suggested Users (Not friends, not self)
+let suggestedUsers: any[] = [];
+if (session?.user?.id) {
+  const currentUserId = Number(session.user.id);
+
+  // Get IDs to exclude (self + friends + pending)
+  const friends1 = await client
+    .select({ id: FriendsTable.friendId })
+    .from(FriendsTable)
+    .where(eq(FriendsTable.userId, currentUserId));
+  const friends2 = await client
+    .select({ id: FriendsTable.userId })
+    .from(FriendsTable)
+    .where(eq(FriendsTable.friendId, currentUserId));
+
+  const excludeIds = [
+    currentUserId,
+    ...friends1.map((f) => f.id),
+    ...friends2.map((f) => f.id),
+  ];
+
+  suggestedUsers = await client
+    .select({
+      id: UsersTable.id,
+      displayName: UsersTable.displayName,
+      username: UsersTable.username,
+      avatar: UsersTable.avatar,
+    })
+    .from(UsersTable)
+    .where(notInArray(UsersTable.id, excludeIds))
+    .limit(3)
+    .orderBy(sql`RANDOM()`);
+}
+---
+
+<Layout
+  title="Saltogram"
+  hideFooter={true}
+  hideHeader={true}
+  mainClassname="px-4 sm:px-8 pt-4 pb-16"
+>
+  <SaltogramApp
+    client:only="preact"
+    user={session?.user}
+    stats={stats}
+    trendingTags={trendingTags}
+    friendRequests={friendRequests.map((request) => ({
+      ...request,
+      createdAt: request.createdAt?.toISOString?.() ?? request.createdAt,
+    }))}
+    suggestedUsers={suggestedUsers}
+    initialRoute={Astro.url.pathname}
+    basePath="/saltogram"
+  />
+</Layout>

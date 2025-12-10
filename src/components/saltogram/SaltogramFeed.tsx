@@ -83,7 +83,13 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
         if (tagParam) setTag(tagParam);
     }, []);
 
-    useEffect(() => { fetchPosts(1, true); }, [sort, tag]);
+    useEffect(() => {
+        setLoading(true);
+        setPosts([]);
+        setHasMore(true);
+        setPage(1);
+        fetchPosts(1, true);
+    }, [sort, tag, targetUserId]);
     useEffect(() => { startPolling(); return () => { if (pollingRef.current) clearTimeout(pollingRef.current); }; }, [startPolling]);
 
     // Infinite Scroll
@@ -142,7 +148,7 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
             {user && !targetUserId && (
                 <div className="bg-[#242526] rounded-xl p-4 shadow-sm border border-white/5">
                     <div className="flex gap-3">
-                        <a href={`/comunidad/saltogram/u/${user.username}`}>
+                        <a href={`/saltogram/u/${user.username}`}>
                             <img
                                 src={user.image || `https://ui-avatars.com/api/?name=${user.name}`}
                                 alt={user.name || "User"}

@@ -1,6 +1,8 @@
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
+import { route } from "preact-router";
+import { LucideCheck, LucideX } from "lucide-preact";
 
 interface FriendRequest {
     id: number;
@@ -15,10 +17,15 @@ interface FriendRequest {
 
 interface FriendRequestsWidgetProps {
     initialRequests: FriendRequest[];
+    onRequestsChange?: (next: FriendRequest[]) => void;
 }
 
-export default function FriendRequestsWidget({ initialRequests }: FriendRequestsWidgetProps) {
+export default function FriendRequestsWidget({ initialRequests, onRequestsChange }: FriendRequestsWidgetProps) {
     const [requests, setRequests] = useState(initialRequests);
+
+    useEffect(() => {
+        setRequests(initialRequests);
+    }, [initialRequests]);
 
     const handleAccept = async (requestId: number) => {
         const { error } = await actions.friends.acceptRequest({ requestId });
@@ -26,7 +33,9 @@ export default function FriendRequestsWidget({ initialRequests }: FriendRequests
             toast.error(error.message);
             return;
         }
-        setRequests(prev => prev.filter(r => r.id !== requestId));
+        const next = requests.filter(r => r.id !== requestId);
+        setRequests(next);
+        onRequestsChange?.(next);
         toast.success("Solicitud aceptada");
     };
 
@@ -36,50 +45,57 @@ export default function FriendRequestsWidget({ initialRequests }: FriendRequests
             toast.error(error.message);
             return;
         }
-        setRequests(prev => prev.filter(r => r.id !== requestId));
+        const next = requests.filter(r => r.id !== requestId);
+        setRequests(next);
+        onRequestsChange?.(next);
         toast.success("Solicitud rechazada");
     };
 
     if (requests.length === 0) return null;
 
+    // Show only first 3 in widget
+    const displayRequests = requests.slice(0, 3);
+
     return (
-        <div className="bg-[#242526] rounded-xl p-4 border border-white/5 shadow-sm mb-6">
+        <div className="bg-white/5 rounded-3xl border border-white/10 p-4">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[#e4e6eb] font-semibold text-[17px]">Solicitudes de amistad</h3>
-                <span className="text-blue-400 text-sm cursor-pointer hover:underline">Ver todo</span>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/40">Solicitudes</p>
+                <button
+                    onClick={() => route('/saltogram/requests')}
+                    className="text-xs text-blue-300 hover:text-blue-200 transition-colors"
+                >
+                    Ver todo
+                </button>
             </div>
 
             <div className="space-y-4">
-                {requests.map(req => (
+                {displayRequests.map(req => (
                     <div key={req.id} className="flex items-center gap-3">
-                        <a href={`/comunidad/saltogram/u/${req.user.username}`}>
+                        <a href={`/saltogram/u/${req.user.username}`} className="shrink-0">
                             <img
                                 src={req.user.avatar || `https://ui-avatars.com/api/?name=${req.user.displayName}`}
                                 alt={req.user.displayName}
-                                className="w-[60px] h-[60px] rounded-full object-cover border border-white/5"
+                                className="w-10 h-10 rounded-full object-cover border border-white/10"
                             />
                         </a>
                         <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start">
-                                <a href={`/comunidad/saltogram/u/${req.user.username}`} className="font-semibold text-[#e4e6eb] text-[15px] hover:underline truncate block">
-                                    {req.user.displayName}
-                                </a>
-                                <span className="text-xs text-[#b0b3b8] whitespace-nowrap ml-2">
-                                    {new Date(req.createdAt).toLocaleDateString()}
-                                </span>
-                            </div>
-                            <div className="flex gap-2 mt-2">
+                            <a href={`/saltogram/u/${req.user.username}`} className="font-medium text-white text-sm hover:underline truncate block">
+                                {req.user.displayName}
+                            </a>
+                            <div className="flex gap-2 mt-1.5">
                                 <button
                                     onClick={() => handleAccept(req.id)}
-                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-[15px] font-semibold py-1.5 rounded-md transition-colors"
+                                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium py-1.5 rounded-lg transition-colors flex items-center justify-center"
+                                    title="Aceptar"
                                 >
-                                    Confirmar
+                                    <LucideCheck size={14} />
                                 </button>
                                 <button
                                     onClick={() => handleReject(req.id)}
-                                    className="flex-1 bg-[#3a3b3c] hover:bg-[#4e4f50] text-[#e4e6eb] text-[15px] font-semibold py-1.5 rounded-md transition-colors"
+                                    className="flex-1 bg-white/10 hover:bg-white/20 text-white/70 hover:text-white text-xs font-medium py-1.5 rounded-lg transition-colors flex items-center justify-center"
+                                    title="Rechazar"
                                 >
-                                    Eliminar
+                                    <LucideX size={14} />
                                 </button>
                             </div>
                         </div>

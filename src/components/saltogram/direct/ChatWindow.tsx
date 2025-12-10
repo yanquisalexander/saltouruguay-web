@@ -83,7 +83,7 @@ export default function ChatWindow({ otherUser, currentUser, initialMessages }: 
         <div className="bg-[#242526] rounded-xl border border-white/10 overflow-hidden h-full flex flex-col">
             {/* Header */}
             <div className="p-4 border-b border-white/10 flex items-center gap-3 bg-[#242526]">
-                <a href="/comunidad/saltogram/direct" className="text-white/70 hover:text-white">
+                <a href="/saltogram/direct" className="text-white/70 hover:text-white">
                     <LucideArrowLeft size={24} />
                 </a>
                 <img
@@ -111,13 +111,12 @@ export default function ChatWindow({ otherUser, currentUser, initialMessages }: 
                                     </span>
                                 </div>
                             )}
-                            
+
                             <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${
-                                    isMe 
-                                        ? 'bg-blue-600 text-white rounded-br-none' 
+                                <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${isMe
+                                        ? 'bg-blue-600 text-white rounded-br-none'
                                         : 'bg-[#3a3b3c] text-white rounded-bl-none'
-                                }`}>
+                                    }`}>
                                     {/* Story Reply Context */}
                                     {msg.story && (
                                         <div className="mb-2 pb-2 border-b border-white/20">
@@ -141,7 +140,7 @@ export default function ChatWindow({ otherUser, currentUser, initialMessages }: 
                                     {msg.content && (
                                         <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                                     )}
-                                    
+
                                     <p className={`text-[10px] mt-1 text-right ${isMe ? 'text-blue-200' : 'text-white/40'}`}>
                                         {format(new Date(msg.createdAt), "HH:mm")}
                                     </p>
@@ -168,7 +167,7 @@ export default function ChatWindow({ otherUser, currentUser, initialMessages }: 
                         className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-white/50 text-sm"
                     />
                     {newMessage.trim() ? (
-                        <button 
+                        <button
                             onClick={handleSend}
                             disabled={sending}
                             className="text-blue-500 hover:text-blue-400 font-semibold text-sm transition-colors"

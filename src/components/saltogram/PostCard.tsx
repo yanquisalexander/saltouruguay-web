@@ -64,7 +64,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
             if (word.startsWith("#") && word.length > 1) {
                 const tag = word.substring(1);
                 return (
-                    <a key={i} href={`/comunidad/saltogram?tag=${tag}`} className="text-blue-400 hover:text-blue-300 font-medium hover:underline">
+                    <a key={i} href={`/saltogram?tag=${tag}`} className="text-blue-400 hover:text-blue-300 font-medium hover:underline">
                         {word}
                     </a>
                 );
@@ -74,7 +74,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                 // Simple regex to check if it's a valid username format (alphanumeric + underscore)
                 if (/^[a-zA-Z0-9_]+$/.test(username)) {
                     return (
-                        <a key={i} href={`/comunidad/saltogram/u/${username}`} className="text-blue-400 hover:text-blue-300 font-medium hover:underline">
+                        <a key={i} href={`/saltogram/u/${username}`} className="text-blue-400 hover:text-blue-300 font-medium hover:underline">
                             {word}
                         </a>
                     );
@@ -85,7 +85,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
     };
 
     const handleShare = async () => {
-        const url = `${window.location.origin}/comunidad/saltogram/${post.id}`;
+        const url = `${window.location.origin}/saltogram/${post.id}`;
         try {
             await navigator.clipboard.writeText(url);
             toast.success("Enlace copiado al portapapeles");
@@ -123,7 +123,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
             {/* Header */}
             <div className="p-4 flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                    <a href={`/comunidad/saltogram/u/${post.user.username}`}>
+                    <a href={`/saltogram/u/${post.user.username}`}>
                         <img
                             src={post.user.avatar || `https://ui-avatars.com/api/?name=${post.user.displayName}`}
                             alt={post.user.displayName}
@@ -132,7 +132,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                         />
                     </a>
                     <div>
-                        <a href={`/comunidad/saltogram/u/${post.user.username}`} className="font-semibold text-[#e4e6eb] text-[15px] leading-tight hover:underline cursor-pointer flex items-center gap-1">
+                        <a href={`/saltogram/u/${post.user.username}`} className="font-semibold text-[#e4e6eb] text-[15px] leading-tight hover:underline cursor-pointer flex items-center gap-1">
                             {post.user.displayName}
                             {post.user.admin && (
                                 <BadgeCheck size={16} className="text-blue-400 fill-blue-400/10" />
@@ -145,7 +145,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                             )}
                         </a>
                         <div className="flex items-center gap-1 text-[13px] text-[#b0b3b8] mt-0.5">
-                            <a href={`/comunidad/saltogram/${post.id}`} className="hover:underline">{timeAgo}</a>
+                            <a href={`/saltogram/${post.id}`} className="hover:underline">{timeAgo}</a>
                             <span>·</span>
                             <span className="text-xs">@{post.user.username}</span>
                         </div>

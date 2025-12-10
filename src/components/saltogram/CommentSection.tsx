@@ -36,14 +36,14 @@ export default function CommentSection({
 
     useEffect(() => {
         if (!preview || (preview && comments.length === 0 && !initialComments.length)) {
-             fetchComments();
+            fetchComments();
         }
     }, [postId, preview]);
 
     const handleInputChange = async (e: any) => {
         const value = e.target.value;
         setNewComment(value);
-        
+
         const cursor = e.target.selectionStart;
         const textBeforeCursor = value.slice(0, cursor);
         const lastWord = textBeforeCursor.split(/\s/).pop();
@@ -66,10 +66,10 @@ export default function CommentSection({
         const cursor = inputRef.current?.selectionStart || 0;
         const textBeforeCursor = newComment.slice(0, cursor);
         const textAfterCursor = newComment.slice(cursor);
-        
+
         const lastWordStart = textBeforeCursor.lastIndexOf("@");
         const newText = textBeforeCursor.slice(0, lastWordStart) + `@${username} ` + textAfterCursor;
-        
+
         setNewComment(newText);
         setShowMentions(false);
         inputRef.current?.focus();
@@ -127,7 +127,7 @@ export default function CommentSection({
     const handleReply = (commentId: number, username: string) => {
         const comment = comments.find(c => c.id === commentId);
         const targetId = comment?.parentId || commentId;
-        
+
         // If replying to a reply, add mention
         if (comment?.parentId) {
             setNewComment(`@${username} `);
@@ -163,8 +163,8 @@ export default function CommentSection({
                                     onClick={() => handleMentionSelect(user.username)}
                                     className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors text-left"
                                 >
-                                    <img 
-                                        src={user.avatar || `https://ui-avatars.com/api/?name=${user.displayName}`} 
+                                    <img
+                                        src={user.avatar || `https://ui-avatars.com/api/?name=${user.displayName}`}
                                         className="w-8 h-8 rounded-full object-cover"
                                     />
                                     <div>
@@ -182,7 +182,7 @@ export default function CommentSection({
                                 <LucideCornerDownRight size={12} />
                                 Respondiendo a <span className="font-bold text-white">{replyingTo.username}</span>
                             </span>
-                            <button 
+                            <button
                                 type="button"
                                 onClick={() => setReplyingTo(null)}
                                 className="hover:text-white"
@@ -238,16 +238,16 @@ export default function CommentSection({
                 ) : (
                     <>
                         {displayedComments.map((comment) => (
-                            <CommentItem 
-                                key={comment.id} 
-                                comment={comment} 
+                            <CommentItem
+                                key={comment.id}
+                                comment={comment}
                                 allComments={comments}
                                 onReply={handleReply}
                                 preview={preview}
                             />
                         ))}
                         {preview && totalComments > 2 && (
-                            <button 
+                            <button
                                 onClick={onToggleComments}
                                 className="text-white/40 text-sm hover:text-white transition-colors pl-1 mt-2 block"
                             >
@@ -276,7 +276,7 @@ const formatCommentText = (text: string) => {
             // Simple regex to check if it's a valid username format (alphanumeric + underscore)
             if (/^[a-zA-Z0-9_]+$/.test(username)) {
                 return (
-                    <a key={i} href={`/comunidad/saltogram/u/${username}`} className="text-blue-400 hover:underline font-medium">
+                    <a key={i} href={`/saltogram/u/${username}`} className="text-blue-400 hover:underline font-medium">
                         {part}
                     </a>
                 );
@@ -287,12 +287,12 @@ const formatCommentText = (text: string) => {
 };
 
 const CommentItem = ({ comment, allComments, onReply, preview, isReply = false }: CommentItemProps) => {
-    const replies = useMemo(() => 
+    const replies = useMemo(() =>
         allComments
             .filter(c => c.parentId === comment.id)
             .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    , [allComments, comment.id]);
-    
+        , [allComments, comment.id]);
+
     return (
         <div className={`group flex gap-3 animate-fade-in-up ${isReply ? 'ml-10 mt-2' : ''}`}>
             <img
@@ -324,10 +324,10 @@ const CommentItem = ({ comment, allComments, onReply, preview, isReply = false }
                         {formatCommentText(comment.text)}
                     </p>
                 </div>
-                
+
                 {!preview && (
                     <div className="flex items-center gap-4 mt-1 ml-2">
-                        <button 
+                        <button
                             onClick={() => onReply(comment.id, comment.user.username)}
                             className="text-xs text-white/40 hover:text-white font-medium transition-colors"
                         >
@@ -340,13 +340,13 @@ const CommentItem = ({ comment, allComments, onReply, preview, isReply = false }
                 {!preview && replies.length > 0 && (
                     <div className="mt-2">
                         {replies.map(reply => (
-                            <CommentItem 
-                                key={reply.id} 
-                                comment={reply} 
+                            <CommentItem
+                                key={reply.id}
+                                comment={reply}
                                 allComments={allComments}
                                 onReply={onReply}
                                 preview={preview}
-                                isReply={true} 
+                                isReply={true}
                             />
                         ))}
                     </div>

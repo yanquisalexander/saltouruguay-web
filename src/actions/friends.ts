@@ -124,5 +124,38 @@ export const friends = {
 
             return { success: true };
         }
-    })
+    }),
+
+    getRequests: defineAction({
+        handler: async (_, { request }) => {
+            const session = await getSession(request);
+            if (!session?.user?.id) {
+                return { requests: [] };
+            }
+
+            const userId = Number(session.user.id);
+
+            const requests = await client
+                .select({
+                    id: FriendsTable.id,
+                    createdAt: FriendsTable.createdAt,
+                    user: {
+                        id: UsersTable.id,
+                        displayName: UsersTable.displayName,
+                        username: UsersTable.username,
+                        avatar: UsersTable.avatar,
+                    }
+                })
+                .from(FriendsTable)
+                .innerJoin(UsersTable, eq(FriendsTable.userId, UsersTable.id))
+                .where(
+                    and(
+                        eq(FriendsTable.friendId, userId),
+                        eq(FriendsTable.status, "pending")
+                    )
+                );
+
+            return { requests };
+        }
+    }),
 }
