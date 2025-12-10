@@ -281,7 +281,7 @@ export default function SaltogramApp({
                 {!mobileSearchOpen ? (
                     <>
                         <div className="flex items-center gap-3 shrink-0">
-                            <a href="/" className="text-white/60 hover:text-white transition-colors p-1" aria-label="Volver al sitio principal" title="Volver al sitio principal">
+                            <a href="/" data-astro-reload className="text-white/60 hover:text-white transition-colors p-1" aria-label="Volver al sitio principal" title="Volver al sitio principal">
                                 <LucideArrowLeft size={20} />
                             </a>
                             <div className="hidden sm:block">

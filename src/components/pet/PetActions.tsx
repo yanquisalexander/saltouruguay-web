@@ -13,6 +13,7 @@ import {
     LucideX
 } from 'lucide-preact';
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+// import CitrusRainGame from './games/CitrusRainGame';
 
 interface PetActionsProps {
     petId: number;
@@ -28,6 +29,7 @@ interface PetActionsProps {
     onEatStart?: () => void;
     onEatEnd?: () => void;
     onOpenStore?: () => void;
+    onPlayGame?: () => void;
 }
 
 export interface InventoryItem {
@@ -42,13 +44,14 @@ export interface InventoryItem {
     };
 }
 
-export default function PetActions({ petId, stats, isSleeping, onActionComplete, petRef, onEatStart, onEatEnd, onOpenStore }: PetActionsProps) {
+export default function PetActions({ petId, stats, isSleeping, onActionComplete, petRef, onEatStart, onEatEnd, onOpenStore, onPlayGame }: PetActionsProps) {
     const [performing, setPerforming] = useState<string | null>(null);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [selectedFoodItem, setSelectedFoodItem] = useState<number | null>(null);
     const [selectedToyItem, setSelectedToyItem] = useState<number | null>(null);
     const [showFoodSelector, setShowFoodSelector] = useState(false);
     const [showToySelector, setShowToySelector] = useState(false);
+    // const [activeGame, setActiveGame] = useState<'citrus' | null>(null); // Moved to parent
 
     const [foodPage, setFoodPage] = useState(0);
     const ITEMS_PER_PAGE = 8;
@@ -153,13 +156,30 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
         }
     };
 
-    const handlePlay = async () => {
+    const handlePlay = async (scoreBonus: number = 0) => {
+        // If onPlayGame is provided, delegate to parent for game UI
+        if (onPlayGame && scoreBonus === 0) {
+            onPlayGame();
+            return;
+        }
+
         try {
             setPerforming('play');
+            // If scoreBonus is provided, it means it comes from a game
+            // We could pass this to the backend if the action supported it
+            // For now we just play the standard action but maybe we can assume
+            // the game was successful if score > 0
+
             const { data, error } = await actions.pet.playWithPet({ itemId: selectedToyItem || undefined });
 
             if (data?.success) {
-                petToast.success('¡Jugaste con tu mascota!', '🎮');
+                if (scoreBonus > 0) {
+                    petToast.success(`¡Juego terminado! +${scoreBonus} pts`, '🏆');
+                    playSound({ sound: STREAMER_WARS_SOUNDS.LEVEL_UP });
+                } else {
+                    petToast.success('¡Jugaste con tu mascota!', '🎮');
+                }
+
                 if (selectedToyItem) {
                     await loadInventory();
                 }
@@ -177,6 +197,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
             petToast.error(error.message || 'Error al jugar con la mascota');
         } finally {
             setPerforming(null);
+            // setActiveGame(null);
         }
     };
 
@@ -248,6 +269,13 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
 
     return (
         <div className="w-full">
+            {/* {activeGame === 'citrus' && (
+                <CitrusRainGame 
+                    onClose={() => setActiveGame(null)}
+                    onComplete={(score) => handlePlay(score)}
+                />
+            )} */}
+
             {/* Food Selector Bar (Bottom Sheet style) */}
             {showFoodSelector && (
                 <motion.div
@@ -348,13 +376,13 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
                 />
 
                 <ActionButton
-                    onClick={handlePlay}
+                    onClick={() => handlePlay()}
                     disabled={performing !== null || stats.energy < 10 || isSleeping}
                     icon={LucideGamepad2}
                     label="Jugar"
-                    bgClass="bg-yellow-500/10"
-                    colorClass="text-yellow-400"
-                    borderClass="border-yellow-500/20"
+                    bgClass="bg-orange-500/10"
+                    colorClass="text-orange-400"
+                    borderClass="border-orange-500/20"
                 />
 
                 <ActionButton

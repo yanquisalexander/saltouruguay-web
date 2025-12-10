@@ -10,6 +10,8 @@ import AdoptPet from './AdoptPet';
 import { LucideShoppingBag, LucideHome, LucideLoader2 } from 'lucide-preact';
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
+import CitrusRainGame from './games/CitrusRainGame';
+
 interface Pet {
     id: number;
     name: string;
@@ -39,7 +41,7 @@ interface Pet {
     isDead?: boolean;
 }
 
-type ViewMode = 'pet' | 'store';
+type ViewMode = 'pet' | 'store' | 'game-citrus';
 
 export default function PetApp() {
     const [pet, setPet] = useState<Pet | null>(null);
@@ -116,6 +118,25 @@ export default function PetApp() {
         }
     };
 
+    const handleGameComplete = async (score: number) => {
+        setViewMode('pet');
+        if (score > 0) {
+            try {
+                // Play action with bonus
+                const result = await actions.pet.playWithPet({ itemId: undefined });
+                if (result.data?.success) {
+                    toast.success(`¡Juego terminado! +${score} pts`, {
+                        icon: '🏆'
+                    });
+                    playSound({ sound: STREAMER_WARS_SOUNDS.LEVEL_UP });
+                    await loadPet(false);
+                }
+            } catch (error) {
+                console.error('Error saving game result:', error);
+            }
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-96">
@@ -180,6 +201,13 @@ export default function PetApp() {
 
             {/* Content */}
             <div className="flex-1 flex flex-col w-full h-full relative">
+                {viewMode === 'game-citrus' && (
+                    <CitrusRainGame
+                        onClose={() => setViewMode('pet')}
+                        onComplete={handleGameComplete}
+                    />
+                )}
+
                 {viewMode === 'pet' ? (
                     <div className="flex-1 flex flex-col max-w-md mx-auto w-full h-full p-4 relative">
                         {/* Header / Stats */}
@@ -237,14 +265,15 @@ export default function PetApp() {
                                 onEatStart={() => setIsEating(true)}
                                 onEatEnd={() => setIsEating(false)}
                                 onOpenStore={() => setViewMode('store')}
+                                onPlayGame={() => setViewMode('game-citrus')}
                             />
                         </div>
                     </div>
-                ) : (
+                ) : viewMode === 'store' ? (
                     <div className="h-full overflow-y-auto bg-black/80 backdrop-blur-xl">
                         <PetStore onItemPurchased={handlePetAction} />
                     </div>
-                )}
+                ) : null}
             </div>
         </div>
     );
