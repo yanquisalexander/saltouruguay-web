@@ -1,5 +1,5 @@
 import { client } from "@/db/client";
-import { SaltogramPostsTable, UsersTable, FriendsTable } from "@/db/schema";
+import { SaltogramPostsTable, UsersTable, FriendsTable, SaltogramReactionsTable, SaltogramCommentsTable } from "@/db/schema";
 import { uploadImage, validateImage } from "@/services/saltogram-storage";
 import { awardCoins, SALTOGRAM_REWARDS } from "@/services/saltogram-rewards";
 import type { APIContext } from "astro";
@@ -116,7 +116,57 @@ export const GET = async ({ request, url }: APIContext) => {
 
         const posts = await query.limit(limit).offset(offset);
 
-        return new Response(JSON.stringify({ posts }), {
+        // Enrich posts with user specific data and details to avoid N+1 fetches
+        const enrichedPosts = await Promise.all(posts.map(async (post) => {
+            // 1. Get user reaction
+            let userReaction = null;
+            if (userId) {
+                const result = await client
+                    .select({ emoji: SaltogramReactionsTable.emoji })
+                    .from(SaltogramReactionsTable)
+                    .where(and(
+                        eq(SaltogramReactionsTable.postId, post.id),
+                        eq(SaltogramReactionsTable.userId, userId)
+                    ))
+                    .limit(1);
+                if (result.length > 0) userReaction = result[0].emoji;
+            }
+
+            // 2. Get recent reactions (for avatars)
+            const recentReactions = await client
+                .select({
+                    userId: UsersTable.id,
+                    displayName: UsersTable.displayName,
+                    username: UsersTable.username,
+                    avatar: UsersTable.avatar,
+                    emoji: SaltogramReactionsTable.emoji,
+                })
+                .from(SaltogramReactionsTable)
+                .innerJoin(UsersTable, eq(SaltogramReactionsTable.userId, UsersTable.id))
+                .where(eq(SaltogramReactionsTable.postId, post.id))
+                .orderBy(desc(SaltogramReactionsTable.createdAt))
+                .limit(5);
+
+            // 3. Get reactions stats (counts per emoji)
+            const reactionsStats = await client
+                .select({
+                    emoji: SaltogramReactionsTable.emoji,
+                    count: sql<number>`COUNT(*)::int`,
+                })
+                .from(SaltogramReactionsTable)
+                .where(eq(SaltogramReactionsTable.postId, post.id))
+                .groupBy(SaltogramReactionsTable.emoji)
+                .orderBy(sql`count DESC`);
+
+            return {
+                ...post,
+                userReaction,
+                recentReactions,
+                reactions: reactionsStats,
+            };
+        }));
+
+        return new Response(JSON.stringify({ posts: enrichedPosts }), {
             status: 200,
             headers: {
                 "Content-Type": "application/json",

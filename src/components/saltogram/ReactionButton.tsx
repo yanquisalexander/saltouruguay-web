@@ -1,43 +1,34 @@
 import { useState, useEffect, useRef } from "preact/hooks";
-import type { SaltogramReaction } from "@/types/saltogram";
+import type { SaltogramReaction, RecentReaction } from "@/types/saltogram";
 import { toast } from "sonner";
 import { LucideHeart, LucideLoader2 } from "lucide-preact";
 
 interface ReactionButtonProps {
     postId: number;
     currentUserId?: number;
-}
-
-interface RecentReaction {
-    userId: number;
-    displayName: string;
-    username: string;
-    avatar: string | null;
-    emoji: string;
+    initialData?: {
+        reactions?: SaltogramReaction[];
+        userReaction?: string | null;
+        recentReactions?: RecentReaction[];
+    };
 }
 
 const EMOJIS = ["❤️", "🔥", "😂", "👍", "😮", "😢", "😡"];
 
-export default function ReactionButton({ postId, currentUserId }: ReactionButtonProps) {
-    const [reactions, setReactions] = useState<SaltogramReaction[]>([]);
-    const [userReaction, setUserReaction] = useState<string | null>(null);
-    const [recentReactions, setRecentReactions] = useState<RecentReaction[]>([]);
+export default function ReactionButton({ postId, currentUserId, initialData }: ReactionButtonProps) {
+    const [reactions, setReactions] = useState<SaltogramReaction[]>(initialData?.reactions || []);
+    const [userReaction, setUserReaction] = useState<string | null>(initialData?.userReaction || null);
+    const [recentReactions, setRecentReactions] = useState<RecentReaction[]>(initialData?.recentReactions || []);
     const [showPicker, setShowPicker] = useState(false);
     const [loading, setLoading] = useState(false);
     const [reactingTo, setReactingTo] = useState<string | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        fetchReactions();
-
-        const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                setShowPicker(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [postId]);
+        if (!initialData) {
+            fetchReactions();
+        }
+    }, [postId, initialData]);
 
     const fetchReactions = async () => {
         try {
@@ -96,16 +87,16 @@ export default function ReactionButton({ postId, currentUserId }: ReactionButton
     // Generate tooltip text
     const getTooltipText = () => {
         if (recentReactions.length === 0) return "";
-        
+
         const names = recentReactions.map(r => r.userId === currentUserId ? "Tú" : r.displayName);
         const uniqueNames = [...new Set(names)]; // Remove duplicates if any (though API returns unique users usually, but logic might vary)
-        
+
         // We want to show a few names
         const displayNames = uniqueNames.slice(0, 5);
         const remaining = totalReactions - displayNames.length; // This is an approximation as totalReactions is sum of counts, and uniqueNames is users. 
         // Actually totalReactions is correct count of reactions. 
         // If one user can only react once per post (which seems to be the case in API logic: "Check if user already reacted... Remove reaction... Add reaction"), then totalReactions == totalUsers.
-        
+
         let text = displayNames.join(", ");
         if (totalReactions > displayNames.length) {
             text += ` y ${totalReactions - displayNames.length} más`;
@@ -131,8 +122,8 @@ export default function ReactionButton({ postId, currentUserId }: ReactionButton
                 <div className="flex items-center -space-x-1.5 overflow-hidden">
                     {hasReactions ? (
                         topEmojis.map((emoji, idx) => (
-                            <div 
-                                key={emoji} 
+                            <div
+                                key={emoji}
                                 className="relative z-10 w-5 h-5 flex items-center justify-center bg-[#242526] rounded-full ring-2 ring-[#242526]"
                                 style={{ zIndex: 3 - idx }}
                             >

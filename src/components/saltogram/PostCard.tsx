@@ -256,7 +256,15 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
             <div className="px-4 py-1 border-t border-white/10">
                 <div className="flex items-center justify-between gap-1">
                     <div className="flex-1 flex justify-center hover:bg-white/5 rounded-lg py-1 transition-colors">
-                        <ReactionButton postId={post.id} currentUserId={currentUserId} />
+                        <ReactionButton
+                            postId={post.id}
+                            currentUserId={currentUserId}
+                            initialData={{
+                                reactions: post.reactions,
+                                userReaction: post.userReaction,
+                                recentReactions: post.recentReactions
+                            }}
+                        />
                     </div>
 
                     <button

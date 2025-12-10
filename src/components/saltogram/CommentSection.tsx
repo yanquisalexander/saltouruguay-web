@@ -21,12 +21,12 @@ export default function CommentSection({
     onCommentAdded,
     currentUserId,
     preview = false,
-    initialComments = [],
+    initialComments,
     onToggleComments,
     totalComments = 0,
 }: CommentSectionProps) {
-    const [comments, setComments] = useState<SaltogramComment[]>(initialComments);
-    const [loading, setLoading] = useState(!initialComments.length && !preview); // Don't load if preview and no initial comments (maybe empty) or if we have initial comments
+    const [comments, setComments] = useState<SaltogramComment[]>(initialComments || []);
+    const [loading, setLoading] = useState(!initialComments && !preview);
     const [submitting, setSubmitting] = useState(false);
     const [newComment, setNewComment] = useState("");
     const [replyingTo, setReplyingTo] = useState<{ id: number; username: string } | null>(null);
@@ -35,9 +35,16 @@ export default function CommentSection({
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (!preview || (preview && comments.length === 0 && !initialComments.length)) {
-            fetchComments();
-        }
+        // Optimization: Don't fetch if we have initial comments in preview mode
+        if (preview && initialComments) return;
+
+        // Optimization: Don't fetch if there are no comments at all
+        if (totalComments === 0) return;
+
+        // If expanded (not preview), fetch only if we don't have all comments
+        if (!preview && comments.length >= totalComments && totalComments > 0) return;
+
+        fetchComments();
     }, [postId, preview]);
 
     const handleInputChange = async (e: any) => {

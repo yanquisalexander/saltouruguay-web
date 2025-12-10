@@ -7,6 +7,14 @@ export interface SaltogramUser {
     twitchTier?: number | null;
 }
 
+export interface RecentReaction {
+    userId: number;
+    displayName: string;
+    username: string;
+    avatar: string | null;
+    emoji: string;
+}
+
 export interface SaltogramPost {
     id: number;
     userId: number;
@@ -21,6 +29,10 @@ export interface SaltogramPost {
     reactionsCount: number;
     commentsCount: number;
     latestComments?: SaltogramComment[];
+    // Optimized fields
+    userReaction?: string | null;
+    recentReactions?: RecentReaction[];
+    reactions?: SaltogramReaction[];
 }
 
 export interface SaltogramReaction {
