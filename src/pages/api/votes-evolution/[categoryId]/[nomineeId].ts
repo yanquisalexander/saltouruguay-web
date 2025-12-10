@@ -21,12 +21,13 @@ export const GET: APIRoute = async ({ params }) => {
             .select({
                 date: sql<string>`TO_CHAR(${VotesTable.createdAt}, 'YYYY-MM-DD')`,
                 points: sql<number>`SUM(
-          CASE 
-              WHEN ${VotesTable.ranking} = 0 THEN 1
-              WHEN ${VotesTable.ranking} = 1 THEN 0.5
-              ELSE 0
-          END
-        )`
+                  CASE 
+                      WHEN ${VotesTable.ranking} = 0 THEN 1
+                      WHEN ${VotesTable.ranking} = 1 THEN 0.5
+                      ELSE 0
+                  END
+                )`,
+                count: sql<number>`COUNT(*)`
             })
             .from(VotesTable)
             .where(
@@ -41,26 +42,36 @@ export const GET: APIRoute = async ({ params }) => {
             .orderBy(sql`TO_CHAR(${VotesTable.createdAt}, 'YYYY-MM-DD')`);
 
         const dailyPoints: Record<string, number> = {};
+        const dailyVotes: Record<string, number> = {};
+
         votes.forEach(v => {
             dailyPoints[v.date] = Number(v.points);
+            dailyVotes[v.date] = Number(v.count);
         });
 
         const labels: string[] = [];
-        const data: number[] = [];
-        let cumulative = 0;
+        const pointsData: number[] = [];
+        const votesData: number[] = [];
+
+        let cumulativePoints = 0;
+        let cumulativeVotes = 0;
 
         // Loop from Dec 1 to Dec 23
         for (let d = 1; d <= 23; d++) {
             const dateStr = `2025-12-${d.toString().padStart(2, '0')}`;
 
             const points = dailyPoints[dateStr] || 0;
-            cumulative += points;
+            const votesCount = dailyVotes[dateStr] || 0;
+
+            cumulativePoints += points;
+            cumulativeVotes += votesCount;
 
             labels.push(`${d} Dic`);
-            data.push(cumulative);
+            pointsData.push(cumulativePoints);
+            votesData.push(cumulativeVotes);
         }
 
-        return new Response(JSON.stringify({ labels, data }), {
+        return new Response(JSON.stringify({ labels, pointsData, votesData }), {
             headers: { "Content-Type": "application/json" }
         });
     } catch (error) {
