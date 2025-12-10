@@ -52,12 +52,14 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     const isOwner = currentUser?.id && Number(currentUser.id) === story.userId;
     const music = story.metadata?.music;
     const isMentioned = story.metadata?.texts?.some((t: any) => {
-        if (t.mentionUserId && String(t.mentionUserId) === currentUser?.id) return true;
+        if (t.mentionUserId && String(t.mentionUserId) === String(currentUser?.id)) return true;
         if (t.mentions && Array.isArray(t.mentions)) {
-            return t.mentions.some((m: any) => String(m.userId) === currentUser?.id);
+            return t.mentions.some((m: any) => String(m.userId) === String(currentUser?.id));
         }
         return false;
     });
+    console.log("isMentioned:", isMentioned);
+    console.log("currentUser:", currentUser);
     const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
 
     // Process viewers list (merge views and likes)
@@ -512,10 +514,10 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                             onClick={(e) => {
                                 if (text.mentionUserId) {
                                     e.stopPropagation();
-                                    window.location.href = `/saltogram/profile/${text.mentionUsername}`;
+                                    window.location.href = `/saltogram/u/${text.mentionUsername}`;
                                 } else if (text.mentions && text.mentions.length > 0) {
                                     e.stopPropagation();
-                                    window.location.href = `/saltogram/profile/${text.mentions[0].username}`;
+                                    window.location.href = `/saltogram/u/${text.mentions[0].username}`;
                                 }
                             }}
                         >
@@ -543,7 +545,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                                     e.stopPropagation();
                                     toast.info("Función de repostear próximamente");
                                 }}
-                                className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-full font-bold text-sm shadow-lg flex items-center gap-2 transition-transform active:scale-95"
+                                className="bg-white hover:bg-zinc-200 text-black px-6 py-2 rounded-full font-bold text-sm shadow-lg flex items-center gap-2 transition-transform active:scale-95"
                             >
                                 <LucideSend size={16} className="rotate-45" />
                                 Añadir a tu historia
