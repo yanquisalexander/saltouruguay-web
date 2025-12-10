@@ -1,6 +1,7 @@
 import { $ } from "@/lib/dom-selector";
 import type { Session } from "@auth/core/types";
 import { signOut } from "auth-astro/client";
+import { NOMINEES } from "@/awards/Nominees";
 import {
     LucideLoader2,
     LucideLogOut,
@@ -8,6 +9,7 @@ import {
     LucideLayoutDashboard,
     LucideMessageSquare,
     LucideChevronDown,
+    LucideTrophy,
     LucideGamepad2
 } from "lucide-preact";
 import { useState, useEffect, useRef } from "preact/hooks";
@@ -31,6 +33,8 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [user, setUser] = useState<Session['user'] | null>(initialUser);
+
+    const isNominated = user && NOMINEES[user.username as keyof typeof NOMINEES];
 
     // Hook condicional seguro: Si no usas pusher, puedes comentar esto, 
     // pero asumo que está configurado según tu código anterior.
@@ -152,10 +156,14 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                         <img
                             src={user.image || undefined}
                             alt={user.name || "User"}
-                            className="size-9 rounded-full object-cover border border-white/10 shadow-sm group-hover:scale-105 transition-transform"
+                            className={`size-9 rounded-full object-cover border shadow-sm group-hover:scale-105 transition-transform ${isNominated
+                                ? 'border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.5)]'
+                                : 'border-white/10'
+                                }`}
                         />
-                        {/* Indicador de Estado (Online) */}
-                        <div className="absolute bottom-0 right-0 size-2.5 bg-green-500 border-2 border-black rounded-full"></div>
+                        {/* Indicador de Estado (Online / Nominated) */}
+                        <div className={`absolute bottom-0 right-0 size-2.5 border-2 border-black rounded-full ${isNominated ? 'bg-amber-400' : 'bg-green-500'
+                            }`}></div>
                     </div>
 
                     <LucideChevronDown size={14} className={`text-white/50 transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} />
@@ -163,11 +171,13 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
 
                 {/* Dropdown Menu Flotante */}
                 {dropdownOpen && (
-                    <div className="absolute top-full right-0 mt-3 w-72 origin-top-right rounded-2xl bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 shadow-2xl ring-1 ring-white/5 z-50 animate-in fade-in zoom-in-95 duration-200">
+                    <div className={`absolute top-full right-0 mt-3 w-72 origin-top-right rounded-2xl bg-[#0a0a0a]/95 backdrop-blur-xl border shadow-2xl ring-1 ring-white/5 z-50 animate-in fade-in zoom-in-95 duration-200 ${isNominated ? 'border-amber-400/50 shadow-[0_0_40px_rgba(251,191,36,0.15)]' : 'border-white/10'
+                        }`}>
 
                         {/* Header del Perfil */}
                         <div className="relative p-5 border-b border-white/5 overflow-hidden rounded-t-2xl">
-                            <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-transparent"></div>
+                            <div className={`absolute inset-0 ${isNominated ? 'bg-gradient-to-br from-amber-900/20 via-transparent to-transparent' : 'bg-gradient-to-br from-purple-900/20 via-transparent to-transparent'
+                                }`}></div>
                             <div className="relative z-10 flex items-center gap-4">
                                 <img
                                     src={user.image || undefined}
@@ -181,6 +191,12 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                                     <span className="font-rubik text-xs text-white/40 truncate">
                                         {user.email}
                                     </span>
+                                    {isNominated && (
+                                        <div className="flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30">
+                                            <LucideTrophy size={10} className="text-amber-400" />
+                                            <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Nominado</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
