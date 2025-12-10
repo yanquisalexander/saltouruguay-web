@@ -1,8 +1,14 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import {
+  LucideShield,
+  LucideServer,
+  LucideLock,
+  LucideEye,
+  LucideDatabase,
+} from "lucide-preact";
 
 const LATEST_UPDATE_DATE = new Date("2024-11-19").toLocaleDateString("es-UY", {
-  timeZone: "America/Montevideo",
   year: "numeric",
   month: "long",
   day: "numeric",
@@ -11,134 +17,199 @@ const LATEST_UPDATE_DATE = new Date("2024-11-19").toLocaleDateString("es-UY", {
 export const prerender = true;
 ---
 
-<Layout title="Políticas de Privacidad">
-  <article class="prose prose-invert max-w-2xl mx-auto mt-8">
-    <header>
-      <h1 class="text-2xl">Políticas de Privacidad</h1>
-      <p>
-        Última actualización: {LATEST_UPDATE_DATE}
-      </p>
+<Layout
+  title="Políticas de Privacidad"
+  description="Cómo protegemos tus datos en Salto Uruguay Server."
+>
+  {/* Fondo Ambiental */}
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"
+    >
+    </div>
+    <div
+      class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-blue-900/10 blur-[120px] rounded-full pointer-events-none"
+    >
+    </div>
+  </div>
+
+  <main class="max-w-4xl mx-auto px-4 py-16">
+    {/* HEADER */}
+    <header class="text-center mb-16 space-y-4">
+      <div
+        class="inline-flex items-center justify-center p-4 bg-blue-500/10 rounded-2xl text-blue-400 mb-2 border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.15)]"
+      >
+        <LucideShield size={32} />
+      </div>
+      <h1
+        class="text-4xl md:text-5xl font-anton text-white uppercase tracking-wide"
+      >
+        Política de <span
+          class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400"
+          >Privacidad</span
+        >
+      </h1>
+      <div
+        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/40 text-xs font-mono"
+      >
+        <span>ÚLTIMA ACTUALIZACIÓN:</span>
+        <span class="text-white">{LATEST_UPDATE_DATE}</span>
+      </div>
     </header>
 
-    <p>
-      En Salto Uruguay Server valoramos y respetamos tu privacidad. Esta
-      política de privacidad describe cómo recopilamos, utilizamos y protegemos
-      tu información al interactuar con nuestros servicios. Al utilizar nuestra
-      web, aceptas las prácticas descritas en esta política.
-    </p>
+    {/* CONTENIDO PRINCIPAL */}
+    <div class="space-y-12">
+      {/* Intro */}
+      <div class="prose prose-invert prose-lg max-w-none text-white/70">
+        <p>
+          En <strong>Salto Uruguay Server</strong> valoramos y respetamos tu privacidad.
+          Esta política describe con transparencia cómo recopilamos, utilizamos y
+          protegemos tu información al interactuar con nuestros servicios. Al utilizar
+          nuestra web, aceptas las prácticas descritas aquí.
+        </p>
+      </div>
 
-    <h2>1. Información que Recopilamos</h2>
-    <p>
-      Utilizamos <strong>Twitch</strong> como método de autenticación para facilitar
-      el inicio de sesión en nuestra plataforma. Solo recopilamos información pública
-      de tu cuenta de Twitch, como:
-    </p>
-    <ul>
-      <li><strong>ID de usuario</strong></li>
-      <li><strong>Nombre de usuario</strong></li>
-      <li><strong>Avatar</strong></li>
-    </ul>
-    <p>
-      No accedemos a datos privados de tu cuenta ni solicitamos permisos
-      adicionales que los necesarios para identificarte en nuestra plataforma.
-    </p>
+      {/* Sección 1: Datos Recopilados */}
+      <section
+        class="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-xl relative overflow-hidden group hover:border-white/20 transition-colors"
+      >
+        <div
+          class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity"
+        >
+          <LucideEye size={120} />
+        </div>
+        <h2
+          class="text-2xl font-anton text-white uppercase mb-6 flex items-center gap-3"
+        >
+          <span class="text-blue-500">01.</span> Información que Recopilamos
+        </h2>
+        <p class="text-white/60 mb-6 font-rubik">
+          Utilizamos <strong>Twitch</strong> como método único de autenticación.
+          No almacenamos contraseñas. Solo recopilamos los siguientes datos públicos
+          de tu perfil:
+        </p>
+        <ul class="grid sm:grid-cols-3 gap-4">
+          {
+            ["ID de Usuario", "Nombre Público", "Avatar / Logo"].map((item) => (
+              <li class="bg-white/5 border border-white/5 rounded-xl p-4 text-center font-bold text-white text-sm">
+                {item}
+              </li>
+            ))
+          }
+        </ul>
+      </section>
 
-    <h2>2. Uso de la Información</h2>
-    <p>
-      La información que recopilamos es utilizada para los siguientes fines:
-    </p>
-    <ul>
-      <li>
-        <strong>Identificación:</strong> Usamos tu ID de usuario y nombre de usuario
-        de Twitch para registrarte y autenticarte en nuestra plataforma.
-      </li>
-      <li>
-        <strong>Personalización:</strong> Utilizamos tu avatar y nombre de usuario
-        para mejorar tu experiencia en la plataforma.
-      </li>
-    </ul>
-    <p>
-      No compartimos tu información personal con terceros, excepto cuando es
-      necesario para proporcionar el servicio, cumplir con la ley o proteger
-      nuestros derechos.
-    </p>
+      {/* Sección 2: Uso de Info */}
+      <section class="grid md:grid-cols-2 gap-6">
+        <div class="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8">
+          <h2
+            class="text-xl font-anton text-white uppercase mb-4 flex items-center gap-2"
+          >
+            <span class="text-blue-500">02.</span> Finalidad
+          </h2>
+          <ul
+            class="space-y-4 text-white/60 text-sm font-rubik list-disc pl-4 marker:text-blue-500"
+          >
+            <li>
+              <strong>Identificación:</strong> Para crear tu perfil único en la comunidad
+              y vincular tus estadísticas.
+            </li>
+            <li>
+              <strong>Personalización:</strong> Para mostrar tu avatar y nombre en
+              ránkings y torneos.
+            </li>
+            <li>
+              <strong>Seguridad:</strong> Para gestionar accesos y prevenir abusos
+              en la plataforma.
+            </li>
+          </ul>
+        </div>
+        <div
+          class="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 flex flex-col justify-center bg-gradient-to-br from-blue-900/10 to-transparent"
+        >
+          <div class="flex items-center gap-3 mb-4 text-blue-400">
+            <LucideLock size={24} />
+            <span class="font-bold uppercase tracking-widest text-xs"
+              >Privacidad Garantizada</span
+            >
+          </div>
+          <p class="text-white/80 font-rubik italic">
+            "No compartimos tu información personal con terceros, excepto cuando
+            es estrictamente necesario para proporcionar el servicio o cumplir
+            con la ley."
+          </p>
+        </div>
+      </section>
 
-    <h2>3. Servicios de Terceros</h2>
-    <p>
-      Para operar nuestro sitio web y gestionar nuestros servicios, utilizamos
-      proveedores de terceros que pueden procesar tu información en nuestro
-      nombre. Estos proveedores incluyen:
-    </p>
-    <ul>
-      <li>
-        <strong>Vercel:</strong> Proveedor de hosting donde se aloja nuestro sitio
-        web.
-      </li>
-      <li>
-        <strong>Neon:</strong> Utilizamos este servicio para gestionar nuestra base
-        de datos y almacenar información pública sobre nuestros usuarios.
-      </li>
-      <li>
-        <strong>Upstash:</strong> Utilizamos Redis a través de Upstash para la gestión
-        de caché y optimización del rendimiento de nuestro sitio.
-      </li>
-    </ul>
-    <p>
-      Estos proveedores están sujetos a sus propias políticas de privacidad y
-      prácticas de seguridad.
-    </p>
+      {/* Sección 3: Stack Tecnológico */}
+      <section>
+        <h2
+          class="text-2xl font-anton text-white uppercase mb-6 flex items-center gap-3 px-2"
+        >
+          <span class="text-blue-500">03.</span> Proveedores de Infraestructura
+        </h2>
+        <div class="grid sm:grid-cols-3 gap-6">
+          {
+            [
+              {
+                name: "Vercel",
+                role: "Hosting & Edge Network",
+                icon: LucideServer,
+              },
+              {
+                name: "Neon",
+                role: "Base de Datos PostgreSQL",
+                icon: LucideDatabase,
+              },
+              {
+                name: "Upstash",
+                role: "Redis Caching & Rate Limit",
+                icon: LucideServer,
+              },
+            ].map((tech) => (
+              <div class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 hover:bg-white/5 transition-colors">
+                <tech.icon class="text-blue-500 mb-4" size={24} />
+                <h3 class="text-white font-bold text-lg mb-1">{tech.name}</h3>
+                <p class="text-white/40 text-xs uppercase tracking-wider">
+                  {tech.role}
+                </p>
+              </div>
+            ))
+          }
+        </div>
+        <p class="mt-4 text-xs text-white/30 text-center font-mono">
+          Estos proveedores cumplen con estrictos estándares de seguridad y
+          procesan datos bajo nuestras instrucciones.
+        </p>
+      </section>
 
-    <h2>4. Protección de la Información</h2>
-    <p>
-      Nos comprometemos a proteger la información de nuestros usuarios y tomamos
-      medidas razonables para salvaguardar tu información pública. Sin embargo,
-      ningún método de transmisión de datos por Internet o método de
-      almacenamiento electrónico es completamente seguro, por lo que no podemos
-      garantizar su absoluta seguridad.
-    </p>
-
-    <h2>5. Retención de la Información</h2>
-    <p>
-      La información pública que recopilamos se mantiene en nuestra base de
-      datos durante el tiempo que sea necesario para proporcionarte nuestros
-      servicios, o hasta que decidas eliminar tu cuenta de la plataforma.
-    </p>
-
-    <h2>6. Tus Derechos</h2>
-    <p>Tienes derecho a:</p>
-    <ul>
-      <li>
-        <strong>Acceder</strong> a los datos públicos que tenemos almacenados.
-      </li>
-      <li>
-        <strong>Solicitar la eliminación</strong> de tus datos si decides dejar de
-        utilizar nuestra plataforma.
-      </li>
-    </ul>
-    <p>
-      Para cualquier solicitud relacionada con tus datos personales, puedes
-      ponerte en contacto con nosotros a través del formulario de contacto en
-      nuestro sitio.
-    </p>
-
-    <h2>7. Cambios a esta Política de Privacidad</h2>
-    <p>
-      Nos reservamos el derecho a actualizar esta política de privacidad en
-      cualquier momento. Te notificaremos sobre cualquier cambio publicando la
-      nueva política de privacidad en nuestro sitio. Recomendamos revisar esta
-      política periódicamente para estar informado sobre cómo protegemos tu
-      información.
-    </p>
-
-    <h2>8. Contacto</h2>
-    <p>
-      Si tienes preguntas o inquietudes sobre esta política de privacidad, no
-      dudes en contactarnos a través de nuestro sitio web.
-    </p>
-
-    <p>
-      Gracias por confiar en Salto Uruguay Server. Nos comprometemos a proteger
-      tu privacidad y a garantizar una experiencia segura en nuestra plataforma.
-    </p>
-  </article>
+      {/* Sección 4: Derechos */}
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8">
+        <h2
+          class="text-2xl font-anton text-white uppercase mb-4 flex items-center gap-3"
+        >
+          <span class="text-blue-500">04.</span> Tus Derechos y Control
+        </h2>
+        <p class="text-white/60 mb-4 font-rubik">
+          Eres el dueño de tus datos. En cualquier momento puedes:
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <span
+            class="px-4 py-2 rounded-lg bg-green-500/10 text-green-400 border border-green-500/20 text-sm font-bold"
+          >
+            Acceder a tu información
+          </span>
+          <span
+            class="px-4 py-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 text-sm font-bold"
+          >
+            Solicitar eliminación total
+          </span>
+        </div>
+        <p class="mt-6 text-sm text-white/40">
+          Para ejercer estos derechos, contáctanos a través de nuestro Discord
+          oficial o formulario de contacto.
+        </p>
+      </section>
+    </div>
+  </main>
 </Layout>

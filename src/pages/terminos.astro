@@ -1,0 +1,197 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import {
+  LucideFileText,
+  LucideGavel,
+  LucideUsers,
+  LucideAlertTriangle,
+  LucideCopyright,
+} from "lucide-preact";
+
+const LATEST_UPDATE_DATE = new Date().toLocaleDateString("es-UY", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+export const prerender = true;
+---
+
+<Layout
+  title="Términos y Condiciones"
+  description="Reglas de juego y términos de servicio de Salto Uruguay Server."
+>
+  {/* Fondo Ambiental */}
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"
+    >
+    </div>
+    <div
+      class="absolute bottom-0 right-1/2 translate-x-1/2 w-[600px] h-[400px] bg-purple-900/10 blur-[120px] rounded-full pointer-events-none"
+    >
+    </div>
+  </div>
+
+  <main class="max-w-4xl mx-auto px-4 py-16">
+    {/* HEADER */}
+    <header class="text-center mb-16 space-y-4">
+      <div
+        class="inline-flex items-center justify-center p-4 bg-purple-500/10 rounded-2xl text-purple-400 mb-2 border border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.15)]"
+      >
+        <LucideFileText size={32} />
+      </div>
+      <h1
+        class="text-4xl md:text-5xl font-anton text-white uppercase tracking-wide"
+      >
+        Términos y <span
+          class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400"
+          >Condiciones</span
+        >
+      </h1>
+      <p class="text-white/50 font-rubik max-w-xl mx-auto">
+        Por favor, lee atentamente estas condiciones antes de utilizar nuestros
+        servicios. Son las reglas del juego para mantener una comunidad sana.
+      </p>
+      <div
+        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/40 text-xs font-mono"
+      >
+        <span>VIGENCIA DESDE:</span>
+        <span class="text-white">{LATEST_UPDATE_DATE}</span>
+      </div>
+    </header>
+
+    {/* CONTENIDO PRINCIPAL */}
+    <div class="space-y-8">
+      {/* 1. Aceptación */}
+      <section
+        class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8 hover:border-purple-500/30 transition-colors"
+      >
+        <h2
+          class="text-xl font-anton text-white uppercase mb-4 flex items-center gap-3"
+        >
+          <LucideGavel className="text-purple-500" size={24} /> 1. Aceptación de
+          los Términos
+        </h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            Al acceder y utilizar el sitio web <strong
+              >Salto Uruguay Server</strong
+            > y sus servicios asociados (incluyendo servidores de juegos y Discord),
+            aceptas estar legalmente vinculado por estos Términos y Condiciones.
+            Si no estás de acuerdo con alguna parte de estos términos, no podrás
+            acceder al servicio.
+          </p>
+        </div>
+      </section>
+
+      {/* 2. Código de Conducta (CRÍTICO PARA GAMING) */}
+      <section
+        class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8 hover:border-purple-500/30 transition-colors"
+      >
+        <h2
+          class="text-xl font-anton text-white uppercase mb-6 flex items-center gap-3"
+        >
+          <LucideUsers className="text-purple-500" size={24} /> 2. Código de Conducta
+        </h2>
+        <p class="text-white/70 text-sm mb-4">
+          Para mantener un ambiente divertido y seguro, queda terminantemente
+          prohibido:
+        </p>
+        <div class="grid sm:grid-cols-2 gap-4">
+          {
+            [
+              "Comportamiento tóxico, acoso o discriminación.",
+              "Uso de cheats, hacks o exploits en torneos.",
+              "Spam o publicidad no autorizada.",
+              "Suplantación de identidad de staff u otros usuarios.",
+              "Contenido NSFW o inapropiado para menores.",
+              "Doxing o compartir info privada de terceros.",
+            ].map((rule) => (
+              <div class="flex items-start gap-3 p-3 rounded-lg bg-red-500/5 border border-red-500/10 text-red-200/80 text-sm">
+                <LucideAlertTriangle size={16} class="shrink-0 mt-0.5" />
+                <span>{rule}</span>
+              </div>
+            ))
+          }
+        </div>
+        <p class="mt-4 text-xs text-white/40 italic">
+          El incumplimiento de estas normas puede resultar en la suspensión
+          temporal o permanente de tu cuenta.
+        </p>
+      </section>
+
+      {/* 3. Cuentas y Seguridad */}
+      <section
+        class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8 hover:border-purple-500/30 transition-colors"
+      >
+        <h2 class="text-xl font-anton text-white uppercase mb-4">
+          3. Cuentas y Seguridad
+        </h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            Eres responsable de salvaguardar la cuenta que utilizas para acceder
+            al Servicio (Twitch/Discord) y de cualquier actividad o acción bajo
+            tu cuenta. Salto Uruguay Server no se hace responsable de pérdidas
+            causadas por accesos no autorizados resultantes de tu negligencia en
+            la seguridad.
+          </p>
+        </div>
+      </section>
+
+      {/* 4. Propiedad Intelectual */}
+      <section
+        class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8 hover:border-purple-500/30 transition-colors"
+      >
+        <h2
+          class="text-xl font-anton text-white uppercase mb-4 flex items-center gap-3"
+        >
+          <LucideCopyright className="text-purple-500" size={24} /> 4. Propiedad
+          Intelectual
+        </h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            El Servicio y su contenido original (excluyendo el contenido
+            proporcionado por los usuarios), características y funcionalidad son
+            y seguirán siendo propiedad exclusiva de Salto Uruguay Server y sus
+            licenciantes.
+          </p>
+          <p>
+            El contenido generado por usuarios (clips, comentarios) sigue siendo
+            propiedad del usuario, pero nos otorgas una licencia para mostrarlo
+            en la plataforma.
+          </p>
+        </div>
+      </section>
+
+      {/* 5. Limitación de Responsabilidad */}
+      <section
+        class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8 hover:border-purple-500/30 transition-colors"
+      >
+        <h2 class="text-xl font-anton text-white uppercase mb-4">
+          5. Limitación de Responsabilidad
+        </h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            En ningún caso Salto Uruguay Server, ni sus directores, empleados,
+            socios, agentes, proveedores o afiliados, serán responsables de
+            daños indirectos, incidentales, especiales, consecuentes o
+            punitivos, incluyendo, sin limitación, pérdida de beneficios, datos,
+            uso, buena voluntad u otras pérdidas intangibles.
+          </p>
+        </div>
+      </section>
+
+      {/* Footer Legal */}
+      <div class="border-t border-white/10 pt-8 mt-12 text-center">
+        <p class="text-white/40 text-sm font-rubik">
+          ¿Tienes dudas sobre estos términos? <a
+            href="#"
+            class="text-purple-400 hover:text-purple-300 underline"
+            >Contáctanos</a
+          >.
+        </p>
+      </div>
+    </div>
+  </main>
+</Layout>
