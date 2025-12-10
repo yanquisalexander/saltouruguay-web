@@ -186,20 +186,47 @@ const getAvatarUrl = (name: string) =>
         </button>
       </div>
 
-      {/* Tabs */}
-      <div class="flex gap-2">
-        <button
-          data-tab="points"
-          class="px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wide transition-all bg-yellow-500 text-black"
+      {/* Tabs & Controls */}
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="flex gap-2 w-full sm:w-auto">
+          <button
+            data-tab="points"
+            class="px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wide transition-all bg-yellow-500 text-black"
+          >
+            Puntos
+          </button>
+          <button
+            data-tab="votes"
+            class="px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wide transition-all bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+          >
+            Votos
+          </button>
+        </div>
+
+        <label
+          class="flex items-center gap-3 cursor-pointer select-none bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 hover:bg-white/10 transition-colors"
         >
-          Puntos
-        </button>
-        <button
-          data-tab="votes"
-          class="px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wide transition-all bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
-        >
-          Votos
-        </button>
+          <span
+            class="text-xs font-rubik text-white/50 uppercase tracking-wider font-bold"
+            >Diario</span
+          >
+          <div class="relative">
+            <input
+              type="checkbox"
+              id="cumulative-toggle"
+              class="sr-only peer"
+              checked
+            />
+            <div
+              class="w-9 h-5 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"
+            >
+            </div>
+          </div>
+          <span
+            class="text-xs font-rubik text-white uppercase tracking-wider font-bold"
+            >Acumulado</span
+          >
+        </label>
       </div>
     </div>
 
@@ -236,6 +263,7 @@ const getAvatarUrl = (name: string) =>
     const loader = $("#chart-loader");
     const canvas = $("#vote-evolution-chart") as HTMLCanvasElement;
     const tabs = $$("[data-tab]");
+    const cumulativeToggle = $("#cumulative-toggle") as HTMLInputElement;
 
     if (!dialog || !canvas) return;
 
@@ -248,11 +276,22 @@ const getAvatarUrl = (name: string) =>
     const updateChart = (type: string) => {
       if (!chartInstance || !currentData) return;
 
+      const isCumulative = cumulativeToggle?.checked ?? true;
       const isPoints = type === "points";
-      const datasetData = isPoints
-        ? currentData.pointsData
-        : currentData.votesData;
-      const label = isPoints ? "Puntos Acumulados" : "Votos Acumulados";
+
+      let datasetData;
+      if (isPoints) {
+        datasetData = isCumulative
+          ? currentData.pointsData
+          : currentData.dailyPointsData;
+      } else {
+        datasetData = isCumulative
+          ? currentData.votesData
+          : currentData.dailyVotesData;
+      }
+
+      const labelPrefix = isCumulative ? "Acumulados" : "Diarios";
+      const label = isPoints ? `Puntos ${labelPrefix}` : `Votos ${labelPrefix}`;
       const color = isPoints ? "#eab308" : "#3b82f6"; // yellow-500 vs blue-500
       const bgColor = isPoints
         ? "rgba(234, 179, 8, 0.1)"
@@ -262,7 +301,9 @@ const getAvatarUrl = (name: string) =>
       chartInstance.data.datasets[0].label = label;
       chartInstance.data.datasets[0].borderColor = color;
       chartInstance.data.datasets[0].backgroundColor = bgColor;
+      // @ts-ignore
       chartInstance.data.datasets[0].pointBackgroundColor = color;
+      // @ts-ignore
       chartInstance.data.datasets[0].pointHoverBorderColor = color;
 
       chartInstance.update();
@@ -280,6 +321,11 @@ const getAvatarUrl = (name: string) =>
 
       activeTab = type;
     };
+
+    // Toggle handler
+    cumulativeToggle?.addEventListener("change", () => {
+      updateChart(activeTab);
+    });
 
     // Tab click handlers
     tabs.forEach((tab) => {
@@ -304,8 +350,10 @@ const getAvatarUrl = (name: string) =>
 
         dialog.showModal();
 
-        // Reset tabs to points
+        // Reset tabs to points and toggle to cumulative
         activeTab = "points";
+        if (cumulativeToggle) cumulativeToggle.checked = true;
+
         tabs.forEach((tab) => {
           const tabType = tab.getAttribute("data-tab");
           if (tabType === "points") {

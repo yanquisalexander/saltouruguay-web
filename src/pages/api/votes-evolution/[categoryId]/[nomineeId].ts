@@ -52,6 +52,8 @@ export const GET: APIRoute = async ({ params }) => {
         const labels: string[] = [];
         const pointsData: number[] = [];
         const votesData: number[] = [];
+        const dailyPointsData: number[] = [];
+        const dailyVotesData: number[] = [];
 
         let cumulativePoints = 0;
         let cumulativeVotes = 0;
@@ -69,9 +71,11 @@ export const GET: APIRoute = async ({ params }) => {
             labels.push(`${d} Dic`);
             pointsData.push(cumulativePoints);
             votesData.push(cumulativeVotes);
+            dailyPointsData.push(points);
+            dailyVotesData.push(votesCount);
         }
 
-        return new Response(JSON.stringify({ labels, pointsData, votesData }), {
+        return new Response(JSON.stringify({ labels, pointsData, votesData, dailyPointsData, dailyVotesData }), {
             headers: { "Content-Type": "application/json" }
         });
     } catch (error) {
