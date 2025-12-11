@@ -145,7 +145,7 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
                             )}
                         </a>
                         <div className="flex items-center gap-1 text-[13px] text-[#b0b3b8] mt-0.5">
-                            <a href={`/saltogram/${post.id}`} className="hover:underline">{timeAgo}</a>
+                            <a href={`/saltogram/post/${post.id}`} className="hover:underline">{timeAgo}</a>
                             <span>·</span>
                             <span className="text-xs">@{post.user.username}</span>
                         </div>
