@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { toast } from 'sonner';
 import { petToast } from '@/utils/petToast';
@@ -28,8 +28,17 @@ interface PetActionsProps {
     petRef?: RefObject<HTMLDivElement>;
     onEatStart?: () => void;
     onEatEnd?: () => void;
+    onCleanStart?: () => void;
+    onCleanEnd?: () => void;
+    onCleanProgress?: (progress: number) => void;
     onOpenStore?: () => void;
     onPlayGame?: () => void;
+    onOptimisticUpdate?: (stats: Partial<{
+        hunger: number;
+        energy: number;
+        hygiene: number;
+        happiness: number;
+    }>) => void;
 }
 
 export interface InventoryItem {
@@ -44,13 +53,19 @@ export interface InventoryItem {
     };
 }
 
-export default function PetActions({ petId, stats, isSleeping, onActionComplete, petRef, onEatStart, onEatEnd, onOpenStore, onPlayGame }: PetActionsProps) {
+export default function PetActions({ petId, stats, isSleeping, onActionComplete, petRef, onEatStart, onEatEnd, onCleanStart, onCleanEnd, onCleanProgress, onOpenStore, onPlayGame, onOptimisticUpdate }: PetActionsProps) {
     const [performing, setPerforming] = useState<string | null>(null);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [selectedFoodItem, setSelectedFoodItem] = useState<number | null>(null);
     const [selectedToyItem, setSelectedToyItem] = useState<number | null>(null);
     const [showFoodSelector, setShowFoodSelector] = useState(false);
     const [showToySelector, setShowToySelector] = useState(false);
+
+    // Cleaning state
+    const [isCleaningMode, setIsCleaningMode] = useState(false);
+    const [cleanliness, setCleanliness] = useState(0);
+    const soapRef = useRef<HTMLDivElement>(null);
+
     // const [activeGame, setActiveGame] = useState<'citrus' | null>(null); // Moved to parent
 
     const [foodPage, setFoodPage] = useState(0);
@@ -80,27 +95,58 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
             return;
         }
 
+        // Optimistic update setup
+        const itemIndex = inventory.findIndex(i => i.itemId === idToUse);
+        const item = inventory[itemIndex];
+        const previousInventory = [...inventory];
+        const previousStats = { ...stats };
+
+        if (item) {
+            // 1. Optimistic Inventory
+            const newInventory = [...inventory];
+            if (item.quantity > 1) {
+                newInventory[itemIndex] = { ...item, quantity: item.quantity - 1 };
+            } else {
+                newInventory.splice(itemIndex, 1);
+            }
+            setInventory(newInventory);
+
+            // 2. Optimistic Stats
+            if (onOptimisticUpdate) {
+                const newHunger = Math.min(100, stats.hunger + item.item.effectValue);
+                onOptimisticUpdate({ hunger: newHunger });
+            }
+
+            // 3. Immediate Feedback
+            playSound({ sound: STREAMER_WARS_SOUNDS.PET_EAT, volume: 0.5 });
+        }
+
         try {
             setPerforming('feed');
             const { error, data } = await actions.pet.feedPet({ itemId: idToUse });
 
             if (data?.success) {
-                petToast.success('¡Mascota alimentada!', '🍎');
-                playSound({ sound: STREAMER_WARS_SOUNDS.PET_EAT, volume: 0.5 });
                 await loadInventory();
+                petToast.success('¡Mascota alimentada!', '🍎');
                 onActionComplete();
                 // Don't close selector immediately to allow feeding more
                 // setShowFoodSelector(false); 
             }
 
             if (error) {
-                petToast.error(error.message || 'Error al alimentar la mascota');
-                if (error.message?.includes('fallecido')) {
-                    onActionComplete();
-                }
+                throw new Error(error.message || 'Error al alimentar la mascota');
             }
         } catch (error: any) {
+            // Rollback
+            setInventory(previousInventory);
+            if (onOptimisticUpdate) {
+                onOptimisticUpdate(previousStats);
+            }
+
             petToast.error(error.message || 'Error al alimentar la mascota');
+            if (error.message?.includes('fallecido')) {
+                onActionComplete();
+            }
         } finally {
             setPerforming(null);
         }
@@ -132,13 +178,84 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
         }
     };
 
-    const handleClean = async () => {
+    const handleCleanToggle = () => {
+        if (isCleaningMode) {
+            setIsCleaningMode(false);
+            onCleanEnd?.();
+            setCleanliness(0);
+        } else {
+            setIsCleaningMode(true);
+            onCleanStart?.();
+            setCleanliness(0);
+            petToast.info('¡Frota el jabón sobre tu mascota!', '🧼');
+        }
+    };
+
+    const handleSoapDrag = (event: any, info: any) => {
+        if (!petRef?.current) return;
+
+        const petRect = petRef.current.getBoundingClientRect();
+        const point = info.point;
+        const padding = 50;
+
+        // Check if soap is over pet
+        if (
+            point.x >= (petRect.left - padding) &&
+            point.x <= (petRect.right + padding) &&
+            point.y >= (petRect.top - padding) &&
+            point.y <= (petRect.bottom + padding)
+        ) {
+            // Calculate movement distance to determine cleaning amount
+            // Use delta to ensure we only clean when moving
+            const distance = Math.sqrt(info.delta.x ** 2 + info.delta.y ** 2);
+
+            // Ignore very small movements or no movement
+            if (distance < 0.5) return;
+
+            // Increase cleanliness based on movement intensity
+            // Slower increment to make it feel like "rubbing"
+            // Multiplier 0.1 means you need to move ~1000 pixels total to clean (100 / 0.1)
+            const increment = Math.min(distance * 0.15, 1.5);
+
+            setCleanliness(prev => {
+                // If already done, don't do anything
+                if (prev >= 100) return 100;
+
+                const newVal = Math.min(100, prev + increment);
+
+                // Notify parent for visual feedback
+                onCleanProgress?.(newVal);
+
+                // Play sound occasionally
+                if (Math.floor(newVal / 20) > Math.floor(prev / 20) && newVal < 100) {
+                    playSound({ sound: STREAMER_WARS_SOUNDS.PET_SHOWER, volume: 0.2 });
+                }
+
+                if (newVal >= 100 && prev < 100) {
+                    // Execute completion outside of the state update
+                    setTimeout(() => handleCleanComplete(), 100);
+                }
+                return newVal;
+            });
+        }
+    };
+
+    const handleCleanComplete = async () => {
+        setIsCleaningMode(false);
+        onCleanEnd?.();
+        setCleanliness(0);
+
+        // Optimistic update
+        if (onOptimisticUpdate) {
+            onOptimisticUpdate({ hygiene: 100 });
+        }
+
         try {
             setPerforming('clean');
             const { data, error } = await actions.pet.cleanPet();
 
             if (data?.success) {
-                petToast.success('¡Mascota limpia!', '🧼');
+                petToast.success('¡Mascota reluciente!', '✨');
                 playSound({ sound: STREAMER_WARS_SOUNDS.PET_SHOWER, volume: 0.5 });
                 onActionComplete();
             }
@@ -175,7 +292,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
             if (data?.success) {
                 if (scoreBonus > 0) {
                     petToast.success(`¡Juego terminado! +${scoreBonus} pts`, '🏆');
-                    playSound({ sound: STREAMER_WARS_SOUNDS.LEVEL_UP });
+                    playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT });
                 } else {
                     petToast.success('¡Jugaste con tu mascota!', '🎮');
                 }
@@ -268,13 +385,53 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
     );
 
     return (
-        <div className="w-full">
+        <div className="w-full relative">
             {/* {activeGame === 'citrus' && (
                 <CitrusRainGame 
                     onClose={() => setActiveGame(null)}
                     onComplete={(score) => handlePlay(score)}
                 />
             )} */}
+
+            {/* Soap for Cleaning Mode */}
+            {isCleaningMode && (
+                <div className="fixed inset-0 z-50 pointer-events-none">
+                    <motion.div
+                        drag
+                        dragConstraints={petRef}
+                        dragElastic={0.1}
+                        dragMomentum={false}
+                        onDrag={handleSoapDrag}
+                        className="absolute bottom-32 left-1/2 -translate-x-1/2 w-24 h-16 bg-pink-200 rounded-3xl shadow-xl border-4 border-white/50 flex items-center justify-center cursor-grab active:cursor-grabbing pointer-events-auto z-50"
+                        style={{ touchAction: 'none' }}
+                        initial={{ y: 100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                    >
+                        <span className="text-3xl select-none">🧼</span>
+                        {/* Bubbles effect when dragging */}
+                        <div className="absolute -inset-4 bg-white/20 rounded-full blur-xl animate-pulse -z-10"></div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Cleaning Status Indicator */}
+            {isCleaningMode && (
+                <div className="absolute bottom-full left-0 right-0 mb-4 px-2 animate-fade-in z-20">
+                    <div className="bg-black/60 backdrop-blur-md p-3 rounded-2xl border border-white/10 shadow-xl">
+                        <div className="flex justify-between w-full mb-1 px-1">
+                            <span className="text-xs font-bold text-blue-300 uppercase tracking-wider">Limpieza</span>
+                            <span className="text-xs font-bold text-white">{Math.round(cleanliness)}%</span>
+                        </div>
+                        <div className="w-full bg-gray-700/50 rounded-full h-2 overflow-hidden border border-white/10">
+                            <div
+                                className="bg-gradient-to-r from-blue-400 to-blue-600 h-full rounded-full transition-all duration-100 ease-out"
+                                style={{ width: `${cleanliness}%` }}
+                            ></div>
+                        </div>
+                        <p className="text-[10px] text-blue-300/70 mt-1 text-center animate-pulse">¡Frota el jabón!</p>
+                    </div>
+                </div>
+            )}
 
             {/* Food Selector Bar (Bottom Sheet style) */}
             {showFoodSelector && (
@@ -366,12 +523,12 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
                 />
 
                 <ActionButton
-                    onClick={handleClean}
+                    onClick={handleCleanToggle}
                     disabled={performing !== null || stats.hygiene >= 100 || isSleeping}
                     icon={LucideSparkles}
-                    label="Limpiar"
-                    bgClass="bg-blue-500/10"
-                    colorClass="text-blue-400"
+                    label={isCleaningMode ? "Limpiando..." : "Limpiar"}
+                    bgClass={isCleaningMode ? "bg-blue-500 text-white" : "bg-blue-500/10"}
+                    colorClass={isCleaningMode ? "text-white" : "text-blue-400"}
                     borderClass="border-blue-500/20"
                 />
 

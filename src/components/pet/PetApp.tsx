@@ -49,6 +49,8 @@ export default function PetApp() {
     const [viewMode, setViewMode] = useState<ViewMode>('pet');
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [isEating, setIsEating] = useState(false);
+    const [isCleaning, setIsCleaning] = useState(false);
+    const [cleaningProgress, setCleaningProgress] = useState(0);
     const petRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -99,6 +101,18 @@ export default function PetApp() {
         await loadPet(false);
     };
 
+    const handleOptimisticUpdate = (statsUpdate: Partial<Pet['currentStats']>) => {
+        if (pet) {
+            setPet({
+                ...pet,
+                currentStats: {
+                    ...pet.currentStats,
+                    ...statsUpdate
+                }
+            });
+        }
+    };
+
     const handleBuryPet = async () => {
         if (!confirm('¿Estás seguro de que quieres despedirte de tu mascota?')) return;
 
@@ -128,7 +142,7 @@ export default function PetApp() {
                     toast.success(`¡Juego terminado! +${score} pts`, {
                         icon: '🏆'
                     });
-                    playSound({ sound: STREAMER_WARS_SOUNDS.LEVEL_UP });
+                    playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT });
                     await loadPet(false);
                 }
             } catch (error) {
@@ -229,6 +243,8 @@ export default function PetApp() {
                                     stats={pet.currentStats}
                                     isSleeping={!!pet.sleepingSince}
                                     isEating={isEating}
+                                    isCleaning={isCleaning}
+                                    cleaningProgress={cleaningProgress}
                                 />
                             </div>
 
@@ -264,8 +280,18 @@ export default function PetApp() {
                                 petRef={petRef}
                                 onEatStart={() => setIsEating(true)}
                                 onEatEnd={() => setIsEating(false)}
+                                onCleanStart={() => {
+                                    setIsCleaning(true);
+                                    setCleaningProgress(0);
+                                }}
+                                onCleanEnd={() => {
+                                    setIsCleaning(false);
+                                    setCleaningProgress(0);
+                                }}
+                                onCleanProgress={setCleaningProgress}
                                 onOpenStore={() => setViewMode('store')}
                                 onPlayGame={() => setViewMode('game-citrus')}
+                                onOptimisticUpdate={handleOptimisticUpdate}
                             />
                         </div>
                     </div>

@@ -19,11 +19,11 @@ interface Message {
     content: string | null;
     reaction: string | null;
     createdAt: string;
+    isRead: boolean;
     story?: {
         id: number;
         mediaUrl: string;
         mediaType: 'image' | 'video';
-        isRead: boolean;
     };
 }
 
@@ -92,6 +92,7 @@ export default function ChatView({ partnerId, user }: ChatViewProps) {
             content: content,
             reaction: null,
             createdAt: new Date().toISOString(),
+            isRead: false,
         };
 
         setMessages(prev => [...prev, optimisticMessage]);
@@ -210,7 +211,7 @@ export default function ChatView({ partnerId, user }: ChatViewProps) {
                                         </p>
                                         {isMe && (
                                             <div className="flex">
-                                                {msg.story?.isRead ? (
+                                                {msg.isRead ? (
                                                     <LucideCheckCheck size={12} className="text-blue-200" />
                                                 ) : (
                                                     <LucideCheck size={12} className="text-blue-200" />
