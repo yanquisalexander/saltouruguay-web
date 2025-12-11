@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
-import { LucideArrowLeft, LucideLoader2, LucideSend } from "lucide-preact";
+import { LucideArrowLeft, LucideLoader2, LucideSend, LucideCheck, LucideCheckCheck } from "lucide-preact";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import type { Session } from "@auth/core/types";
@@ -19,7 +19,12 @@ interface Message {
     content: string | null;
     reaction: string | null;
     createdAt: string;
-    story?: any;
+    story?: {
+        id: number;
+        mediaUrl: string;
+        mediaType: 'image' | 'video';
+        isRead: boolean;
+    };
 }
 
 interface Partner {
@@ -164,18 +169,55 @@ export default function ChatView({ partnerId, user }: ChatViewProps) {
                         return (
                             <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                                 <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${isMe
-                                        ? "bg-blue-600 text-white rounded-tr-none"
-                                        : "bg-white/10 text-white rounded-tl-none"
+                                    ? "bg-blue-600 text-white rounded-tr-none"
+                                    : "bg-white/10 text-white rounded-tl-none"
                                     }`}>
                                     {msg.story && (
-                                        <div className="mb-2 pb-2 border-b border-white/20 text-xs opacity-80">
-                                            Respondió a una historia
+                                        <div className="mb-2 pb-2 border-b border-white/20">
+                                            <div className="flex items-center gap-2 text-xs opacity-80 mb-1">
+                                                <span>Respondió a una historia</span>
+                                            </div>
+                                            <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/20">
+                                                {msg.story.mediaType === 'video' ? (
+                                                    <video
+                                                        src={msg.story.mediaUrl}
+                                                        className="w-full h-full object-cover"
+                                                        muted
+                                                        preload="metadata"
+                                                    />
+                                                ) : (
+                                                    <img
+                                                        src={msg.story.mediaUrl}
+                                                        className="w-full h-full object-cover"
+                                                        alt="Story preview"
+                                                    />
+                                                )}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                                                <div className="absolute bottom-1 right-1 w-3 h-3 bg-white rounded-full flex items-center justify-center">
+                                                    {msg.story.mediaType === 'video' ? (
+                                                        <div className="w-1.5 h-1.5 bg-black rounded-sm" />
+                                                    ) : (
+                                                        <div className="w-1 h-1.5 bg-black rounded-sm transform rotate-45 border-l border-b border-black" />
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                     <p className="text-sm whitespace-pre-wrap break-words">{msg.content || msg.reaction}</p>
-                                    <p className={`text-[10px] mt-1 text-right ${isMe ? "text-blue-200" : "text-white/40"}`}>
-                                        {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true, locale: es })}
-                                    </p>
+                                    <div className={`flex items-center justify-end gap-1 mt-1 ${isMe ? "text-blue-200" : "text-white/40"}`}>
+                                        <p className="text-[10px]">
+                                            {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true, locale: es })}
+                                        </p>
+                                        {isMe && (
+                                            <div className="flex">
+                                                {msg.story?.isRead ? (
+                                                    <LucideCheckCheck size={12} className="text-blue-200" />
+                                                ) : (
+                                                    <LucideCheck size={12} className="text-blue-200" />
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         );
