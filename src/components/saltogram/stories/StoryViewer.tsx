@@ -351,8 +351,8 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                 </div>
 
                 {/* Header */}
-                <div className="absolute top-6 left-0 right-0 z-50 p-4 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent">
-                    <div className="flex items-center gap-3">
+                <div className="absolute top-0 left-0 right-0 z-40 p-4 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent">
+                    <div className="flex items-center gap-3 pt-2">
                         <img
                             src={userStories.user.avatar || `https://ui-avatars.com/api/?name=${userStories.user.displayName}`}
                             className="w-10 h-10 rounded-full border border-white/20"
@@ -394,6 +394,7 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                     onMouseUp={() => setIsPaused(false)}
                     onTouchStart={() => setIsPaused(true)}
                     onTouchEnd={() => setIsPaused(false)}
+                    onContextMenu={(e) => e.preventDefault()}
                 >
                     {story.mediaType === 'image' ? (
                         <img
