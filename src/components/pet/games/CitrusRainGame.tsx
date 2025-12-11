@@ -2,10 +2,19 @@ import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { LucideTrophy, LucideX, LucidePlay } from 'lucide-preact';
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import PetSprite from '../PetSprite';
 
 interface CitrusRainGameProps {
     onComplete: (score: number) => void;
     onClose: () => void;
+    appearance: {
+        color: string;
+        skinId: string | null;
+        hatId: string | null;
+        accessoryId: string | null;
+        eyesId: string | null;
+        mouthId: string | null;
+    };
 }
 
 interface FallingItem {
@@ -16,7 +25,7 @@ interface FallingItem {
     speed: number;
 }
 
-export default function CitrusRainGame({ onComplete, onClose }: CitrusRainGameProps) {
+export default function CitrusRainGame({ onComplete, onClose, appearance }: CitrusRainGameProps) {
     const [gameState, setGameState] = useState<'intro' | 'playing' | 'gameover'>('intro');
     const [score, setScore] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
@@ -27,6 +36,28 @@ export default function CitrusRainGame({ onComplete, onClose }: CitrusRainGamePr
     const requestRef = useRef<number>();
     const lastTimeRef = useRef<number>();
     const spawnTimerRef = useRef<number>(0);
+
+    // Keyboard controls
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (gameState !== 'playing') return;
+
+            const speed = 5;
+            let newX = playerXRef.current;
+
+            if (e.key === 'ArrowLeft' || e.key === 'a') {
+                newX = Math.max(5, newX - speed);
+            } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                newX = Math.min(95, newX + speed);
+            }
+
+            setPlayerX(newX);
+            playerXRef.current = newX;
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [gameState]);
 
     // Game Loop
     const animate = (time: number) => {
@@ -68,6 +99,10 @@ export default function CitrusRainGame({ onComplete, onClose }: CitrusRainGamePr
                     ) {
                         // Caught!
                         caughtTypes.push(item.type);
+                        if (item.type !== 'rotten') {
+
+                            playSound({ sound: STREAMER_WARS_SOUNDS.PET_EAT });
+                        }
                         return; // Remove item
                     }
 
@@ -101,6 +136,7 @@ export default function CitrusRainGame({ onComplete, onClose }: CitrusRainGamePr
                         endGame();
                         return 0;
                     }
+                    playSound({ sound: STREAMER_WARS_SOUNDS.TICK });
                     return prev - 1;
                 });
             }, 1000);
@@ -187,7 +223,7 @@ export default function CitrusRainGame({ onComplete, onClose }: CitrusRainGamePr
                 {/* Game Area */}
                 <div
                     ref={gameAreaRef}
-                    className="flex-1 relative cursor-none touch-none"
+                    className={`flex-1 relative ${gameState === 'playing' ? 'cursor-none touch-none' : 'cursor-default'}`}
                     onMouseMove={handleMouseMove}
                     onTouchMove={handleTouchMove}
                 >
@@ -219,7 +255,7 @@ export default function CitrusRainGame({ onComplete, onClose }: CitrusRainGamePr
                                 <div className="bg-black/40 px-4 py-1 rounded-full backdrop-blur-md border border-white/10">
                                     Puntos: <span className="text-yellow-400">{score}</span>
                                 </div>
-                                <div className={`bg-black/40 px-4 py-1 rounded-full backdrop-blur-md border border-white/10 ${timeLeft < 5 ? 'text-red-500 animate-pulse' : ''}`}>
+                                <div className={`bg-black/40 px-4 py-1 rounded-full backdrop-blur-md border border-white/10 tabular-nums ${timeLeft < 5 ? 'text-red-500 animate-pulse' : ''}`}>
                                     ⏱️ {timeLeft}s
                                 </div>
                             </div>
@@ -243,8 +279,14 @@ export default function CitrusRainGame({ onComplete, onClose }: CitrusRainGamePr
                                 className="absolute bottom-8 transform -translate-x-1/2 transition-transform duration-75 pointer-events-none"
                                 style={{ left: `${playerX}%` }}
                             >
-                                <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border-2 border-white/30 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-                                    <span className="text-4xl">🧺</span>
+                                <div className="w-24 h-24 flex items-center justify-center transform scale-[0.35]">
+                                    <PetSprite
+                                        appearance={appearance}
+                                        stats={{ hunger: 100, energy: 100, hygiene: 100, happiness: 100 }}
+                                        isEating={false}
+                                        isSleeping={false}
+                                        disableAnimations={true}
+                                    />
                                 </div>
                             </div>
                         </>

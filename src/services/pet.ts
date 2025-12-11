@@ -1,7 +1,6 @@
 import { client as db } from '@/db/client';
 import {
     PetsTable,
-    PetItemsTable,
     PetUserInventoryTable,
     PetHousesTable,
     PetMinigameScoresTable,
@@ -9,10 +8,11 @@ import {
 } from '@/db/schema';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import { BancoSaltanoService } from './banco-saltano';
+import { PET_ITEMS_CATALOG, type PetItemCategory, type PetItemCatalogEntry } from '@/consts/petItemsCatalog';
 
 // Decay rates per hour (serverless lazy evaluation)
 const DECAY_RATES = {
-    hunger: 15,    // -15 per hour (approx 6.5h to starve)
+    hunger: 8,    // -8 per hour (approx 12.5h to starve)
     energy: 10,    // -10 per hour (10h to sleep)
     hygiene: 8,    // -8 per hour (12.5h to dirty)
     happiness: 10, // -10 per hour (10h to sad)
@@ -24,6 +24,7 @@ const SLEEP_DECAY_MULTIPLIER = 0.5; // Stats decay 50% slower while sleeping
 // Maximum stats
 const MAX_STAT = 100;
 const MIN_STAT = 0;
+const DEATH_THRESHOLD = -20; // Pet dies if hunger reaches this value
 
 interface PetStats {
     hunger: number;
@@ -67,7 +68,7 @@ export class PetService {
             const energyRecovered = safeHours * SLEEP_RECOVERY_RATE;
 
             return {
-                hunger: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.hunger - (DECAY_RATES.hunger * SLEEP_DECAY_MULTIPLIER * safeHours)))),
+                hunger: Math.round(Math.max(DEATH_THRESHOLD, Math.min(MAX_STAT, savedStats.hunger - (DECAY_RATES.hunger * SLEEP_DECAY_MULTIPLIER * safeHours)))),
                 energy: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.energy + energyRecovered))),
                 hygiene: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.hygiene - (DECAY_RATES.hygiene * SLEEP_DECAY_MULTIPLIER * safeHours)))),
                 happiness: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.happiness - (DECAY_RATES.happiness * SLEEP_DECAY_MULTIPLIER * safeHours)))),
@@ -77,7 +78,7 @@ export class PetService {
         const hoursElapsed = (now.getTime() - new Date(lastInteraction).getTime()) / (1000 * 60 * 60);
 
         return {
-            hunger: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.hunger - (DECAY_RATES.hunger * hoursElapsed)))),
+            hunger: Math.round(Math.max(DEATH_THRESHOLD, Math.min(MAX_STAT, savedStats.hunger - (DECAY_RATES.hunger * hoursElapsed)))),
             energy: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.energy - (DECAY_RATES.energy * hoursElapsed)))),
             hygiene: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.hygiene - (DECAY_RATES.hygiene * hoursElapsed)))),
             happiness: Math.round(Math.max(MIN_STAT, Math.min(MAX_STAT, savedStats.happiness - (DECAY_RATES.happiness * hoursElapsed)))),
@@ -171,7 +172,8 @@ export class PetService {
                     hygiene: pet.hygiene,
                     happiness: pet.happiness,
                 },
-                isDead: currentStats.hunger <= 0,
+                isDead: currentStats.hunger <= DEATH_THRESHOLD,
+                isStarving: currentStats.hunger <= 0,
             };
         } catch (error) {
             console.error('Error getting pet:', error);
@@ -198,10 +200,8 @@ export class PetService {
                     throw new Error('Tu mascota está durmiendo. Despiértala para alimentarla.');
                 }
 
-                // Get item
-                const item = await tx.query.PetItemsTable.findFirst({
-                    where: eq(PetItemsTable.id, itemId),
-                });
+                // Get item from catalog
+                const item = PET_ITEMS_CATALOG.find(i => i.id === itemId);
 
                 if (!item || item.category !== 'food') {
                     throw new Error('Invalid food item');
@@ -230,7 +230,7 @@ export class PetService {
                     pet.lastInteraction
                 );
 
-                if (currentStats.hunger <= 0) {
+                if (currentStats.hunger <= DEATH_THRESHOLD) {
                     throw new Error('Tu mascota ha fallecido :(');
                 }
 
@@ -312,7 +312,7 @@ export class PetService {
                     pet.lastInteraction
                 );
 
-                if (currentStats.hunger <= 0) {
+                if (currentStats.hunger <= DEATH_THRESHOLD) {
                     throw new Error('Tu mascota ha fallecido :(');
                 }
 
@@ -379,7 +379,7 @@ export class PetService {
                     pet.lastInteraction
                 );
 
-                if (currentStats.hunger <= 0) {
+                if (currentStats.hunger <= DEATH_THRESHOLD) {
                     throw new Error('Tu mascota ha fallecido :(');
                 }
 
@@ -388,9 +388,7 @@ export class PetService {
 
                 // If using a toy item, increase effects
                 if (itemId) {
-                    const item = await tx.query.PetItemsTable.findFirst({
-                        where: eq(PetItemsTable.id, itemId),
-                    });
+                    const item = PET_ITEMS_CATALOG.find(i => i.id === itemId);
 
                     if (item && item.category === 'toy') {
                         const inventoryItem = await tx.query.PetUserInventoryTable.findFirst({
@@ -485,7 +483,7 @@ export class PetService {
                     pet.lastInteraction
                 );
 
-                if (currentStats.hunger <= 0) {
+                if (currentStats.hunger <= DEATH_THRESHOLD) {
                     throw new Error('Tu mascota ha fallecido :(');
                 }
 
@@ -589,10 +587,8 @@ export class PetService {
     static async purchaseItem(userId: number, itemId: number, quantity: number = 1) {
         try {
             return await db.transaction(async (tx) => {
-                // Get item
-                const item = await tx.query.PetItemsTable.findFirst({
-                    where: eq(PetItemsTable.id, itemId),
-                });
+                // Get item from catalog
+                const item = PET_ITEMS_CATALOG.find(i => i.id === itemId);
 
                 if (!item) {
                     throw new Error('Item not found');
@@ -680,12 +676,18 @@ export class PetService {
         try {
             const inventory = await db.query.PetUserInventoryTable.findMany({
                 where: eq(PetUserInventoryTable.userId, userId),
-                with: {
-                    item: true,
-                },
             });
 
-            return inventory;
+            // Manually join with the catalog
+            const inventoryWithDetails = inventory.map(invItem => {
+                const itemDetails = PET_ITEMS_CATALOG.find(catItem => catItem.id === invItem.itemId);
+                return {
+                    ...invItem,
+                    item: itemDetails,
+                };
+            }).filter(invItem => invItem.item); // Filter out items that might not be in the catalog anymore
+
+            return inventoryWithDetails;
         } catch (error) {
             console.error('Error getting user inventory:', error);
             throw new Error('Failed to retrieve inventory');
@@ -695,22 +697,21 @@ export class PetService {
     /**
      * Get all available items in the store
      */
-    static async getStoreItems(category?: 'food' | 'toy' | 'furniture' | 'clothing' | 'accessory') {
+    static async getStoreItems(category?: PetItemCategory) {
         try {
-            const whereCondition = category
-                ? and(
-                    eq(PetItemsTable.isAvailable, true),
-                    eq(PetItemsTable.category, category)
-                )
-                : eq(PetItemsTable.isAvailable, true);
+            let items = PET_ITEMS_CATALOG.filter(item => item.isAvailable);
 
-            const items = await db
-                .select()
-                .from(PetItemsTable)
-                .where(whereCondition)
-                .orderBy(PetItemsTable.category, PetItemsTable.price);
+            if (category) {
+                items = items.filter(item => item.category === category);
+            }
 
-            return items;
+            return items.sort((a, b) => {
+                if (a.category < b.category) return -1;
+                if (a.category > b.category) return 1;
+                if (a.price < b.price) return -1;
+                if (a.price > b.price) return 1;
+                return 0;
+            });
         } catch (error) {
             console.error('Error getting store items:', error);
             throw new Error('Failed to retrieve store items');
@@ -780,30 +781,31 @@ export class PetService {
     static async equipItem(userId: number, itemId: number) {
         try {
             return await db.transaction(async (tx) => {
-                // 1. Check if user owns the item
+                // 1. Get item from catalog
+                const item = PET_ITEMS_CATALOG.find(i => i.id === itemId);
+                if (!item) {
+                    throw new Error('Item not found in catalog');
+                }
+
+                // 2. Check if user owns the item
                 const inventoryItem = await tx.query.PetUserInventoryTable.findFirst({
                     where: and(
                         eq(PetUserInventoryTable.userId, userId),
                         eq(PetUserInventoryTable.itemId, itemId)
                     ),
-                    with: {
-                        item: true,
-                    },
                 });
 
                 if (!inventoryItem || inventoryItem.quantity < 1) {
                     throw new Error('No tienes este item');
                 }
 
-                const item = inventoryItem.item;
-
-                // 2. Check if item is equippable
-                const equippableCategories = ['clothing', 'accessory', 'eyes', 'mouth', 'skin'];
+                // 3. Check if item is equippable
+                const equippableCategories: PetItemCategory[] = ['clothing', 'accessory', 'eyes', 'mouth', 'skin'];
                 if (!equippableCategories.includes(item.category)) {
                     throw new Error('Este item no se puede equipar');
                 }
 
-                // 3. Get current pet
+                // 4. Get current pet
                 const pet = await tx.query.PetsTable.findFirst({
                     where: eq(PetsTable.ownerId, userId),
                 });
@@ -812,7 +814,7 @@ export class PetService {
                     throw new Error('Mascota no encontrada');
                 }
 
-                // 4. Update appearance
+                // 5. Update appearance
                 const currentAppearance = pet.appearance as PetAppearance;
                 const newAppearance = { ...currentAppearance };
 

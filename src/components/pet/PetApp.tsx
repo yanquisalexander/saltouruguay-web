@@ -11,6 +11,7 @@ import { LucideShoppingBag, LucideHome, LucideLoader2 } from 'lucide-preact';
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 
 import CitrusRainGame from './games/CitrusRainGame';
+import SaltoJumpGame from './games/SaltoJumpGame';
 
 interface Pet {
     id: number;
@@ -39,9 +40,10 @@ interface Pet {
     sleepingSince: Date | null;
     createdAt: Date;
     isDead?: boolean;
+    isStarving?: boolean;
 }
 
-type ViewMode = 'pet' | 'store' | 'game-citrus';
+type ViewMode = 'pet' | 'store' | 'game-citrus' | 'game-jump';
 
 export default function PetApp() {
     const [pet, setPet] = useState<Pet | null>(null);
@@ -219,6 +221,15 @@ export default function PetApp() {
                     <CitrusRainGame
                         onClose={() => setViewMode('pet')}
                         onComplete={handleGameComplete}
+                        appearance={pet.appearance}
+                    />
+                )}
+
+                {viewMode === 'game-jump' && (
+                    <SaltoJumpGame
+                        onClose={() => setViewMode('pet')}
+                        onComplete={handleGameComplete}
+                        appearance={pet.appearance}
                     />
                 )}
 
@@ -257,7 +268,11 @@ export default function PetApp() {
 
                             {/* Warning Bubbles */}
                             <div className="absolute top-0 right-0 flex flex-col gap-2">
-                                {pet.currentStats.hunger < 20 && (
+                                {pet.isStarving ? (
+                                    <div className="bg-red-700/90 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-bounce border border-white/20">
+                                        ¡MORIBUNDO!
+                                    </div>
+                                ) : pet.currentStats.hunger < 20 && (
                                     <div className="bg-red-500/90 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-bounce border border-white/20">
                                         ¡Hambre!
                                     </div>
@@ -290,7 +305,7 @@ export default function PetApp() {
                                 }}
                                 onCleanProgress={setCleaningProgress}
                                 onOpenStore={() => setViewMode('store')}
-                                onPlayGame={() => setViewMode('game-citrus')}
+                                onPlayGame={(game) => setViewMode(game === 'jump' ? 'game-jump' : 'game-citrus')}
                                 onOptimisticUpdate={handleOptimisticUpdate}
                             />
                         </div>

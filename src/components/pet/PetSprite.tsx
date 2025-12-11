@@ -20,9 +20,10 @@ interface PetSpriteProps {
     };
     isEating?: boolean;
     isSleeping?: boolean;
+    disableAnimations?: boolean;
 }
 
-export default function PetSprite({ appearance, stats, isEating, isSleeping }: PetSpriteProps) {
+export default function PetSprite({ appearance, stats, isEating, isSleeping, disableAnimations = false }: PetSpriteProps) {
     const [blink, setBlink] = useState(false);
     const [bounce, setBounce] = useState(0);
 
@@ -104,7 +105,7 @@ export default function PetSprite({ appearance, stats, isEating, isSleeping }: P
         <div className="relative w-64 h-64 flex items-center justify-center">
             <motion.div
                 animate={{
-                    y: [0, -10, 0],
+                    y: disableAnimations ? 0 : [0, -10, 0],
                     scale: isEating ? [1, 1.05, 1] : 1
                 }}
                 transition={{

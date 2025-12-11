@@ -32,7 +32,7 @@ interface PetActionsProps {
     onCleanEnd?: () => void;
     onCleanProgress?: (progress: number) => void;
     onOpenStore?: () => void;
-    onPlayGame?: () => void;
+    onPlayGame?: (game: 'citrus' | 'jump') => void;
     onOptimisticUpdate?: (stats: Partial<{
         hunger: number;
         energy: number;
@@ -60,11 +60,15 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
     const [selectedToyItem, setSelectedToyItem] = useState<number | null>(null);
     const [showFoodSelector, setShowFoodSelector] = useState(false);
     const [showToySelector, setShowToySelector] = useState(false);
+    const [showGameSelector, setShowGameSelector] = useState(false);
 
     // Cleaning state
     const [isCleaningMode, setIsCleaningMode] = useState(false);
     const [cleanliness, setCleanliness] = useState(0);
     const soapRef = useRef<HTMLDivElement>(null);
+
+    // Feeding state
+    const [mouthSoundPlayed, setMouthSoundPlayed] = useState(false);
 
     // const [activeGame, setActiveGame] = useState<'citrus' | null>(null); // Moved to parent
 
@@ -178,6 +182,28 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
         }
     };
 
+    const handleFoodDrag = (event: any, info: any) => {
+        if (!petRef?.current || mouthSoundPlayed) return;
+
+        const petRect = petRef.current.getBoundingClientRect();
+        const point = info.point;
+
+        // Calculate mouth position (center-top of pet area, roughly where the face is)
+        const mouthX = petRect.left + petRect.width / 2;
+        const mouthY = petRect.top + petRect.height * 0.3; // About 30% down from top
+
+        // Calculate distance from food to mouth
+        const distance = Math.sqrt(
+            Math.pow(point.x - mouthX, 2) + Math.pow(point.y - mouthY, 2)
+        );
+
+        // If food is within 80px of mouth, play mouth opening sound
+        if (distance < 80) {
+            playSound({ sound: STREAMER_WARS_SOUNDS.PET_MOUTH_OPEN });
+            setMouthSoundPlayed(true);
+        }
+    };
+
     const handleCleanToggle = () => {
         if (isCleaningMode) {
             setIsCleaningMode(false);
@@ -274,9 +300,9 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
     };
 
     const handlePlay = async (scoreBonus: number = 0) => {
-        // If onPlayGame is provided, delegate to parent for game UI
+        // If onPlayGame is provided, show selector
         if (onPlayGame && scoreBonus === 0) {
-            onPlayGame();
+            setShowGameSelector(true);
             return;
         }
 
@@ -393,6 +419,51 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
                 />
             )} */}
 
+            {/* Game Selector */}
+            {showGameSelector && (
+                <motion.div
+                    initial={{ y: 100, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="fixed bottom-0 left-0 right-0 z-50 bg-[#121212] border-t border-white/10 p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] rounded-t-3xl"
+                >
+                    <div className="max-w-md mx-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-black text-white">Elige un juego</h3>
+                            <button
+                                onClick={() => setShowGameSelector(false)}
+                                className="bg-white/10 p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/20 transition-colors"
+                            >
+                                <LucideX size={20} />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 pb-4">
+                            <button
+                                onClick={() => {
+                                    setShowGameSelector(false);
+                                    onPlayGame?.('citrus');
+                                }}
+                                className="bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 rounded-2xl p-4 flex flex-col items-center gap-3 transition-all hover:scale-105 active:scale-95 group"
+                            >
+                                <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-lg shadow-orange-900/20">🍊</div>
+                                <span className="font-bold text-orange-200">Lluvia Cítrica</span>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    setShowGameSelector(false);
+                                    onPlayGame?.('jump');
+                                }}
+                                className="bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 rounded-2xl p-4 flex flex-col items-center gap-3 transition-all hover:scale-105 active:scale-95 group"
+                            >
+                                <div className="w-16 h-16 bg-violet-500/20 rounded-full flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-lg shadow-violet-900/20">🏃</div>
+                                <span className="font-bold text-violet-200">Salto Jump</span>
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
             {/* Soap for Cleaning Mode */}
             {isCleaningMode && (
                 <div className="fixed inset-0 z-50 pointer-events-none">
@@ -493,7 +564,11 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
                                         drag
                                         dragSnapToOrigin
                                         whileDrag={{ scale: 1.2, zIndex: 1000 }}
-                                        onDragStart={() => onEatStart?.()}
+                                        onDragStart={() => {
+                                            onEatStart?.();
+                                            setMouthSoundPlayed(false);
+                                        }}
+                                        onDrag={(e: any, info: any) => handleFoodDrag(e, info)}
                                         onDragEnd={(e: any, info: any) => handleDragEnd(e, info, item)}
                                         className="flex-shrink-0 w-20 h-20 bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center gap-1 cursor-grab active:cursor-grabbing hover:border-violet-500/50 hover:bg-white/10 transition-colors relative shadow-lg touch-none"
                                     >
