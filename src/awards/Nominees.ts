@@ -61,7 +61,7 @@ export const NOMINEES = {
     },
     vitocorleone: {
         username: "vitocorleone",
-        displayName: "vitocorleone"
+        displayName: "Vito Corleone"
     },
     little_muside18: {
         username: "little_muside18",
@@ -385,7 +385,7 @@ export const NOMINEES = {
     },
     vitocorleonejr33: {
         username: "vitocorleonejr33",
-        displayName: "vitocorleonejr33"
+        displayName: "Vito Corleone"
     },
     yosoysecond: {
         username: "yosoysecond",
