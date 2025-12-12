@@ -2,19 +2,17 @@ import { CATEGORIES } from "@/awards/Categories";
 import { NOMINEES } from "@/awards/Nominees";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from 'preact/hooks';
+import { LucideTrophy, LucideCrown } from "lucide-preact";
 
 // Types
-type OverlayMode = 'hidden' | 'category' | 'nominees' | 'winner' | 'paused';
+type OverlayMode = 'hidden' | 'category' | 'nominees' | 'winner';
 
 interface OverlayState {
   mode: OverlayMode;
   categoryId: string;
-  visibleNominees: string[]; // Nominee IDs
+  visibleNominees: string[];
   winnerId?: string;
-  previousMode?: OverlayMode;
 }
-
-const POLL_INTERVAL = 1000; // Fallback poll interval if long polling fails immediately
 
 export const AwardsOverlay = () => {
   const [state, setState] = useState<OverlayState>({
@@ -23,13 +21,9 @@ export const AwardsOverlay = () => {
     visibleNominees: [],
   });
   const [version, setVersion] = useState<number>(0);
-  const [isConnected, setIsConnected] = useState(true);
 
-  // Long Polling Logic
   useEffect(() => {
     let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
-
     const fetchState = async () => {
       try {
         const res = await fetch(`/api/overlay/state?lastVersion=${version}`);
@@ -38,35 +32,19 @@ export const AwardsOverlay = () => {
           if (isMounted && data.version > version) {
             setState(data.state);
             setVersion(data.version);
-            setIsConnected(true);
           }
         }
       } catch (err) {
-        console.error("Polling error", err);
-        // If error, wait a bit before retrying to avoid spamming
-        if (isMounted) setIsConnected(false);
         await new Promise(r => setTimeout(r, 2000));
       } finally {
-        if (isMounted) {
-          // Immediately poll again for "long polling" effect, 
-          // or short delay if connection closed fast.
-          // Since our API handles the wait, we can call immediately.
-          timeoutId = setTimeout(fetchState, 100);
-        }
+        if (isMounted) setTimeout(fetchState, 100);
       }
     };
-
     fetchState();
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timeoutId);
-    };
+    return () => { isMounted = false; };
   }, [version]);
 
-  // Derived Data
   const category = CATEGORIES.find(c => c.id === state.categoryId);
-  // Filter nominees that are in the "visibleNominees" list
   const activeNominees = category?.nominees.filter(n => state.visibleNominees.includes(n.id)) || [];
 
   const nomineesDetails = activeNominees.map(n => {
@@ -75,191 +53,218 @@ export const AwardsOverlay = () => {
     return { ...n, ...details, id: n.id };
   });
 
-  const winnerDetails = state.winnerId
-    // @ts-ignore
-    ? NOMINEES[state.winnerId]
-    : null;
+  // @ts-ignore
+  const winnerDetails = state.winnerId ? { ...NOMINEES[state.winnerId], id: state.winnerId } : null;
 
-  // Render Helpers
   if (state.mode === 'hidden') return null;
 
   return (
-    <div className="w-screen h-screen overflow-hidden flex items-center justify-center font-rubik text-white p-12">
-      <AnimatePresence mode="wait">
+    <div className="fixed inset-0 w-full h-dvh overflow-hidden bg-transparent font-rubik text-white select-none box-border">
 
-        {/* Category Mode */}
-        {state.mode === 'category' && category && (
-          <motion.div
-            key="category"
-            initial={{ opacity: 0, scale: 0.8, y: 50 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center flex flex-col items-center gap-6"
-          >
+      {/* FONDO BASE */}
+
+      <div className="relative z-10 w-full h-full">
+        <AnimatePresence mode="wait">
+
+          {/* --- 1. MODO: CATEGORÍA (INTRO) --- */}
+          {state.mode === 'category' && category && (
             <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: 200 }}
-              className="h-2 bg-yellow-500 rounded-full mb-4"
-            />
-            <h2 className="text-4xl md:text-5xl font-bold uppercase tracking-[0.2em] text-yellow-500 drop-shadow-lg">
-              Categoría
-            </h2>
-            <h1 className="text-7xl md:text-9xl font-anton uppercase text-white drop-shadow-2xl max-w-5xl leading-tight">
-              {category.name}
-            </h1>
-          </motion.div>
-        )}
-
-
-        {/* Nominees Grid Mode (Multiple) */}
-        {state.mode === 'nominees' && category && activeNominees.length > 1 && (
-          <motion.div
-            key="nominees-grid"
-            className="w-full max-w-7xl mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.header
-              className="flex items-center gap-6 mb-12 border-b-2 border-white/20 pb-6"
-              initial={{ y: -50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
+              key="category"
+              className="w-full h-full flex flex-col items-center justify-center text-center gap-4 p-16"
+              initial={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, scale: 1.05, filter: "blur(20px)", transition: { duration: 0.5 } }}
+              transition={{ duration: 0.8, ease: "circOut" }}
             >
-              <h2 className="text-5xl font-anton uppercase text-yellow-500">
+              <div className="flex items-center gap-4 mb-2">
+                <div className="h-[2px] w-16 bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.8)]"></div>
+                <span className="text-2xl font-bold uppercase tracking-[0.3em] text-yellow-500 drop-shadow-md">
+                  Categoría
+                </span>
+                <div className="h-[2px] w-16 bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.8)]"></div>
+              </div>
+
+              <h1 className="text-8xl font-anton uppercase text-white leading-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] text-balance max-w-5xl">
                 {category.name}
-              </h2>
-              <span className="text-2xl font-light text-white/60 tracking-widest uppercase">
-                / Nominados
-              </span>
-            </motion.header>
-
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-              layout
-            >
-              <AnimatePresence>
-                {nomineesDetails.map((nominee, index) => (
-                  <motion.div
-                    key={nominee.id}
-                    layoutId={nominee.id}
-                    initial={{ opacity: 0, x: -50, scale: 0.9 }}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.5, filter: "blur(10px)" }}
-                    transition={{
-                      delay: index * 0.1,
-                      type: "spring",
-                      stiffness: 100,
-                      damping: 15
-                    }}
-                    className="relative group bg-black/60 backdrop-blur-md rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
-
-                    <div className="flex items-center aspect-video bg-white/5 relative overflow-hidden">
-                      <img
-                        src={`/images/nominees/${nominee.id.toLowerCase()}.webp`}
-                        alt={nominee.displayName}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 brightness-75 group-hover:brightness-100"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${nominee.displayName}&background=random&size=512`;
-                        }}
-                      />
-                    </div>
-
-                    <div className="absolute bottom-0 left-0 w-full p-6">
-                      <motion.div
-                        className="bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded-full w-fit mb-2 uppercase tracking-wide"
-                      >
-                        Nominado
-                      </motion.div>
-                      <h3 className="text-3xl font-anton uppercase text-white drop-shadow-md">
-                        {nominee.displayName}
-                      </h3>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+              </h1>
             </motion.div>
-          </motion.div>
-        )}
+          )}
 
-        {/* Single Nominee Focus Mode */}
-        {state.mode === 'nominees' && category && activeNominees.length === 1 && (
-          <motion.div
-            key={Math.random()}
-            className="flex items-center justify-center w-full max-w-6xl mx-auto absolute inset-0"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, x: -100, transition: { duration: 0.3 } }}
-            transition={{ type: "spring", bounce: 0.3 }}
-          >
-            {/* Background elements for visual interest */}
+
+          {/* --- 2. MODO: NOMINADOS --- */}
+          {state.mode === 'nominees' && category && (
             <motion.div
-              className="absolute top-1/2 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl -z-10"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
-              transition={{ duration: 4, repeat: Infinity }}
-            />
-
-            <div className="flex flex-row items-center gap-12 bg-black/80 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] max-w-5xl w-full">
-              {/* Left: Image */}
+              key="nominees"
+              className="w-full h-full relative flex flex-col"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, y: -20, transition: { duration: 0.4 } }}
+            >
+              {/* HEADER CATEGORÍA (Fijo arriba) */}
               <motion.div
-                className="shrink-0 w-80 h-80 rounded-2xl overflow-hidden border-4 border-white/5 relative shadow-2xl"
-                initial={{ x: -50, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
+                className="absolute top-10 left-0 w-full flex flex-col items-center z-20"
+                initial={{ y: -50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                <img
-                  src={`/images/nominees/${nomineesDetails[0].id.toLowerCase()}.webp`}
-                  // @ts-ignore
-                  alt={nomineesDetails[0].displayName}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // @ts-ignore
-                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${nomineesDetails[0].displayName}&background=0A0A0A&color=fff&size=512`;
-                  }}
-                />
+                <div className="flex flex-col items-center bg-black/60 backdrop-blur-sm border border-white/10 rounded-2xl px-10 py-2 shadow-2xl">
+                  <span className="text-yellow-500 font-bold tracking-[0.2em] uppercase text-xs mb-1">
+                    Nominados a
+                  </span>
+                  <h2 className="text-4xl font-anton uppercase text-white drop-shadow-md leading-none">
+                    {category.name}
+                  </h2>
+                </div>
               </motion.div>
 
-              {/* Right: Info */}
-              <div class="flex flex-col flex-1 gap-4">
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <span className="text-blue-400 font-bold tracking-widest uppercase text-sm mb-2 block">
-                    {category.name}
-                  </span>
-                  <h2 className="text-6xl md:text-7xl font-anton uppercase text-white leading-none">
-                    {/* @ts-ignore */}
-                    {nomineesDetails[0].displayName}
-                  </h2>
-                </motion.div>
+              {/* CONTENEDOR PRINCIPAL */}
+              <div className="w-full h-full">
 
-                <motion.div
-                  className="h-1 w-32 bg-yellow-500 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: 128 }}
-                  transition={{ delay: 0.5, duration: 0.8 }}
-                />
+                {/* --- CASO 1: UN SOLO NOMINADO (Single Card) --- */}
+                {activeNominees.length === 1 ? (
+                  // Usamos flex items-center justify-center H-FULL para centrado perfecto
+                  <div className="w-full h-full flex items-center justify-center pt-10">
+                    {(() => {
+                      const nominee = nomineesDetails[0];
+                      return (
+                        <motion.div
+                          key={nominee.id}
+                          layoutId={nominee.id}
+                          initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, filter: "blur(5px)" }}
+                          transition={{ duration: 0.7, type: "spring", bounce: 0.2 }}
+                          // Tamaño contenido para 1080p (max-w-xl aprox 576px)
+                          className="relative w-full max-w-[550px] aspect-[3/4] rounded-[2rem] overflow-hidden border-[4px] border-white/10 bg-[#111] shadow-[0_0_60px_rgba(0,0,0,0.7)]"
+                        >
+                          {/* Imagen */}
+                          <div className="absolute inset-0 overflow-hidden">
+                            <motion.img
+                              src={`/images/nominees/${nominee.id.toLowerCase()}.webp`}
+                              alt={nominee.displayName}
+                              className="w-full h-full object-cover"
+                              animate={{ scale: [1, 1.1] }}
+                              transition={{ duration: 20, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+                              onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${nominee.displayName}&background=222&color=fff&size=512` }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-90"></div>
+                          </div>
 
-                <motion.p
-                  className="text-white/60 text-lg font-light max-w-md mt-2"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                >
-                  Nominado oficial en la categoría {category.name}.
-                </motion.p>
+                          {/* Info */}
+                          <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col items-center text-center pb-10">
+                            <div className="w-12 h-1.5 bg-yellow-500 mb-4 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.8)]"></div>
+                            <h3 className="text-5xl font-anton uppercase text-white leading-[0.9] drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
+                              {nominee.displayName}
+                            </h3>
+                          </div>
+                        </motion.div>
+                      );
+                    })()}
+                  </div>
+                ) : (
+                  // --- CASO 2: GRID (Múltiples) ---
+                  <div className="w-full h-full flex flex-col justify-center pt-20 px-12">
+                    <div className={`grid gap-6 w-full mx-auto ${
+                      // GRID MÁS COMPACTO: Anchos máximos reducidos
+                      activeNominees.length === 2 ? 'grid-cols-2 max-w-3xl' :
+                        activeNominees.length === 3 ? 'grid-cols-3 max-w-5xl' :
+                          'grid-cols-5 max-w-7xl'
+                      }`}>
+                      {nomineesDetails.map((nominee, i) => (
+                        <motion.div
+                          key={nominee.id}
+                          layoutId={nominee.id}
+                          initial={{ opacity: 0, y: 30 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.9, filter: "blur(5px)" }}
+                          transition={{ delay: i * 0.1, duration: 0.5, type: "spring", bounce: 0.2 }}
+                          className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white/10 bg-[#111] shadow-2xl"
+                        >
+                          <div className="absolute inset-0 overflow-hidden">
+                            <motion.img
+                              src={`/images/nominees/${nominee.id.toLowerCase()}.webp`}
+                              alt={nominee.displayName}
+                              className="w-full h-full object-cover"
+                              animate={{ scale: [1, 1.08] }}
+                              transition={{ duration: 12, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+                              onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${nominee.displayName}&background=222&color=fff&size=512` }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-90"></div>
+                          </div>
+
+                          <div className="absolute bottom-0 left-0 w-full p-5 flex flex-col items-center text-center pb-6">
+                            <div className="w-8 h-1 bg-yellow-500 mb-2 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.8)]"></div>
+                            <h3 className="text-2xl font-anton uppercase text-white leading-[0.95] drop-shadow-xl">
+                              {nominee.displayName}
+                            </h3>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
               </div>
-            </div>
-          </motion.div>
-        )}
+            </motion.div>
+          )}
 
 
+          {/* --- 3. MODO: GANADOR (REVEAL) --- */}
+          {state.mode === 'winner' && winnerDetails && category && (
+            <motion.div
+              key="winner"
+              className="flex flex-col items-center justify-center w-full h-full relative z-30"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {/* Glow ajustado */}
+              <motion.div
+                className="absolute w-[800px] h-[800px] bg-yellow-500/15 rounded-full blur-[120px]"
+                animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.2, 0.4, 0.2] }}
+                transition={{ duration: 4, repeat: Infinity }}
+              />
 
-      </AnimatePresence>
+              <motion.div
+                className="flex flex-col items-center z-10"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, type: "spring" }}
+              >
+                <div className="flex items-center gap-3 bg-yellow-500 text-black px-8 py-2 rounded-full font-bold text-xl uppercase tracking-widest mb-8 shadow-[0_0_30px_rgba(234,179,8,0.5)]">
+                  <LucideTrophy size={24} /> Ganador
+                </div>
+
+                {/* Imagen Ganador (Tamaño 350px) */}
+                <div className="relative mb-8">
+                  <div className="absolute inset-0 rounded-full border-[8px] border-yellow-500 blur-md opacity-60 animate-pulse"></div>
+                  <motion.div
+                    className="size-[350px] rounded-full overflow-hidden border-[6px] border-yellow-500 shadow-[0_0_60px_rgba(234,179,8,0.3)] bg-black"
+                    layoutId={winnerDetails.id}
+                  >
+                    <img
+                      src={`/images/nominees/${winnerDetails.id.toLowerCase()}.webp`}
+                      alt={winnerDetails.displayName}
+                      className="w-full h-full object-cover"
+                    />
+                  </motion.div>
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-[0_0_20px_rgba(234,179,8,0.8)]">
+                    <LucideCrown size={64} fill="currentColor" />
+                  </div>
+                </div>
+
+                <h2 className="text-xl text-white/60 font-mono uppercase tracking-[0.2em] mb-4 bg-black/40 px-4 py-1 rounded backdrop-blur-sm">
+                  {category.name}
+                </h2>
+
+                <h1 className="text-7xl font-anton text-white uppercase leading-none drop-shadow-[0_5px_15px_rgba(0,0,0,1)] text-balance text-center max-w-4xl">
+                  {winnerDetails.displayName}
+                </h1>
+              </motion.div>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
