@@ -100,14 +100,14 @@ export const AwardsOverlay = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: -20, transition: { duration: 0.4 } }}
             >
-              {/* HEADER CATEGORÍA (Fijo arriba) */}
+              {/* HEADER CATEGORÍA (Fijo arriba a la derecha) */}
               <motion.div
-                className="absolute top-12 left-0 w-full flex flex-col items-center z-20"
-                initial={{ y: -50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
+                className="absolute top-12 right-12 flex flex-col items-end z-20"
+                initial={{ x: 50, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                <div className="flex flex-col items-center bg-black/80 backdrop-blur-md border border-white/10 rounded-3xl px-16 py-4 shadow-2xl">
+                <div className="flex flex-col items-end bg-black/80 backdrop-blur-md border border-white/10 rounded-3xl px-12 py-4 shadow-2xl">
                   <span className="text-yellow-500 font-bold tracking-[0.3em] uppercase text-lg mb-2">
                     Nominados a
                   </span>
