@@ -1,0 +1,24 @@
+---
+import { AwardsOverlay } from "@/components/Overlay/AwardsOverlay";
+import "@/assets/styles/global.css";
+// Load fonts via @fontsource or Astro Integrations in global
+---
+
+<html lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Awards Overlay</title>
+    </head>
+    <body class="bg-transparent overflow-hidden">
+        <AwardsOverlay client:only="react" />
+    </body>
+</html>
+
+<style is:global>
+    /* Ensure transparent background for OBS */
+    html,
+    body {
+        background-color: transparent !important;
+    }
+</style>

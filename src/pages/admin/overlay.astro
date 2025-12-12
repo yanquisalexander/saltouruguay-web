@@ -1,0 +1,322 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { CATEGORIES } from "@/awards/Categories";
+import { NOMINEES } from "@/awards/Nominees";
+import {
+    LucideMonitor,
+    LucidePlay,
+    LucideSquare,
+    LucideEye,
+    LucideEyeOff,
+} from "lucide-preact";
+
+// Server Side: Get initial nominees map for easy access
+const nomineesMap = NOMINEES;
+---
+
+<AdminLayout title="Control de Overlay">
+    <div class="max-w-7xl mx-auto p-6 space-y-8">
+        <header
+            class="flex justify-between items-center border-b border-white/10 pb-6"
+        >
+            <div>
+                <h1
+                    class="text-3xl font-anton uppercase text-white flex items-center gap-3"
+                >
+                    <LucideMonitor class="text-blue-500" /> Control de Transmisión
+                </h1>
+                <p class="text-white/60 mt-2">
+                    Gestiona el overlay de OBS en tiempo real.
+                </p>
+            </div>
+
+            <div class="flex gap-4">
+                <a
+                    href="/overlay"
+                    target="_blank"
+                    class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold uppercase tracking-wide transition-colors flex items-center gap-2"
+                >
+                    <LucideEye size={16} /> Abrir Overlay
+                </a>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Panel Izquierdo: Selección de Categoría */}
+            <section
+                class="bg-[#111] border border-white/10 rounded-2xl p-6 flex flex-col gap-6 lg:col-span-1"
+            >
+                <h2
+                    class="text-xl font-bold text-white uppercase tracking-wide border-b border-white/10 pb-4"
+                >
+                    1. Seleccionar Categoría
+                </h2>
+
+                <div
+                    class="flex flex-col gap-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar"
+                >
+                    {
+                        CATEGORIES.map((cat) => (
+                            <button
+                                data-category-btn
+                                data-category-id={cat.id}
+                                class="text-left px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 hover:text-yellow-400 transition-all border border-transparent hover:border-yellow-500/30 group"
+                            >
+                                <span class="block text-xs text-white/40 font-mono mb-1">
+                                    {cat.id}
+                                </span>
+                                <span class="font-bold text-white">
+                                    {cat.name}
+                                </span>
+                            </button>
+                        ))
+                    }
+                </div>
+            </section>
+
+            {/* Panel Central: Control de Nominados */}
+            <section
+                class="bg-[#111] border border-white/10 rounded-2xl p-6 flex flex-col gap-6 lg:col-span-2 relative"
+            >
+                <div
+                    id="selection-placeholder"
+                    class="absolute inset-0 bg-[#111]/90 z-10 flex items-center justify-center rounded-2xl backdrop-blur-sm"
+                >
+                    <p
+                        class="text-white/40 uppercase tracking-widest font-bold"
+                    >
+                        Selecciona una categoría para comenzar
+                    </p>
+                </div>
+
+                <header
+                    class="flex justify-between items-center border-b border-white/10 pb-4"
+                >
+                    <h2
+                        id="current-category-title"
+                        class="text-xl font-bold text-yellow-500 uppercase tracking-wide"
+                    >
+                        Categoría
+                    </h2>
+                    <div class="flex gap-2">
+                        <button
+                            id="btn-show-category"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold uppercase text-xs tracking-wide transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2"
+                        >
+                            <LucidePlay size={14} /> Mostrar Título
+                        </button>
+                        <button
+                            id="btn-hide"
+                            class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold uppercase text-xs tracking-wide transition-all shadow-lg shadow-red-900/20 flex items-center gap-2"
+                        >
+                            <LucideSquare size={14} /> Ocultar Todo
+                        </button>
+                    </div>
+                </header>
+
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3
+                            class="text-sm font-bold text-white/60 uppercase tracking-wider"
+                        >
+                            Nominados
+                        </h3>
+                        <div class="flex gap-2">
+                            <button
+                                id="btn-select-all"
+                                class="text-xs text-blue-400 hover:text-blue-300 underline"
+                            >
+                                Seleccionar Todos
+                            </button>
+                            <button
+                                id="btn-deselect-all"
+                                class="text-xs text-white/40 hover:text-white/60 underline"
+                            >
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        id="nominees-grid"
+                        class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6"
+                    >
+                        {/* Nominees injected via JS */}
+                    </div>
+
+                    <button
+                        id="btn-show-nominees"
+                        class="w-full py-4 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold uppercase tracking-widest text-lg transition-all shadow-lg shadow-green-900/20 flex items-center justify-center gap-3"
+                    >
+                        <LucideEye /> Mostrar Nominados Seleccionados
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+</AdminLayout>
+
+<script define:vars={{ CATEGORIES, NOMINEES }}>
+    let currentCategoryId = null;
+    let selectedNominees = new Set();
+
+    // Elements
+    const placeholder = document.getElementById("selection-placeholder");
+    const categoryTitle = document.getElementById("current-category-title");
+    const nomineesGrid = document.getElementById("nominees-grid");
+    // Winner elements removed
+    const categoryBtns = document.querySelectorAll("[data-category-btn]");
+
+    // Action Buttons
+    const btnShowCategory = document.getElementById("btn-show-category");
+    const btnHide = document.getElementById("btn-hide");
+    const btnShowNominees = document.getElementById("btn-show-nominees");
+    const btnSelectAll = document.getElementById("btn-select-all");
+    const btnDeselectAll = document.getElementById("btn-deselect-all");
+
+    // API Helper
+    const sendUpdate = async (mode, winnerId = null) => {
+        try {
+            if (!currentCategoryId && mode !== "hidden") return;
+
+            const payload = {
+                mode,
+                categoryId: currentCategoryId,
+                visibleNominees: Array.from(selectedNominees),
+                winnerId,
+            };
+
+            const res = await fetch("/api/overlay/update", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) throw new Error("Failed to update");
+        } catch (err) {
+            console.error(err);
+            alert("Error actualizando overlay");
+        }
+    };
+
+    // Render Grid only (does not reset selection)
+    const renderGrid = () => {
+        const category = CATEGORIES.find((c) => c.id === currentCategoryId);
+        if (!category) return;
+
+        nomineesGrid.innerHTML = "";
+
+        category.nominees.forEach((nom) => {
+            const details = NOMINEES[nom.id] || { displayName: nom.id };
+
+            // Card Container
+            const container = document.createElement("div");
+            container.className = `
+                p-3 rounded-lg border transition-all flex items-center justify-between gap-4 group
+                ${
+                    selectedNominees.has(nom.id)
+                        ? "bg-blue-500/10 border-blue-500/50"
+                        : "bg-white/5 border-transparent hover:bg-white/10"
+                }
+            `;
+
+            // Info (Click to toggle selection without sending)
+            const info = document.createElement("div");
+            info.className =
+                "flex-1 cursor-pointer flex items-center justify-between";
+            info.innerHTML = `
+                <span class="font-bold text-white truncate">${details.displayName}</span>
+                <div class="w-4 h-4 rounded-full border border-current flex items-center justify-center text-blue-500 opacity-50 ${selectedNominees.has(nom.id) ? "opacity-100" : ""}">
+                    ${selectedNominees.has(nom.id) ? '<div class="w-2 h-2 bg-current rounded-full"></div>' : ""}
+                </div>
+            `;
+            info.onclick = () => {
+                if (selectedNominees.has(nom.id)) {
+                    selectedNominees.delete(nom.id);
+                } else {
+                    selectedNominees.add(nom.id);
+                }
+                renderGrid(); // Re-render grid to update styles
+            };
+
+            // Present Button (Triggers update immediately)
+            const presentBtn = document.createElement("button");
+            presentBtn.className =
+                "px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold uppercase tracking-wide transition-colors flex items-center gap-1 shadow-lg shadow-blue-900/20";
+            presentBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Presentar`;
+            presentBtn.onclick = (e) => {
+                e.stopPropagation();
+                // Select only this one
+                selectedNominees.clear();
+                selectedNominees.add(nom.id);
+                renderGrid(); // Update UI
+                // Send update
+                sendUpdate("nominees");
+            };
+
+            container.appendChild(info);
+            container.appendChild(presentBtn);
+
+            nomineesGrid.appendChild(container);
+        });
+    };
+
+    // Initialize Category (Clears election)
+    const selectCategory = (id) => {
+        const category = CATEGORIES.find((c) => c.id === id);
+        if (!category) return;
+
+        currentCategoryId = id;
+        categoryTitle.textContent = category.name;
+        selectedNominees.clear(); // Reset selection on category change
+
+        // Clean active states for sidebar
+        categoryBtns.forEach((b) =>
+            b.classList.remove("bg-white/20", "border-yellow-500"),
+        );
+        const btn = document.querySelector(`[data-category-id="${id}"]`);
+        if (btn) btn.classList.add("bg-white/20", "border-yellow-500");
+
+        placeholder.style.display = "none";
+        renderGrid();
+    };
+
+    // Logic
+    categoryBtns.forEach((btn) => {
+        btn.addEventListener("click", () =>
+            selectCategory(btn.getAttribute("data-category-id")),
+        );
+    });
+
+    // Action Listeners
+    btnShowCategory?.addEventListener("click", () => sendUpdate("category"));
+    btnHide?.addEventListener("click", () => sendUpdate("hidden"));
+    btnShowNominees?.addEventListener("click", () => sendUpdate("nominees"));
+
+    btnSelectAll?.addEventListener("click", () => {
+        const category = CATEGORIES.find((c) => c.id === currentCategoryId);
+        category?.nominees.forEach((n) => selectedNominees.add(n.id));
+        renderGrid();
+    });
+
+    btnDeselectAll?.addEventListener("click", () => {
+        selectedNominees.clear();
+        renderGrid();
+    });
+</script>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.4);
+    }
+</style>
