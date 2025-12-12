@@ -78,8 +78,8 @@ export const AwardsOverlay = () => {
             >
               <div className="flex items-center gap-4 mb-2">
                 <div className="h-[2px] w-16 bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.8)]"></div>
-                <span className="text-2xl font-bold uppercase tracking-[0.3em] text-yellow-500 drop-shadow-md">
-                  Categoría
+                <span className="text-3xl font-bold uppercase tracking-[0.3em] text-yellow-500 drop-shadow-md">
+                  Terna
                 </span>
                 <div className="h-[2px] w-16 bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.8)]"></div>
               </div>
@@ -100,18 +100,18 @@ export const AwardsOverlay = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: -20, transition: { duration: 0.4 } }}
             >
-              {/* HEADER CATEGORÍA (Fijo arriba a la derecha) */}
+              {/* HEADER CATEGORÍA */}
               <motion.div
-                className="absolute top-12 right-12 flex flex-col items-end z-20"
+                className="absolute top-12 inset-x-0 flex flex-col items-center z-20"
                 initial={{ x: 50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                <div className="flex flex-col items-end bg-black/80 backdrop-blur-md border border-white/10 rounded-3xl px-12 py-4 shadow-2xl">
-                  <span className="text-yellow-500 font-bold tracking-[0.3em] uppercase text-lg mb-2">
-                    Nominados a
+                <div className="flex flex-col items-center bg-black/80 backdrop-blur-md border border-white/10 rounded-3xl px-12 py-4 shadow-2xl">
+                  <span className="text-yellow-500 font-bold tracking-[0.3em] uppercase text-lg mb-2 text-right">
+                    Terna
                   </span>
-                  <h2 className="text-7xl font-anton uppercase text-white drop-shadow-xl leading-none">
+                  <h2 className="text-7xl font-anton uppercase text-white drop-shadow-xl leading-none text-right">
                     {category.name}
                   </h2>
                 </div>
