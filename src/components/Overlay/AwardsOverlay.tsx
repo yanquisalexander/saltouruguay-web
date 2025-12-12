@@ -69,7 +69,7 @@ export const AwardsOverlay = () => {
           {/* --- 1. MODO: CATEGORÍA (INTRO) --- */}
           {state.mode === 'category' && category && (
             <motion.div
-              key="category"
+              key={category.id}
               className="w-full h-full flex flex-col items-center justify-center text-center gap-4 p-16"
               initial={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
               animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
