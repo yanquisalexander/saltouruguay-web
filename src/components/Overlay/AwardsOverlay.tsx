@@ -62,6 +62,14 @@ export const AwardsOverlay = () => {
     <div className="fixed inset-0 w-full h-dvh overflow-hidden bg-transparent font-rubik text-white select-none box-border">
 
       {/* FONDO BASE */}
+      <div className="absolute inset-0 bg-black/95 -z-10">
+        <div className="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-10"></div>
+        <motion.div
+          className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-transparent to-transparent"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
 
       <div className="relative z-10 w-full h-full">
         <AnimatePresence mode="wait">
@@ -102,16 +110,16 @@ export const AwardsOverlay = () => {
             >
               {/* HEADER CATEGORÍA (Fijo arriba) */}
               <motion.div
-                className="absolute top-10 left-0 w-full flex flex-col items-center z-20"
+                className="absolute top-12 left-0 w-full flex flex-col items-center z-20"
                 initial={{ y: -50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                <div className="flex flex-col items-center bg-black/60 backdrop-blur-sm border border-white/10 rounded-2xl px-10 py-2 shadow-2xl">
-                  <span className="text-yellow-500 font-bold tracking-[0.2em] uppercase text-xs mb-1">
+                <div className="flex flex-col items-center bg-black/80 backdrop-blur-md border border-white/10 rounded-3xl px-16 py-4 shadow-2xl">
+                  <span className="text-yellow-500 font-bold tracking-[0.3em] uppercase text-lg mb-2">
                     Nominados a
                   </span>
-                  <h2 className="text-4xl font-anton uppercase text-white drop-shadow-md leading-none">
+                  <h2 className="text-7xl font-anton uppercase text-white drop-shadow-xl leading-none">
                     {category.name}
                   </h2>
                 </div>
@@ -122,8 +130,7 @@ export const AwardsOverlay = () => {
 
                 {/* --- CASO 1: UN SOLO NOMINADO (Single Card) --- */}
                 {activeNominees.length === 1 ? (
-                  // Usamos flex items-center justify-center H-FULL para centrado perfecto
-                  <div className="w-full h-full flex items-center justify-center pt-10">
+                  <div className="w-full h-full flex items-center justify-center pt-24">
                     {(() => {
                       const nominee = nomineesDetails[0];
                       return (
@@ -134,10 +141,9 @@ export const AwardsOverlay = () => {
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95, filter: "blur(5px)" }}
                           transition={{ duration: 0.7, type: "spring", bounce: 0.2 }}
-                          // Tamaño contenido para 1080p (max-w-xl aprox 576px)
-                          className="relative w-full max-w-[550px] aspect-[3/4] rounded-[2rem] overflow-hidden border-[4px] border-white/10 bg-[#111] shadow-[0_0_60px_rgba(0,0,0,0.7)]"
+                          // AJUSTE DE TAMAÑO: max-w reducido a 450px
+                          className="relative w-full max-w-[450px] aspect-[3/4] rounded-[2rem] overflow-hidden border-[4px] border-white/10 bg-[#111] shadow-[0_0_60px_rgba(0,0,0,0.7)]"
                         >
-                          {/* Imagen */}
                           <div className="absolute inset-0 overflow-hidden">
                             <motion.img
                               src={`/images/nominees/${nominee.id.toLowerCase()}.webp`}
@@ -150,7 +156,6 @@ export const AwardsOverlay = () => {
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-90"></div>
                           </div>
 
-                          {/* Info */}
                           <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col items-center text-center pb-10">
                             <div className="w-12 h-1.5 bg-yellow-500 mb-4 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.8)]"></div>
                             <h3 className="text-5xl font-anton uppercase text-white leading-[0.9] drop-shadow-[0_5px_10px_rgba(0,0,0,1)]">
@@ -163,12 +168,12 @@ export const AwardsOverlay = () => {
                   </div>
                 ) : (
                   // --- CASO 2: GRID (Múltiples) ---
-                  <div className="w-full h-full flex flex-col justify-center pt-20 px-12">
-                    <div className={`grid gap-6 w-full mx-auto ${
-                      // GRID MÁS COMPACTO: Anchos máximos reducidos
-                      activeNominees.length === 2 ? 'grid-cols-2 max-w-3xl' :
-                        activeNominees.length === 3 ? 'grid-cols-3 max-w-5xl' :
-                          'grid-cols-5 max-w-7xl'
+                  <div className="w-full h-full flex flex-col justify-center pt-32 px-12">
+                    <div className={`grid gap-8 w-full mx-auto ${
+                      // AJUSTE DE TAMAÑO: max-w de los grids reducidos para hacer las cards más chicas
+                      activeNominees.length === 2 ? 'grid-cols-2 max-w-2xl' :
+                        activeNominees.length === 3 ? 'grid-cols-3 max-w-4xl' :
+                          'grid-cols-5 max-w-6xl'
                       }`}>
                       {nomineesDetails.map((nominee, i) => (
                         <motion.div
@@ -192,7 +197,7 @@ export const AwardsOverlay = () => {
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-90"></div>
                           </div>
 
-                          <div className="absolute bottom-0 left-0 w-full p-5 flex flex-col items-center text-center pb-6">
+                          <div className="absolute bottom-0 left-0 w-full p-4 flex flex-col items-center text-center pb-5">
                             <div className="w-8 h-1 bg-yellow-500 mb-2 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.8)]"></div>
                             <h3 className="text-2xl font-anton uppercase text-white leading-[0.95] drop-shadow-xl">
                               {nominee.displayName}
@@ -217,7 +222,6 @@ export const AwardsOverlay = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
-              {/* Glow ajustado */}
               <motion.div
                 className="absolute w-[800px] h-[800px] bg-yellow-500/15 rounded-full blur-[120px]"
                 animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.2, 0.4, 0.2] }}
@@ -234,11 +238,11 @@ export const AwardsOverlay = () => {
                   <LucideTrophy size={24} /> Ganador
                 </div>
 
-                {/* Imagen Ganador (Tamaño 350px) */}
+                {/* Imagen Ganador (AJUSTE DE TAMAÑO: reducido a 280px) */}
                 <div className="relative mb-8">
                   <div className="absolute inset-0 rounded-full border-[8px] border-yellow-500 blur-md opacity-60 animate-pulse"></div>
                   <motion.div
-                    className="size-[350px] rounded-full overflow-hidden border-[6px] border-yellow-500 shadow-[0_0_60px_rgba(234,179,8,0.3)] bg-black"
+                    className="size-[280px] rounded-full overflow-hidden border-[6px] border-yellow-500 shadow-[0_0_60px_rgba(234,179,8,0.3)] bg-black"
                     layoutId={winnerDetails.id}
                   >
                     <img
@@ -247,8 +251,8 @@ export const AwardsOverlay = () => {
                       className="w-full h-full object-cover"
                     />
                   </motion.div>
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-[0_0_20px_rgba(234,179,8,0.8)]">
-                    <LucideCrown size={64} fill="currentColor" />
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-yellow-400 drop-shadow-[0_0_20px_rgba(234,179,8,0.8)]">
+                    <LucideCrown size={56} fill="currentColor" />
                   </div>
                 </div>
 
