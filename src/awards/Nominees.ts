@@ -173,7 +173,7 @@ export const NOMINEES = {
     },
     alexdevargas777: {
         username: "alexdevargas777",
-        displayName: "alexdevargas777"
+        displayName: "Alex de Vargas"
     },
     Chavaza: {
         username: "Chavaza",
@@ -213,7 +213,7 @@ export const NOMINEES = {
     },
     juniordxzx: {
         username: "juniordxzx",
-        displayName: "juniordxzx"
+        displayName: "Junior DEXZX"
     },
     Ville064: {
         username: "Ville064",
