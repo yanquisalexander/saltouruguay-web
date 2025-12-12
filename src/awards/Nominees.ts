@@ -137,7 +137,7 @@ export const NOMINEES = {
     },
     elbarre_: {
         username: "elbarre_",
-        displayName: "elbarre_"
+        displayName: "El Barre"
     },
     raika_frost: {
         username: "raika_frost",
