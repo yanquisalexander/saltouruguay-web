@@ -37,7 +37,7 @@ export const AwardsOverlay = () => {
       } catch (err) {
         await new Promise(r => setTimeout(r, 2000));
       } finally {
-        if (isMounted) setTimeout(fetchState, 100);
+        if (isMounted) fetchState(); // Cambiar a long polling: llamar inmediatamente en lugar de setTimeout
       }
     };
     fetchState();
@@ -69,7 +69,7 @@ export const AwardsOverlay = () => {
           {/* --- 1. MODO: CATEGORÍA (INTRO) --- */}
           {state.mode === 'category' && category && (
             <motion.div
-              key={`category-${category.id}`} // Key única para forzar animación si cambia categoría
+              key={`category-${category.id}-${version}`}
               className="w-full h-full flex flex-col items-center justify-center text-center gap-4 p-16"
               initial={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
               animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
