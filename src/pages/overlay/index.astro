@@ -16,9 +16,22 @@ import "@/assets/styles/global.css";
 </html>
 
 <style is:global>
+    @font-face {
+        font-family: "Cinzel";
+        src:
+            url("/fonts/Cinzel-VariableFont_wght.woff2") format("woff2"),
+            url("/fonts/Cinzel-VariableFont_wght.woff") format("woff");
+        font-weight: 400 900;
+        font-style: normal;
+        font-display: swap;
+    }
     /* Ensure transparent background for OBS */
     html,
     body {
         background-color: transparent !important;
+    }
+
+    .font-cinzel {
+        font-family: "Cinzel", serif;
     }
 </style>

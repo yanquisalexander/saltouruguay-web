@@ -84,7 +84,7 @@ export const AwardsOverlay = () => {
                 <div className="h-[2px] w-16 bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.8)]"></div>
               </div>
 
-              <h1 className="text-8xl font-anton uppercase text-white leading-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] text-balance max-w-5xl">
+              <h1 className="text-8xl font-cinzel uppercase text-white leading-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] text-balance max-w-5xl">
                 {category.name}
               </h1>
             </motion.div>
@@ -113,7 +113,7 @@ export const AwardsOverlay = () => {
                   <span className="text-yellow-500 font-bold tracking-[0.3em] uppercase text-4xl mb-2 text-right">
                     Terna
                   </span>
-                  <h2 className="text-7xl font-anton uppercase text-white drop-shadow-xl leading-none text-right">
+                  <h2 className="text-7xl font-cinzel uppercase text-white drop-shadow-xl leading-none text-right">
                     {category.name}
                   </h2>
                 </div>
