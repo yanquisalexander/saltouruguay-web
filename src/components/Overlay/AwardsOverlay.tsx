@@ -56,12 +56,12 @@ export const AwardsOverlay = () => {
   // @ts-ignore
   const winnerDetails = state.winnerId ? { ...NOMINEES[state.winnerId], id: state.winnerId } : null;
 
-  if (state.mode === 'hidden') return null;
+  // CAMBIO 1: Eliminamos el return null para permitir que AnimatePresence haga el fade-out.
+  // Usamos pointer-events para que el overlay no bloquee clicks cuando está 'hidden'.
+  const isHidden = state.mode === 'hidden';
 
   return (
-    <div className="fixed inset-0 w-full h-dvh overflow-hidden bg-transparent font-rubik text-white select-none box-border">
-
-
+    <div className={`fixed inset-0 w-full h-dvh overflow-hidden bg-transparent font-rubik text-white select-none box-border transition-all ${isHidden ? 'pointer-events-none' : 'pointer-events-auto'}`}>
 
       <div className="relative z-10 w-full h-full">
         <AnimatePresence mode="wait">
@@ -69,7 +69,7 @@ export const AwardsOverlay = () => {
           {/* --- 1. MODO: CATEGORÍA (INTRO) --- */}
           {state.mode === 'category' && category && (
             <motion.div
-              key={`${category.id}-${new Date().getTime()}`}
+              key={`category-${category.id}`} // Key única para forzar animación si cambia categoría
               className="w-full h-full flex flex-col items-center justify-center text-center gap-4 p-16"
               initial={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
               animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
@@ -101,11 +101,13 @@ export const AwardsOverlay = () => {
               exit={{ opacity: 0, y: -20, transition: { duration: 0.4 } }}
             >
               {/* HEADER CATEGORÍA */}
+              {/* CAMBIO 2: Aumentado z-index a 50 para asegurar que esté sobre las cards */}
               <motion.div
-                className="absolute top-12 inset-x-0 flex flex-col items-center z-20"
-                initial={{ x: 50, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
+                key={`header-${category.id}`}
+                className="absolute top-12 inset-x-0 flex flex-col items-center z-50"
+                initial={{ y: -50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
               >
                 <div className="flex flex-col items-center bg-black/80 backdrop-blur-md border border-white/10 rounded-3xl px-12 py-4 shadow-2xl">
                   <span className="text-yellow-500 font-bold tracking-[0.3em] uppercase text-4xl mb-2 text-right">
@@ -118,7 +120,7 @@ export const AwardsOverlay = () => {
               </motion.div>
 
               {/* CONTENEDOR PRINCIPAL */}
-              <div className="w-full h-full">
+              <div className="w-full h-full z-0">
 
                 {/* --- CASO 1: UN SOLO NOMINADO (Single Card) --- */}
                 {activeNominees.length === 1 ? (
@@ -133,7 +135,6 @@ export const AwardsOverlay = () => {
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95, filter: "blur(5px)" }}
                           transition={{ duration: 0.7, type: "spring", bounce: 0.2 }}
-                          // AJUSTE DE TAMAÑO: max-w reducido a 450px
                           className="relative w-full max-w-[450px] aspect-[3/4] rounded-[2rem] overflow-hidden border-[4px] border-white/10 bg-[#111] shadow-[0_0_60px_rgba(0,0,0,0.7)]"
                         >
                           <div className="absolute inset-0 overflow-hidden">
@@ -143,7 +144,7 @@ export const AwardsOverlay = () => {
                               className="w-full h-full object-cover"
                               animate={{ scale: [1, 1.1] }}
                               transition={{ duration: 20, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
-                              onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${nominee.displayName}&background=222&color=fff&size=512` }}
+                              onError={(e: any) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${nominee.displayName}&background=222&color=fff&size=512` }}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-90"></div>
                           </div>
@@ -161,11 +162,9 @@ export const AwardsOverlay = () => {
                 ) : (
                   // --- CASO 2: GRID (Múltiples) ---
                   <div className="w-full h-full flex flex-col justify-center pt-32 px-12">
-                    <div className={`grid gap-8 w-full mx-auto ${
-                      // AJUSTE DE TAMAÑO: max-w de los grids reducidos para hacer las cards más chicas
-                      activeNominees.length === 2 ? 'grid-cols-2 max-w-2xl' :
-                        activeNominees.length === 3 ? 'grid-cols-3 max-w-4xl' :
-                          'grid-cols-5 max-w-6xl'
+                    <div className={`grid gap-8 w-full mx-auto ${activeNominees.length === 2 ? 'grid-cols-2 max-w-2xl' :
+                      activeNominees.length === 3 ? 'grid-cols-3 max-w-4xl' :
+                        'grid-cols-5 max-w-6xl'
                       }`}>
                       {nomineesDetails.map((nominee, i) => (
                         <motion.div
@@ -184,7 +183,7 @@ export const AwardsOverlay = () => {
                               className="w-full h-full object-cover"
                               animate={{ scale: [1, 1.08] }}
                               transition={{ duration: 12, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
-                              onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${nominee.displayName}&background=222&color=fff&size=512` }}
+                              onError={(e: any) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${nominee.displayName}&background=222&color=fff&size=512` }}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-90"></div>
                           </div>
@@ -213,6 +212,7 @@ export const AwardsOverlay = () => {
               className="flex flex-col items-center justify-center w-full h-full relative z-30"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
+              exit={{ opacity: 0, filter: "blur(10px)", transition: { duration: 0.5 } }}
             >
               <motion.div
                 className="absolute w-[800px] h-[800px] bg-yellow-500/15 rounded-full blur-[120px]"
@@ -224,13 +224,14 @@ export const AwardsOverlay = () => {
                 className="flex flex-col items-center z-10"
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
                 transition={{ duration: 0.5, type: "spring" }}
               >
                 <div className="flex items-center gap-3 bg-yellow-500 text-black px-8 py-2 rounded-full font-bold text-xl uppercase tracking-widest mb-8 shadow-[0_0_30px_rgba(234,179,8,0.5)]">
                   <LucideTrophy size={24} /> Ganador
                 </div>
 
-                {/* Imagen Ganador (AJUSTE DE TAMAÑO: reducido a 280px) */}
+                {/* Imagen Ganador */}
                 <div className="relative mb-8">
                   <div className="absolute inset-0 rounded-full border-[8px] border-yellow-500 blur-md opacity-60 animate-pulse"></div>
                   <motion.div
