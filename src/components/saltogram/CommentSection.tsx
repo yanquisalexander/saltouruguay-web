@@ -5,6 +5,7 @@ import { Send, LucideLoader2, LucideCornerDownRight, LucideX, BadgeCheck, Crown 
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { actions } from "astro:actions";
+import CommentReactionButton from "@/components/saltogram/CommentReactionButton";
 
 interface CommentSectionProps {
     postId: number;
@@ -303,67 +304,7 @@ const CommentItem = ({ comment, allComments, onReply, preview, isReply = false, 
             .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
         , [allComments, comment.id]);
 
-    // Reactions state
-    const [reactions, setReactions] = useState<Array<{ emoji: string; count: number }>>([]);
-    const [userReaction, setUserReaction] = useState<string | null>(comment.userReaction || null);
-    const [loadingReactions, setLoadingReactions] = useState(false);
 
-    useEffect(() => {
-        let mounted = true;
-        const fetchReactions = async () => {
-            setLoadingReactions(true);
-            try {
-                const res = await fetch(`/api/saltogram/comments/${comment.id}/reactions`);
-                if (!res.ok) return;
-                const data = await res.json();
-                if (!mounted) return;
-                setReactions(data.reactions || []);
-                setUserReaction(data.userReaction || null);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                if (mounted) setLoadingReactions(false);
-            }
-        };
-
-        fetchReactions();
-        return () => { mounted = false; };
-    }, [comment.id]);
-
-    const toggleReaction = async (emoji: string) => {
-        if (!currentUserId) {
-            // user not logged in — ideally show toast, but keep silent here
-            return;
-        }
-
-        try {
-            const res = await fetch(`/api/saltogram/comments/${comment.id}/reactions`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ emoji }),
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                console.error(data.error);
-                return;
-            }
-
-            // Update local state
-            if (data.action === "added") {
-                setUserReaction(emoji);
-                setReactions(prev => {
-                    const found = prev.find(r => r.emoji === emoji);
-                    if (found) return prev.map(r => r.emoji === emoji ? { ...r, count: r.count + 1 } : r);
-                    return [{ emoji, count: 1 }, ...prev];
-                });
-            } else if (data.action === "removed") {
-                setUserReaction(null);
-                setReactions(prev => prev.map(r => r.emoji === emoji ? { ...r, count: Math.max(0, r.count - 1) } : r));
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    };
 
     return (
         <div className={`group flex gap-3 animate-fade-in-up ${isReply ? 'ml-10 mt-2' : ''}`}>
@@ -400,35 +341,7 @@ const CommentItem = ({ comment, allComments, onReply, preview, isReply = false, 
                 {!preview && (
                     <div className="flex items-center gap-4 mt-1 ml-2">
                         <div className="flex items-center gap-2">
-                            {reactions && reactions.length > 0 && (
-                                <div className="flex items-center gap-1">
-                                    {reactions.slice(0, 4).map(r => (
-                                        <button
-                                            key={r.emoji}
-                                            type="button"
-                                            onClick={() => toggleReaction(r.emoji)}
-                                            className="text-xs text-white/40 hover:text-white px-2 py-0.5 rounded-full bg-white/2 transition-colors flex items-center gap-1"
-                                        >
-                                            <span>{r.emoji}</span>
-                                            <span className="text-[11px]">{r.count}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            <button
-                                onClick={() => toggleReaction('❤️')}
-                                className={`text-xs px-2 py-0.5 rounded-full transition-colors flex items-center gap-1 ${userReaction === '❤️' ? 'bg-purple-600 text-white' : 'text-white/40 hover:text-white bg-white/2'}`}
-                            >
-                                <span>❤️</span>
-                                <span className="text-[11px]">
-                                    {(() => {
-                                        const found = reactions.find(r => r.emoji === '❤️');
-                                        return found ? found.count : 0;
-                                    })()}
-                                </span>
-                            </button>
-
+                            <CommentReactionButton commentId={comment.id} currentUserId={currentUserId} />
                         </div>
 
                         <button
