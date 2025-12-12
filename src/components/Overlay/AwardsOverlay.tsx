@@ -61,15 +61,7 @@ export const AwardsOverlay = () => {
   return (
     <div className="fixed inset-0 w-full h-dvh overflow-hidden bg-transparent font-rubik text-white select-none box-border">
 
-      {/* FONDO BASE */}
-      <div className="absolute inset-0 bg-black/95 -z-10">
-        <div className="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-10"></div>
-        <motion.div
-          className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-transparent to-transparent"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-        />
-      </div>
+
 
       <div className="relative z-10 w-full h-full">
         <AnimatePresence mode="wait">
