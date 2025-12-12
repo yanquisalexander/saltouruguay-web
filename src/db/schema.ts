@@ -890,6 +890,16 @@ export const SaltogramCommentsTable = pgTable("saltogram_comments", {
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().default(sql`current_timestamp`),
 });
 
+export const SaltogramCommentReactionsTable = pgTable("saltogram_comment_reactions", {
+    id: serial("id").primaryKey(),
+    commentId: integer("comment_id").notNull().references(() => SaltogramCommentsTable.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    emoji: varchar("emoji", { length: 10 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueUserCommentEmoji: unique("unique_user_comment_emoji").on(t.commentId, t.userId, t.emoji),
+}));
+
 export const SaltogramReportsTable = pgTable("saltogram_reports", {
     id: serial("id").primaryKey(),
     postId: integer("post_id").notNull().references(() => SaltogramPostsTable.id, { onDelete: "cascade" }),

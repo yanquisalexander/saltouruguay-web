@@ -46,6 +46,8 @@ export interface SaltogramComment {
     parentId?: number | null;
     createdAt: string;
     user: SaltogramUser;
+    reactionsCount?: number;
+    userReaction?: string | null;
 }
 
 export interface FriendRequest {
