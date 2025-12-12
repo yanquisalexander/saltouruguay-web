@@ -37,7 +37,7 @@ export const NOMINEES = {
     },
     pazalvarez33: {
         username: "pazalvarez33",
-        displayName: "pazalvarez33"
+        displayName: "Paz Alvarez"
     },
     eldeadpool_uruguayo: {
         username: "eldeadpool_uruguayo",
