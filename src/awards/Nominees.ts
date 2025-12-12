@@ -357,7 +357,7 @@ export const NOMINEES = {
     },
     fedegimenezOC: {
         username: "fedegimenezOC",
-        displayName: "fedegimenezOC"
+        displayName: "Fede Gimenez"
     },
     h0ru5_: {
         username: "h0ru5_",
