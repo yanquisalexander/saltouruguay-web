@@ -113,7 +113,7 @@ export const NOMINEES = {
     },
     elderoscuro_8: {
         username: "elderoscuro_8",
-        displayName: "elderoscuro_8"
+        displayName: "Elder Oscuro"
     },
     mfernandap18: {
         username: "mfernandap18",
@@ -269,7 +269,7 @@ export const NOMINEES = {
     },
     Capibaramaster01: {
         username: "Capibaramaster01",
-        displayName: "Capibaramaster01"
+        displayName: "Capibara Master"
     },
     denver17: {
         username: "denver17",

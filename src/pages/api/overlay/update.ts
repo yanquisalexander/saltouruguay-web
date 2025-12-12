@@ -22,7 +22,8 @@ export const POST: APIRoute = async (context: APIContext) => {
             categoryId,
             visibleNominees: visibleNominees || [], // IDs to show
             winnerId,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            nonce: Math.floor(Math.random() * 1000000000)
         };
 
         // Update Redis
