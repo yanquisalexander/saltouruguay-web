@@ -108,7 +108,7 @@ export const AwardsOverlay = () => {
                 transition={{ delay: 0.2 }}
               >
                 <div className="flex flex-col items-center bg-black/80 backdrop-blur-md border border-white/10 rounded-3xl px-12 py-4 shadow-2xl">
-                  <span className="text-yellow-500 font-bold tracking-[0.3em] uppercase text-lg mb-2 text-right">
+                  <span className="text-yellow-500 font-bold tracking-[0.3em] uppercase text-2xl mb-2 text-right">
                     Terna
                   </span>
                   <h2 className="text-7xl font-anton uppercase text-white drop-shadow-xl leading-none text-right">
