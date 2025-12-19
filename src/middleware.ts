@@ -2,7 +2,7 @@ import { defineMiddleware } from "astro:middleware";
 import { getSession } from "auth-astro/server";
 import { getSessionById } from "./utils/user";
 
-const ENABLE_MAINTENANCE = true//import.meta.env.PROD; // Cambia a true para activar modo mantenimiento
+const ENABLE_MAINTENANCE = false//import.meta.env.PROD; // Cambia a true para activar modo mantenimiento
 
 export const onRequest = defineMiddleware(async (context, next) => {
     const { request, redirect } = context;
