@@ -3,7 +3,7 @@ export const prerender = false;
 import LastEditionWinners from "@/components/LastEditionWinners.astro";
 import Layout from "@/layouts/Layout.astro";
 import { AWARDS_VOTES_RESULT } from "@/data/awards-winners";
-import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP } from "@/config";
+import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP, EVENT_TIMESTAMP } from "@/config";
 import LaunchCountdown from "@/components/LaunchCountdown";
 import {
   LucideTrophy,
@@ -192,7 +192,7 @@ const cardClass =
 
               <div class="w-full max-w-4xl scale-90 md:scale-100">
                 <LaunchCountdown
-                  timestamp={VOTES_OPEN_TIMESTAMP}
+                  timestamp={EVENT_TIMESTAMP}
                   showCalendarButton={true}
                   classNames={{
                     container: "justify-center gap-4 md:gap-8",
