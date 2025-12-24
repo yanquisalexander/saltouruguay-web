@@ -9,57 +9,90 @@ import Advantages from "@/sections/Advantages.astro";
 import Required2FA from "@/components/admin/Required2FA.astro";
 import { LucideChevronsDown } from "lucide-preact";
 
-const IS_PROD = import.meta.env.PROD;
+import { CHRISTMAS_MODE } from "@/config";
 
+const IS_PROD = import.meta.env.PROD;
 export const prerender = true;
+
+// Lógica de estilos condicionales
+const subtitleGradient = CHRISTMAS_MODE
+  ? "from-red-500 via-green-500 to-red-500 bg-[length:200%_auto] animate-shine"
+  : "from-blue-400 to-purple-500";
+
+const titleShadow = CHRISTMAS_MODE
+  ? "drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]"
+  : "drop-shadow-lg";
 ---
 
 <Layout
   title="Comunidad SaltoUruguayServer"
   description="Te damos la bienvenida a la comunidad del canal de SaltoUruguayServer en Twitch. ¡Los #SaltoAwards2025 será un evento inolvidable!"
 >
-  <main class="w-full text-white">
+  <main class="relative w-full text-white">
+    {/* ❄️ EFECTO DE NIEVE */}
+    {
+      CHRISTMAS_MODE && (
+        <div
+          class="fixed inset-0 z-50 pointer-events-none overflow-hidden"
+          aria-hidden="true"
+        >
+          <div class="snow" />
+          <div class="snow layer2" />
+          <div class="snow layer3" />
+        </div>
+      )
+    }
+
     <section
       id="hero"
-      class="relative w-full min-h-dvh -mt-24 flex flex-col items-center justify-center overflow-hidden"
+      class="relative -mt-24 flex min-h-dvh w-full flex-col items-center justify-center overflow-hidden"
     >
       <div
-        class="relative z-10 flex flex-col items-center gap-10 px-4 max-w-7xl mx-auto text-center"
+        class="relative z-10 mx-auto flex max-w-7xl flex-col items-center gap-10 px-4 text-center"
       >
-        {/* Alertas Superiores */}
+        {/* Alertas */}
         <div
-          class="flex flex-col gap-3 animate-fade-in-down items-center w-full max-w-md"
+          class="flex w-full max-w-md flex-col items-center gap-3 animate-fade-in-down"
         >
           <Required2FA server:defer />
           <VoteCallToAction server:defer />
         </div>
 
         <header
-          class="flex flex-col md:flex-row items-center justify-center gap-8"
+          class="flex flex-col items-center justify-center gap-8 md:flex-row"
         >
           {/* Logo */}
-          <div class="relative group animate-fade-in">
+          <div
+            class={`group relative animate-fade-in ${
+              CHRISTMAS_MODE ? "christmas-logo" : ""
+            }`}
+          >
             <img
               src="/favicon.svg"
               alt="SaltoUruguayServer Logo"
               draggable="false"
               fetchpriority="high"
               loading="eager"
-              class="h-32 md:h-48 w-auto object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-105"
+              class="h-32 w-auto object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-105 md:h-48"
             />
           </div>
 
           {/* Títulos */}
-          <div
-            class="flex flex-col items-center md:items-start text-center md:text-left space-y-1 animate-fade-in-up"
-          >
+          <div class="animate-fade-in-up space-y-1 text-center md:text-left">
             <h1
-              class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-anton tracking-tight text-white drop-shadow-lg"
+              class:list={[
+                "font-anton text-5xl tracking-tight text-white transition-all duration-500 sm:text-6xl md:text-7xl lg:text-8xl",
+                titleShadow,
+              ]}
             >
               SALTO URUGUAY
             </h1>
+
             <h2
-              class="text-xl md:text-3xl font-anton tracking-wide uppercase text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500"
+              class:list={[
+                "bg-gradient-to-r bg-clip-text font-anton text-xl uppercase tracking-wide text-transparent md:text-3xl",
+                subtitleGradient,
+              ]}
             >
               Server Community
             </h2>
@@ -67,28 +100,23 @@ export const prerender = true;
         </header>
       </div>
 
-      {/* Indicador de Scroll */}
-      <div
-        class="absolute bottom-0 animate-bouncing animate-iteration-count-infinite text-white/30"
-      >
+      {/* Scroll indicator */}
+      <div class="absolute bottom-0 text-white/30 animate-bouncing">
         <LucideChevronsDown size={32} />
       </div>
     </section>
 
-    {/* RESTO DEL CONTENIDO */}
+    {/* CONTENIDO */}
     <div
-      class="relative z-10 flex flex-col gap-24 pb-20 px-4 max-w-7xl mx-auto"
+      class="relative z-10 mx-auto flex max-w-7xl flex-col gap-24 px-4 pb-20"
     >
       <div id="stream-section" class="scroll-mt-32">
         <LiveStream server:defer />
       </div>
 
-      <FeaturedNews client:visible />
-
+      <FeaturedNews client:only />
       <Advantages />
-
       <NewsOnPage />
-
       <Sponsors />
     </div>
   </main>
@@ -107,6 +135,20 @@ export const prerender = true;
   .animate-fade-in-up {
     opacity: 0;
     animation: fadeInUp 1s ease-out 0.3s forwards;
+  }
+
+  /* Animación para el gradiente navideño */
+  .animate-shine {
+    animation: backgroundShine 3s linear infinite;
+  }
+
+  @keyframes backgroundShine {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 200% 50%;
+    }
   }
 
   @keyframes fadeIn {
@@ -136,6 +178,85 @@ export const prerender = true;
     }
     to {
       opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 🎅 ESTILOS DE NAVIDAD */
+
+  /* Gorrito sobre el logo */
+  .christmas-logo::before {
+    content: "🎅";
+    position: absolute;
+    top: -30px;
+    left: -20px;
+    font-size: 4rem;
+    z-index: 20;
+    transform: rotate(-15deg);
+    animation: bounceHat 2s infinite ease-in-out;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+  }
+
+  @keyframes bounceHat {
+    0%,
+    100% {
+      transform: rotate(-15deg) translateY(0);
+    }
+    50% {
+      transform: rotate(-10deg) translateY(-5px);
+    }
+  }
+
+  /* Efecto de Nieve (CSS Only - Performance Friendly) */
+  .snow {
+    position: absolute;
+    top: -10px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+      radial-gradient(4px 4px at 100px 50px, #fff, transparent),
+      radial-gradient(6px 6px at 200px 150px, #fff, transparent),
+      radial-gradient(3px 3px at 300px 250px, #fff 50%, transparent),
+      radial-gradient(4px 4px at 400px 350px, #fff 50%, transparent),
+      radial-gradient(6px 6px at 500px 100px, #fff 50%, transparent),
+      radial-gradient(3px 3px at 50px 200px, #fff 50%, transparent),
+      radial-gradient(4px 4px at 150px 300px, #fff 50%, transparent),
+      radial-gradient(6px 6px at 250px 400px, #fff 50%, transparent),
+      radial-gradient(6px 6px at 350px 500px, #fff 50%, transparent);
+    background-size: 550px 550px;
+    animation: snow 10s linear infinite;
+    opacity: 0.6;
+  }
+
+  .snow.layer2 {
+    background-image:
+      radial-gradient(4px 4px at 50px 250px, #fff, transparent),
+      radial-gradient(6px 6px at 150px 350px, #fff, transparent),
+      radial-gradient(3px 3px at 250px 450px, #fff 50%, transparent),
+      radial-gradient(4px 4px at 350px 50px, #fff 50%, transparent);
+    background-size: 350px 350px;
+    animation: snow 6s linear infinite reverse;
+    opacity: 0.4;
+    filter: blur(1px);
+  }
+
+  .snow.layer3 {
+    background-image: radial-gradient(
+      3px 3px at 100px 100px,
+      #fff,
+      transparent
+    );
+    background-size: 250px 250px;
+    animation: snow 4s linear infinite;
+    opacity: 0.3;
+  }
+
+  @keyframes snow {
+    0% {
+      transform: translateY(-550px);
+    }
+    100% {
       transform: translateY(0);
     }
   }

@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from "preact/compat";
-import { gsap } from "gsap";
-import { ScrollToPlugin } from "gsap/ScrollToPlugin";
+import { motion, AnimatePresence } from "motion/react";
 import { navigate } from "astro:transitions/client";
 import { LucideArrowRight, LucideExternalLink, LucideSparkles } from "lucide-preact";
-
-gsap.registerPlugin(ScrollToPlugin);
 
 const NEWS = [
     {
@@ -34,92 +31,72 @@ const NEWS = [
     id: index,
 }));
 
+// --- VARIANTS ---
+const slideVariants = {
+    // El estado 'initial' lo usaremos solo para las ENTRADAS de nuevos slides,
+    // no para el render inicial del servidor.
+    enter: { opacity: 0, zIndex: 10 },
+    center: {
+        opacity: 1,
+        zIndex: 10,
+        transition: { duration: 0.8, ease: "easeInOut" }
+    },
+    exit: {
+        opacity: 0,
+        zIndex: 0,
+        transition: { duration: 0.5, ease: "easeInOut" }
+    }
+};
+
+const contentContainerVariants = {
+    center: {
+        transition: {
+            staggerChildren: 0.1,
+            delayChildren: 0.2
+        }
+    }
+};
+
+const contentItemVariants = {
+    enter: { y: 30, opacity: 0 },
+    center: {
+        y: 0,
+        opacity: 1,
+        transition: { duration: 0.6, ease: [0.175, 0.885, 0.32, 1.275] }
+    }
+};
+
 export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?: typeof NEWS, duration?: number }) => {
+    // Inicializamos en 0. Esto coincide con lo que el servidor renderizará por defecto.
     const [selectedIndex, setSelectedIndex] = useState<number>(0);
-    const [progress, setProgress] = useState(0);
-    const slidesRef = useRef<Array<HTMLLIElement | null>>([]);
-    const contentRef = useRef<Array<HTMLDivElement | null>>([]);
     const scrollContainerRef = useRef<HTMLOListElement | null>(null);
-    const progressTween = useRef<gsap.core.Tween | null>(null);
 
-    // --- ANIMACIÓN DE CAMBIO DE SLIDE ---
+    // --- SCROLL SEGURO (Solo cliente) ---
     useEffect(() => {
-        if (selectedIndex !== null) {
-            // 1. Ocultar los inactivos
-            slidesRef.current.forEach((slide, index) => {
-                if (slide && index !== selectedIndex) {
-                    gsap.to(slide, {
-                        opacity: 0,
-                        zIndex: 0,
-                        duration: 0.5,
-                        overwrite: true
-                    });
-                }
-            });
+        // Verificamos que container.current exista para evitar errores en tests o entornos raros
+        if (scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            const thumb = container.children[selectedIndex] as HTMLElement;
 
-            // 2. Animar el activo
-            const selectedSlide = slidesRef.current[selectedIndex];
-            if (selectedSlide) {
-                gsap.set(selectedSlide, { zIndex: 10, display: 'flex' });
-
-                // Imagen Zoom Effect
-                const img = selectedSlide.querySelector('img');
-                if (img) {
-                    gsap.fromTo(img,
-                        { scale: 1.1 },
-                        { scale: 1, duration: 1.5, ease: "power2.out", overwrite: true }
-                    );
-                }
-
-                // Fade In Container
-                gsap.fromTo(selectedSlide,
-                    { opacity: 0 },
-                    { opacity: 1, duration: 0.8, ease: "power2.inOut", overwrite: true }
-                );
-
-                // Animar contenido de texto (Entrada desde abajo)
-                const content = contentRef.current[selectedIndex];
-                if (content) {
-                    gsap.fromTo(content.children,
-                        { y: 30, opacity: 0 },
-                        { y: 0, opacity: 1, duration: 0.6, stagger: 0.1, delay: 0.2, ease: "back.out(1.7)", overwrite: true }
-                    );
-                }
-            }
-
-            // 3. Scroll automático de miniaturas (Tu lógica original mejorada)
-            if (scrollContainerRef.current) {
-                const thumb = scrollContainerRef.current.children[selectedIndex] as HTMLElement;
-                if (thumb) {
-                    gsap.to(scrollContainerRef.current, {
-                        scrollTo: { x: thumb, offsetX: (scrollContainerRef.current.offsetWidth - thumb.offsetWidth) / 2 },
-                        duration: 0.5,
-                        ease: "power2.out"
-                    });
-                }
+            if (thumb) {
+                const scrollLeft = thumb.offsetLeft - (container.offsetWidth / 2) + (thumb.offsetWidth / 2);
+                // Usamos 'scrollTo' nativo que es seguro en useEffect
+                container.scrollTo({
+                    left: scrollLeft,
+                    behavior: "smooth"
+                });
             }
         }
     }, [selectedIndex]);
 
-    // --- AUTOPLAY TIMER ---
-    useEffect(() => {
-        if (progressTween.current) progressTween.current.kill();
-        setProgress(0);
-
-        if (newsItems.length > 1) {
-            progressTween.current = gsap.to({}, {
-                duration: duration / 1000,
-                ease: "none",
-                onUpdate: function () { setProgress(this.progress() * 100); },
-                onComplete: () => { setSelectedIndex((prev) => (prev + 1) % newsItems.length); }
-            });
-        }
-        return () => { if (progressTween.current) progressTween.current.kill(); };
-    }, [selectedIndex, newsItems.length, duration]);
+    const handleNextSlide = () => {
+        setSelectedIndex((prev) => (prev + 1) % newsItems.length);
+    };
 
     const handleNavigation = (event: MouseEvent, ctaLink: typeof NEWS[0]["ctaLink"]) => {
         if (!ctaLink.newTab) {
             event.preventDefault();
+            // navigate es seguro invocarlo aquí porque es un evento de usuario
             navigate(ctaLink.url);
         }
     };
@@ -129,63 +106,75 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
 
             {/* --- MAIN SLIDER --- */}
             <div className="relative w-full aspect-[4/5] md:aspect-[21/9] rounded-3xl overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-2xl group">
-                <ol className="w-full h-full relative">
-                    {newsItems.map((news, index) => (
-                        <li
-                            key={news.id}
-                            ref={(el) => (slidesRef.current[index] = el)}
-                            className="absolute inset-0 w-full h-full flex items-end md:items-center p-6 md:p-12 opacity-0"
+                <div className="w-full h-full relative">
+                    {/* SSR KEY: initial={false} 
+                        Esto le dice a Framer Motion: "Si el componente ya está montado (porque vino del servidor),
+                        no ejecutes la animación de entrada inicial (opacity 0 -> 1)".
+                        Muestra el estado 'center' directamente.
+                    */}
+                    <AnimatePresence mode="popLayout" initial={false}>
+                        <motion.div
+                            key={selectedIndex}
+                            variants={slideVariants}
+                            initial="enter"
+                            animate="center"
+                            exit="exit"
+                            className="absolute inset-0 w-full h-full flex items-end md:items-center p-6 md:p-12"
                         >
                             {/* Background Image */}
-                            <div className="absolute inset-0 z-0">
-                                <img
+                            <div className="absolute inset-0 z-0 overflow-hidden">
+                                <motion.img
+                                    // Eliminamos variants complejas en la imagen para evitar repaints pesados,
+                                    // o usamos una transición simple de escala.
+                                    initial={{ scale: 1.1 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ duration: 1.5, ease: "easeOut" }}
                                     className="w-full h-full object-cover"
-                                    src={news.background.img}
-                                    alt={news.title}
-                                    loading={index === 0 ? "eager" : "lazy"}
+                                    src={newsItems[selectedIndex].background.img}
+                                    alt={newsItems[selectedIndex].title}
+                                    // Eager solo para la primera imagen para LCP rápido
+                                    loading={selectedIndex === 0 ? "eager" : "lazy"}
+                                    decoding="async"
                                 />
-                                {/* Gradiente cinemático */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90 md:bg-gradient-to-r md:from-black md:via-black/50 md:to-transparent"></div>
                             </div>
 
-                            {/* GLASS CARD CONTENT */}
-                            <div
-                                ref={(el) => (contentRef.current[index] = el)}
+                            {/* CONTENT */}
+                            <motion.div
+                                variants={contentContainerVariants}
                                 className="relative z-10 max-w-2xl w-full"
                             >
-                                {/* Tags */}
-                                <div className="flex flex-wrap gap-2 mb-4">
-                                    {news.tags.map((tag) => (
+                                <motion.div variants={contentItemVariants} className="flex flex-wrap gap-2 mb-4">
+                                    {newsItems[selectedIndex].tags.map((tag) => (
                                         <span key={tag} className="px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-xs font-bold uppercase tracking-widest backdrop-blur-md flex items-center gap-1">
                                             <LucideSparkles size={10} /> {tag}
                                         </span>
                                     ))}
-                                </div>
+                                </motion.div>
 
-                                {/* Title */}
-                                <h2 className="text-4xl md:text-6xl font-anton text-white uppercase leading-[0.95] mb-4 drop-shadow-lg text-balance">
-                                    {news.title}
-                                </h2>
+                                <motion.h2 variants={contentItemVariants} className="text-4xl md:text-6xl font-anton text-white uppercase leading-[0.95] mb-4 drop-shadow-lg text-balance">
+                                    {newsItems[selectedIndex].title}
+                                </motion.h2>
 
-                                {/* Description */}
-                                <p className="text-white/80 font-rubik text-base md:text-lg mb-8 max-w-lg leading-relaxed text-pretty drop-shadow-md">
-                                    {news.description}
-                                </p>
+                                <motion.p variants={contentItemVariants} className="text-white/80 font-rubik text-base md:text-lg mb-8 max-w-lg leading-relaxed text-pretty drop-shadow-md">
+                                    {newsItems[selectedIndex].description}
+                                </motion.p>
 
-                                {/* CTA Button */}
-                                <a
-                                    {...(news.ctaLink.newTab && { target: "_blank", rel: "noopener noreferrer" })}
-                                    href={news.ctaLink.url}
-                                    onClick={(event) => handleNavigation(event as unknown as MouseEvent, news.ctaLink)}
-                                    className="inline-flex items-center gap-3 px-8 py-3 bg-white text-black hover:bg-yellow-400 border border-white/20 hover:border-yellow-500/50 rounded-xl font-teko text-xl font-bold uppercase tracking-wide transition-all duration-300 shadow-lg hover:scale-105 group/btn"
-                                >
-                                    <span>{news.ctaLink.text}</span>
-                                    {news.ctaLink.newTab ? <LucideExternalLink size={18} /> : <LucideArrowRight size={18} className="transition-transform group-hover/btn:translate-x-1" />}
-                                </a>
-                            </div>
-                        </li>
-                    ))}
-                </ol>
+                                <motion.div variants={contentItemVariants}>
+                                    <a
+                                        {...(newsItems[selectedIndex].ctaLink.newTab && { target: "_blank", rel: "noopener noreferrer" })}
+                                        href={newsItems[selectedIndex].ctaLink.url}
+                                        onClick={(event) => handleNavigation(event as unknown as MouseEvent, newsItems[selectedIndex].ctaLink)}
+                                        className="inline-flex items-center gap-3 px-8 py-3 bg-white text-black hover:bg-yellow-400 border border-white/20 hover:border-yellow-500/50 rounded-xl font-teko text-xl font-bold uppercase tracking-wide transition-all duration-300 shadow-lg hover:scale-105 group/btn"
+                                    >
+                                        <span>{newsItems[selectedIndex].ctaLink.text}</span>
+                                        {newsItems[selectedIndex].ctaLink.newTab ? <LucideExternalLink size={18} /> : <LucideArrowRight size={18} className="transition-transform group-hover/btn:translate-x-1" />}
+                                    </a>
+                                </motion.div>
+                            </motion.div>
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
             </div>
 
             {/* --- THUMBNAILS NAVIGATION --- */}
@@ -200,6 +189,8 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
                             <li key={news.id} className="flex-shrink-0 snap-center">
                                 <button
                                     onClick={() => setSelectedIndex(index)}
+                                    aria-label={`Ver noticia: ${news.title}`}
+                                    aria-current={isActive ? "true" : "false"}
                                     className={`
                                         relative group flex items-center gap-3 p-2 pr-4 rounded-xl border transition-all duration-300 w-64 md:w-72
                                         ${isActive
@@ -208,16 +199,15 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
                                         }
                                     `}
                                 >
-                                    {/* Miniatura */}
                                     <div className="relative w-16 h-16 shrink-0 rounded-lg overflow-hidden bg-black">
                                         <img
                                             className={`w-full h-full object-cover transition-all duration-500 ${isActive ? 'scale-110 saturate-100' : 'grayscale group-hover:grayscale-0'}`}
                                             src={news.navImage || news.background.img}
                                             alt={news.title}
+                                            loading="lazy"
                                         />
                                     </div>
 
-                                    {/* Texto Info */}
                                     <div className="flex flex-col items-start min-w-0 text-left">
                                         <span className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${isActive ? 'text-yellow-400' : 'text-gray-500'}`}>
                                             {news.tags[0]}
@@ -227,12 +217,18 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
                                         </span>
                                     </div>
 
-                                    {/* Barra de Progreso (Solo en activo) */}
-                                    {isActive && (
+                                    {/* Barra de Progreso */}
+                                    {isActive && newsItems.length > 1 && (
                                         <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-white/10 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-yellow-500 transition-all ease-linear"
-                                                style={{ width: `${progress}%` }}
+                                            <motion.div
+                                                className="h-full bg-yellow-500"
+                                                initial={{ width: "0%" }}
+                                                animate={{ width: "100%" }}
+                                                transition={{
+                                                    duration: duration / 1000,
+                                                    ease: "linear"
+                                                }}
+                                                onAnimationComplete={handleNextSlide}
                                             />
                                         </div>
                                     )}

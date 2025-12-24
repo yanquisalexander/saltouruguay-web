@@ -19,8 +19,9 @@ import { CinematicPlayer } from "./CinematicPlayer";
 import { usePusher } from "@/hooks/usePusher";
 import { navigate } from "astro:transitions/client";
 import type { JSX } from 'preact';
+import { CHRISTMAS_MODE } from "@/config"; // 🎄 Importamos el modo navidad
 
-// Icono de Twitch SVG Inline para evitar problemas de importación
+// Icono de Twitch SVG Inline
 const TwitchBrandIcon = (props: JSX.IntrinsicElements['svg']) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
         <path d="M11.64 5.93h1.43v4.28h-1.43m3.93-4.28H17v4.28h-1.43M7 2L3.43 5.57v12.86h4.28V22l3.58-3.57h2.85L20.57 12V2m-1.43 9.29l-2.85 2.85h-2.86l-2.5 2.5v-2.5H7.71V3.43h11.43Z" />
@@ -36,9 +37,20 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
 
     const isNominated = user && NOMINEES[user.username as keyof typeof NOMINEES];
 
-    // Hook condicional seguro: Si no usas pusher, puedes comentar esto, 
-    // pero asumo que está configurado según tu código anterior.
     const { pusher } = usePusher();
+
+    // --- ESTILOS DINÁMICOS ---
+    const loginButtonStyles = CHRISTMAS_MODE
+        ? "bg-red-600 hover:bg-red-700 shadow-[0_0_15px_rgba(220,38,38,0.5)] ring-1 ring-white/20"
+        : "bg-[#9146FF] hover:bg-[#7c2cf5] hover:shadow-[0_0_15px_rgba(145,70,255,0.5)]";
+
+    const dropdownBorder = CHRISTMAS_MODE
+        ? "border-red-500/30 shadow-[0_0_40px_rgba(220,38,38,0.15)]"
+        : "border-white/10";
+
+    const dropdownHeaderGradient = CHRISTMAS_MODE
+        ? "bg-gradient-to-br from-red-900/40 via-red-900/10 to-transparent"
+        : "bg-gradient-to-br from-purple-900/20 via-transparent to-transparent";
 
     const fetchUserFromServer = async () => {
         setLoading(true);
@@ -110,16 +122,16 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     if (fetchingUser) {
         return (
             <div className="flex items-center justify-center size-10 rounded-full bg-white/5 animate-pulse">
-                <LucideLoader2 class="animate-spin-clockwise animate-iteration-count-infinite text-white/50" size={18} />
+                <LucideLoader2 class={`animate-spin-clockwise animate-iteration-count-infinite ${CHRISTMAS_MODE ? 'text-red-400' : 'text-white/50'}`} size={18} />
             </div>
         );
     }
 
-    // 2. Estado: NO Logueado (Botón de Login Mejorado)
+    // 2. Estado: NO Logueado
     if (!user && !loading) {
         return (
             <button
-                className="group relative flex items-center gap-2 bg-[#9146FF] hover:bg-[#7c2cf5] text-white px-5 py-2 rounded-full font-teko text-xl uppercase tracking-wide transition-all duration-300 hover:shadow-[0_0_15px_rgba(145,70,255,0.5)] active:scale-95 overflow-hidden"
+                className={`group relative flex items-center gap-2 text-white px-5 py-2 rounded-full font-teko text-xl uppercase tracking-wide transition-all duration-300 active:scale-95 overflow-hidden ${loginButtonStyles}`}
                 onClick={handleSignIn}
                 aria-label="Iniciar sesión con Twitch"
             >
@@ -127,13 +139,18 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                     <TwitchBrandIcon className="size-5" />
                     <span>Conectar</span>
                 </span>
-                {/* Efecto Shine simple via CSS classes si las tienes, o un gradiente simple */}
+
+                {/* Decoración de Nieve en botón si es Navidad */}
+                {CHRISTMAS_MODE && (
+                    <div className="absolute top-0 left-0 w-full h-1 bg-white/40 blur-[2px]" />
+                )}
+
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
             </button>
         );
     }
 
-    // 3. Estado: Logueado (Avatar + Dropdown)
+    // 3. Estado: Logueado
     if (user) {
         return (
             <div className="relative flex items-center" ref={dropdownRef}>
@@ -142,27 +159,34 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                     className={`
                         group flex items-center gap-2 p-1 pl-2 pr-1 rounded-full transition-all duration-300 border
                         ${dropdownOpen
-                            ? 'bg-white/10 border-white/10 ring-2 ring-white/5'
+                            ? (CHRISTMAS_MODE ? 'bg-red-900/20 border-red-500/30 ring-2 ring-red-500/20' : 'bg-white/10 border-white/10 ring-2 ring-white/5')
                             : 'bg-transparent border-transparent hover:bg-white/5 hover:border-white/10'
                         }
                     `}
                     onClick={toggleDropdown}
                 >
-                    <span className="hidden md:block font-teko text-xl uppercase tracking-wide text-white mr-1 group-hover:text-yellow-400 transition-colors">
+                    <span className={`hidden md:block font-teko text-xl uppercase tracking-wide text-white mr-1 transition-colors ${CHRISTMAS_MODE ? 'group-hover:text-red-400' : 'group-hover:text-yellow-400'}`}>
                         {user.name}
                     </span>
 
                     <div className="relative">
+                        {/* 🎅 GORRITO DE SANTA */}
+                        {CHRISTMAS_MODE && (
+                            <span className="absolute -top-3.5 -left-2.5 text-2xl z-20 pointer-events-none rotate-[-15deg] filter drop-shadow-md select-none animate-pulse-slow">
+                                🎅
+                            </span>
+                        )}
+
                         <img
                             src={user.image || undefined}
                             alt={user.name || "User"}
                             className={`size-9 rounded-full object-cover border shadow-sm group-hover:scale-105 transition-transform ${isNominated
                                 ? 'border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.5)]'
-                                : 'border-white/10'
+                                : (CHRISTMAS_MODE ? 'border-red-500/50' : 'border-white/10')
                                 }`}
                         />
-                        {/* Indicador de Estado (Online / Nominated) */}
-                        <div className={`absolute bottom-0 right-0 size-2.5 border-2 border-black rounded-full ${isNominated ? 'bg-amber-400' : 'bg-green-500'
+                        {/* Indicador de Estado */}
+                        <div className={`absolute bottom-0 right-0 size-2.5 border-2 border-black rounded-full ${isNominated ? 'bg-amber-400' : (CHRISTMAS_MODE ? 'bg-green-500' : 'bg-green-500')
                             }`}></div>
                     </div>
 
@@ -171,19 +195,29 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
 
                 {/* Dropdown Menu Flotante */}
                 {dropdownOpen && (
-                    <div className={`absolute top-full right-0 mt-3 w-72 origin-top-right rounded-2xl bg-[#0a0a0a]/95 backdrop-blur-xl border shadow-2xl ring-1 ring-white/5 z-50 animate-in fade-in zoom-in-95 duration-200 ${isNominated ? 'border-amber-400/50 shadow-[0_0_40px_rgba(251,191,36,0.15)]' : 'border-white/10'
-                        }`}>
+                    <div className={`absolute top-full right-0 mt-3 w-72 origin-top-right rounded-2xl bg-[#0a0a0a]/95 backdrop-blur-xl border shadow-2xl ring-1 ring-white/5 z-50 animate-in fade-in zoom-in-95 duration-200 ${isNominated ? 'border-amber-400/50 shadow-[0_0_40px_rgba(251,191,36,0.15)]' : dropdownBorder}`}>
 
                         {/* Header del Perfil */}
                         <div className="relative p-5 border-b border-white/5 overflow-hidden rounded-t-2xl">
-                            <div className={`absolute inset-0 ${isNominated ? 'bg-gradient-to-br from-amber-900/20 via-transparent to-transparent' : 'bg-gradient-to-br from-purple-900/20 via-transparent to-transparent'
-                                }`}></div>
+                            <div className={`absolute inset-0 ${dropdownHeaderGradient}`}></div>
+
+                            {/* Nieve sutil en header */}
+                            {CHRISTMAS_MODE && <div className="absolute top-0 w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>}
+
                             <div className="relative z-10 flex items-center gap-4">
-                                <img
-                                    src={user.image || undefined}
-                                    alt={user.name || "User"}
-                                    className="size-12 rounded-full border-2 border-white/10 shadow-lg"
-                                />
+                                <div className="relative">
+                                    {/* Gorrito en Header también */}
+                                    {CHRISTMAS_MODE && (
+                                        <span className="absolute -top-4 -left-2 text-3xl z-20 pointer-events-none rotate-[-15deg] select-none">
+                                            🎅
+                                        </span>
+                                    )}
+                                    <img
+                                        src={user.image || undefined}
+                                        alt={user.name || "User"}
+                                        className={`size-12 rounded-full border-2 shadow-lg ${CHRISTMAS_MODE ? 'border-green-500/30' : 'border-white/10'}`}
+                                    />
+                                </div>
                                 <div className="flex flex-col min-w-0">
                                     <span className="font-teko text-2xl text-white uppercase tracking-wide truncate">
                                         {user.name}

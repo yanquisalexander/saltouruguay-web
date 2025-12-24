@@ -5,6 +5,7 @@ import { CurrentUser } from "./CurrentUser";
 import DiscordPresenceCount from "./DiscordPresenceCount";
 import { Notifications } from "./Notifications";
 import { LucideLock } from "lucide-preact";
+import { CHRISTMAS_MODE } from "@/config"; // 👈 Importamos la config
 
 interface Props {
   session?: Session | null;
@@ -33,18 +34,39 @@ const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
 const evenLinks = links.filter((_, index) => index % 2 === 0);
 const oddLinks = links.filter((_, index) => index % 2 !== 0);
 
-// Estilos de enlaces
+// --- ESTILOS CONDICIONALES ---
+
 const navLinkBase =
   "relative flex flex-col items-center justify-center px-4 py-1 group transition-all duration-300";
 const textStyle =
   "font-teko text-xl uppercase tracking-wide transition-colors relative z-10";
-const activeText = "text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]";
+
+// Lógica de colores (Navidad vs Default)
+const activeText = CHRISTMAS_MODE
+  ? "text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]" // Rojo Navidad
+  : "text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]"; // Amarillo Default
+
 const inactiveText = "text-white/70 group-hover:text-white";
+
+// Lógica de la línea inferior (Underline)
+const underlineColor = CHRISTMAS_MODE
+  ? "bg-gradient-to-r from-green-500 via-red-500 to-green-500" // Bastón de caramelo
+  : "bg-yellow-500";
+
+const logoGlowColor = CHRISTMAS_MODE ? "bg-red-500/30" : "bg-yellow-500/20";
 
 // Helper para generar las clases del Badge según el tipo de mensaje
 const getBadgeStyles = (label: string) => {
   const base =
     "absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-bold font-rubik px-2 py-0.5 rounded-full border shadow-[0_0_10px_rgba(0,0,0,0.5)] tracking-widest leading-none whitespace-nowrap transition-transform duration-300 group-hover:-translate-y-1 pointer-events-none backdrop-blur-md z-20";
+
+  // Si es navidad, forzamos colores navideños en etiquetas específicas
+  if (
+    CHRISTMAS_MODE &&
+    (label.includes("VOTA") || label.includes("VOTACIÓN"))
+  ) {
+    return `${base} bg-green-600/30 text-green-300 border-green-500/40 shadow-green-500/10`;
+  }
 
   if (label.includes("VOTA") || label.includes("VOTACIÓN")) {
     return `${base} bg-yellow-500/20 text-yellow-300 border-yellow-500/40 shadow-yellow-500/10`;
@@ -110,7 +132,7 @@ const getBadgeStyles = (label: string) => {
 
                     {/* Underline animado */}
                     <span
-                      class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-yellow-500 rounded-full transition-all duration-300 ${currentPath.startsWith(link.url) ? "w-full opacity-100 shadow-[0_0_10px_#EAB308]" : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-100"}`}
+                      class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] ${underlineColor} rounded-full transition-all duration-300 ${currentPath.startsWith(link.url) ? "w-full opacity-100 shadow-[0_0_10px_currentColor]" : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-100"}`}
                     />
                   </a>
                 )
@@ -119,13 +141,18 @@ const getBadgeStyles = (label: string) => {
           </div>
 
           {/* --- CENTRO (Logo Escritorio) --- */}
-          <div class="hidden md:flex flex-shrink-0 mx-4 relative group">
+          {/* Añadimos clase condicional para el gorro */}
+          <div
+            class={`hidden md:flex flex-shrink-0 mx-4 relative group ${CHRISTMAS_MODE ? "christmas-logo-nav" : ""}`}
+          >
             <a
               href="/"
               id="home-button"
               class="block transition-transform duration-300 group-hover:scale-110 active:scale-95"
             >
-              <div class="absolute inset-0 bg-yellow-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div
+                class={`absolute inset-0 ${logoGlowColor} blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+              />
               <img
                 src="/favicon.svg"
                 alt="Home"
@@ -163,7 +190,7 @@ const getBadgeStyles = (label: string) => {
                     )}
 
                     <span
-                      class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-yellow-500 rounded-full transition-all duration-300 ${currentPath.startsWith(link.url) ? "w-full opacity-100 shadow-[0_0_10px_#EAB308]" : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-100"}`}
+                      class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] ${underlineColor} rounded-full transition-all duration-300 ${currentPath.startsWith(link.url) ? "w-full opacity-100 shadow-[0_0_10px_currentColor]" : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-100"}`}
                     />
                   </a>
                 )
@@ -247,7 +274,7 @@ const getBadgeStyles = (label: string) => {
           <div class="flex-1 overflow-y-auto px-4 space-y-2">
             <a
               href="/"
-              class={`block px-4 py-3 rounded-lg font-teko text-xl transition-colors ${currentPath === "/" ? "bg-yellow-500/10 text-yellow-400" : "bg-white/5 text-white hover:bg-white/10"}`}
+              class={`block px-4 py-3 rounded-lg font-teko text-xl transition-colors ${currentPath === "/" ? (CHRISTMAS_MODE ? "bg-red-500/10 text-red-400" : "bg-yellow-500/10 text-yellow-400") : "bg-white/5 text-white hover:bg-white/10"}`}
             >
               INICIO
             </a>
@@ -259,12 +286,12 @@ const getBadgeStyles = (label: string) => {
               ) : (
                 <a
                   href={link.url}
-                  class={`block px-4 py-3 rounded-lg font-teko text-xl flex justify-between transition-colors ${currentPath.startsWith(link.url) ? "bg-yellow-500/10 text-yellow-400" : "text-white/70 hover:bg-white/5 hover:text-white"}`}
+                  class={`block px-4 py-3 rounded-lg font-teko text-xl flex justify-between transition-colors ${currentPath.startsWith(link.url) ? (CHRISTMAS_MODE ? "bg-red-500/10 text-red-400" : "bg-yellow-500/10 text-yellow-400") : "text-white/70 hover:bg-white/5 hover:text-white"}`}
                 >
                   {link.label}
                   {link.specialComment && (
                     <span
-                      class={`text-[10px] font-rubik font-bold px-2 py-0.5 rounded tracking-wide ${link.specialComment === "VOTACIÓN" ? "bg-yellow-500/20 text-yellow-400" : "bg-blue-500/20 text-blue-400"}`}
+                      class={`text-[10px] font-rubik font-bold px-2 py-0.5 rounded tracking-wide ${link.specialComment === "VOTACIÓN" ? (CHRISTMAS_MODE ? "bg-red-500/20 text-red-400" : "bg-yellow-500/20 text-yellow-400") : "bg-blue-500/20 text-blue-400"}`}
                     >
                       {link.specialComment}
                     </span>
@@ -290,6 +317,31 @@ const getBadgeStyles = (label: string) => {
 
   :global(#site-header.is-scrolled #nav-island) {
     @apply bg-[#050505]/85 backdrop-blur-xl border-white/10 shadow-2xl max-w-6xl;
+  }
+
+  /* 🎅 GORRO DE NAVIDAD (CSS PURO) */
+  /* Se ajusta específicamente para el logo pequeño del Navbar */
+  .christmas-logo-nav::before {
+    content: "🎅";
+    position: absolute;
+    top: -18px;
+    left: -8px;
+    font-size: 2rem;
+    z-index: 50;
+    transform: rotate(-15deg);
+    animation: bounceHatNav 3s infinite ease-in-out;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    pointer-events: none; /* Para que no moleste el click al logo */
+  }
+
+  @keyframes bounceHatNav {
+    0%,
+    100% {
+      transform: rotate(-15deg) translateY(0);
+    }
+    50% {
+      transform: rotate(-5deg) translateY(-3px);
+    }
   }
 </style>
 

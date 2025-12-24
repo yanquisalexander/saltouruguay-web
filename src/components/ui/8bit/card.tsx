@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 
 import {
   Card as ShadcnCard,
-  CardAction as ShadcnCardAction,
   CardContent as ShadcnCardContent,
   CardDescription as ShadcnCardDescription,
   CardFooter as ShadcnCardFooter,
@@ -28,7 +27,7 @@ export const cardVariants = cva("", {
 
 export interface BitCardProps
   extends React.ComponentProps<"div">,
-    VariantProps<typeof cardVariants> {
+  VariantProps<typeof cardVariants> {
   asChild?: boolean;
 }
 
@@ -96,7 +95,7 @@ function CardAction({ ...props }: BitCardProps) {
   const { className, font } = props;
 
   return (
-    <ShadcnCardAction
+    <CardAction
       className={cn(font !== "normal" && "retro", className)}
       {...props}
     />

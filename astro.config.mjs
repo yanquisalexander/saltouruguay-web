@@ -55,8 +55,17 @@ export default defineConfig({
     checkOrigin: false
   },
   vite: {
+    resolve: {
+      alias: {
+        react: 'preact/compat',
+        'react-dom/test-utils': 'preact/test-utils',
+        'react-dom': 'preact/compat',
+        'react/jsx-runtime': 'preact/jsx-runtime',
+      },
+    },
     optimizeDeps: {
-      exclude: ['edge-tts']
-    }
+      exclude: ['edge-tts', 'motion/react']
+    },
+
   }
 });
