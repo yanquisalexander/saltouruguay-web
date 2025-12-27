@@ -1,21 +1,13 @@
 import { useEffect, useState } from "preact/hooks";
 import {
-    LucideGamepad2,
-    LucideMedal,
-    LucideTrophy,
-    LucideUsers,
-    LucideCode,
-    LucideSettings,
-    LucideLayoutDashboard,
-    LucidePaintbrush,
-    LucideCalendar,
-    LucideSwords,
-    LucidePanelLeftClose,
-    LucidePanelLeftOpen,
-    LucideArrowLeft
+    LucideGamepad2, LucideMedal, LucideTrophy, LucideUsers,
+    LucideCode, LucideSettings, LucideLayoutDashboard, LucidePaintbrush,
+    LucideCalendar, LucideSwords, LucidePanelLeftClose, LucidePanelLeftOpen,
+    LucideLogOut, LucideMenu, LucideX
 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 
+// --- CONFIGURACIÓN ---
 const iconMap = {
     home: LucideLayoutDashboard,
     users: LucideUsers,
@@ -31,15 +23,15 @@ const iconMap = {
 
 const categories = [
     {
-        title: "CORE",
+        title: "Principal",
         links: [
             { label: "Dashboard", url: "/admin", icon: "home" },
             { label: "Usuarios", url: "/admin/usuarios", icon: "users" },
-            { label: "Páginas", url: "/admin/custom-pages", icon: "paintbrush" },
+            { label: "CMS Páginas", url: "/admin/custom-pages", icon: "paintbrush" },
         ],
     },
     {
-        title: "GESTIÓN",
+        title: "Competición",
         links: [
             { label: "Eventos", url: "/admin/eventos", icon: "calendar" },
             { label: "Torneos", url: "/admin/torneos", icon: "trophy" },
@@ -48,185 +40,236 @@ const categories = [
         ],
     },
     {
-        title: "DEVELOPER",
+        title: "Sistema",
         links: [
-            { label: "OAuth Apps", url: "/admin/developer/apps", icon: "code" }
-        ]
-    },
-    {
-        title: "SISTEMA",
-        links: [
-            { label: "Twitch Events", url: "/admin/system/twitch-events", icon: "code" }
+            { label: "OAuth Apps", url: "/admin/developer/apps", icon: "code" },
+            { label: "Twitch Events", url: "/admin/system/twitch-events", icon: "settings" }
         ]
     },
 ];
 
-export default function Sidebar({ session, initialPathname }: { session: Session | null, initialPathname: string }) {
-    const [collapsed, setCollapsed] = useState(false);
+export default function AdminSidebar({ session, initialPathname }: { session: Session | null, initialPathname: string }) {
+    // Estado Desktop Persistente
+    const [collapsed, setCollapsed] = useState(() => {
+        if (typeof window !== 'undefined') return localStorage.getItem('admin-sidebar-collapsed') === 'true';
+        return false;
+    });
+
+    // Estado Móvil
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [pathname, setPathname] = useState(initialPathname);
+
+    const toggleSidebar = () => {
+        const newState = !collapsed;
+        setCollapsed(newState);
+        localStorage.setItem('admin-sidebar-collapsed', String(newState));
+    };
 
     const isActive = (url: string) => {
         if (url === "/admin") return pathname === "/admin";
         return pathname.startsWith(url);
-    }
+    };
 
     useEffect(() => {
-        const updatePath = () => setPathname(window.location.pathname);
+        const updatePath = () => {
+            setPathname(window.location.pathname);
+            setIsMobileOpen(false);
+        };
         document.addEventListener('astro:page-load', updatePath);
-        if (window.innerWidth < 1024) setCollapsed(true);
         return () => document.removeEventListener('astro:page-load', updatePath);
     }, []);
 
+    // Clases dinámicas de ancho
+    // Móvil: w-72 (Fijo cuando está abierto)
+    // Desktop: w-72 (Expandido) vs w-20 (Colapsado)
+    const sidebarWidth = collapsed ? "md:w-20" : "md:w-72";
+
     return (
-        <aside
-            className={`
-                fixed md:sticky top-0 left-0 z-50 h-screen 
-                bg-[#09090b] border-r border-white/5 
-                transition-all duration-300 ease-in-out flex flex-col
-                ${collapsed ? "w-20" : "w-72"}
-            `}
-        >
-            {/* --- HEADER --- */}
-            <div className={`h-16 flex items-center border-b border-white/5 transition-all duration-300 ${collapsed ? "justify-center px-0" : "justify-between px-4"}`}>
-
-                {/* Logo / Title Wrapper */}
-                <div className={`flex items-center overflow-hidden transition-all duration-300 ${collapsed ? "w-0 opacity-0 p-0" : "w-auto opacity-100 gap-3"}`}>
-                    <div className="size-8 rounded bg-blue-600 flex items-center justify-center shrink-0">
-                        <span className="font-anton text-white text-lg">A</span>
+        <>
+            {/* ==============================================
+                1. MOBILE HEADER BAR (Solo visible en < md)
+               ============================================== */}
+            <div className="md:hidden fixed top-0 left-0 z-40 w-full h-16 flex items-center justify-between px-4 bg-[#09090b]/95 backdrop-blur-md border-b border-white/5">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => setIsMobileOpen(true)}
+                        className="p-2 -ml-2 text-white/70 hover:text-white active:bg-white/10 rounded-lg transition-colors"
+                    >
+                        <LucideMenu size={24} />
+                    </button>
+                    <div className="flex items-center gap-2">
+                        <div className="size-6 rounded bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                            <span className="font-anton text-white text-xs">S</span>
+                        </div>
+                        <span className="font-teko text-xl text-white tracking-wide pt-0.5">ADMIN</span>
                     </div>
-                    <span className="font-teko text-2xl text-white tracking-wide whitespace-nowrap">
-                        ADMIN PANEL
-                    </span>
                 </div>
-
-                {/* Toggle Button */}
-                <button
-                    onClick={() => setCollapsed(!collapsed)}
-                    className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-                    title={collapsed ? "Expandir" : "Colapsar"}
-                >
-                    {collapsed ? <LucidePanelLeftOpen size={20} /> : <LucidePanelLeftClose size={20} />}
-                </button>
+                {/* Avatar Móvil */}
+                <img src={session?.user?.image || "/og.webp"} className="size-8 rounded-lg border border-white/10 bg-black" />
             </div>
 
-            {/* --- NAVIGATION --- */}
-            <nav className="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">
-                {categories.map((category, idx) => (
-                    <div key={idx} className={`${collapsed ? "mb-4" : "mb-6"}`}>
+            {/* ==============================================
+                2. MOBILE BACKDROP (Fondo oscuro)
+               ============================================== */}
+            {isMobileOpen && (
+                <div
+                    className="fixed inset-0 bg-black/80 z-[45] md:hidden backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={() => setIsMobileOpen(false)}
+                />
+            )}
 
-                        {/* Category Title - Ocultar completamente margen y altura si colapsado */}
-                        <div
-                            className={`
-                                text-[10px] font-bold text-gray-500 uppercase tracking-widest transition-all duration-300 overflow-hidden whitespace-nowrap
-                                ${collapsed ? "h-0 opacity-0 mb-0 px-0" : "h-auto opacity-100 mb-2 px-3"}
-                            `}
-                        >
-                            {category.title}
-                        </div>
+            {/* ==============================================
+                3. SIDEBAR CONTAINER PRINCIPAL
+               ============================================== */}
+            <aside
+                className={`
+                    fixed inset-y-0 left-0 z-50 h-full flex flex-col
+                    bg-[#09090b] border-r border-white/5 
+                    transition-[width,transform] duration-300 ease-[cubic-bezier(0.2,0,0,1)]
+                    
+                    /* Lógica Móvil (Off-canvas) */
+                    ${isMobileOpen ? "translate-x-0 w-72" : "-translate-x-full w-72"}
+                    
+                    /* Lógica Desktop (Static & Collapsible) */
+                    md:translate-x-0 md:static ${sidebarWidth}
+                `}
+            >
+                {/* --- HEADER --- */}
+                <div className={`
+                    h-16 flex items-center shrink-0 border-b border-white/5 relative
+                    ${collapsed ? "md:justify-center" : "justify-between px-5"}
+                    px-5 /* Default padding mobile */
+                `}>
 
-                        {/* Links List */}
-                        <ul className="space-y-1">
-                            {category.links.map((link, linkIdx) => {
-                                const Icon = iconMap[link.icon as keyof typeof iconMap];
-                                const active = isActive(link.url);
+                    {/* LOGO + TÍTULO (Oculto si colapsado en desktop) */}
+                    <div className={`
+                        flex items-center gap-3 overflow-hidden transition-all duration-300
+                        ${collapsed ? "md:w-0 md:opacity-0 md:absolute" : "w-auto opacity-100"}
+                    `}>
 
-                                return (
-                                    <li key={linkIdx}>
-                                        <a
-                                            href={link.url}
-                                            title={collapsed ? link.label : ""}
-                                            className={`
-                                                group flex items-center rounded-lg transition-all duration-200 py-2.5
-                                                ${collapsed ? "justify-center px-0 gap-0" : "justify-start px-3 gap-3"}
-                                                ${active
-                                                    ? "bg-blue-500/10 text-blue-400"
-                                                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                                                }
-                                            `}
-                                        >
-                                            {/* Icono - Mantener tamaño constante */}
-                                            <div className="relative flex items-center justify-center shrink-0">
-                                                <Icon
-                                                    size={20}
-                                                    className={`transition-transform duration-300 ${active ? "scale-110" : "group-hover:scale-110"}`}
-                                                />
-
-                                                {/* Indicador de activo (Punto) solo visible colapsado */}
-                                                {collapsed && active && (
-                                                    <div className="absolute -right-2 top-0 w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>
-                                                )}
-
-                                                {/* Borde izquierdo indicador solo expandido */}
-                                                {!collapsed && active && (
-                                                    <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-1 h-5 bg-blue-500 rounded-r-full"></div>
-                                                )}
-                                            </div>
-
-                                            {/* Texto - Ocultar suavemente */}
-                                            <span
-                                                className={`
-                                                    text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300
-                                                    ${collapsed ? "w-0 opacity-0" : "w-auto opacity-100"}
-                                                `}
-                                            >
-                                                {link.label}
-                                            </span>
-                                        </a>
-                                    </li>
-                                );
-                            })}
-                        </ul>
+                        <span className="font-teko text-2xl text-white tracking-wide pt-1 whitespace-nowrap">
+                            ADMIN PANEL
+                        </span>
                     </div>
-                ))}
-            </nav>
 
-            {/* --- FOOTER --- */}
-            <div className="p-3 border-t border-white/5 bg-[#09090b]">
-
-                {/* Back to Site */}
-                <a
-                    href="/"
-                    className={`
-                        flex items-center rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors mb-2 py-2
-                        ${collapsed ? "justify-center px-0 gap-0" : "justify-start px-3 gap-3"}
-                    `}
-                    title="Volver a la web"
-                >
-                    <LucideArrowLeft size={18} className="shrink-0" />
-                    <span
+                    {/* BOTÓN COLAPSAR (Desktop) / CERRAR (Mobile) */}
+                    <button
+                        onClick={() => window.innerWidth < 768 ? setIsMobileOpen(false) : toggleSidebar()}
                         className={`
-                            text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300
-                            ${collapsed ? "w-0 opacity-0" : "w-auto opacity-100"}
+                            text-white/40 hover:text-white hover:bg-white/5 p-1.5 rounded-lg transition-colors
+                            ${collapsed ? "md:hidden" : "block"}
                         `}
                     >
-                        Volver a la Web
-                    </span>
-                </a>
+                        <div className="md:hidden"><LucideX size={20} /></div>
+                        <div className="hidden md:block"><LucidePanelLeftClose size={20} /></div>
+                    </button>
 
-                {/* User Card */}
-                <div className={`
-                    flex items-center rounded-xl bg-white/5 border border-white/5 overflow-hidden transition-all duration-300
-                    ${collapsed ? "justify-center p-2 bg-transparent border-transparent" : "justify-start p-2 gap-3"}
-                `}>
-                    <div className="relative shrink-0">
-                        <img
-                            src={session?.user?.image || "/og.webp"}
-                            alt="Admin"
-                            className="size-9 rounded-lg object-cover"
-                        />
-                        <div className="absolute -bottom-1 -right-1 size-2.5 bg-green-500 border-2 border-[#09090b] rounded-full"></div>
-                    </div>
-
-                    <div className={`flex flex-col overflow-hidden transition-all duration-300 ${collapsed ? "w-0 opacity-0" : "w-auto opacity-100"}`}>
-                        <span className="text-sm font-bold text-white truncate leading-tight">
-                            {session?.user?.name}
-                        </span>
-                        <span className="text-[10px] text-blue-400 font-mono uppercase tracking-wider leading-tight">
-                            Admin
-                        </span>
-                    </div>
+                    {/* LOGO SOLO ICONO (Visible solo si colapsado en Desktop) */}
+                    {collapsed && (
+                        <button
+                            onClick={toggleSidebar}
+                            className="hidden md:flex size-10 rounded-xl hover:bg-white/5 items-center justify-center transition-colors group"
+                            title="Expandir"
+                        >
+                            <LucidePanelLeftOpen size={24} className="text-white/40 group-hover:text-white" />
+                        </button>
+                    )}
                 </div>
-            </div>
-        </aside>
+
+                {/* --- NAVIGATION SCROLL AREA --- */}
+                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6 space-y-8 custom-scrollbar">
+                    {categories.map((category, idx) => (
+                        <div key={idx} className="w-full">
+
+                            {/* TÍTULO DE SECCIÓN */}
+                            <div className={`
+                                px-5 mb-3 text-[10px] font-bold text-white/30 uppercase tracking-widest transition-all duration-300 whitespace-nowrap
+                                ${collapsed ? "md:opacity-0 md:h-0 md:mb-0 md:px-0" : "opacity-100"}
+                            `}>
+                                {category.title}
+                            </div>
+
+                            {/* LISTA DE LINKS */}
+                            <ul className="space-y-1 px-3">
+                                {category.links.map((link, linkIdx) => {
+                                    const Icon = iconMap[link.icon as keyof typeof iconMap];
+                                    const active = isActive(link.url);
+
+                                    return (
+                                        <li key={linkIdx}>
+                                            <a
+                                                href={link.url}
+                                                onClick={() => setIsMobileOpen(false)}
+                                                className={`
+                                                    group relative flex items-center rounded-xl transition-all duration-200 min-h-[44px]
+                                                    ${active
+                                                        ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
+                                                        : "text-gray-400 hover:text-gray-100 hover:bg-white/5"
+                                                    }
+                                                    /* LAYOUT: Centrado si colapsado, Inicio si expandido */
+                                                    ${collapsed ? "md:justify-center md:px-0" : "justify-start px-3 gap-3"}
+                                                    justify-start px-3 gap-3 /* Mobile default */
+                                                `}
+                                                title={collapsed ? link.label : ""}
+                                            >
+                                                {/* ICONO */}
+                                                <Icon
+                                                    size={20}
+                                                    className={`shrink-0 transition-transform ${!active && "group-hover:scale-110"}`}
+                                                />
+
+                                                {/* TEXTO (Oculto absolutamente si colapsado para evitar saltos) */}
+                                                <span className={`
+                                                    whitespace-nowrap font-medium text-sm pt-0.5 transition-all duration-300
+                                                    ${collapsed ? "md:w-0 md:opacity-0 md:absolute" : "w-auto opacity-100"}
+                                                `}>
+                                                    {link.label}
+                                                </span>
+
+                                                {/* TOOLTIP FLOTANTE (Solo Desktop Hover cuando colapsado) */}
+                                                {collapsed && (
+                                                    <div className="hidden md:block absolute left-full ml-4 px-2.5 py-1.5 bg-white text-black text-xs font-bold rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
+                                                        {link.label}
+                                                        {/* Flechita del tooltip */}
+                                                        <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-white rotate-45"></div>
+                                                    </div>
+                                                )}
+                                            </a>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    ))}
+                </nav>
+
+                {/* --- FOOTER --- */}
+                <div className="p-3 border-t border-white/5 bg-[#09090b]">
+                    {collapsed ? (
+                        // FOOTER COLAPSADO (Solo Avatar o Icono Salir)
+                        <div className="flex flex-col gap-2 items-center">
+                            <a href="/" className="size-10 flex items-center justify-center rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-colors" title="Salir">
+                                <LucideLogOut size={20} />
+                            </a>
+                            <div className="size-8 rounded-lg bg-white/5 p-0.5 cursor-help" title={session?.user?.name}>
+                                <img src={session?.user?.image || "/og.webp"} className="w-full h-full rounded-md object-cover" />
+                            </div>
+                        </div>
+                    ) : (
+                        // FOOTER EXPANDIDO
+                        <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/5">
+                            <img src={session?.user?.image || "/og.webp"} className="size-9 rounded-lg object-cover bg-black shrink-0" />
+                            <div className="flex flex-col overflow-hidden">
+                                <span className="text-sm font-bold text-white truncate max-w-[110px]">{session?.user?.name}</span>
+                                <span className="text-[10px] text-blue-400 font-mono uppercase tracking-wider">Admin</span>
+                            </div>
+                            <a href="/" className="ml-auto p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Salir de la Admin">
+                                <LucideLogOut size={16} />
+                            </a>
+                        </div>
+                    )}
+                </div>
+            </aside>
+        </>
     );
 }

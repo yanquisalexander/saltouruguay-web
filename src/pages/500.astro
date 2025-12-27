@@ -1,44 +1,213 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import {
+  LucideConstruction,
+  LucideAlertTriangle,
+  LucideRefreshCw,
+  LucideHome,
+  LucideCat,
+} from "lucide-preact";
+
+const { isMaintenanceMode } = Astro.locals;
+
+// Configuración dinámica
+const config = isMaintenanceMode
+  ? {
+      theme: "yellow",
+      title: "Mantenimiento",
+      icon: LucideConstruction,
+      glowColor: "bg-yellow-500/20",
+      textColor: "text-yellow-500",
+      borderColor: "border-yellow-500/20",
+    }
+  : {
+      theme: "red",
+      title: "Error 500",
+      icon: LucideAlertTriangle,
+      glowColor: "bg-red-500/20",
+      textColor: "text-red-500",
+      borderColor: "border-red-500/20",
+    };
 
 const preload = [
   {
     as: "image",
-    href: "/images/404-salto.webp",
+    href: "/images/500.webp",
     type: "image/webp",
   },
 ];
-
-const { isMaintenanceMode } = Astro.locals;
-
-const title = isMaintenanceMode ? "Mantenimiento" : "Error interno";
 ---
 
-<Layout title={title} preload={preload} hideHeader>
-  <div class="min-h-screen flex flex-col justify-center items-center h-full">
-    <header
-      class="flex items-center justify-center max-w-md w-full gap-x-14 gap-y-6 flex-col"
+<Layout
+  title={config.title}
+  preload={preload}
+  hideHeader
+  hideFooter
+  mainClassname="relative overflow-hidden min-h-dvh flex items-center justify-center"
+>
+  {/* --- FONDO AMBIENTAL --- */}
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"
     >
-      <div class="relative">
-        <img
-          draggable="false"
-          src="/images/500.webp"
-          alt="This is fine"
-          class="h-48 sm:h-56 w-auto object-contain"
-        />
-      </div>
-      <h1 class="text-2xl font-bold text-center flex-wrap">
-        {isMaintenanceMode ? "¡Estamos en mantenimiento! 🚧" : "¡Upps! 😢"}
-      </h1>
-    </header>
+    </div>
+    {/* Glow ajustado para móvil (más pequeño) y desktop */}
+    <div
+      class={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] ${config.glowColor} blur-[100px] md:blur-[150px] rounded-full pointer-events-none animate-pulse-slow`}
+    >
+    </div>
+  </div>
 
-    <p
-      class="font-rubik uppercase text-lg text-balance text-center mt-6 max-w-xl"
+  <div
+    class="w-full max-w-2xl px-6 py-12 flex flex-col items-center text-center relative z-10"
+  >
+    {/* Badge de Estado */}
+    <div
+      class={`inline-flex items-center gap-2 px-3 py-1 md:px-4 md:py-1.5 rounded-full bg-[#0a0a0a] border ${config.borderColor} ${config.textColor} mb-6 md:mb-8 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-700`}
     >
-      <span class="font-bold text-yellow-500"> ¡Upps! </span>
-      <br />
-      No te preocupes, nuestros gatos ingenieros ya descansaron y están trabajando
-      para solucionar el problema. <br />
-    </p>
+      <config.icon size={14} class="animate-pulse md:w-4 md:h-4" />
+      <span
+        class="text-[10px] md:text-xs font-bold tracking-[0.15em] uppercase font-rubik"
+      >
+        {isMaintenanceMode ? "En Mantenimiento" : "Error Crítico"}
+      </span>
+    </div>
+
+    {/* Imagen Principal Adaptable */}
+    <div
+      class="relative mb-8 md:mb-10 group animate-in zoom-in-95 duration-700 delay-150"
+    >
+      <div
+        class={`absolute inset-0 ${config.glowColor} blur-2xl rounded-full opacity-50 group-hover:opacity-80 transition-opacity`}
+      >
+      </div>
+
+      {/* Imagen más pequeña en móvil (h-32) y grande en desktop (sm:h-64) */}
+      <img
+        draggable="false"
+        src="/images/500.webp"
+        alt="Estado del Sistema"
+        class="relative h-36 sm:h-52 md:h-64 w-auto object-contain drop-shadow-2xl grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500"
+      />
+
+      {/* Decoración flotante (Escalada para móvil) */}
+      <div
+        class="absolute -bottom-2 -right-2 md:-bottom-4 md:-right-4 bg-[#0a0a0a] border border-white/10 p-1.5 md:p-2 rounded-xl shadow-xl flex items-center gap-2 animate-bounce-slow scale-90 md:scale-100 origin-bottom-right"
+      >
+        <div class="bg-white/10 p-1 rounded-lg">
+          <LucideCat size={16} class="text-white md:w-5 md:h-5" />
+        </div>
+        <span
+          class="text-[9px] md:text-[10px] font-bold text-white/60 uppercase tracking-wide pr-1"
+          >Ingeniero</span
+        >
+      </div>
+    </div>
+
+    {/* Textos Responsivos */}
+    <div
+      class="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 w-full"
+    >
+      <h1
+        class="text-4xl sm:text-5xl md:text-7xl font-anton text-white uppercase tracking-wide leading-none text-balance"
+      >
+        {
+          isMaintenanceMode ? (
+            <>
+              Volvemos <br class="sm:hidden" />{" "}
+              <span class={config.textColor}>Pronto</span>
+            </>
+          ) : (
+            <>
+              ¡Upps! <br class="sm:hidden" />{" "}
+              <span class={config.textColor}>Error</span>
+            </>
+          )
+        }
+      </h1>
+
+      <div class="max-w-md mx-auto space-y-4">
+        <div
+          class="hidden sm:block h-px w-24 bg-gradient-to-r from-transparent via-white/20 to-transparent mx-auto"
+        >
+        </div>
+
+        <p
+          class="font-rubik text-base md:text-lg text-white/60 leading-relaxed text-pretty px-2"
+        >
+          {
+            isMaintenanceMode
+              ? "Estamos aplicando mejoras. Nuestros gatos ingenieros están trabajando duro (y tomando siestas)."
+              : "Hubo un cortocircuito en los servidores. El equipo de soporte felino ya está investigando."
+          }
+        </p>
+      </div>
+    </div>
+
+    {/* Botones de Acción (Full width en móvil) */}
+    <div
+      class="w-full sm:w-auto flex flex-col sm:flex-row gap-3 md:gap-4 mt-8 md:mt-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500"
+    >
+      {
+        !isMaintenanceMode && (
+          <button
+            onclick="window.location.reload()"
+            class="w-full sm:w-auto px-6 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95"
+          >
+            <LucideRefreshCw size={18} />
+            Reintentar
+          </button>
+        )
+      }
+
+      <a
+        href="/"
+        class={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg ${
+          isMaintenanceMode
+            ? "bg-yellow-500 hover:bg-yellow-400 text-black shadow-yellow-500/20"
+            : "bg-white hover:bg-gray-200 text-black shadow-white/10"
+        }`}
+      >
+        <LucideHome size={18} />
+        {isMaintenanceMode ? "Ver Estado" : "Inicio"}
+      </a>
+    </div>
+
+    {/* Footer Técnico (Solo desktop o muy sutil) */}
+    <div
+      class="mt-8 md:absolute md:bottom-6 text-[9px] md:text-[10px] font-mono text-white/10 uppercase tracking-widest"
+    >
+      {isMaintenanceMode ? "MAINTENANCE_MODE_ACTIVE" : "ERR_500_SERVER_FAILURE"}
+    </div>
   </div>
 </Layout>
+
+<style>
+  @keyframes bounce-slow {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+  .animate-bounce-slow {
+    animation: bounce-slow 3s infinite ease-in-out;
+  }
+
+  @keyframes pulse-slow {
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+  }
+  .animate-pulse-slow {
+    animation: pulse-slow 8s infinite ease-in-out;
+  }
+</style>

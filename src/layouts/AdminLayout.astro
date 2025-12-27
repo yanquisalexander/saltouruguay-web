@@ -1,35 +1,83 @@
 ---
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import Layout from "@/layouts/Layout.astro";
+import type { Session } from "@auth/core/types";
+
 interface Props {
   session: Session | null;
   title?: string;
   description?: string;
 }
 
-import AdminSidebar from "@/components/admin/AdminSidebar";
-import Layout from "@/layouts/Layout.astro";
-import type { Session } from "@auth/core/types";
-
-const { session, title = "Admin", description } = Astro.props;
+const { session, title = "Dashboard", description } = Astro.props;
 ---
 
 <Layout
-  title={title}
+  title={`Admin - ${title}`}
   description={description}
-  mainClassname=""
   hideFooter
   hideHeader
+  mainClassname="bg-[#09090b] text-white overflow-hidden"
 >
-  <div class="flex min-h-screen text-white">
+  {/* Contenedor Flex: En desktop es Row, en móvil es Column */}
+  <div class="flex flex-col md:flex-row h-dvh w-full overflow-hidden">
+    {/* Sidebar (Maneja su propio estado responsive) */}
     <AdminSidebar
       session={session}
       initialPathname={Astro.url.pathname}
       client:load
-      transition:persist
-      transition:name="admin-sidebar"
-      transition:persist-props
+      transition:persist="admin-sidebar"
     />
-    <div role="main" class="flex-1 overflow-auto px-4">
-      <slot />
+
+    {/* Área Principal */}
+    <div class="flex flex-1 flex-col min-w-0 overflow-hidden bg-[#0c0c0e]">
+      {
+        /* HEADER INTERNO: 
+         - En móvil agregamos padding-top (pt-16) o margin-top para compensar el header del sidebar que es fixed.
+         - O mejor, hacemos que este header sea sticky y visible.
+      */
+      }
+      <header
+        class="h-16 mt-14 md:mt-0 shrink-0 border-b border-white/5 bg-[#09090b]/50 backdrop-blur-sm flex items-center px-6 justify-between z-20"
+      >
+        <div class="flex items-center gap-3 overflow-hidden">
+          <h1
+            class="font-anton text-xl md:text-2xl uppercase tracking-wide text-white truncate"
+          >
+            {title}
+          </h1>
+          {
+            description && (
+              <span class="hidden md:block w-px h-4 bg-white/10 mx-2" />
+            )
+          }
+          {
+            description && (
+              <p class="hidden md:block text-sm text-white/40 font-rubik truncate max-w-md">
+                {description}
+              </p>
+            )
+          }
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span
+            class="text-xs font-mono text-white/30 bg-white/5 px-2 py-1 rounded"
+            >v1.0</span
+          >
+        </div>
+      </header>
+
+      {/* Contenido Scrollable */}
+      <main class="flex-1 overflow-y-auto p-4 md:p-8 relative scroll-smooth">
+        <div
+          class="fixed inset-0 pointer-events-none opacity-[0.02] bg-[url('/images/pattern-grid.svg')] z-0"
+        >
+        </div>
+        <div class="relative z-10 max-w-7xl mx-auto">
+          <slot />
+        </div>
+      </main>
     </div>
   </div>
 </Layout>

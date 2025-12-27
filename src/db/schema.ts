@@ -237,15 +237,30 @@ export const CustomPagesTable = pgTable("custom_pages", {
     title: varchar("title").notNull(),
     slug: varchar("slug").notNull().unique(),
     permalink: varchar("permalink").notNull().unique(),
-    content: text("content").notNull(),
+    content: text("content").notNull(), // JSON del editor
+    cookedHtml: text("cooked_html"), // HTML generado y almacenado
     isPublic: boolean("is_public").notNull().default(false),
     isDraft: boolean("is_draft").notNull().default(true),
+    authorId: integer("author_id").notNull().references(() => UsersTable.id),
+    lastEditorId: integer("last_editor_id").references(() => UsersTable.id),
     createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
     updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
 }, (t) => ({
     uniqueSlug: unique("slug").on(t.slug),
     uniquePermalink: unique("permalink").on(t.permalink),
 }))
+// Historial de versiones de páginas personalizadas
+export const CustomPageHistoryTable = pgTable("custom_page_history", {
+    id: serial("id").primaryKey(),
+    pageId: integer("page_id").notNull().references(() => CustomPagesTable.id, { onDelete: "cascade" }),
+    title: varchar("title").notNull(),
+    slug: varchar("slug").notNull(),
+    permalink: varchar("permalink").notNull(),
+    content: text("content").notNull(),
+    cookedHtml: text("cooked_html"),
+    editorId: integer("editor_id").notNull().references(() => UsersTable.id),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+})
 
 
 

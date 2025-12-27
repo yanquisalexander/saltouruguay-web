@@ -53,6 +53,9 @@ importers:
       '@editorjs/list':
         specifier: ^2.0.6
         version: 2.0.6
+      '@editorjs/raw':
+        specifier: ^2.5.1
+        version: 2.5.1
       '@floating-ui/react':
         specifier: ^0.26.28
         version: 0.26.28(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -152,6 +155,9 @@ importers:
       drizzle-orm:
         specifier: ^0.36.3
         version: 0.36.4(@opentelemetry/api@1.9.0)(@types/pg@8.11.11)(pg@8.14.1)(react@19.1.0)
+      editorjs-html:
+        specifier: ^4.0.5
+        version: 4.0.5
       editorjs-layout:
         specifier: ^1.2.5
         version: 1.2.5
@@ -1207,6 +1213,9 @@ packages:
     resolution: {integrity: sha512-8XqW8xGn++Eqqbz3e9wKuK7mxryeRjs4LOHLxbh2lwKeSbuNR4NFifDZT4KzvjU6HMOPbiNTsWpniK5EJfTWkg==}
     engines: {node: '>=18'}
 
+  '@codexteam/icons@0.0.4':
+    resolution: {integrity: sha512-V8N/TY2TGyas4wLrPIFq7bcow68b3gu8DfDt1+rrHPtXxcexadKauRJL6eQgfG7Z0LCrN4boLRawR4S9gjIh/Q==}
+
   '@codexteam/icons@0.0.5':
     resolution: {integrity: sha512-s6H2KXhLz2rgbMZSkRm8dsMJvyUNZsEjxobBEg9ztdrb1B2H3pEzY6iTwI4XUPJWJ3c3qRKwV4TrO3J5jUdoQA==}
 
@@ -1265,6 +1274,9 @@ packages:
 
   '@editorjs/list@2.0.6':
     resolution: {integrity: sha512-QmmRAMtIBlO9k8LxfiqhWM+CjrA9r1F5th3cI9UFhDMC78YqFdFNg+dWrH57bAW4063HJfS1ygbGoH/LfHBkww==}
+
+  '@editorjs/raw@2.5.1':
+    resolution: {integrity: sha512-h7CjXtfSTe4Bj1CL84ch5NW0q0CdrlWsLzQ/kbaFTgx914CzKz4Ug+xgdvytVO1dd1QzB5/HCW0ic1VxtgkhMQ==}
 
   '@emmetio/abbreviation@2.3.3':
     resolution: {integrity: sha512-mgv58UrU3rh4YgbE/TzgLQwJ3pFsHHhCLqY20aJq+9comytTXUDNGG/SMtSeMJdkpxgXSXunBGLD8Boka3JyVA==}
@@ -3366,6 +3378,9 @@ packages:
 
   ecdsa-sig-formatter@1.0.11:
     resolution: {integrity: sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==}
+
+  editorjs-html@4.0.5:
+    resolution: {integrity: sha512-ImQYxB3fNCJcd+nJ+Vbne/6PxidO1cYByNpu9nBDStVabfjVrMW65BuR+IEZfOii8VKYH+CW/lYDb2GDlzZtDg==}
 
   editorjs-layout@1.2.5:
     resolution: {integrity: sha512-pv4CmIsEUAQaHmQ+zvXqB+VsZ9RelN2ZISFJJjL+/AYcXG4Exz47zMb9ncYVSRjek3bCEId++uQ6N7QmPX6SZQ==}
@@ -7158,6 +7173,8 @@ snapshots:
     dependencies:
       fontkit: 2.0.4
 
+  '@codexteam/icons@0.0.4': {}
+
   '@codexteam/icons@0.0.5': {}
 
   '@codexteam/icons@0.3.3': {}
@@ -7232,6 +7249,10 @@ snapshots:
   '@editorjs/list@2.0.6':
     dependencies:
       '@codexteam/icons': 0.3.3
+
+  '@editorjs/raw@2.5.1':
+    dependencies:
+      '@codexteam/icons': 0.0.4
 
   '@emmetio/abbreviation@2.3.3':
     dependencies:
@@ -9404,6 +9425,8 @@ snapshots:
   ecdsa-sig-formatter@1.0.11:
     dependencies:
       safe-buffer: 5.2.1
+
+  editorjs-html@4.0.5: {}
 
   editorjs-layout@1.2.5:
     dependencies:

@@ -8,6 +8,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const { request, redirect } = context;
     const currentPath = new URL(request.url).pathname;
 
+
     // Modo mantenimiento
     const userAgent = request.headers.get('user-agent') || '';
     const isBot = /googlebot|bingbot|slurp|duckduckbot|yandexbot|baiduspider/i.test(userAgent);
