@@ -2,46 +2,58 @@
 import { LucidePlayCircle } from "lucide-preact";
 
 interface Props {
-  channelId: string;
+  videoId?: string; // Nuevo prop opcional
+  channelId?: string; // Ahora opcional
+  username?: string; // Ahora opcional
   autoLoad?: boolean;
   extraClasses?: string;
   placeholder?: string;
-  username: string;
 }
 
 const {
+  videoId,
   channelId,
-  autoLoad = false,
-  extraClasses,
   username,
+  autoLoad = false,
+  extraClasses = "",
   placeholder,
 } = Astro.props;
-let thumbnailUrl =
-  placeholder ||
-  `https://static-cdn.jtvnw.net/previews-ttv/live_user_${channelId}-1280x720.jpg`;
-let title = `Twitch Stream - ${channelId}`;
+
+// Lógica de Prioridad: Si hay videoId, es VOD. Si no, es Live.
+const isVod = !!videoId;
+
+// Si es VOD y no hay placeholder, usamos uno genérico o negro, ya que no se puede adivinar la thumb de un VOD fácilmente sin API.
+// Si es Live, usamos la CDN de Twitch.
+let defaultThumb = "";
+if (!isVod && channelId) {
+  defaultThumb = `https://static-cdn.jtvnw.net/previews-ttv/live_user_${channelId}-1280x720.jpg`;
+}
+
+let thumbnailUrl = placeholder || defaultThumb;
+const uniqueId = videoId || channelId || "twitch-embed";
+const title = isVod ? `Twitch VOD - ${videoId}` : `Twitch Stream - ${username}`;
 ---
 
 <twitch-embed
-  class={`relative w-full flex max-w-3xl rounded-md overflow-hidden cursor-pointer bg-center bg-cover transition-transform duration-500 ${extraClasses} bg-black`}
-  channelid={channelId}
-  thumbnailurl={thumbnailUrl}
-  username={username}
+  class={`relative w-full flex rounded-md overflow-hidden cursor-pointer bg-center bg-cover transition-transform duration-500 ${extraClasses} bg-black`}
+  data-videoid={videoId}
+  data-channelid={channelId}
   data-username={username}
+  data-thumbnail-url={thumbnailUrl}
   data-title={title}
-  aria-label="Reproducir stream"
+  aria-label="Reproducir contenido"
   role="button"
   tabindex="0"
-  style="aspect-ratio: 16 / 9;"
-  {...autoLoad && { "data-autoplay": true }}
+  style={`aspect-ratio: 16 / 9; background-image: url('${thumbnailUrl}');`}
+  {...autoLoad ? { "data-autoplay": "true" } : {}}
 >
   <div
-    class="absolute inset-0 flex items-center justify-center bg-black/50 transition-opacity duration-300 hover:bg-black/75"
-    id={`Id${channelId}`}
+    class="absolute inset-0 flex items-center justify-center bg-black/50 transition-opacity duration-300 hover:bg-black/75 group"
+    id={`Id${uniqueId}`}
     title={title}
   >
     <LucidePlayCircle
-      class="w-16 h-16 text-white opacity-90 hover:opacity-100 transition-opacity duration-300"
+      class="w-16 h-16 text-white opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300"
     />
   </div>
 </twitch-embed>
@@ -50,59 +62,75 @@ let title = `Twitch Stream - ${channelId}`;
   import { toast } from "sonner";
 
   class TwitchEmbed extends HTMLElement {
-    channelId?: string;
+    videoId?: string;
     username?: string;
 
     connectedCallback() {
-      const thumbnailUrl = this.getAttribute("thumbnailurl");
-      this.channelId = this.getAttribute("channelid")!;
-      this.username = this.getAttribute("data-username")!;
+      // Leer atributos
+      this.videoId = this.getAttribute("data-videoid") || undefined;
+      this.username = this.getAttribute("data-username") || undefined;
 
-      this.style.backgroundImage = `url(${thumbnailUrl})`;
-
-      // Inicialmente agrega la clase para el efecto de escala
-      this.classList.add("hover:scale-105");
-
+      // Event listeners
+      this.classList.add("hover:scale-[1.01]"); // Efecto sutil
       this.addEventListener("click", this.activateVideo);
       this.addEventListener("keydown", this.handleKeyPress);
     }
 
-    activateVideo() {
-      // Quita el fondo y la clase de escala
+    activateVideo = () => {
+      // Limpieza visual
       this.style.backgroundImage = "none";
-      this.classList.remove("hover:scale-105");
+      this.classList.remove("hover:scale-[1.01]");
 
-      // Remueve el ícono de play
-      this.querySelector(`#Id${this.channelId}`)?.remove();
+      // Buscar y remover el botón de play (buscando hijos directos para evitar conflictos de ID)
+      const playBtn = this.querySelector("div");
+      if (playBtn) playBtn.remove();
 
-      // Carga el iframe del video
+      // Cargar iframe
       const iframeEl = this.createIframe();
       this.append(iframeEl);
       iframeEl.focus();
 
-      // Muestra un mensaje de éxito
-      toast.success(
-        `Twitch cargado: ${this.getAttribute("data-title")?.slice(0, 50)}...`
-      );
-    }
+      // Feedback
+      const type = this.videoId ? "VOD" : "Stream";
+      toast.success(`${type} cargado correctamente`);
+    };
 
-    handleKeyPress(event: KeyboardEvent) {
+    handleKeyPress = (event: KeyboardEvent) => {
       if (event.code === "Enter" || event.code === "Space") {
+        event.preventDefault(); // Prevenir scroll con barra espaciadora
         this.activateVideo();
       }
-    }
+    };
 
     createIframe() {
       const iframeEl = document.createElement("iframe");
       iframeEl.width = "100%";
       iframeEl.height = "100%";
-      iframeEl.classList.add("rounded-md");
-      iframeEl.title = this.getAttribute("data-title")!;
+      iframeEl.classList.add(
+        "rounded-md",
+        "animate-in",
+        "fade-in",
+        "duration-500"
+      );
+      iframeEl.title = this.getAttribute("data-title") || "Twitch Content";
       iframeEl.allow =
         "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; transparency";
       iframeEl.allowFullscreen = true;
-      iframeEl.src = `https://player.twitch.tv/?channel=${this.username}&parent=${window.location.hostname}`;
 
+      // Construcción de la URL
+      const hostname = window.location.hostname;
+      let src = "https://player.twitch.tv/?";
+
+      if (this.videoId) {
+        src += `video=${this.videoId}`;
+      } else if (this.username) {
+        src += `channel=${this.username}`;
+      }
+
+      // Parámetros obligatorios y autoplay
+      src += `&parent=${hostname}&autoplay=true`;
+
+      iframeEl.src = src;
       return iframeEl;
     }
   }
