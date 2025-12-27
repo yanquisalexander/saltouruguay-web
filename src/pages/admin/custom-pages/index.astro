@@ -19,14 +19,7 @@ if (!session?.user.isAdmin) {
       title="Páginas personalizadas"
       pathname="/admin/custom-pages"
     />
-    {
-      import.meta.env.DEV ? (
-        <CustomPagesManager client:idle />
-      ) : (
-        <span class="text-yellow-500">
-          Esta sección aún no está disponible.
-        </span>
-      )
-    }
+
+    <CustomPagesManager client:idle />
   </div>
 </AdminLayout>

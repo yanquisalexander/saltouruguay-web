@@ -27,7 +27,7 @@ export default defineConfig({
     migrateDatabaseIntegration(),
     notifyNewVersion(),
     sitemap({
-      //filter: (page) => !SITEMAP_EXCLUDED_PATHS.includes(`${this.site ?? ''}${page}`)
+      filter: (page) => !SITEMAP_EXCLUDED_PATHS.includes(page)
     })
   ],
   devToolbar: {
