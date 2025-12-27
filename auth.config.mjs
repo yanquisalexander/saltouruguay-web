@@ -1,11 +1,18 @@
 import TwitchProvider from "@auth/core/providers/twitch";
 import { defineConfig } from "auth-astro";
-import { createTwitchEventsInstance, EXTENDED_TWITCH_SCOPES, TWITCH_SCOPES } from "@/lib/Twitch";
+import { eq } from "drizzle-orm";
+
+// Imports internos
 import { client } from "@/db/client";
 import { UsersTable } from "@/db/schema";
-import { getUserSubscription } from "@/utils/user";
-import { eq, or } from "drizzle-orm";
-import { saveSession, updateSessionActivity, destroySession, getSessionById } from "@/utils/user";
+import { createTwitchEventsInstance, TWITCH_SCOPES } from "@/lib/Twitch";
+import {
+    getUserSubscription,
+    saveSession,
+    updateSessionActivity,
+    destroySession,
+    getSessionById
+} from "@/utils/user";
 
 export default defineConfig({
     providers: [
@@ -21,144 +28,139 @@ export default defineConfig({
         }),
     ],
     callbacks: {
-        signIn: async ({ account, profile, ...props }) => {
+        signIn: async ({ account, profile }) => {
             if (account?.provider === "twitch" && !profile?.email) {
                 throw new Error("Email is required to sign in");
             }
             return true;
         },
-        jwt: async ({ token, user, account, profile, ...props }) => {
+
+        jwt: async ({ token, user, account, profile }) => {
+            // Lógica de inicio de sesión / creación de usuario
             if (user && account?.provider === "twitch") {
                 const email = profile?.email || null;
                 const username = user?.name?.toLowerCase();
                 const twitchId = profile?.sub ?? "";
 
                 try {
-                    const [existingUser] = await client
-                        .select()
-                        .from(UsersTable)
-                        .where(or(
-                            eq(UsersTable.twitchId, twitchId),
-                            email ? eq(UsersTable.email, email) : undefined
-                        ))
-                        .limit(1);
-
+                    // 1. Obtener Tier de suscripción (API externa)
                     const twitchTier = await getUserSubscription(twitchId, account.access_token);
 
-                    if (existingUser) {
-                        await client
-                            .update(UsersTable)
-                            .set({
-                                twitchId,
-                                avatar: profile?.picture,
-                                username,
-                                displayName: profile?.preferred_username ?? username,
-                                twitchTier,
-                                updatedAt: new Date(),
-                            })
-                            .where(eq(UsersTable.id, existingUser.id));
+                    const userValues = {
+                        twitchId,
+                        email, // Solo se usa al insertar uno nuevo
+                        username,
+                        displayName: profile?.preferred_username ?? username,
+                        avatar: profile?.picture,
+                        twitchTier,
+                        updatedAt: new Date(),
+                    };
 
-                        token.user = {
-                            ...profile,
-                            twitchTier,
-                            id: existingUser.id
-                        };
-                    } else {
-                        const [newUser] = await client
-                            .insert(UsersTable)
-                            .values({
-                                email,
-                                displayName: profile?.preferred_username ?? username,
-                                avatar: profile?.picture,
-                                username,
-                                twitchId,
-                                twitchTier,
-                            })
-                            .returning({ id: UsersTable.id });
+                    // 2. OPTIMIZACIÓN POSTGRES: Upsert Atómico
+                    // Inserta el usuario, o si el twitchId existe, actualiza los datos.
+                    const [upsertedUser] = await client
+                        .insert(UsersTable)
+                        .values(userValues)
+                        .onConflictDoUpdate({
+                            target: UsersTable.twitchId, // Requiere .unique() en el schema
+                            set: {
+                                username: userValues.username,
+                                displayName: userValues.displayName,
+                                avatar: userValues.avatar,
+                                twitchTier: userValues.twitchTier,
+                                updatedAt: userValues.updatedAt,
+                                // No actualizamos email para evitar conflictos de seguridad
+                            },
+                        })
+                        .returning({ id: UsersTable.id });
 
-                        token.user = {
-                            ...profile,
-                            twitchTier,
-                            id: newUser.id
-                        };
-                    }
+                    // Actualizar el token con la ID real de base de datos
+                    token.user = {
+                        ...profile,
+                        twitchTier,
+                        id: upsertedUser.id
+                    };
 
-                    try {
-                        const eventSub = createTwitchEventsInstance()
-                        await eventSub.registerUserEventSub(twitchId)
-                        console.log(`Registered event sub for user ${twitchId}`);
+                    // Generar ID de sesión
+                    const sessionId = crypto.randomUUID();
+                    token.sessionId = sessionId;
 
-                    } catch (error) {
-                        console.error("Error registering event sub:", error);
-                    }
-
+                    // 3. Tareas en segundo plano (No bloqueantes)
+                    // Guardamos la sesión y registramos el webhook en paralelo
+                    await Promise.allSettled([
+                        saveSession(
+                            upsertedUser.id,
+                            sessionId,
+                            token.userAgent ?? "Unknown",
+                            token.user.ip ?? "Unknown"
+                        ),
+                        (async () => {
+                            try {
+                                const eventSub = createTwitchEventsInstance();
+                                await eventSub.registerUserEventSub(twitchId);
+                                console.log(`Registered event sub for user ${twitchId}`);
+                            } catch (e) {
+                                console.error("Error registering event sub:", e);
+                            }
+                        })()
+                    ]);
 
                 } catch (error) {
-                    console.error("Error managing user:", error);
+                    console.error("Error during user login processing:", error);
                     throw error;
                 }
-
-                // Generar sessionId y guardar la sesión
-                const sessionId = crypto.randomUUID();
-                token.sessionId = sessionId;
-                await saveSession(token.user.id, sessionId, token.userAgent ?? "Unknown", token.user.ip ?? "Unknown");
             }
             return token;
         },
+
         session: async ({ session, token }) => {
             try {
-                let existingSession = await getSessionById(token.sessionId);
+                // Si no hay sessionId en el token, retornamos la sesión tal cual (probablemente inválida)
+                if (!token.sessionId) return session;
+
+                // 4. Validación rápida de sesión
+                const existingSession = await getSessionById(token.sessionId);
 
                 if (!existingSession) {
-                    /* 
-                        Assume logged out if session not found (Remotely maybe)
-                        This is useful when the session is destroyed on the server
-                        but the client is still logged in.
-                    */
+                    // Si la sesión no está en Redis/DB, forzamos logout en el cliente
                     session.user = null;
                     return session;
                 }
 
-
-
-                if (token.sessionId) {
-                    await updateSessionActivity(token.sessionId);
-                }
-
-                const userRecord = await client.query.UsersTable.findFirst({
-                    where: eq(UsersTable.twitchId, token.user.sub),
-                    columns: {
-                        id: true,
-                        admin: true,
-                        twitchId: true,
-                        twitchTier: true,
-                        discordId: true,
-                        coins: true,
-                        username: true,
-                        twoFactorEnabled: true,
-                    },
-                    with: {
-                        streamerWarsPlayer: {
-                            columns: {
-                                playerNumber: true,
-                            }
+                // 5. OPTIMIZACIÓN: Carga de datos + Actualización de actividad en PARALELO
+                const [userRecord] = await Promise.all([
+                    // A: Buscar datos completos del usuario
+                    client.query.UsersTable.findFirst({
+                        where: eq(UsersTable.twitchId, token.user.sub),
+                        columns: {
+                            id: true,
+                            admin: true,
+                            twitchId: true,
+                            twitchTier: true,
+                            discordId: true,
+                            coins: true,
+                            username: true,
+                            twoFactorEnabled: true,
                         },
-                        suspensions: {
-                            columns: {
-                                startDate: true,
-                                endDate: true,
-                                status: true,
+                        with: {
+                            streamerWarsPlayer: {
+                                columns: { playerNumber: true }
                             },
+                            suspensions: {
+                                columns: { startDate: true, endDate: true, status: true },
+                            }
                         }
-                    }
-                });
+                    }),
+                    // B: Actualizar "last_active" (sin esperar respuesta)
+                    updateSessionActivity(token.sessionId)
+                ]);
 
                 if (userRecord) {
+                    const now = new Date();
                     const isSuspended = userRecord.suspensions.some(
-                        (suspension) =>
-                            suspension.status === "active" &&
-                            (suspension.endDate === null || new Date(suspension.endDate) > new Date())
+                        (s) => s.status === "active" && (s.endDate === null || new Date(s.endDate) > now)
                     );
+
                     session.user = {
                         ...session.user,
                         id: userRecord.id,
@@ -175,8 +177,7 @@ export default defineConfig({
                     };
                 }
             } catch (error) {
-                console.error("Error retrieving user data:", error);
-                throw error;
+                console.error("Error retrieving session data:", error);
             }
 
             return session;
@@ -189,11 +190,10 @@ export default defineConfig({
     events: {
         signOut: async ({ token }) => {
             if (token.sessionId) {
-                try {
-                    await destroySession(token.sessionId);
-                } catch (error) {
-                    console.error("Error destroying session:", error);
-                }
+                // Destruir sesión sin detener el proceso de logout del cliente
+                destroySession(token.sessionId).catch(error =>
+                    console.error("Error destroying session:", error)
+                );
             }
         }
     }
