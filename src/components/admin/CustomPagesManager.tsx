@@ -59,7 +59,8 @@ export default function CustomPagesManager() {
 
         const { error } = await actions.admin.customPages.createPage({
             title: newPage.title,
-            slug: newPage.slug || newPage.defaultSlug
+            slug: newPage.slug || newPage.defaultSlug,
+            defaultSlug: newPage.defaultSlug
         });
 
         if (error) return toast.error(error.message || "Error al crear");
