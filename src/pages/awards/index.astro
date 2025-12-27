@@ -3,7 +3,7 @@ export const prerender = false;
 import LastEditionWinners from "@/components/LastEditionWinners.astro";
 import Layout from "@/layouts/Layout.astro";
 import { AWARDS_VOTES_RESULT } from "@/data/awards-winners";
-import { IS_VOTES_OPEN, VOTES_OPEN_TIMESTAMP, EVENT_TIMESTAMP } from "@/config";
+import { IS_VOTES_OPEN, EVENT_TIMESTAMP, LAST_EDITION_VOD_URL } from "@/config";
 import LaunchCountdown from "@/components/LaunchCountdown";
 import {
   LucideTrophy,
@@ -11,11 +11,52 @@ import {
   LucideHistory,
   LucideCalendarClock,
   LucideSparkles,
+  LucidePlay,
+  LucideRadio,
+  LucideTwitch,
 } from "lucide-preact";
 import { getTotalVotes } from "@/utils/awards-vote-system";
 
 const votesOpen = IS_VOTES_OPEN();
 const totalVotes = await getTotalVotes();
+
+// --- LÓGICA DE TIEMPO Y ESTADOS ---
+const now = Date.now();
+const EVENT_DURATION_MS = 4 * 60 * 60 * 1000; // 4 Horas aprox
+const eventEndTime = EVENT_TIMESTAMP + EVENT_DURATION_MS;
+
+// Estados temporales
+const isPreEvent = now < EVENT_TIMESTAMP;
+const isLive = now >= EVENT_TIMESTAMP && now < eventEndTime;
+const isFinished = now >= eventEndTime;
+
+// Lógica de visualización de video
+// Asumimos que si hay URL, queremos mostrar el player (ya sea en vivo o repetición)
+const hasVodUrl = !!LAST_EDITION_VOD_URL;
+const showPlayer = (isLive || isFinished) && hasVodUrl;
+
+// Lógica de visualización del Countdown:
+// SOLO si es pre-evento.
+const showCountdown = isPreEvent;
+
+// Helper para extraer ID de Twitch
+// Soporta formatos: https://www.twitch.tv/videos/232085233
+const getTwitchVideoId = (url) => {
+  try {
+    const match = url?.match(/\/videos\/(\d+)/);
+    return match ? match[1] : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const vodId = getTwitchVideoId(LAST_EDITION_VOD_URL);
+
+// IMPORTANTE: Para que Twitch funcione, debes especificar el dominio padre.
+// He agregado localhost y 127.0.0.1 para desarrollo.
+// Cambia 'tudominio.com' por el dominio real de producción.
+const TWITCH_PARENTS =
+  "&parent=localhost&parent=127.0.0.1&parent=saltouruguay.com";
 
 // Helper para tarjetas glass
 const cardClass =
@@ -51,18 +92,27 @@ const cardClass =
         </div>
         <img
           src="/images/trofeo-awards.webp"
-          alt="SaltoUruguayServer"
+          alt="SaltoAwards Trofeo"
           class="relative h-32 saturate-125 md:h-40 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-transform duration-500 hover:scale-105"
         />
       </div>
 
       <div class="mt-8 space-y-2">
-        <div
-          class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 text-xs font-bold uppercase tracking-widest backdrop-blur-md mb-2"
-        >
-          <LucideSparkles size={14} />
-          <span> Evento especial </span>
-        </div>
+        {/* Badge de Estado del Evento */}
+        {
+          isLive ? (
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-red-500/50 bg-red-500/20 text-red-400 text-xs font-bold uppercase tracking-widest backdrop-blur-md mb-2 animate-pulse">
+              <LucideRadio size={14} />
+              <span>En Vivo Ahora</span>
+            </div>
+          ) : (
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 text-xs font-bold uppercase tracking-widest backdrop-blur-md mb-2">
+              <LucideSparkles size={14} />
+              <span> Evento especial </span>
+            </div>
+          )
+        }
+
         <h1
           class="text-6xl md:text-8xl font-anton text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-yellow-500 to-yellow-700 drop-shadow-sm tracking-tight uppercase"
         >
@@ -80,7 +130,7 @@ const cardClass =
     <main class="w-full">
       {
         votesOpen ? (
-          /* --- ESTADO: VOTACIÓN ABIERTA --- */
+          /* --- ESTADO 1: VOTACIÓN ABIERTA --- */
           <div class="space-y-16">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Tarjeta Principal de Votación (Ocupa 2 columnas) */}
@@ -137,8 +187,7 @@ const cardClass =
                 </a>
               </section>
             </div>
-
-            {/* --- HISTORIAL DE EDICIONES --- */}
+            {/* Historial (Se renderiza igual abajo, pero está aquí para mantener estructura) */}
             <section id="history" class="scroll-mt-24">
               <div class="flex items-center gap-4 mb-8">
                 <div class="h-px flex-1 bg-white/10" />
@@ -172,40 +221,97 @@ const cardClass =
             </section>
           </div>
         ) : (
-          /* --- ESTADO: VOTACIÓN CERRADA / COUNTDOWN --- */
+          /* --- ESTADO 2: VOTACIÓN CERRADA (EVENTO / COUNTDOWN / FINALIZADO) --- */
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* 1. Countdown Card (Top Center - Full Width or Highlighted) */}
+            {/* 1. SECCIÓN DINÁMICA PRINCIPAL */}
             <section
-              class={`${cardClass} lg:col-span-12 flex flex-col items-center justify-center text-center py-12`}
+              class={`${cardClass} lg:col-span-12 flex flex-col items-center justify-center text-center py-12 ${
+                showPlayer
+                  ? "border-yellow-500/40 shadow-[0_0_50px_rgba(234,179,8,0.15)]"
+                  : ""
+              }`}
             >
-              <div class="mb-6 flex items-center gap-3 text-yellow-500/80">
-                <LucideCalendarClock size={24} />
-                <span class="font-bold tracking-widest uppercase text-sm">
-                  Próxima Edición
-                </span>
-              </div>
+              {showPlayer ? (
+                /* --- A. PLAYER (Twitch VOD) --- */
+                <div class="w-full max-w-5xl mx-auto animate-in fade-in zoom-in duration-700">
+                  <div class="mb-6 flex items-center justify-center gap-3 text-[#9146FF]">
+                    {isLive ? (
+                      <LucideRadio class="animate-pulse" />
+                    ) : (
+                      <LucideTwitch />
+                    )}
+                    <span class="font-bold tracking-widest uppercase text-sm text-yellow-500">
+                      {isLive ? "Transmitiendo en Directo" : "Revive la Gala"}
+                    </span>
+                  </div>
 
-              <h3 class="text-3xl md:text-4xl font-rubik font-bold text-white mb-8 max-w-3xl">
-                Prepárate para los{" "}
-                <span class="text-yellow-500">#SaltoAwards2025</span>
-              </h3>
+                  <div class="relative w-full aspect-video rounded-2xl overflow-hidden border border-yellow-500/30 shadow-2xl group bg-black">
+                    {/* Glow effect */}
+                    <div class="absolute -inset-1 bg-gradient-to-r from-[#9146FF] to-yellow-500 opacity-20 blur-lg group-hover:opacity-30 transition-opacity" />
 
-              <div class="w-full max-w-4xl scale-90 md:scale-100">
-                <LaunchCountdown
-                  timestamp={EVENT_TIMESTAMP}
-                  showCalendarButton={true}
-                  classNames={{
-                    container: "justify-center gap-4 md:gap-8",
-                    block:
-                      "bg-black/50 border border-white/10 rounded-xl p-4 md:p-6 min-w-[80px] md:min-w-[120px]",
-                    timeDisplay:
-                      "text-4xl md:text-6xl font-anton text-yellow-400",
-                    label:
-                      "text-xs md:text-sm font-rubik text-white/50 uppercase tracking-widest mt-2",
-                  }}
-                  client:idle
-                />
-              </div>
+                    {vodId ? (
+                      <iframe
+                        src={`https://player.twitch.tv/?video=${vodId}${TWITCH_PARENTS}&autoplay=${isLive ? "true" : "false"}`}
+                        height="100%"
+                        width="100%"
+                        class="relative z-10 w-full h-full"
+                        allowfullscreen
+                      ></iframe>
+                    ) : (
+                      <div class="relative z-10 flex flex-col items-center justify-center w-full h-full bg-black/80 text-white/50">
+                        <LucideTwitch size={48} />
+                        <p class="mt-4">Video no disponible por el momento</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : showCountdown ? (
+                /* --- B. COUNTDOWN (Solo si es Futuro) --- */
+                <>
+                  <div class="mb-6 flex items-center gap-3 text-yellow-500/80">
+                    <LucideCalendarClock size={24} />
+                    <span class="font-bold tracking-widest uppercase text-sm">
+                      Próxima Edición
+                    </span>
+                  </div>
+
+                  <h3 class="text-3xl md:text-4xl font-rubik font-bold text-white mb-8 max-w-3xl">
+                    Prepárate para los{" "}
+                    <span class="text-yellow-500">#SaltoAwards2025</span>
+                  </h3>
+
+                  <div class="w-full max-w-4xl scale-90 md:scale-100">
+                    <LaunchCountdown
+                      timestamp={EVENT_TIMESTAMP}
+                      showCalendarButton={true}
+                      classNames={{
+                        container: "justify-center gap-4 md:gap-8",
+                        block:
+                          "bg-black/50 border border-white/10 rounded-xl p-4 md:p-6 min-w-[80px] md:min-w-[120px]",
+                        timeDisplay:
+                          "text-4xl md:text-6xl font-anton text-yellow-400",
+                        label:
+                          "text-xs md:text-sm font-rubik text-white/50 uppercase tracking-widest mt-2",
+                      }}
+                      client:idle
+                    />
+                  </div>
+                </>
+              ) : (
+                /* --- C. FALLBACK (Finalizado sin video) --- */
+                <div class="py-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  <div class="mb-6 inline-flex p-4 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                    <LucideSparkles size={32} />
+                  </div>
+                  <h3 class="text-4xl md:text-5xl font-anton text-white uppercase mb-4">
+                    Edición <span class="text-yellow-500">Finalizada</span>
+                  </h3>
+                  <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    ¡Gracias a todos por participar en los SaltoAwards! <br />
+                    Pronto subiremos la repetición del evento.
+                  </p>
+                </div>
+              )}
             </section>
 
             {/* 2. Last Winners (Main Content Area) */}
@@ -218,7 +324,7 @@ const cardClass =
                 <div class="h-px flex-1 bg-white/10" />
               </div>
 
-              {/* Wrapper para el componente existente para darle estilo */}
+              {/* Wrapper para el componente existente */}
               <div class="bg-white/5 border border-white/10 rounded-3xl p-6 md:p-8">
                 <LastEditionWinners />
               </div>

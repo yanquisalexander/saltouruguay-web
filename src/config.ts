@@ -30,3 +30,4 @@ export const SITEMAP_EXCLUDED_PATHS = [
 export const PUSHER_KEY = 'app-key';
 
 export const CHRISTMAS_MODE = true;
+export const LAST_EDITION_VOD_URL = '';
