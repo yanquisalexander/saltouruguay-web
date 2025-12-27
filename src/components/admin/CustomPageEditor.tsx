@@ -24,7 +24,7 @@ const ConfirmDialog = ({ open, onConfirm, onCancel, message }: { open: boolean, 
             <dialog ref={dialogRef} className="max-w-[420px] w-full fixed inset-0 z-[99999999] p-0 animate-fade-in-up bg-[#18181b] border border-yellow-500/30 rounded-xl shadow-2xl text-white backdrop:backdrop-blur-sm backdrop:bg-black/40">
                 <form method="dialog" className="absolute top-4 right-4">
                     <button type="button" onClick={onCancel} className="text-white/60 hover:text-white/90">
-                        <svg width="28" height="28" viewBox="0 0 24 24"><path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/></svg>
+                        <svg width="28" height="28" viewBox="0 0 24 24"><path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z" /></svg>
                     </button>
                 </form>
                 <div className="flex flex-col items-center px-8 py-10">
