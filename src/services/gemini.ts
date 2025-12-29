@@ -1,55 +1,66 @@
 import { google } from '@ai-sdk/google';
-import { generateObject, generateText } from 'ai';
-import { z } from 'astro:schema';
+import { generateObject } from 'ai';
+import { z } from 'astro:schema'; // Asegúrate de tener zod instalado o usa 'astro:schema' si prefieres
 
+// Definimos la estructura exacta de lo que queremos recibir
+const TipsSchema = z.object({
+    tips: z.array(z.object({
+        category: z.enum(['engagement', 'content', 'technical', 'discord_twitch']).describe('Categoría del consejo'),
+        title: z.string().describe('Un título corto y pegadizo con un emoji'),
+        description: z.string().describe('La explicación detallada y accionable, mencionando métricas específicas si aplica'),
+        actionItem: z.string().describe('Una acción concreta y corta para realizar')
+    }))
+});
 
 export class GeminiService {
-    private google: ReturnType<typeof google>
-    constructor() {
-        this.google = google('gemini-2.0-flash-exp', {
+    // Usamos el modelo flash por velocidad y costo, ideal para esto
+    private model = google('gemini-2.0-flash-exp');
 
+    async generateTipsForAdminPanel(statsContext: {
+        visitorStats: any,
+        generalStats: any[]
+    }) {
+        // Prompt de Sistema: Define la personalidad y las reglas
+        const systemPrompt = `
+            Eres un Estratega de Comunidades Gaming Senior para "Salto Uruguay Server".
+            
+            CONTEXTO:
+            - Somos una comunidad centrada en Twitch, Discord, Minecraft y Rust.
+            - Tu objetivo es analizar métricas y sugerir acciones para aumentar el engagement y la retención.
+            
+            REGLAS:
+            1. Sé breve, directo y usa jerga gamer leve pero profesional.
+            2. Enfócate en la conversión Web <-> Discord/Twitch.
+            3. NO menciones rutas técnicas (ej: /admin).
+            4. Evita obviedades ("Crea buen contenido"). Dame ideas concretas basadas en los números.
+        `;
 
-        })
+        // Prompt de Usuario: Solo los datos puros
+        const userPrompt = `
+            Analiza las siguientes estadísticas actuales del panel y genera 3-5 consejos estratégicos:
+            
+            VISITAS WEB:
+            ${JSON.stringify(statsContext.visitorStats)}
+            
+            MÉTRICAS GENERALES:
+            ${JSON.stringify(statsContext.generalStats)}
+        `;
+
+        try {
+            const result = await generateObject({
+                model: this.model,
+                schema: TipsSchema,
+                system: systemPrompt,
+                prompt: userPrompt,
+                temperature: 0.7, // Creativo pero coherente
+            });
+
+            return (result.object as z.infer<typeof TipsSchema>).tips;
+
+        } catch (error) {
+            console.error("Error generando tips con Gemini:", error);
+            // Fallback silencioso o re-throw según prefieras
+            throw new Error("No se pudieron generar los consejos.");
+        }
     }
-
-    async generateTipsForAdminPanel({ dashboardStats }: { dashboardStats: string }) {
-        const prompt = `Eres un asistente que ayuda a los administradores de Salto Uruguay Server (saltouruguayserver.com) a mejorar su sitio web.
-        Se te proporcionará un resumen de las estadísticas del panel de administración, como visitas, usuarios activos, etc.
-        Tu tarea es generar consejos para mejorar el sitio web, mejorar la experiencia del usuario, etc.
-
-        Debes ser breve y conciso, y proporcionar consejos prácticos que puedan implementarse fácilmente.
-        EVITA incluir info de rutas internas como /admin, /two-factor, etc. (No existen problemas de seguridad, pero es mejor no incluirlas)
-
-        Evita palabras como En general, En resumen, En conclusión, etc.
-
-        Puede ser útil que des consejos sobre como attaer a usuarios de Discord o desde em canal de Twitch,
-        como sugerencias de eventos, juegos en la web, secciones nuevas para fomentar la participación de los usuarios en el sitio web, etc.
-
-
-        Puedes usar emojis
-
-        Ten en cuenta:
-
-        - Salto Uruguay Server es una comunidad de Twitch y Discord que se centra en la creación de contenido, la transmisión y la interacción con los espectadores, no un
-        servidor en concreto (Pero si que se realizan servidores de Minecraft, Rust, etc.)
-
-
-        
-        Aquí tienes un resumen de las estadísticas del panel de administración: ${dashboardStats}
-        `
-
-        const response = await generateText({
-            model: this.google,
-
-            prompt,
-            temperature: 0.7,
-            system: "Eres un asistente que ayuda a los administradores de Salto Uruguay Server a mejorar su sitio web. Se te proporcionará un resumen de las estadísticas del panel de administración, como visitas, usuarios activos, etc. Tu tarea es generar consejos para mejorar el sitio web, mejorar la experiencia del usuario, etc."
-        });
-        return response.text
-    }
-
-
-
-
-
 }

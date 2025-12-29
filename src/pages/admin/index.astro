@@ -81,7 +81,7 @@ const chartOptions: Partial<ChartOptions> = {
 const stats = await getSiteStats();
 const cache = cacheService.create();
 const cacheKey = "site-admin-tips";
-let tips: string | null = null;
+let tips: any = null;
 const cacheValue = (await cache.get(cacheKey)) as string | null;
 
 const BEAUTIFIED_STATS = [
@@ -130,16 +130,40 @@ const BEAUTIFIED_STATS = [
   },
 ];
 
+const CACHE_TTL = 60 * 60 * 24; // 24 horas
+
 if (cacheValue) {
   tips = cacheValue;
 } else {
   const gemini = new GeminiService();
-  const message = `JSON Visitas: ${JSON.stringify(visitorStats)} | JSON Stats: ${JSON.stringify(BEAUTIFIED_STATS.map((s) => ({ id: s.id, title: s.title, value: s.value })))}`;
-  const generatedTips = await gemini
-    .generateTipsForAdminPanel({ dashboardStats: message.trim() })
-    .catch((err) => "Sistema de IA no disponible temporalmente.");
-  await cache.set(cacheKey, generatedTips, 60 * 60 * 24);
-  tips = generatedTips;
+
+  try {
+    // Pasamos los objetos limpios, sin convertirlos a string manualmente aquí
+    const generatedTips = await gemini.generateTipsForAdminPanel({
+      visitorStats: visitorStats,
+      generalStats: BEAUTIFIED_STATS.map((s) => ({
+        id: s.id,
+        title: s.title,
+        value: s.value,
+      })),
+    });
+
+    // Guardamos en caché
+    await cache.set(cacheKey, generatedTips, CACHE_TTL);
+    tips = generatedTips;
+  } catch (err) {
+    console.error(err);
+    // Fallback manual por si falla la IA
+    tips = [
+      {
+        category: "technical",
+        title: "🤖 IA Durmiendo",
+        description:
+          "El sistema de sugerencias está recargando energía. Vuelve más tarde.",
+        actionItem: "Revisar logs",
+      },
+    ];
+  }
 }
 
 // Estilos
