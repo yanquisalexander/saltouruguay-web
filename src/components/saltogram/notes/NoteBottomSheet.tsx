@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "preact/hooks";
+import { createPortal } from 'preact/compat';
 import { motion, AnimatePresence } from "motion/react";
-import { LucideX, LucideMusic, LucidePlay, LucidePause, LucideMessageCircle, LucideTrash2, LucideRefreshCw } from "lucide-preact";
+import { LucideX, LucideMusic, LucidePlay, LucidePause, LucideMessageCircle, LucideTrash2, LucideRefreshCw, LucideCornerUpLeft } from "lucide-preact";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -24,16 +25,9 @@ export default function NoteBottomSheet({ note, onClose, currentUser, onDelete, 
 
     useEffect(() => {
         if (note?.musicTrackId) {
-            // Fetch fresh URL using ID to avoid expiration
             fetch(`/api/deezer/track?id=${note.musicTrackId}`)
                 .then(res => res.json())
-                .then(data => {
-                    if (data.preview) {
-                        setAudioUrl(data.preview);
-                    } else {
-                        setAudioUrl(note.musicUrl);
-                    }
-                })
+                .then(data => setAudioUrl(data.preview || note.musicUrl))
                 .catch((err) => {
                     console.error("Error fetching track:", err);
                     setAudioUrl(note.musicUrl);
@@ -47,18 +41,17 @@ export default function NoteBottomSheet({ note, onClose, currentUser, onDelete, 
 
     useEffect(() => {
         if (audioUrl) {
-            if (audioRef.current) {
-                audioRef.current.pause();
-            }
+            if (audioRef.current) audioRef.current.pause();
             audioRef.current = new Audio(audioUrl);
             audioRef.current.onended = () => setIsPlaying(false);
 
-            // Auto-play
-            audioRef.current.play()
-                .then(() => setIsPlaying(true))
-                .catch(() => setIsPlaying(false));
+            const playPromise = audioRef.current.play();
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => setIsPlaying(true))
+                    .catch(() => setIsPlaying(false));
+            }
         }
-
         return () => {
             if (audioRef.current) {
                 audioRef.current.pause();
@@ -80,12 +73,10 @@ export default function NoteBottomSheet({ note, onClose, currentUser, onDelete, 
 
     const handleDelete = async () => {
         if (!confirm("¿Seguro que quieres eliminar tu nota?")) return;
-
         setIsDeleting(true);
         try {
             const { error } = await actions.notes.delete({});
             if (error) throw error;
-
             toast.success("Nota eliminada");
             onDelete?.();
             onClose();
@@ -99,19 +90,20 @@ export default function NoteBottomSheet({ note, onClose, currentUser, onDelete, 
 
     if (!note) return null;
 
-    return (
+    const content = (
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-none">
-                {/* Backdrop */}
+            <div className="fixed inset-0 z-[99999] flex items-end justify-center pointer-events-none">
+
+                {/* Backdrop con Blur */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={onClose}
-                    className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto"
+                    className="absolute inset-0 bg-black/60 backdrop-blur-md pointer-events-auto"
                 />
 
-                {/* Sheet */}
+                {/* Sheet Container Glassmorphism */}
                 <motion.div
                     initial={{ y: "100%" }}
                     animate={{ y: 0 }}
@@ -123,110 +115,146 @@ export default function NoteBottomSheet({ note, onClose, currentUser, onDelete, 
                     onDragEnd={(_: any, info: any) => {
                         if (info.offset.y > 100) onClose();
                     }}
-                    className="relative w-full max-w-md bg-[#242526] rounded-t-3xl overflow-hidden pointer-events-auto border-t border-white/10 pb-8"
+                    className="relative w-full max-w-md bg-[#121212]/85 backdrop-blur-2xl rounded-t-[32px] overflow-hidden pointer-events-auto border-t border-white/10 pb-8 shadow-2xl"
                 >
-                    {/* Drag Handle */}
-                    <div className="w-full flex justify-center pt-3 pb-1">
-                        <div className="w-12 h-1.5 bg-white/20 rounded-full" />
-                    </div>
+                    {/* Decorative Top Glow */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-1 bg-white/20 rounded-full mt-3 z-20" />
 
-                    <div className="p-6 flex flex-col items-center gap-6">
-                        {/* User Info */}
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-purple-500 to-pink-500">
-                                <div className="w-full h-full rounded-full border-4 border-[#242526] overflow-hidden">
-                                    <img
-                                        src={note.user.avatar || note.user.image || `https://ui-avatars.com/api/?name=${note.user.displayName || note.user.name}`}
-                                        alt={note.user.displayName || note.user.name}
-                                        className="w-full h-full object-cover"
-                                    />
+                    {/* Close Button */}
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 right-4 p-2 bg-white/5 hover:bg-white/10 rounded-full text-white/50 hover:text-white transition-colors z-30"
+                    >
+                        <LucideX size={20} />
+                    </button>
+
+                    <div className="p-6 flex flex-col items-center gap-8 pt-12">
+
+                        {/* 1. Header & User */}
+                        <div className="flex flex-col items-center gap-4 relative z-10">
+                            <div className="relative group cursor-pointer">
+                                {/* Glow effect */}
+                                <div className="absolute inset-0 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
+                                <div className="w-[88px] h-[88px] rounded-full p-[3px] bg-gradient-to-tr from-purple-500 to-pink-500 relative z-10">
+                                    <div className="w-full h-full rounded-full border-4 border-[#121212] overflow-hidden bg-black">
+                                        <img
+                                            src={note.user.avatar || note.user.image || `https://ui-avatars.com/api/?name=${note.user.displayName || note.user.name}`}
+                                            alt={note.user.displayName}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
                                 </div>
                             </div>
+
                             <div className="text-center">
-                                <h3 className="text-lg font-bold text-white">{note.user.displayName || note.user.name}</h3>
-                                <p className="text-sm text-gray-400">@{note.user.username}</p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true, locale: es })}
-                                </p>
+                                <h3 className="text-xl font-anton text-white tracking-wide">{note.user.displayName || note.user.name}</h3>
+                                <div className="flex items-center gap-2 justify-center text-sm mt-1">
+                                    <span className="text-white/40">@{note.user.username}</span>
+                                    <span className="w-1 h-1 bg-white/20 rounded-full"></span>
+                                    <span className="text-white/40">
+                                        {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true, locale: es })}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Note Content */}
-                        {note.text && (
-                            <div className="w-full bg-[#18191a] rounded-2xl p-6 border border-white/5 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 opacity-10">
-                                    <LucideMessageCircle size={100} />
-                                </div>
+                        {/* 2. Content Area */}
+                        <div className="w-full space-y-4">
 
-                                <p className="text-xl font-medium text-center text-white leading-relaxed relative z-10">
-                                    "{note.text}"
-                                </p>
-                            </div>
-                        )}                        {/* Music Player */}
-                        {note.musicUrl && (
-                            <div className="w-full bg-gradient-to-r from-purple-900/40 to-pink-900/40 rounded-xl p-4 border border-white/10 flex items-center gap-4">
-                                <div className="relative w-12 h-12 flex-shrink-0">
-                                    <img
-                                        src={note.musicCover}
-                                        className={`w-full h-full rounded-lg object-cover ${isPlaying ? 'animate-pulse' : ''}`}
-                                    />
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
-                                        <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform">
-                                            {isPlaying ? <LucidePause size={20} /> : <LucidePlay size={20} />}
-                                        </button>
+                            {/* Text Bubble */}
+                            {note.text && (
+                                <div className="w-full bg-white/5 rounded-3xl p-6 border border-white/5 relative overflow-hidden group">
+                                    <div className="absolute -top-4 -left-4 text-white/5 group-hover:text-white/10 transition-colors">
+                                        <LucideMessageCircle size={80} />
+                                    </div>
+                                    <p className="text-lg font-medium text-center text-white/90 leading-relaxed relative z-10 break-words">
+                                        "{note.text}"
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Music Player Card */}
+                            {note.musicUrl && (
+                                <div className="relative w-full rounded-2xl overflow-hidden border border-white/10 group">
+                                    {/* Blurred Background Cover */}
+                                    <div
+                                        className="absolute inset-0 bg-cover bg-center opacity-40 blur-xl scale-110 group-hover:scale-125 transition-transform duration-700"
+                                        style={{ backgroundImage: `url(${note.musicCover})` }}
+                                    ></div>
+                                    <div className="absolute inset-0 bg-black/40"></div>
+
+                                    <div className="relative z-10 p-4 flex items-center gap-4">
+                                        <div className="relative w-14 h-14 flex-shrink-0 cursor-pointer" onClick={togglePlay}>
+                                            <img
+                                                src={note.musicCover}
+                                                className={`w-full h-full rounded-xl object-cover shadow-lg ${isPlaying ? 'animate-pulse' : ''}`}
+                                            />
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+                                                {isPlaying ? <LucidePause size={24} className="text-white fill-current" /> : <LucidePlay size={24} className="text-white fill-current" />}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <LucideMusic size={12} className="text-purple-400" />
+                                                <p className="text-sm font-bold text-white truncate">{note.musicTitle}</p>
+                                            </div>
+                                            <p className="text-xs text-white/60 truncate">{note.musicArtist}</p>
+                                        </div>
+
+                                        {/* Visualizer Bars */}
+                                        <div className="flex gap-[3px] items-end h-6 pr-2">
+                                            {[1, 2, 3, 4].map((i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`w-1 bg-white rounded-full transition-all duration-300 ${isPlaying ? 'animate-equalizer' : 'h-1.5 opacity-30'
+                                                        }`}
+                                                    style={{
+                                                        // Variamos la duración para que cada barra tenga su propio ritmo
+                                                        animationDuration: `${0.4 + (i * 0.15)}s`,
+                                                        // Añadimos un delay negativo para que la animación empiece en puntos distintos
+                                                        animationDelay: `-${i * 0.2}s`
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-white truncate">{note.musicTitle}</p>
-                                    <p className="text-xs text-gray-400 truncate">{note.musicArtist}</p>
-                                </div>
-                                <div className="flex gap-1">
-                                    {[1, 2, 3, 4].map(i => (
-                                        <div
-                                            key={i}
-                                            className={`w-1 bg-purple-500 rounded-full transition-all duration-300 ${isPlaying ? 'animate-music-bar' : 'h-2'}`}
-                                            style={{
-                                                height: isPlaying ? `${Math.random() * 16 + 8}px` : '8px',
-                                                animationDelay: `${i * 0.1}s`
-                                            }}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
-                        {/* Actions */}
-                        <div className="flex gap-4 w-full">
+                        {/* 3. Actions */}
+                        <div className="flex gap-3 w-full">
                             {isOwner ? (
                                 <>
                                     <button
                                         onClick={onReplace}
-                                        className="flex-1 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                                        className="flex-1 py-3.5 bg-white text-black font-bold rounded-2xl hover:bg-gray-200 transition-transform active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-white/10"
                                     >
-                                        <LucideRefreshCw size={20} />
-                                        Reemplazar
+                                        <LucideRefreshCw size={18} />
+                                        <span>Actualizar</span>
                                     </button>
                                     <button
                                         onClick={handleDelete}
                                         disabled={isDeleting}
-                                        className="flex-1 py-3 bg-red-500/10 text-red-500 font-bold rounded-xl hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                        className="py-3.5 px-5 bg-red-500/10 border border-red-500/20 text-red-400 font-bold rounded-2xl hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
                                         <LucideTrash2 size={20} />
-                                        {isDeleting ? "Eliminando..." : "Eliminar"}
                                     </button>
                                 </>
                             ) : (
-                                <button className="flex-1 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors">
-                                    Responder
+                                <button className="flex-1 py-3.5 bg-white text-black font-bold rounded-2xl hover:bg-gray-200 transition-transform active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-white/10">
+                                    <LucideCornerUpLeft size={18} />
+                                    <span>Responder</span>
                                 </button>
                             )}
-                            {/* <button className="p-3 bg-[#3a3b3c] text-white rounded-xl hover:bg-[#4e4f50] transition-colors">
-                                <LucideHeart size={20} />
-                            </button> */}
                         </div>
                     </div>
                 </motion.div>
             </div>
         </AnimatePresence>
     );
+
+    // Renderizamos en el body usando Portal para saltarnos cualquier restricción de z-index o overflow
+    return typeof document !== 'undefined' ? createPortal(content, document.body) : content;
 }
