@@ -15,7 +15,7 @@ const availableYears = Object.keys(AWARDS_VOTES_RESULT)
   .map((y) => Number(y))
   .sort((a, b) => b - a);
 const renderYear = year ? Number(year) : availableYears[0];
-const votesForYear = AWARDS_VOTES_RESULT[renderYear];
+const votesForYear = AWARDS_VOTES_RESULT[2024];
 
 // Si no hay datos, no renderizamos nada (o podrías poner un mensaje de error)
 if (!votesForYear) return null;
