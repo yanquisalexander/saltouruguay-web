@@ -18,9 +18,9 @@ const COMISION_DIRECTIVA = [
       { name: "TitoLeproso", role: "Secretario" },
       { name: "xDiegouy", role: "Secretario" },
       { name: "TurbanteUy", role: "Prosecretario" },
-      { name: "MundoUnoUy", role: "Prosecretario" }
+      { name: "MundoUnoUy", role: "Prosecretario" },
     ],
-  }
+  },
 ];
 ---
 
@@ -33,7 +33,6 @@ const COMISION_DIRECTIVA = [
   >
     {/* --- BLOQUE 1: ESTADO Y LOGO --- */}
 
-    {/* Badge / Etiqueta de estado */}
     <div
       class="mb-8 inline-flex items-center gap-3 rounded-full border border-current/30 px-5 py-2 opacity-80 backdrop-blur-sm"
     >
@@ -41,7 +40,8 @@ const COMISION_DIRECTIVA = [
         <span
           class="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"
         ></span>
-        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-current"
+        <span
+          class="relative inline-flex rounded-full h-2.5 w-2.5 bg-current"
         ></span>
       </span>
       <span class="text-xs font-bold uppercase tracking-[0.2em]">
@@ -49,7 +49,6 @@ const COMISION_DIRECTIVA = [
       </span>
     </div>
 
-    {/* Título Principal */}
     <h1
       class="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none max-w-4xl mb-2"
     >
@@ -59,12 +58,10 @@ const COMISION_DIRECTIVA = [
 
     <div class="w-24 h-1 bg-current opacity-10 rounded-full my-12"></div>
 
-    {/* Imagen con Glow */}
     <div class="relative w-full max-w-lg group mb-20">
       <div
         class="absolute -inset-10 bg-current opacity-[0.07] blur-3xl rounded-full group-hover:opacity-[0.12] transition-opacity duration-700"
-      >
-      </div>
+      ></div>
       <img
         src="/images/acreconre/acreconre_logo_full.webp"
         draggable="false"
@@ -74,9 +71,6 @@ const COMISION_DIRECTIVA = [
     </div>
 
     {/* --- BLOQUE 2: COMISIÓN DIRECTIVA --- */}
-    {
-      /* Este es el bloque que faltaba en tu código, estilizado igual que el resto */
-    }
 
     <div
       class="w-full max-w-4xl space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300"
@@ -84,7 +78,7 @@ const COMISION_DIRECTIVA = [
       {
         COMISION_DIRECTIVA.map((group) => (
           <div class="flex flex-col items-center">
-            {/* Título de Categoría (con líneas a los lados) */}
+            {/* Título de Categoría */}
             <div class="flex items-center w-full max-w-xs gap-4 mb-8 opacity-50">
               <span class="h-[1px] flex-1 bg-current" />
               <h3 class="text-xs font-bold uppercase tracking-[0.2em]">
@@ -94,23 +88,43 @@ const COMISION_DIRECTIVA = [
             </div>
 
             {/* Grilla de Miembros */}
-            <div class="flex flex-wrap justify-center gap-6 w-full">
-              {group.members.map((member) => (
-                <div class="group/card flex flex-col items-center justify-center p-6 rounded-2xl border border-current/10 bg-current/[0.01] hover:bg-current/[0.04] hover:border-current/20 transition-all duration-300 min-w-[200px] md:min-w-[240px]">
-                  <p class="text-lg md:text-xl font-bold leading-tight tracking-tight">
-                    {member.name}
-                  </p>
-                  <p class="text-xs font-medium opacity-60 mt-1 uppercase tracking-widest group-hover/card:opacity-90 transition-opacity">
-                    {member.role}
-                  </p>
-                </div>
-              ))}
+            <div class="w-full flex flex-col items-center">
+              {/* Miembros principales */}
+              <div class="flex flex-wrap justify-center gap-6 w-full">
+                {group.members
+                  .filter((m) => m.role !== "Prosecretario")
+                  .map((member) => (
+                    <div class="group/card flex flex-col items-center justify-center p-6 rounded-2xl border border-current/10 bg-current/[0.01] hover:bg-current/[0.04] hover:border-current/20 transition-all duration-300 min-w-[200px] md:min-w-[240px]">
+                      <p class="text-lg md:text-xl font-bold leading-tight tracking-tight">
+                        {member.name}
+                      </p>
+                      <p class="text-xs font-medium opacity-60 mt-1 uppercase tracking-widest">
+                        {member.role}
+                      </p>
+                    </div>
+                  ))}
+              </div>
+
+              {/* Prosecretarios */}
+              <div class="flex flex-wrap justify-center gap-6 w-full mt-10">
+                {group.members
+                  .filter((m) => m.role === "Prosecretario")
+                  .map((member) => (
+                    <div class="group/card flex flex-col items-center justify-center p-6 rounded-2xl border border-current/10 bg-current/[0.01] hover:bg-current/[0.04] hover:border-current/20 transition-all duration-300 min-w-[200px] md:min-w-[240px]">
+                      <p class="text-lg md:text-xl font-bold leading-tight tracking-tight">
+                        {member.name}
+                      </p>
+                      <p class="text-xs font-medium opacity-60 mt-1 uppercase tracking-widest">
+                        {member.role}
+                      </p>
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
         ))
       }
 
-      {/* Footer integrado */}
       <div class="pt-10 opacity-30">
         <p class="text-[10px] font-bold uppercase tracking-[0.15em]">
           Asociación de Creadores de Contenido de la Región
