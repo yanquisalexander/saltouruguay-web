@@ -6,7 +6,7 @@ import { z } from 'astro:schema';
 export class GeminiService {
     private google: ReturnType<typeof google>
     constructor() {
-        this.google = google('gemini-1.5-flash', {
+        this.google = google('gemini-2.0-flash-exp', {
 
 
         })
