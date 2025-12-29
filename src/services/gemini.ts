@@ -60,7 +60,6 @@ export class GeminiService {
         } catch (error) {
             console.error("Error generando tips con Gemini:", error);
             // Fallback silencioso o re-throw según prefieras
-            throw new Error("No se pudieron generar los consejos.");
         }
     }
 }
