@@ -14,7 +14,7 @@ const TipsSchema = z.object({
 
 export class GeminiService {
     // Usamos el modelo flash por velocidad y costo, ideal para esto
-    private model = google('gemini-2.0-flash-001');
+    private model = google('gemini-2.0-flash-lite');
 
     async generateTipsForAdminPanel(statsContext: {
         visitorStats: any,
