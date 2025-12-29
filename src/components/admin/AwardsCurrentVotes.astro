@@ -28,7 +28,7 @@ const getAvatarUrl = (name: string) =>
   </header>
 
   {/* Grid de Categorías */}
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 gap-6">
     {
       Object.entries(groupedVotes).map(([category, votes]) => {
         // Ordenar por puntos descendente
