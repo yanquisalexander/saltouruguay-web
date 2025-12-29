@@ -160,7 +160,7 @@ export const getGroupedVotes = async (): Promise<ReturnType<typeof createGrouped
 
 
 export const getTotalVotes = async () => {
-    const result = await client.select({ count: sql<number>`count(*)`.as('count') }).from(VotesTable).execute();
+    const result = await client.select({ count: sql<number>`count(*)`.as('count') }).from(VotesTable).execute().catch(() => [{ count: 0 }]);
     const count = result[0]?.count || 0;
 
     return count;
