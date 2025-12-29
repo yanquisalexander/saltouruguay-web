@@ -6,7 +6,7 @@ export const checkAdmin = async (session: Session | null): Promise<Response | nu
         return new Response(null, { status: 404 });
     }
 
-    if (!session.user.isAdmin) {
+    if (!session?.user?.isAdmin) {
         return new Response(null, { status: 404 });
     }
 
