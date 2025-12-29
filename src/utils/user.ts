@@ -384,7 +384,7 @@ export const getSessionById = async (sessionId: string) => {
         return session;
     } catch (error) {
         console.error("Error fetching session:", error);
-
+        throw error;
     }
 };
 
