@@ -13,6 +13,8 @@ import {
     LucideCamera
 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
+import { useInterval } from "@/utils/client/hooks/useInterval";
+
 
 interface SaltogramFeedProps {
     user?: Session['user'];
@@ -27,12 +29,14 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
     const [sort, setSort] = useState<"recent" | "popular">("recent");
     const [tag, setTag] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Estado para notificar al usuario
     const [hasNewPosts, setHasNewPosts] = useState(false);
+
     const observerRef = useRef<IntersectionObserver | null>(null);
     const lastPostRef = useRef<HTMLDivElement | null>(null);
-    const pollingRef = useRef<number | null>(null);
 
-    // --- DATA FETCHING (Sin cambios en lógica, solo limpieza) ---
+    // --- DATA FETCHING (Carga inicial e infinito) ---
     const fetchPosts = async (pageNum: number, reset = false) => {
         try {
             const params = new URLSearchParams({
@@ -45,6 +49,7 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
 
             const response = await fetch(`/api/saltogram/posts?${params.toString()}`);
             const data = await response.json();
+
             if (data.posts && data.posts.length > 0) {
                 setPosts(prev => reset ? data.posts : [...prev, ...data.posts]);
                 setHasMore(data.posts.length === 10);
@@ -59,22 +64,38 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
         }
     };
 
-    const startPolling = useCallback(() => {
-        if (posts.length === 0) return;
-        const poll = async () => {
-            try {
-                // Fix: Usar el ID máximo en lugar del primero para evitar problemas con posts fijados
-                const lastPostId = posts.reduce((max, p) => (p.id > max ? p.id : max), 0);
-                const response = await fetch(`/api/saltogram/poll?lastPostId=${lastPostId}`);
+    // --- POLLING OPTIMIZADO (Short Polling) ---
+    const checkForNewPosts = useCallback(async () => {
+        // Obtenemos el ID más alto actual de la lista visible
+        // Usamos reduce para seguridad (por si el orden visual no coincide con IDs o hay pins)
+        const lastPostId = posts.reduce((max, p) => (p.id > max ? p.id : max), 0);
+
+        if (lastPostId === 0) return;
+
+        try {
+            const response = await fetch(`/api/saltogram/poll?lastPostId=${lastPostId}`);
+            if (response.ok) {
                 const data = await response.json();
-                if (data.hasNewPosts) setHasNewPosts(true);
-                pollingRef.current = window.setTimeout(poll, 10000); // Polling más lento (10s) para no saturar
-            } catch (error) {
-                pollingRef.current = window.setTimeout(poll, 15000);
+                if (data.hasNewPosts) {
+                    setHasNewPosts(true);
+                }
             }
-        };
-        poll();
+        } catch (error) {
+            // Fallo silencioso, reintentará en el siguiente intervalo
+            console.error("Polling error", error);
+        }
     }, [posts]);
+
+    // Intervalo de 30 segundos (30000ms).
+    // Solo se activa si:
+    // 1. NO estamos viendo un perfil específico (!targetUserId)
+    // 2. NO sabemos ya que hay posts nuevos (!hasNewPosts)
+    // 3. Ya tenemos posts cargados (posts.length > 0)
+    const shouldPoll = !targetUserId && !hasNewPosts && posts.length > 0;
+
+    useInterval(checkForNewPosts, shouldPoll ? 30000 : null);
+
+    // --- EFECTOS ESTÁNDAR ---
 
     useEffect(() => {
         // Read tag from URL
@@ -88,9 +109,9 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
         setPosts([]);
         setHasMore(true);
         setPage(1);
+        setHasNewPosts(false); // Resetear alerta al cambiar filtros
         fetchPosts(1, true);
     }, [sort, tag, targetUserId]);
-    useEffect(() => { startPolling(); return () => { if (pollingRef.current) clearTimeout(pollingRef.current); }; }, [startPolling]);
 
     // Infinite Scroll
     useEffect(() => {
@@ -130,7 +151,6 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
     // --- RENDER ---
     return (
         <div className="relative space-y-8">
-
             {/* NEW POSTS TOAST (Floating Pill) */}
             {hasNewPosts && (
                 <div className="sticky top-24 z-30 flex justify-center animate-bounce-in">
@@ -144,7 +164,7 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
                 </div>
             )}
 
-            {/* CREATE POST WIDGET (Facebook Style) */}
+            {/* CREATE POST WIDGET */}
             {user && !targetUserId && (
                 <div className="bg-[#242526] rounded-xl p-4 shadow-sm border border-white/5">
                     <div className="flex gap-3">
@@ -163,17 +183,11 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
                         </button>
                     </div>
                     <div className="border-t border-white/10 mt-3 pt-3 flex justify-between px-2">
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-white/5 rounded-lg transition-colors text-[#b0b3b8] font-medium text-sm"
-                        >
+                        <button onClick={() => setIsModalOpen(true)} className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-white/5 rounded-lg transition-colors text-[#b0b3b8] font-medium text-sm">
                             <LucideCamera className="text-green-500" size={20} />
                             <span>Foto/Video</span>
                         </button>
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-white/5 rounded-lg transition-colors text-[#b0b3b8] font-medium text-sm"
-                        >
+                        <button onClick={() => setIsModalOpen(true)} className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-white/5 rounded-lg transition-colors text-[#b0b3b8] font-medium text-sm">
                             <LucideFlame className="text-yellow-500" size={20} />
                             <span>Sentimiento</span>
                         </button>
@@ -184,7 +198,7 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
             {/* NOTES TRAY */}
             {!targetUserId && <NotesTray user={user} />}
 
-            {/* FILTROS (Segmented Control) */}
+            {/* FILTROS */}
             <div className="flex flex-col gap-4">
                 {tag && (
                     <div className="flex items-center justify-between p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl animate-fade-in">
@@ -210,19 +224,13 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
                     <div className="inline-flex p-1 bg-white/5 rounded-xl border border-white/5">
                         <button
                             onClick={() => setSort("recent")}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${sort === "recent"
-                                ? "bg-purple-600 text-white shadow-lg"
-                                : "text-white/50 hover:text-white hover:bg-white/5"
-                                }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${sort === "recent" ? "bg-purple-600 text-white shadow-lg" : "text-white/50 hover:text-white hover:bg-white/5"}`}
                         >
                             <LucideClock size={16} /> Recientes
                         </button>
                         <button
                             onClick={() => setSort("popular")}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${sort === "popular"
-                                ? "bg-yellow-500 text-black shadow-lg"
-                                : "text-white/50 hover:text-white hover:bg-white/5"
-                                }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${sort === "popular" ? "bg-yellow-500 text-black shadow-lg" : "text-white/50 hover:text-white hover:bg-white/5"}`}
                         >
                             <LucideFlame size={16} /> Populares
                         </button>
@@ -262,7 +270,7 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
                                 key={post.id}
                                 ref={index === posts.length - 1 ? lastPostRef : null}
                                 className="animate-fade-in-up"
-                                style={{ animationDelay: `${index * 50}ms` }} // Stagger effect
+                                style={{ animationDelay: `${index * 50}ms` }}
                             >
                                 <PostCard post={post} currentUserId={user?.id} isAdmin={user?.isAdmin} />
                             </div>
