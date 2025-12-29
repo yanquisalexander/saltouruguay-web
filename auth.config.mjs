@@ -115,21 +115,15 @@ export default defineConfig({
 
         session: async ({ session, token }) => {
             try {
-                // Si no hay sessionId en el token, retornamos la sesión tal cual (probablemente inválida)
                 if (!token.sessionId) return session;
 
-                // 4. Validación rápida de sesión
                 const existingSession = await getSessionById(token.sessionId);
-
                 if (!existingSession) {
-                    // Si la sesión no está en Redis/DB, forzamos logout en el cliente
                     session.user = null;
                     return session;
                 }
 
-                // 5. OPTIMIZACIÓN: Carga de datos + Actualización de actividad en PARALELO
-                const [userRecord] = await Promise.all([
-                    // A: Buscar datos completos del usuario
+                const [userResult] = await Promise.allSettled([
                     client.query.UsersTable.findFirst({
                         where: eq(UsersTable.twitchId, token.user.sub),
                         columns: {
@@ -150,38 +144,44 @@ export default defineConfig({
                                 columns: { startDate: true, endDate: true, status: true },
                             }
                         }
-                    }),
-                    // B: Actualizar "last_active" (sin esperar respuesta)
-                    updateSessionActivity(token.sessionId)
+                    }), updateSessionActivity(token.sessionId),
                 ]);
 
-                if (userRecord) {
-                    const now = new Date();
-                    const isSuspended = userRecord.suspensions.some(
-                        (s) => s.status === "active" && (s.endDate === null || new Date(s.endDate) > now)
-                    );
-
-                    session.user = {
-                        ...session.user,
-                        id: userRecord.id,
-                        username: userRecord.username,
-                        isAdmin: userRecord.admin,
-                        twitchId: userRecord.twitchId,
-                        tier: userRecord.twitchTier,
-                        discordId: userRecord.discordId,
-                        coins: userRecord.coins,
-                        streamerWarsPlayerNumber: userRecord.streamerWarsPlayer?.playerNumber,
-                        isSuspended,
-                        twoFactorEnabled: userRecord.twoFactorEnabled,
-                        sessionId: token.sessionId,
-                    };
+                if (userResult.status !== "fulfilled" || !userResult.value) {
+                    return session;
                 }
+
+                const userRecord = userResult.value;
+                const now = new Date();
+
+                const suspensions = userRecord.suspensions ?? [];
+                const isSuspended = suspensions.some(
+                    (s) =>
+                        s.status === "active" &&
+                        (s.endDate === null || new Date(s.endDate) > now)
+                );
+
+                session.user = {
+                    ...session.user,
+                    id: userRecord.id,
+                    username: userRecord.username,
+                    isAdmin: userRecord.admin,
+                    twitchId: userRecord.twitchId,
+                    tier: userRecord.twitchTier,
+                    discordId: userRecord.discordId,
+                    coins: userRecord.coins,
+                    streamerWarsPlayerNumber: userRecord.streamerWarsPlayer?.playerNumber,
+                    isSuspended,
+                    twoFactorEnabled: userRecord.twoFactorEnabled,
+                    sessionId: token.sessionId,
+                };
             } catch (error) {
-                console.error("Error retrieving session data:", error);
+                console.error("[auth][session] Error:", error);
             }
 
             return session;
         },
+
     },
     pages: {
         error: "/auth/twitch/callback",
