@@ -1,7 +1,4 @@
 ---
-/* Esta página no depende del servidor, puede prerenderizarse */
-export const prerender = true;
-
 import Layout from "@/layouts/Layout.astro";
 
 const COMISION_DIRECTIVA = [
@@ -15,109 +12,101 @@ const COMISION_DIRECTIVA = [
     ],
   },
   {
-    category: "OTRA CATEGORÍA",
-    members: [
-      { name: "Julian Martin", role: "Rol" },
-      { name: "Nombre Apellido", role: "Rol" },
-    ],
+    category: "Comisión Directiva",
+    members: [{ name: "Julian Martin", role: "ROL" }],
   },
-  // Puedes agregar más categorías aquí si es necesario
 ];
 ---
 
 <Layout title="ACRECONRE">
   <div
-    class="min-h-screen flex flex-col items-center justify-center py-20 px-4 relative overflow-hidden"
+    class="flex flex-col items-center justify-center min-h-[90vh] py-20 px-4 text-center"
   >
-    {/* Fondo decorativo sutil (opcional, aporta textura) */}
+    {/* --- BLOQUE 1: ESTADO Y LOGO --- */}
+
+    {/* Badge / Etiqueta de estado */}
     <div
-      class="absolute inset-0 opacity-5 pointer-events-none"
-      style="background-image: radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0); background-size: 40px 40px;"
+      class="mb-8 inline-flex items-center gap-3 rounded-full border border-current/30 px-5 py-2 opacity-80 backdrop-blur-sm"
     >
+      <span class="relative flex h-2.5 w-2.5">
+        <span
+          class="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"
+        ></span>
+        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-current"
+        ></span>
+      </span>
+      <span class="text-xs font-bold uppercase tracking-[0.2em]">
+        Página en construcción
+      </span>
     </div>
 
-    {/* --- SECCIÓN HERO (Logo y Estado) --- */}
-    <section
-      class="flex flex-col items-center text-center max-w-4xl mx-auto z-10"
+    {/* Título Principal */}
+    <h1
+      class="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none max-w-4xl mb-2"
     >
-      {/* Logo con efecto de elevación */}
-      <div class="relative group mb-12">
-        <div
-          class="absolute -inset-10 bg-current opacity-[0.03] blur-3xl rounded-full group-hover:opacity-[0.08] transition-opacity duration-700"
-        >
-        </div>
-        <img
-          src="/images/acreconre/acreconre_logo_full.webp"
-          draggable="false"
-          alt="ACRECONRE Banner"
-          class="relative w-full max-w-md md:max-w-lg h-auto drop-shadow-2xl transform transition-transform duration-700 hover:scale-[1.02]"
-        />
-      </div>
+      Inscripciones <br class="hidden md:block" />
+      <span class="opacity-40 font-light">se abrirán pronto</span>
+    </h1>
 
-      {/* Título de estado elegante */}
-      <div class="space-y-4 mb-16">
-        <h1
-          class="text-3xl md:text-5xl font-serif font-medium tracking-tight leading-tight"
-        >
-          Inscripciones <span class="opacity-40 italic">próximamente</span>
-        </h1>
-        <div class="flex items-center justify-center gap-3 opacity-60">
-          <span class="h-[1px] w-12 bg-current"></span>
-          <p class="text-xs font-bold uppercase tracking-[0.2em]">
-            Sitio Oficial en Construcción
-          </p>
-          <span class="h-[1px] w-12 bg-current"></span>
-        </div>
-      </div>
-    </section>
+    <div class="w-24 h-1 bg-current opacity-10 rounded-full my-12"></div>
 
-    {/* --- SECCIÓN INSTITUCIONAL (Comisión) --- */}
-    <section
-      class="w-full max-w-2xl z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200"
-    >
+    {/* Imagen con Glow */}
+    <div class="relative w-full max-w-lg group mb-20">
       <div
-        class="backdrop-blur-sm bg-white/5 border border-current/10 rounded-2xl p-8 md:p-10 shadow-2xl"
+        class="absolute -inset-10 bg-current opacity-[0.07] blur-3xl rounded-full group-hover:opacity-[0.12] transition-opacity duration-700"
       >
-        <h2
-          class="text-center text-sm font-bold uppercase tracking-widest opacity-50 mb-8"
-        >
-          Comisión Directiva
-        </h2>
-
-        <div class="space-y-8">
-          {
-            COMISION_DIRECTIVA.map((group) => (
-              <div class="text-center">
-                <h3 class="text-lg font-serif italic opacity-80 mb-6 relative inline-block px-4">
-                  {group.category}
-                  {/* Adorno sutil bajo el título */}
-                  <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-current opacity-20" />
-                </h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 justify-center">
-                  {group.members.map((member) => (
-                    <div class="group relative p-4 rounded-lg hover:bg-current/5 transition-colors duration-300">
-                      <p class="text-xl font-medium tracking-wide">
-                        {member.name}
-                      </p>
-                      <p class="text-xs uppercase tracking-wider opacity-60 mt-1 group-hover:opacity-100 transition-opacity">
-                        {member.role}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))
-          }
-        </div>
       </div>
+      <img
+        src="/images/acreconre/acreconre_logo_full.webp"
+        draggable="false"
+        alt="ACRECONRE Banner"
+        class="relative w-full h-auto drop-shadow-2xl transform transition-transform duration-700 hover:scale-[1.02]"
+      />
+    </div>
 
-      {/* Footer minimalista */}
-      <p
-        class="text-center text-[10px] opacity-30 mt-12 uppercase tracking-widest"
-      >
-        © {new Date().getFullYear()} ACRECONRE. Todos los derechos reservados.
-      </p>
-    </section>
+    {/* --- BLOQUE 2: COMISIÓN DIRECTIVA --- */}
+    {
+      /* Este es el bloque que faltaba en tu código, estilizado igual que el resto */
+    }
+
+    <div
+      class="w-full max-w-4xl space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300"
+    >
+      {
+        COMISION_DIRECTIVA.map((group) => (
+          <div class="flex flex-col items-center">
+            {/* Título de Categoría (con líneas a los lados) */}
+            <div class="flex items-center w-full max-w-xs gap-4 mb-8 opacity-50">
+              <span class="h-[1px] flex-1 bg-current" />
+              <h3 class="text-xs font-bold uppercase tracking-[0.2em]">
+                {group.category}
+              </h3>
+              <span class="h-[1px] flex-1 bg-current" />
+            </div>
+
+            {/* Grilla de Miembros */}
+            <div class="flex flex-wrap justify-center gap-6 w-full">
+              {group.members.map((member) => (
+                <div class="group/card flex flex-col items-center justify-center p-6 rounded-2xl border border-current/10 bg-current/[0.01] hover:bg-current/[0.04] hover:border-current/20 transition-all duration-300 min-w-[200px] md:min-w-[240px]">
+                  <p class="text-lg md:text-xl font-bold leading-tight tracking-tight">
+                    {member.name}
+                  </p>
+                  <p class="text-xs font-medium opacity-60 mt-1 uppercase tracking-widest group-hover/card:opacity-90 transition-opacity">
+                    {member.role}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+
+      {/* Footer integrado */}
+      <div class="pt-10 opacity-30">
+        <p class="text-[10px] font-bold uppercase tracking-[0.15em]">
+          Asociación de Creadores de Contenido de la Región
+        </p>
+      </div>
+    </div>
   </div>
 </Layout>
