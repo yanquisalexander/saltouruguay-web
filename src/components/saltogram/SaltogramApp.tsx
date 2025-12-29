@@ -28,6 +28,8 @@ import ProfileView from "./views/ProfileView";
 import PostView from "./views/PostView";
 import FriendRequestsWidget from "./FriendRequestsWidget";
 import SuggestedUsersWidget from "./SuggestedUsersWidget";
+import { useInterval } from "@/utils/client/hooks/useInterval";
+
 
 type ActiveView = "home" | "explore" | "direct" | "chat" | "requests" | "profile" | "post";
 
@@ -94,14 +96,50 @@ export default function SaltogramApp({
     );
     const [conversations, setConversations] = useState<ConversationPreview[]>([]);
     const [loadingConversations, setLoadingConversations] = useState(false);
+
+    // Contadores para Badges
     const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
     const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
-    const searchInputRef = useRef<HTMLInputElement>(null);
-    const pollingRef = useRef<number | null>(null);
 
+    const searchInputRef = useRef<HTMLInputElement>(null);
     const base = useMemo(() => normalizePath(basePath), [basePath]);
 
-    // Calculate unread messages from conversations if available, otherwise use polled count
+    // --- LÓGICA DE POLLING OPTIMIZADA ---
+
+    // Función de ejecución única (stateless)
+    const handleGlobalPoll = useCallback(async () => {
+        if (!user) return;
+
+        try {
+            // Llamamos a la action optimizada (Promise.all backend)
+            const { data, error } = await actions.saltogram.poll({});
+
+            if (error) {
+                console.error("Poll error:", error);
+                return;
+            }
+
+            if (data) {
+                setUnreadMessagesCount(data.unreadMessages);
+                setUnreadNotificationsCount(data.unreadNotifications);
+
+                // Nota: friendRequestsState es un array local manejado por la UI y Widgets.
+                // Si quisieras sincronizarlo estrictamente con el servidor, deberías recargar la lista
+                // si data.friendRequests !== friendRequestsState.length
+            }
+        } catch (error) {
+            // Fallo silencioso en background
+            console.error(error);
+        }
+    }, [user]);
+
+    // Intervalo controlado: 60 segundos si hay usuario logueado.
+    // Esto evita el bucle infinito y reduce costos serverless.
+    useInterval(handleGlobalPoll, user ? 60000 : null);
+
+    // --- FIN LÓGICA POLLING ---
+
+    // Calculo de mensajes no leídos (combina local con servidor)
     const unreadMessages = useMemo(
         () => {
             const fromConversations = conversations.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0);
@@ -109,46 +147,6 @@ export default function SaltogramApp({
         },
         [conversations, unreadMessagesCount]
     );
-
-    const startPolling = useCallback(() => {
-        if (!user) return;
-
-        const poll = async () => {
-            try {
-                const { data, error } = await actions.saltogram.poll({});
-                if (error) throw new Error(error.message);
-
-                if (data) {
-                    setUnreadMessagesCount(data.unreadMessages);
-                    setUnreadNotificationsCount(data.unreadNotifications);
-                    // Note: Friend requests are a list in state, but poll returns count.
-                    // If count differs significantly, we might want to reload requests.
-                    // For now, we just rely on the initial load + manual refresh for the list,
-                    // but we could update a badge count if we separated it from the list.
-                    // However, the UI uses friendRequestsState.length.
-                    // To keep it simple and consistent, if count > length, we could trigger a reload of requests?
-                    // Or just let the user refresh.
-                    // Actually, let's just update the badge if we can.
-                    // But the badge uses friendRequestsState.length.
-                    // Let's leave friend requests as is for now or implement full sync.
-                }
-
-                pollingRef.current = window.setTimeout(poll, 10000);
-            } catch (error) {
-                console.error("Polling error:", error);
-                pollingRef.current = window.setTimeout(poll, 15000);
-            }
-        };
-
-        poll();
-    }, [user]);
-
-    useEffect(() => {
-        startPolling();
-        return () => {
-            if (pollingRef.current) clearTimeout(pollingRef.current);
-        };
-    }, [startPolling]);
 
     const loadConversations = useCallback(async () => {
         if (!user) return;
@@ -165,6 +163,7 @@ export default function SaltogramApp({
         }
     }, [user]);
 
+    // Search Logic
     useEffect(() => {
         if (searchQuery.length < 2) {
             setSearchResults([]);
@@ -303,7 +302,6 @@ export default function SaltogramApp({
                                     setSearchOpen(true);
                                 }}
                                 onFocus={() => setSearchOpen(true)}
-                                // onBlur={() => setTimeout(() => setSearchOpen(false), 200)} // Removed to allow clicking results
                                 placeholder="Buscar perfiles o etiquetas"
                                 className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all focus:bg-white/10"
                             />
@@ -516,9 +514,6 @@ export default function SaltogramApp({
                             disabled={item.disabled}
                         >
                             <item.icon size={18} />
-                            {/* {item.badge && item.badge > 0 && (
-                                <span className="text-[10px] text-blue-300">{item.badge}</span>
-                            )} */}
                             {item.label}
                         </button>
                     ))}

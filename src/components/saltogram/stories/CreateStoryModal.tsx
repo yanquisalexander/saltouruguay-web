@@ -1,5 +1,10 @@
 import { useState, useRef, useEffect } from "preact/hooks";
-import { LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo, LucideStar, LucideGlobe, LucideUsers, LucideMusic, LucideTrash2, LucideMaximize2, LucidePlay, LucidePause, LucideType, LucideRotateCw, LucideAtSign } from "lucide-preact";
+import {
+    LucideX, LucideUploadCloud, LucideLoader2, LucideImage, LucideVideo,
+    LucideStar, LucideGlobe, LucideUsers, LucideMusic, LucideTrash2,
+    LucideMaximize2, LucidePlay, LucidePause, LucideType, LucideRotateCw,
+    LucideAtSign, LucideCamera, LucideSwitchCamera
+} from "lucide-preact";
 import { toast } from "sonner";
 import WaveSurfer from 'wavesurfer.js';
 import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js';
@@ -43,6 +48,7 @@ const COLORS = [
 ];
 
 export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateStoryModalProps) {
+    // --- ESTADOS ---
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -57,19 +63,36 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
     const [musicDuration, setMusicDuration] = useState(15);
     const [isPlayingPreview, setIsPlayingPreview] = useState(false);
 
-    // Text State
+    // --- CÁMARA ---
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+
+    // --- TEXTO ---
     const [texts, setTexts] = useState<TextElement[]>([]);
     const [editingTextId, setEditingTextId] = useState<string | null>(null);
     const [textInput, setTextInput] = useState("");
     const [selectedFont, setSelectedFont] = useState(FONTS[0].class);
     const [selectedColor, setSelectedColor] = useState(COLORS[0]);
     const [selectedBgColor, setSelectedBgColor] = useState('transparent');
-    const [activeElementId, setActiveElementId] = useState<string | null>(null); // 'music' or textId
+    const [activeElementId, setActiveElementId] = useState<string | null>(null);
 
+    // --- REFS ---
     const waveformContainerRef = useRef<HTMLDivElement>(null);
     const wavesurferRef = useRef<WaveSurfer | null>(null);
     const regionsPluginRef = useRef<RegionsPlugin | null>(null);
 
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const isDragging = useRef(false);
+    const isResizing = useRef(false);
+    const startPos = useRef({ x: 0, y: 0 });
+    const startConfig = useRef({ x: 0, y: 0, scale: 1 });
+    const initialPinch = useRef<{ dist: number, angle: number, startScale: number, startRotation: number } | null>(null);
+
+    // --- INITIALIZATION ---
     useEffect(() => {
         if (!isOpen) {
             setFile(null);
@@ -88,6 +111,10 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             setEditingTextId(null);
             setActiveElementId(null);
 
+            // Reset cámara
+            stopCamera();
+            setIsCameraOpen(false);
+
             if (wavesurferRef.current) {
                 wavesurferRef.current.destroy();
                 wavesurferRef.current = null;
@@ -95,23 +122,101 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
         }
     }, [isOpen]);
 
-    // Initialize WaveSurfer when music is selected
+    useEffect(() => {
+        return () => stopCamera();
+    }, []);
+
+    // --- LÓGICA DE CÁMARA ---
+    const startCamera = async () => {
+        try {
+            if (streamRef.current) stopCamera();
+
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: facingMode,
+                    aspectRatio: { ideal: 9 / 16 },
+                    width: { ideal: 1080 },
+                    height: { ideal: 1920 }
+                },
+                audio: false
+            });
+
+            streamRef.current = stream;
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                videoRef.current.play();
+            }
+            setIsCameraOpen(true);
+        } catch (err) {
+            console.error(err);
+            toast.error("No se pudo acceder a la cámara.");
+            setIsCameraOpen(false);
+        }
+    };
+
+    const stopCamera = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+    };
+
+    const switchCamera = () => {
+        setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+    };
+
+    useEffect(() => {
+        if (isCameraOpen) {
+            startCamera();
+        }
+    }, [facingMode]);
+
+    const capturePhoto = () => {
+        if (videoRef.current && canvasRef.current) {
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                if (facingMode === 'user') {
+                    ctx.translate(canvas.width, 0);
+                    ctx.scale(-1, 1);
+                }
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+                        setFile(file);
+                        setPreview(URL.createObjectURL(file));
+                        setMediaType('image');
+                        setDuration(5);
+                        stopCamera();
+                        setIsCameraOpen(false);
+                    }
+                }, 'image/jpeg', 0.9);
+            }
+        }
+    };
+
+    // --- LÓGICA WAVESURFER ---
     useEffect(() => {
         if (selectedMusic && waveformContainerRef.current) {
             if (wavesurferRef.current) {
                 wavesurferRef.current.destroy();
             }
 
-            // Create gradients
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const width = waveformContainerRef.current.clientWidth || 300;
 
-            // Instagram-like gradient for progress (played part) - Horizontal
             const progressGradient = ctx!.createLinearGradient(0, 0, width, 0);
-            progressGradient.addColorStop(0, '#833AB4');   // Purple
-            progressGradient.addColorStop(0.5, '#FD1D1D'); // Red/Pink
-            progressGradient.addColorStop(1, '#FCAF45');   // Orange/Yellow
+            progressGradient.addColorStop(0, '#833AB4');
+            progressGradient.addColorStop(0.5, '#FD1D1D');
+            progressGradient.addColorStop(1, '#FCAF45');
 
             const ws = WaveSurfer.create({
                 container: waveformContainerRef.current,
@@ -131,7 +236,6 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             regionsPluginRef.current = wsRegions;
 
             ws.on('decode', () => {
-                // Create the initial region
                 wsRegions.addRegion({
                     start: 0,
                     end: 15,
@@ -141,8 +245,6 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                     minLength: 5,
                     maxLength: 30,
                 });
-
-                // Auto-play when ready
                 ws.play();
                 setIsPlayingPreview(true);
             });
@@ -150,7 +252,6 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             wsRegions.on('region-updated', (region) => {
                 setMusicStart(region.start);
                 setMusicDuration(region.end - region.start);
-                // Loop playback within region
                 region.play();
                 setIsPlayingPreview(true);
             });
@@ -179,16 +280,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
         }
     };
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const isDragging = useRef(false);
-    const isResizing = useRef(false);
-    const startPos = useRef({ x: 0, y: 0 });
-    const startConfig = useRef({ x: 0, y: 0, scale: 1 });
-    const initialPinch = useRef<{ dist: number, angle: number, startScale: number, startRotation: number } | null>(null);
-
-    if (!isOpen) return null;
-
+    // --- HANDLERS (Stickers/Texto) ---
     const handleDragStart = (e: PointerEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -273,16 +365,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
         }
     };
 
-    const handleFileChange = (e: Event) => {
-        const target = e.target as HTMLInputElement;
-        if (target.files && target.files[0]) {
-            const file = target.files[0];
-            setFile(file);
-            setPreview(URL.createObjectURL(file));
-            setMediaType(file.type.startsWith('video') ? 'video' : 'image');
-        }
-    };
-
+    // --- MANEJO DE TEXTO ---
     const handleAddText = () => {
         const newText: TextElement = {
             id: crypto.randomUUID(),
@@ -320,7 +403,6 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
         e.stopPropagation();
         setActiveElementId(id);
 
-        // Reset pinch state
         initialPinch.current = null;
 
         const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
@@ -332,12 +414,11 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
         const startTop = text.y;
 
         const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
-            // Prevent default browser behavior (scrolling/zooming)
             if (moveEvent.cancelable) {
                 moveEvent.preventDefault();
             }
 
-            // Handle Pinch/Zoom with 2 fingers
+            // Pinch/Zoom con 2 dedos
             if ('touches' in moveEvent && moveEvent.touches.length === 2) {
                 const touch1 = moveEvent.touches[0];
                 const touch2 = moveEvent.touches[1];
@@ -366,7 +447,8 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
             }
 
             const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
-            const currentY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY; const container = document.getElementById('story-preview-container');
+            const currentY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+            const container = document.getElementById('story-preview-container');
             if (!container) return;
 
             const rect = container.getBoundingClientRect();
@@ -444,442 +526,510 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
         }
     };
 
+    if (!isOpen) return null;
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-[#242526] w-full max-w-[400px] aspect-[9/16] max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl border border-white/10 animate-in fade-in zoom-in-95 duration-200 flex flex-col relative">
+        // CAMBIO: Padding 0 en móvil, p-4 en desktop.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-0 md:p-4">
+
+            {/* CAMBIO: Full screen en móvil (rounded-none, border-none, h-full), Modal en desktop */}
+            <div className="bg-black md:bg-[#242526] w-full h-full md:h-auto md:max-w-[400px] md:aspect-[9/16] md:max-h-[85vh] rounded-none md:rounded-2xl overflow-hidden shadow-2xl md:border border-white/10 animate-in fade-in zoom-in-95 duration-200 flex flex-col relative">
 
                 {/* Header */}
-                <div className="p-4 border-b border-white/10 flex justify-between items-center shrink-0 z-10 bg-[#242526]">
-                    <h3 className="text-white font-bold text-lg">Crear Historia</h3>
-                    <button onClick={onClose} className="text-white/50 hover:text-white">
-                        <LucideX size={24} />
-                    </button>
-                </div>
+                {!isCameraOpen && (
+                    <div className="p-4 border-b border-white/10 flex justify-between items-center shrink-0 z-10 bg-[#242526] absolute md:relative top-0 left-0 right-0 md:bg-transparent">
+                        <h3 className="text-white font-bold text-lg drop-shadow-md">Crear Historia</h3>
+                        <button onClick={onClose} className="text-white hover:text-white/70 drop-shadow-md">
+                            <LucideX size={28} />
+                        </button>
+                    </div>
+                )}
 
-                {/* Content */}
-                <div className="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
-                    {!preview ? (
-                        <div
-                            onClick={() => fileInputRef.current?.click()}
-                            className="w-full h-full flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-white/5 transition-colors group"
-                        >
-                            <div className="p-6 bg-blue-500/10 rounded-full text-blue-400 group-hover:scale-110 transition-transform">
-                                <LucideUploadCloud size={48} />
-                            </div>
-                            <div className="text-center">
-                                <p className="text-white font-medium text-lg">Sube una foto o video</p>
-                                <p className="text-white/40 text-sm mt-1">Arrastra o haz clic para seleccionar</p>
-                            </div>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileSelect}
-                                accept="image/*,video/*"
-                                className="hidden"
+                {/* Content Area */}
+                <div className="flex-1 relative bg-black flex items-center justify-center overflow-hidden w-full h-full">
+
+                    {/* --- MODO CÁMARA --- */}
+                    {isCameraOpen ? (
+                        <div className="absolute inset-0 z-50 flex flex-col bg-black">
+                            <video
+                                ref={videoRef}
+                                className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
+                                autoPlay
+                                playsInline
+                                muted
                             />
+                            <canvas ref={canvasRef} className="hidden" />
+
+                            {/* Botón cerrar cámara */}
+                            <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-50">
+                                <button
+                                    onClick={() => { stopCamera(); setIsCameraOpen(false); }}
+                                    className="p-2 bg-black/40 rounded-full text-white backdrop-blur-md"
+                                >
+                                    <LucideX size={24} />
+                                </button>
+                            </div>
+
+                            {/* Controles inferiores cámara */}
+                            <div className="absolute bottom-12 left-0 right-0 flex items-center justify-center gap-10 z-50 pb-8 md:pb-0">
+                                <button
+                                    onClick={() => { stopCamera(); setIsCameraOpen(false); fileInputRef.current?.click(); }}
+                                    className="w-10 h-10 rounded-lg border-2 border-white/50 bg-black/40 flex items-center justify-center text-white/80"
+                                >
+                                    <LucideImage size={20} />
+                                </button>
+
+                                <button
+                                    onClick={capturePhoto}
+                                    className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center hover:scale-105 transition-transform active:scale-95 bg-white/20 backdrop-blur-sm"
+                                >
+                                    <div className="w-16 h-16 bg-white rounded-full"></div>
+                                </button>
+
+                                <button
+                                    onClick={switchCamera}
+                                    className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white"
+                                >
+                                    <LucideSwitchCamera size={24} />
+                                </button>
+                            </div>
                         </div>
                     ) : (
-                        <div
-                            ref={containerRef}
-                            id="story-preview-container"
-                            className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden touch-none"
-                            onClick={() => {
-                                setEditingTextId(null);
-                                setActiveElementId(null);
-                            }}
-                        >
-                            {mediaType === 'video' ? (
-                                <video src={preview} className="max-w-full max-h-full object-contain pointer-events-none" />
-                            ) : (
-                                <img src={preview} className="max-w-full max-h-full object-contain pointer-events-none" />
-                            )}
-
-                            {/* Text Elements */}
-                            {texts.map((text) => (
-                                <div
-                                    key={text.id}
-                                    className={`absolute cursor-move select-none group ${text.font}`}
-                                    style={{
-                                        left: `${text.x}%`,
-                                        top: `${text.y}%`,
-                                        transform: `translate(-50%, -50%) scale(${text.scale}) rotate(${text.rotation}deg)`,
-                                        color: text.color,
-                                        backgroundColor: text.backgroundColor,
-                                        zIndex: activeElementId === text.id ? 50 : 20,
-                                        padding: '0.5rem',
-                                        borderRadius: '0.5rem',
-                                        border: activeElementId === text.id ? '2px dashed rgba(255,255,255,0.5)' : 'none'
-                                    }}
-                                    onMouseDown={(e) => handleTextDragStart(e, text.id)}
-                                    onTouchStart={(e) => handleTextDragStart(e, text.id)}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditingTextId(text.id);
-                                        setActiveElementId(text.id);
-                                        setTextInput(text.content);
-                                        setSelectedFont(text.font);
-                                        setSelectedColor(text.color);
-                                        setSelectedBgColor(text.backgroundColor);
-                                    }}
-                                >
-                                    <span className="whitespace-pre-wrap text-2xl font-bold drop-shadow-lg pointer-events-none">
-                                        {text.content}
-                                    </span>
-
-                                    {activeElementId === text.id && (
-                                        <>
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); handleDeleteText(text.id); }}
-                                                className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 z-50"
-                                            >
-                                                <LucideTrash2 size={14} />
-                                            </button>
-
-                                            {/* Rotate Handle */}
-                                            <div
-                                                className="absolute -top-6 left-1/2 -translate-x-1/2 bg-white text-black rounded-full p-1.5 shadow-md cursor-grab active:cursor-grabbing z-50"
-                                                onMouseDown={(e) => {
-                                                    e.stopPropagation();
-                                                    const startX = e.clientX;
-                                                    const startRotation = text.rotation;
-                                                    const handleRotate = (moveEvent: MouseEvent) => {
-                                                        const deltaX = moveEvent.clientX - startX;
-                                                        handleUpdateText(text.id, { rotation: startRotation + deltaX });
-                                                    };
-                                                    const handleUp = () => {
-                                                        window.removeEventListener('mousemove', handleRotate);
-                                                        window.removeEventListener('mouseup', handleUp);
-                                                    };
-                                                    window.addEventListener('mousemove', handleRotate);
-                                                    window.addEventListener('mouseup', handleUp);
-                                                }}
-                                            >
-                                                <LucideRotateCw size={14} />
-                                            </div>
-
-                                            {/* Scale Handle */}
-                                            <div
-                                                className="absolute -bottom-3 -right-3 bg-blue-500 text-white rounded-full p-1.5 shadow-md cursor-nwse-resize z-50"
-                                                onMouseDown={(e) => {
-                                                    e.stopPropagation();
-                                                    const startY = e.clientY;
-                                                    const startScale = text.scale;
-                                                    const handleScale = (moveEvent: MouseEvent) => {
-                                                        const deltaY = startY - moveEvent.clientY;
-                                                        handleUpdateText(text.id, { scale: Math.max(0.5, Math.min(5, startScale + deltaY * 0.01)) });
-                                                    };
-                                                    const handleUp = () => {
-                                                        window.removeEventListener('mousemove', handleScale);
-                                                        window.removeEventListener('mouseup', handleUp);
-                                                    };
-                                                    window.addEventListener('mousemove', handleScale);
-                                                    window.addEventListener('mouseup', handleUp);
-                                                }}
-                                            >
-                                                <LucideMaximize2 size={14} />
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            ))}
-
-                            {/* Music Sticker */}
-                            {selectedMusic && (
-                                <div
-                                    className="absolute bg-white/90 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 shadow-xl max-w-[80%] cursor-move touch-none select-none group"
-                                    style={{
-                                        left: `${stickerConfig.x}%`,
-                                        top: `${stickerConfig.y}%`,
-                                        transform: `translate(-50%, -50%) scale(${stickerConfig.scale}) rotate(${stickerConfig.rotation}deg)`,
-                                        zIndex: 10
-                                    }}
-                                    onPointerDown={handleDragStart}
-                                    onPointerMove={handlePointerMove}
-                                    onPointerUp={handlePointerUp}
-                                >
-                                    <img src={selectedMusic.album.cover_medium} className="w-12 h-12 rounded-lg shadow-sm pointer-events-none" />
-                                    <div className="min-w-0 pointer-events-none">
-                                        <p className="text-black font-bold text-sm truncate">{selectedMusic.title}</p>
-                                        <p className="text-black/60 text-xs truncate">{selectedMusic.artist.name}</p>
-                                    </div>
-                                    <div className="flex gap-1 items-end h-4 ml-2 pointer-events-none">
-                                        <div className="w-1 bg-black/80 h-full animate-pulse"></div>
-                                        <div className="w-1 bg-black/80 h-2/3 animate-pulse delay-75"></div>
-                                        <div className="w-1 bg-black/80 h-full animate-pulse delay-150"></div>
-                                    </div>
-
-                                    {/* Delete Button */}
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setSelectedMusic(null); }}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 z-20"
-                                        onPointerDown={(e) => e.stopPropagation()}
+                        // --- MODO PREVIEW / UPLOAD ---
+                        <>
+                            {!preview ? (
+                                <div className="w-full h-full flex flex-col items-center justify-center gap-6 p-6">
+                                    <div
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-full flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-white/5 transition-colors group p-6 rounded-xl border-2 border-dashed border-white/10 hover:border-blue-500/50"
                                     >
-                                        <LucideX size={12} />
+                                        <div className="p-4 bg-blue-500/10 rounded-full text-blue-400 group-hover:scale-110 transition-transform">
+                                            <LucideUploadCloud size={32} />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-white font-medium">Subir foto o video</p>
+                                            <p className="text-white/40 text-xs mt-1">Desde tu galería</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center w-full gap-4">
+                                        <div className="h-px bg-white/10 flex-1"></div>
+                                        <span className="text-white/30 text-xs uppercase font-bold">O</span>
+                                        <div className="h-px bg-white/10 flex-1"></div>
+                                    </div>
+
+                                    <button
+                                        onClick={startCamera}
+                                        className="w-full flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 p-4 rounded-xl transition-all text-white font-medium group"
+                                    >
+                                        <LucideCamera size={24} className="group-hover:scale-110 transition-transform" />
+                                        Usar Cámara
                                     </button>
 
-                                    {/* Rotate Handle */}
-                                    <div
-                                        className="absolute -top-6 left-1/2 -translate-x-1/2 bg-white text-black rounded-full p-1.5 shadow-md cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-20"
-                                        onPointerDown={(e) => {
-                                            e.stopPropagation();
-                                            const startX = e.clientX;
-                                            const startRotation = stickerConfig.rotation;
-
-                                            const handleRotate = (moveEvent: PointerEvent) => {
-                                                const deltaX = moveEvent.clientX - startX;
-                                                setStickerConfig(prev => ({ ...prev, rotation: startRotation + deltaX }));
-                                            };
-
-                                            const handleUp = () => {
-                                                window.removeEventListener('pointermove', handleRotate);
-                                                window.removeEventListener('pointerup', handleUp);
-                                            };
-
-                                            window.addEventListener('pointermove', handleRotate);
-                                            window.addEventListener('pointerup', handleUp);
-                                        }}
-                                    >
-                                        <LucideRotateCw size={12} />
-                                    </div>
-
-                                    {/* Resize Handle */}
-                                    <div
-                                        className="absolute -bottom-3 -right-3 bg-blue-500 text-white rounded-full p-1.5 shadow-md cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity z-20"
-                                        onPointerDown={handleResizeStart}
-                                        onPointerMove={handlePointerMove}
-                                        onPointerUp={handlePointerUp}
-                                    >
-                                        <LucideMaximize2 size={12} />
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Text Editor Controls */}
-                            {editingTextId && (
-                                <div
-                                    className="absolute bottom-4 left-4 right-4 bg-black/80 backdrop-blur-md rounded-xl p-4 flex flex-col gap-4 z-40 animate-in slide-in-from-bottom-10"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
                                     <input
-                                        type="text"
-                                        value={textInput}
-                                        onChange={(e) => {
-                                            const target = e.target as HTMLInputElement;
-                                            setTextInput(target.value);
-                                            handleUpdateText(editingTextId, { content: target.value });
-                                        }}
-                                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/50 focus:outline-none focus:border-white/50"
-                                        placeholder="Escribe algo..."
-                                        autoFocus
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileSelect}
+                                        accept="image/*,video/*"
+                                        className="hidden"
                                     />
+                                </div>
+                            ) : (
+                                <div
+                                    ref={containerRef}
+                                    id="story-preview-container"
+                                    className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden touch-none"
+                                    onClick={() => {
+                                        setEditingTextId(null);
+                                        setActiveElementId(null);
+                                    }}
+                                >
+                                    {mediaType === 'video' ? (
+                                        <video src={preview} className="w-full h-full object-contain md:object-contain bg-black pointer-events-none" />
+                                    ) : (
+                                        <img src={preview} className="w-full h-full object-contain md:object-contain bg-black pointer-events-none" />
+                                    )}
 
-                                    {/* Size Slider */}
-                                    <div className="flex items-center gap-3 px-1">
-                                        <span className="text-white/60 text-xs font-medium">Tamaño</span>
-                                        <input
-                                            type="range"
-                                            min="0.5"
-                                            max="4"
-                                            step="0.1"
-                                            value={texts.find(t => t.id === editingTextId)?.scale || 1}
-                                            onChange={(e) => {
-                                                const target = e.target as HTMLInputElement;
-                                                handleUpdateText(editingTextId, { scale: parseFloat(target.value) });
+                                    {/* --- ELEMENTOS DE TEXTO --- */}
+                                    {texts.map((text) => (
+                                        <div
+                                            key={text.id}
+                                            className={`absolute cursor-move select-none group ${text.font}`}
+                                            style={{
+                                                left: `${text.x}%`,
+                                                top: `${text.y}%`,
+                                                transform: `translate(-50%, -50%) scale(${text.scale}) rotate(${text.rotation}deg)`,
+                                                color: text.color,
+                                                backgroundColor: text.backgroundColor,
+                                                zIndex: activeElementId === text.id ? 50 : 20,
+                                                padding: '0.5rem',
+                                                borderRadius: '0.5rem',
+                                                border: activeElementId === text.id ? '2px dashed rgba(255,255,255,0.5)' : 'none'
                                             }}
-                                            className="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
-                                        />
-                                    </div>
+                                            onMouseDown={(e) => handleTextDragStart(e, text.id)}
+                                            onTouchStart={(e) => handleTextDragStart(e, text.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditingTextId(text.id);
+                                                setActiveElementId(text.id);
+                                                setTextInput(text.content);
+                                                setSelectedFont(text.font);
+                                                setSelectedColor(text.color);
+                                                setSelectedBgColor(text.backgroundColor);
+                                            }}
+                                        >
+                                            <span className="whitespace-pre-wrap text-2xl font-bold drop-shadow-lg pointer-events-none">
+                                                {text.content}
+                                            </span>
 
-                                    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-                                        <label className="text-xs text-white/60 font-medium uppercase">Fuente</label>
-                                        {FONTS.map((font) => (
-                                            <button
-                                                key={font.name}
-                                                onClick={() => {
-                                                    setSelectedFont(font.class);
-                                                    handleUpdateText(editingTextId, { font: font.class });
-                                                }}
-                                                className={`
-                                                    px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-all
-                                                    ${selectedFont === font.class
-                                                        ? 'bg-white text-black font-bold'
-                                                        : 'bg-white/10 text-white hover:bg-white/20'}
-                                                    ${font.class}
-                                                `}
-                                            >
-                                                {font.name}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs text-white/60 font-medium uppercase">Color</label>
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide flex-1">
-                                                {COLORS.map((color) => (
+                                            {activeElementId === text.id && (
+                                                <>
                                                     <button
-                                                        key={color}
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteText(text.id); }}
+                                                        className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 z-50"
+                                                    >
+                                                        <LucideTrash2 size={14} />
+                                                    </button>
+
+                                                    {/* Control Rotación Texto */}
+                                                    <div
+                                                        className="absolute -top-6 left-1/2 -translate-x-1/2 bg-white text-black rounded-full p-1.5 shadow-md cursor-grab active:cursor-grabbing z-50"
+                                                        onMouseDown={(e) => {
+                                                            e.stopPropagation();
+                                                            const startX = e.clientX;
+                                                            const startRotation = text.rotation;
+                                                            const handleRotate = (moveEvent: MouseEvent) => {
+                                                                const deltaX = moveEvent.clientX - startX;
+                                                                handleUpdateText(text.id, { rotation: startRotation + deltaX });
+                                                            };
+                                                            const handleUp = () => {
+                                                                window.removeEventListener('mousemove', handleRotate);
+                                                                window.removeEventListener('mouseup', handleUp);
+                                                            };
+                                                            window.addEventListener('mousemove', handleRotate);
+                                                            window.addEventListener('mouseup', handleUp);
+                                                        }}
+                                                    >
+                                                        <LucideRotateCw size={14} />
+                                                    </div>
+
+                                                    {/* Control Escala Texto */}
+                                                    <div
+                                                        className="absolute -bottom-3 -right-3 bg-blue-500 text-white rounded-full p-1.5 shadow-md cursor-nwse-resize z-50"
+                                                        onMouseDown={(e) => {
+                                                            e.stopPropagation();
+                                                            const startY = e.clientY;
+                                                            const startScale = text.scale;
+                                                            const handleScale = (moveEvent: MouseEvent) => {
+                                                                const deltaY = startY - moveEvent.clientY;
+                                                                handleUpdateText(text.id, { scale: Math.max(0.5, Math.min(5, startScale + deltaY * 0.01)) });
+                                                            };
+                                                            const handleUp = () => {
+                                                                window.removeEventListener('mousemove', handleScale);
+                                                                window.removeEventListener('mouseup', handleUp);
+                                                            };
+                                                            window.addEventListener('mousemove', handleScale);
+                                                            window.addEventListener('mouseup', handleUp);
+                                                        }}
+                                                    >
+                                                        <LucideMaximize2 size={14} />
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    {/* --- STICKER MÚSICA --- */}
+                                    {selectedMusic && (
+                                        <div
+                                            className="absolute bg-white/90 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 shadow-xl max-w-[80%] cursor-move touch-none select-none group"
+                                            style={{
+                                                left: `${stickerConfig.x}%`,
+                                                top: `${stickerConfig.y}%`,
+                                                transform: `translate(-50%, -50%) scale(${stickerConfig.scale}) rotate(${stickerConfig.rotation}deg)`,
+                                                zIndex: 10
+                                            }}
+                                            onPointerDown={handleDragStart}
+                                            onPointerMove={handlePointerMove}
+                                            onPointerUp={handlePointerUp}
+                                        >
+                                            <img src={selectedMusic.album.cover_medium} className="w-12 h-12 rounded-lg shadow-sm pointer-events-none" />
+                                            <div className="min-w-0 pointer-events-none">
+                                                <p className="text-black font-bold text-sm truncate">{selectedMusic.title}</p>
+                                                <p className="text-black/60 text-xs truncate">{selectedMusic.artist.name}</p>
+                                            </div>
+                                            <div className="flex gap-1 items-end h-4 ml-2 pointer-events-none">
+                                                <div className="w-1 bg-black/80 h-full animate-pulse"></div>
+                                                <div className="w-1 bg-black/80 h-2/3 animate-pulse delay-75"></div>
+                                                <div className="w-1 bg-black/80 h-full animate-pulse delay-150"></div>
+                                            </div>
+
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setSelectedMusic(null); }}
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 z-20"
+                                                onPointerDown={(e) => e.stopPropagation()}
+                                            >
+                                                <LucideX size={12} />
+                                            </button>
+
+                                            {/* Rotación Música */}
+                                            <div
+                                                className="absolute -top-6 left-1/2 -translate-x-1/2 bg-white text-black rounded-full p-1.5 shadow-md cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                                onPointerDown={(e) => {
+                                                    e.stopPropagation();
+                                                    const startX = e.clientX;
+                                                    const startRotation = stickerConfig.rotation;
+                                                    const handleRotate = (moveEvent: PointerEvent) => {
+                                                        const deltaX = moveEvent.clientX - startX;
+                                                        setStickerConfig(prev => ({ ...prev, rotation: startRotation + deltaX }));
+                                                    };
+                                                    const handleUp = () => {
+                                                        window.removeEventListener('pointermove', handleRotate);
+                                                        window.removeEventListener('pointerup', handleUp);
+                                                    };
+                                                    window.addEventListener('pointermove', handleRotate);
+                                                    window.addEventListener('pointerup', handleUp);
+                                                }}
+                                            >
+                                                <LucideRotateCw size={12} />
+                                            </div>
+
+                                            {/* Escalado Música */}
+                                            <div
+                                                className="absolute -bottom-3 -right-3 bg-blue-500 text-white rounded-full p-1.5 shadow-md cursor-nwse-resize opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                                onPointerDown={handleResizeStart}
+                                                onPointerMove={handlePointerMove}
+                                                onPointerUp={handlePointerUp}
+                                            >
+                                                <LucideMaximize2 size={12} />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* --- OVERLAY EDICIÓN DE TEXTO --- */}
+                                    {editingTextId && (
+                                        <div
+                                            className="absolute bottom-4 left-4 right-4 bg-black/80 backdrop-blur-md rounded-xl p-4 flex flex-col gap-4 z-40 animate-in slide-in-from-bottom-10"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <input
+                                                type="text"
+                                                value={textInput}
+                                                onChange={(e) => {
+                                                    const target = e.target as HTMLInputElement;
+                                                    setTextInput(target.value);
+                                                    handleUpdateText(editingTextId, { content: target.value });
+                                                }}
+                                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/50 focus:outline-none focus:border-white/50"
+                                                placeholder="Escribe algo..."
+                                                autoFocus
+                                            />
+
+                                            <div className="flex items-center gap-3 px-1">
+                                                <span className="text-white/60 text-xs font-medium">Tamaño</span>
+                                                <input
+                                                    type="range"
+                                                    min="0.5"
+                                                    max="4"
+                                                    step="0.1"
+                                                    value={texts.find(t => t.id === editingTextId)?.scale || 1}
+                                                    onChange={(e) => {
+                                                        const target = e.target as HTMLInputElement;
+                                                        handleUpdateText(editingTextId, { scale: parseFloat(target.value) });
+                                                    }}
+                                                    className="flex-1 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
+                                                />
+                                            </div>
+
+                                            <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                                                <label className="text-xs text-white/60 font-medium uppercase">Fuente</label>
+                                                {FONTS.map((font) => (
+                                                    <button
+                                                        key={font.name}
                                                         onClick={() => {
-                                                            setSelectedColor(color);
-                                                            handleUpdateText(editingTextId, { color: color });
+                                                            setSelectedFont(font.class);
+                                                            handleUpdateText(editingTextId, { font: font.class });
                                                         }}
                                                         className={`
-                                                            w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 shrink-0
-                                                            ${selectedColor === color ? 'border-white scale-110' : 'border-transparent'}
+                                                            px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-all
+                                                            ${selectedFont === font.class
+                                                                ? 'bg-white text-black font-bold'
+                                                                : 'bg-white/10 text-white hover:bg-white/20'}
+                                                            ${font.class}
                                                         `}
-                                                        style={{ backgroundColor: color }}
-                                                    />
+                                                    >
+                                                        {font.name}
+                                                    </button>
                                                 ))}
                                             </div>
 
-                                            <div className="w-px h-8 bg-white/20 mx-2"></div>
+                                            <div className="flex flex-col gap-2">
+                                                <label className="text-xs text-white/60 font-medium uppercase">Color</label>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide flex-1">
+                                                        {COLORS.map((color) => (
+                                                            <button
+                                                                key={color}
+                                                                onClick={() => {
+                                                                    setSelectedColor(color);
+                                                                    handleUpdateText(editingTextId, { color: color });
+                                                                }}
+                                                                className={`
+                                                                    w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 shrink-0
+                                                                    ${selectedColor === color ? 'border-white scale-110' : 'border-transparent'}
+                                                                `}
+                                                                style={{ backgroundColor: color }}
+                                                            />
+                                                        ))}
+                                                    </div>
 
-                                            <button
-                                                onClick={() => {
-                                                    const newBg = selectedBgColor === 'transparent' ? 'rgba(0,0,0,0.5)' : selectedBgColor === 'rgba(0,0,0,0.5)' ? 'rgba(255,255,255,0.5)' : 'transparent';
-                                                    setSelectedBgColor(newBg);
-                                                    handleUpdateText(editingTextId, { backgroundColor: newBg });
-                                                }}
-                                                className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 whitespace-nowrap"
-                                            >
-                                                Fondo: {selectedBgColor === 'transparent' ? 'Ninguno' : selectedBgColor.includes('0,0,0') ? 'Oscuro' : 'Claro'}
-                                            </button>
+                                                    <div className="w-px h-8 bg-white/20 mx-2"></div>
+
+                                                    <button
+                                                        onClick={() => {
+                                                            const newBg = selectedBgColor === 'transparent' ? 'rgba(0,0,0,0.5)' : selectedBgColor === 'rgba(0,0,0,0.5)' ? 'rgba(255,255,255,0.5)' : 'transparent';
+                                                            setSelectedBgColor(newBg);
+                                                            handleUpdateText(editingTextId, { backgroundColor: newBg });
+                                                        }}
+                                                        className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 whitespace-nowrap"
+                                                    >
+                                                        Fondo: {selectedBgColor === 'transparent' ? 'Ninguno' : selectedBgColor.includes('0,0,0') ? 'Oscuro' : 'Claro'}
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            )}
+                                    )}
 
-                            {/* Music Controls */}
-                            {selectedMusic && (
-                                <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md rounded-xl p-3 flex flex-col gap-3 z-30 animate-in slide-in-from-bottom-10">
-                                    <div className="flex items-center justify-between text-white/80 text-xs">
-                                        <span>{musicStart.toFixed(1)}s</span>
-                                        <span className="font-bold text-white">{musicDuration.toFixed(1)}s</span>
-                                        <span>{(musicStart + musicDuration).toFixed(1)}s</span>
-                                    </div>
+                                    {/* --- CONTROLES DE MÚSICA --- */}
+                                    {selectedMusic && (
+                                        <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md rounded-xl p-3 flex flex-col gap-3 z-30 animate-in slide-in-from-bottom-10">
+                                            <div className="flex items-center justify-between text-white/80 text-xs">
+                                                <span>{musicStart.toFixed(1)}s</span>
+                                                <span className="font-bold text-white">{musicDuration.toFixed(1)}s</span>
+                                                <span>{(musicStart + musicDuration).toFixed(1)}s</span>
+                                            </div>
 
-                                    <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={togglePlayback}
+                                                    className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shrink-0 hover:scale-105 transition-transform"
+                                                >
+                                                    {isPlayingPreview ? <LucidePause size={20} /> : <LucidePlay size={20} />}
+                                                </button>
+
+                                                <div
+                                                    ref={waveformContainerRef}
+                                                    className="relative flex-1 h-12 bg-white/10 rounded-lg overflow-hidden cursor-pointer"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* --- HERRAMIENTAS LATERALES --- */}
+                                    <div className="absolute top-16 right-4 flex flex-col gap-3 z-20 md:top-4">
                                         <button
-                                            onClick={togglePlayback}
-                                            className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shrink-0 hover:scale-105 transition-transform"
+                                            onClick={handleAddText}
+                                            className="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
+                                            title="Añadir texto"
                                         >
-                                            {isPlayingPreview ? <LucidePause size={20} /> : <LucidePlay size={20} />}
+                                            <LucideType size={20} />
                                         </button>
-
-                                        {/* WaveSurfer Container */}
-                                        <div
-                                            ref={waveformContainerRef}
-                                            className="relative flex-1 h-12 bg-white/10 rounded-lg overflow-hidden cursor-pointer"
-                                        />
+                                        <button
+                                            onClick={() => setShowUserPicker(true)}
+                                            className="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
+                                            title="Mencionar usuario"
+                                        >
+                                            <LucideAtSign size={20} />
+                                        </button>
+                                        {mediaType !== 'video' && (
+                                            <button
+                                                onClick={() => setShowMusicPicker(true)}
+                                                className="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
+                                                title="Añadir música"
+                                            >
+                                                <LucideMusic size={20} />
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => { setFile(null); setPreview(null); setSelectedMusic(null); }}
+                                            className="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-all"
+                                            title="Descartar"
+                                        >
+                                            <LucideTrash2 size={20} />
+                                        </button>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Tools Overlay */}
-                            <div className="absolute top-4 right-4 flex flex-col gap-3 z-20">
-                                <button
-                                    onClick={handleAddText}
-                                    className="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
-                                    title="Añadir texto"
-                                >
-                                    <LucideType size={20} />
-                                </button>
-                                <button
-                                    onClick={() => setShowUserPicker(true)}
-                                    className="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
-                                    title="Mencionar usuario"
-                                >
-                                    <LucideAtSign size={20} />
-                                </button>
-                                {mediaType !== 'video' && (
-                                    <button
-                                        onClick={() => setShowMusicPicker(true)}
-                                        className="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
-                                        title="Añadir música"
-                                    >
-                                        <LucideMusic size={20} />
-                                    </button>
-                                )}
-                                <button
-                                    onClick={() => { setFile(null); setPreview(null); setSelectedMusic(null); }}
-                                    className="w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-all"
-                                    title="Descartar"
-                                >
-                                    <LucideTrash2 size={20} />
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                            {/* --- MODALES AUXILIARES --- */}
+                            {showMusicPicker && (
+                                <MusicPicker
+                                    onSelect={(track) => {
+                                        setSelectedMusic(track);
+                                        setMusicStart(0);
+                                        setShowMusicPicker(false);
+                                    }}
+                                    onClose={() => setShowMusicPicker(false)}
+                                />
+                            )}
 
-                    {/* Music Picker Overlay */}
-                    {showMusicPicker && (
-                        <MusicPicker
-                            onSelect={(track) => {
-                                setSelectedMusic(track);
-                                setMusicStart(0);
-                                setShowMusicPicker(false);
-                            }}
-                            onClose={() => setShowMusicPicker(false)}
-                        />
-                    )}
+                            {showUserPicker && (
+                                <UserPicker
+                                    onSelect={(user) => {
+                                        if (editingTextId) {
+                                            setTexts(texts.map(t => {
+                                                if (t.id === editingTextId) {
+                                                    const newContent = t.content ? `${t.content} @${user.username}` : `@${user.username}`;
+                                                    const newMentions = [...(t.mentions || [])];
+                                                    if (!newMentions.some(m => m.userId === user.id)) {
+                                                        newMentions.push({ userId: user.id, username: user.username });
+                                                    }
 
-                    {/* User Picker Overlay */}
-                    {showUserPicker && (
-                        <UserPicker
-                            onSelect={(user) => {
-                                if (editingTextId) {
-                                    setTexts(texts.map(t => {
-                                        if (t.id === editingTextId) {
-                                            const newContent = t.content ? `${t.content} @${user.username}` : `@${user.username}`;
-                                            const newMentions = [...(t.mentions || [])];
-                                            if (!newMentions.some(m => m.userId === user.id)) {
-                                                newMentions.push({ userId: user.id, username: user.username });
-                                            }
+                                                    const updates: any = {
+                                                        content: newContent,
+                                                        mentions: newMentions
+                                                    };
 
-                                            const updates: any = {
-                                                content: newContent,
-                                                mentions: newMentions
+                                                    if (!t.mentionUserId) {
+                                                        updates.mentionUserId = user.id;
+                                                        updates.mentionUsername = user.username;
+                                                    }
+
+                                                    return { ...t, ...updates };
+                                                }
+                                                return t;
+                                            }));
+                                            setShowUserPicker(false);
+                                        } else {
+                                            const newText: TextElement = {
+                                                id: crypto.randomUUID(),
+                                                content: `@${user.username}`,
+                                                x: 50,
+                                                y: 50,
+                                                scale: 1,
+                                                rotation: 0,
+                                                color: '#ffffff',
+                                                backgroundColor: 'rgba(0,0,0,0.5)',
+                                                font: FONTS[1].class,
+                                                mentionUserId: user.id,
+                                                mentionUsername: user.username,
+                                                mentions: [{ userId: user.id, username: user.username }]
                                             };
-
-                                            // Legacy support / Primary mention
-                                            if (!t.mentionUserId) {
-                                                updates.mentionUserId = user.id;
-                                                updates.mentionUsername = user.username;
-                                            }
-
-                                            return { ...t, ...updates };
+                                            setTexts([...texts, newText]);
+                                            setActiveElementId(newText.id);
+                                            setShowUserPicker(false);
                                         }
-                                        return t;
-                                    }));
-                                    setShowUserPicker(false);
-                                } else {
-                                    const newText: TextElement = {
-                                        id: crypto.randomUUID(),
-                                        content: `@${user.username}`,
-                                        x: 50,
-                                        y: 50,
-                                        scale: 1,
-                                        rotation: 0,
-                                        color: '#ffffff',
-                                        backgroundColor: 'rgba(0,0,0,0.5)', // Default dark background for mentions
-                                        font: FONTS[1].class, // Modern font
-                                        mentionUserId: user.id,
-                                        mentionUsername: user.username,
-                                        mentions: [{ userId: user.id, username: user.username }]
-                                    };
-                                    setTexts([...texts, newText]);
-                                    setActiveElementId(newText.id);
-                                    setShowUserPicker(false);
-                                }
-                            }}
-                            onClose={() => setShowUserPicker(false)}
-                        />
+                                    }}
+                                    onClose={() => setShowUserPicker(false)}
+                                />
+                            )}
+                        </>
                     )}
                 </div>
 
-                {/* Footer */}
-                {preview && (
-                    <div className="p-4 border-t border-white/10 bg-[#242526] shrink-0 flex justify-between items-center gap-4">
+                {/* Footer: Ajustado para mobile full screen */}
+                {preview && !isCameraOpen && (
+                    <div className="p-4 border-t border-white/10 bg-[#242526] shrink-0 flex justify-between items-center gap-4 absolute bottom-0 left-0 right-0 md:relative z-20 pb-8 md:pb-4">
                         <button
                             onClick={toggleVisibility}
                             className={`
@@ -899,7 +1049,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                             disabled={loading}
                             className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                            {loading ? <LucideLoader2 className="animate-spin" size={20} /> : "Compartir Historia"}
+                            {loading ? <LucideLoader2 className="animate-spin" size={20} /> : "Compartir"}
                         </button>
                     </div>
                 )}

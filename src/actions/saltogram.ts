@@ -12,6 +12,8 @@ export const saltogram = {
         }),
         handler: async ({ lastPostId }, { request }) => {
             const auth = await getAuthenticatedUser(request);
+
+            // Si no hay usuario, retornamos estado vacío inmediatamente
             if (!auth) {
                 return {
                     unreadMessages: 0,
@@ -23,55 +25,51 @@ export const saltogram = {
 
             const userId = auth.user.id;
 
-            // 1. Unread Messages
-            const [messagesResult] = await client
-                .select({ count: count() })
-                .from(SaltogramMessagesTable)
-                .where(
-                    and(
+            // EJECUCIÓN EN PARALELO:
+            // Disparamos todas las promesas a la vez. El tiempo total será igual a la consulta más lenta,
+            // no a la suma de todas.
+            const [messagesResult, requestsResult, notificationsResult, postsResult] = await Promise.all([
+                // 1. Unread Messages
+                client
+                    .select({ count: count() })
+                    .from(SaltogramMessagesTable)
+                    .where(and(
                         eq(SaltogramMessagesTable.receiverId, userId),
                         eq(SaltogramMessagesTable.isRead, false)
-                    )
-                );
+                    )),
 
-            // 2. Friend Requests
-            const [requestsResult] = await client
-                .select({ count: count() })
-                .from(FriendsTable)
-                .where(
-                    and(
+                // 2. Friend Requests
+                client
+                    .select({ count: count() })
+                    .from(FriendsTable)
+                    .where(and(
                         eq(FriendsTable.friendId, userId),
                         eq(FriendsTable.status, "pending")
-                    )
-                );
+                    )),
 
-            // 3. Unread Notifications
-            const [notificationsResult] = await client
-                .select({ count: count() })
-                .from(NotificationsTable)
-                .where(
-                    and(
+                // 3. Unread Notifications
+                client
+                    .select({ count: count() })
+                    .from(NotificationsTable)
+                    .where(and(
                         eq(NotificationsTable.userId, userId),
                         eq(NotificationsTable.read, false)
-                    )
-                );
+                    )),
 
-            // 4. New Posts (if lastPostId provided)
-            let hasNewPosts = false;
-            if (lastPostId) {
-                const [postsResult] = await client
-                    .select({ count: count() })
-                    .from(SaltogramPostsTable)
-                    .where(gt(SaltogramPostsTable.id, lastPostId));
-
-                hasNewPosts = (postsResult?.count ?? 0) > 0;
-            }
+                // 4. New Posts (Condicional)
+                lastPostId
+                    ? client
+                        .select({ count: count() })
+                        .from(SaltogramPostsTable)
+                        .where(gt(SaltogramPostsTable.id, lastPostId))
+                    : Promise.resolve([{ count: 0 }]) // Retorno dummy si no hay ID
+            ]);
 
             return {
-                unreadMessages: messagesResult?.count ?? 0,
-                friendRequests: requestsResult?.count ?? 0,
-                unreadNotifications: notificationsResult?.count ?? 0,
-                hasNewPosts
+                unreadMessages: messagesResult[0]?.count ?? 0,
+                friendRequests: requestsResult[0]?.count ?? 0,
+                unreadNotifications: notificationsResult[0]?.count ?? 0,
+                hasNewPosts: (postsResult[0]?.count ?? 0) > 0
             };
         }
     }),
