@@ -46,6 +46,11 @@ export class GeminiService {
             ${JSON.stringify(statsContext.generalStats)}
         `;
 
+        // Return a empty json because gemini is not available
+
+        return { tips: [] };
+
+
         try {
             const result = await generateObject({
                 model: this.model,
