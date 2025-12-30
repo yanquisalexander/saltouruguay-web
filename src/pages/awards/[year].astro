@@ -24,7 +24,10 @@ const availableYears = Object.keys(AWARDS_VOTES_RESULT)
   .sort((a, b) => Number(a) - Number(b));
 ---
 
-<Layout title={`SaltoAwards ${year} - Resultados`}>
+<Layout
+  title={`Resultados de SaltoAwards ${year}`}
+  description={`Descubre los ganadores y resultados de la edición ${year} de SaltoAwards.`}
+>
   {/* Fondo inmersivo fijo */}
   <div class="fixed inset-0 -z-10 bg-[#050505]">
     <div
