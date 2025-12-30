@@ -17,6 +17,7 @@ const PRERENDERED_PATHS = [
   "/privacidad",
   "/terminos",
   "/awards",
+  "/awards/*",
   "/saltocraft",
   "/acreconre",
 ];
@@ -31,7 +32,21 @@ const links = [
   { label: "Awards", url: "/awards", specialComment: "VOTACIÓN" },
 ];
 
-const isPrerenderedPath = PRERENDERED_PATHS.includes(currentPath);
+// Soporte simplificado: sólo wildcards '*' (ej. /awards/*)
+const patternToRegex = (pattern: string) => {
+  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+  const regexStr =
+    "^" + escaped.replace(/\\\*/g, ".*").replace(/\*/g, ".*") + "$";
+  return new RegExp(regexStr);
+};
+
+const isPrerenderedPath = PRERENDERED_PATHS.some((pattern) => {
+  try {
+    return patternToRegex(pattern).test(currentPath);
+  } catch (e) {
+    return false;
+  }
+});
 const evenLinks = links.filter((_, index) => index % 2 === 0);
 const oddLinks = links.filter((_, index) => index % 2 !== 0);
 
