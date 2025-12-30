@@ -21,7 +21,7 @@ const year = Number(yearParam);
 
 const availableYears = Object.keys(AWARDS_VOTES_RESULT)
   .map((y) => Number(y))
-  .sort((a, b) => b - a);
+  .sort((a, b) => Number(a) - Number(b));
 ---
 
 <Layout title={`SaltoAwards ${year} - Resultados`}>
