@@ -132,6 +132,20 @@ export const SaltoPlayAuthorizationCodesTable = pgTable("salto_play_authorizatio
     createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
 });
 
+export const AcreconreMembersTable = pgTable("acreconre_members", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    email: varchar("email").notNull(),
+    discordUsername: varchar("discord_username").notNull(),
+    platformType: varchar("platform_type", { enum: ["twitch", "other"] }).notNull(),
+    platformName: varchar("platform_name"), // YouTube, TikTok, etc.
+    canalName: varchar("canal_name").notNull(),
+    canalLink: varchar("canal_link"),
+    status: varchar("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
+});
+
 export const SaltoPlayAchievementsTable = pgTable("salto_play_achievements", {
     id: uuid("id").primaryKey().defaultRandom(),
     gameId: uuid("game_id")

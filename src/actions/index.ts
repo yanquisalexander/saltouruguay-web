@@ -36,10 +36,12 @@ import { audio } from "./audio";
 import { voice } from "./voice";
 import { notifications } from "./notifications";
 import { tournaments } from "./tournaments";
+import { acreconre } from "./acreconre";
 
 
 
 export const server = {
+    acreconre,
     tournaments,
     notifications,
     saltogram,

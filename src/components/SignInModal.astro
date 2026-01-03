@@ -6,45 +6,96 @@ import TwitchIcon from "@/icons/Twitch.astro";
 
 <dialog
   id="login-modal"
-  class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+  class="fixed inset-0 z-[99999999] m-auto max-w-[480px] w-[90%] p-0
+         bg-[#0a0a0a]/60 text-white
+         backdrop-blur-3xl
+         border border-white/10
+         rounded-3xl
+         shadow-[0_0_40px_-10px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.15)]
+         animate-fade-in-up overflow-hidden"
 >
-  <form id="login-modal-close" class="absolute top-5 right-5">
-    <button type="button" class="text-white">
-      <LucideX class="w-6 h-6" />
-    </button>
-  </form>
-
-  <div class="flex flex-col items-center space-y-4">
-    <img src="/favicon.svg" class="aspect-square size-24" />
-
-    <p class="text-center">
-      Al acceder con tu cuenta de Twitch, aceptas haber leído nuestros <a
-        href="/terminos"
-        class="underline">Términos de Servicio</a
-      > y <a href="/privacidad" class="underline">Política de Privacidad</a>.
-    </p>
+  <div
+    class="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 bg-indigo-600/20 rounded-full blur-[80px] pointer-events-none"
+  >
   </div>
 
-  <div class="flex flex-col space-y-4 mt-8">
-    <button
-      type="button"
-      class="flex items-center justify-center w-full py-3 bg-electric-violet-500 rounded-lg text-white transition duration-300 hover:bg-electric-violet-600"
-      data-provider="twitch"
-    >
-      <TwitchIcon class="w-6 h-6 mr-2" />
-      <span>Acceder con Twitch</span>
-    </button>
+  <div class="relative z-10 p-8 sm:p-10 flex flex-col items-center">
+    <form method="dialog" id="login-modal-close" class="absolute top-5 right-5">
+      <button
+        type="button"
+        class="group p-2 rounded-full hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
+        aria-label="Cerrar modal"
+      >
+        <LucideX
+          class="w-5 h-5 text-gray-400 group-hover:text-white transition-colors"
+        />
+      </button>
+    </form>
 
-    <!-- <span
-      class="text-center text-yellow-400 tracking-wider font-medium font-rubik uppercase text-md"
-    >
-      Estamos trabajando en la integración con Twitch. Por favor, vuelve más
-      tarde.
-    </span> -->
+    <div class="flex flex-col items-center space-y-6 w-full mb-8">
+      <div
+        class="relative flex items-center justify-center p-4 rounded-2xl bg-gradient-to-b from-white/5 to-transparent border border-white/5 shadow-lg"
+      >
+        <img
+          src="/favicon.svg"
+          class="aspect-square size-16 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+          alt="Logo"
+        />
+      </div>
+
+      <div class="text-center space-y-1">
+        <h2
+          class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-white to-white/60"
+        >
+          Bienvenido
+        </h2>
+        <p class="text-sm font-medium text-gray-400">
+          Inicia sesión para continuar
+        </p>
+      </div>
+    </div>
+
+    <div class="w-full space-y-6">
+      <button
+        type="button"
+        class="group relative w-full flex items-center justify-center gap-3 py-3.5 px-4
+               bg-[#9146FF] hover:bg-[#8535f5] text-white font-semibold rounded-xl
+               transition-all duration-300
+               shadow-[0_0_20px_-5px_#9146FF80] hover:shadow-[0_0_30px_-5px_#9146FFaa]
+               border border-white/10 overflow-hidden"
+        data-provider="twitch"
+      >
+        <div
+          class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"
+        >
+        </div>
+
+        <TwitchIcon class="w-5 h-5 fill-white relative z-10" />
+        <span class="relative z-10 tracking-wide">Acceder con Twitch</span>
+      </button>
+
+      <p class="text-xs text-center text-gray-500/80 px-2 leading-relaxed">
+        Al acceder, aceptas nuestros
+        <a
+          href="/terminos"
+          class="text-gray-400 hover:text-white underline decoration-gray-600 hover:decoration-white transition-all"
+          >Términos</a
+        >
+        y
+        <a
+          href="/privacidad"
+          class="text-gray-400 hover:text-white underline decoration-gray-600 hover:decoration-white transition-all"
+          >Privacidad</a
+        >.
+      </p>
+    </div>
   </div>
 </dialog>
+
 <div
-  class="dialog-background inset-0 w-dvw h-dvh backdrop-blur-sm bg-white/5 z-[9999999] animate-blurred-fade-in"
+  id="login-backdrop"
+  class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999990] transition-opacity duration-500 opacity-0 pointer-events-none"
+  aria-hidden="true"
 >
 </div>
 
@@ -52,23 +103,57 @@ import TwitchIcon from "@/icons/Twitch.astro";
   import { $ } from "@/lib/dom-selector";
   import { signIn } from "auth-astro/client";
 
-  const addListeners = () => {
+  const setupModal = () => {
     const $loginModal = $("#login-modal") as HTMLDialogElement;
+    const $backdrop = $("#login-backdrop");
     const $twitchButton = $('#login-modal button[data-provider="twitch"]');
-    const $googleButton = $('#login-modal button[data-provider="google"]');
     const $closeButton = $("#login-modal-close button");
 
+    if (!$loginModal) return;
+
+    const toggleBackdrop = (show: boolean) => {
+      if (!$backdrop) return;
+      if (show) {
+        $backdrop.classList.remove("opacity-0", "pointer-events-none");
+      } else {
+        $backdrop.classList.add("opacity-0", "pointer-events-none");
+      }
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === "open") {
+          toggleBackdrop($loginModal.open);
+        }
+      });
+    });
+    observer.observe($loginModal, { attributes: true });
+
     $twitchButton?.addEventListener("click", async () => {
+      const btn = $twitchButton as HTMLButtonElement;
+      // Pequeño feedback visual
+      btn.style.opacity = "0.7";
+      btn.innerHTML = `<span class="animate-pulse">Conectando...</span>`;
       await signIn("twitch");
     });
 
-    $googleButton?.addEventListener("click", async () => {
-      await signIn("google");
-    });
-
-    $closeButton?.addEventListener("click", () => {
+    $closeButton?.addEventListener("click", (e) => {
+      e.preventDefault();
       $loginModal.close();
     });
+
+    $loginModal.addEventListener("click", (e) => {
+      const rect = $loginModal.getBoundingClientRect();
+      const isInDialog =
+        rect.top <= e.clientY &&
+        e.clientY <= rect.top + rect.height &&
+        rect.left <= e.clientX &&
+        e.clientX <= rect.left + rect.width;
+      if (!isInDialog) {
+        $loginModal.close();
+      }
+    });
   };
-  document.addEventListener("astro:page-load", addListeners);
+
+  document.addEventListener("astro:page-load", setupModal);
 </script>

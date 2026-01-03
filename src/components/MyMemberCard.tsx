@@ -193,6 +193,34 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
                             <span>{generating ? 'Renderizando...' : 'Descargar Tarjeta'}</span>
                         </a>
                     </div>
+                    <div className="mt-4">
+                        <button
+                            onClick={async () => {
+                                try {
+                                    const res = await fetch('/api/wallet/generate', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            userId: session.user.id,
+                                            name: session.user.name,
+                                            avatar,
+                                            cardNumber: session.user.id
+                                        })
+                                    });
+                                    const data = await res.json();
+                                    if (!res.ok) throw new Error(data.error || 'Error generando pass');
+                                    window.open(data.saveUrl, '_blank');
+                                } catch (e) {
+                                    console.error(e);
+                                    toast.error(e.message || 'No se pudo generar la pass');
+                                }
+                            }}
+                            className="relative flex items-center gap-2 px-6 py-3 rounded-xl font-bold uppercase tracking-wide bg-gradient-to-r from-blue-600 to-sky-500 text-white hover:opacity-95 shadow-lg"
+                        >
+                            <Sparkles size={16} />
+                            <span>Añadir a Google Wallet</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* COLUMNA DERECHA: CONTROLES (WORKSHOP) */}
