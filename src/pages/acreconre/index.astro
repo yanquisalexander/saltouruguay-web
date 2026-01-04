@@ -60,7 +60,7 @@ const COMISION_DIRECTIVA = [
 
     <div class="w-24 h-1 bg-current opacity-10 rounded-full my-12"></div>
 
-    <div class="relative w-full max-w-lg group mb-20">
+    <div class="relative w-full max-w-lg group mb-12">
       <div
         class="absolute -inset-10 bg-current opacity-[0.07] blur-3xl rounded-full group-hover:opacity-[0.12] transition-opacity duration-700"
       ></div>
@@ -70,6 +70,17 @@ const COMISION_DIRECTIVA = [
         alt="ACRECONRE Banner"
         class="relative w-full h-auto drop-shadow-2xl transform transition-transform duration-700 hover:scale-[1.02]"
       />
+    </div>
+
+    <div class="mb-20">
+      <a 
+        href="http://saltouruguayserver.com/acreconre/inscripcion" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        class="inline-block px-10 py-4 text-sm font-bold uppercase tracking-[0.2em] bg-current text-neutral-50 dark:text-neutral-950 rounded-full hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-95 transition-all duration-300"
+      >
+        Inscribirme ahora
+      </a>
     </div>
 
     {/* --- BLOQUE 2: COMISIÓN DIRECTIVA --- */}
@@ -91,7 +102,6 @@ const COMISION_DIRECTIVA = [
 
             {/* Grilla de Miembros */}
             <div class="w-full flex flex-col items-center">
-              {/* Miembros principales */}
               <div class="flex flex-wrap justify-center gap-6 w-full">
                 {group.members
                   .filter((m) => m.role !== "Prosecretario")
@@ -107,7 +117,6 @@ const COMISION_DIRECTIVA = [
                   ))}
               </div>
 
-              {/* Prosecretarios */}
               <div class="flex flex-wrap justify-center gap-6 w-full mt-10">
                 {group.members
                   .filter((m) => m.role === "Prosecretario")
