@@ -21,6 +21,18 @@ const session = await getSession(Astro.request);
 
 const APPS = [
   {
+    id: "server-hytale",
+    path: "",
+    requiresLogin: true,
+    title: "Nuevo server HYTALE",
+    description: "Un nuevo juego se suma a la comundad Saltana.",
+    image: "/images/pet-bg.webp",
+    icon: LucideWallet,
+    soon: false,
+    featured: true, // Ocupará 2 columnas
+    section: "main",
+  },
+  {
     id: "member-card",
     path: "/comunidad/member-card",
     requiresLogin: true,
@@ -29,7 +41,6 @@ const APPS = [
     image: "/images/member-card.webp",
     icon: LucideIdCard,
     soon: false,
-    featured: true, // Ocupará 2 columnas
     section: "main",
   },
   {
