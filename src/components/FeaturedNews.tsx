@@ -7,12 +7,12 @@ const NEWS = [
     {
         title: "#SaltoAwards 2025",
         description: `
-        Votaciones abiertas! Ayúdanos a elegir a los mejores miembros de la comunidad del año.
+        Se realizaron las votaciones para elegir a los mejores miembros de la comunidad del año.
     `,
         tags: ["Awards"],
         background: { img: "/images/ads/awards.webp" },
         navImage: "/images/ads/awards.webp",
-        ctaLink: { text: "¡Vota ahora!", url: "/awards", newTab: false }
+        ctaLink: { text: "¡Revive la gala!", url: "/awards", newTab: false }
     },
     {
         title: "Nueva Web Oficial",
