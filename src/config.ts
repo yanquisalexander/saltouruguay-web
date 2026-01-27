@@ -29,5 +29,5 @@ export const SITEMAP_EXCLUDED_PATHS = [
 
 export const PUSHER_KEY = 'app-key';
 
-export const CHRISTMAS_MODE = true;
+export const CHRISTMAS_MODE = false;
 export const LAST_EDITION_VOD_URL = 'https://www.twitch.tv/videos/2650701140';
