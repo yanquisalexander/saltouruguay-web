@@ -470,7 +470,8 @@ const PLATFORMS = [
 
             {!discordInfo && (
               <p class="text-center text-xs text-red-400 font-medium animate-pulse">
-                * Debes vincular tu cuenta de Discord para poder enviar la inscripción.
+                * Debes vincular tu cuenta de Discord para poder enviar la
+                inscripción.
               </p>
             )}
           </form>
@@ -511,91 +512,73 @@ const PLATFORMS = [
 
   document.addEventListener("astro:page-load", () => {
     const $loginBtn = $("[data-login-on-click]");
-    if ($loginBtn) {
-      $loginBtn.addEventListener("click", () => showSignInDialog());
-    }
+    $loginBtn?.addEventListener("click", () => showSignInDialog());
 
     const $form = $("form") as HTMLFormElement;
     const $submitBtn = $("#submit-btn") as HTMLButtonElement;
     const $btnText = $("#btn-text");
     const $btnLoader = $("#btn-loader");
-
     const $btnTwitch = $("#btn-twitch");
     const $btnOther = $("#btn-other-platform");
     const $twitchInfo = $("#twitch-info");
     const $otherInfo = $("#other-platform-info");
     const $platformType = $("#platform_type") as HTMLInputElement;
-
-    const $canalTwitch = $("#canal_twitch") as HTMLInputElement;
     const $canalName = $("#canal_name") as HTMLInputElement;
     const $canalLink = $("#canal_link") as HTMLInputElement;
-    const $platformEnum = $("#platform_enum") as HTMLSelectElement;
 
-    $btnTwitch?.addEventListener("click", () => {
-      $platformType.value = "twitch";
+    const ACTIVE = ["border-indigo-500/50", "bg-indigo-500/10"] as const;
+    const INACTIVE = ["border-white/10", "bg-white/5"] as const;
 
-      // UI
-      $btnTwitch.classList.add("border-indigo-500/50", "bg-indigo-500/10");
-      $btnTwitch.classList.remove("border-white/10", "bg-white/5");
+    function selectPlatform(type: "twitch" | "other") {
+      $platformType.value = type;
 
-      $btnOther?.classList.add("border-white/10", "bg-white/5");
-      $btnOther?.classList.remove("border-indigo-500/50", "bg-indigo-500/10");
+      const isTwitch = type === "twitch";
+      $btnTwitch?.classList.toggle(ACTIVE[0], isTwitch);
+      $btnTwitch?.classList.toggle(ACTIVE[1], isTwitch);
+      $btnTwitch?.classList.toggle(INACTIVE[0], !isTwitch);
+      $btnTwitch?.classList.toggle(INACTIVE[1], !isTwitch);
+      $btnOther?.classList.toggle(ACTIVE[0], !isTwitch);
+      $btnOther?.classList.toggle(ACTIVE[1], !isTwitch);
+      $btnOther?.classList.toggle(INACTIVE[0], isTwitch);
+      $btnOther?.classList.toggle(INACTIVE[1], isTwitch);
 
-      $twitchInfo?.classList.remove("hidden");
-      $otherInfo?.classList.add("hidden");
+      $twitchInfo?.classList.toggle("hidden", !isTwitch);
+      $otherInfo?.classList.toggle("hidden", isTwitch);
 
-      // Validation
-      if ($canalName) $canalName.required = false;
-      if ($canalLink) $canalLink.required = false;
-    });
+      if ($canalName) $canalName.required = !isTwitch;
+      if ($canalLink) $canalLink.required = !isTwitch;
+    }
 
-    $btnOther?.addEventListener("click", () => {
-      $platformType.value = "other";
-
-      // UI
-      $btnOther.classList.add("border-indigo-500/50", "bg-indigo-500/10");
-      $btnOther.classList.remove("border-white/10", "bg-white/5");
-
-      $btnTwitch?.classList.add("border-white/10", "bg-white/5");
-      $btnTwitch?.classList.remove("border-indigo-500/50", "bg-indigo-500/10");
-
-      $otherInfo?.classList.remove("hidden");
-      $twitchInfo?.classList.add("hidden");
-
-      // Validation
-      if ($canalName) $canalName.required = true;
-      if ($canalLink) $canalLink.required = true;
-    });
+    $btnTwitch?.addEventListener("click", () => selectPlatform("twitch"));
+    $btnOther?.addEventListener("click", () => selectPlatform("other"));
 
     $form?.addEventListener("submit", async (e) => {
       e.preventDefault();
-
       if ($submitBtn.disabled) return;
 
       const formData = new FormData($form);
-
       const discordUsername = formData.get("discord") as string;
       const platformType = formData.get("platform_type") as "twitch" | "other";
       const acceptedTerms = formData.get("terms") === "on";
 
-      if (!discordUsername || discordUsername.trim() === "") {
-        toast.error("Debes tener una cuenta de Discord vinculada para inscribirte");
+      if (!discordUsername?.trim()) {
+        toast.error(
+          "Debes tener una cuenta de Discord vinculada para inscribirte",
+        );
         return;
       }
 
-      let canalName = "";
-      let platformName = "Twitch";
-      let canalLink = "";
+      const isTwitch = platformType === "twitch";
+      const canalName = isTwitch
+        ? (formData.get("canal") as string)
+        : (formData.get("canal_name") as string);
+      const platformName = isTwitch
+        ? "Twitch"
+        : (formData.get("platform_enum") as string);
+      const canalLink = isTwitch
+        ? undefined
+        : (formData.get("canal_link") as string) || undefined;
 
-      if (platformType === "twitch") {
-        canalName = formData.get("canal") as string;
-      } else {
-        canalName = formData.get("canal_name") as string;
-        platformName = formData.get("platform_enum") as string;
-        canalLink = formData.get("canal_link") as string;
-      }
-
-      // Loading state
       $submitBtn.disabled = true;
       $btnText?.classList.add("hidden");
       $btnLoader?.classList.remove("hidden");
@@ -605,7 +588,7 @@ const PLATFORMS = [
         platformType,
         platformName,
         canalName,
-        canalLink: canalLink || undefined,
+        canalLink,
         acceptedTerms,
       });
 
@@ -618,9 +601,7 @@ const PLATFORMS = [
       }
 
       toast.success("¡Inscripción enviada correctamente!");
-      setTimeout(() => {
-        navigate("/acreconre");
-      }, 2000);
+      setTimeout(() => navigate("/acreconre"), 2000);
     });
   });
 </script>
