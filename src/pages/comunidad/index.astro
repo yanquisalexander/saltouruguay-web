@@ -21,6 +21,19 @@ const session = await getSession(Astro.request);
 
 const APPS = [
   {
+    id: "Torneo Rocket League",
+    path: "",
+    url: "https://discord.gg/trrFvPHDKd", // 👈 LINK EXTERNO
+    requiresLogin: true,
+    title: "Torneo Rocket League",
+    description: "Inscribete y compite en una Liga extraordinaria",
+    image: "/images/rocket.webp",
+    icon: LucideIdCard,
+    soon: false,
+    featured: true, // Ocupará 2 columnas
+    section: "main",
+  },
+  {
     id: "server-hytale",
     path: "",
     url: "https://discord.gg/trrFvPHDKd", // 👈 LINK EXTERNO
@@ -30,7 +43,6 @@ const APPS = [
     image: "/images/hytale.webp",
     icon: LucideWallet,
     soon: false,
-    featured: true, // Ocupará 2 columnas
     section: "main",
   },
   {
