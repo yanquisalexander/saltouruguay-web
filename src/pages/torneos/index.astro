@@ -87,18 +87,34 @@ const tournaments = tournamentsData.map((t) => {
             Demuestra tu habilidad, escala en el ranking y gana premios
             exclusivos. La gloria te espera en la arena.
           </p>
-          {/* BOTÓN INSCRIPCIÓN ROCKET LEAGUE */}
-<a
-  href="/inscripcion-rocket-league"
-  class="inline-flex items-center justify-center mt-6 px-8 py-4 rounded-2xl 
-  bg-gradient-to-r from-orange-500 to-fuchsia-600 
-  hover:from-orange-400 hover:to-fuchsia-500
-  text-white font-bold uppercase tracking-wide text-sm
-  shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40
-  transition-all duration-300 hover:scale-[1.03]"
->
-  INSCRIBIRME PARA ENTRAR AL TORNEO ROCKET LEAGUE
-</a>
+          {/* CTA INSCRIPCIÓN ROCKET LEAGUE */}
+<div class="mt-8">
+  <a
+    href="/inscripcion-rocket-league"
+    class="group relative flex items-center justify-center gap-4 
+    px-12 py-6 rounded-3xl 
+    text-lg md:text-xl font-extrabold uppercase tracking-wide
+    text-white
+    bg-gradient-to-r from-orange-500 via-pink-500 to-fuchsia-600
+    hover:from-orange-400 hover:via-pink-400 hover:to-fuchsia-500
+    transition-all duration-300
+    shadow-[0_0_40px_rgba(236,72,153,0.35)]
+    hover:shadow-[0_0_60px_rgba(236,72,153,0.6)]
+    hover:scale-[1.04]"
+  >
+    {/* Glow animado */}
+    <span class="absolute inset-0 rounded-3xl bg-gradient-to-r from-orange-500 via-pink-500 to-fuchsia-600 blur-xl opacity-40 group-hover:opacity-70 transition"></span>
+
+    {/* Contenido */}
+    <span class="relative flex items-center gap-3">
+      🚀 INSCRIBIRME AL TORNEO DE ROCKET LEAGUE
+    </span>
+  </a>
+
+  <p class="text-white/40 text-sm mt-3 font-rubik">
+    Cupos limitados — asegura tu lugar ahora
+  </p>
+</div>
 
 
           {/* Stats Rápidos */}
