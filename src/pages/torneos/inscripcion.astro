@@ -1,1 +1,578 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+import { getDiscordUser } from "@/services/discord";
+import { client } from "@/db/client";
+import { AcreconreMembersTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import {
+  LucideUser,
+  LucideMail,
+  LucideMessageSquare,
+  LucideFileText,
+  LucideCheckCircle,
+  LucideArrowLeft,
+  LucideSend,
+  LucideGlobe,
+  LucideLink,
+  LucideTv,
+  LucideLock,
+  LucideInfo,
+} from "lucide-preact";
+import Twitch from "@/icons/Twitch.astro";
 
+const session = await getSession(Astro.request);
+
+const discordInfo = session?.user.discordId
+  ? await getDiscordUser(session.user.discordId).catch(() => null)
+  : null;
+
+const isInscribed = session?.user?.id
+  ? await client
+      .select()
+      .from(RocketLeagueRegistrationsTable)
+      .where(eq(RocketLeagueRegistrationsTable.userId, session.user.id))
+      .execute()
+      .then((res) => res.length > 0)
+  : false;
+
+const cardClass =
+  "relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 backdrop-blur-md p-8 shadow-2xl transition-all hover:border-indigo-500/30";
+
+const inputClass =
+  "appearance-none block w-full px-4 py-3 border border-white/10 rounded-xl bg-white/5 shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 sm:text-sm text-white transition-all hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed";
+
+const PLATFORMS = [
+  { id: "youtube", name: "YouTube" },
+  { id: "tiktok", name: "TikTok" },
+  { id: "instagram", name: "Instagram" },
+  { id: "kick", name: "Kick" },
+  { id: "facebook", name: "Facebook" },
+  { id: "other", name: "Otra" },
+];
+---
+
+<Layout title="Inscripción Torneo Rocket League">
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      id="backdrop-acreconre"
+      class="absolute inset-0 bg-center bg-cover opacity-20"
+    >
+    </div>
+    <div
+      class="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent"
+    >
+    </div>
+    <div
+      class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none"
+    >
+    </div>
+  </div>
+
+  <div
+    class="flex flex-col max-w-4xl mx-auto min-h-screen pt-24 px-4 pb-20 relative z-10"
+  >
+    <a
+      href="/acreconre"
+      class="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors mb-8 group w-fit"
+    >
+      <LucideArrowLeft
+        size={20}
+        class="transition-transform group-hover:-translate-x-1"
+      />
+      <span>Volver</span>
+    </a>
+
+    <header class="text-center mb-12">
+      <div
+        class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 text-xs font-bold uppercase tracking-widest backdrop-blur-md mb-6"
+      >
+        <LucideCheckCircle size={14} />
+        <span>Inscripciones Abiertas</span>
+      </div>
+
+      <h1
+        class="text-5xl md:text-7xl font-anton text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50 drop-shadow-sm tracking-tight uppercase mb-4"
+      >
+        Inscripción <span class="text-indigo-500">Torneo Rocket League</span>
+      </h1>
+      <p class="text-xl font-rubik text-white/60 max-w-2xl mx-auto font-light">
+        Registra tu cuenta y asegura tu lugar en el próximo torneo competitivo.
+      </p>
+    </header>
+
+    <main class={cardClass}>
+      {
+        !session ? (
+          <div class="flex flex-col items-center justify-center py-12 text-center space-y-6">
+            <div class="p-6 rounded-full bg-white/5 border border-white/10 text-indigo-400">
+              <LucideLock size={48} />
+            </div>
+            <div class="space-y-2">
+              <h2 class="text-2xl font-anton uppercase text-white">
+                Acceso Restringido
+              </h2>
+              <p class="text-white/60 max-w-xs mx-auto">
+                Debes iniciar sesión para poder completar tu inscripción en
+                ACRECONRE.
+              </p>
+            </div>
+            <button
+              data-login-on-click
+              class="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold uppercase rounded-xl transition-all hover:scale-105 shadow-lg shadow-indigo-500/20"
+            >
+              Iniciar Sesión
+            </button>
+          </div>
+        ) : isInscribed ? (
+          <div class="flex flex-col items-center justify-center py-12 text-center space-y-6">
+            <div class="p-6 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-400">
+              <LucideCheckCircle size={48} />
+            </div>
+            <div class="space-y-2">
+              <h2 class="text-2xl font-anton uppercase text-white">
+                ¡Ya estás inscripto!
+              </h2>
+              <p class="text-white/60 max-w-xs mx-auto">
+                Tu solicitud para unirte a ACRECONRE ya ha sido enviada y está
+                siendo procesada.
+              </p>
+            </div>
+            <div class="flex items-center gap-2 p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm">
+              <LucideInfo size={18} />
+              <span>Te notificaremos por Discord una vez sea revisada.</span>
+            </div>
+            <a
+              href="/acreconre"
+              class="px-8 py-3 bg-white/5 hover:bg-white/10 text-white font-bold uppercase rounded-xl transition-all border border-white/10"
+            >
+              Volver al inicio
+            </a>
+          </div>
+        ) : (
+          <form class="space-y-10">
+            <div class="grid grid-cols-1 gap-8 sm:grid-cols-2">
+              <div class="space-y-2">
+                <label
+                  for="email"
+                  class="flex items-center gap-2 text-sm font-bold text-white/80 uppercase tracking-wider ml-1"
+                >
+                  <LucideMail size={16} class="text-indigo-400" />
+                  Correo electrónico
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  value={session.user.email}
+                  readonly
+                  class={inputClass}
+                />
+                <p class="text-[10px] text-white/40 ml-1 italic">
+                  Obtenido de tu cuenta
+                </p>
+              </div>
+
+              <div class="space-y-2">
+                <label
+                  for="discord"
+                  class="flex items-center gap-2 text-sm font-bold text-white/80 uppercase tracking-wider ml-1"
+                >
+                  <LucideMessageSquare size={16} class="text-indigo-400" />
+                  Usuario de Discord
+                </label>
+                <div class="relative">
+                  <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">
+                    #
+                  </span>
+                  <input
+                    type="text"
+                    name="discord"
+                    id="discord"
+                    required
+                    value={discordInfo?.username || ""}
+                    readonly={true}
+                    placeholder="usuario_discord"
+                    class={`${inputClass} pl-10`}
+                  />
+                </div>
+                {!discordInfo && (
+                  <p class="text-[10px] text-yellow-500/80 ml-1 italic">
+                    No detectamos Discord vinculado, por favor vincula tu cuenta
+                    para proseguir.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div class="space-y-6 pt-4 border-t border-white/5">
+              <label class="flex items-center gap-2 text-sm font-bold text-white/80 uppercase tracking-wider ml-1">
+                <LucideTv size={16} class="text-indigo-400" />
+                Plataforma de Contenido
+              </label>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  id="btn-twitch"
+                  class="flex items-center justify-center gap-3 p-4 rounded-2xl border border-indigo-500/50 bg-indigo-500/10 transition-all group"
+                >
+                  <div class="p-2 rounded-lg bg-[#9146FF] text-white transition-colors">
+                    <Twitch class="w-5 h-5 fill-current" />
+                  </div>
+                  <span class="font-bold text-white">
+                    Usar mi cuenta de Twitch
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  id="btn-other-platform"
+                  class="flex items-center justify-center gap-3 p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all group"
+                >
+                  <div class="p-2 rounded-lg bg-white/10 text-white group-hover:bg-white group-hover:text-black transition-colors">
+                    <LucideGlobe size={20} />
+                  </div>
+                  <span class="font-bold text-white">Otra plataforma</span>
+                </button>
+              </div>
+
+              <input
+                type="hidden"
+                name="platform_type"
+                id="platform_type"
+                value="twitch"
+              />
+
+              <div
+                id="twitch-info"
+                class="space-y-4 animate-in fade-in duration-500"
+              >
+                <div class="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-4">
+                  <img
+                    src={session.user.image}
+                    class="size-12 rounded-full border-2 border-indigo-500"
+                  />
+                  <div>
+                    <p class="text-white font-bold">{session.user.name}</p>
+                    <p class="text-white/50 text-xs uppercase tracking-widest">
+                      Cuenta de Twitch vinculada
+                    </p>
+                  </div>
+                </div>
+                <input
+                  type="hidden"
+                  name="canal"
+                  id="canal_twitch"
+                  value={session.user.name}
+                />
+              </div>
+
+              <div
+                id="other-platform-info"
+                class="hidden space-y-6 animate-in fade-in duration-500"
+              >
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+  {/* ID DE ROCKET LEAGUE */}
+  <div class="space-y-2">
+    <label class="text-sm font-bold text-white/80 uppercase tracking-wider ml-1">
+      ID de Rocket League
+    </label>
+    <input
+      type="text"
+      name="rocketId"
+      required
+      placeholder="Ej: Player123"
+      class={inputClass}
+    />
+  </div>
+
+  {/* PLATAFORMA */}
+  <div class="space-y-2">
+    <label class="text-sm font-bold text-white/80 uppercase tracking-wider ml-1">
+      Plataforma
+    </label>
+    <select name="platform" class={inputClass} required>
+      <option value="epic">Epic Games</option>
+      <option value="steam">Steam</option>
+      <option value="playstation">PlayStation</option>
+      <option value="xbox">Xbox</option>
+      <option value="switch">Nintendo Switch</option>
+    </select>
+  </div>
+
+  {/* EQUIPO */}
+  <div class="space-y-2 sm:col-span-2">
+    <label class="text-sm font-bold text-white/80 uppercase tracking-wider ml-1">
+      Nombre de comañero de equipo (opcional)
+    </label>
+    <input
+      type="text"
+      name="teamName"
+      placeholder="Ej: Juanito"
+      class={inputClass}
+    />
+  </div>
+</div>
+
+
+            <div class="space-y-4 pt-4 border-t border-white/5">
+              <h2 class="flex items-center gap-2 text-sm font-bold text-white/80 uppercase tracking-wider ml-1">
+                <LucideFileText size={16} class="text-indigo-400" />
+                Reglas del torneo
+              </h2>
+              <div class="h-48 overflow-y-auto p-6 rounded-2xl border border-white/10 bg-black/40 text-sm text-white/60 space-y-4 custom-scrollbar backdrop-blur-sm">
+                <section>
+                  <h3 class="font-bold text-white mb-1">
+                    1. Aceptación de reglas
+                  </h3>
+                  <p>
+                    La inscripción implica la aceptación total de estas reglas.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 class="font-bold text-white mb-1">
+                    2. Administración decide ante diferentes situaciones
+                  </h3>
+                  <p>
+                    Los administradores del torneo tendrán la última palabra ante cualquier situación no contemplada.
+                  </p>
+                  <h3 class="font-bold text-white mb-1">
+                    3. Servidores oficiales
+                  </h3>
+                  <p>
+                    El torneo se jugará en servidores oficiales de Rocket League.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 class="font-bold text-white mb-1">
+                    4. Comportamiento
+                  </h3>
+                  <p>
+                    Los jugadores deben comportarse de forma respetuosa en todo momento.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 class="font-bold text-white mb-1">
+                    5. Horarios
+                  </h3>
+                  <p>
+                    Todos los horarios están expresados en hora local del torneo y pueden ser sugetos a cambios sin previo aviso.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 class="font-bold text-white mb-1">5. Uso de imagen</h3>
+                  <p>
+                    Autoriza a SALTOURUGUAY SERVER a mencionar su nombre y canal con fines
+                    promocionales.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 class="font-bold text-white mb-1">6. Modificaciones</h3>
+                  <p>
+                    SALTOURUGUAY SERVER se reserva el derecho de modificar estos términos
+                    notificando por canales oficiales.
+                  </p>
+                </section>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
+              <input
+                id="terms"
+                name="terms"
+                type="checkbox"
+                required
+                class="h-5 w-5 rounded border-white/20 bg-white/10 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0 transition-all cursor-pointer"
+              />
+              <label
+                for="terms"
+                class="text-sm font-medium text-white/70 cursor-pointer group-hover:text-white transition-colors"
+              >
+                He leído y acepto los{" "}
+                <span class="text-indigo-400 font-bold">
+                  Términos y Condiciones
+                </span>{" "}
+                de ACRECONRE
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              id="submit-btn"
+              disabled={!discordInfo}
+              class="group w-full flex items-center justify-center gap-3 py-4 px-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-lg uppercase rounded-2xl transition-all hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(79,70,229,0.4)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
+            >
+              <span id="btn-text" class="flex items-center gap-3">
+                <LucideSend
+                  size={20}
+                  class="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1"
+                />
+                Enviar inscripción
+              </span>
+              <span id="btn-loader" class="hidden animate-spin">
+                <svg
+                  class="w-5 h-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  />
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+              </span>
+            </button>
+
+            {!discordInfo && (
+              <p class="text-center text-xs text-red-400 font-medium animate-pulse">
+                * Debes vincular tu cuenta de Discord para poder enviar la
+                inscripción.
+              </p>
+            )}
+          </form>
+        )
+      }
+    </main>
+  </div>
+</Layout>
+
+<style>
+  #backdrop-acreconre {
+    background-image: url("/images/acreconre/acreconre_logo_full.webp");
+    filter: grayscale(100%) brightness(0.5);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+</style>
+
+<script>
+  import { $ } from "@/lib/dom-selector";
+  import { showSignInDialog } from "@/lib/utils";
+  import { actions } from "astro:actions";
+  import { navigate } from "astro:transitions/client";
+  import { toast } from "sonner";
+
+  document.addEventListener("astro:page-load", () => {
+    const $loginBtn = $("[data-login-on-click]");
+    $loginBtn?.addEventListener("click", () => showSignInDialog());
+
+    const $form = $("form") as HTMLFormElement;
+    const $submitBtn = $("#submit-btn") as HTMLButtonElement;
+    const $btnText = $("#btn-text");
+    const $btnLoader = $("#btn-loader");
+    const $btnTwitch = $("#btn-twitch");
+    const $btnOther = $("#btn-other-platform");
+    const $twitchInfo = $("#twitch-info");
+    const $otherInfo = $("#other-platform-info");
+    const $platformType = $("#platform_type") as HTMLInputElement;
+    const $canalName = $("#canal_name") as HTMLInputElement;
+    const $canalLink = $("#canal_link") as HTMLInputElement;
+
+    const ACTIVE = ["border-indigo-500/50", "bg-indigo-500/10"] as const;
+    const INACTIVE = ["border-white/10", "bg-white/5"] as const;
+
+    function selectPlatform(type: "twitch" | "other") {
+      $platformType.value = type;
+
+      const isTwitch = type === "twitch";
+      $btnTwitch?.classList.toggle(ACTIVE[0], isTwitch);
+      $btnTwitch?.classList.toggle(ACTIVE[1], isTwitch);
+      $btnTwitch?.classList.toggle(INACTIVE[0], !isTwitch);
+      $btnTwitch?.classList.toggle(INACTIVE[1], !isTwitch);
+      $btnOther?.classList.toggle(ACTIVE[0], !isTwitch);
+      $btnOther?.classList.toggle(ACTIVE[1], !isTwitch);
+      $btnOther?.classList.toggle(INACTIVE[0], isTwitch);
+      $btnOther?.classList.toggle(INACTIVE[1], isTwitch);
+
+      $twitchInfo?.classList.toggle("hidden", !isTwitch);
+      $otherInfo?.classList.toggle("hidden", isTwitch);
+
+      if ($canalName) $canalName.required = !isTwitch;
+      if ($canalLink) $canalLink.required = !isTwitch;
+    }
+
+    $btnTwitch?.addEventListener("click", () => selectPlatform("twitch"));
+    $btnOther?.addEventListener("click", () => selectPlatform("other"));
+
+    $form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if ($submitBtn.disabled) return;
+
+      const formData = new FormData($form);
+      const discordUsername = formData.get("discord") as string;
+      const platformType = formData.get("platform_type") as "twitch" | "other";
+      const acceptedTerms = formData.get("terms") === "on";
+
+      if (!discordUsername?.trim()) {
+        toast.error(
+          "Debes tener una cuenta de Discord vinculada para inscribirte",
+        );
+        return;
+      }
+
+      const isTwitch = platformType === "twitch";
+      const canalName = isTwitch
+        ? (formData.get("canal") as string)
+        : (formData.get("canal_name") as string);
+      const platformName = isTwitch
+        ? "Twitch"
+        : (formData.get("platform_enum") as string);
+      const canalLink = isTwitch
+        ? undefined
+        : (formData.get("canal_link") as string) || undefined;
+
+      $submitBtn.disabled = true;
+      $btnText?.classList.add("hidden");
+      $btnLoader?.classList.remove("hidden");
+
+      const { error } = await actions.tournaments.registerRocketLeague({
+        discordUsername,
+        rocketId,
+        platform,
+        teamName,
+        acceptedTerms,
+      });
+
+      if (error) {
+        toast.error(error.message || "Error al enviar la inscripción");
+        $submitBtn.disabled = false;
+        $btnText?.classList.remove("hidden");
+        $btnLoader?.classList.add("hidden");
+        return;
+      }
+
+      toast.success("¡Inscripción enviada correctamente!");
+      setTimeout(() => navigate("/acreconre"), 2000);
+    });
+  });
+</script>
