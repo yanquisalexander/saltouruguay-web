@@ -14,7 +14,7 @@ const isAdmin = user?.isAdmin === true; // Validación de seguridad
 
 // Fetch tournaments
 const tournamentsData = await db.query.TournamentsTable.findMany({
-  where: (t, { ne }) => ne(t.status, "draft"),
+  where: isAdmin ? undefined : (t, { ne }) => ne(t.status, "draft"),
   orderBy: [desc(TournamentsTable.createdAt)],
   with: {
     participants: true,
