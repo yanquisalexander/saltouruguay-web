@@ -4,6 +4,7 @@ import { client as db } from '@/db/client';
 import { TournamentsTable, TournamentParticipantsTable, TournamentMatchesTable, UsersTable } from '@/db/schema';
 import { eq, and, count, sql } from 'drizzle-orm';
 import { getSession } from "auth-astro/server";
+import { uploadTournamentCover } from '@/services/tournament-storage';
 
 export const tournaments = {
     /**
@@ -505,6 +506,66 @@ export const tournaments = {
                 .where(eq(TournamentsTable.id, input.tournamentId));
 
             return { success: true };
+        }
+    }),
+
+    /**
+     * Upload Tournament Cover Image
+     */
+    uploadCover: defineAction({
+        input: z.object({
+            tournamentId: z.number(),
+            image: z.instanceof(File),
+        }),
+        handler: async (input, context) => {
+            const session = await getSession(context.request);
+            if (!session?.user?.id) throw new ActionError({ code: 'UNAUTHORIZED' });
+
+            // Get user to check if they're admin
+            const user = await db.query.UsersTable.findFirst({
+                where: eq(UsersTable.id, session.user.id),
+            });
+
+            if (!user?.admin) {
+                throw new ActionError({ code: 'FORBIDDEN', message: 'Solo administradores pueden subir imágenes' });
+            }
+
+            const tournament = await db.query.TournamentsTable.findFirst({
+                where: eq(TournamentsTable.id, input.tournamentId),
+            });
+
+            if (!tournament) {
+                throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
+            }
+
+            try {
+                // Convert File to Buffer
+                const arrayBuffer = await input.image.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+
+                // Upload and optimize image
+                const result = await uploadTournamentCover(
+                    buffer,
+                    input.image.name,
+                    input.tournamentId
+                );
+
+                // Update tournament with new banner URL
+                await db.update(TournamentsTable)
+                    .set({
+                        bannerUrl: result.url,
+                        updatedAt: new Date(),
+                    })
+                    .where(eq(TournamentsTable.id, input.tournamentId));
+
+                return { success: true, url: result.url };
+            } catch (error: any) {
+                console.error('Error uploading tournament cover:', error);
+                throw new ActionError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: error.message || 'Error al subir la imagen',
+                });
+            }
         }
     }),
 };
