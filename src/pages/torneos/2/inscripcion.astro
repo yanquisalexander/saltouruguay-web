@@ -2,7 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
 import { client as db } from "@/db/client";
-import { RocketLeagueRegistrationsTable, TournamentsTable } from "@/db/schema";
+import { TournamentsTable, TournamentParticipantsTable } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 const session = await getSession(Astro.request);
@@ -19,10 +19,10 @@ const tournament = await db.query.TournamentsTable.findFirst({
 let isInscribed = false;
 
 if (user) {
-  const existing = await db.query.RocketLeagueRegistrationsTable.findFirst({
+  const existing = await db.query.TournamentParticipantsTable.findFirst({
     where: and(
-      eq(RocketLeagueRegistrationsTable.userId, Number(user.id)),
-      eq(RocketLeagueRegistrationsTable.tournamentId, tournamentId)
+      eq(TournamentParticipantsTable.userId, user.id),
+      eq(TournamentParticipantsTable.tournamentId, tournamentId)
     ),
   });
 
@@ -78,9 +78,8 @@ if (user) {
         ) : (
 
           /* 📝 FORMULARIO */
-          <form class="space-y-8" id="register-form">
+          <form id="join-form" class="space-y-8">
 
-            {/* Email */}
             <div class="space-y-2">
               <label class="text-xs uppercase text-white/60 font-bold">
                 Email
@@ -89,30 +88,6 @@ if (user) {
                 type="email"
                 value={user?.email}
                 readonly
-                class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
-              />
-            </div>
-
-            {/* Discord */}
-            <div class="space-y-2">
-              <label class="text-xs uppercase text-white/60 font-bold">
-                Usuario de Discord
-              </label>
-              <input
-                name="discord"
-                required
-                class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
-              />
-            </div>
-
-            {/* Rocket League */}
-            <div class="space-y-2">
-              <label class="text-xs uppercase text-white/60 font-bold">
-                Cuenta de Rocket League
-              </label>
-              <input
-                name="epic"
-                required
                 class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
               />
             </div>
@@ -139,18 +114,14 @@ if (user) {
   import { navigate } from "astro:transitions/client";
 
   document.addEventListener("astro:page-load", () => {
-    const form = document.getElementById("register-form");
+    const form = document.getElementById("join-form");
     const btn = document.getElementById("submit-btn");
 
     form?.addEventListener("submit", async (e) => {
       e.preventDefault();
-
-      const data = new FormData(form);
       btn.disabled = true;
 
-      const { error } = await actions.tournaments.register({
-        discord: data.get("discord"),
-        epic: data.get("epic"),
+      const { error } = await actions.tournaments.join({
         tournamentId: Number(window.location.pathname.split("/")[2]),
       });
 
@@ -165,4 +136,3 @@ if (user) {
     });
   });
 </script>
-
