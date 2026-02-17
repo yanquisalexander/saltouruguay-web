@@ -47,62 +47,73 @@ const titleShadow = CHRISTMAS_MODE
       id="hero"
       class="relative -mt-24 flex min-h-dvh w-full flex-col items-center justify-center overflow-hidden"
     >
+      {/* Efecto de iluminación atmosférica de fondo (Glow sutil) */}
       <div
-        class="relative z-10 mx-auto flex max-w-7xl flex-col items-center gap-10 px-4 text-center"
+        class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.04)_0%,transparent_60%)]"
       >
-        {/* Alertas */}
+      </div>
+
+      <div
+        class="relative z-10 mx-auto flex max-w-6xl flex-col items-center gap-10 px-6 text-center"
+      >
+        {/* Alertas - Con un toque de glassmorphism */}
         <div
-          class="flex w-full max-w-md flex-col items-center gap-3 animate-fade-in-down"
+          class="flex w-full max-w-md flex-col items-center gap-3 animate-fade-in-down backdrop-blur-sm"
         >
           <Required2FA server:defer />
-          <!-- <VoteCallToAction server:defer /> -->
         </div>
 
         <header
-          class="flex flex-col items-center justify-center gap-8 md:flex-row"
+          class="flex flex-col items-center justify-center gap-8 md:flex-row md:gap-14"
         >
-          {/* Logo */}
+          {/* Logo - Con un halo de luz sutil al pasar el mouse */}
           <div
             class={`group relative animate-fade-in ${
               CHRISTMAS_MODE ? "christmas-logo" : ""
             }`}
           >
+            <div
+              class="absolute -inset-4 rounded-full bg-white/5 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+            >
+            </div>
             <img
               src="/favicon.svg"
               alt="SaltoUruguayServer Logo"
               draggable="false"
               fetchpriority="high"
               loading="eager"
-              class="h-32 w-auto object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-105 md:h-48"
+              class="relative h-28 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.05)] transition-all duration-500 ease-out group-hover:scale-105 group-hover:drop-shadow-[0_0_25px_rgba(255,255,255,0.15)] md:h-40"
             />
           </div>
 
           {/* Títulos */}
-          <div class="animate-fade-in-up space-y-1 text-center md:text-left">
+          <div class="animate-fade-in-up space-y-3 text-center md:text-left">
+            {
+              /* Título Principal - Recupera fuerza, pero con sombras controladas */
+            }
             <h1
-              class:list={[
-                "font-anton text-5xl tracking-tight text-white transition-all duration-500 sm:text-6xl md:text-7xl lg:text-8xl",
-                titleShadow,
-              ]}
+              class="font-anton text-5xl tracking-wide text-white transition-all duration-500 sm:text-6xl md:text-7xl drop-shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
             >
               SALTO URUGUAY
             </h1>
 
+            {
+              /* Subtítulo - Gradiente metálico/sutil en lugar de colores planos */
+            }
             <h2
-              class:list={[
-                "bg-gradient-to-r bg-clip-text font-anton text-xl uppercase tracking-wide text-transparent md:text-3xl",
-                subtitleGradient,
-              ]}
+              class="bg-gradient-to-r from-white via-white/80 to-white/40 bg-clip-text font-sans text-lg font-medium tracking-[0.2em] text-transparent md:text-xl"
             >
-              Server Community
+              SERVER COMMUNITY
             </h2>
           </div>
         </header>
       </div>
 
-      {/* Scroll indicator */}
-      <div class="absolute bottom-0 text-white/30 animate-bouncing">
-        <LucideChevronsDown size={32} />
+      {/* Scroll indicator - Estilo más técnico/gaming */}
+      <div
+        class="absolute bottom-8 text-white/30 transition-all hover:-translate-y-1 hover:text-white/80 animate-bounce cursor-pointer"
+      >
+        <LucideChevronsDown size={28} stroke-width="2" />
       </div>
     </section>
 

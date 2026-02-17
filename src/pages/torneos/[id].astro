@@ -27,9 +27,7 @@ const session = await getSession(Astro.request);
 const user = session?.user;
 
 // Verificación de Rol de Administrador
-// Asumimos que session.user tiene la propiedad 'role'.
-// Si tu schema es diferente, ajusta esta línea (ej: user.email === 'admin@mail.com')
-const isAdmin = user?.role === "admin";
+const isAdmin = user?.admin === true;
 
 // Fetch tournament with relations
 const tournament = await db.query.TournamentsTable.findFirst({
@@ -257,9 +255,12 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
                   <LucidePlay size={18} fill="currentColor" /> Iniciar Torneo
                 </button>
               )}
-              <button class="flex items-center gap-2 px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold rounded-lg transition-colors">
-                <LucideSettings size={18} /> Configurar
-              </button>
+              <a
+                href={`/admin/torneos/${tournament.id}`}
+                class="flex items-center gap-2 px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold rounded-lg transition-colors"
+              >
+                <LucideSettings size={18} /> Gestionar
+              </a>
             </div>
           </div>
         </div>
@@ -447,7 +448,7 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
 
       if (
         !confirm(
-          "⚠️ ¿Iniciar torneo?\n\nSe cerrarán las inscripciones y se generará el bracket automáticamente. Esta acción no se puede deshacer."
+          "⚠️ ¿Iniciar torneo?\n\nSe cerrarán las inscripciones y se generará el bracket automáticamente. Esta acción no se puede deshacer.",
         )
       )
         return;

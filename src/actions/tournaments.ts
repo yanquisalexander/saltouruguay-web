@@ -145,12 +145,21 @@ export const tournaments = {
             const session = await getSession(context.request);
             if (!session?.user?.id) throw new ActionError({ code: 'UNAUTHORIZED' });
 
+            // Get user to check if they're admin
+            const user = await db.query.UsersTable.findFirst({
+                where: eq(UsersTable.id, session.user.id),
+            });
+
+            if (!user?.admin) {
+                throw new ActionError({ code: 'FORBIDDEN', message: 'Solo administradores pueden iniciar torneos' });
+            }
+
             const tournament = await db.query.TournamentsTable.findFirst({
                 where: eq(TournamentsTable.id, input.tournamentId),
             });
 
-            if (!tournament || tournament.creatorId !== session.user.id) {
-                throw new ActionError({ code: 'FORBIDDEN', message: 'No tienes permiso' });
+            if (!tournament) {
+                throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
             }
 
             if (tournament.status !== 'registration' && tournament.status !== 'draft') {
@@ -298,6 +307,15 @@ export const tournaments = {
             const session = await getSession(context.request);
             if (!session?.user?.id) throw new ActionError({ code: 'UNAUTHORIZED' });
 
+            // Get user to check if they're admin
+            const user = await db.query.UsersTable.findFirst({
+                where: eq(UsersTable.id, session.user.id),
+            });
+
+            if (!user?.admin) {
+                throw new ActionError({ code: 'FORBIDDEN', message: 'Solo administradores pueden actualizar resultados' });
+            }
+
             // Get match and tournament to check permissions
             const match = await db.query.TournamentMatchesTable.findFirst({
                 where: eq(TournamentMatchesTable.id, input.matchId),
@@ -307,11 +325,6 @@ export const tournaments = {
             });
 
             if (!match) throw new ActionError({ code: 'NOT_FOUND', message: 'Partido no encontrado' });
-
-            // Only creator can update for now (or maybe the players themselves in the future)
-            if (match.tournament.creatorId !== session.user.id) {
-                throw new ActionError({ code: 'FORBIDDEN', message: 'Solo el organizador puede actualizar resultados' });
-            }
 
             // Update current match
             await db.update(TournamentMatchesTable).set({
@@ -377,17 +390,23 @@ export const tournaments = {
             const session = await getSession(context.request);
             if (!session?.user?.id) throw new ActionError({ code: 'UNAUTHORIZED' });
 
+            // Get user to check if they're admin
+            const user = await db.query.UsersTable.findFirst({
+                where: eq(UsersTable.id, session.user.id),
+            });
+
             const tournament = await db.query.TournamentsTable.findFirst({
                 where: eq(TournamentsTable.id, input.tournamentId),
             });
 
             if (!tournament) throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
 
-            // Only creator or the user themselves can remove
+            // Allow if user is admin, the creator, or removing themselves
+            const isAdmin = user?.admin === true;
             const isCreator = tournament.creatorId === session.user.id;
             const isSelf = input.userId === session.user.id;
 
-            if (!isCreator && !isSelf) {
+            if (!isAdmin && !isCreator && !isSelf) {
                 throw new ActionError({ code: 'FORBIDDEN', message: 'No tienes permiso' });
             }
 
@@ -416,15 +435,20 @@ export const tournaments = {
             const session = await getSession(context.request);
             if (!session?.user?.id) throw new ActionError({ code: 'UNAUTHORIZED' });
 
+            // Get user to check if they're admin
+            const user = await db.query.UsersTable.findFirst({
+                where: eq(UsersTable.id, session.user.id),
+            });
+
+            if (!user?.admin) {
+                throw new ActionError({ code: 'FORBIDDEN', message: 'Solo administradores pueden eliminar torneos' });
+            }
+
             const tournament = await db.query.TournamentsTable.findFirst({
                 where: eq(TournamentsTable.id, input.tournamentId),
             });
 
             if (!tournament) throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
-
-            if (tournament.creatorId !== session.user.id) {
-                throw new ActionError({ code: 'FORBIDDEN', message: 'Solo el creador puede eliminar el torneo' });
-            }
 
             // Cascade delete should handle participants and matches if configured in DB, 
             // but let's be safe or rely on schema constraints.
@@ -452,12 +476,21 @@ export const tournaments = {
             const session = await getSession(context.request);
             if (!session?.user?.id) throw new ActionError({ code: 'UNAUTHORIZED' });
 
+            // Get user to check if they're admin
+            const user = await db.query.UsersTable.findFirst({
+                where: eq(UsersTable.id, session.user.id),
+            });
+
+            if (!user?.admin) {
+                throw new ActionError({ code: 'FORBIDDEN', message: 'Solo administradores pueden actualizar torneos' });
+            }
+
             const tournament = await db.query.TournamentsTable.findFirst({
                 where: eq(TournamentsTable.id, input.tournamentId),
             });
 
-            if (!tournament || tournament.creatorId !== session.user.id) {
-                throw new ActionError({ code: 'FORBIDDEN', message: 'No tienes permiso' });
+            if (!tournament) {
+                throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
             }
 
             await db.update(TournamentsTable)

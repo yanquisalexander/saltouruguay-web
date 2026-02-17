@@ -1,0 +1,4 @@
+onlyBuiltDependencies:
+  - '@vaadin/vaadin-usage-statistics'
+  - esbuild
+  - sharp
