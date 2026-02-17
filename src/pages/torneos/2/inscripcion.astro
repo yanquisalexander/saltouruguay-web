@@ -1,1 +1,168 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+import { client as db } from "@/db/client";
+import { RocketLeagueRegistrationsTable, TournamentsTable } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+
+const session = await getSession(Astro.request);
+const user = session?.user;
+
+const tournamentId = Number(Astro.params.id);
+
+// 🔎 Traer torneo
+const tournament = await db.query.TournamentsTable.findFirst({
+  where: eq(TournamentsTable.id, tournamentId),
+});
+
+// 🔎 Ver si ya está inscripto
+let isInscribed = false;
+
+if (user) {
+  const existing = await db.query.RocketLeagueRegistrationsTable.findFirst({
+    where: and(
+      eq(RocketLeagueRegistrationsTable.userId, Number(user.id)),
+      eq(RocketLeagueRegistrationsTable.tournamentId, tournamentId)
+    ),
+  });
+
+  isInscribed = !!existing;
+}
+---
+
+<Layout title={`Inscripción | ${tournament?.name ?? "Torneo"}`}>
+  <div class="container mx-auto px-4 py-12 mt-20 max-w-2xl">
+
+    {/* HEADER */}
+    <header class="text-center mb-10 space-y-3">
+      <h1 class="text-4xl font-anton uppercase text-white">
+        Inscripción al Torneo
+      </h1>
+      <p class="text-white/60">
+        {tournament?.name}
+      </p>
+    </header>
+
+    {/* CARD */}
+    <main class="p-8 rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl">
+
+      {
+        !session ? (
+
+          /* 🔒 NO LOGUEADO */
+          <div class="flex flex-col items-center text-center space-y-6 py-10">
+            <h2 class="text-2xl font-anton text-white uppercase">
+              Debes iniciar sesión
+            </h2>
+
+            <button
+              data-login-on-click
+              class="px-8 py-3 bg-indigo-600 rounded-xl font-bold uppercase"
+            >
+              Iniciar sesión
+            </button>
+          </div>
+
+        ) : isInscribed ? (
+
+          /* ✅ YA INSCRIPTO */
+          <div class="flex flex-col items-center text-center space-y-6 py-10">
+            <h2 class="text-2xl font-anton text-white uppercase">
+              Ya estás inscripto
+            </h2>
+            <p class="text-white/60">
+              Tu inscripción ya fue registrada.
+            </p>
+          </div>
+
+        ) : (
+
+          /* 📝 FORMULARIO */
+          <form class="space-y-8" id="register-form">
+
+            {/* Email */}
+            <div class="space-y-2">
+              <label class="text-xs uppercase text-white/60 font-bold">
+                Email
+              </label>
+              <input
+                type="email"
+                value={user?.email}
+                readonly
+                class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+              />
+            </div>
+
+            {/* Discord */}
+            <div class="space-y-2">
+              <label class="text-xs uppercase text-white/60 font-bold">
+                Usuario de Discord
+              </label>
+              <input
+                name="discord"
+                required
+                class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+              />
+            </div>
+
+            {/* Rocket League */}
+            <div class="space-y-2">
+              <label class="text-xs uppercase text-white/60 font-bold">
+                Cuenta de Rocket League
+              </label>
+              <input
+                name="epic"
+                required
+                class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+              />
+            </div>
+
+            <button
+              type="submit"
+              id="submit-btn"
+              class="w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl font-bold uppercase"
+            >
+              Confirmar inscripción
+            </button>
+
+          </form>
+        )
+      }
+
+    </main>
+  </div>
+</Layout>
+
+<script>
+  import { actions } from "astro:actions";
+  import { toast } from "sonner";
+  import { navigate } from "astro:transitions/client";
+
+  document.addEventListener("astro:page-load", () => {
+    const form = document.getElementById("register-form");
+    const btn = document.getElementById("submit-btn");
+
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const data = new FormData(form);
+      btn.disabled = true;
+
+      const { error } = await actions.tournaments.register({
+        discord: data.get("discord"),
+        epic: data.get("epic"),
+        tournamentId: Number(window.location.pathname.split("/")[2]),
+      });
+
+      if (error) {
+        toast.error(error.message);
+        btn.disabled = false;
+        return;
+      }
+
+      toast.success("Inscripción confirmada 🎉");
+      navigate("/torneos");
+    });
+  });
+</script>
 
