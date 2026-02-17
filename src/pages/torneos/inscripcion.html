@@ -1,176 +1,178 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inscripción Torneo</title>
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+import { client } from "@/db/client";
+import { RocketLeagueTournamentTable } from "@/db/schema"; // 👈 tu tabla
+import { eq } from "drizzle-orm";
 
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #0f172a;
-        color: white;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-    }
+import {
+  LucideMail,
+  LucideMessageSquare,
+  LucideGamepad2,
+  LucideUsers,
+  LucideCheckCircle,
+  LucideArrowLeft,
+  LucideSend,
+  LucideLock,
+  LucideInfo,
+} from "lucide-preact";
 
-    .container {
-        background: #111827;
-        padding: 30px;
-        border-radius: 12px;
-        width: 400px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
+const session = await getSession(Astro.request);
 
-    h1 {
-        text-align: center;
-        margin-bottom: 20px;
-    }
+const isInscribed = session?.user?.id
+  ? await client
+      .select()
+      .from(RocketLeagueTournamentTable)
+      .where(eq(RocketLeagueTournamentTable.userId, session.user.id))
+      .execute()
+      .then((res) => res.length > 0)
+  : false;
 
-    label {
-        display: block;
-        margin-top: 15px;
-        font-size: 14px;
-    }
+const cardClass =
+  "relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 backdrop-blur-md p-8 shadow-2xl transition-all hover:border-indigo-500/30";
 
-    input[type="text"],
-    input[type="email"] {
-        width: 100%;
-        padding: 10px;
-        margin-top: 5px;
-        border-radius: 6px;
-        border: none;
-        background: #1f2937;
-        color: white;
-    }
+const inputClass =
+  "appearance-none block w-full px-4 py-3 border border-white/10 rounded-xl bg-white/5 shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 sm:text-sm text-white transition-all hover:bg-white/10";
+---
 
-    input[readonly] {
-        opacity: 0.7;
-    }
+<Layout title="Inscripción Torneo Rocket League">
+  <div class="flex flex-col max-w-3xl mx-auto min-h-screen pt-24 px-4 pb-20">
 
-    .checkbox {
-        margin-top: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 14px;
-    }
+    <a href="/torneo" class="inline-flex items-center gap-2 text-white/60 hover:text-white mb-8">
+      <LucideArrowLeft size={20} />
+      Volver
+    </a>
 
-    button {
-        width: 100%;
-        margin-top: 20px;
-        padding: 12px;
-        border: none;
-        border-radius: 8px;
-        background: #22c55e;
-        color: white;
-        font-size: 16px;
-        cursor: pointer;
-        transition: 0.2s;
-    }
+    <main class={cardClass}>
 
-    button:hover {
-        background: #16a34a;
-    }
+      {
+        !session ? (
+          <div class="flex flex-col items-center text-center py-12 space-y-4">
+            <LucideLock size={48} class="text-indigo-400" />
+            <h2 class="text-2xl font-bold text-white">Debes iniciar sesión</h2>
+            <p class="text-white/60">Para inscribirte al torneo</p>
+          </div>
 
-    .error {
-        color: #f87171;
-        margin-top: 10px;
-        text-align: center;
-    }
+        ) : isInscribed ? (
+          <div class="flex flex-col items-center text-center py-12 space-y-4">
+            <LucideCheckCircle size={48} class="text-indigo-400" />
+            <h2 class="text-2xl font-bold text-white">Ya estás inscripto</h2>
+            <p class="text-white/60">Tu inscripción ya fue registrada</p>
+          </div>
 
-    .success {
-        color: #4ade80;
-        margin-top: 10px;
-        text-align: center;
-    }
-</style>
-</head>
-<body>
+        ) : (
+          <form class="space-y-8">
 
-<div class="container">
-    <h1>Inscripción Torneo</h1>
+            <div class="grid sm:grid-cols-2 gap-6">
 
-    <form id="formInscripcion">
-        
-        <label>Correo electrónico</label>
-        <input type="email" id="email" readonly>
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-white/80 uppercase">
+                  Correo electrónico
+                </label>
+                <input
+                  type="email"
+                  value={session.user.email}
+                  readonly
+                  class={inputClass}
+                />
+              </div>
 
-        <label>Usuario de Discord</label>
-        <input type="text" id="discord" placeholder="Ej: usuario#1234" required>
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-white/80 uppercase">
+                  Usuario Discord
+                </label>
+                <input
+                  type="text"
+                  name="discord"
+                  required
+                  placeholder="usuario#0000"
+                  class={inputClass}
+                />
+              </div>
 
-        <label>Usuario de Rocket League</label>
-        <input type="text" id="rocket" placeholder="Tu Epic / RL ID" required>
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-white/80 uppercase">
+                  Usuario Rocket League
+                </label>
+                <input
+                  type="text"
+                  name="rocketLeague"
+                  required
+                  placeholder="Tu Epic ID"
+                  class={inputClass}
+                />
+              </div>
 
-        <label>Compañero de equipo (Opcional)</label>
-        <input type="text" id="companero" placeholder="Nombre o ID">
+              <div class="space-y-2">
+                <label class="text-sm font-bold text-white/80 uppercase">
+                  Compañero (Opcional)
+                </label>
+                <input
+                  type="text"
+                  name="teammate"
+                  placeholder="Nombre o ID"
+                  class={inputClass}
+                />
+              </div>
 
-        <div class="checkbox">
-            <input type="checkbox" id="reglas">
-            <label for="reglas">Acepto las reglas del torneo</label>
-        </div>
+            </div>
 
-        <button type="submit">Confirmar inscripción</button>
+            <div class="p-4 rounded-xl bg-white/5 border border-white/10 flex gap-3">
+              <input type="checkbox" name="terms" required class="mt-1" />
+              <span class="text-sm text-white/70">
+                Acepto las reglas del torneo
+              </span>
+            </div>
 
-        <div id="mensaje"></div>
-    </form>
-</div>
+            <button
+              type="submit"
+              id="submit-btn"
+              class="w-full flex items-center justify-center gap-3 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold uppercase"
+            >
+              <LucideSend size={20} />
+              Enviar inscripción
+            </button>
+
+          </form>
+        )
+      }
+
+    </main>
+  </div>
+</Layout>
 
 <script>
-/* ===============================
-   SIMULACIÓN DE USUARIO LOGUEADO
-   👉 Reemplazar por tu sistema real
-================================= */
+  import { $ } from "@/lib/dom-selector";
+  import { actions } from "astro:actions";
+  import { toast } from "sonner";
+  import { navigate } from "astro:transitions/client";
 
-const usuarioLogueado = {
-    email: "usuario@email.com" // <- esto debe venir de tu backend/login
-};
+  document.addEventListener("astro:page-load", () => {
+    const $form = $("form");
+    const $btn = $("#submit-btn");
 
-// Si no está logueado → redirige
-if (!usuarioLogueado) {
-    window.location.href = "/login";
-}
+    $form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-// Colocar mail en el input
-document.getElementById("email").value = usuarioLogueado.email;
+      const data = new FormData($form);
 
+      $btn.disabled = true;
 
-/* ===============================
-   VALIDACIÓN Y ENVÍO
-================================= */
+      const { error } = await actions.torneo.inscribirse({
+        discord: data.get("discord"),
+        rocketLeague: data.get("rocketLeague"),
+        teammate: data.get("teammate"),
+        acceptedTerms: data.get("terms") === "on",
+      });
 
-document.getElementById("formInscripcion").addEventListener("submit", function(e) {
-    e.preventDefault();
-
-    const discord = document.getElementById("discord").value.trim();
-    const rocket = document.getElementById("rocket").value.trim();
-    const reglas = document.getElementById("reglas").checked;
-    const mensaje = document.getElementById("mensaje");
-
-    mensaje.textContent = "";
-
-    if (!reglas) {
-        mensaje.className = "error";
-        mensaje.textContent = "Debes aceptar las reglas para inscribirte.";
+      if (error) {
+        toast.error(error.message || "Error al inscribirse");
+        $btn.disabled = false;
         return;
-    }
+      }
 
-    // 👉 Aquí luego conectamos a tu backend / base de datos
-    mensaje.className = "success";
-    mensaje.textContent = "Inscripción enviada correctamente 🎉";
-
-    console.log({
-        email: usuarioLogueado.email,
-        discord,
-        rocket,
-        companero: document.getElementById("companero").value.trim()
+      toast.success("Inscripción enviada 🚀");
+      setTimeout(() => navigate("/torneo"), 1500);
     });
-});
+  });
 </script>
-
-</body>
-</html>
-
