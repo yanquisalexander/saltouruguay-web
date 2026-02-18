@@ -154,12 +154,9 @@ const tournaments = tournamentsData.map((t) => {
     ].map((team) => (
       <div class="group relative border border-white/10 rounded-2xl p-4 bg-white/[0.02] hover:bg-white/[0.05] transition">
         <div class="flex items-center gap-3">
-          
-          {/* Escudo automático */}
-          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-bold">
+          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center text-white/60 font-bold">
             {team.charAt(0)}
           </div>
-
           <span class="text-white font-semibold tracking-wide">
             {team}
           </span>
