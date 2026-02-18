@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { toast } from 'sonner';
 import { LucideSave, LucideTrash2, LucideAlertTriangle, LucideUpload, LucideImage, LucideX } from 'lucide-preact';
-import type { Tournament } from '@/db/schema';
+import type { Tournament } from "@/types/tournaments";
 
 interface Props {
     tournament: Tournament;
@@ -47,10 +47,11 @@ export default function TournamentSettingsForm({ tournament }: Props) {
             reader.readAsDataURL(file);
 
             // Upload to server
-            const { data, error } = await actions.tournaments.uploadCover({
-                tournamentId: tournament.id,
-                image: file
-            });
+            const formData = new FormData();
+            formData.append('tournamentId', tournament.id.toString());
+            formData.append('image', file);
+
+            const { data, error } = await actions.tournaments.uploadCover(formData);
 
             if (error) {
                 toast.error(error.message);

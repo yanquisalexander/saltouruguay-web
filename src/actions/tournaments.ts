@@ -513,6 +513,7 @@ export const tournaments = {
      * Upload Tournament Cover Image
      */
     uploadCover: defineAction({
+        accept: 'form',
         input: z.object({
             tournamentId: z.number(),
             image: z.instanceof(File),
