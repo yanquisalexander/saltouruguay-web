@@ -470,8 +470,14 @@ export const tournaments = {
             name: z.string().min(3).max(100).optional(),
             description: z.string().optional(),
             status: z.enum(['draft', 'registration', 'in_progress', 'completed']).optional(),
-            maxParticipants: z.number().optional(),
-            startDate: z.date().optional(),
+            maxParticipants: z.number().nullable().optional(),
+            startDate: z.coerce.date().optional(),
+            config: z.object({
+                teamsEnabled: z.boolean().optional(),
+                playersPerTeam: z.number().min(2).max(50).optional(),
+                teamNamePrefix: z.string().max(30).optional(),
+                maxTeams: z.number().min(2).max(256).optional(),
+            }).optional(),
         }),
         handler: async (input, context) => {
             const session = await getSession(context.request);
@@ -494,6 +500,11 @@ export const tournaments = {
                 throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
             }
 
+            const existingConfig = (tournament.config as Record<string, any>) ?? {};
+            const mergedConfig = input.config !== undefined
+                ? { ...existingConfig, ...input.config }
+                : existingConfig;
+
             await db.update(TournamentsTable)
                 .set({
                     name: input.name,
@@ -501,8 +512,73 @@ export const tournaments = {
                     status: input.status,
                     maxParticipants: input.maxParticipants,
                     startDate: input.startDate,
+                    config: mergedConfig,
                     updatedAt: new Date(),
                 })
+                .where(eq(TournamentsTable.id, input.tournamentId));
+
+            return { success: true };
+        }
+    }),
+
+    /**
+     * Assign a player to a team (updates participant teamName)
+     */
+    assignPlayerToTeam: defineAction({
+        input: z.object({
+            tournamentId: z.number(),
+            userId: z.number(),
+            teamName: z.string().nullable(),
+        }),
+        handler: async (input, context) => {
+            const session = await getSession(context.request);
+            if (!session?.user?.id) throw new ActionError({ code: 'UNAUTHORIZED' });
+
+            const user = await db.query.UsersTable.findFirst({
+                where: eq(UsersTable.id, session.user.id),
+            });
+            if (!user?.admin) {
+                throw new ActionError({ code: 'FORBIDDEN', message: 'Solo administradores pueden gestionar equipos' });
+            }
+
+            await db.update(TournamentParticipantsTable)
+                .set({ teamName: input.teamName })
+                .where(and(
+                    eq(TournamentParticipantsTable.tournamentId, input.tournamentId),
+                    eq(TournamentParticipantsTable.userId, input.userId)
+                ));
+
+            return { success: true };
+        }
+    }),
+
+    /**
+     * Update the teams list stored in tournament config
+     */
+    updateTeamsList: defineAction({
+        input: z.object({
+            tournamentId: z.number(),
+            teams: z.array(z.string().min(1).max(60)),
+        }),
+        handler: async (input, context) => {
+            const session = await getSession(context.request);
+            if (!session?.user?.id) throw new ActionError({ code: 'UNAUTHORIZED' });
+
+            const user = await db.query.UsersTable.findFirst({
+                where: eq(UsersTable.id, session.user.id),
+            });
+            if (!user?.admin) {
+                throw new ActionError({ code: 'FORBIDDEN', message: 'Solo administradores pueden gestionar equipos' });
+            }
+
+            const tournament = await db.query.TournamentsTable.findFirst({
+                where: eq(TournamentsTable.id, input.tournamentId),
+            });
+            if (!tournament) throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
+
+            const existingConfig = (tournament.config as Record<string, any>) ?? {};
+            await db.update(TournamentsTable)
+                .set({ config: { ...existingConfig, teams: input.teams }, updatedAt: new Date() })
                 .where(eq(TournamentsTable.id, input.tournamentId));
 
             return { success: true };

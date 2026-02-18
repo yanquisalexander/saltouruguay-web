@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { toast } from 'sonner';
-import { LucideSave, LucideTrash2, LucideAlertTriangle, LucideUpload, LucideImage, LucideX } from 'lucide-preact';
+import { LucideSave, LucideTrash2, LucideAlertTriangle, LucideUpload, LucideImage, LucideX, LucideUsers, LucideShield } from 'lucide-preact';
 import type { Tournament } from "@/types/tournaments";
 
 interface Props {
@@ -16,7 +16,15 @@ export default function TournamentSettingsForm({ tournament }: Props) {
         name: tournament.name,
         description: tournament.description || '',
         startDate: tournament.startDate ? new Date(tournament.startDate).toISOString().slice(0, 16) : '',
-        status: tournament.status
+        status: tournament.status,
+        maxParticipants: tournament.maxParticipants?.toString() || '',
+    });
+
+    const [teamConfig, setTeamConfig] = useState({
+        teamsEnabled: (tournament.config as any)?.teamsEnabled ?? false,
+        playersPerTeam: (tournament.config as any)?.playersPerTeam ?? 2,
+        teamNamePrefix: (tournament.config as any)?.teamNamePrefix ?? 'Equipo',
+        maxTeams: (tournament.config as any)?.maxTeams ?? '',
     });
 
     const handleImageUpload = async (e: Event) => {
@@ -84,7 +92,14 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                 name: formData.name,
                 description: formData.description,
                 startDate: formData.startDate ? new Date(formData.startDate) : undefined,
-                status: formData.status as any
+                status: formData.status as any,
+                maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : null,
+                config: {
+                    teamsEnabled: teamConfig.teamsEnabled,
+                    playersPerTeam: teamConfig.playersPerTeam,
+                    teamNamePrefix: teamConfig.teamNamePrefix || 'Equipo',
+                    maxTeams: teamConfig.maxTeams ? parseInt(teamConfig.maxTeams as string) : undefined,
+                },
             });
 
             if (error) {
@@ -218,21 +233,119 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                     />
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-300">Estado</label>
-                    <select
-                        className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-none"
-                        value={formData.status}
-                        onChange={(e: any) => setFormData(prev => ({ ...prev, status: e.target.value }))}
-                    >
-                        <option value="draft">Borrador (Oculto)</option>
-                        <option value="registration">Inscripciones Abiertas</option>
-                        <option value="in_progress">En Progreso</option>
-                        <option value="completed">Finalizado</option>
-                    </select>
-                    <p className="text-xs text-gray-500">
-                        * "Borrador" oculta el torneo del público. "Inscripciones Abiertas" permite que la gente se una.
-                    </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">Estado</label>
+                        <select
+                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-none"
+                            value={formData.status}
+                            onChange={(e: any) => setFormData(prev => ({ ...prev, status: e.target.value }))}
+                        >
+                            <option value="draft">Borrador (Oculto)</option>
+                            <option value="registration">Inscripciones Abiertas</option>
+                            <option value="in_progress">En Progreso</option>
+                            <option value="completed">Finalizado</option>
+                        </select>
+                        <p className="text-xs text-gray-500">
+                            * "Borrador" oculta el torneo del público. "Inscripciones Abiertas" permite que la gente se una.
+                        </p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <LucideUsers className="w-4 h-4" />
+                            Límite de Participantes
+                        </label>
+                        <input
+                            type="number"
+                            min={2}
+                            max={1024}
+                            placeholder="Sin límite"
+                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-none"
+                            value={formData.maxParticipants}
+                            onInput={(e: any) => setFormData(prev => ({ ...prev, maxParticipants: e.target.value }))}
+                        />
+                        <p className="text-xs text-gray-500">Dejar vacío para no tener límite de inscriptos.</p>
+                    </div>
+                </div>
+
+                {/* Teams Configuration */}
+                <div className="space-y-4 p-5 bg-white/[0.03] border border-white/10 rounded-xl">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                <LucideShield className="w-4 h-4 text-violet-400" />
+                                Modo Equipos
+                            </label>
+                            <p className="text-xs text-gray-500 mt-1">Los jugadores compiten agrupados en equipos.</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setTeamConfig(prev => ({ ...prev, teamsEnabled: !prev.teamsEnabled }))}
+                            className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${teamConfig.teamsEnabled ? 'bg-violet-600' : 'bg-white/10'
+                                }`}
+                        >
+                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${teamConfig.teamsEnabled ? 'translate-x-6' : ''
+                                }`} />
+                        </button>
+                    </div>
+
+                    {teamConfig.teamsEnabled && (
+                        <div className="pt-4 border-t border-white/10 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-300">Jugadores por Equipo</label>
+                                    <input
+                                        type="number"
+                                        min={2}
+                                        max={50}
+                                        className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-none"
+                                        value={teamConfig.playersPerTeam}
+                                        onInput={(e: any) => setTeamConfig(prev => ({ ...prev, playersPerTeam: parseInt(e.target.value) || 2 }))}
+                                    />
+                                    <p className="text-xs text-gray-500">Mín. 2, Máx. 50</p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-300">Prefijo de Nombre de Equipo</label>
+                                    <input
+                                        type="text"
+                                        maxLength={30}
+                                        placeholder="Ej: Equipo, Team, Clan..."
+                                        className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-none"
+                                        value={teamConfig.teamNamePrefix}
+                                        onInput={(e: any) => setTeamConfig(prev => ({ ...prev, teamNamePrefix: e.target.value }))}
+                                    />
+                                    <p className="text-xs text-gray-500">Ej: "Equipo A", "Equipo B"...</p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-300">Máx. de Equipos</label>
+                                    <input
+                                        type="number"
+                                        min={2}
+                                        max={256}
+                                        placeholder="Sin límite"
+                                        className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-none"
+                                        value={teamConfig.maxTeams}
+                                        onInput={(e: any) => setTeamConfig(prev => ({ ...prev, maxTeams: e.target.value }))}
+                                    />
+                                    <p className="text-xs text-gray-500">Dejar vacío para sin límite.</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-3 p-3 bg-violet-500/5 border border-violet-500/20 rounded-lg">
+                                <LucideShield className="w-4 h-4 text-violet-400 mt-0.5 flex-shrink-0" />
+                                <p className="text-xs text-violet-300">
+                                    <strong>Modo Equipos activo:</strong> Cada slot del bracket representará un equipo en lugar de un jugador individual.
+                                    Se requieren <strong>{teamConfig.playersPerTeam} jugadores</strong> por equipo.
+                                    {formData.maxParticipants && (
+                                        <> El torneo tendrá un máximo de <strong>{Math.floor(parseInt(formData.maxParticipants) / teamConfig.playersPerTeam)} equipos</strong> ({formData.maxParticipants} jugadores).</>
+                                    )}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="pt-4 border-t border-white/5 flex justify-end">

@@ -15,9 +15,11 @@ import {
   LucidePlay,
   LucidePause,
   LucideRefreshCw,
+  LucideShield,
 } from "lucide-preact";
 import TournamentParticipantsManager from "@/components/admin/tournaments/TournamentParticipantsManager";
 import TournamentSettingsForm from "@/components/admin/tournaments/TournamentSettingsForm";
+import TournamentTeamsManager from "@/components/admin/tournaments/TournamentTeamsManager";
 
 const { id } = Astro.params;
 const tournamentId = parseInt(id!);
@@ -157,6 +159,28 @@ if (!tournament) {
           tournamentId={tournament.id}
         />
       </div>
+
+      {
+        (tournament.config as any)?.teamsEnabled && (
+          <div class="bg-[#1a1b1e] border border-white/10 rounded-xl p-6">
+            <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <LucideShield className="text-violet-400" /> Gestión de Equipos
+            </h2>
+            <TournamentTeamsManager
+              client:load
+              participants={tournament.participants as any}
+              tournamentId={tournament.id}
+              config={{
+                playersPerTeam: (tournament.config as any)?.playersPerTeam ?? 2,
+                teamNamePrefix:
+                  (tournament.config as any)?.teamNamePrefix ?? "Equipo",
+                maxTeams: (tournament.config as any)?.maxTeams,
+                teams: (tournament.config as any)?.teams ?? [],
+              }}
+            />
+          </div>
+        )
+      }
     </div>
   </div>
 </AdminLayout>
@@ -173,7 +197,7 @@ if (!tournament) {
     deleteBtn.addEventListener("click", async () => {
       if (
         confirm(
-          "¿ESTÁS SEGURO? Esta acción eliminará el torneo y todos sus datos permanentemente."
+          "¿ESTÁS SEGURO? Esta acción eliminará el torneo y todos sus datos permanentemente.",
         )
       ) {
         const id = parseInt(deleteBtn.dataset.id!);
