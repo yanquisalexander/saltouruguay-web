@@ -412,17 +412,6 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
                     <div class="overflow-hidden">
                       <p class="text-white font-bold text-sm truncate">
                         {p.user?.displayName || p.user?.username}
-                        {p.user?.discordId && (
-                          <a
-                            href={`https://discord.com/users/${p.user.discordId}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="ml-2 inline-flex items-center text-xs text-gray-400 hover:text-white"
-                            title="Ver en Discord"
-                          >
-                            <LucideExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
                       </p>
                       <p class="text-xs text-white/40 truncate">
                         @{p.user?.username}
