@@ -115,6 +115,11 @@ export const tournaments = {
 
                 if (!user) throw new ActionError({ code: 'UNAUTHORIZED' });
 
+                // Require Discord linked
+                if (!user.discordId) {
+                    throw new ActionError({ code: 'BAD_REQUEST', message: 'Debes vincular tu cuenta de Discord para inscribirte' });
+                }
+
                 await db.insert(TournamentParticipantsTable).values({
                     tournamentId: input.tournamentId,
                     userId: session.user.id,

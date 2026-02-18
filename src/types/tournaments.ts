@@ -31,6 +31,7 @@ export interface TournamentParticipant {
         displayName: string;
         username: string;
         avatar: string | null;
+        discordId?: string | null;
     };
 }
 

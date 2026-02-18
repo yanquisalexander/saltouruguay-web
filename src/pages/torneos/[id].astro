@@ -14,6 +14,7 @@ import {
   LucideShieldAlert,
   LucideSettings,
   LucideSwords,
+  LucideExternalLink,
 } from "lucide-preact";
 
 const { id } = Astro.params;
@@ -55,6 +56,7 @@ const maxParticipants = tournament.maxParticipants || Infinity;
 // Permisos
 const canJoin =
   user &&
+  !!user.discordId &&
   !isJoined &&
   tournament.status === "registration" &&
   currentParticipants < maxParticipants;
@@ -171,7 +173,9 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
             {tournament.name}
           </h1>
 
-          <p class="text-white/70 text-lg font-rubik max-w-2xl leading-relaxed">
+          <p
+            class="text-white/70 text-lg font-rubik max-w-2xl leading-relaxed whitespace-pre-wrap"
+          >
             {tournament.description}
           </p>
         </div>
@@ -187,6 +191,18 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
               >
                 <LucideUserPlus size={20} />
                 <span>Inscribirse Ahora</span>
+              </button>
+            )
+          }
+
+          {
+            user && !user.discordId && tournament.status === "registration" && (
+              <button
+                onclick="window.location.href='/api/discord/link'"
+                class="group relative flex items-center justify-center gap-3 px-8 py-4 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_30px_rgba(124,58,237,0.5)]"
+              >
+                <LucideUserPlus size={20} />
+                <span>Vincular Discord para inscribirte</span>
               </button>
             )
           }
@@ -347,6 +363,17 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
                     <div class="overflow-hidden">
                       <p class="text-white font-bold text-sm truncate">
                         {p.user?.displayName || p.user?.username}
+                        {p.user?.discordId && (
+                          <a
+                            href={`https://discord.com/users/${p.user.discordId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="ml-2 inline-flex items-center text-xs text-gray-400 hover:text-white"
+                            title="Ver en Discord"
+                          >
+                            <LucideExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
                       </p>
                       <p class="text-xs text-white/40 truncate">
                         @{p.user?.username}

@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { toast } from 'sonner';
-import { LucidePlus, LucideTrash2, LucideShield, LucideUserX } from 'lucide-preact';
+import { LucidePlus, LucideTrash2, LucideShield, LucideUserX, LucideExternalLink } from 'lucide-preact';
 import type { TournamentParticipant } from '@/types/tournaments';
 
 interface TeamConfig {
@@ -273,7 +273,20 @@ function PlayerRow({ participant: p, teams, currentTeam, loading, onAssign }: {
                 className="w-7 h-7 rounded-full bg-black/50 flex-shrink-0"
             />
             <div className="flex-1 min-w-0">
-                <div className="text-white text-sm font-medium truncate leading-tight">{p.user?.displayName}</div>
+                <div className="text-white text-sm font-medium truncate leading-tight">
+                    {p.user?.displayName}
+                    {p.user?.discordId && (
+                        <a
+                            href={`https://discord.com/users/${p.user.discordId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-2 inline-flex items-center text-xs text-gray-400 hover:text-white"
+                            title="Ver en Discord"
+                        >
+                            <LucideExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                    )}
+                </div>
                 <div className="text-gray-500 text-xs">@{p.user?.username}</div>
             </div>
             <div className="flex items-center gap-1.5">

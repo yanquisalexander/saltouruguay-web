@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { toast } from 'sonner';
-import { LucideTrash2, LucideUserX, LucideSearch } from 'lucide-preact';
+import { LucideTrash2, LucideUserX, LucideSearch, LucideExternalLink } from 'lucide-preact';
 import type { TournamentParticipant } from '@/types/tournaments';
 
 interface Props {
@@ -71,7 +71,19 @@ export default function TournamentParticipantsManager({ participants: initialPar
                                             className="w-8 h-8 rounded-full bg-black/50"
                                         />
                                         <div>
-                                            <div className="text-white font-medium text-sm">{p.user?.displayName}</div>
+                                            <div className="text-white font-medium text-sm">{p.user?.displayName}
+                                                {p.user?.discordId && (
+                                                    <a
+                                                        href={`https://discord.com/users/${p.user.discordId}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="ml-2 inline-flex items-center text-xs text-gray-400 hover:text-white"
+                                                        title="Ver en Discord"
+                                                    >
+                                                        <LucideExternalLink className="w-3.5 h-3.5" />
+                                                    </a>
+                                                )}
+                                            </div>
                                             <div className="text-gray-500 text-xs">@{p.user?.username}</div>
                                         </div>
                                     </div>
