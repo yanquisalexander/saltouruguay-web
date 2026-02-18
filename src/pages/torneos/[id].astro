@@ -315,7 +315,7 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
     {/* --- LAYOUT GRID --- */}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* COLUMNA PRINCIPAL (Bracket) */}
-      <div class="lg:col-span-2 space-y-8">
+      <div class="lg:col-span-2 space-y-8 hidden">
         {
           tournament.status === "in_progress" ||
           tournament.status === "completed" ? (
