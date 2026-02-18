@@ -482,6 +482,7 @@ export const tournaments = {
                 playersPerTeam: z.number().min(2).max(50).optional(),
                 teamNamePrefix: z.string().max(30).optional(),
                 maxTeams: z.number().min(2).max(256).optional(),
+                showParticipants: z.boolean().optional(),
             }).optional(),
         }),
         handler: async (input, context) => {

@@ -2,8 +2,8 @@
 import Layout from "@/layouts/Layout.astro";
 import TournamentBracket from "@/components/tournaments/TournamentBracket";
 import { client as db } from "@/db/client";
-import { TournamentsTable } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { TournamentsTable, TournamentParticipantsTable } from "@/db/schema";
+import { eq, and, count } from "drizzle-orm";
 import { getSession } from "auth-astro/server";
 import {
   LucideUsers,
@@ -15,6 +15,7 @@ import {
   LucideSettings,
   LucideSwords,
   LucideExternalLink,
+  LucideLock,
 } from "lucide-preact";
 
 const { id } = Astro.params;
@@ -27,18 +28,13 @@ if (isNaN(tournamentId)) {
 const session = await getSession(Astro.request);
 const user = session?.user;
 
-// Verificación de Rol de Administrador
-const isAdmin = user?.admin === true;
+// Verificación de Rol de Administrador (compatibilidad: admin | isAdmin)
+const isAdmin = (user as any)?.admin === true || (user as any)?.isAdmin === true;
 
-// Fetch tournament with relations
+// Fetch tournament (without participant details by default)
 const tournament = await db.query.TournamentsTable.findFirst({
   where: eq(TournamentsTable.id, tournamentId),
   with: {
-    participants: {
-      with: {
-        user: true,
-      },
-    },
     matches: true,
     creator: true,
   },
@@ -48,22 +44,48 @@ if (!tournament) {
   return Astro.redirect("/404");
 }
 
-const isJoined =
-  user && tournament.participants.some((p) => p.userId === Number(user.id));
-const currentParticipants = tournament.participants.length;
+// Decide si mostrar participantes públicamente (default: true)
+const showParticipants = (tournament.config as any)?.showParticipants ?? true;
+
+let participants: any[] = [];
+let currentParticipants = 0;
+let isJoined = false;
+
+if (showParticipants || isAdmin) {
+  participants = await db.query.TournamentParticipantsTable.findMany({
+    where: eq(TournamentParticipantsTable.tournamentId, tournamentId),
+    with: { user: true },
+  });
+  currentParticipants = participants.length;
+  if (user) isJoined = participants.some((p) => p.userId === Number(user.id));
+} else {
+  // Only fetch counts / joined flag (do NOT fetch participant details)
+  const countRes = await db
+    .select({ count: count() })
+    .from(TournamentParticipantsTable)
+    .where(eq(TournamentParticipantsTable.tournamentId, tournamentId));
+  currentParticipants = countRes[0].count;
+
+  if (user) {
+    const existing = await db.query.TournamentParticipantsTable.findFirst({
+      where: and(
+        eq(TournamentParticipantsTable.tournamentId, tournamentId),
+        eq(TournamentParticipantsTable.userId, Number(user.id))
+      ),
+    });
+    isJoined = !!existing;
+  }
+}
+
+// Attach participants only when allowed
+const participantsList: any[] = participants;
 const maxParticipants = tournament.maxParticipants || Infinity;
 
 // Permisos
-const canJoin =
-  user &&
-  !!user.discordId &&
-  !isJoined &&
-  tournament.status === "registration" &&
-  currentParticipants < maxParticipants;
+const canJoin = user && !!user.discordId && !isJoined && tournament.status === "registration" && currentParticipants < maxParticipants;
 
 // Solo ADMINS pueden iniciar el torneo
-const canStart =
-  isAdmin && tournament.status === "registration" && currentParticipants >= 2;
+const canStart = isAdmin && tournament.status === "registration" && currentParticipants >= 2;
 
 const isFull = currentParticipants >= maxParticipants;
 
@@ -303,7 +325,7 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
                 <TournamentBracket
                   client:visible
                   matches={tournament.matches as any}
-                  participants={tournament.participants as any}
+                  participants={participantsList as any}
                   currentUserId={user ? Number(user.id) : undefined}
                   isCreator={isAdmin}
                 />
@@ -349,42 +371,62 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
             class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar"
           >
             {
-              tournament.participants.length > 0 ? (
-                tournament.participants.map((p) => (
-                  <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/20 transition-colors">
-                    <img
-                      src={
-                        p.user?.avatar ||
-                        `https://ui-avatars.com/api/?name=${p.user?.username}`
-                      }
-                      alt={p.user?.username}
-                      class="size-10 rounded-lg object-cover bg-black"
-                    />
-                    <div class="overflow-hidden">
-                      <p class="text-white font-bold text-sm truncate">
-                        {p.user?.displayName || p.user?.username}
-                        {p.user?.discordId && (
-                          <a
-                            href={`https://discord.com/users/${p.user.discordId}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="ml-2 inline-flex items-center text-xs text-gray-400 hover:text-white"
-                            title="Ver en Discord"
-                          >
-                            <LucideExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                      </p>
-                      <p class="text-xs text-white/40 truncate">
-                        @{p.user?.username}
-                      </p>
+              (!showParticipants && !isAdmin) ? (
+                <div class="space-y-3">
+                  {Array.from({ length: Math.min(6, Math.max(3, currentParticipants || 3)) }).map(() => (
+                    <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 transition-colors filter blur-sm opacity-60">
+                      <div class="w-10 h-10 rounded-lg bg-white/10" />
+                      <div class="flex-1 min-w-0">
+                        <div class="h-3 bg-white/10 rounded mb-2 w-1/2"></div>
+                        <div class="h-3 bg-white/10 rounded w-1/4"></div>
+                      </div>
+                      <LucideLock className="text-gray-400" />
                     </div>
+                  ))}
+
+                  <div class="text-center text-xs text-gray-400 mt-3 flex items-center justify-center gap-2">
+                    <LucideLock className="w-4 h-4" />
+                    <span>La lista de participantes está privada</span>
                   </div>
-                ))
-              ) : (
-                <div class="text-center py-8 text-white/30 text-sm italic">
-                  Sé el primero en inscribirte.
                 </div>
+              ) : (
+                participantsList.length > 0 ? (
+                  participantsList.map((p: any) => (
+                    <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-white/20 transition-colors">
+                      <img
+                        src={
+                          p.user?.avatar ||
+                          `https://ui-avatars.com/api/?name=${p.user?.username}`
+                        }
+                        alt={p.user?.username}
+                        class="size-10 rounded-lg object-cover bg-black"
+                      />
+                      <div class="overflow-hidden">
+                        <p class="text-white font-bold text-sm truncate">
+                          {p.user?.displayName || p.user?.username}
+                          {p.user?.discordId && (
+                            <a
+                              href={`https://discord.com/users/${p.user.discordId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="ml-2 inline-flex items-center text-xs text-gray-400 hover:text-white"
+                              title="Ver en Discord"
+                            >
+                              <LucideExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                        </p>
+                        <p class="text-xs text-white/40 truncate">
+                          @{p.user?.username}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div class="text-center py-8 text-white/30 text-sm italic">
+                    Sé el primero en inscribirte.
+                  </div>
+                )
               )
             }
           </div>
@@ -411,7 +453,7 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
               <span class="text-white font-bold flex items-center gap-2">
                 {tournament.creator.displayName}
                 {
-                  tournament.creator.role === "admin" && (
+                  tournament.creator.admin === true && (
                     <LucideShieldAlert size={12} class="text-red-500" />
                   )
                 }

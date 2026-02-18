@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { toast } from 'sonner';
-import { LucideSave, LucideTrash2, LucideAlertTriangle, LucideUpload, LucideImage, LucideX, LucideUsers, LucideShield } from 'lucide-preact';
+import { LucideSave, LucideTrash2, LucideAlertTriangle, LucideUpload, LucideImage, LucideX, LucideUsers, LucideShield, LucideLock } from 'lucide-preact';
 import type { Tournament } from "@/types/tournaments";
 
 interface Props {
@@ -26,6 +26,8 @@ export default function TournamentSettingsForm({ tournament }: Props) {
         teamNamePrefix: (tournament.config as any)?.teamNamePrefix ?? 'Equipo',
         maxTeams: (tournament.config as any)?.maxTeams ?? '',
     });
+
+    const [participantsVisible, setParticipantsVisible] = useState<boolean>((tournament.config as any)?.showParticipants ?? true);
 
     const handleImageUpload = async (e: Event) => {
         const input = e.target as HTMLInputElement;
@@ -99,6 +101,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                     playersPerTeam: teamConfig.playersPerTeam,
                     teamNamePrefix: teamConfig.teamNamePrefix || 'Equipo',
                     maxTeams: teamConfig.maxTeams ? parseInt(teamConfig.maxTeams as string) : undefined,
+                    showParticipants: participantsVisible,
                 },
             });
 
@@ -266,6 +269,23 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                             onInput={(e: any) => setFormData(prev => ({ ...prev, maxParticipants: e.target.value }))}
                         />
                         <p className="text-xs text-gray-500">Dejar vacío para no tener límite de inscriptos.</p>
+                    </div>
+                </div>
+
+                {/* Participant visibility */}
+                <div className="space-y-3">
+                    <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                        <LucideLock className="w-4 h-4" />
+                        Mostrar lista de participantes públicamente
+                    </label>
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs text-gray-500">Si desactivas esto, los visitantes no verán los nombres de los jugadores (aparecerán placeholders). Los administradores siempre verán la lista completa.</p>
+                        <button
+                            type="button"
+                            onClick={() => setParticipantsVisible(prev => !prev)}
+                            className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${participantsVisible ? 'bg-green-600' : 'bg-white/10'}`}>
+                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${participantsVisible ? 'translate-x-6' : ''}`} />
+                        </button>
                     </div>
                 </div>
 
