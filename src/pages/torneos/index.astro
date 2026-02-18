@@ -146,17 +146,30 @@ const tournaments = tournamentsData.map((t) => {
     </span>
   </div>
 
-  <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-    {[
-      "La 141",
+  ---
+  // Lista de escudos posibles
+  const shields = ["🛡️","⚔️","🏆","🔥","🚀","🎯","💠","⭐"]
+
+  const teams = [
+    "La 141",
       "SS",
       "Fuerza Torales"
-    ].map((team) => (
+  ]
+
+  // Función para obtener escudo random
+  const getRandomShield = () => shields[Math.floor(Math.random() * shields.length)]
+  ---
+
+  <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    {teams.map((team) => (
       <div class="group relative border border-white/10 rounded-2xl p-4 bg-white/[0.02] hover:bg-white/[0.05] transition">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center text-white/60 font-bold">
-            {team.charAt(0)}
+          
+          {/* Escudo random */}
+          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-lg">
+            {getRandomShield()}
           </div>
+
           <span class="text-white font-semibold tracking-wide">
             {team}
           </span>
@@ -167,6 +180,7 @@ const tournaments = tournamentsData.map((t) => {
     ))}
   </div>
 </section>
+
 
     {/* --- LISTA DE TORNEOS --- */}
     <main>
