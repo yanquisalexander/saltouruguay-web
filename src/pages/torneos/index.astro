@@ -1,29 +1,17 @@
 {/* --- EQUIPOS CONFIRMADOS --- */}
-<section class="mb-16 relative">
+<section class="mb-14">
 
-  {/* Glow decorativo */}
-  <div class="absolute inset-0 -z-10 flex justify-center">
-    <div class="w-[600px] h-[200px] bg-violet-600/10 blur-[120px] rounded-full"></div>
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-2xl md:text-3xl font-anton text-white uppercase tracking-wide">
+      Equipos Confirmados
+    </h2>
+
+    <span class="text-xs text-white/40 uppercase tracking-wider">
+      Torneo Rocket League
+    </span>
   </div>
 
-  {/* Header */}
-  <div class="flex items-center justify-between mb-8">
-    <div>
-      <h2 class="text-3xl md:text-4xl font-anton text-white uppercase tracking-wide drop-shadow-lg">
-        ⚔️ Equipos Confirmados
-      </h2>
-      <p class="text-white/40 text-sm mt-1 uppercase tracking-wider">
-        Torneo Rocket League • Lineup oficial
-      </p>
-    </div>
-
-    <div class="px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-bold uppercase tracking-widest">
-      11 equipos
-    </div>
-  </div>
-
-  {/* Grid */}
-  <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+  <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 
     {[
       "La 141",
@@ -38,25 +26,22 @@
       "MATE & TACO",
       "Fuerza Torales"
     ].map((team) => (
-      <div class="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-[1px] hover:scale-[1.03] transition duration-300">
+      <div class="group relative rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] transition p-4">
 
-        {/* Glow hover */}
-        <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-gradient-to-r from-violet-500/20 via-fuchsia-500/10 to-violet-500/20 blur-xl"></div>
+        <div class="flex items-center gap-3">
 
-        {/* Card */}
-        <div class="relative rounded-2xl bg-[#0b0b0e] p-4 flex items-center gap-3">
-
-          {/* Escudo estilo badge */}
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-violet-900/40">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-bold">
             {team.charAt(0)}
           </div>
 
-          {/* Nombre */}
-          <span class="text-white font-semibold tracking-wide group-hover:text-violet-300 transition">
+          <span class="text-white font-semibold tracking-wide">
             {team}
           </span>
 
         </div>
+
+        <div class="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition pointer-events-none bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10"></div>
+
       </div>
     ))}
 
