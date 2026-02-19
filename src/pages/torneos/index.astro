@@ -1,152 +1,30 @@
----
-import Layout from "@/layouts/Layout.astro";
-import TournamentList from "@/components/tournaments/TournamentList";
-import TournamentAdminControls from "@/components/tournaments/TournamentAdminControls";
-import { client as db } from "@/db/client";
-import { TournamentsTable } from "@/db/schema";
-import { desc } from "drizzle-orm";
-import { getSession } from "auth-astro/server";
-import { LucideTrophy, LucideSwords, LucideUsers } from "lucide-preact";
+{/* --- EQUIPOS CONFIRMADOS --- */}
+<section class="mb-16 relative">
 
-const session = await getSession(Astro.request);
-const user = session?.user;
-const isAdmin = user?.isAdmin === true; // Validación de seguridad
+  {/* Glow decorativo */}
+  <div class="absolute inset-0 -z-10 flex justify-center">
+    <div class="w-[600px] h-[200px] bg-violet-600/10 blur-[120px] rounded-full"></div>
+  </div>
 
-// Fetch tournaments
-const tournamentsData = await db.query.TournamentsTable.findMany({
-  where: isAdmin ? undefined : (t, { ne }) => ne(t.status, "draft"),
-  orderBy: [desc(TournamentsTable.createdAt)],
-  with: {
-    participants: true,
-  },
-});
-
-// Transform data & Calculate Stats
-let totalPlayers = 0;
-let activeTournaments = 0;
-
-const tournaments = tournamentsData.map((t) => {
-  const count = t.participants.length;
-  totalPlayers += count;
-  if (t.status === "registration" || t.status === "in_progress")
-    activeTournaments++;
-
-  return {
-    ...t,
-    participantsCount: count,
-    currentUserJoined: user
-      ? t.participants.some((p) => p.userId === Number(user.id))
-      : false,
-    participants: undefined, // Optimizacion de payload
-  };
-});
----
-
-<Layout
-  title="Torneos | Salto Uruguay"
-  description="Compite en los torneos oficiales de la comunidad."
->
-  {/* Fondo Ambiental */}
-  <div class="fixed inset-0 -z-10 bg-[#050505]">
-    <div
-      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"
-    >
+  {/* Header */}
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h2 class="text-3xl md:text-4xl font-anton text-white uppercase tracking-wide drop-shadow-lg">
+        ⚔️ Equipos Confirmados
+      </h2>
+      <p class="text-white/40 text-sm mt-1 uppercase tracking-wider">
+        Torneo Rocket League • Lineup oficial
+      </p>
     </div>
-    <div
-      class="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-900/10 blur-[150px] rounded-full pointer-events-none"
-    >
-    </div>
-    <div
-      class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[150px] rounded-full pointer-events-none"
-    >
+
+    <div class="px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-bold uppercase tracking-widest">
+      11 equipos
     </div>
   </div>
 
-  <div class="container mx-auto px-4 py-8 mt-20 min-h-screen pb-20">
-    {/* --- HEADER HERO --- */}
-    <header class="relative mb-12">
-      <div class="flex flex-col md:flex-row justify-between items-end gap-6">
-        {/* Título y Stats */}
-        <div class="flex-1">
-          <div
-            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold uppercase tracking-widest mb-4"
-          >
-            <LucideTrophy size={14} /> Competitivo Oficial
-          </div>
+  {/* Grid */}
+  <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
 
-          <h1
-            class="text-5xl md:text-7xl font-anton text-white uppercase tracking-tight mb-4 drop-shadow-xl"
-          >
-            Zona de <span
-              class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500"
-              >Torneos</span
-            >
-          </h1>
-
-          <p class="text-white/60 font-rubik text-lg max-w-xl leading-relaxed">
-            Demuestra tu habilidad, escala en el ranking y gana premios
-            exclusivos. La gloria te espera en la arena.
-          </p>
-          {/* Stats Rápidos */}
-          <div class="flex gap-6 mt-8">
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-white/5 rounded-lg text-white/50">
-                <LucideSwords size={20} />
-              </div>
-              <div>
-                <span class="block text-2xl font-bold text-white leading-none"
-                  >{activeTournaments}</span
-                >
-                <span class="text-xs text-white/40 uppercase tracking-wider"
-                  >Activos</span
-                >
-              </div>
-            </div>
-            <div class="w-px h-10 bg-white/10"></div>
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-white/5 rounded-lg text-white/50">
-                <LucideUsers size={20} />
-              </div>
-              <div>
-                <span class="block text-2xl font-bold text-white leading-none"
-                  >{totalPlayers}</span
-                >
-                <span class="text-xs text-white/40 uppercase tracking-wider"
-                  >Jugadores</span
-                >
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Acciones (Solo Admin) */}
-        {
-          isAdmin && (
-            <div class="shrink-0">
-              <TournamentAdminControls client:visible />
-            </div>
-          )
-        }
-      </div>
-    </header>
-
-    {/* Separador */}
-    <div
-      class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-12"
-    >
-    </div>
-    {/* --- EQUIPOS CONFIRMADOS --- */}
-<section class="mb-14">
-  <div class="flex items-center justify-between mb-6">
-    <h2 class="text-2xl md:text-3xl font-anton text-white uppercase tracking-wide">
-      Equipos Confirmados
-    </h2>
-    <span class="text-xs text-white/40 uppercase tracking-wider">
-      Torneo Rocket League
-    </span>
-  </div>
-
-  <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
     {[
       "La 141",
       "SS",
@@ -160,44 +38,27 @@ const tournaments = tournamentsData.map((t) => {
       "MATE & TACO",
       "Fuerza Torales"
     ].map((team) => (
-      <div class="group relative border border-white/10 rounded-2xl p-4 bg-white/[0.02] hover:bg-white/[0.05] transition">
-        <div class="flex items-center gap-2">
-          
-          {/* Escudo automático */}
-          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-bold">
+      <div class="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-[1px] hover:scale-[1.03] transition duration-300">
+
+        {/* Glow hover */}
+        <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-gradient-to-r from-violet-500/20 via-fuchsia-500/10 to-violet-500/20 blur-xl"></div>
+
+        {/* Card */}
+        <div class="relative rounded-2xl bg-[#0b0b0e] p-4 flex items-center gap-3">
+
+          {/* Escudo estilo badge */}
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-violet-900/40">
             {team.charAt(0)}
           </div>
 
-          <span class="text-white font-semibold tracking-wide">
+          {/* Nombre */}
+          <span class="text-white font-semibold tracking-wide group-hover:text-violet-300 transition">
             {team}
           </span>
-        </div>
 
-        <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition pointer-events-none bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10"></div>
+        </div>
       </div>
     ))}
+
   </div>
 </section>
-
-    {/* --- LISTA DE TORNEOS --- */}
-    <main>
-      {
-        tournaments.length > 0 ? (
-          <TournamentList client:load tournaments={tournaments as any} />
-        ) : (
-          <div class="flex flex-col items-center justify-center py-20 text-center border border-white/5 rounded-3xl bg-white/[0.02]">
-            <div class="bg-white/5 p-6 rounded-full mb-4">
-              <LucideTrophy size={48} class="text-white/20" />
-            </div>
-            <h3 class="text-xl font-bold text-white mb-2">
-              No hay torneos activos
-            </h3>
-            <p class="text-white/50">
-              Mantente atento a las próximas competiciones.
-            </p>
-          </div>
-        )
-      }
-    </main>
-  </div>
-</Layout>
