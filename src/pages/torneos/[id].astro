@@ -102,6 +102,15 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
   month: "long",
   day: "numeric",
 });
+
+// Nuevo: featured + external challonge id (columna DB, fallback a config)
+const isFeatured = !!(
+  tournament.featured ?? (tournament.config as any)?.featured
+);
+const externalChallongeBracketId =
+  tournament.externalChallongeBracketId ??
+  (tournament.config as any)?.externalChallongeBracketId ??
+  null;
 ---
 
 <Layout title={`${tournament.name} | Torneos`}>
@@ -197,9 +206,16 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
           </div>
 
           <h1
-            class="text-4xl md:text-6xl font-anton text-white uppercase tracking-wide leading-none drop-shadow-lg"
+            class={`text-4xl md:${isFeatured ? "text-7xl" : "text-6xl"} font-anton text-white uppercase tracking-wide leading-none drop-shadow-lg`}
           >
             {tournament.name}
+            {
+              isFeatured && (
+                <span class="ml-4 text-yellow-400 text-sm font-bold px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-400/20 uppercase">
+                  Destacado
+                </span>
+              )
+            }
           </h1>
 
           <p
@@ -315,7 +331,7 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
     {/* --- LAYOUT GRID --- */}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* COLUMNA PRINCIPAL (Bracket) */}
-      <div class="lg:col-span-2 space-y-8 hidden">
+      <div class="lg:col-span-2 space-y-8">
         {
           tournament.status === "in_progress" ||
           tournament.status === "completed" ? (
@@ -329,13 +345,24 @@ const startDate = new Date(tournament.createdAt).toLocaleDateString("es-UY", {
                 </span>
               </div>
               <div class="p-6 overflow-x-auto custom-scrollbar">
-                <TournamentBracket
-                  client:visible
-                  matches={tournament.matches as any}
-                  participants={participantsList as any}
-                  currentUserId={user ? Number(user.id) : undefined}
-                  isCreator={isAdmin}
-                />
+                {externalChallongeBracketId ? (
+                  <div class="w-full h-[700px] rounded-lg overflow-hidden border border-white/5 bg-black/20">
+                    <iframe
+                      src={`https://challonge.com/es/${externalChallongeBracketId}/module`}
+                      class="w-full h-full"
+                      frameborder="0"
+                      allowfullscreen
+                    />
+                  </div>
+                ) : (
+                  <TournamentBracket
+                    client:visible
+                    matches={tournament.matches as any}
+                    participants={participantsList as any}
+                    currentUserId={user ? Number(user.id) : undefined}
+                    isCreator={isAdmin}
+                  />
+                )}
               </div>
             </div>
           ) : (

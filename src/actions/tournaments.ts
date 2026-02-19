@@ -477,6 +477,8 @@ export const tournaments = {
             status: z.enum(['draft', 'registration', 'in_progress', 'completed']).optional(),
             maxParticipants: z.number().nullable().optional(),
             startDate: z.coerce.date().optional(),
+            featured: z.boolean().optional(),
+            externalChallongeBracketId: z.string().max(255).nullable().optional(),
             config: z.object({
                 teamsEnabled: z.boolean().optional(),
                 playersPerTeam: z.number().min(2).max(50).optional(),
@@ -511,6 +513,11 @@ export const tournaments = {
                 ? { ...existingConfig, ...input.config }
                 : existingConfig;
 
+            const updatedFeatured = input.featured !== undefined ? input.featured : (tournament as any).featured;
+            const updatedExternalChallonge = input.externalChallongeBracketId !== undefined
+                ? input.externalChallongeBracketId
+                : (tournament as any).externalChallongeBracketId;
+
             await db.update(TournamentsTable)
                 .set({
                     name: input.name,
@@ -518,6 +525,8 @@ export const tournaments = {
                     status: input.status,
                     maxParticipants: input.maxParticipants,
                     startDate: input.startDate,
+                    featured: updatedFeatured,
+                    externalChallongeBracketId: updatedExternalChallonge,
                     config: mergedConfig,
                     updatedAt: new Date(),
                 })

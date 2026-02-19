@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { toast } from 'sonner';
-import { LucideSave, LucideTrash2, LucideAlertTriangle, LucideUpload, LucideImage, LucideX, LucideUsers, LucideShield, LucideLock } from 'lucide-preact';
+import { LucideSave, LucideTrash2, LucideAlertTriangle, LucideUpload, LucideImage, LucideX, LucideUsers, LucideShield, LucideLock, LucideStar } from 'lucide-preact';
 import type { Tournament } from "@/types/tournaments";
 
 interface Props {
@@ -28,6 +28,14 @@ export default function TournamentSettingsForm({ tournament }: Props) {
     });
 
     const [participantsVisible, setParticipantsVisible] = useState<boolean>((tournament.config as any)?.showParticipants ?? true);
+
+    // Nuevo: Destacado + Challonge externo (usar columna DB, con fallback a config para compatibilidad)
+    const [isFeatured, setIsFeatured] = useState<boolean>(
+        tournament.featured !== undefined ? tournament.featured : (tournament.config as any)?.featured ?? false,
+    );
+    const [externalChallongeId, setExternalChallongeId] = useState<string>(
+        tournament.externalChallongeBracketId ?? (tournament.config as any)?.externalChallongeBracketId ?? ''
+    );
 
     const handleImageUpload = async (e: Event) => {
         const input = e.target as HTMLInputElement;
@@ -85,6 +93,10 @@ export default function TournamentSettingsForm({ tournament }: Props) {
     };
 
     const handleSubmit = async (e: Event) => {
+        console.log('Submitting form with data:', {
+            ...formData,
+            teamConfig,
+        });
         e.preventDefault();
         setLoading(true);
 
@@ -96,13 +108,19 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                 startDate: formData.startDate ? new Date(formData.startDate) : undefined,
                 status: formData.status as any,
                 maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : null,
+                // Persistir también en columnas top-level (compatibilidad y búsqueda)
+                featured: isFeatured,
+                externalChallongeBracketId: externalChallongeId?.trim() || null,
                 config: {
                     teamsEnabled: teamConfig.teamsEnabled,
                     playersPerTeam: teamConfig.playersPerTeam,
                     teamNamePrefix: teamConfig.teamNamePrefix || 'Equipo',
                     maxTeams: teamConfig.maxTeams ? parseInt(teamConfig.maxTeams as string) : undefined,
                     showParticipants: participantsVisible,
-                },
+                    // Legacy / fallback
+                    featured: isFeatured,
+                    externalChallongeBracketId: externalChallongeId?.trim() || undefined,
+                } as any,
             });
 
             if (error) {
@@ -289,6 +307,36 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                     </div>
                 </div>
 
+                {/* Nuevo: Destacado + Challonge externo */}
+                <div className="space-y-3">
+                    <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                        <LucideStar className="w-4 h-4 text-yellow-400" />
+                        Destacado
+                    </label>
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs text-gray-500">Marcar como destacado hará que el torneo ocupe más espacio en el listado y tenga mayor visibilidad.</p>
+                        <button
+                            type="button"
+                            onClick={() => setIsFeatured(prev => !prev)}
+                            className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${isFeatured ? 'bg-yellow-400' : 'bg-white/10'}`}>
+                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${isFeatured ? 'translate-x-6' : ''}`} />
+                        </button>
+                    </div>
+
+                    <div className="mt-4">
+                        <label className="text-sm font-medium text-gray-300">External Challonge Bracket ID</label>
+                        <input
+                            type="text"
+                            placeholder="Ej: torneorocketleague2026"
+                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-yellow-400 outline-none"
+                            value={externalChallongeId}
+                            onInput={(e: any) => setExternalChallongeId(e.target.value)}
+                            onKeyDown={(e: KeyboardEvent) => { if ((e as any).key === 'Enter') e.preventDefault(); }}
+                        />
+                        <p className="text-xs text-gray-500">Si rellenas esto se mostrará un iframe embebido de Challonge en la página del torneo.</p>
+                    </div>
+                </div>
+
                 {/* Teams Configuration */}
                 <div className="space-y-4 p-5 bg-white/[0.03] border border-white/10 rounded-xl">
                     <div className="flex items-center justify-between">
@@ -371,6 +419,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                 <div className="pt-4 border-t border-white/5 flex justify-end">
                     <button
                         type="submit"
+
                         disabled={loading}
                         className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
                     >

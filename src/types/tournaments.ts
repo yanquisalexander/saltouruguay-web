@@ -14,6 +14,8 @@ export interface Tournament {
     startDate: Date | null;
     endDate: Date | null;
     config: any;
+    featured?: boolean;
+    externalChallongeBracketId?: string | null;
     creatorId: number;
     createdAt: Date;
     updatedAt: Date;

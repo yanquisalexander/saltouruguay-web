@@ -1225,6 +1225,8 @@ export const TournamentsTable = pgTable("tournaments", {
     startDate: timestamp("start_date"),
     endDate: timestamp("end_date"),
     config: jsonb("config").default({}), // Scoring rules, tiebreakers, etc.
+    featured: boolean("featured").notNull().default(false),
+    externalChallongeBracketId: varchar("external_challonge_bracket_id", { length: 255 }),
     creatorId: integer("creator_id").notNull().references(() => UsersTable.id),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),

@@ -42,6 +42,8 @@ export interface UpdateTournamentParams {
     endDate?: Date;
     status?: keyof typeof TournamentStatus;
     config?: Record<string, any>;
+    featured?: boolean;
+    externalChallongeBracketId?: string | null;
 }
 
 export interface TournamentParticipantParams {
@@ -102,6 +104,8 @@ export async function updateTournament(params: UpdateTournamentParams) {
                 endDate: params.endDate,
                 status: params.status ? TournamentStatus[params.status] : undefined,
                 config: params.config ? JSON.stringify(params.config) : undefined,
+                featured: params.featured,
+                externalChallongeBracketId: params.externalChallongeBracketId,
                 updatedAt: new Date(),
             })
             .where(eq(TournamentsTable.id, params.id))
