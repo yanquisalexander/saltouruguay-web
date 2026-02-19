@@ -135,6 +135,48 @@ const tournaments = tournamentsData.map((t) => {
       class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-12"
     >
     </div>
+    {/* --- EQUIPOS CONFIRMADOS --- */}
+<section class="mb-14">
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-2xl md:text-3xl font-anton text-white uppercase tracking-wide">
+      Equipos Confirmados
+    </h2>
+    <span class="text-xs text-white/40 uppercase tracking-wider">
+      Torneo Rocket League
+    </span>
+  </div>
+
+  <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    {[
+      "La 141",
+      "SS",
+      "X-FORCE",
+      "La Pasion",
+      "Principes del EH",
+      "Que Pelota Gerson",
+      "Desertores Cúbicos",
+      "Los changos",
+      "MATE & TACO",
+      "Fuerza Torales"
+    ].map((team) => (
+      <div class="group relative border border-white/10 rounded-2xl p-4 bg-white/[0.02] hover:bg-white/[0.05] transition">
+        <div class="flex items-center gap-2">
+          
+          {/* Escudo automático */}
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-bold">
+            {team.charAt(0)}
+          </div>
+
+          <span class="text-white font-semibold tracking-wide">
+            {team}
+          </span>
+        </div>
+
+        <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition pointer-events-none bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10"></div>
+      </div>
+    ))}
+  </div>
+</section>
 
     {/* --- LISTA DE TORNEOS --- */}
     <main>

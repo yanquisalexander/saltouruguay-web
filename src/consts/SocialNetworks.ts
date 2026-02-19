@@ -27,7 +27,7 @@ export const SOCIAL_NETWORKS = [
     },
     {
         name: 'Discord',
-        url: 'https://discord.gg/pdAk3QdqCK',
+        url: 'https://discord.gg/XwHSRRwnzS',
         icon: DiscordIcon,
     },
     {
