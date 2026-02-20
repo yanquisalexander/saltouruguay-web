@@ -155,7 +155,7 @@ const featuredTeams = Array.from(teamsByName.entries())
         }
       </main>
 
-      {/* EQUIPOS ESTILO BADGE */}
+      {/* EQUIPOS ESTILO BADGE EN GRID */}
 {
   featuredTeamsTournament && featuredTeams.length > 0 && (
     <section class="mb-14">
@@ -165,29 +165,30 @@ const featuredTeams = Array.from(teamsByName.entries())
         </h2>
       </div>
 
-      <div class="space-y-4">
+      {/* GRID */}
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {featuredTeams.map((team) => (
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-full border border-white/10 bg-white/[0.02] px-6 py-4 hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
+          <div class="flex items-center justify-between rounded-full border border-white/10 bg-white/[0.02] px-4 py-3 hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
 
-            {/* IZQUIERDA — EQUIPO */}
-            <div class="flex items-center gap-4 min-w-0">
-              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center flex-shrink-0">
-                <LucideUsers size={18} class="text-white" />
+            {/* TEAM */}
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center flex-shrink-0">
+                <LucideUsers size={16} class="text-white" />
               </div>
 
-              <h3 class="text-white font-bold text-lg md:text-xl truncate">
+              <h3 class="text-white font-semibold text-sm truncate">
                 {team.name}
               </h3>
             </div>
 
-            {/* DERECHA — JUGADORES */}
-            <div class="flex flex-wrap md:flex-nowrap items-start md:items-center gap-x-6 gap-y-2">
+            {/* PLAYERS */}
+            <div class="flex items-center gap-4">
               {team.players.map((player) => (
-                <div class="text-left md:text-right">
-                  <div class="text-white text-sm font-semibold leading-tight">
+                <div class="text-right">
+                  <div class="text-orange-400 text-xs font-semibold leading-tight">
                     {player.displayName}
                   </div>
-                  <div class="text-white/40 text-xs leading-tight">
+                  <div class="text-white/40 text-[10px] leading-tight">
                     @{player.username}
                   </div>
                 </div>
