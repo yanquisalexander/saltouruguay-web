@@ -170,18 +170,18 @@ const featuredTeams = Array.from(teamsByName.entries())
           <div class="flex items-center justify-between rounded-full border border-white/10 bg-white/[0.02] px-4 py-3 hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
 
             {/* TEAM */}
-            <div class="flex items-center gap-3 min-w-0">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
               <div class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center flex-shrink-0">
                 <LucideUsers size={16} class="text-white" />
               </div>
 
-              <h3 class="text-white font-semibold text-sm truncate">
+              <h3 class="text-white font-semibold text-base truncate">
                 {team.name}
               </h3>
             </div>
 
             {/* PLAYERS EN COLUMNA */}
-            <div class="flex flex-col items-end gap-1">
+            <div class="flex flex-col items-end gap-1 shrink-0 ml-3">
               {team.players.map((player) => (
                 <div class="text-right">
                   <div class="text-orange-400 text-xs font-semibold leading-tight">
