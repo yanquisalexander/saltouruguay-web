@@ -135,6 +135,27 @@ const tournaments = tournamentsData.map((t) => {
       class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-12"
     >
     </div>
+    {/* --- LISTA DE TORNEOS --- */}
+    <main>
+      {
+        tournaments.length > 0 ? (
+          <TournamentList client:load tournaments={tournaments as any} />
+        ) : (
+          <div class="flex flex-col items-center justify-center py-20 text-center border border-white/5 rounded-3xl bg-white/[0.02]">
+            <div class="bg-white/5 p-6 rounded-full mb-4">
+              <LucideTrophy size={48} class="text-white/20" />
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">
+              No hay torneos activos
+            </h3>
+            <p class="text-white/50">
+              Mantente atento a las próximas competiciones.
+            </p>
+          </div>
+        )
+      }
+    </main>
+
     {/* --- EQUIPOS CONFIRMADOS --- */}
 <section class="mb-16">
 
@@ -219,44 +240,19 @@ const tournaments = tournamentsData.map((t) => {
 
   </div>
 
-  {/* DIAGRAMA DESTACADO */}
-  <div class="flex flex-col items-center">
+  {/* --- DIAGRAMA DEL TORNEO --- */}
+<section class="tournament-diagram">
 
-    <span class="text-xs md:text-sm text-white/50 uppercase tracking-widest mb-4">
-      DIAGRAMA DE TORNEO
-    </span>
+  <h2 class="diagram-title">📊 Formato de Competencia</h2>
 
-    <div class="group relative w-full max-w-5xl rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden hover:border-violet-400/40 transition">
-      <img
-        src="/images/Diagrama.webp"
-        alt="Diagrama del torneo"
-        class="w-full h-auto object-contain"
-      />
-    </div>
-
+  <div class="diagram-wrapper">
+    <img 
+      src="/images/diagrama.png" 
+      alt="Diagrama del torneo"
+    />
   </div>
 
 </section>
 
-    {/* --- LISTA DE TORNEOS --- */}
-    <main>
-      {
-        tournaments.length > 0 ? (
-          <TournamentList client:load tournaments={tournaments as any} />
-        ) : (
-          <div class="flex flex-col items-center justify-center py-20 text-center border border-white/5 rounded-3xl bg-white/[0.02]">
-            <div class="bg-white/5 p-6 rounded-full mb-4">
-              <LucideTrophy size={48} class="text-white/20" />
-            </div>
-            <h3 class="text-xl font-bold text-white mb-2">
-              No hay torneos activos
-            </h3>
-            <p class="text-white/50">
-              Mantente atento a las próximas competiciones.
-            </p>
-          </div>
-        )
-      }
-    </main>
   </div>
 </Layout>
