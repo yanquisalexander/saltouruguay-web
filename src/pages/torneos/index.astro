@@ -171,7 +171,23 @@ const tournaments = tournamentsData.map((t) => {
     </div>
 
     <div class="hidden md:block px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-bold uppercase tracking-widest">
-       15 equipos
+       {[
+  "La 141",
+  "PUSKAS",
+  "YEN",
+  "Tóxicos a la pala",
+  "Principes del EH",
+  "Que Pelota Gerson",
+  "Desertores Cúbicos",
+  "Los changos",
+  "Los sin pelo",
+  "VasACorrer",
+  "Team FZBR",
+  "Therian & Furious",
+  "MATE & TACO",
+  "Fuerza Torales",
+  "Anti Therian"
+].length} equipos
     </div>
   </div>
 
@@ -198,7 +214,7 @@ const tournaments = tournamentsData.map((t) => {
       <div class="group relative rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-4 transition duration-300 hover:border-violet-400/40 hover:bg-white/[0.06]">
 
         {/* Glow suave */}
-        <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition pointer-events-none bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10"></div>
+        <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition pointer-events-none bg-gradient-to-r from-violet-500/20 via-fuchsia-500/20 to-cyan-500/20 blur-xl"></div>
 
         <div class="relative flex items-center gap-3">
 
@@ -241,7 +257,7 @@ const tournaments = tournamentsData.map((t) => {
   </div>
 
   {/* --- DIAGRAMA DEL TORNEO --- */}
-<section class="tournament-diagram">
+<section class="tournament-diagram mb-20">
 
   <h2 class="diagram-title">📊 Formato de Competencia</h2>
 
@@ -256,3 +272,28 @@ const tournaments = tournamentsData.map((t) => {
 
   </div>
 </Layout>
+<style>
+.tournament-diagram {
+  margin-top: 3rem;
+}
+
+.diagram-title {
+  text-align: center;
+  font-size: 1.9rem;
+  font-weight: 800;
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.5px;
+}
+
+.diagram-wrapper {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.diagram-wrapper img {
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  display: block;
+}
+</style>
