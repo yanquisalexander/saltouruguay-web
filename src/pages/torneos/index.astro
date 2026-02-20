@@ -155,65 +155,51 @@ const featuredTeams = Array.from(teamsByName.entries())
         }
       </main>
 
-      {/* EQUIPOS */}
-      {
-        featuredTeamsTournament && featuredTeams.length > 0 && (
-          <section class="mb-16">
-            <div class="flex items-center justify-between mb-6">
-              <div>
-                <h2 class="text-3xl font-anton text-white mb-2">
-                  {featuredTeamsTournament.name} - Equipos Confirmados
-                </h2>
+      {/* EQUIPOS ESTILO BADGE */}
+{
+  featuredTeamsTournament && featuredTeams.length > 0 && (
+    <section class="mb-14">
+      <div class="mb-6">
+        <h2 class="text-2xl md:text-3xl font-anton text-white">
+          {featuredTeamsTournament.name} - Equipos Confirmados
+        </h2>
+      </div>
+
+      <div class="space-y-4">
+        {featuredTeams.map((team) => (
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-full border border-white/10 bg-white/[0.02] px-6 py-4 hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
+
+            {/* IZQUIERDA — EQUIPO */}
+            <div class="flex items-center gap-4 min-w-0">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center flex-shrink-0">
+                <LucideUsers size={18} class="text-white" />
               </div>
+
+              <h3 class="text-white font-bold text-lg md:text-xl truncate">
+                {team.name}
+              </h3>
             </div>
 
-            <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {featuredTeams.map((team) => (
-                <div class="rounded-xl border border-white/10 bg-white/[0.02] p-5 hover:border-white/20 hover:bg-white/[0.04] transition-all group">
-                  <div class="flex items-center gap-2 mb-4 pb-3 border-b border-white/10">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center flex-shrink-0">
-                      <LucideUsers size={16} class="text-white" />
-                    </div>
-                    <h3 class="text-white font-bold text-lg truncate group-hover:text-violet-400 transition-colors">
-                      {team.name}
-                    </h3>
+            {/* DERECHA — JUGADORES */}
+            <div class="flex flex-wrap md:flex-nowrap items-start md:items-center gap-x-6 gap-y-2">
+              {team.players.map((player) => (
+                <div class="text-left md:text-right">
+                  <div class="text-white text-sm font-semibold leading-tight">
+                    {player.displayName}
                   </div>
-
-                  <div class="space-y-2">
-                    {team.players.map((player) => (
-                      <div class="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 transition-colors">
-                        <img
-                          src={
-                            player.avatar ||
-                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${player.username}`
-                          }
-                          alt={player.displayName}
-                          class="w-8 h-8 rounded-full border-2 border-white/10"
-                        />
-                        <div class="flex-1 min-w-0">
-                          <div class="text-white text-sm font-medium truncate">
-                            {player.displayName}
-                          </div>
-                          <div class="text-white/40 text-xs truncate">
-                            @{player.username}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div class="mt-3 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-                    <span class="text-white/50">Jugadores</span>
-                    <span class="px-2 py-1 bg-white/5 rounded-full text-white font-medium">
-                      {team.players.length}
-                    </span>
+                  <div class="text-white/40 text-xs leading-tight">
+                    @{player.username}
                   </div>
                 </div>
               ))}
             </div>
-          </section>
-        )
-      }
+
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
 
       {/* DIAGRAMA */}
       <section class="tournament-diagram mb-20">
