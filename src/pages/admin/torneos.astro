@@ -77,7 +77,14 @@ const tournaments = await db.query.TournamentsTable.findMany({
                       )}
                     </div>
                     <div>
-                      <div class="font-bold text-white">{tournament.name}</div>
+                      <div class="font-bold text-white flex items-center gap-2">
+                        {tournament.name}
+                        {tournament.showTeamsFeatured && (
+                          <span class="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs font-bold rounded border border-blue-500/30" title="Equipos destacados en página principal">
+                            EQUIPOS DESTACADOS
+                          </span>
+                        )}
+                      </div>
                       <div class="text-xs text-gray-500">
                         ID: {tournament.id}
                       </div>

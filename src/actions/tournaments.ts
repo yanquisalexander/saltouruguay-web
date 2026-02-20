@@ -479,6 +479,7 @@ export const tournaments = {
             startDate: z.coerce.date().optional(),
             featured: z.boolean().optional(),
             externalChallongeBracketId: z.string().max(255).nullable().optional(),
+            showTeamsFeatured: z.boolean().optional(),
             config: z.object({
                 teamsEnabled: z.boolean().optional(),
                 playersPerTeam: z.number().min(2).max(50).optional(),
@@ -508,6 +509,13 @@ export const tournaments = {
                 throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
             }
 
+            // If enabling showTeamsFeatured, disable it for all other tournaments first
+            if (input.showTeamsFeatured === true) {
+                await db.update(TournamentsTable)
+                    .set({ showTeamsFeatured: false })
+                    .where(sql`${TournamentsTable.id} != ${input.tournamentId}`);
+            }
+
             const existingConfig = (tournament.config as Record<string, any>) ?? {};
             const mergedConfig = input.config !== undefined
                 ? { ...existingConfig, ...input.config }
@@ -517,6 +525,9 @@ export const tournaments = {
             const updatedExternalChallonge = input.externalChallongeBracketId !== undefined
                 ? input.externalChallongeBracketId
                 : (tournament as any).externalChallongeBracketId;
+            const updatedShowTeamsFeatured = input.showTeamsFeatured !== undefined
+                ? input.showTeamsFeatured
+                : (tournament as any).showTeamsFeatured ?? false;
 
             await db.update(TournamentsTable)
                 .set({
@@ -527,6 +538,7 @@ export const tournaments = {
                     startDate: input.startDate,
                     featured: updatedFeatured,
                     externalChallongeBracketId: updatedExternalChallonge,
+                    showTeamsFeatured: updatedShowTeamsFeatured,
                     config: mergedConfig,
                     updatedAt: new Date(),
                 })

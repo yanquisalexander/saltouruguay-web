@@ -463,6 +463,13 @@
       "when": 1771463780254,
       "tag": "0065_lively_thunderbird",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1771604278264,
+      "tag": "0066_overjoyed_sharon_ventura",
+      "breakpoints": true
     }
   ]
 }

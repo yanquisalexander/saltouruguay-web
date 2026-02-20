@@ -16,6 +16,7 @@ export interface Tournament {
     config: any;
     featured?: boolean;
     externalChallongeBracketId?: string | null;
+    showTeamsFeatured?: boolean;
     creatorId: number;
     createdAt: Date;
     updatedAt: Date;

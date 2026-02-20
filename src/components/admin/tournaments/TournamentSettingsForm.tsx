@@ -36,6 +36,9 @@ export default function TournamentSettingsForm({ tournament }: Props) {
     const [externalChallongeId, setExternalChallongeId] = useState<string>(
         tournament.externalChallongeBracketId ?? (tournament.config as any)?.externalChallongeBracketId ?? ''
     );
+    const [showTeamsFeatured, setShowTeamsFeatured] = useState<boolean>(
+        tournament.showTeamsFeatured ?? false
+    );
 
     const handleImageUpload = async (e: Event) => {
         const input = e.target as HTMLInputElement;
@@ -111,6 +114,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                 // Persistir también en columnas top-level (compatibilidad y búsqueda)
                 featured: isFeatured,
                 externalChallongeBracketId: externalChallongeId?.trim() || null,
+                showTeamsFeatured: showTeamsFeatured,
                 config: {
                     teamsEnabled: teamConfig.teamsEnabled,
                     playersPerTeam: teamConfig.playersPerTeam,
@@ -334,6 +338,35 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                             onKeyDown={(e: KeyboardEvent) => { if ((e as any).key === 'Enter') e.preventDefault(); }}
                         />
                         <p className="text-xs text-gray-500">Si rellenas esto se mostrará un iframe embebido de Challonge en la página del torneo.</p>
+                    </div>
+
+                    <div className="mt-6 pt-6 border-t border-white/10">
+                        <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                            <LucideUsers className="w-4 h-4 text-blue-400" />
+                            Mostrar Equipos de Forma Destacada
+                        </label>
+                        <div className="flex items-center justify-between mt-3">
+                            <p className="text-xs text-gray-500">
+                                Activa esto para mostrar los equipos de este torneo en la página principal con avatares y diseño mejorado.
+                                <strong className="text-yellow-400"> Solo un torneo puede tener esto activo a la vez.</strong>
+                                Al activarlo, se desactivará automáticamente en otros torneos.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => setShowTeamsFeatured(prev => !prev)}
+                                className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${showTeamsFeatured ? 'bg-blue-500' : 'bg-white/10'}`}>
+                                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${showTeamsFeatured ? 'translate-x-6' : ''}`} />
+                            </button>
+                        </div>
+                        {showTeamsFeatured && (
+                            <div className="mt-3 flex items-start gap-3 p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg">
+                                <LucideUsers className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                                <p className="text-xs text-blue-300">
+                                    <strong>Equipos destacados activos:</strong> Los equipos de este torneo se mostrarán en la página principal
+                                    con un diseño especial que incluye avatares de los jugadores y estadísticas del equipo.
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

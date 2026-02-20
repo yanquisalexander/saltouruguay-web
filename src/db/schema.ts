@@ -1227,6 +1227,7 @@ export const TournamentsTable = pgTable("tournaments", {
     config: jsonb("config").default({}), // Scoring rules, tiebreakers, etc.
     featured: boolean("featured").notNull().default(false),
     externalChallongeBracketId: varchar("external_challonge_bracket_id", { length: 255 }),
+    showTeamsFeatured: boolean("show_teams_featured").notNull().default(false), // Only one tournament can have this true at a time
     creatorId: integer("creator_id").notNull().references(() => UsersTable.id),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
