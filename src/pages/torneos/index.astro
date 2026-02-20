@@ -228,18 +228,24 @@ const tournaments = tournamentsData.map((t) => {
         />
       </div>
 
-      {/* Sponsor 3 NUEVO GRANDE */}
-<div class="group relative w-40 h-40 md:w-52 md:h-52 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center hover:border-violet-400/40 transition overflow-hidden">
-  <img
-    src="/images/Diagrama.webp"
-    alt="Sponsor 3"
-    class="w-full h-full object-contain opacity-95 group-hover:opacity-100 transition"
-  />
-</div>
+      {/* Sponsor 3 — DIAGRAMA */}
+<div class="flex flex-col items-center">
 
-    </div>
+  {/* Título */}
+  <span class="text-xs md:text-sm text-white/50 uppercase tracking-widest mb-3">
+    DIAGRAMA DE TORNEO
+  </span>
 
+  {/* Contenedor más grande */}
+  <div class="group relative w-52 h-52 md:w-72 md:h-72 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center hover:border-violet-400/40 transition overflow-hidden">
+    <img
+      src="/images/Diagrama.webp"
+      alt="Diagrama del torneo"
+      class="w-full h-full object-cover opacity-100 transition"
+    />
   </div>
+
+</div>
 
 </section>
 
