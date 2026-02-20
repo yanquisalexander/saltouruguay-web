@@ -10,18 +10,14 @@ import { LucideTrophy, LucideSwords, LucideUsers } from "lucide-preact";
 
 const session = await getSession(Astro.request);
 const user = session?.user;
-const isAdmin = user?.isAdmin === true; // Validación de seguridad
+const isAdmin = user?.isAdmin === true;
 
-// Fetch tournaments
 const tournamentsData = await db.query.TournamentsTable.findMany({
   where: isAdmin ? undefined : (t, { ne }) => ne(t.status, "draft"),
   orderBy: [desc(TournamentsTable.createdAt)],
-  with: {
-    participants: true,
-  },
+  with: { participants: true },
 });
 
-// Transform data & Calculate Stats
 let totalPlayers = 0;
 let activeTournaments = 0;
 
@@ -37,271 +33,117 @@ const tournaments = tournamentsData.map((t) => {
     currentUserJoined: user
       ? t.participants.some((p) => p.userId === Number(user.id))
       : false,
-    participants: undefined, // Optimizacion de payload
+    participants: undefined,
   };
 });
 ---
 
-<Layout
-  title="Torneos | Salto Uruguay"
-  description="Compite en los torneos oficiales de la comunidad."
->
-  {/* Fondo Ambiental */}
+<Layout title="Torneos | Salto Uruguay" description="Compite en los torneos oficiales de la comunidad.">
+
+  {/* Fondo */}
   <div class="fixed inset-0 -z-10 bg-[#050505]">
-    <div
-      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"
-    >
-    </div>
-    <div
-      class="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-900/10 blur-[150px] rounded-full pointer-events-none"
-    >
-    </div>
-    <div
-      class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[150px] rounded-full pointer-events-none"
-    >
-    </div>
+    <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"></div>
+    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-900/10 blur-[150px] rounded-full"></div>
+    <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[150px] rounded-full"></div>
   </div>
 
-  <div class="container mx-auto px-4 py-8 mt-20 min-h-screen pb-20">
-    {/* --- HEADER HERO --- */}
-    <header class="relative mb-12">
-      <div class="flex flex-col md:flex-row justify-between items-end gap-6">
-        {/* Título y Stats */}
-        <div class="flex-1">
-          <div
-            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold uppercase tracking-widest mb-4"
-          >
-            <LucideTrophy size={14} /> Competitivo Oficial
-          </div>
+  {/* CONTENEDOR FLEX para empujar sponsors al fondo */}
+  <div class="container mx-auto px-4 py-8 mt-20 min-h-screen flex flex-col">
 
-          <h1
-            class="text-5xl md:text-7xl font-anton text-white uppercase tracking-tight mb-4 drop-shadow-xl"
-          >
-            Zona de <span
-              class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500"
-              >Torneos</span
-            >
-          </h1>
+    <div class="flex-1">
 
-          <p class="text-white/60 font-rubik text-lg max-w-xl leading-relaxed">
-            Demuestra tu habilidad, escala en el ranking y gana premios
-            exclusivos. La gloria te espera en la arena.
-          </p>
-          {/* Stats Rápidos */}
-          <div class="flex gap-6 mt-8">
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-white/5 rounded-lg text-white/50">
-                <LucideSwords size={20} />
-              </div>
-              <div>
-                <span class="block text-2xl font-bold text-white leading-none"
-                  >{activeTournaments}</span
-                >
-                <span class="text-xs text-white/40 uppercase tracking-wider"
-                  >Activos</span
-                >
-              </div>
+      {/* HEADER */}
+      <header class="relative mb-12">
+        <div class="flex flex-col md:flex-row justify-between items-end gap-6">
+          <div class="flex-1">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold uppercase tracking-widest mb-4">
+              <LucideTrophy size={14}/> Competitivo Oficial
             </div>
-            <div class="w-px h-10 bg-white/10"></div>
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-white/5 rounded-lg text-white/50">
-                <LucideUsers size={20} />
+
+            <h1 class="text-5xl md:text-7xl font-anton text-white uppercase tracking-tight mb-4">
+              Zona de <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500">Torneos</span>
+            </h1>
+
+            <p class="text-white/60 text-lg max-w-xl">
+              Demuestra tu habilidad, escala en el ranking y gana premios exclusivos.
+            </p>
+
+            <div class="flex gap-6 mt-8">
+              <div class="flex items-center gap-3">
+                <LucideSwords size={20}/>
+                <span class="text-2xl text-white">{activeTournaments}</span>
               </div>
-              <div>
-                <span class="block text-2xl font-bold text-white leading-none"
-                  >{totalPlayers}</span
-                >
-                <span class="text-xs text-white/40 uppercase tracking-wider"
-                  >Jugadores</span
-                >
+              <div class="flex items-center gap-3">
+                <LucideUsers size={20}/>
+                <span class="text-2xl text-white">{totalPlayers}</span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Acciones (Solo Admin) */}
-        {
-          isAdmin && (
+          {isAdmin && (
             <div class="shrink-0">
               <TournamentAdminControls client:visible />
             </div>
-          )
-        }
-      </div>
-    </header>
+          )}
+        </div>
+      </header>
 
-    {/* Separador */}
-    <div
-      class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-12"
-    >
+      {/* LISTA TORNEOS */}
+      <main class="mb-12">
+        {tournaments.length > 0
+          ? <TournamentList client:load tournaments={tournaments as any} />
+          : <div class="text-center text-white/50 py-20">No hay torneos activos</div>}
+      </main>
+
+      {/* EQUIPOS */}
+      <section class="mb-16">
+        <h2 class="text-3xl font-anton text-white mb-6">Equipos Confirmados</h2>
+
+        <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {[
+            "La 141","PUSKAS","YEN","Tóxicos a la pala","Principes del EH",
+            "Que Pelota Gerson","Desertores Cúbicos","Los changos","Los sin pelo",
+            "VasACorrer","Team FZBR","Therian & Furious","MATE & TACO",
+            "CAP1891","Fuerza Torales","Anti Therian"
+          ].map(team => (
+            <div class="rounded-xl border border-white/10 p-4 text-white">{team}</div>
+          ))}
+        </div>
+      </section>
+
+      {/* DIAGRAMA */}
+      <section class="tournament-diagram mb-20">
+        <h2 class="diagram-title">📊 Formato de Competencia</h2>
+        <div class="diagram-wrapper">
+          <img src="/images/Diagrama.webp" alt="Diagrama del torneo"/>
+        </div>
+      </section>
+
     </div>
-    {/* --- LISTA DE TORNEOS --- */}
-    <main>
-      {
-        tournaments.length > 0 ? (
-          <TournamentList client:load tournaments={tournaments as any} />
-        ) : (
-          <div class="flex flex-col items-center justify-center py-20 text-center border border-white/5 rounded-3xl bg-white/[0.02]">
-            <div class="bg-white/5 p-6 rounded-full mb-4">
-              <LucideTrophy size={48} class="text-white/20" />
-            </div>
-            <h3 class="text-xl font-bold text-white mb-2">
-              No hay torneos activos
-            </h3>
-            <p class="text-white/50">
-              Mantente atento a las próximas competiciones.
-            </p>
-          </div>
-        )
-      }
-    </main>
-    {/* Separador2 */}
-    <div
-      class="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-12"
-    >
-    </div>
 
-    {/* --- EQUIPOS CONFIRMADOS --- */}
-<section class="mb-16">
-
-  {/* Header */}
-  <div class="flex items-end justify-between mb-8">
-    <div>
-      <h2 class="text-3xl md:text-4xl font-anton text-white uppercase tracking-wide">
-        Equipos Confirmados
+    {/* ===== AUSPICIANTES SIEMPRE AL FINAL ===== */}
+    <section class="mb-10">
+      <h2 class="text-2xl md:text-3xl font-anton text-white uppercase tracking-wide mb-8">
+        HACEN POSIBLE ESTE TORNEO
       </h2>
-      <p class="text-white/40 text-sm mt-1 uppercase tracking-wider">
-        Lineup oficial del torneo
-      </p>
-    </div>
 
-    <div class="hidden md:block px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-bold uppercase tracking-widest">
-       {[
-  "La 141",
-  "PUSKAS",
-  "YEN",
-  "Tóxicos a la pala",
-  "Principes del EH",
-  "Que Pelota Gerson",
-  "Desertores Cúbicos",
-  "Los changos",
-  "Los sin pelo",
-  "VasACorrer",
-  "Team FZBR",
-  "Therian & Furious",
-  "MATE & TACO",
-  "CAP1891",
-  "Fuerza Torales",
-  "Anti Therian"
-].length} equipos
-    </div>
-  </div>
-
-  {/* Grid */}
-  <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-
-    {[
-      "La 141",
-      "PUSKAS",
-      "YEN",
-      "Tóxicos a la pala",
-      "Principes del EH",
-      "Que Pelota Gerson",
-      "Desertores Cúbicos",
-      "Los changos",
-      "Los sin pelo",
-      "VasACorrer",
-      "Team FZBR",
-      "Therian & Furious",
-      "MATE & TACO",
-      "CAP1891",
-      "Fuerza Torales",
-      "Anti Therian"
-    ].map((team) => (
-      <div class="group relative rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-4 transition duration-300 hover:border-violet-400/40 hover:bg-white/[0.06]">
-
-        {/* Glow suave */}
-        <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition pointer-events-none bg-gradient-to-r from-violet-500/20 via-fuchsia-500/20 to-cyan-500/20 blur-xl"></div>
-
-        <div class="relative flex items-center gap-3">
-
-          {/* Escudo */}
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center text-white font-bold shadow-md shadow-violet-900/30">
-            {team.charAt(0)}
-          </div>
-
-          {/* Nombre */}
-          <span class="text-white font-semibold tracking-wide group-hover:text-violet-300 transition">
-            {team}
-          </span>
-
+      <div class="flex flex-wrap gap-8">
+        <div class="w-40 h-40 md:w-52 md:h-52 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center">
+          <img src="/images/zona.webp" class="max-w-[85%] max-h-[85%] object-contain"/>
         </div>
 
+        <div class="w-40 h-40 md:w-52 md:h-52 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center">
+          <img src="/images/golen.webp" class="max-w-[85%] max-h-[85%] object-contain"/>
+        </div>
       </div>
-    ))}
-
-  </div>
-</section>
-
-{/* --- AUSPICIANTES --- */}
-<section class="mb-20">
-
-  <h2 class="text-2xl md:text-3xl font-anton text-white uppercase tracking-wide mb-8">
-    HACEN POSIBLE ESTE TORNEO:
-  </h2>
-
-  {/* Sponsors */}
-  <div class="flex flex-wrap gap-8 mb-14">
-
-    <div class="group relative w-40 h-40 md:w-52 md:h-52 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center hover:border-violet-400/40 transition">
-      <img src="/images/zona.webp" alt="Sponsor 1" class="max-w-[85%] max-h-[85%] object-contain opacity-90 group-hover:opacity-100 transition"/>
-    </div>
-
-    <div class="group relative w-40 h-40 md:w-52 md:h-52 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center hover:border-violet-400/40 transition">
-      <img src="/images/golen.webp" alt="Sponsor 2" class="max-w-[85%] max-h-[85%] object-contain opacity-90 group-hover:opacity-100 transition"/>
-    </div>
-
-  </div>
-</section> <!-- 👈 cierre de AUSPICIANTES -->
-
-{/* --- DIAGRAMA DEL TORNEO --- */}
-<section class="tournament-diagram mb-20">
-
-  <h2 class="diagram-title">📊 Formato de Competencia</h2>
-
-  <div class="diagram-wrapper">
-    <img 
-      src="/images/Diagrama.webp" 
-      alt="Diagrama del torneo"
-    />
-  </div>
-
-</section>
+    </section>
 
   </div>
 </Layout>
+
 <style>
-.tournament-diagram {
-  margin-top: 3rem;
-}
-
-.diagram-title {
-  text-align: center;
-  font-size: 1.9rem;
-  font-weight: 800;
-  margin-bottom: 1.2rem;
-  letter-spacing: 0.5px;
-}
-
-.diagram-wrapper {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.diagram-wrapper img {
-  width: 100%;
-  height: auto;
-  border-radius: 14px;
-  display: block;
-}
+.tournament-diagram { margin-top:3rem; }
+.diagram-title { text-align:center; font-size:1.9rem; font-weight:800; margin-bottom:1rem; }
+.diagram-wrapper { max-width:600px; margin:0 auto; }
+.diagram-wrapper img { width:100%; border-radius:14px; }
 </style>
