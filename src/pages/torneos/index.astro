@@ -165,7 +165,6 @@ const featuredTeams = Array.from(teamsByName.entries())
         </h2>
       </div>
 
-      {/* GRID */}
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {featuredTeams.map((team) => (
           <div class="flex items-center justify-between rounded-full border border-white/10 bg-white/[0.02] px-4 py-3 hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
@@ -181,8 +180,8 @@ const featuredTeams = Array.from(teamsByName.entries())
               </h3>
             </div>
 
-            {/* PLAYERS */}
-            <div class="flex items-center gap-4">
+            {/* PLAYERS EN COLUMNA */}
+            <div class="flex flex-col items-end gap-1">
               {team.players.map((player) => (
                 <div class="text-right">
                   <div class="text-orange-400 text-xs font-semibold leading-tight">
