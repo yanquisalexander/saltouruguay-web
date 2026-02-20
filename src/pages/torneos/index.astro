@@ -150,7 +150,7 @@ const tournaments = tournamentsData.map((t) => {
     </div>
 
     <div class="hidden md:block px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-bold uppercase tracking-widest">
-       14 equipos
+       15 equipos
     </div>
   </div>
 
@@ -160,6 +160,7 @@ const tournaments = tournamentsData.map((t) => {
     {[
       "La 141",
       "PUSKAS",
+      "YEN",
       "Tóxicos a la pala",
       "Principes del EH",
       "Que Pelota Gerson",
@@ -201,51 +202,39 @@ const tournaments = tournamentsData.map((t) => {
 {/* --- AUSPICIANTES --- */}
 <section class="mb-20">
 
-  <h2 class="text-2xl md:text-3xl font-anton text-white uppercase tracking-wide mb-10">
+  <h2 class="text-2xl md:text-3xl font-anton text-white uppercase tracking-wide mb-8">
     HACEN POSIBLE ESTE TORNEO:
   </h2>
 
-  <div class="flex flex-col lg:flex-row items-start gap-12">
+  {/* Sponsors */}
+  <div class="flex flex-wrap gap-8 mb-14">
 
-    {/* Sponsors */}
-    <div class="flex gap-8">
-
-      {/* Sponsor 1 */}
-      <div class="group relative w-40 h-40 md:w-52 md:h-52 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center hover:border-violet-400/40 transition">
-        <img
-          src="/images/zona.webp"
-          alt="Sponsor 1"
-          class="max-w-[85%] max-h-[85%] object-contain opacity-90 group-hover:opacity-100 transition"
-        />
-      </div>
-
-      {/* Sponsor 2 */}
-      <div class="group relative w-40 h-40 md:w-52 md:h-52 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center hover:border-violet-400/40 transition">
-        <img
-          src="/images/golen.webp"
-          alt="Sponsor 2"
-          class="max-w-[85%] max-h-[85%] object-contain opacity-90 group-hover:opacity-100 transition"
-        />
-      </div>
-
+    <div class="group relative w-40 h-40 md:w-52 md:h-52 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center hover:border-violet-400/40 transition">
+      <img src="/images/zona.webp" alt="Sponsor 1" class="max-w-[85%] max-h-[85%] object-contain opacity-90 group-hover:opacity-100 transition"/>
     </div>
 
-    {/* DIAGRAMA */}
-<div class="flex flex-col items-center lg:items-start">
+    <div class="group relative w-40 h-40 md:w-52 md:h-52 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center hover:border-violet-400/40 transition">
+      <img src="/images/golen.webp" alt="Sponsor 2" class="max-w-[85%] max-h-[85%] object-contain opacity-90 group-hover:opacity-100 transition"/>
+    </div>
 
-  <span class="text-xs md:text-sm text-white/50 uppercase tracking-widest mb-4">
-    DIAGRAMA DE TORNEO
-  </span>
-
-  <div class="group relative w-[300px] md:w-[500px] lg:w-[650px] rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden hover:border-violet-400/40 transition">
-    <img
-      src="/images/Diagrama.webp"
-      alt="Diagrama del torneo"
-      class="w-full h-auto object-contain"
-    />
   </div>
 
-</div>
+  {/* DIAGRAMA DESTACADO */}
+  <div class="flex flex-col items-center">
+
+    <span class="text-xs md:text-sm text-white/50 uppercase tracking-widest mb-4">
+      DIAGRAMA DE TORNEO
+    </span>
+
+    <div class="group relative w-full max-w-5xl rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden hover:border-violet-400/40 transition">
+      <img
+        src="/images/Diagrama.webp"
+        alt="Diagrama del torneo"
+        class="w-full h-auto object-contain"
+      />
+    </div>
+
+  </div>
 
 </section>
 
