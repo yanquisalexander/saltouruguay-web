@@ -199,16 +199,16 @@ const tournaments = tournamentsData.map((t) => {
 </section>
 
 {/* --- AUSPICIANTES --- */}
-<section class="mb-16">
+<section class="mb-20">
 
-  <h2 class="text-2xl md:text-3xl font-anton text-white uppercase tracking-wide mb-6">
+  <h2 class="text-2xl md:text-3xl font-anton text-white uppercase tracking-wide mb-10">
     HACEN POSIBLE ESTE TORNEO:
   </h2>
 
-  <div class="flex items-center gap-8">
+  <div class="flex flex-col lg:flex-row items-center gap-12">
 
-    {/* Logos */}
-    <div class="flex gap-6">
+    {/* Sponsors */}
+    <div class="flex gap-8">
 
       {/* Sponsor 1 */}
       <div class="group relative w-40 h-40 md:w-52 md:h-52 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center hover:border-violet-400/40 transition">
@@ -228,24 +228,26 @@ const tournaments = tournamentsData.map((t) => {
         />
       </div>
 
-      {/* Sponsor 3 — DIAGRAMA */}
-<div class="flex flex-col items-center">
+    </div>
 
-  {/* Título */}
-  <span class="text-xs md:text-sm text-white/50 uppercase tracking-widest mb-3">
-    DIAGRAMA DE TORNEO
-  </span>
+    {/* DIAGRAMA */}
+    <div class="flex flex-col items-center lg:items-start">
 
-  {/* Contenedor más grande */}
-  <div class="group relative w-52 h-52 md:w-72 md:h-72 rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center hover:border-violet-400/40 transition overflow-hidden">
-    <img
-      src="/images/Diagrama.webp"
-      alt="Diagrama del torneo"
-      class="w-full h-full object-cover opacity-100 transition"
-    />
+      <span class="text-xs md:text-sm text-white/50 uppercase tracking-widest mb-4">
+        DIAGRAMA DE TORNEO
+      </span>
+
+      <div class="group relative w-[260px] md:w-[420px] lg:w-[520px] rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden hover:border-violet-400/40 transition">
+        <img
+          src="/images/Diagrama.webp"
+          alt="Diagrama del torneo"
+          class="w-full h-auto object-contain"
+        />
+      </div>
+
+    </div>
+
   </div>
-
-</div>
 
 </section>
 
