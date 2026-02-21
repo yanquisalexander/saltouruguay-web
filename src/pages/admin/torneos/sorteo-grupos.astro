@@ -5,8 +5,9 @@ import Layout from "@/layouts/Layout.astro";
 <Layout title="Sorteo de Grupos" mainClassname="px-6 sm:px-10 pt-24 pb-32">
   <section class="max-w-6xl mx-auto">
 
+    <!-- TÍTULO EPICO -->
     <div class="text-center mb-8">
-      <p class="uppercase tracking-[0.4em] text-4xl md:text-6xl font-anton font-bold mb-2 bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent drop-shadow-lg">
+      <p class="uppercase tracking-[0.4em] text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg">
   TORNEO ROCKET LEAGUE
 </p>
 
@@ -15,6 +16,7 @@ import Layout from "@/layouts/Layout.astro";
       </h1>
     </div>
 
+    <!-- LISTA DE EQUIPOS -->
     <div class="mb-6">
       <label class="text-sm text-white/70 mb-2 block">
         Lista de equipos (uno por línea)
@@ -41,8 +43,8 @@ CAP1891
 Equipo 16</textarea>
     </div>
 
+    <!-- CONTROLES DE SORTEO -->
     <div class="flex flex-wrap gap-3 mb-8">
-
       <select
         id="groupSelect"
         class="bg-white/5 border border-white/10 rounded-lg px-4 py-2"
@@ -66,11 +68,12 @@ Equipo 16</textarea>
       >
         🔄 Reiniciar
       </button>
-
     </div>
 
+    <!-- RESULTADO -->
     <div id="result" class="text-center text-lg font-semibold text-green-400 mb-6"></div>
 
+    <!-- GRUPOS -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
       {["A","B","C","D"].map(group => (
         <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-lg">
@@ -81,9 +84,21 @@ Equipo 16</textarea>
         </div>
       ))}
     </div>
+
+    <!-- 16 IMÁGENES DE EQUIPOS -->
+    <div class="mt-8 max-w-6xl mx-auto grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-16 gap-4">
+      {Array.from({length:16}).map((_, i) => (
+        <img
+          src={`/images/team-logos/team${i+1}.webp`}
+          alt={`Equipo ${i+1}`}
+          class="w-full h-auto rounded-lg border border-white/10 hover:scale-110 hover:drop-shadow-xl transition-transform duration-300"
+        />
+      ))}
+    </div>
+
   </section>
 
-  {/* OVERLAY */}
+  <!-- OVERLAY -->
   <div
     id="drawOverlay"
     class="fixed inset-0 bg-black/80 backdrop-blur flex items-center justify-center opacity-0 pointer-events-none transition"
@@ -99,7 +114,6 @@ Equipo 16</textarea>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-
       let remainingTeams = [];
 
       function loadTeamsIfNeeded() {
@@ -126,7 +140,6 @@ Equipo 16</textarea>
         const randomIndex = Math.floor(Math.random() * remainingTeams.length);
         const selectedTeam = remainingTeams[randomIndex];
 
-        // 👉 mostrar overlay completamente
         overlay.style.display = "flex";
         overlay.classList.remove("opacity-0","pointer-events-none");
         overlay.classList.add("opacity-100");
@@ -149,31 +162,25 @@ Equipo 16</textarea>
           li.className = "bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center drop";
 
           document.getElementById("group" + group).appendChild(li);
-
           document.getElementById("result").textContent =
             "Equipo sorteado: " + selectedTeam;
 
-          // 👉 ocultar overlay COMPLETO
           overlay.classList.add("opacity-0","pointer-events-none");
           setTimeout(() => {
             overlay.style.display = "none";
             text.textContent = "";
             text.classList.remove("reveal","pulsing");
           }, 300);
-
         }, 3000);
       };
 
       window.resetDraw = function () {
         remainingTeams = [];
-
         ["A","B","C","D"].forEach(g => {
           document.getElementById("group" + g).innerHTML = "";
         });
-
         document.getElementById("result").textContent = "";
       };
-
     });
   </script>
 
