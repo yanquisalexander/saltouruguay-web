@@ -152,47 +152,51 @@ Equipo 16</textarea>
 </div>
 
 <script>
-let remainingTeams = [];
+document.addEventListener("DOMContentLoaded", () => {
 
-function loadTeamsIfNeeded() {
-  if (remainingTeams.length === 0) {
-    remainingTeams = document.getElementById("teamList").value
-      .split("\n")
-      .map(t => t.trim())
-      .filter(t => t !== "");
-  }
-}
+  let remainingTeams = [];
 
-function drawTeam() {
-  loadTeamsIfNeeded();
-
-  if (remainingTeams.length === 0) {
-    alert("No quedan equipos por sortear");
-    return;
+  function loadTeamsIfNeeded() {
+    if (remainingTeams.length === 0) {
+      remainingTeams = document.getElementById("teamList").value
+        .split("\n")
+        .map(t => t.trim())
+        .filter(t => t !== "");
+    }
   }
 
-  const group = document.getElementById("groupSelect").value;
+  window.drawTeam = function () {
+    loadTeamsIfNeeded();
 
-  const randomIndex = Math.floor(Math.random() * remainingTeams.length);
-  const selectedTeam = remainingTeams.splice(randomIndex, 1)[0];
+    if (remainingTeams.length === 0) {
+      alert("No quedan equipos por sortear");
+      return;
+    }
 
-  const li = document.createElement("li");
-  li.textContent = selectedTeam;
-  document.getElementById("group" + group).appendChild(li);
+    const group = document.getElementById("groupSelect").value;
 
-  document.getElementById("result").textContent =
-    "Equipo sorteado: " + selectedTeam;
-}
+    const randomIndex = Math.floor(Math.random() * remainingTeams.length);
+    const selectedTeam = remainingTeams.splice(randomIndex, 1)[0];
 
-function resetDraw() {
-  remainingTeams = [];
+    const li = document.createElement("li");
+    li.textContent = selectedTeam;
+    document.getElementById("group" + group).appendChild(li);
 
-  document.getElementById("groupA").innerHTML = "";
-  document.getElementById("groupB").innerHTML = "";
-  document.getElementById("groupC").innerHTML = "";
-  document.getElementById("groupD").innerHTML = "";
-  document.getElementById("result").textContent = "";
-}
+    document.getElementById("result").textContent =
+      "Equipo sorteado: " + selectedTeam;
+  };
+
+  window.resetDraw = function () {
+    remainingTeams = [];
+
+    document.getElementById("groupA").innerHTML = "";
+    document.getElementById("groupB").innerHTML = "";
+    document.getElementById("groupC").innerHTML = "";
+    document.getElementById("groupD").innerHTML = "";
+    document.getElementById("result").textContent = "";
+  };
+
+});
 </script>
 
 </body>
