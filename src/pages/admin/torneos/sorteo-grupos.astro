@@ -5,7 +5,7 @@ import Layout from "@/layouts/Layout.astro";
 <Layout title="Sorteo de Grupos" mainClassname="px-6 sm:px-10 pt-24 pb-32">
   <section class="max-w-6xl mx-auto">
 
-    <!-- TÍTULO EPICO BLANCO -->
+    <!-- TITULO -->
     <div class="text-center mb-8">
       <p class="uppercase tracking-[0.1em] text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg">
         TORNEO ROCKET LEAGUE
@@ -16,16 +16,13 @@ import Layout from "@/layouts/Layout.astro";
       </h1>
     </div>
 
-    <!-- LISTA DE EQUIPOS -->
+    <!-- LISTA -->
     <div class="mb-6">
       <label class="text-sm text-white/70 mb-2 block">
         Lista de equipos (uno por línea)
       </label>
 
-      <textarea
-        id="teamList"
-        class="w-full h-36 rounded-xl bg-white/5 border border-white/10 p-4 focus:outline-none focus:ring-2 focus:ring-amber-400"
-      >anti-therian
+      <textarea id="teamList" class="w-full h-36 rounded-xl bg-white/5 border border-white/10 p-4 focus:outline-none focus:ring-2 focus:ring-amber-400">anti-therian
 que-pelota-gerson
 desertores-cubicos
 fuerza-torales
@@ -43,7 +40,7 @@ x-force
 yen</textarea>
     </div>
 
-    <!-- CONTROLES DE SORTEO -->
+    <!-- CONTROLES -->
     <div class="flex flex-wrap gap-3 mb-8">
       <select id="groupSelect" class="bg-white/5 border border-white/10 rounded-lg px-4 py-2">
         <option value="A">Grupo A</option>
@@ -61,7 +58,6 @@ yen</textarea>
       </button>
     </div>
 
-    <!-- RESULTADO -->
     <div id="result" class="text-center text-lg font-semibold text-green-400 mb-6"></div>
 
     <!-- GRUPOS -->
@@ -76,30 +72,30 @@ yen</textarea>
       ))}
     </div>
 
-    <!-- IMÁGENES DE EQUIPOS EN 4 COLUMNAS -->
+    <!-- LOGOS -->
     <div class="mt-8 max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4">
       {[
-        "anti-therian.webp",
-        "que-pelota-gerson.webp",
-        "desertores-cubicos.webp",
-        "fuerza-torales.webp",
-        "la-141.webp",
-        "los-changos.webp",
-        "los-sin-pelo.webp",
-        "mate-&-taco.webp",
-        "puskas.webp",
-        "ss.webp",
-        "team-fzbr.webp",
-        "therian-&-furious.webp",
-        "toxicos-a-la-pala.webp",
-        "vasacorrer.webp",
-        "x-force.webp",
-        "yen.webp"
-      ].map((img, i) => (
+        "anti-therian",
+        "que-pelota-gerson",
+        "desertores-cubicos",
+        "fuerza-torales",
+        "la-141",
+        "los-changos",
+        "los-sin-pelo",
+        "mate-&-taco",
+        "puskas",
+        "ss",
+        "team-fzbr",
+        "therian-&-furious",
+        "toxicos-a-la-pala",
+        "vasacorrer",
+        "x-force",
+        "yen"
+      ].map(team => (
         <img
-          src={`/images/team-logos/${img}`}
-          alt={`Equipo ${i+1}`}
-          class="w-full h-20 object-contain rounded-lg border border-white/10 hover:scale-110 hover:drop-shadow-xl transition-transform duration-300"
+          src={`/images/team-logos/${team}.webp`}
+          data-team={team}
+          class="teamLogo w-full h-20 object-contain rounded-lg border border-white/10 transition-all duration-500"
         />
       ))}
     </div>
@@ -126,20 +122,28 @@ yen</textarea>
         }
       }
 
+      function highlightLogo(team) {
+        const logo = document.querySelector(`[data-team="${team}"]`);
+        if (!logo) return;
+
+        logo.classList.add("winnerGlow");
+
+        setTimeout(() => {
+          logo.classList.remove("winnerGlow");
+          logo.classList.add("logoUsed");
+        }, 2000);
+      }
+
       window.drawTeam = function () {
         loadTeamsIfNeeded();
-
-        if (remainingTeams.length === 0) {
-          alert("No quedan equipos por sortear");
-          return;
-        }
+        if (remainingTeams.length === 0) return alert("No quedan equipos");
 
         const overlay = document.getElementById("drawOverlay");
         const text = document.getElementById("drawText");
         const group = document.getElementById("groupSelect").value;
 
-        const randomIndex = Math.floor(Math.random() * remainingTeams.length);
-        const selectedTeam = remainingTeams[randomIndex];
+        const index = Math.floor(Math.random() * remainingTeams.length);
+        const team = remainingTeams[index];
 
         overlay.style.display = "flex";
         overlay.classList.remove("opacity-0","pointer-events-none");
@@ -147,64 +151,57 @@ yen</textarea>
 
         text.textContent = "SORTEANDO...";
         text.classList.add("pulsing");
-        text.classList.remove("reveal");
 
         setTimeout(() => {
-          text.textContent = selectedTeam;
+          text.textContent = team;
           text.classList.remove("pulsing");
           text.classList.add("reveal");
+          highlightLogo(team);
         }, 1500);
 
         setTimeout(() => {
-          remainingTeams.splice(randomIndex, 1);
+          remainingTeams.splice(index, 1);
 
           const li = document.createElement("li");
-          li.textContent = selectedTeam;
+          li.textContent = team;
           li.className = "bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center drop";
 
           document.getElementById("group" + group).appendChild(li);
-          document.getElementById("result").textContent = "Equipo sorteado: " + selectedTeam;
+          document.getElementById("result").textContent = "Equipo sorteado: " + team;
 
           overlay.classList.add("opacity-0","pointer-events-none");
-          setTimeout(() => {
-            overlay.style.display = "none";
-            text.textContent = "";
-            text.classList.remove("reveal","pulsing");
-          }, 300);
+          setTimeout(() => overlay.style.display = "none", 300);
         }, 3000);
       };
 
       window.resetDraw = function () {
         remainingTeams = [];
-        ["A","B","C","D"].forEach(g => {
-          document.getElementById("group" + g).innerHTML = "";
+        document.querySelectorAll(".teamLogo").forEach(l => {
+          l.classList.remove("logoUsed","winnerGlow");
         });
-        document.getElementById("result").textContent = "";
+        ["A","B","C","D"].forEach(g => document.getElementById("group"+g).innerHTML="");
+        document.getElementById("result").textContent="";
       };
     });
   </script>
 
   <style>
-    @keyframes dropIn {
-      0% { transform: translateY(-40px); opacity:0; }
-      100% { transform: translateY(0); opacity:1; }
+    .winnerGlow {
+      box-shadow: 0 0 25px rgba(255,200,0,.9);
+      transform: scale(1.15);
     }
 
-    .drop { animation: dropIn .5s ease; }
-
-    .pulsing { animation: pulse 1s infinite alternate; }
-
-    @keyframes pulse {
-      from { transform: scale(1); }
-      to { transform: scale(1.08); }
+    .logoUsed {
+      filter: grayscale(100%) brightness(.6);
+      opacity: .7;
     }
 
-    .reveal { animation: reveal .35s ease; }
-
-    @keyframes reveal {
-      from { transform: scale(.85); opacity:0 }
-      to { transform: scale(1); opacity:1 }
-    }
+    @keyframes dropIn { 0%{transform:translateY(-40px);opacity:0} 100%{transform:translateY(0);opacity:1}}
+    .drop{animation:dropIn .5s ease}
+    .pulsing{animation:pulse 1s infinite alternate}
+    @keyframes pulse{from{transform:scale(1)}to{transform:scale(1.08)}}
+    .reveal{animation:reveal .35s ease}
+    @keyframes reveal{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
   </style>
 
 </Layout>
