@@ -152,24 +152,27 @@ Equipo 16</textarea>
 </div>
 
 <script>
-let teams = [];
 let remainingTeams = [];
 
-function getTeams() {
-  teams = document.getElementById("teamList").value
-    .split("\n")
-    .map(t => t.trim())
-    .filter(t => t !== "");
-  remainingTeams = [...teams];
+function loadTeamsIfNeeded() {
+  if (remainingTeams.length === 0) {
+    remainingTeams = document.getElementById("teamList").value
+      .split("\n")
+      .map(t => t.trim())
+      .filter(t => t !== "");
+  }
 }
 
 function drawTeam() {
+  loadTeamsIfNeeded();
+
   if (remainingTeams.length === 0) {
     alert("No quedan equipos por sortear");
     return;
   }
 
   const group = document.getElementById("groupSelect").value;
+
   const randomIndex = Math.floor(Math.random() * remainingTeams.length);
   const selectedTeam = remainingTeams.splice(randomIndex, 1)[0];
 
@@ -182,15 +185,14 @@ function drawTeam() {
 }
 
 function resetDraw() {
-  getTeams();
+  remainingTeams = [];
+
   document.getElementById("groupA").innerHTML = "";
   document.getElementById("groupB").innerHTML = "";
   document.getElementById("groupC").innerHTML = "";
   document.getElementById("groupD").innerHTML = "";
   document.getElementById("result").textContent = "";
 }
-
-getTeams();
 </script>
 
 </body>
