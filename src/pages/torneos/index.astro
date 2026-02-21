@@ -175,30 +175,36 @@ const featuredTeams = Array.from(teamsByName.entries())
       {/* DERECHA — JUGADORES */}
       <div class="flex flex-col justify-center items-end shrink-0 ml-3 h-[66px]">
 
-        {/* TITULARES */}
-        {team.players.slice(0, 2).map((player) => (
-          <div class="text-right leading-tight">
-            <div class="text-orange-400 text-xs font-semibold">
-              {player.displayName}
-            </div>
-            <div class="text-white/40 text-[10px]">
-              @{player.username}
-            </div>
-          </div>
-        ))}
-
-        {/* ESPACIO SUPLENTE */}
-        <div class="h-[18px] mt-[2px] text-right">
-          {team.players.length > 2 && (
-            <div class="text-white/70 text-[10px] leading-tight">
-              {team.players[2].displayName}
-            </div>
-          )}
-        </div>
-
+  {/* TITULARES */}
+  {team.players.slice(0, 2).map((player) => (
+    <div class="text-right leading-tight">
+      <div class="text-orange-400 text-xs font-semibold">
+        {player.displayName}
       </div>
+      <div class="text-white/40 text-[10px]">
+        @{player.username}
+      </div>
+    </div>
+  ))}
 
-    </div>  {/* ✅ ESTE ES EL CIERRE QUE FALTABA */}
+  {/* SEPARADOR + SUPLENTE */}
+  <div class="w-full flex flex-col items-end mt-[2px]">
+
+    {/* línea sutil */}
+    <div class="w-10 h-px bg-white/10 mb-[2px]"></div>
+
+    {/* espacio fijo suplente */}
+    <div class="h-[14px] text-right">
+      {team.players.length > 2 && (
+        <div class="text-white/50 text-[9px] leading-none">
+          {team.players[2].displayName}
+        </div>
+      )}
+    </div>
+
+  </div>
+
+</div>  {/* ✅ ESTE ES EL CIERRE QUE FALTABA */}
   ))}
 </div>
         </section>
