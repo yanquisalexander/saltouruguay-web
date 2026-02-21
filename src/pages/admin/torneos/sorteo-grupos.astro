@@ -95,61 +95,87 @@ toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
   </section>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      let remainingTeams = [];
+document.addEventListener("DOMContentLoaded", () => {
+  let remainingTeams = [];
 
-      function loadTeamsIfNeeded() {
-        if (remainingTeams.length === 0) {
-          remainingTeams = document.getElementById("teamList").value
-            .replace(/\s+/g,"\n")
-            .split("\n")
-            .map(t => t.trim())
-            .filter(t => t !== "");
-        }
-      }
+  function loadTeamsIfNeeded() {
+    if (remainingTeams.length === 0) {
+      remainingTeams = document.getElementById("teamList").value
+        .replace(/\s+/g,"\n")
+        .split("\n")
+        .map(t => t.trim())
+        .filter(t => t !== "");
+    }
+  }
 
-      function highlightLogo(team){
-        const logo = document.querySelector(`[data-team="${team}"]`);
-        if(!logo) return;
+  function highlightLogo(team){
+    const logo = document.querySelector(`[data-team="${team}"]`);
+    if(!logo) return;
 
-        logo.classList.add("winnerGlow");
+    logo.classList.add("winnerGlow");
 
-        setTimeout(()=>{
-          logo.classList.remove("winnerGlow");
-          logo.classList.add("logoUsed");
-        },2000);
-      }
+    setTimeout(()=>{
+      logo.classList.remove("winnerGlow");
+      logo.classList.add("logoUsed");
+    },2000);
+  }
 
-      window.drawTeam = function () {
-        loadTeamsIfNeeded();
-        if (remainingTeams.length === 0) return alert("No quedan equipos");
+  window.drawTeam = function () {
+    loadTeamsIfNeeded();
+    if (remainingTeams.length === 0) return alert("No quedan equipos");
 
-        const group = document.getElementById("groupSelect").value;
-        const index = Math.floor(Math.random() * remainingTeams.length);
-        const team = remainingTeams[index];
+    const overlay = document.getElementById("drawOverlay");
+    const text = document.getElementById("drawText");
+    const group = document.getElementById("groupSelect").value;
 
-        remainingTeams.splice(index, 1);
+    const index = Math.floor(Math.random() * remainingTeams.length);
+    const team = remainingTeams[index];
 
-        highlightLogo(team);
+    overlay.style.display = "flex";
+    overlay.classList.remove("opacity-0","pointer-events-none");
+    overlay.classList.add("opacity-100");
 
-        const li = document.createElement("li");
-        li.textContent = team;
-        li.className = "bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center drop";
+    text.textContent = "SORTEANDO...";
+    text.classList.add("pulsing");
+    text.classList.remove("reveal");
 
-        document.getElementById("group" + group).appendChild(li);
-        document.getElementById("result").textContent = "Equipo sorteado: " + team;
-      };
+    setTimeout(() => {
+      text.textContent = team;
+      text.classList.remove("pulsing");
+      text.classList.add("reveal");
+      highlightLogo(team);
+    }, 1500);
 
-      window.resetDraw = function () {
-        remainingTeams = [];
-        document.querySelectorAll(".teamLogo").forEach(l=>{
-          l.classList.remove("winnerGlow","logoUsed");
-        });
-        ["A","B","C","D"].forEach(g => document.getElementById("group"+g).innerHTML="");
-        document.getElementById("result").textContent="";
-      };
+    setTimeout(() => {
+      remainingTeams.splice(index, 1);
+
+      const li = document.createElement("li");
+      li.textContent = team;
+      li.className = "bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center drop";
+
+      document.getElementById("group" + group).appendChild(li);
+      document.getElementById("result").textContent = "Equipo sorteado: " + team;
+
+      overlay.classList.add("opacity-0","pointer-events-none");
+      setTimeout(() => {
+        overlay.style.display = "none";
+        text.textContent = "";
+        text.classList.remove("reveal","pulsing");
+      }, 300);
+
+    }, 3000);
+  };
+
+  window.resetDraw = function () {
+    remainingTeams = [];
+    document.querySelectorAll(".teamLogo").forEach(l=>{
+      l.classList.remove("winnerGlow","logoUsed");
     });
-  </script>
+    ["A","B","C","D"].forEach(g => document.getElementById("group"+g).innerHTML="");
+    document.getElementById("result").textContent="";
+  };
+});
+</script>
 
   <style>
     .teamGrid{
