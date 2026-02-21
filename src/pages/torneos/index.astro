@@ -147,56 +147,59 @@ const featuredTeams = Array.from(teamsByName.entries())
           </div>
 
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {featuredTeams.map((team) => (
-              <div class="flex items-center justify-between rounded-full border border-white/10 bg-white/[0.02] px-4 py-3 min-h-[96px] hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
+  {featuredTeams.map((team) => (
+    <div class="flex items-center justify-between rounded-full border border-white/10 bg-white/[0.02] px-4 py-3 min-h-[96px] hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
 
-                <div class="flex items-center gap-4 min-w-0 flex-1">
+      {/* IZQUIERDA */}
+      <div class="flex items-center gap-4 min-w-0 flex-1">
 
-                  {/* ESCUDO */}
-                  <div class="w-16 h-16 rounded-full overflow-hidden border border-white/10 flex-shrink-0 bg-black/40 relative">
+        {/* ESCUDO */}
+        <div class="w-16 h-16 rounded-full overflow-hidden border border-white/10 flex-shrink-0 bg-black/40 relative">
+          <img
+            src={getTeamLogoPath(team.name)}
+            alt={`Escudo ${team.name}`}
+            class="w-full h-full object-cover"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+          />
 
-                    <img
-                      src={getTeamLogoPath(team.name)}
-                      alt={`Escudo ${team.name}`}
-                      class="w-full h-full object-cover"
-                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                    />
+          <div class="absolute inset-0 hidden items-center justify-center bg-gradient-to-br from-violet-500 to-fuchsia-600">
+            <LucideUsers size={16} class="text-white"/>
+          </div>
+        </div>
 
-                    <div class="absolute inset-0 hidden items-center justify-center bg-gradient-to-br from-violet-500 to-fuchsia-600">
-                      <LucideUsers size={16} class="text-white"/>
-                    </div>
-
-                  </div>
-
-                  <h3 class="text-white font-semibold text-xl truncate">
-                    {team.name}
-                  </h3>
-
-                </div>
-
-                <div class="flex flex-col justify-center items-end shrink-0 ml-3 h-[66px]">
-
-  {/* TITULARES */}
-  {team.players.slice(0, 2).map((player) => (
-    <div class="text-right leading-tight">
-      <div class="text-orange-400 text-xs font-semibold">
-        {player.displayName}
+        <h3 class="text-white font-semibold text-xl truncate">
+          {team.name}
+        </h3>
       </div>
-      <div class="text-white/40 text-[10px]">
-        @{player.username}
+
+      {/* DERECHA — JUGADORES */}
+      <div class="flex flex-col justify-center items-end shrink-0 ml-3 h-[66px]">
+
+        {/* TITULARES */}
+        {team.players.slice(0, 2).map((player) => (
+          <div class="text-right leading-tight">
+            <div class="text-orange-400 text-xs font-semibold">
+              {player.displayName}
+            </div>
+            <div class="text-white/40 text-[10px]">
+              @{player.username}
+            </div>
+          </div>
+        ))}
+
+        {/* ESPACIO SUPLENTE */}
+        <div class="h-[18px] mt-[2px] text-right">
+          {team.players.length > 2 && (
+            <div class="text-white/70 text-[10px] leading-tight">
+              {team.players[2].displayName}
+            </div>
+          )}
+        </div>
+
       </div>
-    </div>
+
+    </div>  {/* ✅ ESTE ES EL CIERRE QUE FALTABA */}
   ))}
-
-  {/* ESPACIO RESERVADO SUPLENTE */}
-  <div class="h-[18px] mt-[2px] text-right">
-    {team.players.length > 2 && (
-      <div class="text-white/70 text-[10px] leading-tight">
-        {team.players[2].displayName}
-      </div>
-    )}
-  </div>
-
 </div>
         </section>
       )}
