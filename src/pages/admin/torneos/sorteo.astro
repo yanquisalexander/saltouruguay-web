@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sorteo de Grupos</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    margin: 0;
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: auto;
+  }
+
+  textarea {
+    width: 100%;
+    height: 120px;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    margin-bottom: 15px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  select, button {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button {
+    background: #f59e0b;
+    color: black;
+  }
+
+  .groups {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+  }
+
+  .group {
+    background: #1e293b;
+    padding: 15px;
+    border-radius: 10px;
+    min-height: 200px;
+  }
+
+  .group h2 {
+    text-align: center;
+    margin-top: 0;
+    color: #f59e0b;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  li {
+    background: #334155;
+    margin-bottom: 6px;
+    padding: 6px;
+    border-radius: 6px;
+  }
+
+  .result {
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 15px;
+    color: #22c55e;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Sorteo de Grupos</h1>
+
+  <label>Lista de equipos (uno por línea)</label>
+  <textarea id="teamList">Equipo 1
+Equipo 2
+Equipo 3
+Equipo 4
+Equipo 5
+Equipo 6
+Equipo 7
+Equipo 8
+Equipo 9
+Equipo 10
+Equipo 11
+Equipo 12
+Equipo 13
+Equipo 14
+Equipo 15
+Equipo 16</textarea>
+
+  <div class="controls">
+    <select id="groupSelect">
+      <option value="A">Grupo A</option>
+      <option value="B">Grupo B</option>
+      <option value="C">Grupo C</option>
+      <option value="D">Grupo D</option>
+    </select>
+
+    <button onclick="drawTeam()">🎲 Sortear equipo</button>
+    <button onclick="resetDraw()">🔄 Reiniciar</button>
+  </div>
+
+  <div class="result" id="result"></div>
+
+  <div class="groups">
+    <div class="group">
+      <h2>Grupo A</h2>
+      <ul id="groupA"></ul>
+    </div>
+
+    <div class="group">
+      <h2>Grupo B</h2>
+      <ul id="groupB"></ul>
+    </div>
+
+    <div class="group">
+      <h2>Grupo C</h2>
+      <ul id="groupC"></ul>
+    </div>
+
+    <div class="group">
+      <h2>Grupo D</h2>
+      <ul id="groupD"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+let teams = [];
+let remainingTeams = [];
+
+function getTeams() {
+  teams = document.getElementById("teamList").value
+    .split("\n")
+    .map(t => t.trim())
+    .filter(t => t !== "");
+  remainingTeams = [...teams];
+}
+
+function drawTeam() {
+  if (remainingTeams.length === 0) {
+    alert("No quedan equipos por sortear");
+    return;
+  }
+
+  const group = document.getElementById("groupSelect").value;
+  const randomIndex = Math.floor(Math.random() * remainingTeams.length);
+  const selectedTeam = remainingTeams.splice(randomIndex, 1)[0];
+
+  const li = document.createElement("li");
+  li.textContent = selectedTeam;
+  document.getElementById("group" + group).appendChild(li);
+
+  document.getElementById("result").textContent =
+    "Equipo sorteado: " + selectedTeam;
+}
+
+function resetDraw() {
+  getTeams();
+  document.getElementById("groupA").innerHTML = "";
+  document.getElementById("groupB").innerHTML = "";
+  document.getElementById("groupC").innerHTML = "";
+  document.getElementById("groupD").innerHTML = "";
+  document.getElementById("result").textContent = "";
+}
+
+getTeams();
+</script>
+
+</body>
+</html>
