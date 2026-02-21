@@ -5,7 +5,7 @@ import Layout from "@/layouts/Layout.astro";
 <Layout title="Sorteo de Grupos" mainClassname="px-6 sm:px-10 pt-24 pb-32">
   <section class="max-w-6xl mx-auto">
 
-    <!-- TÍTULO EPICO BLANCO -->
+    <!-- TÍTULO -->
     <div class="text-center mb-8">
       <p class="uppercase tracking-[0.1em] text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg">
         TORNEO ROCKET LEAGUE
@@ -16,10 +16,10 @@ import Layout from "@/layouts/Layout.astro";
       </h1>
     </div>
 
-    <!-- LISTA DE EQUIPOS EN FORMATO 4x4 -->
+    <!-- LISTA 4x4 -->
     <div class="mb-6">
       <label class="text-sm text-white/70 mb-2 block">
-        Lista de equipos (4 filas de 4)
+        Lista de equipos (4x4)
       </label>
 
       <textarea
@@ -31,7 +31,7 @@ puskas    ss    team-fzbr    therian-&-furious
 toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
     </div>
 
-    <!-- CONTROLES DE SORTEO -->
+    <!-- CONTROLES -->
     <div class="flex flex-wrap gap-3 mb-8">
       <select id="groupSelect" class="bg-white/5 border border-white/10 rounded-lg px-4 py-2">
         <option value="A">Grupo A</option>
@@ -63,30 +63,31 @@ toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
       ))}
     </div>
 
-    <!-- 🔴 IMÁGENES EXACTAMENTE COMO TU PRIMER ARCHIVO -->
+    <!-- IMÁGENES ORIGINALES + DATA TEAM -->
     <div class="mt-8 max-w-6xl mx-auto grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-16 gap-4">
       {[
-  "anti-therian.webp",
-  "que-pelota-gerson.webp",
-  "desertores-cubicos.webp",
-  "fuerza-torales.webp",
-  "la-141.webp",
-  "los-changos.webp",
-  "los-sin-pelo.webp",
-  "mate-&-taco.webp",
-  "puskas.webp",
-  "ss.webp",
-  "team-fzbr.webp",
-  "therian-&-furious.webp",
-  "toxicos-a-la-pala.webp",
-  "vasacorrer.webp",
-  "x-force.webp",
-  "yen.webp"
-].map((img, i) => (
+        "anti-therian",
+        "que-pelota-gerson",
+        "desertores-cubicos",
+        "fuerza-torales",
+        "la-141",
+        "los-changos",
+        "los-sin-pelo",
+        "mate-&-taco",
+        "puskas",
+        "ss",
+        "team-fzbr",
+        "therian-&-furious",
+        "toxicos-a-la-pala",
+        "vasacorrer",
+        "x-force",
+        "yen"
+      ].map((team, i) => (
         <img
-          src={`/images/team-logos/${img}`}
+          src={`/images/team-logos/${team}.webp`}
+          data-team={team}
           alt={`Equipo ${i+1}`}
-          class="w-full h-auto rounded-lg border border-white/10 hover:scale-110 hover:drop-shadow-xl transition-transform duration-300"
+          class="teamLogo w-full h-auto rounded-lg border border-white/10 hover:scale-110 transition"
         />
       ))}
     </div>
@@ -107,6 +108,18 @@ toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
         }
       }
 
+      function highlightLogo(team){
+        const logo = document.querySelector(`[data-team="${team}"]`);
+        if(!logo) return;
+
+        logo.classList.add("winnerGlow");
+
+        setTimeout(()=>{
+          logo.classList.remove("winnerGlow");
+          logo.classList.add("logoUsed");
+        },2000);
+      }
+
       window.drawTeam = function () {
         loadTeamsIfNeeded();
         if (remainingTeams.length === 0) return alert("No quedan equipos");
@@ -116,6 +129,8 @@ toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
         const team = remainingTeams[index];
 
         remainingTeams.splice(index, 1);
+
+        highlightLogo(team);
 
         const li = document.createElement("li");
         li.textContent = team;
@@ -127,6 +142,9 @@ toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
 
       window.resetDraw = function () {
         remainingTeams = [];
+        document.querySelectorAll(".teamLogo").forEach(l=>{
+          l.classList.remove("winnerGlow","logoUsed");
+        });
         ["A","B","C","D"].forEach(g => document.getElementById("group"+g).innerHTML="");
         document.getElementById("result").textContent="";
       };
@@ -138,6 +156,16 @@ toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
       font-family: monospace;
       white-space: pre;
       line-height: 1.8;
+    }
+
+    .winnerGlow{
+      box-shadow:0 0 25px rgba(255,200,0,.9);
+      transform:scale(1.15);
+    }
+
+    .logoUsed{
+      filter:grayscale(100%) brightness(.6);
+      opacity:.7;
     }
 
     @keyframes dropIn{0%{transform:translateY(-40px);opacity:0}100%{transform:translateY(0);opacity:1}}
