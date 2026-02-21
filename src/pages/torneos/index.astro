@@ -37,7 +37,6 @@ const tournaments = tournamentsData.map((t) => {
   };
 });
 
-/* 🔥 función que busca automáticamente el escudo */
 const getTeamLogoPath = (teamName: string) => {
   const normalized = teamName
     .toLowerCase()
@@ -48,7 +47,6 @@ const getTeamLogoPath = (teamName: string) => {
   return `/images/team-logos/${normalized}.webp`;
 };
 
-// Obtener torneo con equipos destacados
 const featuredTeamsTournament = await db.query.TournamentsTable.findFirst({
   where: (t, { eq }) => eq(t.showTeamsFeatured, true),
   with: {
@@ -58,7 +56,6 @@ const featuredTeamsTournament = await db.query.TournamentsTable.findFirst({
   },
 });
 
-// Agrupar participantes por equipo
 const teamsByName = new Map<string, any[]>();
 if (featuredTeamsTournament) {
   for (const participant of featuredTeamsTournament.participants) {
@@ -137,7 +134,6 @@ const featuredTeams = Array.from(teamsByName.entries())
         )}
       </main>
 
-      {/* EQUIPOS */}
       {featuredTeamsTournament && featuredTeams.length > 0 && (
         <section class="mb-14">
           <div class="mb-6">
@@ -147,66 +143,72 @@ const featuredTeams = Array.from(teamsByName.entries())
           </div>
 
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-  {featuredTeams.map((team) => (
-    <div class="flex items-center justify-between rounded-full border border-white/10 bg-white/[0.02] px-4 py-3 h-[96px] hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
+            {featuredTeams.map((team) => (
+              <div class="flex items-center justify-between rounded-full border border-white/10 bg-white/[0.02] px-4 py-3 h-[96px] hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
 
-      {/* IZQUIERDA */}
-      <div class="flex items-center gap-4 min-w-0 flex-1">
+                <div class="flex items-center gap-4 min-w-0 flex-1">
+                  <div class="w-16 h-16 rounded-full overflow-hidden border border-white/10 flex-shrink-0 bg-black/40 relative">
+                    <img
+                      src={getTeamLogoPath(team.name)}
+                      alt={`Escudo ${team.name}`}
+                      class="w-full h-full object-cover"
+                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                    />
+                    <div class="absolute inset-0 hidden items-center justify-center bg-gradient-to-br from-violet-500 to-fuchsia-600">
+                      <LucideUsers size={16} class="text-white"/>
+                    </div>
+                  </div>
 
-        {/* ESCUDO */}
-        <div class="w-16 h-16 rounded-full overflow-hidden border border-white/10 flex-shrink-0 bg-black/40 relative">
-          <img
-            src={getTeamLogoPath(team.name)}
-            alt={`Escudo ${team.name}`}
-            class="w-full h-full object-cover"
-            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-          />
+                  <h3 class="text-white font-semibold text-xl truncate">
+                    {team.name}
+                  </h3>
+                </div>
 
-          <div class="absolute inset-0 hidden items-center justify-center bg-gradient-to-br from-violet-500 to-fuchsia-600">
-            <LucideUsers size={16} class="text-white"/>
+                <div class="flex flex-col justify-between items-end shrink-0 ml-3 h-[66px] overflow-hidden">
+
+                  <div class="h-[22px] flex flex-col justify-center text-right">
+                    {team.players[0] && (
+                      <>
+                        <div class="text-orange-400 text-xs font-semibold leading-none">
+                          {team.players[0].displayName}
+                        </div>
+                        <div class="text-white/40 text-[10px] leading-none">
+                          @{team.players[0].username}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div class="h-[22px] flex flex-col justify-center text-right">
+                    {team.players[1] && (
+                      <>
+                        <div class="text-orange-400 text-xs font-semibold leading-none">
+                          {team.players[1].displayName}
+                        </div>
+                        <div class="text-white/40 text-[10px] leading-none">
+                          @{team.players[1].username}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div class="h-[18px] flex flex-col items-end justify-end">
+                    <div class="w-10 h-px bg-white/10 mb-[2px]"></div>
+
+                    <div class="h-[12px]">
+                      {team.players[2] && (
+                        <div class="text-white/50 text-[9px] leading-none">
+                          {team.players[2].displayName}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+            ))}
           </div>
-        </div>
-
-        <h3 class="text-white font-semibold text-xl truncate">
-          {team.name}
-        </h3>
-      </div>
-
-      {/* DERECHA — JUGADORES */}
-      <div class="flex flex-col justify-center items-end shrink-0 ml-3 h-[66px]">
-
-  {/* TITULARES */}
-  {team.players.slice(0, 2).map((player) => (
-    <div class="text-right leading-tight">
-      <div class="text-orange-400 text-xs font-semibold">
-        {player.displayName}
-      </div>
-      <div class="text-white/40 text-[10px]">
-        @{player.username}
-      </div>
-    </div>
-  ))}
-
-  {/* SEPARADOR + SUPLENTE */}
-  <div class="w-full flex flex-col items-end mt-[2px]">
-
-    {/* línea sutil */}
-    <div class="w-10 h-px bg-white/10 mb-[2px]"></div>
-
-    {/* espacio fijo suplente */}
-    <div class="h-[14px] text-right">
-      {team.players.length > 2 && (
-        <div class="text-white/50 text-[9px] leading-none">
-          {team.players[2].displayName}
-        </div>
-      )}
-    </div>
-
-  </div>
-
-</div>  {/* ✅ ESTE ES EL CIERRE QUE FALTABA */}
-  ))}
-</div>
         </section>
       )}
 
