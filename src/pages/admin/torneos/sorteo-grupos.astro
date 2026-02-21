@@ -73,8 +73,8 @@ Equipo 16</textarea>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
       {["A","B","C","D"].map(group => (
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg">
-          <h2 class="text-center font-semibold text-amber-300 mb-3">
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-lg">
+          <h2 class="text-center font-bold text-2xl md:text-3xl text-amber-300 mb-4">
             Grupo {group}
           </h2>
           <ul id={`group${group}`} class="space-y-2"></ul>
@@ -146,7 +146,7 @@ Equipo 16</textarea>
 
           const li = document.createElement("li");
           li.textContent = selectedTeam;
-          li.className = "bg-white/5 border border-white/10 rounded-lg py-1 text-center drop";
+          li.className = "bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center drop";
 
           document.getElementById("group" + group).appendChild(li);
 
