@@ -87,6 +87,7 @@ Equipo 16</textarea>
   <div
     id="drawOverlay"
     class="fixed inset-0 bg-black/80 backdrop-blur flex items-center justify-center opacity-0 pointer-events-none transition"
+    style="display:none"
   >
     <div
       id="drawText"
@@ -125,11 +126,14 @@ Equipo 16</textarea>
         const randomIndex = Math.floor(Math.random() * remainingTeams.length);
         const selectedTeam = remainingTeams[randomIndex];
 
+        // 👉 mostrar overlay completamente
+        overlay.style.display = "flex";
         overlay.classList.remove("opacity-0","pointer-events-none");
         overlay.classList.add("opacity-100");
 
         text.textContent = "SORTEANDO...";
         text.classList.add("pulsing");
+        text.classList.remove("reveal");
 
         setTimeout(() => {
           text.textContent = selectedTeam;
@@ -149,8 +153,14 @@ Equipo 16</textarea>
           document.getElementById("result").textContent =
             "Equipo sorteado: " + selectedTeam;
 
+          // 👉 ocultar overlay COMPLETO
           overlay.classList.add("opacity-0","pointer-events-none");
-          text.classList.remove("reveal");
+          setTimeout(() => {
+            overlay.style.display = "none";
+            text.textContent = "";
+            text.classList.remove("reveal","pulsing");
+          }, 300);
+
         }, 3000);
       };
 
