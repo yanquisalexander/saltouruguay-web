@@ -133,7 +133,44 @@
       grid-template-columns: 1fr;
     }
   }
+
+  /* 🎬 Overlay de sorteo */
+
+  #drawOverlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle, rgba(2,6,23,0.9), rgba(2,6,23,1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  #drawOverlay.show {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  #drawText {
+    font-size: 64px;
+    font-weight: 800;
+    text-align: center;
+    padding: 20px 40px;
+    border-radius: 16px;
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    color: #020617;
+    animation: pulse 1s infinite alternate;
+  }
+
+  @keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.08); }
+  }
 </style>
+
 </head>
 
 <body>
@@ -218,17 +255,35 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    const overlay = document.getElementById("drawOverlay");
+    const text = document.getElementById("drawText");
     const group = document.getElementById("groupSelect").value;
 
     const randomIndex = Math.floor(Math.random() * remainingTeams.length);
-    const selectedTeam = remainingTeams.splice(randomIndex, 1)[0];
+    const selectedTeam = remainingTeams[randomIndex];
 
-    const li = document.createElement("li");
-    li.textContent = selectedTeam;
-    document.getElementById("group" + group).appendChild(li);
+    // Mostrar overlay
+    overlay.classList.add("show");
+    text.textContent = "SORTEANDO...";
 
-    document.getElementById("result").textContent =
-      "Equipo sorteado: " + selectedTeam;
+    // A los 1.5s mostrar el nombre
+    setTimeout(() => {
+      text.textContent = selectedTeam;
+    }, 1500);
+
+    // A los 3s agregar al grupo
+    setTimeout(() => {
+      remainingTeams.splice(randomIndex, 1);
+
+      const li = document.createElement("li");
+      li.textContent = selectedTeam;
+      document.getElementById("group" + group).appendChild(li);
+
+      document.getElementById("result").textContent =
+        "Equipo sorteado: " + selectedTeam;
+
+      overlay.classList.remove("show");
+    }, 3000);
   };
 
   window.resetDraw = function () {
@@ -243,6 +298,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 </script>
-
+<div id="drawOverlay">
+  <div id="drawText">SORTEANDO...</div>
+</div>
 </body>
 </html>
