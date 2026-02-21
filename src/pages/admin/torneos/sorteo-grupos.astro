@@ -16,10 +16,10 @@ import Layout from "@/layouts/Layout.astro";
       </h1>
     </div>
 
-    <!-- LISTA 4x4 -->
+    <!-- LISTA EQUIPOS -->
     <div class="mb-6">
-      <label class="text-sm text-white/70 mb-2 block">
-        Lista de equipos (4x4)
+      <label class="text-lg text-white mb-2 block font-semibold">
+        Lista de equipos (4 filas de 4)
       </label>
 
       <textarea
@@ -63,7 +63,7 @@ toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
       ))}
     </div>
 
-    <!-- IMÁGENES ORIGINALES + DATA TEAM -->
+    <!-- LOGOS -->
     <div class="mt-8 max-w-6xl mx-auto grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-16 gap-4">
       {[
         "anti-therian",
@@ -92,9 +92,14 @@ toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
       ))}
     </div>
 
+    <!-- OVERLAY CINEMÁTICA -->
+    <div id="drawOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 opacity-0 pointer-events-none transition">
+      <div id="drawText" class="text-5xl md:text-7xl font-anton text-amber-300 tracking-widest"></div>
+    </div>
+
   </section>
 
-  <script>
+<script>
 document.addEventListener("DOMContentLoaded", () => {
   let remainingTeams = [];
 
@@ -177,25 +182,32 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-  <style>
-    .teamGrid{
-      font-family: monospace;
-      white-space: pre;
-      line-height: 1.8;
-    }
+<style>
+.teamGrid{
+  font-family: monospace;
+  white-space: pre;
+  line-height: 1.8;
+  font-size: 16px;
+}
 
-    .winnerGlow{
-      box-shadow:0 0 25px rgba(255,200,0,.9);
-      transform:scale(1.15);
-    }
+.winnerGlow{
+  box-shadow:0 0 25px rgba(255,200,0,.9);
+  transform:scale(1.15);
+}
 
-    .logoUsed{
-      filter:grayscale(100%) brightness(.6);
-      opacity:.7;
-    }
+.logoUsed{
+  filter:grayscale(100%) brightness(.6);
+  opacity:.7;
+}
 
-    @keyframes dropIn{0%{transform:translateY(-40px);opacity:0}100%{transform:translateY(0);opacity:1}}
-    .drop{animation:dropIn .5s ease}
-  </style>
+@keyframes dropIn{0%{transform:translateY(-40px);opacity:0}100%{transform:translateY(0);opacity:1}}
+.drop{animation:dropIn .5s ease}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.pulsing{animation:pulse 1s infinite}
+
+@keyframes reveal{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+.reveal{animation:reveal .4s ease}
+</style>
 
 </Layout>
