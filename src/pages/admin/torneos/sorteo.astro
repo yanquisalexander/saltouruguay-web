@@ -1,3 +1,5 @@
+---
+---
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -24,6 +26,15 @@
     -webkit-text-fill-color: transparent;
   }
 
+  .mainTitle {
+    text-align: center;
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: white;
+    margin-bottom: 5px;
+    font-weight: 700;
+  }
+
   .container {
     max-width: 1100px;
     margin: auto;
@@ -48,29 +59,26 @@
     flex-wrap: wrap;
   }
 
-  select {
-    background: #020617;
-    color: white;
-    border: 1px solid #1f2937;
-  }
-
   select, button {
     padding: 12px 18px;
     border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
     transition: 0.2s ease;
+    border: 1px solid #1f2937;
+    background: #020617;
+    color: white;
   }
 
   button {
     background: linear-gradient(135deg, #f59e0b, #fbbf24);
     color: #111827;
+    border: none;
     box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
   }
 
   button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4);
   }
 
   .groups {
@@ -80,20 +88,16 @@
   }
 
   .group {
-    background: linear-gradient(180deg, #020617, #020617 60%, #020617);
+    background: #020617;
     border: 1px solid #1f2937;
     padding: 18px;
     border-radius: 14px;
     min-height: 230px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
   }
 
   .group h2 {
     text-align: center;
-    margin-top: 0;
-    margin-bottom: 12px;
     color: #fbbf24;
-    letter-spacing: 1px;
   }
 
   ul {
@@ -109,7 +113,18 @@
     padding: 8px 10px;
     border-radius: 8px;
     text-align: center;
-    font-weight: 500;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+
+  li.drop-animation {
+    animation: dropIn 0.6s ease forwards;
+    box-shadow: 0 0 15px rgba(251,191,36,0.7);
+  }
+
+  @keyframes dropIn {
+    0% { transform: translateY(-40px) scale(0.9); opacity: 0; }
+    60% { transform: translateY(6px) scale(1.05); opacity: 1; }
+    100% { transform: translateY(0) scale(1); }
   }
 
   .result {
@@ -118,23 +133,8 @@
     margin-bottom: 20px;
     font-weight: 700;
     color: #22c55e;
-    letter-spacing: 1px;
     min-height: 34px;
   }
-
-  @media (max-width: 900px) {
-    .groups {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (max-width: 500px) {
-    .groups {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  /* 🎬 Overlay de sorteo */
 
   #drawOverlay {
     position: fixed;
@@ -157,7 +157,6 @@
   #drawText {
     font-size: 64px;
     font-weight: 800;
-    text-align: center;
     padding: 20px 40px;
     border-radius: 16px;
     background: linear-gradient(90deg, #f59e0b, #fbbf24);
@@ -169,32 +168,31 @@
     from { transform: scale(1); }
     to { transform: scale(1.08); }
   }
-</style>
 
+  @media (max-width: 900px) {
+    .groups { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 500px) {
+    .groups { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 
 <body>
 
 <div class="container">
+  <h2 class="mainTitle">TORNEO ROCKET LEAGUE</h2>
   <h1>Sorteo de Grupos</h1>
 
-  <label>Lista de equipos (uno por línea)</label>
-  <textarea id="teamList">Deportivo MTM
-VasACorrer
-Los sin pelo
-Desertores Cúbicos
-Team FZBR
-La 141
-Therian & Furious
-Fuerza Torales
-MATE & TACO
-Los changos
-Tóxicos a la pala
-PUSKAS
-Anti Therian
-YEN
-CAP1891
-Equipo 16</textarea>
+  <textarea id="teamList">Equipo 1
+Equipo 2
+Equipo 3
+Equipo 4
+Equipo 5
+Equipo 6
+Equipo 7
+Equipo 8</textarea>
 
   <div class="controls">
     <select id="groupSelect">
@@ -211,32 +209,22 @@ Equipo 16</textarea>
   <div class="result" id="result"></div>
 
   <div class="groups">
-    <div class="group">
-      <h2>Grupo A</h2>
-      <ul id="groupA"></ul>
-    </div>
-
-    <div class="group">
-      <h2>Grupo B</h2>
-      <ul id="groupB"></ul>
-    </div>
-
-    <div class="group">
-      <h2>Grupo C</h2>
-      <ul id="groupC"></ul>
-    </div>
-
-    <div class="group">
-      <h2>Grupo D</h2>
-      <ul id="groupD"></ul>
-    </div>
+    <div class="group"><h2>Grupo A</h2><ul id="groupA"></ul></div>
+    <div class="group"><h2>Grupo B</h2><ul id="groupB"></ul></div>
+    <div class="group"><h2>Grupo C</h2><ul id="groupC"></ul></div>
+    <div class="group"><h2>Grupo D</h2><ul id="groupD"></ul></div>
   </div>
+</div>
+
+<div id="drawOverlay">
+  <div id="drawText">SORTEANDO...</div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
   let remainingTeams = [];
+  let drawing = false;
 
   function loadTeamsIfNeeded() {
     if (remainingTeams.length === 0) {
@@ -248,10 +236,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   window.drawTeam = function () {
+    if (drawing) return;
+    drawing = true;
+
     loadTeamsIfNeeded();
 
     if (remainingTeams.length === 0) {
-      alert("No quedan equipos por sortear");
+      alert("No quedan equipos");
+      drawing = false;
       return;
     }
 
@@ -262,33 +254,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const randomIndex = Math.floor(Math.random() * remainingTeams.length);
     const selectedTeam = remainingTeams[randomIndex];
 
-    // Mostrar overlay
+    const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
+    audio.play();
+
     overlay.classList.add("show");
     text.textContent = "SORTEANDO...";
 
-    // A los 1.5s mostrar el nombre
     setTimeout(() => {
       text.textContent = selectedTeam;
     }, 1500);
 
-    // A los 3s agregar al grupo
     setTimeout(() => {
       remainingTeams.splice(randomIndex, 1);
 
       const li = document.createElement("li");
       li.textContent = selectedTeam;
+      li.classList.add("drop-animation");
+
       document.getElementById("group" + group).appendChild(li);
 
       document.getElementById("result").textContent =
         "Equipo sorteado: " + selectedTeam;
 
       overlay.classList.remove("show");
+      drawing = false;
     }, 3000);
   };
 
   window.resetDraw = function () {
     remainingTeams = [];
-
     document.getElementById("groupA").innerHTML = "";
     document.getElementById("groupB").innerHTML = "";
     document.getElementById("groupC").innerHTML = "";
@@ -298,8 +292,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 </script>
-<div id="drawOverlay">
-  <div id="drawText">SORTEANDO...</div>
-</div>
+
 </body>
 </html>
