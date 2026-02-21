@@ -148,7 +148,7 @@ const featuredTeams = Array.from(teamsByName.entries())
 
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {featuredTeams.map((team) => (
-              <div class="flex items-center justify-between rounded-full border border-white/10 bg-white/[0.02] px-4 py-3 hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
+              <div class="flex items-center justify-between rounded-full border border-white/10 bg-white/[0.02] px-4 py-3 min-h-[96px] hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
 
                 <div class="flex items-center gap-4 min-w-0 flex-1">
 
@@ -175,21 +175,32 @@ const featuredTeams = Array.from(teamsByName.entries())
                 </div>
 
                 <div class="flex flex-col items-end gap-1 shrink-0 ml-3">
-                  {team.players.map((player) => (
-                    <div class="text-right">
-                      <div class="text-orange-400 text-xs font-semibold leading-tight">
-                        {player.displayName}
-                      </div>
-                      <div class="text-white/40 text-[10px] leading-tight">
-                        @{player.username}
-                      </div>
-                    </div>
-                  ))}
-                </div>
 
-              </div>
-            ))}
-          </div>
+  {/* TITULARES */}
+  {team.players.slice(0, 2).map((player) => (
+    <div class="text-right">
+      <div class="text-orange-400 text-xs font-semibold leading-tight">
+        {player.displayName}
+      </div>
+      <div class="text-white/40 text-[10px] leading-tight">
+        @{player.username}
+      </div>
+    </div>
+  ))}
+
+  {/* SUPLENTE */}
+  {team.players.length > 2 && (
+    <div class="text-right mt-1 opacity-70">
+      <div class="text-white/60 text-[10px] uppercase tracking-wide">
+        SUPLENTE
+      </div>
+      <div class="text-white/80 text-[11px] leading-tight">
+        {team.players[2].displayName}
+      </div>
+    </div>
+  )}
+
+</div>
         </section>
       )}
 
