@@ -157,6 +157,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if(cell) cell.classList.remove("cellUsed");
   }
 
+  /* 🔹 NUEVO — obtener estado actual */
+  function getCurrentGroups(){
+    const data = { A:[], B:[], C:[], D:[] };
+    ["A","B","C","D"].forEach(g=>{
+      const items = document.querySelectorAll(`#group${g} li`);
+      items.forEach(li=> data[g].push(li.dataset.team || li.textContent));
+    });
+    return data;
+  }
+
+  /* 🔹 NUEVO — guardar */
+  function saveGroups(){
+    localStorage.setItem("drawResults", JSON.stringify(getCurrentGroups()));
+  }
+
   window.drawTeam = function(){
 
     loadTeamsIfNeeded();
@@ -198,6 +213,8 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("group"+group).appendChild(li);
       document.getElementById("result").textContent="Equipo sorteado: "+team;
 
+      saveGroups(); // ✅ guarda estado
+
       overlay.classList.add("opacity-0","pointer-events-none");
       setTimeout(()=>{
         overlay.style.display="none";
@@ -224,6 +241,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("result").textContent="Se deshizo el último sorteo";
     lastDraw = null;
+
+    saveGroups(); // ✅ guarda estado
   };
 
   window.resetDraw = function(){
@@ -233,6 +252,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".teamCell").forEach(c=>c.classList.remove("cellUsed"));
     ["A","B","C","D"].forEach(g=>document.getElementById("group"+g).innerHTML="");
     document.getElementById("result").textContent="";
+
+    localStorage.removeItem("drawResults"); // ✅ limpia
   };
 
 });
