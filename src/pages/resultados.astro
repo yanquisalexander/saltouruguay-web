@@ -33,15 +33,15 @@ const fallbackGroups = {
             Grupo {group}
           </h2>
 
-          <ul id={`group-${group}`} class="space-y-4">
+          <ul id={`group-${group}`} class="space-y-3">
             {teams.map(team => (
-              <li class="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+              <li class="teamRow">
                 <img
                   src={`/images/team-logos/${team}.webp`}
                   alt={team}
-                  class="w-10 h-10 object-contain"
+                  class="teamLogoFixed"
                 />
-                <span class="font-semibold text-lg">{team}</span>
+                <span class="teamName">{team}</span>
               </li>
             ))}
           </ul>
@@ -56,15 +56,12 @@ const fallbackGroups = {
 document.addEventListener("DOMContentLoaded", ()=>{
 
   const raw = localStorage.getItem("drawResults");
-  console.log("drawResults localStorage →", raw);
-
-  if(!raw) return; // sigue mostrando fallback
+  if(!raw) return;
 
   let groups;
   try {
     groups = JSON.parse(raw);
   } catch(e){
-    console.error("Error parseando drawResults", e);
     return;
   }
 
@@ -76,11 +73,11 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
     teams.forEach(team=>{
       const li = document.createElement("li");
-      li.className = "flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg px-3 py-2";
+      li.className = "teamRow";
 
       li.innerHTML = `
-        <img src="/images/team-logos/${team}.webp" class="w-10 h-10 object-contain" />
-        <span class="font-semibold text-lg">${team}</span>
+        <img src="/images/team-logos/${team}.webp" class="teamLogoFixed" />
+        <span class="teamName">${team}</span>
       `;
 
       container.appendChild(li);
@@ -89,5 +86,34 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
 });
 </script>
+
+<style>
+.teamRow{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  height:56px;              /* 🔹 MISMA ALTURA */
+  padding:0 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.05);
+}
+
+.teamLogoFixed{
+  width:36px;               /* 🔹 LOGO FIJO */
+  height:36px;
+  object-fit:contain;
+  flex-shrink:0;
+}
+
+.teamName{
+  flex:1;                   /* 🔹 OCUPA TODO EL ESPACIO */
+  font-weight:600;
+  font-size:1.05rem;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;   /* 🔹 CORTA SI ES MUY LARGO */
+}
+</style>
 
 </Layout>
