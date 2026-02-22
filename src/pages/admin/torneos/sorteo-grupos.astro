@@ -16,6 +16,17 @@ import Layout from "@/layouts/Layout.astro";
       </h1>
     </div>
 
+  <!-- LISTA + PREVIEW EN COSTADO -->
+    <div class="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+    
+
+      <!-- GRILLA PREVIEW GRANDE -->
+      <div class="lg:col-span-2">
+        <div id="teamGridPreview" class="grid grid-cols-4 gap-2"></div>
+      </div>
+
+    </div>
   
     <!-- CONTROLES -->
     <div class="flex flex-wrap gap-3 mb-8">
@@ -70,10 +81,7 @@ import Layout from "@/layouts/Layout.astro";
     <div id="drawOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 opacity-0 pointer-events-none transition">
       <div id="drawText" class="text-5xl md:text-7xl font-anton text-amber-300 tracking-widest"></div>
     </div>
-   <!-- LISTA + PREVIEW EN COSTADO -->
-    <div class="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-
-      <!-- LISTA PEQUEÑA -->
+    <!-- LISTA PEQUEÑA -->
       <div class="lg:col-span-1">
         <label class="text-lg text-white mb-2 block font-semibold">
           Equipos para el sorteo
@@ -87,14 +95,6 @@ import Layout from "@/layouts/Layout.astro";
   >anti-therian    que-pelota-gerson    desertores-cubicos    fuerza-torales la-141    los-changos    los-sin-pelo    mate-&-taco puskas    ss    team-fzbr    therian-&-furious toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
 </div>
       </div>
-
-      <!-- GRILLA PREVIEW GRANDE -->
-      <div class="lg:col-span-2">
-        <div id="teamGridPreview" class="grid grid-cols-4 gap-2"></div>
-      </div>
-
-    </div>
-
   </section>
 
 <script>
