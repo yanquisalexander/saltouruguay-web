@@ -23,9 +23,9 @@ import Layout from "@/layouts/Layout.astro";
       </label>
 
       <textarea
-        id="teamList"
-        class="w-full h-40 rounded-xl bg-white/5 border border-white/10 p-4 focus:outline-none focus:ring-2 focus:ring-amber-400 teamGrid"
-      >anti-therian    que-pelota-gerson    desertores-cubicos    fuerza-torales
+  id="teamList"
+  class="w-full h-44 rounded-xl border border-white/10 p-3 focus:outline-none focus:ring-2 focus:ring-amber-400 teamGrid"
+>anti-therian    que-pelota-gerson    desertores-cubicos    fuerza-torales
 la-141    los-changos    los-sin-pelo    mate-&-taco
 puskas    ss    team-fzbr    therian-&-furious
 toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
@@ -184,20 +184,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <style>
 .teamGrid{
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1rem;
+  line-height: 2.2;
+  letter-spacing: .02em;
   white-space: pre;
-  line-height: 1.8;
-  font-size: 16px;
-}
+  background-color: rgba(255,255,255,0.03);
 
-.winnerGlow{
-  box-shadow:0 0 25px rgba(255,200,0,.9);
-  transform:scale(1.15);
-}
+  /* líneas horizontales */
+  background-image:
+    linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
 
-.logoUsed{
-  filter:grayscale(100%) brightness(.6);
-  opacity:.7;
+  /* tamaño de “celdas” */
+  background-size: 100% 2.4em, 25% 100%;
+
+  padding: 12px 14px;
 }
 
 @keyframes dropIn{0%{transform:translateY(-40px);opacity:0}100%{transform:translateY(0);opacity:1}}
