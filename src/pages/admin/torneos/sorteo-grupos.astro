@@ -19,20 +19,13 @@ import Layout from "@/layouts/Layout.astro";
     <!-- LISTA + PREVIEW EN COSTADO -->
     <div class="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-      <!-- LISTA PEQUEÑA -->
-      <div class="lg:col-span-1">
-        <label class="text-lg text-white mb-2 block font-semibold">
-          Equipos para el sorteo
-        </label>
-
-        <textarea
-          id="teamList"
-          class="w-full h-36 rounded-xl border border-white/10 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 teamGrid"
-        >anti-therian    que-pelota-gerson    desertores-cubicos    fuerza-torales
-la-141    los-changos    los-sin-pelo    mate-&-taco
-puskas    ss    team-fzbr    therian-&-furious
-toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
-      </div>
+      <div class="overflow-x-auto">
+  <textarea
+    id="teamList"
+    class="w-full whitespace-nowrap overflow-x-auto overflow-y-hidden rounded-xl border border-white/10 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 teamGrid"
+    style="height:48px"
+  >anti-therian    que-pelota-gerson    desertores-cubicos    fuerza-torales la-141    los-changos    los-sin-pelo    mate-&-taco puskas    ss    team-fzbr    therian-&-furious toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
+</div>
 
       <!-- GRILLA PREVIEW GRANDE -->
       <div class="lg:col-span-2">
