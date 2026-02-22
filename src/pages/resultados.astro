@@ -109,9 +109,12 @@ document.addEventListener("DOMContentLoaded", ()=>{
 .teamName{
   flex:1;
   font-weight:700;
-  font-size:1.1rem;            /* 🔹 texto más grande */
+  font-size:1.1rem;
   display:flex;
-  align-items:center;          /* 🔹 centra vertical */
+  align-items:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 </style>
 
