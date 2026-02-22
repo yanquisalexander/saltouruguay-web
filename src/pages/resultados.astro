@@ -55,13 +55,21 @@ const fallbackGroups = {
 <script>
 document.addEventListener("DOMContentLoaded", ()=>{
 
-  const stored = localStorage.getItem("drawResults");
-  if(!stored) return;
+  const raw = localStorage.getItem("drawResults");
+  console.log("drawResults localStorage →", raw);
 
-  const groups = JSON.parse(stored);
+  if(!raw) return; // sigue mostrando fallback
+
+  let groups;
+  try {
+    groups = JSON.parse(raw);
+  } catch(e){
+    console.error("Error parseando drawResults", e);
+    return;
+  }
 
   Object.entries(groups).forEach(([group, teams])=>{
-    const container = document.querySelector(`#group-${group}`);
+    const container = document.getElementById(`group-${group}`);
     if(!container) return;
 
     container.innerHTML = "";
