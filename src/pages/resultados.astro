@@ -33,18 +33,18 @@ const fallbackGroups = {
         Grupo {group}
       </h2>
 
-      <ul id={`group-${group}`} class="flex gap-3 overflow-x-auto whitespace-nowrap">
-  {teams.map(team => (
-    <li class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 flex-shrink-0">
-      <img
-        src={`/images/team-logos/${team}.webp`}
-        alt={team}
-        class="w-10 h-10 object-contain"
-      />
-      <span class="font-semibold text-lg">{team}</span>
-    </li>
-  ))}
-</ul>
+      <ul id={`group-${group}`} class="flex flex-wrap gap-3">
+        {teams.map(team => (
+          <li class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+            <img
+              src={`/images/team-logos/${team}.webp`}
+              alt={team}
+              class="w-10 h-10 object-contain"
+            />
+            <span class="font-semibold text-lg">{team}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   ))}
 
