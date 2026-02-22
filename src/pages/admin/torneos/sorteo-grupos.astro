@@ -133,14 +133,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function highlightLogo(team){
-    const logo = document.querySelector(`[data-team="${team}"]`);
-    if(!logo) return;
-    logo.classList.add("winnerGlow");
-    setTimeout(()=>{
-      logo.classList.remove("winnerGlow");
-      logo.classList.add("logoUsed");
-    },2000);
-  }
+  const logo = document.querySelector(`img.teamLogo[data-team="${team}"]`);
+  if(!logo) return;
+
+  logo.classList.add("winnerGlow");
+
+  setTimeout(()=>{
+    logo.classList.remove("winnerGlow");
+    logo.classList.add("logoUsed");
+  },2000);
+}
 
   function markCellUsed(team){
     const cell = document.querySelector(`.teamCell[data-team="${team}"]`);
