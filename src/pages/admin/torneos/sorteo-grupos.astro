@@ -23,12 +23,15 @@ import Layout from "@/layouts/Layout.astro";
       </label>
 
       <textarea
-  id="teamList"
-  class="w-full h-44 rounded-xl border border-white/10 p-3 focus:outline-none focus:ring-2 focus:ring-amber-400 teamGrid"
->anti-therian    que-pelota-gerson    desertores-cubicos    fuerza-torales
+        id="teamList"
+        class="w-full h-44 rounded-xl border border-white/10 p-3 focus:outline-none focus:ring-2 focus:ring-amber-400 teamGrid"
+      >anti-therian    que-pelota-gerson    desertores-cubicos    fuerza-torales
 la-141    los-changos    los-sin-pelo    mate-&-taco
 puskas    ss    team-fzbr    therian-&-furious
 toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
+
+      <!-- GRILLA REAL -->
+      <div id="teamGridPreview" class="grid grid-cols-4 gap-2 mt-3"></div>
     </div>
 
     <!-- CONTROLES -->
@@ -66,22 +69,10 @@ toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
     <!-- LOGOS -->
     <div class="mt-8 max-w-6xl mx-auto grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-16 gap-4">
       {[
-        "anti-therian",
-        "que-pelota-gerson",
-        "desertores-cubicos",
-        "fuerza-torales",
-        "la-141",
-        "los-changos",
-        "los-sin-pelo",
-        "mate-&-taco",
-        "puskas",
-        "ss",
-        "team-fzbr",
-        "therian-&-furious",
-        "toxicos-a-la-pala",
-        "vasacorrer",
-        "x-force",
-        "yen"
+        "anti-therian","que-pelota-gerson","desertores-cubicos","fuerza-torales",
+        "la-141","los-changos","los-sin-pelo","mate-&-taco",
+        "puskas","ss","team-fzbr","therian-&-furious",
+        "toxicos-a-la-pala","vasacorrer","x-force","yen"
       ].map((team, i) => (
         <img
           src={`/images/team-logos/${team}.webp`}
@@ -92,7 +83,7 @@ toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
       ))}
     </div>
 
-    <!-- OVERLAY CINEMÁTICA -->
+    <!-- OVERLAY -->
     <div id="drawOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 opacity-0 pointer-events-none transition">
       <div id="drawText" class="text-5xl md:text-7xl font-anton text-amber-300 tracking-widest"></div>
     </div>
@@ -101,105 +92,138 @@ toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+
   let remainingTeams = [];
 
-  function loadTeamsIfNeeded() {
-    if (remainingTeams.length === 0) {
-      remainingTeams = document.getElementById("teamList").value
-        .replace(/\s+/g,"\n")
-        .split("\n")
-        .map(t => t.trim())
-        .filter(t => t !== "");
+  function getTeams(){
+    return document.getElementById("teamList").value
+      .replace(/\s+/g,"\n")
+      .split("\n")
+      .map(t=>t.trim())
+      .filter(Boolean);
+  }
+
+  function renderTeamGrid(){
+    const container = document.getElementById("teamGridPreview");
+    container.innerHTML = "";
+
+    getTeams().forEach(team=>{
+      const cell = document.createElement("div");
+      cell.textContent = team;
+      cell.dataset.team = team;
+      cell.className = "teamCell bg-white/5 border border-white/10 rounded-lg py-2 text-center text-sm font-semibold";
+      container.appendChild(cell);
+    });
+  }
+
+  renderTeamGrid();
+  document.getElementById("teamList").addEventListener("input", renderTeamGrid);
+
+  function loadTeamsIfNeeded(){
+    if(remainingTeams.length === 0){
+      remainingTeams = getTeams();
     }
   }
 
   function highlightLogo(team){
     const logo = document.querySelector(`[data-team="${team}"]`);
     if(!logo) return;
-
     logo.classList.add("winnerGlow");
-
     setTimeout(()=>{
       logo.classList.remove("winnerGlow");
       logo.classList.add("logoUsed");
     },2000);
   }
 
-  window.drawTeam = function () {
+  function markCellUsed(team){
+    const cell = document.querySelector(`.teamCell[data-team="${team}"]`);
+    if(cell) cell.classList.add("cellUsed");
+  }
+
+  window.drawTeam = function(){
+
     loadTeamsIfNeeded();
-    if (remainingTeams.length === 0) return alert("No quedan equipos");
+    if(!remainingTeams.length) return alert("No quedan equipos");
 
     const overlay = document.getElementById("drawOverlay");
     const text = document.getElementById("drawText");
     const group = document.getElementById("groupSelect").value;
 
-    const index = Math.floor(Math.random() * remainingTeams.length);
+    const index = Math.floor(Math.random()*remainingTeams.length);
     const team = remainingTeams[index];
 
-    overlay.style.display = "flex";
+    overlay.style.display="flex";
     overlay.classList.remove("opacity-0","pointer-events-none");
     overlay.classList.add("opacity-100");
 
-    text.textContent = "SORTEANDO...";
+    text.textContent="SORTEANDO...";
     text.classList.add("pulsing");
     text.classList.remove("reveal");
 
-    setTimeout(() => {
-      text.textContent = team;
+    setTimeout(()=>{
+      text.textContent=team;
       text.classList.remove("pulsing");
       text.classList.add("reveal");
       highlightLogo(team);
-    }, 1500);
+      markCellUsed(team);
+    },1500);
 
-    setTimeout(() => {
-      remainingTeams.splice(index, 1);
+    setTimeout(()=>{
+      remainingTeams.splice(index,1);
 
-      const li = document.createElement("li");
-      li.textContent = team;
-      li.className = "bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center drop";
+      const li=document.createElement("li");
+      li.textContent=team;
+      li.className="bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center drop";
 
-      document.getElementById("group" + group).appendChild(li);
-      document.getElementById("result").textContent = "Equipo sorteado: " + team;
+      document.getElementById("group"+group).appendChild(li);
+      document.getElementById("result").textContent="Equipo sorteado: "+team;
 
       overlay.classList.add("opacity-0","pointer-events-none");
-      setTimeout(() => {
-        overlay.style.display = "none";
-        text.textContent = "";
+      setTimeout(()=>{
+        overlay.style.display="none";
+        text.textContent="";
         text.classList.remove("reveal","pulsing");
-      }, 300);
+      },300);
 
-    }, 3000);
+    },3000);
   };
 
-  window.resetDraw = function () {
-    remainingTeams = [];
-    document.querySelectorAll(".teamLogo").forEach(l=>{
-      l.classList.remove("winnerGlow","logoUsed");
-    });
-    ["A","B","C","D"].forEach(g => document.getElementById("group"+g).innerHTML="");
+  window.resetDraw = function(){
+    remainingTeams=[];
+    document.querySelectorAll(".teamLogo").forEach(l=>l.classList.remove("winnerGlow","logoUsed"));
+    document.querySelectorAll(".teamCell").forEach(c=>c.classList.remove("cellUsed"));
+    ["A","B","C","D"].forEach(g=>document.getElementById("group"+g).innerHTML="");
     document.getElementById("result").textContent="";
   };
+
 });
 </script>
 
 <style>
 .teamGrid{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 1rem;
-  line-height: 2.2;
-  letter-spacing: .02em;
+  font-family: ui-monospace, monospace;
   white-space: pre;
   background-color: rgba(255,255,255,0.03);
+}
 
-  /* líneas horizontales */
-  background-image:
-    linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+.teamCell{
+  transition:.3s;
+}
 
-  /* tamaño de “celdas” */
-  background-size: 100% 2.4em, 25% 100%;
+.cellUsed{
+  background: rgba(255,255,255,.08);
+  filter: grayscale(100%);
+  opacity:.6;
+}
 
-  padding: 12px 14px;
+.winnerGlow{
+  box-shadow:0 0 25px rgba(255,200,0,.9);
+  transform:scale(1.15);
+}
+
+.logoUsed{
+  filter:grayscale(100%) brightness(.6);
+  opacity:.7;
 }
 
 @keyframes dropIn{0%{transform:translateY(-40px);opacity:0}100%{transform:translateY(0);opacity:1}}
