@@ -25,30 +25,30 @@ const fallbackGroups = {
     </div>
 
     <!-- GRUPOS -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-      {Object.entries(fallbackGroups).map(([group, teams]) => (
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-lg">
-          <h2 class="text-center font-bold text-2xl md:text-3xl text-amber-300 mb-6">
-            Grupo {group}
-          </h2>
+  {Object.entries(fallbackGroups).map(([group, teams]) => (
+    <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-lg">
+      <h2 class="text-center font-bold text-2xl md:text-3xl text-amber-300 mb-6">
+        Grupo {group}
+      </h2>
 
-          <ul id={`group-${group}`} class="space-y-4">
-            {teams.map(team => (
-              <li class="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
-                <img
-                  src={`/images/team-logos/${team}.webp`}
-                  alt={team}
-                  class="w-10 h-10 object-contain"
-                />
-                <span class="font-semibold text-lg">{team}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-
+      <ul id={`group-${group}`} class="flex flex-wrap gap-3">
+        {teams.map(team => (
+          <li class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+            <img
+              src={`/images/team-logos/${team}.webp`}
+              alt={team}
+              class="w-10 h-10 object-contain"
+            />
+            <span class="font-semibold text-lg">{team}</span>
+          </li>
+        ))}
+      </ul>
     </div>
+  ))}
+
+</div>
 
   </section>
 
