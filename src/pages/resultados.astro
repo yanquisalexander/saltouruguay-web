@@ -91,28 +91,27 @@ document.addEventListener("DOMContentLoaded", ()=>{
 .teamRow{
   display:flex;
   align-items:center;
-  gap:12px;
-  height:56px;              /* 🔹 MISMA ALTURA */
-  padding:0 12px;
+  gap:14px;
+  height:48px;                 /* 🔹 fila más compacta */
+  padding:0 14px;
   border-radius:10px;
   border:1px solid rgba(255,255,255,0.1);
   background:rgba(255,255,255,0.05);
 }
 
 .teamLogoFixed{
-  width:36px;               /* 🔹 LOGO FIJO */
-  height:36px;
+  width:28px;                  /* 🔹 logo proporcional */
+  height:28px;
   object-fit:contain;
   flex-shrink:0;
 }
 
 .teamName{
-  flex:1;                   /* 🔹 OCUPA TODO EL ESPACIO */
-  font-weight:600;
-  font-size:1.05rem;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;   /* 🔹 CORTA SI ES MUY LARGO */
+  flex:1;
+  font-weight:700;
+  font-size:1.1rem;            /* 🔹 texto más grande */
+  display:flex;
+  align-items:center;          /* 🔹 centra vertical */
 }
 </style>
 
