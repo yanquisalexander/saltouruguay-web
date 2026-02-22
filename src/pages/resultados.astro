@@ -88,33 +88,34 @@ document.addEventListener("DOMContentLoaded", ()=>{
 </script>
 
 <style>
-.teamRow{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  height:48px;                 /* 🔹 fila más compacta */
-  padding:0 14px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,0.1);
-  background:rgba(255,255,255,0.05);
+.teamRow {
+  display: flex;
+  align-items: center;      /* centra verticalmente todo */
+  gap: 12px;
+  height: 48px;             /* altura fija */
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
 }
 
-.teamLogoFixed{
-  width:28px;                  /* 🔹 logo proporcional */
-  height:28px;
-  object-fit:contain;
-  flex-shrink:0;
+.teamLogoFixed {
+  width: 36px;              /* logo más pequeño */
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;           /* no se encoge */
 }
 
-.teamName{
-  flex:1;
-  font-weight:700;
-  font-size:1.1rem;
-  display:flex;
-  align-items:center;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+.teamName {
+  flex: 1;                  /* ocupa todo el espacio restante */
+  font-weight: 700;
+  font-size: 1.2rem;        /* más grande */
+  display: flex;
+  align-items: center;      /* centra verticalmente el texto */
+  justify-content: flex-start; /* texto alineado a la izquierda */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;  /* corta si es demasiado largo */
 }
 </style>
 
