@@ -1,8 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 
-/* 🔹 CONFIGURA AQUÍ LOS RESULTADOS */
-const groups = {
+/* 🔹 Fallback si todavía no hay datos guardados */
+const fallbackGroups = {
   A: ["anti-therian","que-pelota-gerson","desertores-cubicos","fuerza-torales"],
   B: ["la-141","los-changos","los-sin-pelo","mate-&-taco"],
   C: ["puskas","ss","team-fzbr","therian-&-furious"],
@@ -27,13 +27,13 @@ const groups = {
     <!-- GRUPOS -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-      {Object.entries(groups).map(([group, teams]) => (
+      {Object.entries(fallbackGroups).map(([group, teams]) => (
         <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-lg">
           <h2 class="text-center font-bold text-2xl md:text-3xl text-amber-300 mb-6">
             Grupo {group}
           </h2>
 
-          <ul class="space-y-4">
+          <ul id={`group-${group}`} class="space-y-4">
             {teams.map(team => (
               <li class="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
                 <img
@@ -51,4 +51,35 @@ const groups = {
     </div>
 
   </section>
+
+<script>
+document.addEventListener("DOMContentLoaded", ()=>{
+
+  const stored = localStorage.getItem("drawResults");
+  if(!stored) return;
+
+  const groups = JSON.parse(stored);
+
+  Object.entries(groups).forEach(([group, teams])=>{
+    const container = document.querySelector(`#group-${group}`);
+    if(!container) return;
+
+    container.innerHTML = "";
+
+    teams.forEach(team=>{
+      const li = document.createElement("li");
+      li.className = "flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg px-3 py-2";
+
+      li.innerHTML = `
+        <img src="/images/team-logos/${team}.webp" class="w-10 h-10 object-contain" />
+        <span class="font-semibold text-lg">${team}</span>
+      `;
+
+      container.appendChild(li);
+    });
+  });
+
+});
+</script>
+
 </Layout>
