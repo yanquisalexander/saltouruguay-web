@@ -90,32 +90,33 @@ document.addEventListener("DOMContentLoaded", ()=>{
 <style>
 .teamRow {
   display: flex;
-  align-items: center;      /* centra verticalmente todo */
+  align-items: center;       /* centra vertical */
   gap: 12px;
-  height: 48px;             /* altura fija */
+  height: 60px;              /* altura uniforme un poco más grande */
   padding: 0 12px;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.05);
+  overflow: hidden;
 }
 
 .teamLogoFixed {
-  width: 36px;              /* logo más pequeño */
-  height: 36px;
+  width: 48px;               /* logo más pequeño y consistente */
+  height: 48px;
   object-fit: contain;
-  flex-shrink: 0;           /* no se encoge */
+  flex-shrink: 0;
 }
 
 .teamName {
-  flex: 1;                  /* ocupa todo el espacio restante */
+  flex: 1;                   /* ocupa todo el espacio restante */
   font-weight: 700;
-  font-size: 1.2rem;        /* más grande */
+  font-size: 1.25rem;        /* texto más grande */
   display: flex;
-  align-items: center;      /* centra verticalmente el texto */
-  justify-content: flex-start; /* texto alineado a la izquierda */
+  align-items: center;       /* centra vertical */
+  justify-content: flex-start; 
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;  /* corta si es demasiado largo */
+  text-overflow: ellipsis;   /* corta nombres largos */
 }
 </style>
 
