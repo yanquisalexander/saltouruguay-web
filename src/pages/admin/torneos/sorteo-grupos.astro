@@ -115,7 +115,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderTeamGrid(){
     const container = document.getElementById("teamGridPreview");
     container.innerHTML = "";
-
     getTeams().forEach(team=>{
       const cell = document.createElement("div");
       cell.textContent = team;
@@ -152,7 +151,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function unmarkTeam(team){
     const logo = document.querySelector(`img.teamLogo[data-team="${team}"]`);
     if(logo) logo.classList.remove("logoUsed");
-
     const cell = document.querySelector(`.teamCell[data-team="${team}"]`);
     if(cell) cell.classList.remove("cellUsed");
   }
@@ -166,8 +164,20 @@ document.addEventListener("DOMContentLoaded", () => {
     return data;
   }
 
-  function saveGroups(){
-    localStorage.setItem("drawResults", JSON.stringify(getCurrentGroups()));
+  /* 🔹 NUEVO — guarda y sincroniza */
+  async function saveGroups(){
+    const data = getCurrentGroups();
+    localStorage.setItem("drawResults", JSON.stringify(data));
+
+    try{
+      await fetch("/api/draw-results.json",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(data)
+      });
+    }catch(e){
+      console.warn("No se pudo sync con overlay");
+    }
   }
 
   window.drawTeam = function(){
@@ -181,7 +191,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const index = Math.floor(Math.random()*remainingTeams.length);
     const team = remainingTeams[index];
-
     lastDraw = { team, group };
 
     overlay.style.display="flex";
@@ -225,14 +234,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.undoLastDraw = function(){
     if(!lastDraw) return;
-
     const { team, group } = lastDraw;
 
     const list = document.getElementById("group"+group);
     const items = list.querySelectorAll("li");
-    if(items.length){
-      list.removeChild(items[items.length-1]);
-    }
+    if(items.length) list.removeChild(items[items.length-1]);
 
     remainingTeams.push(team);
     unmarkTeam(team);
@@ -243,7 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
     saveGroups();
   };
 
-  window.resetDraw = function(){
+  window.resetDraw = async function(){
     remainingTeams=[];
     lastDraw=null;
     document.querySelectorAll(".teamLogo").forEach(l=>l.classList.remove("winnerGlow","logoUsed"));
@@ -251,35 +257,9 @@ document.addEventListener("DOMContentLoaded", () => {
     ["A","B","C","D"].forEach(g=>document.getElementById("group"+g).innerHTML="");
     document.getElementById("result").textContent="";
     localStorage.removeItem("drawResults");
+
+    await fetch("/api/draw-results.json",{method:"POST",headers:{ "Content-Type":"application/json" },body: JSON.stringify({A:[],B:[],C:[],D:[]})});
   };
-
-  /* 🔹 LONG POLLING PARA OVERLAY */
-  async function pollOverlay(){
-    try{
-      const res = await fetch("/api/draw-results.json",{cache:"no-store"});
-      if(!res.ok) throw new Error("no data");
-      const groups = await res.json();
-
-      Object.entries(groups).forEach(([group,teams])=>{
-        const container=document.getElementById("group"+group);
-        if(!container) return;
-        container.innerHTML="";
-        teams.forEach(team=>{
-          const li=document.createElement("li");
-          li.textContent=team;
-          li.className="bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center";
-          container.appendChild(li);
-        });
-      });
-
-    }catch(e){
-      /* silencio para no spamear consola en dev */
-    }
-
-    setTimeout(pollOverlay,3000);
-  }
-
-  pollOverlay();
 
 });
 </script>
