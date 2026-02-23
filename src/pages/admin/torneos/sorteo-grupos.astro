@@ -2,24 +2,39 @@
 import AdminLayout from "@/layouts/AdminLayout.astro";
 
 const TEAMS = [
-  "anti-therian","que-pelota-gerson","desertores-cubicos","fuerza-torales",
-  "la-141","los-changos","los-sin-pelo","mate-&-taco",
-  "puskas","ss","team-fzbr","therian-&-furious",
-  "toxicos-a-la-pala","vasacorrer","x-force","yen"
+  "anti-therian",
+  "que-pelota-gerson",
+  "desertores-cubicos",
+  "fuerza-torales",
+  "la-141",
+  "los-changos",
+  "los-sin-pelo",
+  "mate-&-taco",
+  "puskas",
+  "ss",
+  "team-fzbr",
+  "therian-&-furious",
+  "toxicos-a-la-pala",
+  "vasacorrer",
+  "x-force",
+  "yen",
 ];
 
-const GROUPS = ["A","B","C","D"] as const;
+const GROUPS = ["A", "B", "C", "D"] as const;
 ---
 
 <AdminLayout title="Sorteo de Grupos" mainClassname="px-6 sm:px-10 pt-24 pb-32">
   <section class="max-w-6xl mx-auto">
-
     <!-- TÍTULO -->
     <div class="text-center mb-8">
-      <p class="uppercase tracking-[0.1em] text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg">
+      <p
+        class="uppercase tracking-[0.1em] text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg"
+      >
         TORNEO ROCKET LEAGUE
       </p>
-      <h1 class="font-anton text-4xl md:text-5xl mt-2 bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
+      <h1
+        class="font-anton text-4xl md:text-5xl mt-2 bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent"
+      >
         Sorteo de Grupos
       </h1>
     </div>
@@ -31,258 +46,322 @@ const GROUPS = ["A","B","C","D"] as const;
 
     <!-- CONTROLES -->
     <div class="flex flex-wrap gap-3 mb-8">
-      <select id="groupSelect" class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white">
-        {GROUPS.map(g => <option value={g}>Grupo {g}</option>)}
+      <select
+        id="groupSelect"
+        class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white"
+      >
+        {GROUPS.map((g) => <option value={g}>Grupo {g}</option>)}
       </select>
-      <button id="btnDraw"  class="px-5 py-2 rounded-lg font-semibold bg-gradient-to-r from-amber-400 to-yellow-300 text-black hover:scale-105 transition">
+      <button
+        id="btnDraw"
+        class="px-5 py-2 rounded-lg font-semibold bg-gradient-to-r from-amber-400 to-yellow-300 text-black hover:scale-105 transition"
+      >
         🎲 Sortear equipo
       </button>
-      <button id="btnUndo"  class="px-5 py-2 rounded-lg font-semibold bg-white/10 hover:bg-white/20 transition">
+      <button
+        id="btnUndo"
+        class="px-5 py-2 rounded-lg font-semibold bg-white/10 hover:bg-white/20 transition"
+      >
         ↩️ Undo
       </button>
-      <button id="btnReset" class="px-5 py-2 rounded-lg font-semibold bg-white/10 hover:bg-white/20 transition">
+      <button
+        id="btnReset"
+        class="px-5 py-2 rounded-lg font-semibold bg-white/10 hover:bg-white/20 transition"
+      >
         🔄 Reiniciar
       </button>
     </div>
 
-    <div id="result" class="text-center text-lg font-semibold text-green-400 mb-6" aria-live="polite"></div>
+    <div
+      id="result"
+      class="text-center text-lg font-semibold text-green-400 mb-6"
+      aria-live="polite"
+    >
+    </div>
 
     <!-- GRUPOS -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-      {GROUPS.map(g => (
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-lg">
-          <h2 class="text-center font-bold text-2xl md:text-3xl text-amber-300 mb-4">Grupo {g}</h2>
-          <ul id={`group${g}`} class="space-y-2"></ul>
-        </div>
-      ))}
+      {
+        GROUPS.map((g) => (
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-lg">
+            <h2 class="text-center font-bold text-2xl md:text-3xl text-amber-300 mb-4">
+              Grupo {g}
+            </h2>
+            <ul id={`group${g}`} class="space-y-2" />
+          </div>
+        ))
+      }
     </div>
 
     <!-- LOGOS -->
     <div class="mt-8 grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-16 gap-4">
-      {TEAMS.map(team => (
-        <img
-          src={`/images/team-logos/${team}.webp`}
-          data-team={team}
-          alt={team}
-          class="teamLogo w-full h-auto rounded-lg border border-white/10 hover:scale-110 transition"
-        />
-      ))}
+      {
+        TEAMS.map((team) => (
+          <img
+            src={`/images/team-logos/${team}.webp`}
+            data-team={team}
+            alt={team}
+            class="teamLogo w-full h-auto rounded-lg border border-white/10 hover:scale-110 transition"
+          />
+        ))
+      }
     </div>
 
     <!-- LISTA DE EQUIPOS (editable) -->
     <div class="mt-8">
-      <label for="teamList" class="text-lg text-white mb-2 block font-semibold">Equipos para el sorteo</label>
+      <label for="teamList" class="text-lg text-white mb-2 block font-semibold"
+        >Equipos para el sorteo</label
+      >
       <textarea
         id="teamList"
         class="w-full rounded-xl border border-white/10 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 teamGrid"
         style="height:48px; overflow-x:auto; overflow-y:hidden; white-space:nowrap"
-      >{TEAMS.join("    ")}</textarea>
+        >{TEAMS.join("    ")}</textarea
+      >
     </div>
 
     <!-- OVERLAY -->
-    <div id="drawOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden" aria-hidden="true">
-      <div id="drawText" class="text-5xl md:text-7xl font-anton text-amber-300 tracking-widest"></div>
+    <div
+      id="drawOverlay"
+      class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden"
+      aria-hidden="true"
+    >
+      <div
+        id="drawText"
+        class="text-5xl md:text-7xl font-anton text-amber-300 tracking-widest"
+      >
+      </div>
     </div>
-
   </section>
 </AdminLayout>
 
 <script>
-import { $ } from "@/lib/dom-selector";
+  import { $ } from "@/lib/dom-selector";
 
-document.addEventListener("astro:page-load", () => {
+  document.addEventListener("astro:page-load", () => {
+    // ─── State ────────────────────────────────────────────────────────────────
+    let remainingTeams: string[] = [];
+    let lastDraw: { team: string; group: string } | null = null;
+    let isDrawing = false;
 
-  // ─── State ────────────────────────────────────────────────────────────────
-  let remainingTeams: string[] = [];
-  let lastDraw: { team: string; group: string } | null = null;
-  let isDrawing = false;
+    // ─── DOM refs ─────────────────────────────────────────────────────────────
+    const $teamList = $("#teamList") as HTMLTextAreaElement;
+    const $groupSelect = $("#groupSelect") as HTMLSelectElement;
+    const $teamGridPreview = $("#teamGridPreview") as HTMLDivElement;
+    const $result = $("#result") as HTMLDivElement;
+    const $overlay = $("#drawOverlay") as HTMLDivElement;
+    const $drawText = $("#drawText") as HTMLDivElement;
 
-  // ─── DOM refs ─────────────────────────────────────────────────────────────
-  const $teamList      = $("#teamList")       as HTMLTextAreaElement;
-  const $groupSelect   = $("#groupSelect")    as HTMLSelectElement;
-  const $teamGridPreview = $("#teamGridPreview") as HTMLDivElement;
-  const $result        = $("#result")         as HTMLDivElement;
-  const $overlay       = $("#drawOverlay")    as HTMLDivElement;
-  const $drawText      = $("#drawText")       as HTMLDivElement;
+    // ─── Helpers ──────────────────────────────────────────────────────────────
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
+    function getTeams(): string[] {
+      return $teamList.value
+        .replace(/\s+/g, "\n")
+        .split("\n")
+        .map((t) => t.trim())
+        .filter(Boolean);
+    }
 
-  function getTeams(): string[] {
-    return $teamList.value
-      .replace(/\s+/g, "\n")
-      .split("\n")
-      .map(t => t.trim())
-      .filter(Boolean);
-  }
+    function getGroupEl(group: string): HTMLUListElement {
+      return document.getElementById(`group${group}`) as HTMLUListElement;
+    }
 
-  function getGroupEl(group: string): HTMLUListElement {
-    return document.getElementById(`group${group}`) as HTMLUListElement;
-  }
+    function getLogoEl(team: string): Element | null {
+      return document.querySelector(`img.teamLogo[data-team="${team}"]`);
+    }
 
-  function getLogoEl(team: string): Element | null {
-    return document.querySelector(`img.teamLogo[data-team="${team}"]`);
-  }
+    function getCellEl(team: string): Element | null {
+      return document.querySelector(`.teamCell[data-team="${team}"]`);
+    }
 
-  function getCellEl(team: string): Element | null {
-    return document.querySelector(`.teamCell[data-team="${team}"]`);
-  }
+    function getCurrentGroups(): Record<string, string[]> {
+      return Object.fromEntries(
+        ["A", "B", "C", "D"].map((g) => [
+          g,
+          [...getGroupEl(g).querySelectorAll("li")].map(
+            (li) => li.dataset.team ?? li.textContent ?? "",
+          ),
+        ]),
+      );
+    }
 
-  function getCurrentGroups(): Record<string, string[]> {
-    return Object.fromEntries(
-      ["A","B","C","D"].map(g => [
-        g,
-        [...getGroupEl(g).querySelectorAll("li")].map(li => li.dataset.team ?? li.textContent ?? "")
-      ])
-    );
-  }
+    async function syncGroups(): Promise<void> {
+      const data = getCurrentGroups();
+      try {
+        await fetch("/api/draw-results", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+      } catch {
+        console.warn("No se pudo sincronizar con el overlay");
+      }
+    }
 
-  async function syncGroups(): Promise<void> {
-    const data = getCurrentGroups();
-    localStorage.setItem("drawResults", JSON.stringify(data));
-    try {
-      await fetch("/api/draw-results.json", {
+    // ─── UI helpers ───────────────────────────────────────────────────────────
+
+    function renderTeamGrid(): void {
+      $teamGridPreview.innerHTML = "";
+      getTeams().forEach((team) => {
+        const cell = Object.assign(document.createElement("div"), {
+          textContent: team,
+          className:
+            "teamCell bg-white/5 border border-white/10 rounded-lg py-2 text-center text-sm font-semibold",
+        });
+        cell.dataset.team = team;
+        $teamGridPreview.appendChild(cell);
+      });
+    }
+
+    function setOverlayVisible(visible: boolean): void {
+      $overlay.classList.toggle("hidden", !visible);
+      $overlay.setAttribute("aria-hidden", String(!visible));
+    }
+
+    function appendTeamToGroup(group: string, team: string): void {
+      const li = Object.assign(document.createElement("li"), {
+        textContent: team,
+        className:
+          "bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center drop",
+      });
+      li.dataset.team = team;
+      getGroupEl(group).appendChild(li);
+    }
+
+    function markTeamUsed(team: string): void {
+      getLogoEl(team)?.classList.add("logoUsed");
+      getCellEl(team)?.classList.add("cellUsed");
+    }
+
+    function unmarkTeamUsed(team: string): void {
+      getLogoEl(team)?.classList.remove("logoUsed");
+      getCellEl(team)?.classList.remove("cellUsed");
+    }
+
+    function flashLogo(team: string): void {
+      const logo = getLogoEl(team);
+      if (!logo) return;
+      logo.classList.add("winnerGlow");
+      setTimeout(() => logo.classList.remove("winnerGlow"), 2000);
+    }
+
+    // ─── Init ─────────────────────────────────────────────────────────────────
+
+    renderTeamGrid();
+    $teamList.addEventListener("input", renderTeamGrid);
+
+    // try to load any previously saved draw from Redis
+    async function loadSavedGroups(): Promise<void> {
+      try {
+        const resp = await fetch("/api/draw-results");
+        if (!resp.ok) return;
+        const data: Record<string, string[]> = await resp.json();
+        Object.entries(data).forEach(([group, teams]) => {
+          teams.forEach((team) => {
+            appendTeamToGroup(group, team);
+            markTeamUsed(team);
+          });
+        });
+        const all = getTeams();
+        const used = Object.values(data).flat();
+        remainingTeams = all.filter((t) => !used.includes(t));
+      } catch (e) {
+        console.warn("No se pudieron cargar los resultados guardados", e);
+      }
+    }
+
+    loadSavedGroups();
+
+    // ─── Actions ──────────────────────────────────────────────────────────────
+
+    function drawTeam(): void {
+      if (isDrawing) return;
+
+      if (!remainingTeams.length) remainingTeams = getTeams();
+      if (!remainingTeams.length) return alert("No quedan equipos");
+
+      const group = $groupSelect.value;
+      const index = Math.floor(Math.random() * remainingTeams.length);
+      const team = remainingTeams[index];
+
+      isDrawing = true;
+      lastDraw = { team, group };
+
+      // Show overlay with spinning animation
+      setOverlayVisible(true);
+      $drawText.textContent = "SORTEANDO...";
+      $drawText.className =
+        "text-5xl md:text-7xl font-anton text-amber-300 tracking-widest pulsing";
+
+      setTimeout(() => {
+        $drawText.textContent = team;
+        $drawText.className =
+          "text-5xl md:text-7xl font-anton text-amber-300 tracking-widest reveal";
+        flashLogo(team);
+        getCellEl(team)?.classList.add("cellUsed");
+      }, 1500);
+
+      setTimeout(async () => {
+        remainingTeams.splice(index, 1);
+        appendTeamToGroup(group, team);
+        markTeamUsed(team);
+        $result.textContent = `Equipo sorteado: ${team}`;
+
+        await syncGroups();
+
+        setOverlayVisible(false);
+        setTimeout(() => {
+          $drawText.textContent = "";
+          $drawText.className = "";
+          isDrawing = false;
+        }, 300);
+      }, 3000);
+    }
+
+    function undoLastDraw(): void {
+      if (!lastDraw) return;
+      const { team, group } = lastDraw;
+
+      const list = getGroupEl(group);
+      const items = list.querySelectorAll("li");
+      if (items.length) list.removeChild(items[items.length - 1]);
+
+      remainingTeams.push(team);
+      unmarkTeamUsed(team);
+      $result.textContent = "Se deshizo el último sorteo";
+      lastDraw = null;
+
+      syncGroups();
+    }
+
+    async function resetDraw(): Promise<void> {
+      remainingTeams = [];
+      lastDraw = null;
+      isDrawing = false;
+
+      document
+        .querySelectorAll(".teamLogo")
+        .forEach((l) => l.classList.remove("winnerGlow", "logoUsed"));
+      document
+        .querySelectorAll(".teamCell")
+        .forEach((c) => c.classList.remove("cellUsed"));
+      ["A", "B", "C", "D"].forEach((g) => {
+        getGroupEl(g).innerHTML = "";
+      });
+      $result.textContent = "";
+
+      await fetch("/api/draw-results", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ A: [], B: [], C: [], D: [] }),
       });
-    } catch {
-      console.warn("No se pudo sincronizar con el overlay");
     }
-  }
 
-  // ─── UI helpers ───────────────────────────────────────────────────────────
-
-  function renderTeamGrid(): void {
-    $teamGridPreview.innerHTML = "";
-    getTeams().forEach(team => {
-      const cell = Object.assign(document.createElement("div"), {
-        textContent: team,
-        className: "teamCell bg-white/5 border border-white/10 rounded-lg py-2 text-center text-sm font-semibold",
-      });
-      cell.dataset.team = team;
-      $teamGridPreview.appendChild(cell);
-    });
-  }
-
-  function setOverlayVisible(visible: boolean): void {
-    $overlay.classList.toggle("hidden", !visible);
-    $overlay.setAttribute("aria-hidden", String(!visible));
-  }
-
-  function appendTeamToGroup(group: string, team: string): void {
-    const li = Object.assign(document.createElement("li"), {
-      textContent: team,
-      className: "bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center drop",
-    });
-    li.dataset.team = team;
-    getGroupEl(group).appendChild(li);
-  }
-
-  function markTeamUsed(team: string): void {
-    getLogoEl(team)?.classList.add("logoUsed");
-    getCellEl(team)?.classList.add("cellUsed");
-  }
-
-  function unmarkTeamUsed(team: string): void {
-    getLogoEl(team)?.classList.remove("logoUsed");
-    getCellEl(team)?.classList.remove("cellUsed");
-  }
-
-  function flashLogo(team: string): void {
-    const logo = getLogoEl(team);
-    if (!logo) return;
-    logo.classList.add("winnerGlow");
-    setTimeout(() => logo.classList.remove("winnerGlow"), 2000);
-  }
-
-  // ─── Init ─────────────────────────────────────────────────────────────────
-
-  renderTeamGrid();
-  $teamList.addEventListener("input", renderTeamGrid);
-
-  // ─── Actions ──────────────────────────────────────────────────────────────
-
-  function drawTeam(): void {
-    if (isDrawing) return;
-
-    if (!remainingTeams.length) remainingTeams = getTeams();
-    if (!remainingTeams.length) return alert("No quedan equipos");
-
-    const group = $groupSelect.value;
-    const index = Math.floor(Math.random() * remainingTeams.length);
-    const team  = remainingTeams[index];
-
-    isDrawing = true;
-    lastDraw  = { team, group };
-
-    // Show overlay with spinning animation
-    setOverlayVisible(true);
-    $drawText.textContent = "SORTEANDO...";
-    $drawText.className   = "text-5xl md:text-7xl font-anton text-amber-300 tracking-widest pulsing";
-
-    setTimeout(() => {
-      $drawText.textContent = team;
-      $drawText.className   = "text-5xl md:text-7xl font-anton text-amber-300 tracking-widest reveal";
-      flashLogo(team);
-      getCellEl(team)?.classList.add("cellUsed");
-    }, 1500);
-
-    setTimeout(async () => {
-      remainingTeams.splice(index, 1);
-      appendTeamToGroup(group, team);
-      markTeamUsed(team);
-      $result.textContent = `Equipo sorteado: ${team}`;
-
-      await syncGroups();
-
-      setOverlayVisible(false);
-      setTimeout(() => {
-        $drawText.textContent = "";
-        $drawText.className   = "";
-        isDrawing = false;
-      }, 300);
-    }, 3000);
-  }
-
-  function undoLastDraw(): void {
-    if (!lastDraw) return;
-    const { team, group } = lastDraw;
-
-    const list  = getGroupEl(group);
-    const items = list.querySelectorAll("li");
-    if (items.length) list.removeChild(items[items.length - 1]);
-
-    remainingTeams.push(team);
-    unmarkTeamUsed(team);
-    $result.textContent = "Se deshizo el último sorteo";
-    lastDraw = null;
-
-    syncGroups();
-  }
-
-  async function resetDraw(): Promise<void> {
-    remainingTeams = [];
-    lastDraw       = null;
-    isDrawing      = false;
-
-    document.querySelectorAll(".teamLogo").forEach(l => l.classList.remove("winnerGlow", "logoUsed"));
-    document.querySelectorAll(".teamCell").forEach(c => c.classList.remove("cellUsed"));
-    ["A","B","C","D"].forEach(g => { getGroupEl(g).innerHTML = ""; });
-    $result.textContent = "";
-
-    localStorage.removeItem("drawResults");
-    await fetch("/api/draw-results.json", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ A:[], B:[], C:[], D:[] }),
-    });
-  }
-
-  // ─── Button wiring ────────────────────────────────────────────────────────
-  $("#btnDraw")! .addEventListener("click", drawTeam);
-  $("#btnUndo")! .addEventListener("click", undoLastDraw);
-  $("#btnReset")!.addEventListener("click", resetDraw);
-});
+    // ─── Button wiring ────────────────────────────────────────────────────────
+    $("#btnDraw")!.addEventListener("click", drawTeam);
+    $("#btnUndo")!.addEventListener("click", undoLastDraw);
+    $("#btnReset")!.addEventListener("click", resetDraw);
+  });
 </script>
 
 <style>
@@ -290,23 +369,67 @@ document.addEventListener("astro:page-load", () => {
   .teamGrid {
     font-family: ui-monospace, monospace;
     white-space: pre;
-    background-color: rgba(255,255,255,0.03);
+    background-color: rgba(255, 255, 255, 0.03);
   }
 
   /* Team cell */
-  .teamCell { transition: .3s; }
-  .cellUsed  { background: rgba(255,255,255,.08); filter: grayscale(1); opacity: .6; }
+  .teamCell {
+    transition: 0.3s;
+  }
+  .cellUsed {
+    background: rgba(255, 255, 255, 0.08);
+    filter: grayscale(1);
+    opacity: 0.6;
+  }
 
   /* Logo states */
-  .winnerGlow { box-shadow: 0 0 25px rgba(255,200,0,.9); transform: scale(1.15); }
-  .logoUsed   { filter: grayscale(1) brightness(.6); opacity: .7; }
+  .winnerGlow {
+    box-shadow: 0 0 25px rgba(255, 200, 0, 0.9);
+    transform: scale(1.15);
+  }
+  .logoUsed {
+    filter: grayscale(1) brightness(0.6);
+    opacity: 0.7;
+  }
 
   /* Animations */
-  @keyframes dropIn  { from { transform: translateY(-40px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
-  @keyframes pulse   { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
-  @keyframes reveal  { from { transform: scale(.7); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+  @keyframes dropIn {
+    from {
+      transform: translateY(-40px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+  }
+  @keyframes reveal {
+    from {
+      transform: scale(0.7);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
 
-  .drop    { animation: dropIn .5s ease }
-  .pulsing { animation: pulse  1s  infinite }
-  .reveal  { animation: reveal .4s ease }
+  .drop {
+    animation: dropIn 0.5s ease;
+  }
+  .pulsing {
+    animation: pulse 1s infinite;
+  }
+  .reveal {
+    animation: reveal 0.4s ease;
+  }
 </style>
