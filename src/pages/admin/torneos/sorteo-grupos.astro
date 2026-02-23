@@ -157,7 +157,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if(cell) cell.classList.remove("cellUsed");
   }
 
-  /* 🔹 NUEVO — obtener estado actual */
   function getCurrentGroups(){
     const data = { A:[], B:[], C:[], D:[] };
     ["A","B","C","D"].forEach(g=>{
@@ -167,7 +166,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return data;
   }
 
-  /* 🔹 NUEVO — guardar */
   function saveGroups(){
     localStorage.setItem("drawResults", JSON.stringify(getCurrentGroups()));
   }
@@ -213,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("group"+group).appendChild(li);
       document.getElementById("result").textContent="Equipo sorteado: "+team;
 
-      saveGroups(); // ✅ guarda estado
+      saveGroups();
 
       overlay.classList.add("opacity-0","pointer-events-none");
       setTimeout(()=>{
@@ -242,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("result").textContent="Se deshizo el último sorteo";
     lastDraw = null;
 
-    saveGroups(); // ✅ guarda estado
+    saveGroups();
   };
 
   window.resetDraw = function(){
@@ -252,9 +250,36 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".teamCell").forEach(c=>c.classList.remove("cellUsed"));
     ["A","B","C","D"].forEach(g=>document.getElementById("group"+g).innerHTML="");
     document.getElementById("result").textContent="";
-
-    localStorage.removeItem("drawResults"); // ✅ limpia
+    localStorage.removeItem("drawResults");
   };
+
+  /* 🔹 LONG POLLING PARA OVERLAY */
+  async function pollOverlay(){
+    try{
+      const res = await fetch("/api/draw-results.json",{cache:"no-store"});
+      if(!res.ok) throw new Error("no data");
+      const groups = await res.json();
+
+      Object.entries(groups).forEach(([group,teams])=>{
+        const container=document.getElementById("group"+group);
+        if(!container) return;
+        container.innerHTML="";
+        teams.forEach(team=>{
+          const li=document.createElement("li");
+          li.textContent=team;
+          li.className="bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center";
+          container.appendChild(li);
+        });
+      });
+
+    }catch(e){
+      /* silencio para no spamear consola en dev */
+    }
+
+    setTimeout(pollOverlay,3000);
+  }
+
+  pollOverlay();
 
 });
 </script>
