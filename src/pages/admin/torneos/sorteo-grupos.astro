@@ -1,8 +1,17 @@
 ---
-import Layout from "@/layouts/Layout.astro";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+
+const TEAMS = [
+  "anti-therian","que-pelota-gerson","desertores-cubicos","fuerza-torales",
+  "la-141","los-changos","los-sin-pelo","mate-&-taco",
+  "puskas","ss","team-fzbr","therian-&-furious",
+  "toxicos-a-la-pala","vasacorrer","x-force","yen"
+];
+
+const GROUPS = ["A","B","C","D"] as const;
 ---
 
-<Layout title="Sorteo de Grupos" mainClassname="px-6 sm:px-10 pt-24 pb-32">
+<AdminLayout title="Sorteo de Grupos" mainClassname="px-6 sm:px-10 pt-24 pb-32">
   <section class="max-w-6xl mx-auto">
 
     <!-- TÍTULO -->
@@ -10,272 +19,294 @@ import Layout from "@/layouts/Layout.astro";
       <p class="uppercase tracking-[0.1em] text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg">
         TORNEO ROCKET LEAGUE
       </p>
-
       <h1 class="font-anton text-4xl md:text-5xl mt-2 bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
         Sorteo de Grupos
       </h1>
     </div>
 
     <!-- GRILLA PREVIEW -->
-    <div class="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-      <div class="lg:col-span-3 flex justify-center">
-        <div id="teamGridPreview" class="grid grid-cols-4 gap-2"></div>
-      </div>
+    <div class="mb-8 flex justify-center">
+      <div id="teamGridPreview" class="grid grid-cols-4 gap-2"></div>
     </div>
 
     <!-- CONTROLES -->
     <div class="flex flex-wrap gap-3 mb-8">
-      <select id="groupSelect" class="bg-white/5 border border-white/10 rounded-lg px-4 py-2">
-        <option value="A">Grupo A</option>
-        <option value="B">Grupo B</option>
-        <option value="C">Grupo C</option>
-        <option value="D">Grupo D</option>
+      <select id="groupSelect" class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white">
+        {GROUPS.map(g => <option value={g}>Grupo {g}</option>)}
       </select>
-
-      <button onclick="drawTeam()" class="px-5 py-2 rounded-lg font-semibold bg-gradient-to-r from-amber-400 to-yellow-300 text-black hover:scale-105 transition">
+      <button id="btnDraw"  class="px-5 py-2 rounded-lg font-semibold bg-gradient-to-r from-amber-400 to-yellow-300 text-black hover:scale-105 transition">
         🎲 Sortear equipo
       </button>
-
-      <button onclick="undoLastDraw()" class="px-5 py-2 rounded-lg font-semibold bg-white/10 hover:bg-white/20 transition">
+      <button id="btnUndo"  class="px-5 py-2 rounded-lg font-semibold bg-white/10 hover:bg-white/20 transition">
         ↩️ Undo
       </button>
-
-      <button onclick="resetDraw()" class="px-5 py-2 rounded-lg font-semibold bg-white/10 hover:bg-white/20 transition">
+      <button id="btnReset" class="px-5 py-2 rounded-lg font-semibold bg-white/10 hover:bg-white/20 transition">
         🔄 Reiniciar
       </button>
     </div>
 
-    <div id="result" class="text-center text-lg font-semibold text-green-400 mb-6"></div>
+    <div id="result" class="text-center text-lg font-semibold text-green-400 mb-6" aria-live="polite"></div>
 
     <!-- GRUPOS -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-      {["A","B","C","D"].map(group => (
+      {GROUPS.map(g => (
         <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-lg">
-          <h2 class="text-center font-bold text-2xl md:text-3xl text-amber-300 mb-4">
-            Grupo {group}
-          </h2>
-          <ul id={`group${group}`} class="space-y-2"></ul>
+          <h2 class="text-center font-bold text-2xl md:text-3xl text-amber-300 mb-4">Grupo {g}</h2>
+          <ul id={`group${g}`} class="space-y-2"></ul>
         </div>
       ))}
     </div>
 
     <!-- LOGOS -->
-    <div class="mt-8 max-w-6xl mx-auto grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-16 gap-4">
-      {[
-        "anti-therian","que-pelota-gerson","desertores-cubicos","fuerza-torales",
-        "la-141","los-changos","los-sin-pelo","mate-&-taco",
-        "puskas","ss","team-fzbr","therian-&-furious",
-        "toxicos-a-la-pala","vasacorrer","x-force","yen"
-      ].map((team, i) => (
+    <div class="mt-8 grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-16 gap-4">
+      {TEAMS.map(team => (
         <img
           src={`/images/team-logos/${team}.webp`}
           data-team={team}
-          alt={`Equipo ${i+1}`}
+          alt={team}
           class="teamLogo w-full h-auto rounded-lg border border-white/10 hover:scale-110 transition"
         />
       ))}
     </div>
 
+    <!-- LISTA DE EQUIPOS (editable) -->
+    <div class="mt-8">
+      <label for="teamList" class="text-lg text-white mb-2 block font-semibold">Equipos para el sorteo</label>
+      <textarea
+        id="teamList"
+        class="w-full rounded-xl border border-white/10 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 teamGrid"
+        style="height:48px; overflow-x:auto; overflow-y:hidden; white-space:nowrap"
+      >{TEAMS.join("    ")}</textarea>
+    </div>
+
     <!-- OVERLAY -->
-    <div id="drawOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 opacity-0 pointer-events-none transition">
+    <div id="drawOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden" aria-hidden="true">
       <div id="drawText" class="text-5xl md:text-7xl font-anton text-amber-300 tracking-widest"></div>
     </div>
 
-    <!-- LISTA -->
-    <div class="lg:col-span-1">
-      <label class="text-lg text-white mb-2 block font-semibold">
-        Equipos para el sorteo
-      </label>
-
-      <div class="overflow-x-auto">
-        <textarea
-          id="teamList"
-          class="w-full whitespace-nowrap overflow-x-auto overflow-y-hidden rounded-xl border border-white/10 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 teamGrid"
-          style="height:48px"
-        >anti-therian    que-pelota-gerson    desertores-cubicos    fuerza-torales la-141    los-changos    los-sin-pelo    mate-&-taco puskas    ss    team-fzbr    therian-&-furious toxicos-a-la-pala    vasacorrer    x-force    yen</textarea>
-      </div>
-    </div>
-
   </section>
+</AdminLayout>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+import { $ } from "@/lib/dom-selector";
 
-  let remainingTeams = [];
-  let lastDraw = null;
+document.addEventListener("astro:page-load", () => {
 
-  function getTeams(){
-    return document.getElementById("teamList").value
-      .replace(/\s+/g,"\n")
+  // ─── State ────────────────────────────────────────────────────────────────
+  let remainingTeams: string[] = [];
+  let lastDraw: { team: string; group: string } | null = null;
+  let isDrawing = false;
+
+  // ─── DOM refs ─────────────────────────────────────────────────────────────
+  const $teamList      = $("#teamList")       as HTMLTextAreaElement;
+  const $groupSelect   = $("#groupSelect")    as HTMLSelectElement;
+  const $teamGridPreview = $("#teamGridPreview") as HTMLDivElement;
+  const $result        = $("#result")         as HTMLDivElement;
+  const $overlay       = $("#drawOverlay")    as HTMLDivElement;
+  const $drawText      = $("#drawText")       as HTMLDivElement;
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  function getTeams(): string[] {
+    return $teamList.value
+      .replace(/\s+/g, "\n")
       .split("\n")
-      .map(t=>t.trim())
+      .map(t => t.trim())
       .filter(Boolean);
   }
 
-  function renderTeamGrid(){
-    const container = document.getElementById("teamGridPreview");
-    container.innerHTML = "";
-    getTeams().forEach(team=>{
-      const cell = document.createElement("div");
-      cell.textContent = team;
-      cell.dataset.team = team;
-      cell.className = "teamCell bg-white/5 border border-white/10 rounded-lg py-2 text-center text-sm font-semibold";
-      container.appendChild(cell);
-    });
+  function getGroupEl(group: string): HTMLUListElement {
+    return document.getElementById(`group${group}`) as HTMLUListElement;
   }
 
-  renderTeamGrid();
-  document.getElementById("teamList").addEventListener("input", renderTeamGrid);
-
-  function loadTeamsIfNeeded(){
-    if(remainingTeams.length === 0){
-      remainingTeams = getTeams();
-    }
+  function getLogoEl(team: string): Element | null {
+    return document.querySelector(`img.teamLogo[data-team="${team}"]`);
   }
 
-  function highlightLogo(team){
-    const logo = document.querySelector(`img.teamLogo[data-team="${team}"]`);
-    if(!logo) return;
-    logo.classList.add("winnerGlow");
-    setTimeout(()=>{
-      logo.classList.remove("winnerGlow");
-      logo.classList.add("logoUsed");
-    },2000);
+  function getCellEl(team: string): Element | null {
+    return document.querySelector(`.teamCell[data-team="${team}"]`);
   }
 
-  function markCellUsed(team){
-    const cell = document.querySelector(`.teamCell[data-team="${team}"]`);
-    if(cell) cell.classList.add("cellUsed");
+  function getCurrentGroups(): Record<string, string[]> {
+    return Object.fromEntries(
+      ["A","B","C","D"].map(g => [
+        g,
+        [...getGroupEl(g).querySelectorAll("li")].map(li => li.dataset.team ?? li.textContent ?? "")
+      ])
+    );
   }
 
-  function unmarkTeam(team){
-    const logo = document.querySelector(`img.teamLogo[data-team="${team}"]`);
-    if(logo) logo.classList.remove("logoUsed");
-    const cell = document.querySelector(`.teamCell[data-team="${team}"]`);
-    if(cell) cell.classList.remove("cellUsed");
-  }
-
-  function getCurrentGroups(){
-    const data = { A:[], B:[], C:[], D:[] };
-    ["A","B","C","D"].forEach(g=>{
-      const items = document.querySelectorAll(`#group${g} li`);
-      items.forEach(li=> data[g].push(li.dataset.team || li.textContent));
-    });
-    return data;
-  }
-
-  /* 🔹 NUEVO — guarda y sincroniza */
-  async function saveGroups(){
+  async function syncGroups(): Promise<void> {
     const data = getCurrentGroups();
     localStorage.setItem("drawResults", JSON.stringify(data));
-
-    try{
-      await fetch("/api/draw-results.json",{
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify(data)
+    try {
+      await fetch("/api/draw-results.json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
-    }catch(e){
-      console.warn("No se pudo sync con overlay");
+    } catch {
+      console.warn("No se pudo sincronizar con el overlay");
     }
   }
 
-  window.drawTeam = function(){
+  // ─── UI helpers ───────────────────────────────────────────────────────────
 
-    loadTeamsIfNeeded();
-    if(!remainingTeams.length) return alert("No quedan equipos");
+  function renderTeamGrid(): void {
+    $teamGridPreview.innerHTML = "";
+    getTeams().forEach(team => {
+      const cell = Object.assign(document.createElement("div"), {
+        textContent: team,
+        className: "teamCell bg-white/5 border border-white/10 rounded-lg py-2 text-center text-sm font-semibold",
+      });
+      cell.dataset.team = team;
+      $teamGridPreview.appendChild(cell);
+    });
+  }
 
-    const overlay = document.getElementById("drawOverlay");
-    const text = document.getElementById("drawText");
-    const group = document.getElementById("groupSelect").value;
+  function setOverlayVisible(visible: boolean): void {
+    $overlay.classList.toggle("hidden", !visible);
+    $overlay.setAttribute("aria-hidden", String(!visible));
+  }
 
-    const index = Math.floor(Math.random()*remainingTeams.length);
-    const team = remainingTeams[index];
-    lastDraw = { team, group };
+  function appendTeamToGroup(group: string, team: string): void {
+    const li = Object.assign(document.createElement("li"), {
+      textContent: team,
+      className: "bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center drop",
+    });
+    li.dataset.team = team;
+    getGroupEl(group).appendChild(li);
+  }
 
-    overlay.style.display="flex";
-    overlay.classList.remove("opacity-0","pointer-events-none");
-    overlay.classList.add("opacity-100");
+  function markTeamUsed(team: string): void {
+    getLogoEl(team)?.classList.add("logoUsed");
+    getCellEl(team)?.classList.add("cellUsed");
+  }
 
-    text.textContent="SORTEANDO...";
-    text.classList.add("pulsing");
-    text.classList.remove("reveal");
+  function unmarkTeamUsed(team: string): void {
+    getLogoEl(team)?.classList.remove("logoUsed");
+    getCellEl(team)?.classList.remove("cellUsed");
+  }
 
-    setTimeout(()=>{
-      text.textContent=team;
-      text.classList.remove("pulsing");
-      text.classList.add("reveal");
-      highlightLogo(team);
-      markCellUsed(team);
-    },1500);
+  function flashLogo(team: string): void {
+    const logo = getLogoEl(team);
+    if (!logo) return;
+    logo.classList.add("winnerGlow");
+    setTimeout(() => logo.classList.remove("winnerGlow"), 2000);
+  }
 
-    setTimeout(()=>{
-      remainingTeams.splice(index,1);
+  // ─── Init ─────────────────────────────────────────────────────────────────
 
-      const li=document.createElement("li");
-      li.textContent=team;
-      li.dataset.team=team;
-      li.className="bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center drop";
+  renderTeamGrid();
+  $teamList.addEventListener("input", renderTeamGrid);
 
-      document.getElementById("group"+group).appendChild(li);
-      document.getElementById("result").textContent="Equipo sorteado: "+team;
+  // ─── Actions ──────────────────────────────────────────────────────────────
 
-      saveGroups();
+  function drawTeam(): void {
+    if (isDrawing) return;
 
-      overlay.classList.add("opacity-0","pointer-events-none");
-      setTimeout(()=>{
-        overlay.style.display="none";
-        text.textContent="";
-        text.classList.remove("reveal","pulsing");
-      },300);
+    if (!remainingTeams.length) remainingTeams = getTeams();
+    if (!remainingTeams.length) return alert("No quedan equipos");
 
-    },3000);
-  };
+    const group = $groupSelect.value;
+    const index = Math.floor(Math.random() * remainingTeams.length);
+    const team  = remainingTeams[index];
 
-  window.undoLastDraw = function(){
-    if(!lastDraw) return;
+    isDrawing = true;
+    lastDraw  = { team, group };
+
+    // Show overlay with spinning animation
+    setOverlayVisible(true);
+    $drawText.textContent = "SORTEANDO...";
+    $drawText.className   = "text-5xl md:text-7xl font-anton text-amber-300 tracking-widest pulsing";
+
+    setTimeout(() => {
+      $drawText.textContent = team;
+      $drawText.className   = "text-5xl md:text-7xl font-anton text-amber-300 tracking-widest reveal";
+      flashLogo(team);
+      getCellEl(team)?.classList.add("cellUsed");
+    }, 1500);
+
+    setTimeout(async () => {
+      remainingTeams.splice(index, 1);
+      appendTeamToGroup(group, team);
+      markTeamUsed(team);
+      $result.textContent = `Equipo sorteado: ${team}`;
+
+      await syncGroups();
+
+      setOverlayVisible(false);
+      setTimeout(() => {
+        $drawText.textContent = "";
+        $drawText.className   = "";
+        isDrawing = false;
+      }, 300);
+    }, 3000);
+  }
+
+  function undoLastDraw(): void {
+    if (!lastDraw) return;
     const { team, group } = lastDraw;
 
-    const list = document.getElementById("group"+group);
+    const list  = getGroupEl(group);
     const items = list.querySelectorAll("li");
-    if(items.length) list.removeChild(items[items.length-1]);
+    if (items.length) list.removeChild(items[items.length - 1]);
 
     remainingTeams.push(team);
-    unmarkTeam(team);
-
-    document.getElementById("result").textContent="Se deshizo el último sorteo";
+    unmarkTeamUsed(team);
+    $result.textContent = "Se deshizo el último sorteo";
     lastDraw = null;
 
-    saveGroups();
-  };
+    syncGroups();
+  }
 
-  window.resetDraw = async function(){
-    remainingTeams=[];
-    lastDraw=null;
-    document.querySelectorAll(".teamLogo").forEach(l=>l.classList.remove("winnerGlow","logoUsed"));
-    document.querySelectorAll(".teamCell").forEach(c=>c.classList.remove("cellUsed"));
-    ["A","B","C","D"].forEach(g=>document.getElementById("group"+g).innerHTML="");
-    document.getElementById("result").textContent="";
+  async function resetDraw(): Promise<void> {
+    remainingTeams = [];
+    lastDraw       = null;
+    isDrawing      = false;
+
+    document.querySelectorAll(".teamLogo").forEach(l => l.classList.remove("winnerGlow", "logoUsed"));
+    document.querySelectorAll(".teamCell").forEach(c => c.classList.remove("cellUsed"));
+    ["A","B","C","D"].forEach(g => { getGroupEl(g).innerHTML = ""; });
+    $result.textContent = "";
+
     localStorage.removeItem("drawResults");
+    await fetch("/api/draw-results.json", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ A:[], B:[], C:[], D:[] }),
+    });
+  }
 
-    await fetch("/api/draw-results.json",{method:"POST",headers:{ "Content-Type":"application/json" },body: JSON.stringify({A:[],B:[],C:[],D:[]})});
-  };
-
+  // ─── Button wiring ────────────────────────────────────────────────────────
+  $("#btnDraw")! .addEventListener("click", drawTeam);
+  $("#btnUndo")! .addEventListener("click", undoLastDraw);
+  $("#btnReset")!.addEventListener("click", resetDraw);
 });
 </script>
 
 <style>
-.teamGrid{font-family: ui-monospace, monospace; white-space: pre; background-color: rgba(255,255,255,0.03);}
-.teamCell{transition:.3s;}
-.cellUsed{background: rgba(255,255,255,.08); filter: grayscale(100%); opacity:.6;}
-.winnerGlow{box-shadow:0 0 25px rgba(255,200,0,.9); transform:scale(1.15);}
-.logoUsed{filter:grayscale(100%) brightness(.6); opacity:.7;}
-@keyframes dropIn{0%{transform:translateY(-40px);opacity:0}100%{transform:translateY(0);opacity:1}}
-.drop{animation:dropIn .5s ease}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.pulsing{animation:pulse 1s infinite}
-@keyframes reveal{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
-.reveal{animation:reveal .4s ease}
-</style>
+  /* Layout helpers */
+  .teamGrid {
+    font-family: ui-monospace, monospace;
+    white-space: pre;
+    background-color: rgba(255,255,255,0.03);
+  }
 
-</Layout>
+  /* Team cell */
+  .teamCell { transition: .3s; }
+  .cellUsed  { background: rgba(255,255,255,.08); filter: grayscale(1); opacity: .6; }
+
+  /* Logo states */
+  .winnerGlow { box-shadow: 0 0 25px rgba(255,200,0,.9); transform: scale(1.15); }
+  .logoUsed   { filter: grayscale(1) brightness(.6); opacity: .7; }
+
+  /* Animations */
+  @keyframes dropIn  { from { transform: translateY(-40px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+  @keyframes pulse   { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
+  @keyframes reveal  { from { transform: scale(.7); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+
+  .drop    { animation: dropIn .5s ease }
+  .pulsing { animation: pulse  1s  infinite }
+  .reveal  { animation: reveal .4s ease }
+</style>
