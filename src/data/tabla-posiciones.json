@@ -1,8 +1,26 @@
 {
   "A": [
-    { "equipo": "anti-therian", "PJ": 3, "PG": 2, "PP": 1, "GF": 5, "GC": 3, "PUNTOS": 6 }
+    { "equipo": "Team FZBR", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 },
+    { "equipo": "YEN", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 },
+    { "equipo": "VasACorrer", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 },
+    { "equipo": "Fuerza Torales", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 }
   ],
-  "B": [],
-  "C": [],
-  "D": []
+  "B": [
+    { "equipo": "Mate & Taco", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 },
+    { "equipo": "Los Changos", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 },
+    { "equipo": "Que Pelota Gerson", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 },
+    { "equipo": "La 141", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 }
+  ],
+  "C": [
+    { "equipo": "PUSKAS", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 },
+    { "equipo": "Toxicos a la Pala", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 },
+    { "equipo": "X-Force", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 },
+    { "equipo": "Los Sin Pelo", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 }
+  ],
+  "D": [
+    { "equipo": "Therian & Fourious", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 },
+    { "equipo": "Desertores Cubicos", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 },
+    { "equipo": "SS", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 },
+    { "equipo": "Anti Therian", "PG": 0, "PP": 0, "GF": 0, "GC": 0, "PUNTOS": 0 }
+  ]
 }
