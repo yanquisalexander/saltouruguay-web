@@ -23,13 +23,12 @@ const columnas = ["Equipo", "PG", "PP", "GF", "GC", "DG", "Puntos"];
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
       {grupos.map((grupo) => (
         <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-lg">
-
           <h2 class="text-center font-bold text-2xl md:text-3xl text-amber-300 mb-6">
             GRUPO {grupo}
           </h2>
 
           <div class="overflow-x-auto">
-            <table class="w-full border-collapse text-sm">
+            <table class="w-full border-collapse text-sm group-table" data-group={grupo}>
               <thead>
                 <tr class="bg-white/10 text-white">
                   {columnas.map((col, i) => (
@@ -42,13 +41,13 @@ const columnas = ["Equipo", "PG", "PP", "GF", "GC", "DG", "Puntos"];
 
               <tbody>
                 {[1,2,3,4].map(() => (
-                  <tr class="hover:bg-white/5">
+                  <tr class="team-row">
                     {columnas.map((col, i) => (
                       <td
-                        contenteditable="true"
+                        contenteditable={i < 5 ? "true" : "false"}
                         class={`border border-white/10 px-3 py-2 ${
                           i === 0 ? "text-left" : "text-center"
-                        } focus:outline-none focus:ring-2 focus:ring-amber-400`}
+                        } focus:outline-none`}
                       ></td>
                     ))}
                   </tr>
@@ -56,10 +55,88 @@ const columnas = ["Equipo", "PG", "PP", "GF", "GC", "DG", "Puntos"];
               </tbody>
             </table>
           </div>
-
         </div>
       ))}
     </div>
 
   </section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const parseNumber = (val) => {
+    const n = parseInt(val);
+    return isNaN(n) ? 0 : n;
+  };
+
+  let standings = {};
+
+  const collectData = () => {
+    const data = {};
+
+    document.querySelectorAll(".group-table").forEach(table => {
+      const group = table.dataset.group;
+      const rows = Array.from(table.querySelectorAll(".team-row"));
+
+      data[group] = rows.map(row => {
+        const cells = row.children;
+        return {
+          equipo: cells[0].innerText,
+          pg: parseNumber(cells[1].innerText),
+          pp: parseNumber(cells[2].innerText),
+          gf: parseNumber(cells[3].innerText),
+          gc: parseNumber(cells[4].innerText)
+        };
+      });
+    });
+
+    return data;
+  };
+
+  const fillTable = (data) => {
+    Object.entries(data).forEach(([group, teams]) => {
+      const table = document.querySelector(`[data-group="${group}"]`);
+      if (!table) return;
+
+      const rows = table.querySelectorAll(".team-row");
+
+      teams.forEach((team, i) => {
+        if (!rows[i]) return;
+        const cells = rows[i].children;
+        cells[0].innerText = team.equipo || "";
+        cells[1].innerText = team.pg || "";
+        cells[2].innerText = team.pp || "";
+        cells[3].innerText = team.gf || "";
+        cells[4].innerText = team.gc || "";
+      });
+    });
+  };
+
+  const saveData = async () => {
+    standings = collectData();
+    await fetch("/api/standings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(standings)
+    });
+  };
+
+  const loadData = async () => {
+    const res = await fetch("/api/standings");
+    const data = await res.json();
+    standings = data;
+    fillTable(data);
+  };
+
+  document.querySelectorAll(".group-table").forEach(table => {
+    table.addEventListener("input", () => {
+      saveData();
+    });
+  });
+
+  loadData();
+
+});
+</script>
+
 </Layout>
