@@ -1,0 +1,11 @@
+{
+  "A": [
+    { "equipo": "anti-therian", "PG": 2, "PP": 1, "GF": 5, "GC": 3, "PUNTOS": 6 },
+    { "equipo": "que-pelota-gerson", "PG": 1, "PP": 2, "GF": 3, "GC": 6, "PUNTOS": 3 },
+    { "equipo": "desertores-cubicos", "PG": 1, "PP": 2, "GF": 4, "GC": 5, "PUNTOS": 3 },
+    { "equipo": "fuerza-torales", "PG": 0, "PP": 3, "GF": 2, "GC": 7, "PUNTOS": 0 }
+  ],
+  "B": [],
+  "C": [],
+  "D": []
+}
