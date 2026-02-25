@@ -4,10 +4,18 @@ import tabla from "@/data/tabla-posiciones.json";
 
 const calcular = (teams) =>
   (teams || [])
-    .map(t => ({
-      ...t,
-      DG: (t.GF || 0) - (t.GC || 0)
-    }))
+    .map(t => {
+      const PG = t.PG || 0;
+      const PP = t.PP || 0;
+      const GF = t.GF || 0;
+      const GC = t.GC || 0;
+
+      return {
+        ...t,
+        PJ: PG + PP,
+        DG: GF - GC
+      };
+    })
     .sort((a, b) =>
       (b.PUNTOS || 0) - (a.PUNTOS || 0) ||
       (b.DG || 0) - (a.DG || 0) ||
