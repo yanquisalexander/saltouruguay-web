@@ -55,6 +55,7 @@ const grupos = ["A", "B", "C", "D"].map(g => ({
             <table class="w-full border-collapse text-sm">
               <thead>
                 <tr class="bg-white/10 text-white">
+                  <th class="text-center px-3 py-2 border border-white/10">#</th>
                   <th class="text-left px-3 py-2 border border-white/10">Equipo</th>
                   <th class="text-center px-3 py-2 border border-white/10">PJ</th>
                   <th class="text-center px-3 py-2 border border-white/10">PG</th>
@@ -69,6 +70,9 @@ const grupos = ["A", "B", "C", "D"].map(g => ({
               <tbody>
                 {equipos.map((team, i) => (
                   <tr class={i < 2 ? "bg-green-500/20" : "bg-red-500/20"}>
+                    <td class="px-3 py-2 border border-white/10 text-center font-bold">
+                      {i + 1}
+                    </td>
                     <td class="px-3 py-2 border border-white/10 text-left">{team.equipo}</td>
                     <td class="px-3 py-2 border border-white/10 text-center">{team.PJ}</td>
                     <td class="px-3 py-2 border border-white/10 text-center">{team.PG}</td>
