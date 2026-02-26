@@ -177,7 +177,7 @@ const featuredTeamsWithRoles = featuredTeams.map((team) => {
 
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {featuredTeamsWithRoles.map((team) => (
-                <div class="flex items-center justify-between rounded-full border border-white/10 bg-white/[0.02] px-4 py-3 h-[96px] hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
+                <div class="flex items-center justify-between rounded-[30px] border border-white/10 bg-white/[0.02] px-4 py-3 h-[96px] hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
                   <div class="flex items-center gap-3 min-w-0 flex-1">
                     <div class="w-16 h-16 rounded-full overflow-hidden border border-white/10 flex-shrink-0 bg-black/40 relative">
                       <img
@@ -196,9 +196,9 @@ const featuredTeamsWithRoles = featuredTeams.map((team) => {
                     </h3>
                   </div>
 
-                  <div class="flex flex-col justify-between items-end shrink-0 ml-3 h-[66px] overflow-hidden">
+                  <div class="grid gap-2 text-right min-w-0 flex-shrink-0 grid-rows-[repeat(auto-fit,minmax(22px,1fr))]">
                     {team.titulares.map((p) => (
-                      <div class="h-[22px] flex flex-col justify-center text-right">
+                      <div class="flex flex-col justify-center text-right">
                         <div class="text-orange-400 text-xs font-semibold leading-none">
                           {p.displayName}
                         </div>
