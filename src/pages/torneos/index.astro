@@ -76,6 +76,16 @@ if (featuredTeamsTournament) {
 const featuredTeams = Array.from(teamsByName.entries())
   .map(([name, players]) => ({ name, players }))
   .sort((a, b) => a.name.localeCompare(b.name));
+
+// number of starting players on the roster; the rest are considered substitutes
+const TITULARES_COUNT = 2;
+
+// split each team into titulares and suplentes rather than relying on numeric indexes
+const featuredTeamsWithRoles = featuredTeams.map((team) => {
+  const titulares = team.players.slice(0, TITULARES_COUNT);
+  const suplentes = team.players.slice(TITULARES_COUNT);
+  return { ...team, titulares, suplentes };
+});
 ---
 
 <Layout
@@ -157,7 +167,7 @@ const featuredTeams = Array.from(teamsByName.entries())
       </main>
 
       {
-        featuredTeamsTournament && featuredTeams.length > 0 && (
+        featuredTeamsTournament && featuredTeamsWithRoles.length > 0 && (
           <section class="mb-14">
             <div class="mb-6">
               <h2 class="text-2xl md:text-3xl font-anton text-white">
@@ -166,7 +176,7 @@ const featuredTeams = Array.from(teamsByName.entries())
             </div>
 
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {featuredTeams.map((team) => (
+              {featuredTeamsWithRoles.map((team) => (
                 <div class="flex items-center justify-between rounded-full border border-white/10 bg-white/[0.02] px-4 py-3 h-[96px] hover:border-violet-400/40 hover:bg-white/[0.04] transition-all">
                   <div class="flex items-center gap-3 min-w-0 flex-1">
                     <div class="w-16 h-16 rounded-full overflow-hidden border border-white/10 flex-shrink-0 bg-black/40 relative">
@@ -187,43 +197,29 @@ const featuredTeams = Array.from(teamsByName.entries())
                   </div>
 
                   <div class="flex flex-col justify-between items-end shrink-0 ml-3 h-[66px] overflow-hidden">
-                    <div class="h-[22px] flex flex-col justify-center text-right">
-                      {team.players[0] && (
-                        <>
-                          <div class="text-orange-400 text-xs font-semibold leading-none">
-                            {team.players[0].displayName}
-                          </div>
-                          <div class="text-white/40 text-[10px] leading-none">
-                            @{team.players[0].username}
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    <div class="h-[22px] flex flex-col justify-center text-right">
-                      {team.players[1] && (
-                        <>
-                          <div class="text-orange-400 text-xs font-semibold leading-none">
-                            {team.players[1].displayName}
-                          </div>
-                          <div class="text-white/40 text-[10px] leading-none">
-                            @{team.players[1].username}
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    <div class="h-[18px] flex flex-col items-end justify-end">
-                      <div class="w-10 h-px bg-white/10 mb-[2px]" />
-
-                      <div class="h-[12px]">
-                        {team.players[2] && (
-                          <div class="text-white/50 text-[9px] leading-none">
-                            {team.players[2].displayName}
-                          </div>
-                        )}
+                    {team.titulares.map((p) => (
+                      <div class="h-[22px] flex flex-col justify-center text-right">
+                        <div class="text-orange-400 text-xs font-semibold leading-none">
+                          {p.displayName}
+                        </div>
+                        <div class="text-white/40 text-[10px] leading-none">
+                          @{p.username}
+                        </div>
                       </div>
-                    </div>
+                    ))}
+
+                    {team.suplentes.length > 0 && (
+                      <>
+                        <div class="w-10 h-px bg-white/10 mb-[2px]" />
+                        <div class="h-[12px]">
+                          {team.suplentes.map((p) => (
+                            <div class="text-white/50 text-[9px] leading-none">
+                              {p.displayName}
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
