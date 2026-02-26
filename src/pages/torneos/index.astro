@@ -191,7 +191,7 @@ const featuredTeamsWithRoles = featuredTeams.map((team) => {
                       </div>
                     </div>
 
-                    <h3 class="text-white font-semibold text-xl truncate">
+                    <h3 class="text-white font-semibold text-xl">
                       {team.name}
                     </h3>
                   </div>
@@ -210,8 +210,8 @@ const featuredTeamsWithRoles = featuredTeams.map((team) => {
 
                     {team.suplentes.length > 0 && (
                       <>
-                        <div class="w-10 h-px bg-white/10 mb-[2px]" />
-                        <div class="h-[12px]">
+                        <div class="w-10 h-px bg-white/10" />
+                        <div>
                           {team.suplentes.map((p) => (
                             <div class="text-white/50 text-[9px] leading-none">
                               {p.displayName}
@@ -293,12 +293,12 @@ const featuredTeamsWithRoles = featuredTeams.map((team) => {
     border-radius: 14px;
   }
   .table-preview {
-    max-width: 900px;
     margin: 0 auto;
     border-radius: 14px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(255, 255, 255, 0.02);
+    @apply max-w-6xl overflow-hidden;
   }
 
   .table-preview iframe {
@@ -308,7 +308,12 @@ const featuredTeamsWithRoles = featuredTeams.map((team) => {
   }
   .table-preview-link {
     display: block;
-    text-decoration: none;
+    border-radius: 14px;
+    overflow: hidden;
+    @apply w-full;
+    transition:
+      transform 0.35s ease,
+      box-shadow 0.35s ease;
   }
 
   .table-preview {
