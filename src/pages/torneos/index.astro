@@ -164,47 +164,63 @@ const featuredTeams = Array.from(teamsByName.entries())
                   </h3>
                 </div>
 
-                <div class="flex flex-col justify-between items-end shrink-0 ml-3 h-[66px] overflow-hidden">
+               <div class="flex flex-col justify-between items-end shrink-0 ml-3 h-[88px] overflow-hidden">
 
-                  <div class="h-[22px] flex flex-col justify-center text-right">
-                    {team.players[0] && (
-                      <>
-                        <div class="text-orange-400 text-xs font-semibold leading-none">
-                          {team.players[0].displayName}
-                        </div>
-                        <div class="text-white/40 text-[10px] leading-none">
-                          @{team.players[0].username}
-                        </div>
-                      </>
-                    )}
-                  </div>
+  <!-- Titular 1 -->
+  <div class="h-[22px] flex flex-col justify-center text-right">
+    {team.players[0] && (
+      <>
+        <div class="text-orange-400 text-xs font-semibold leading-none">
+          {team.players[0].displayName}
+        </div>
+        <div class="text-white/40 text-[10px] leading-none">
+          @{team.players[0].username}
+        </div>
+      </>
+    )}
+  </div>
 
-                  <div class="h-[22px] flex flex-col justify-center text-right">
-                    {team.players[1] && (
-                      <>
-                        <div class="text-orange-400 text-xs font-semibold leading-none">
-                          {team.players[1].displayName}
-                        </div>
-                        <div class="text-white/40 text-[10px] leading-none">
-                          @{team.players[1].username}
-                        </div>
-                      </>
-                    )}
-                  </div>
+  <!-- Titular 2 -->
+  <div class="h-[22px] flex flex-col justify-center text-right">
+    {team.players[1] && (
+      <>
+        <div class="text-orange-400 text-xs font-semibold leading-none">
+          {team.players[1].displayName}
+        </div>
+        <div class="text-white/40 text-[10px] leading-none">
+          @{team.players[1].username}
+        </div>
+      </>
+    )}
+  </div>
 
-                  <div class="h-[18px] flex flex-col items-end justify-end">
-                    <div class="w-10 h-px bg-white/10 mb-[2px]"></div>
+  <!-- Suplente 1 -->
+  <div class="h-[18px] flex flex-col items-end justify-end">
+    <div class="w-10 h-px bg-white/10 mb-[2px]"></div>
 
-                    <div class="h-[12px]">
-                      {team.players[2] && (
-                        <div class="text-white/50 text-[9px] leading-none">
-                          {team.players[2].displayName}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+    <div class="h-[12px]">
+      {team.players[2] && (
+        <div class="text-white/50 text-[9px] leading-none">
+          {team.players[2].displayName}
+        </div>
+      )}
+    </div>
+  </div>
 
-                </div>
+  <!-- Suplente 2 -->
+  <div class="h-[18px] flex flex-col items-end justify-end">
+    <div class="w-10 h-px bg-white/10 mb-[2px]"></div>
+
+    <div class="h-[12px]">
+      {team.players[3] && (
+        <div class="text-white/40 text-[9px] leading-none">
+          {team.players[3].displayName}
+        </div>
+      )}
+    </div>
+  </div>
+
+</div>
 
               </div>
             ))}
