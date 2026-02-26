@@ -5,7 +5,7 @@ import { CurrentUser } from "./CurrentUser";
 import DiscordPresenceCount from "./DiscordPresenceCount";
 import { Notifications } from "./Notifications";
 import { LucideLock } from "lucide-preact";
-import { CHRISTMAS_MODE } from "@/config"; // 👈 Importamos la config
+import { CHRISTMAS_MODE } from "@/config";
 
 interface Props {
   session?: Session | null;
@@ -25,22 +25,22 @@ const PRERENDERED_PATHS = [
 const currentPath = Astro.url.pathname;
 const { session, hideNav } = Astro.props;
 
-/* 
-¿Page route has a isInternalIframe query param? (e.g. /awards?isInternalIframe=true) -> hideNav = true
-*/
-
 const trueHideNav =
   hideNav ||
   new URLSearchParams(Astro.url.search).get("isInternalIframe") === "true";
 
 const links = [
   { label: "Comunidad", url: "/comunidad" },
-  { label: "Torneos", url: "/torneos" },
+  {
+    label: "Torneos",
+    url: "/torneos",
+    specialComment: "ROCKET LEAGUE",
+    colorClassName: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+  },
   { label: "Eventos", url: "/eventos", soon: false, specialComment: "NUEVO" },
-  { label: "Awards", url: "/awards", specialComment: "VOTACIÓN" },
+  { label: "Awards", url: "/awards" },
 ];
 
-// Soporte simplificado: sólo wildcards '*' (ej. /awards/*)
 const patternToRegex = (pattern: string) => {
   const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
   const regexStr =
@@ -55,50 +55,50 @@ const isPrerenderedPath = PRERENDERED_PATHS.some((pattern) => {
     return false;
   }
 });
+
 const evenLinks = links.filter((_, index) => index % 2 === 0);
 const oddLinks = links.filter((_, index) => index % 2 !== 0);
 
 // --- ESTILOS CONDICIONALES ---
-
 const navLinkBase =
-  "relative flex flex-col items-center justify-center px-4 py-1 group transition-all duration-300";
+  "nav-link relative flex flex-col items-center justify-center px-4 py-1 group transition-all duration-300";
 const textStyle =
-  "font-teko text-xl uppercase tracking-wide transition-colors relative z-10";
+  "font-teko text-xl uppercase tracking-wide transition-all duration-200 relative z-10";
 
-// Lógica de colores (Navidad vs Default)
 const activeText = CHRISTMAS_MODE
-  ? "text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]" // Rojo Navidad
-  : "text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]"; // Amarillo Default
+  ? "text-red-400 tracking-wider"
+  : "text-yellow-400 tracking-wider";
 
-const inactiveText = "text-white/70 group-hover:text-white";
+const inactiveText = "text-white/60 group-hover:text-white/90";
 
-// Lógica de la línea inferior (Underline)
-const underlineColor = CHRISTMAS_MODE
-  ? "bg-gradient-to-r from-green-500 via-red-500 to-green-500" // Bastón de caramelo
-  : "bg-yellow-500";
+const underlineActiveColor = CHRISTMAS_MODE
+  ? "from-green-500 via-red-400 to-green-500"
+  : "from-yellow-600 via-yellow-300 to-yellow-600";
 
-const logoGlowColor = CHRISTMAS_MODE ? "bg-red-500/30" : "bg-yellow-500/20";
+const logoGlowColor = CHRISTMAS_MODE ? "bg-red-500/20" : "bg-yellow-500/15";
 
-// Helper para generar las clases del Badge según el tipo de mensaje
-const getBadgeStyles = (label: string) => {
+const getBadgeStyles = (label: string, colorClassName?: string) => {
   const base =
-    "absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-bold font-rubik px-2 py-0.5 rounded-full border shadow-[0_0_10px_rgba(0,0,0,0.5)] tracking-widest leading-none whitespace-nowrap transition-transform duration-300 group-hover:-translate-y-1 pointer-events-none backdrop-blur-md z-20";
+    "badge absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-bold font-rubik px-2 py-0.5 rounded-full border shadow-[0_0_10px_rgba(0,0,0,0.5)] tracking-widest leading-none whitespace-nowrap pointer-events-none backdrop-blur-md z-20";
 
-  // Si es navidad, forzamos colores navideños en etiquetas específicas
   if (
     CHRISTMAS_MODE &&
     (label.includes("VOTA") || label.includes("VOTACIÓN"))
   ) {
-    return `${base} bg-green-600/30 text-green-300 border-green-500/40 shadow-green-500/10`;
+    return `${base} bg-green-600/20 text-green-300 border-green-500/30`;
   }
-
   if (label.includes("VOTA") || label.includes("VOTACIÓN")) {
-    return `${base} bg-yellow-500/20 text-yellow-300 border-yellow-500/40 shadow-yellow-500/10`;
+    return `${base} bg-yellow-500/15 text-yellow-300 border-yellow-500/30`;
   }
   if (label.includes("NUEVO") || label.includes("ATENTOS")) {
-    return `${base} bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-cyan-500/10`;
+    return `${base} bg-cyan-500/15 text-cyan-300 border-cyan-500/30`;
   }
-  return `${base} bg-white/10 text-white/80 border-white/20`;
+
+  if (colorClassName) {
+    return `${base} ${colorClassName}`;
+  }
+
+  return `${base} bg-white/8 text-white/70 border-white/15`;
 };
 ---
 
@@ -107,19 +107,19 @@ const getBadgeStyles = (label: string) => {
     <>
       <header
         id="site-header"
-        class="fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 py-6"
+        class="fixed top-0 left-0 right-0 z-50 w-full transition-all duration-500 py-6"
       >
-        {/* LA ISLA FLOTANTE */}
+        {/* ISLA FLOTANTE */}
         <div
           id="nav-island"
-          class="mx-auto flex items-center justify-between px-4 md:px-6 py-2 transition-all duration-300 w-[95%] max-w-7xl rounded-full border border-transparent"
+          class="mx-auto flex items-center justify-between px-4 md:px-6 py-2 transition-all duration-500 w-[95%] max-w-7xl rounded-full border border-transparent"
         >
           {/* --- IZQUIERDA --- */}
           <div class="flex items-center flex-1 gap-2">
             {/* Logo Móvil */}
             <a
               href="/"
-              class="md:hidden block transition-transform hover:scale-105"
+              class="md:hidden block transition-transform hover:scale-105 active:scale-95"
             >
               <img
                 src="/favicon.svg"
@@ -129,10 +129,10 @@ const getBadgeStyles = (label: string) => {
             </a>
 
             {/* Nav Escritorio (Izquierda) */}
-            <nav class="hidden md:flex items-center gap-1 gap-x-4 ml-auto mr-4">
+            <nav class="hidden md:flex items-center gap-x-4 ml-auto mr-4">
               {evenLinks.map((link) =>
                 link.soon ? (
-                  <div class={`${navLinkBase} opacity-50 cursor-not-allowed`}>
+                  <div class={`${navLinkBase} opacity-40 cursor-not-allowed`}>
                     <span class={textStyle}>{link.label}</span>
                     <LucideLock
                       size={12}
@@ -147,17 +147,31 @@ const getBadgeStyles = (label: string) => {
                       {link.label}
                     </span>
 
-                    {/* SPECIAL LABEL MEJORADO */}
                     {link.specialComment && (
-                      <span class={getBadgeStyles(link.specialComment)}>
+                      <span
+                        class={getBadgeStyles(
+                          link.specialComment,
+                          link.colorClassName,
+                        )}
+                      >
                         {link.specialComment}
                       </span>
                     )}
 
-                    {/* Underline animado */}
+                    {/* Underline activo — glow energy bar */}
                     <span
-                      class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] ${underlineColor} rounded-full transition-all duration-300 ${currentPath.startsWith(link.url) ? "w-full opacity-100 shadow-[0_0_10px_currentColor]" : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-100"}`}
+                      class={`nav-underline absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-gradient-to-r ${underlineActiveColor} rounded-full transition-all duration-300 ${
+                        currentPath.startsWith(link.url)
+                          ? "w-full opacity-100"
+                          : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-60"
+                      }`}
                     />
+                    {/* Glow debajo del underline (solo activo) */}
+                    {currentPath.startsWith(link.url) && (
+                      <span
+                        class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-full blur-sm bg-gradient-to-r ${underlineActiveColor} rounded-full opacity-60`}
+                      />
+                    )}
                   </a>
                 ),
               )}
@@ -165,33 +179,34 @@ const getBadgeStyles = (label: string) => {
           </div>
 
           {/* --- CENTRO (Logo Escritorio) --- */}
-          {/* Añadimos clase condicional para el gorro */}
           <div
-            class={`hidden md:flex flex-shrink-0 mx-4 relative group ${CHRISTMAS_MODE ? "christmas-logo-nav" : ""}`}
+            class={`hidden md:flex flex-shrink-0 mx-4 relative group logo-wrap ${CHRISTMAS_MODE ? "christmas-logo-nav" : ""}`}
           >
             <a
               href="/"
               id="home-button"
               class="block transition-transform duration-300 group-hover:scale-110 active:scale-95"
             >
+              {/* Glow bg */}
               <div
-                class={`absolute inset-0 ${logoGlowColor} blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                class={`absolute inset-0 ${logoGlowColor} blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
               />
+              {/* Ring de escaneo */}
               <img
                 src="/favicon.svg"
+                loading="eager"
                 alt="Home"
-                class="size-14 object-contain relative z-10 drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)]"
+                class="size-14 object-contain relative z-10 drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
               />
             </a>
           </div>
 
           {/* --- DERECHA --- */}
           <div class="flex items-center flex-1 gap-2">
-            {/* Nav Escritorio (Derecha) */}
-            <nav class="hidden md:flex items-center gap-1 gap-x-4 mr-auto ml-4">
+            <nav class="hidden md:flex items-center gap-x-4 mr-auto ml-4">
               {oddLinks.map((link) =>
                 link.soon ? (
-                  <div class={`${navLinkBase} opacity-50 cursor-not-allowed`}>
+                  <div class={`${navLinkBase} opacity-40 cursor-not-allowed`}>
                     <span class={textStyle}>{link.label}</span>
                     <LucideLock
                       size={12}
@@ -206,16 +221,29 @@ const getBadgeStyles = (label: string) => {
                       {link.label}
                     </span>
 
-                    {/* SPECIAL LABEL MEJORADO */}
                     {link.specialComment && (
-                      <span class={getBadgeStyles(link.specialComment)}>
+                      <span
+                        class={getBadgeStyles(
+                          link.specialComment,
+                          link.colorClassName,
+                        )}
+                      >
                         {link.specialComment}
                       </span>
                     )}
 
                     <span
-                      class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] ${underlineColor} rounded-full transition-all duration-300 ${currentPath.startsWith(link.url) ? "w-full opacity-100 shadow-[0_0_10px_currentColor]" : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-100"}`}
+                      class={`nav-underline absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-gradient-to-r ${underlineActiveColor} rounded-full transition-all duration-300 ${
+                        currentPath.startsWith(link.url)
+                          ? "w-full opacity-100"
+                          : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-60"
+                      }`}
                     />
+                    {currentPath.startsWith(link.url) && (
+                      <span
+                        class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-full blur-sm bg-gradient-to-r ${underlineActiveColor} rounded-full opacity-60`}
+                      />
+                    )}
                   </a>
                 ),
               )}
@@ -223,14 +251,14 @@ const getBadgeStyles = (label: string) => {
 
             {/* HERRAMIENTAS */}
             <div class="flex items-center gap-2 ml-auto md:pl-4 md:border-l border-white/10">
-              <div class="hidden md:block opacity-80 hover:opacity-100 transition-opacity">
+              <div class="hidden md:block opacity-70 hover:opacity-100 transition-opacity duration-200">
                 <DiscordPresenceCount
                   client:idle
                   transition:persist
                   transition:name="discord-widget-count"
                 />
               </div>
-              <div class="opacity-80 hover:opacity-100 transition-opacity">
+              <div class="opacity-70 hover:opacity-100 transition-opacity duration-200">
                 <Notifications
                   client:load
                   transition:persist
@@ -248,7 +276,7 @@ const getBadgeStyles = (label: string) => {
               </div>
               <button
                 id="mobile-menu-btn"
-                class="md:hidden p-2 text-white/80 bg-white/5 hover:bg-white/10 rounded-full ml-1 transition-colors"
+                class="md:hidden p-2 text-white/70 bg-white/5 hover:bg-white/10 rounded-full ml-1 transition-all duration-200 active:scale-95"
               >
                 <MenuIcon class="size-5" />
               </button>
@@ -264,23 +292,23 @@ const getBadgeStyles = (label: string) => {
       >
         <div
           id="drawer-bg"
-          class="absolute inset-0 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300 pointer-events-auto"
+          class="absolute inset-0 bg-black/85 backdrop-blur-sm opacity-0 transition-opacity duration-300 pointer-events-auto"
         />
 
         <nav
           id="drawer-panel"
-          class="absolute top-0 right-0 h-full w-[80%] max-w-xs bg-[#0a0a0a] border-l border-white/10 shadow-2xl transform translate-x-full transition-transform duration-300 pointer-events-auto pt-24 flex flex-col"
+          class="absolute top-0 right-0 h-full w-[80%] max-w-xs bg-[#080808] border-l border-white/8 shadow-2xl transform translate-x-full transition-transform duration-300 pointer-events-auto pt-24 flex flex-col"
         >
           <div class="px-6 flex justify-between items-center mb-6">
-            <span class="font-teko text-xl text-white/50 tracking-widest">
-              NAVEGACIÓN
+            <span class="font-teko text-sm text-white/30 tracking-[0.3em] uppercase">
+              Navegación
             </span>
             <button
               id="close-drawer"
-              class="text-white/50 hover:text-white p-2"
+              class="text-white/40 hover:text-white/80 p-2 transition-colors"
             >
               <svg
-                class="w-6 h-6"
+                class="w-5 h-5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -288,34 +316,52 @@ const getBadgeStyles = (label: string) => {
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  stroke-width="2"
+                  stroke-width="1.5"
                   d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
             </button>
           </div>
 
-          <div class="flex-1 overflow-y-auto px-4 space-y-2">
+          <div class="flex-1 overflow-y-auto px-4 space-y-1">
             <a
               href="/"
-              class={`block px-4 py-3 rounded-lg font-teko text-xl transition-colors ${currentPath === "/" ? (CHRISTMAS_MODE ? "bg-red-500/10 text-red-400" : "bg-yellow-500/10 text-yellow-400") : "bg-white/5 text-white hover:bg-white/10"}`}
+              class={`block px-4 py-3 rounded-lg font-teko text-xl tracking-wide transition-all duration-200 ${
+                currentPath === "/"
+                  ? CHRISTMAS_MODE
+                    ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                    : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                  : "bg-white/4 text-white/70 border border-transparent hover:bg-white/8 hover:text-white"
+              }`}
             >
               INICIO
             </a>
             {links.map((link) =>
               link.soon ? (
-                <div class="block px-4 py-3 text-white/30 font-teko text-xl flex justify-between cursor-not-allowed">
+                <div class="block px-4 py-3 text-white/25 font-teko text-xl flex justify-between cursor-not-allowed">
                   {link.label} <LucideLock size={16} />
                 </div>
               ) : (
                 <a
                   href={link.url}
-                  class={`block px-4 py-3 rounded-lg font-teko text-xl flex justify-between transition-colors ${currentPath.startsWith(link.url) ? (CHRISTMAS_MODE ? "bg-red-500/10 text-red-400" : "bg-yellow-500/10 text-yellow-400") : "text-white/70 hover:bg-white/5 hover:text-white"}`}
+                  class={`block px-4 py-3 rounded-lg font-teko text-xl flex justify-between items-center transition-all duration-200 ${
+                    currentPath.startsWith(link.url)
+                      ? CHRISTMAS_MODE
+                        ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                        : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                      : "text-white/60 border border-transparent hover:bg-white/5 hover:text-white"
+                  }`}
                 >
                   {link.label}
                   {link.specialComment && (
                     <span
-                      class={`text-[10px] font-rubik font-bold px-2 py-0.5 rounded tracking-wide ${link.specialComment === "VOTACIÓN" ? (CHRISTMAS_MODE ? "bg-red-500/20 text-red-400" : "bg-yellow-500/20 text-yellow-400") : "bg-blue-500/20 text-blue-400"}`}
+                      class={`text-[9px] font-rubik font-bold px-2 py-0.5 rounded tracking-widest ${
+                        link.specialComment === "VOTACIÓN"
+                          ? CHRISTMAS_MODE
+                            ? "bg-red-500/20 text-red-400 border border-red-500/20"
+                            : "bg-yellow-500/15 text-yellow-400 border border-yellow-500/20"
+                          : "bg-cyan-500/15 text-cyan-400 border border-cyan-500/20"
+                      }`}
                     >
                       {link.specialComment}
                     </span>
@@ -323,7 +369,7 @@ const getBadgeStyles = (label: string) => {
                 </a>
               ),
             )}
-            <div class="mt-4 pt-4 border-t border-white/10 px-4">
+            <div class="mt-4 pt-4 border-t border-white/8 px-4">
               <DiscordPresenceCount client:visible />
             </div>
           </div>
@@ -334,17 +380,84 @@ const getBadgeStyles = (label: string) => {
 }
 
 <style>
-  /* ESTILOS ACTIVOS POR JS (SCROLL) */
+  /* SCROLL — isla compacta con glassmorphism */
   :global(#site-header.is-scrolled) {
     @apply py-2;
   }
 
   :global(#site-header.is-scrolled #nav-island) {
-    @apply bg-[#050505]/85 backdrop-blur-xl border-white/10 shadow-2xl max-w-6xl;
+    background: linear-gradient(
+      135deg,
+      rgba(8, 8, 8, 0.9) 0%,
+      rgba(14, 14, 14, 0.85) 100%
+    );
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+      0 8px 32px rgba(0, 0, 0, 0.6),
+      0 2px 8px rgba(0, 0, 0, 0.4);
+    max-width: 64rem; /* max-w-4xl aprox */
   }
 
-  /* 🎅 GORRO DE NAVIDAD (CSS PURO) */
-  /* Se ajusta específicamente para el logo pequeño del Navbar */
+  /* Glow line en el borde superior de la isla al scroll */
+  :global(#site-header.is-scrolled #nav-island::before) {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.08),
+      transparent
+    );
+    border-radius: 9999px;
+  }
+
+  /* Badge pulse sutil */
+  .badge {
+    animation: badgePulse 3s ease-in-out infinite;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .group:hover .badge {
+    transform: translateX(-50%) translateY(-3px);
+  }
+
+  @keyframes badgePulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  /* Underline: sweep al hover con ease gamer */
+  .nav-underline {
+    transition:
+      width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.25s ease;
+  }
+
+  /* Scan ring del logo */
+  .scan-ring {
+    transition:
+      border-color 0.3s ease,
+      box-shadow 0.3s ease,
+      inset 0.3s ease;
+  }
+
+  .logo-wrap:hover .scan-ring {
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.06);
+  }
+
+  /* 🎅 GORRO DE NAVIDAD */
   .christmas-logo-nav::before {
     content: "🎅";
     position: absolute;
@@ -355,7 +468,7 @@ const getBadgeStyles = (label: string) => {
     transform: rotate(-15deg);
     animation: bounceHatNav 3s infinite ease-in-out;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-    pointer-events: none; /* Para que no moleste el click al logo */
+    pointer-events: none;
   }
 
   @keyframes bounceHatNav {
