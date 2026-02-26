@@ -169,7 +169,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                         {user.name}
                     </span>
 
-                    <div className="relative">
+                    <div className="relative flex-shrink-0">
                         {/* 🎅 GORRITO DE SANTA */}
                         {CHRISTMAS_MODE && (
                             <span className="absolute -top-3.5 -left-2.5 text-2xl z-20 pointer-events-none rotate-[-15deg] filter drop-shadow-md select-none animate-pulse-slow">
@@ -180,7 +180,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                         <img
                             src={user.image || undefined}
                             alt={user.name || "User"}
-                            className={`size-9 rounded-full object-cover border shadow-sm group-hover:scale-105 transition-transform ${isNominated
+                            className={`w-9 h-9 flex-shrink-0 rounded-full object-cover border shadow-sm group-hover:scale-105 transition-transform ${isNominated
                                 ? 'border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.5)]'
                                 : (CHRISTMAS_MODE ? 'border-red-500/50' : 'border-white/10')
                                 }`}

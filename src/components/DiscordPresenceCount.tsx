@@ -45,7 +45,7 @@ const DiscordPresenceCount = () => {
       </a>
 
       {presenceCount > 0 && (
-        <span class="bg-zinc-800 text-zinc-100 font-rubik text-[10px] font-medium rounded-full px-1">
+        <span class="bg-zinc-800 text-zinc-100 font-rubik text-[10px] font-medium rounded-full px-1 py-0.5 hidden lg:inline-flex">
           {presenceCount}
         </span>
       )}
