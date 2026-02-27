@@ -1,6 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import tabla from "@/data/tabla-posiciones.json";
+import { getSession } from "auth-astro/server";
+import redis from "@/lib/redis";
 
 const calcular = (teams: any[]) =>
   (teams || [])
@@ -23,9 +25,27 @@ const calcular = (teams: any[]) =>
         (b.GF || 0) - (a.GF || 0),
     );
 
+// admin info & dynamic data load
+const session = await getSession(Astro.request);
+const isAdmin =
+  (session?.user as any)?.admin === true ||
+  (session?.user as any)?.isAdmin === true;
+
+// attempt to override default tabla with redis-stored value
+let tablaData: any = tabla;
+const redisKey = "tournament:rocket-league:tabla-posiciones";
+try {
+  const stored = await redis.get(redisKey);
+  if (stored) {
+    tablaData = JSON.parse(stored);
+  }
+} catch (err) {
+  console.error("Error reading tabla-posiciones from redis", err);
+}
+
 const grupos = ["A", "B", "C", "D"].map((g) => ({
   grupo: g,
-  equipos: calcular(tabla[g as keyof typeof tabla] || []),
+  equipos: calcular(tablaData[g as keyof typeof tablaData] || []),
 }));
 ---
 
@@ -51,6 +71,7 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
     </div>
 
     <!-- TABLAS -->
+    
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
       {
         grupos.map(({ grupo, equipos }) => (
@@ -105,22 +126,22 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
                       <td class="px-3 py-2 border border-white/10 text-center">
                         {team.PJ}
                       </td>
-                      <td class="px-3 py-2 border border-white/10 text-center">
+                      <td class="px-3 py-2 border border-white/10 text-center" data-group={grupo} data-index={i} data-key="PG">
                         {team.PG}
                       </td>
-                      <td class="px-3 py-2 border border-white/10 text-center">
+                      <td class="px-3 py-2 border border-white/10 text-center" data-group={grupo} data-index={i} data-key="PP">
                         {team.PP}
                       </td>
-                      <td class="px-3 py-2 border border-white/10 text-center">
+                      <td class="px-3 py-2 border border-white/10 text-center" data-group={grupo} data-index={i} data-key="GF">
                         {team.GF}
                       </td>
-                      <td class="px-3 py-2 border border-white/10 text-center">
+                      <td class="px-3 py-2 border border-white/10 text-center" data-group={grupo} data-index={i} data-key="GC">
                         {team.GC}
                       </td>
                       <td class="px-3 py-2 border border-white/10 text-center">
                         {team.DG}
                       </td>
-                      <td class="px-3 py-2 border border-white/10 text-center">
+                      <td class="px-3 py-2 border border-white/10 text-center" data-group={grupo} data-index={i} data-key="PUNTOS">
                         {team.PUNTOS}
                       </td>
                     </tr>
@@ -132,5 +153,85 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
         ))
       }
     </div>
+
+    {isAdmin && (
+      <div class="mt-[600px]">
+        <h2 class="text-xl font-bold text-white mb-2">Editor JSON (solo admin)</h2>
+        <textarea id="json-editor" class="w-full h-48 bg-zinc-900 text-white p-2 rounded"></textarea>
+        <div class="mt-2">
+          <button id="save-btn" class="px-4 py-2 bg-emerald-500 text-white rounded hover:bg-emerald-600">Guardar</button>
+          <span id="save-status" class="ml-4 text-sm text-white"></span>
+        </div>
+        <p class="mt-1 text-xs text-gray-300">Haz clic en una celda de la tabla para editarla interactivamente.</p>
+      </div>
+    )}
   </section>
-</Layout>
+
+  {isAdmin && (
+    <script type="module" define:vars={{ tablaData }}>
+      // admin editing helpers
+
+      function updateTextarea() {
+        const ta = document.getElementById('json-editor');
+        if (ta) ta.value = JSON.stringify(tablaData, null, 2);
+      }
+      updateTextarea();
+
+      document.querySelectorAll('td[data-key]').forEach(cell => {
+        cell.style.cursor = 'pointer';
+        cell.addEventListener('click', () => {
+          const g = cell.dataset.group;
+          const idx = parseInt(cell.dataset.index, 10);
+          const key = cell.dataset.key;
+          const old = cell.textContent || '';
+          const newVal = prompt(`Nuevo valor para ${key} en ${tablaData[g][idx].equipo} (actual: ${old})`, old);
+          if (newVal !== null) {
+            const numeric = Number(newVal);
+            tablaData[g][idx][key] = isNaN(numeric) ? newVal : numeric;
+            cell.textContent = tablaData[g][idx][key];
+            updateTextarea();
+          }
+        });
+      });
+
+      document.getElementById('save-btn').addEventListener('click', async () => {
+        const statusEl = document.getElementById('save-status');
+        if (statusEl) statusEl.textContent = 'guardando...';
+        // try to parse textarea in case admin edited raw JSON
+        let payload = tablaData;
+        const ta = document.getElementById('json-editor');
+        if (ta) {
+          try {
+            payload = JSON.parse(ta.value);
+            // also update internal object for further edits
+            Object.assign(tablaData, payload);
+          } catch (err) {
+            if (statusEl) statusEl.textContent = 'JSON inválido';
+            return;
+          }
+        }
+        try {
+          const res = await fetch('/api/tabla-posiciones', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (res.ok) {
+            if (statusEl) {
+              statusEl.textContent = 'guardado';
+              setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);
+            }
+            // refresh to apply sorting based on new data
+            setTimeout(() => { location.reload(); }, 500);
+          } else {
+            if (statusEl) statusEl.textContent = 'error';
+          }
+        } catch (e) {
+          console.error(e);
+          if (statusEl) statusEl.textContent = 'error';
+        }
+      });
+    </script>
+  )}
+
+</Layout>      
