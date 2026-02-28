@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import redis from "@/lib/redis";
 
-const key = "tournament:rocket-league:partidos";
+const key = "tournament:rocket-league:partidos-v2";
 
 const getData = async () => {
   const stored = await redis.get(key);
