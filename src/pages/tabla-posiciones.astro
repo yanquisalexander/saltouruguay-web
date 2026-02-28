@@ -25,13 +25,11 @@ const calcular = (teams: any[]) =>
         (b.GF || 0) - (a.GF || 0),
     );
 
-// 🔹 ADMIN
 const session = await getSession(Astro.request);
 const isAdmin =
   (session?.user as any)?.admin === true ||
   (session?.user as any)?.isAdmin === true;
 
-// 🔹 TABLA BASE
 let tablaData: any = tabla;
 const redisKeyTabla = "tournament:rocket-league:tabla-posiciones";
 const redisKeyPartidos = "tournament:rocket-league:partidos";
@@ -48,7 +46,6 @@ try {
   console.error("Redis error", err);
 }
 
-// 🔹 RESETEAR STATS
 const resetStats = (teams) =>
   teams.map(t => ({ ...t, PG:0, PP:0, GF:0, GC:0, PUNTOS:0 }));
 
@@ -83,14 +80,9 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
 }));
 ---
 
-<Layout
-  hideHeader
-  title="Tabla de Posiciones"
-  mainClassname="px-6 sm:px-10 pt-24 pb-32"
->
+<Layout hideHeader title="Tabla de Posiciones" mainClassname="px-6 sm:px-10 pt-24 pb-32">
 <section class="max-w-7xl mx-auto">
 
-  <!-- TITULO -->
   <div class="text-center mb-12">
     <p class="uppercase tracking-[0.1em] text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg">
       TORNEO ROCKET LEAGUE
@@ -101,7 +93,6 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
     </h1>
   </div>
 
-  <!-- TABLAS -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
   {
     grupos.map(({ grupo, equipos }) => (
@@ -156,19 +147,8 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
                   {p.local} {p.golesLocal} - {p.golesVisitante} {p.visitante}
                 </span>
 
-                <button
-                  class="edit-btn px-2 py-1 bg-amber-500/80 rounded text-black text-xs"
-                  data-id={p.id}
-                >
-                  ✏️
-                </button>
-
-                <button
-                  class="delete-btn px-2 py-1 bg-red-500/80 rounded text-white text-xs"
-                  data-id={p.id}
-                >
-                  🗑️
-                </button>
+                <button class="edit-btn px-2 py-1 bg-amber-500/80 rounded text-black text-xs" data-id={p.id}>✏️</button>
+                <button class="delete-btn px-2 py-1 bg-red-500/80 rounded text-white text-xs" data-id={p.id}>🗑️</button>
               </div>
             ))}
           </div>
@@ -188,8 +168,8 @@ document.querySelectorAll(".delete-btn").forEach(btn => {
     const id = btn.dataset.id;
     if (!confirm("Eliminar partido?")) return;
 
-    await fetch("/api/delete-match.json", {
-      method: "POST",
+    await fetch("/api/partidos", {
+      method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id })
     });
@@ -202,18 +182,18 @@ document.querySelectorAll(".edit-btn").forEach(btn => {
   btn.addEventListener("click", async () => {
     const id = btn.dataset.id;
 
-    const scoreA = prompt("Nuevo score local");
-    const scoreB = prompt("Nuevo score visitante");
+    const golesLocal = prompt("Nuevo score local");
+    const golesVisitante = prompt("Nuevo score visitante");
 
-    if (scoreA === null || scoreB === null) return;
+    if (golesLocal === null || golesVisitante === null) return;
 
-    await fetch("/api/update-match.json", {
-      method: "POST",
+    await fetch("/api/partidos", {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id,
-        scoreA: Number(scoreA),
-        scoreB: Number(scoreB)
+        golesLocal: Number(golesLocal),
+        golesVisitante: Number(golesVisitante)
       })
     });
 
