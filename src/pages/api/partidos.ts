@@ -3,85 +3,60 @@ import redis from "@/lib/redis";
 
 const key = "tournament:rocket-league:partidos";
 
-/* ================= GET ================= */
+const getData = async () => {
+  const stored = await redis.get(key);
+  return stored ? JSON.parse(stored) : { A: [], B: [], C: [], D: [] };
+};
+
 export const GET: APIRoute = async () => {
-  try {
-    const data = await redis.get(key);
-    return new Response(data || JSON.stringify({ A:[],B:[],C:[],D:[] }), {
-      headers: { "Content-Type": "application/json" }
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "error leyendo partidos" }), { status: 500 });
-  }
+  const data = await getData();
+  return new Response(JSON.stringify(data), {
+    headers: { "Content-Type": "application/json" }
+  });
 };
 
-/* ================= POST (crear) ================= */
 export const POST: APIRoute = async ({ request }) => {
-  try {
-    const body = await request.json();
+  const body = await request.json();
+  const partidos = await getData();
 
-    const stored = await redis.get(key);
-    const partidos = stored ? JSON.parse(stored) : { A:[],B:[],C:[],D:[] };
+  const match = {
+    id: "m_" + Date.now(),
+    local: body.local,
+    visitante: body.visitante,
+    golesLocal: body.golesLocal,
+    golesVisitante: body.golesVisitante
+  };
 
-    const match = {
-      id: "m_" + Date.now(),
-      local: body.local,
-      visitante: body.visitante,
-      golesLocal: body.golesLocal,
-      golesVisitante: body.golesVisitante
-    };
+  partidos[body.grupo].push(match);
+  await redis.set(key, JSON.stringify(partidos));
 
-    partidos[body.grupo].push(match);
-
-    await redis.set(key, JSON.stringify(partidos));
-
-    return new Response(JSON.stringify(match), { status: 200 });
-
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "error guardando partido" }), { status: 500 });
-  }
+  return new Response(JSON.stringify(match));
 };
 
-/* ================= PUT (editar) ================= */
-export const PUT: APIRoute = async ({ request }) => {
-  try {
-    const body = await request.json();
-    const stored = await redis.get(key);
-    const partidos = stored ? JSON.parse(stored) : { A:[],B:[],C:[],D:[] };
-
-    for (const grupo of Object.keys(partidos)) {
-      partidos[grupo] = partidos[grupo].map((m:any) =>
-        m.id === body.id
-          ? { ...m, golesLocal: body.golesLocal, golesVisitante: body.golesVisitante }
-          : m
-      );
-    }
-
-    await redis.set(key, JSON.stringify(partidos));
-
-    return new Response(JSON.stringify({ ok: true }), { status: 200 });
-
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "error editando partido" }), { status: 500 });
-  }
-};
-
-/* ================= DELETE (borrar) ================= */
 export const DELETE: APIRoute = async ({ request }) => {
-  try {
-    const body = await request.json();
-    const stored = await redis.get(key);
-    const partidos = stored ? JSON.parse(stored) : { A:[],B:[],C:[],D:[] };
+  const { id } = await request.json();
+  const partidos = await getData();
 
-    for (const grupo of Object.keys(partidos)) {
-      partidos[grupo] = partidos[grupo].filter((m:any) => m.id !== body.id);
-    }
-
-    await redis.set(key, JSON.stringify(partidos));
-
-    return new Response(JSON.stringify({ ok: true }), { status: 200 });
-
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "error eliminando partido" }), { status: 500 });
+  for (const grupo of Object.keys(partidos)) {
+    partidos[grupo] = partidos[grupo].filter(p => p.id !== id);
   }
+
+  await redis.set(key, JSON.stringify(partidos));
+  return new Response(JSON.stringify({ ok: true }));
+};
+
+export const PUT: APIRoute = async ({ request }) => {
+  const { id, golesLocal, golesVisitante } = await request.json();
+  const partidos = await getData();
+
+  for (const grupo of Object.keys(partidos)) {
+    const match = partidos[grupo].find(p => p.id === id);
+    if (match) {
+      match.golesLocal = golesLocal;
+      match.golesVisitante = golesVisitante;
+    }
+  }
+
+  await redis.set(key, JSON.stringify(partidos));
+  return new Response(JSON.stringify({ ok: true }));
 };
