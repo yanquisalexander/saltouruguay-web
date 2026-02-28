@@ -40,8 +40,12 @@ try {
   const storedTabla = await redis.get(redisKeyTabla);
   if (storedTabla) tablaData = JSON.parse(storedTabla);
 
-  const storedPartidos = await redis.get(redisKeyPartidos);
-  if (storedPartidos) partidos = JSON.parse(storedPartidos);
+  try {
+  const res = await fetch(new URL("/api/partidos", Astro.url));
+  partidos = await res.json();
+} catch (err) {
+  console.error("Error cargando partidos", err);
+}
 } catch (err) {
   console.error("Redis error", err);
 }
