@@ -1,9 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import tabla from "@/data/tabla-posiciones.json";
 import { getSession } from "auth-astro/server";
-import redis from "@/lib/redis";
 
+// 🔢 función de cálculo
 const calcular = (teams: any[]) =>
   (teams || [])
     .map((t) => {
@@ -25,27 +24,26 @@ const calcular = (teams: any[]) =>
         (b.GF || 0) - (a.GF || 0),
     );
 
-// admin info & dynamic data load
+// 🔐 sesión admin
 const session = await getSession(Astro.request);
 const isAdmin =
   (session?.user as any)?.admin === true ||
   (session?.user as any)?.isAdmin === true;
 
-// attempt to override default tabla with redis-stored value
-let tablaData: any = tabla;
-const redisKey = "tournament:rocket-league:tabla-posiciones";
+// 📊 obtener tabla calculada + partidos
+let tablaData: any = {};
+
 try {
-  const stored = await redis.get(redisKey);
-  if (stored) {
-    tablaData = JSON.parse(stored);
-  }
+  const res = await fetch(`${Astro.url.origin}/api/obtener-tabla`);
+  tablaData = await res.json();
 } catch (err) {
-  console.error("Error reading tabla-posiciones from redis", err);
+  console.error("Error cargando tabla", err);
 }
 
+// 📦 grupos
 const grupos = ["A", "B", "C", "D"].map((g) => ({
   grupo: g,
-  equipos: calcular(tablaData[g as keyof typeof tablaData] || []),
+  equipos: calcular(tablaData[g] || []),
 }));
 ---
 
@@ -57,21 +55,16 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
   <section class="max-w-7xl mx-auto">
     <!-- TITULO -->
     <div class="text-center mb-12">
-      <p
-        class="uppercase tracking-[0.1em] text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg"
-      >
+      <p class="uppercase tracking-[0.1em] text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg">
         TORNEO ROCKET LEAGUE
       </p>
 
-      <h1
-        class="font-anton text-4xl md:text-5xl mt-2 bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent"
-      >
+      <h1 class="font-anton text-4xl md:text-5xl mt-2 bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
         Tabla de Posiciones
       </h1>
     </div>
 
     <!-- TABLAS -->
-    
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
       {
         grupos.map(({ grupo, equipos }) => (
@@ -84,33 +77,15 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
               <table class="w-full border-collapse text-sm">
                 <thead>
                   <tr class="bg-white/10 text-white">
-                    <th class="text-center px-3 py-2 border border-white/10">
-                      POS
-                    </th>
-                    <th class="text-left px-3 py-2 border border-white/10">
-                      Equipo
-                    </th>
-                    <th class="text-center px-3 py-2 border border-white/10">
-                      PJ
-                    </th>
-                    <th class="text-center px-3 py-2 border border-white/10">
-                      PG
-                    </th>
-                    <th class="text-center px-3 py-2 border border-white/10">
-                      PP
-                    </th>
-                    <th class="text-center px-3 py-2 border border-white/10">
-                      GF
-                    </th>
-                    <th class="text-center px-3 py-2 border border-white/10">
-                      GC
-                    </th>
-                    <th class="text-center px-3 py-2 border border-white/10">
-                      DG
-                    </th>
-                    <th class="text-center px-3 py-2 border border-white/10 font-bold">
-                      PTS
-                    </th>
+                    <th class="text-center px-3 py-2 border border-white/10">POS</th>
+                    <th class="text-left px-3 py-2 border border-white/10">Equipo</th>
+                    <th class="text-center px-3 py-2 border border-white/10">PJ</th>
+                    <th class="text-center px-3 py-2 border border-white/10">PG</th>
+                    <th class="text-center px-3 py-2 border border-white/10">PP</th>
+                    <th class="text-center px-3 py-2 border border-white/10">GF</th>
+                    <th class="text-center px-3 py-2 border border-white/10">GC</th>
+                    <th class="text-center px-3 py-2 border border-white/10">DG</th>
+                    <th class="text-center px-3 py-2 border border-white/10 font-bold">PTS</th>
                   </tr>
                 </thead>
 
@@ -123,115 +98,92 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
                       <td class="px-3 py-2 border border-white/10 text-left">
                         {team.equipo}
                       </td>
-                      <td class="px-3 py-2 border border-white/10 text-center">
-                        {team.PJ}
-                      </td>
-                      <td class="px-3 py-2 border border-white/10 text-center" data-group={grupo} data-index={i} data-key="PG">
-                        {team.PG}
-                      </td>
-                      <td class="px-3 py-2 border border-white/10 text-center" data-group={grupo} data-index={i} data-key="PP">
-                        {team.PP}
-                      </td>
-                      <td class="px-3 py-2 border border-white/10 text-center" data-group={grupo} data-index={i} data-key="GF">
-                        {team.GF}
-                      </td>
-                      <td class="px-3 py-2 border border-white/10 text-center" data-group={grupo} data-index={i} data-key="GC">
-                        {team.GC}
-                      </td>
-                      <td class="px-3 py-2 border border-white/10 text-center">
-                        {team.DG}
-                      </td>
-                      <td class="px-3 py-2 border border-white/10 text-center" data-group={grupo} data-index={i} data-key="PUNTOS">
-                        {team.PUNTOS}
-                      </td>
+                      <td class="px-3 py-2 border border-white/10 text-center">{team.PJ}</td>
+                      <td class="px-3 py-2 border border-white/10 text-center">{team.PG}</td>
+                      <td class="px-3 py-2 border border-white/10 text-center">{team.PP}</td>
+                      <td class="px-3 py-2 border border-white/10 text-center">{team.GF}</td>
+                      <td class="px-3 py-2 border border-white/10 text-center">{team.GC}</td>
+                      <td class="px-3 py-2 border border-white/10 text-center">{team.DG}</td>
+                      <td class="px-3 py-2 border border-white/10 text-center font-bold">{team.PUNTOS}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            <!-- LISTA DE PARTIDOS -->
+            <div class="mt-4 text-sm text-white/80">
+              <h3 class="font-bold mb-2">Partidos</h3>
+
+              {(tablaData._partidos?.[grupo] || []).length === 0 && (
+                <p class="text-white/50">Sin partidos</p>
+              )}
+
+              {(tablaData._partidos?.[grupo] || []).map((p) => (
+                <div class="flex items-center justify-between border-b border-white/10 py-1">
+                  <span class="text-xs opacity-60">{p.id}</span>
+
+                  <span class="flex-1 text-center">
+                    {p.local} <b>{p.golesLocal} - {p.golesVisitante}</b> {p.visitante}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         ))
       }
     </div>
 
+    <!-- PANEL ADMIN -->
     {isAdmin && (
-      <div class="mt-[600px]">
-        <h2 class="text-xl font-bold text-white mb-2">Editor JSON (solo admin)</h2>
-        <textarea id="json-editor" class="w-full h-48 bg-zinc-900 text-white p-2 rounded"></textarea>
-        <div class="mt-2">
-          <button id="save-btn" class="px-4 py-2 bg-emerald-500 text-white rounded hover:bg-emerald-600">Guardar</button>
-          <span id="save-status" class="ml-4 text-sm text-white"></span>
+      <div class="mt-16">
+        <h2 class="text-xl font-bold text-white mb-4">Cargar resultado</h2>
+
+        <div class="flex flex-wrap gap-2">
+          <select id="grupo" class="p-2 bg-zinc-800 text-white rounded">
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+            <option>D</option>
+          </select>
+
+          <input id="local" placeholder="Equipo local" class="p-2 bg-zinc-800 text-white rounded"/>
+          <input id="visitante" placeholder="Equipo visitante" class="p-2 bg-zinc-800 text-white rounded"/>
+          <input id="gl" type="number" placeholder="Goles local" class="p-2 bg-zinc-800 text-white rounded"/>
+          <input id="gv" type="number" placeholder="Goles visitante" class="p-2 bg-zinc-800 text-white rounded"/>
+
+          <button id="guardarPartido" class="px-4 py-2 bg-emerald-500 rounded hover:bg-emerald-600">
+            Guardar partido
+          </button>
         </div>
-        <p class="mt-1 text-xs text-gray-300">Haz clic en una celda de la tabla para editarla interactivamente.</p>
       </div>
     )}
   </section>
 
   {isAdmin && (
-    <script type="module" define:vars={{ tablaData }}>
-      // admin editing helpers
-
-      function updateTextarea() {
-        const ta = document.getElementById('json-editor');
-        if (ta) ta.value = JSON.stringify(tablaData, null, 2);
+    <script>
+      function generarId() {
+        return "match_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
       }
-      updateTextarea();
 
-      document.querySelectorAll('td[data-key]').forEach(cell => {
-        cell.style.cursor = 'pointer';
-        cell.addEventListener('click', () => {
-          const g = cell.dataset.group;
-          const idx = parseInt(cell.dataset.index, 10);
-          const key = cell.dataset.key;
-          const old = cell.textContent || '';
-          const newVal = prompt(`Nuevo valor para ${key} en ${tablaData[g][idx].equipo} (actual: ${old})`, old);
-          if (newVal !== null) {
-            const numeric = Number(newVal);
-            tablaData[g][idx][key] = isNaN(numeric) ? newVal : numeric;
-            cell.textContent = tablaData[g][idx][key];
-            updateTextarea();
-          }
+      document.getElementById("guardarPartido").addEventListener("click", async () => {
+        const payload = {
+          id: generarId(),
+          grupo: document.getElementById("grupo").value,
+          local: document.getElementById("local").value,
+          visitante: document.getElementById("visitante").value,
+          golesLocal: Number(document.getElementById("gl").value),
+          golesVisitante: Number(document.getElementById("gv").value)
+        };
+
+        await fetch("/api/partidos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
-      });
 
-      document.getElementById('save-btn').addEventListener('click', async () => {
-        const statusEl = document.getElementById('save-status');
-        if (statusEl) statusEl.textContent = 'guardando...';
-        // try to parse textarea in case admin edited raw JSON
-        let payload = tablaData;
-        const ta = document.getElementById('json-editor');
-        if (ta) {
-          try {
-            payload = JSON.parse(ta.value);
-            // also update internal object for further edits
-            Object.assign(tablaData, payload);
-          } catch (err) {
-            if (statusEl) statusEl.textContent = 'JSON inválido';
-            return;
-          }
-        }
-        try {
-          const res = await fetch('/api/tabla-posiciones', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-          if (res.ok) {
-            if (statusEl) {
-              statusEl.textContent = 'guardado';
-              setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);
-            }
-            // refresh to apply sorting based on new data
-            setTimeout(() => { location.reload(); }, 500);
-          } else {
-            if (statusEl) statusEl.textContent = 'error';
-          }
-        } catch (e) {
-          console.error(e);
-          if (statusEl) statusEl.textContent = 'error';
-        }
+        location.reload();
       });
     </script>
   )}
-
-</Layout>      
+</Layout>
