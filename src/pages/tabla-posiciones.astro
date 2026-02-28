@@ -146,7 +146,6 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
           </table>
         </div>
 
-        {/* LISTA PARTIDOS */}
         {isAdmin && (
           <div class="mt-4 text-xs text-white/70">
             <p class="font-bold mb-1">Partidos cargados</p>
@@ -161,5 +160,59 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
   }
   </div>
 
+  {/* PANEL ADMIN */}
+  {isAdmin && (
+    <div class="mt-16 rounded-2xl border border-white/10 bg-white/5 p-6">
+      <h2 class="text-xl font-bold text-white mb-4">➕ Cargar resultado</h2>
+
+      <div class="flex flex-wrap gap-2">
+        <select id="grupo" class="p-2 bg-zinc-800 text-white rounded">
+          <option value="A">Grupo A</option>
+          <option value="B">Grupo B</option>
+          <option value="C">Grupo C</option>
+          <option value="D">Grupo D</option>
+        </select>
+
+        <input id="local" placeholder="Equipo local" class="p-2 bg-zinc-800 text-white rounded"/>
+        <input id="visitante" placeholder="Equipo visitante" class="p-2 bg-zinc-800 text-white rounded"/>
+        <input id="gl" type="number" placeholder="Goles local" class="p-2 bg-zinc-800 text-white rounded w-28"/>
+        <input id="gv" type="number" placeholder="Goles visitante" class="p-2 bg-zinc-800 text-white rounded w-28"/>
+
+        <button id="guardarPartido" class="px-4 py-2 bg-emerald-500 rounded hover:bg-emerald-600">
+          Guardar partido
+        </button>
+      </div>
+    </div>
+  )}
+
 </section>
+
+{isAdmin && (
+<script>
+  document.getElementById("guardarPartido")?.addEventListener("click", async () => {
+
+    const payload = {
+      grupo: document.getElementById("grupo").value,
+      local: document.getElementById("local").value,
+      visitante: document.getElementById("visitante").value,
+      golesLocal: Number(document.getElementById("gl").value),
+      golesVisitante: Number(document.getElementById("gv").value)
+    };
+
+    if (!payload.local || !payload.visitante) {
+      alert("Completa los equipos");
+      return;
+    }
+
+    await fetch("/api/partidos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    location.reload();
+  });
+</script>
+)}
+
 </Layout>
