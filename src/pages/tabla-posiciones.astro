@@ -157,15 +157,15 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
                 </span>
 
                 <button
-                  onclick={`editMatch('${p.id}')`}
-                  class="px-2 py-1 bg-amber-500/80 rounded text-black text-xs"
+                  class="edit-btn px-2 py-1 bg-amber-500/80 rounded text-black text-xs"
+                  data-id={p.id}
                 >
                   ✏️
                 </button>
 
                 <button
-                  onclick={`deleteMatch('${p.id}')`}
-                  class="px-2 py-1 bg-red-500/80 rounded text-white text-xs"
+                  class="delete-btn px-2 py-1 bg-red-500/80 rounded text-white text-xs"
+                  data-id={p.id}
                 >
                   🗑️
                 </button>
@@ -183,36 +183,43 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
 
 {isAdmin && (
 <script>
-async function deleteMatch(id) {
-  if (!confirm("Eliminar partido?")) return;
+document.querySelectorAll(".delete-btn").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const id = btn.dataset.id;
+    if (!confirm("Eliminar partido?")) return;
 
-  await fetch("/api/delete-match.json", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id })
+    await fetch("/api/delete-match.json", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    });
+
+    location.reload();
   });
+});
 
-  location.reload();
-}
+document.querySelectorAll(".edit-btn").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const id = btn.dataset.id;
 
-async function editMatch(id) {
-  const scoreA = prompt("Nuevo score local");
-  const scoreB = prompt("Nuevo score visitante");
+    const scoreA = prompt("Nuevo score local");
+    const scoreB = prompt("Nuevo score visitante");
 
-  if (scoreA === null || scoreB === null) return;
+    if (scoreA === null || scoreB === null) return;
 
-  await fetch("/api/update-match.json", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id,
-      scoreA: Number(scoreA),
-      scoreB: Number(scoreB)
-    })
+    await fetch("/api/update-match.json", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id,
+        scoreA: Number(scoreA),
+        scoreB: Number(scoreB)
+      })
+    });
+
+    location.reload();
   });
-
-  location.reload();
-}
+});
 </script>
 )}
 
