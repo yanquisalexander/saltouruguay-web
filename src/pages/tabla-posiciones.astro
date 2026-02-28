@@ -146,14 +146,27 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
             <p class="font-bold mb-1">Partidos cargados</p>
 
             {(partidos[grupo] || []).map(p => (
-              <div class="flex items-center gap-2">
-                <span class="flex-1">
-                  {p.local} {p.golesLocal} - {p.golesVisitante} {p.visitante}
-                </span>
+              <div class="flex items-center justify-between gap-3 bg-black/30 px-3 py-2 rounded">
+  <span class="text-white text-sm">
+    {p.local} {p.golesLocal} - {p.golesVisitante} {p.visitante}
+  </span>
 
-                <button class="edit-btn px-2 py-1 bg-amber-500/80 rounded text-black text-xs" data-id={p.id}>✏️</button>
-                <button class="delete-btn px-2 py-1 bg-red-500/80 rounded text-white text-xs" data-id={p.id}>🗑️</button>
-              </div>
+  <div class="flex gap-2 shrink-0">
+    <button
+      class="edit-btn bg-amber-500 hover:bg-amber-400 text-black px-2 py-1 rounded text-xs font-bold"
+      data-id={p.id}
+    >
+      ✏️ Editar
+    </button>
+
+    <button
+      class="delete-btn bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-xs font-bold"
+      data-id={p.id}
+    >
+      🗑️ Borrar
+    </button>
+  </div>
+</div>
             ))}
           </div>
         )}
