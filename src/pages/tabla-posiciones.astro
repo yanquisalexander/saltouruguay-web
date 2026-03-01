@@ -28,8 +28,13 @@ let partidos: any = { A: [], B: [], C: [], D: [] };
 
 try {
   // 1. Intentar cargar base de tabla desde el endpoint (usa cache internamente)
+  // Solo reemplaza el fallback JSON si la cache tiene equipos reales
   const tablaResp = await fetch(new URL("/api/tabla-posiciones", Astro.url));
-  if (tablaResp.ok) tablaData = await tablaResp.json();
+  if (tablaResp.ok) {
+    const apiData = await tablaResp.json();
+    const hasData = Object.values(apiData as Record<string, any[]>).some((arr) => arr.length > 0);
+    if (hasData) tablaData = apiData;
+  }
 
   // 2. Cargar partidos desde la API
   try {
