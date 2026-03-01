@@ -149,7 +149,9 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
               ))}
             </tbody>
           </table>
-       {isAdmin && (
+</div>
+
+{isAdmin && (
   <div class="mt-4 text-xs text-white/70 space-y-1">
     <p class="font-bold mb-1">Partidos cargados</p>
 
@@ -160,7 +162,6 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
           {p.local} {p.golesLocal} - {p.golesVisitante} {p.visitante}
         </span>
 
-        <!-- BOTONES -->
         <div class="flex gap-2">
           <button
             class="edit-btn bg-amber-500 hover:bg-amber-400 text-black px-2 py-1 rounded text-xs font-bold"
