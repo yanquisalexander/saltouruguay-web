@@ -140,36 +140,85 @@ const gruposFinales = ["A", "B", "C", "D"].map((g) => ({
           </div>
 
           {isAdmin && (
-            <div class="mt-4 border-t border-white/10 pt-4">
-              <p class="text-xs font-bold text-amber-400/80 uppercase tracking-widest mb-3">Partidos Registrados</p>
-              <div class="space-y-2">
-                {(partidos[grupo] || []).map((p: any) => (
-                  <div class="flex items-center justify-between bg-black/40 p-3 rounded-lg border border-white/5 group">
-                    <span class="text-white text-sm">
-                      <span class="font-bold">{p.local}</span> {p.golesLocal} - {p.golesVisitante} <span class="font-bold">{p.visitante}</span>
-                    </span>
-                    <div class="flex gap-2">
-                      <button
-                        class="edit-btn bg-amber-500 hover:bg-amber-400 text-black p-1.5 rounded transition-colors"
-                        data-id={p.id}
-                        title="Editar resultado"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        class="delete-btn bg-red-600 hover:bg-red-500 text-white p-1.5 rounded transition-colors"
-                        data-id={p.id}
-                        title="Eliminar partido"
-                      >
-                        🗑️
-                      </button>
+            <div class="mt-4 border-t border-white/10 pt-4 space-y-4">
+
+              {/* ── Cargar nuevo resultado ── */}
+              <details class="group/form">
+                <summary class="cursor-pointer list-none flex items-center gap-2 text-xs font-bold text-green-400/90 uppercase tracking-widest select-none">
+                  <span class="group-open/form:rotate-90 transition-transform">▶</span>
+                  Cargar resultado
+                </summary>
+                <form
+                  class="add-match-form mt-3 flex flex-col gap-2"
+                  data-grupo={grupo}
+                  data-equipos={JSON.stringify(equipos.map((e: any) => e.equipo))}
+                >
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="flex flex-col gap-1">
+                      <label class="text-white/50 text-xs">Local</label>
+                      <select name="local" class="bg-black/50 border border-white/10 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
+                        {equipos.map((e: any) => <option value={e.equipo}>{e.equipo}</option>)}
+                      </select>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                      <label class="text-white/50 text-xs">Visitante</label>
+                      <select name="visitante" class="bg-black/50 border border-white/10 rounded px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
+                        {equipos.map((e: any) => <option value={e.equipo}>{e.equipo}</option>)}
+                      </select>
                     </div>
                   </div>
-                ))}
-                {(!partidos[grupo] || partidos[grupo].length === 0) && (
-                  <p class="text-white/30 text-xs italic">No hay partidos cargados</p>
-                )}
+                  <div class="grid grid-cols-2 gap-2">
+                    <div class="flex flex-col gap-1">
+                      <label class="text-white/50 text-xs">Goles Local</label>
+                      <input name="golesLocal" type="number" min="0" value="0"
+                        class="bg-black/50 border border-white/10 rounded px-2 py-1.5 text-sm text-white text-center focus:outline-none focus:ring-1 focus:ring-amber-400" />
+                    </div>
+                    <div class="flex flex-col gap-1">
+                      <label class="text-white/50 text-xs">Goles Visitante</label>
+                      <input name="golesVisitante" type="number" min="0" value="0"
+                        class="bg-black/50 border border-white/10 rounded px-2 py-1.5 text-sm text-white text-center focus:outline-none focus:ring-1 focus:ring-amber-400" />
+                    </div>
+                  </div>
+                  <button type="submit"
+                    class="mt-1 w-full bg-green-600 hover:bg-green-500 active:scale-95 transition text-white text-sm font-bold py-2 rounded-lg">
+                    ➕ Guardar partido
+                  </button>
+                </form>
+              </details>
+
+              {/* ── Partidos registrados ── */}
+              <div>
+                <p class="text-xs font-bold text-amber-400/80 uppercase tracking-widest mb-3">Partidos Registrados</p>
+                <div class="space-y-2">
+                  {(partidos[grupo] || []).map((p: any) => (
+                    <div class="flex items-center justify-between bg-black/40 p-3 rounded-lg border border-white/5">
+                      <span class="text-white text-sm">
+                        <span class="font-bold">{p.local}</span> {p.golesLocal} - {p.golesVisitante} <span class="font-bold">{p.visitante}</span>
+                      </span>
+                      <div class="flex gap-2">
+                        <button
+                          class="edit-btn bg-amber-500 hover:bg-amber-400 text-black p-1.5 rounded transition-colors"
+                          data-id={p.id}
+                          title="Editar resultado"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          class="delete-btn bg-red-600 hover:bg-red-500 text-white p-1.5 rounded transition-colors"
+                          data-id={p.id}
+                          title="Eliminar partido"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {(!partidos[grupo] || partidos[grupo].length === 0) && (
+                    <p class="text-white/30 text-xs italic">No hay partidos cargados</p>
+                  )}
+                </div>
               </div>
+
             </div>
           )}
         </div>
@@ -180,7 +229,42 @@ const gruposFinales = ["A", "B", "C", "D"].map((g) => ({
 
 {isAdmin && (
 <script>
-  // Manejo de Borrado Individual
+  // ── Cargar nuevo partido ──────────────────────────────────────
+  document.querySelectorAll(".add-match-form").forEach(form => {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const f = form as HTMLFormElement;
+      const grupo = f.dataset.grupo!;
+      const local = (f.querySelector("[name=local]") as HTMLSelectElement).value;
+      const visitante = (f.querySelector("[name=visitante]") as HTMLSelectElement).value;
+      const golesLocal = Number((f.querySelector("[name=golesLocal]") as HTMLInputElement).value);
+      const golesVisitante = Number((f.querySelector("[name=golesVisitante]") as HTMLInputElement).value);
+
+      if (local === visitante) { alert("Local y visitante no pueden ser el mismo equipo."); return; }
+
+      const btn = f.querySelector("button[type=submit]") as HTMLButtonElement;
+      btn.disabled = true;
+      btn.textContent = "Guardando…";
+
+      try {
+        const res = await fetch("/api/partidos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ grupo, local, visitante, golesLocal, golesVisitante })
+        });
+        if (res.ok) location.reload();
+        else alert("Error al guardar partido");
+      } catch (err) {
+        console.error(err);
+        alert("Error de red");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "➕ Guardar partido";
+      }
+    });
+  });
+
+  // ── Borrado individual ────────────────────────────────────────
   document.querySelectorAll(".delete-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
       const id = (btn as HTMLElement).dataset.id;
