@@ -1,3 +1,4 @@
+```astro
 ---
 import Layout from "@/layouts/Layout.astro";
 import tabla from "@/data/tabla-posiciones.json";
@@ -8,7 +9,7 @@ const isAdmin =
   (session?.user as any)?.admin === true ||
   (session?.user as any)?.isAdmin === true;
 
-// Función para calcular PJ y DG dinámicamente
+// Calcular PJ y DG
 const calcular = (teams: any[]) =>
   (teams || [])
     .map((t) => ({
@@ -34,14 +35,10 @@ try {
     if (hasData) tablaData = apiData;
   }
 
-  try {
-    const res = await fetch(new URL("/api/partidos", Astro.url));
-    if (res.ok) partidos = await res.json();
-  } catch (err) {
-    console.error("Error cargando partidos desde API", err);
-  }
+  const res = await fetch(new URL("/api/partidos", Astro.url));
+  if (res.ok) partidos = await res.json();
 } catch (err) {
-  console.error("Error cargando tabla de posiciones desde API", err);
+  console.error(err);
 }
 
 const resetStats = (teams: any[]) =>
@@ -61,18 +58,12 @@ for (const grupo of ["A", "B", "C", "D"]) {
     visitante.GC += p.golesLocal;
 
     if (p.golesLocal > p.golesVisitante) {
-      local.PG++;
-      local.PUNTOS += 3;
-      visitante.PP++;
+      local.PG++; local.PUNTOS += 3; visitante.PP++;
     } else if (p.golesLocal < p.golesVisitante) {
-      visitante.PG++;
-      visitante.PUNTOS += 3;
-      local.PP++;
+      visitante.PG++; visitante.PUNTOS += 3; local.PP++;
     } else {
-      local.PE++;
-      visitante.PE++;
-      local.PUNTOS += 1;
-      visitante.PUNTOS += 1;
+      local.PE++; visitante.PE++;
+      local.PUNTOS += 1; visitante.PUNTOS += 1;
     }
   }
 }
@@ -85,18 +76,11 @@ const gruposFinales = ["A", "B", "C", "D"].map((g) => ({
 
 <Layout hideHeader title="Tabla de Posiciones" mainClassname="px-6 sm:px-10 pt-24 pb-32">
   <section class="max-w-7xl mx-auto">
-    <div class="text-center mb-12">
-      <p class="uppercase tracking-[0.1em] text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg">
-        TORNEO ROCKET LEAGUE
-      </p>
-      <h1 class="font-anton text-4xl md:text-5xl mt-2 bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
-        Tabla de Posiciones
-      </h1>
-    </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       {gruposFinales.map(({ grupo, equipos }) => (
         <div class="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-sm">
+
           <h2 class="text-center font-bold text-3xl text-amber-300 mb-6 font-anton tracking-wider">
             GRUPO {grupo}
           </h2>
@@ -105,38 +89,74 @@ const gruposFinales = ["A", "B", "C", "D"].map((g) => ({
             <table class="w-full border-collapse text-sm mb-6">
               <thead>
                 <tr class="bg-white/10 text-white uppercase text-xs">
-                  <th class="px-2 py-3 border border-white/10">POS</th>
-                  <th class="text-left px-3 py-3 border border-white/10">Equipo</th>
-                  <th class="px-2 py-3 border border-white/10 text-center text-amber-300">PTS</th>
-                  <th class="px-2 py-3 border border-white/10 text-center">PJ</th>
-                  <th class="px-2 py-3 border border-white/10 text-center">PG</th>
-                  <th class="px-2 py-3 border border-white/10 text-center">PP</th>
-                  <th class="px-2 py-3 border border-white/10 text-center">GF</th>
-                  <th class="px-2 py-3 border border-white/10 text-center">GC</th>
-                  <th class="px-2 py-3 border border-white/10 text-center">DG</th>
+                  <th class="px-2 py-3 border">POS</th>
+                  <th class="px-3 py-3 border text-left">Equipo</th>
+                  <th class="px-2 py-3 border text-center text-amber-300">PTS</th>
+                  <th class="px-2 py-3 border text-center">PJ</th>
+                  <th class="px-2 py-3 border text-center">PG</th>
+                  <th class="px-2 py-3 border text-center">PP</th>
+                  <th class="px-2 py-3 border text-center">GF</th>
+                  <th class="px-2 py-3 border text-center">GC</th>
+                  <th class="px-2 py-3 border text-center">DG</th>
                 </tr>
               </thead>
+
               <tbody>
                 {equipos.map((team, i) => (
-                  <tr class={i < 2 ? "bg-green-500/10 hover:bg-green-500/20" : "bg-red-500/10 hover:bg-red-500/20"}>
-                    <td class="px-2 py-2 border border-white/10 text-center font-bold">
+                  <tr class={i < 2 ? "bg-green-500/10" : "bg-red-500/10"}>
+                    <td class="px-2 py-2 border text-center font-bold">
                       {i === 0 ? "🥇" : i === 1 ? "🥈" : i + 1}
                     </td>
-                    <td class="px-3 py-2 border border-white/10 text-left font-medium">{team.equipo}</td>
-                    <td class="px-2 py-2 border border-white/10 text-center font-bold text-amber-300">{team.PUNTOS}</td>
-                    <td class="px-2 py-2 border border-white/10 text-center">{team.PJ}</td>
-                    <td class="px-2 py-2 border border-white/10 text-center text-green-400">{team.PG}</td>
-                    <td class="px-2 py-2 border border-white/10 text-center text-red-400">{team.PP}</td>
-                    <td class="px-2 py-2 border border-white/10 text-center">{team.GF}</td>
-                    <td class="px-2 py-2 border border-white/10 text-center">{team.GC}</td>
-                    <td class="px-2 py-2 border border-white/10 text-center text-white/60">{team.DG}</td>
+                    <td class="px-3 py-2 border">{team.equipo}</td>
+                    <td class="px-2 py-2 border text-center font-bold text-amber-300">{team.PUNTOS}</td>
+                    <td class="px-2 py-2 border text-center">{team.PJ}</td>
+                    <td class="px-2 py-2 border text-center text-green-400">{team.PG}</td>
+                    <td class="px-2 py-2 border text-center text-red-400">{team.PP}</td>
+                    <td class="px-2 py-2 border text-center">{team.GF}</td>
+                    <td class="px-2 py-2 border text-center">{team.GC}</td>
+                    <td class="px-2 py-2 border text-center text-white/60">{team.DG}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          {isAdmin && (
+            <div class="mt-4 border-t border-white/10 pt-4 space-y-4">
+
+              <details>
+                <summary class="cursor-pointer text-xs font-bold text-green-400 uppercase">
+                  ▶ Cargar resultado
+                </summary>
+
+                <form class="add-match-form mt-3 flex flex-col gap-2" data-grupo={grupo}>
+                  <select name="local">{equipos.map((e:any)=><option value={e.equipo}>{e.equipo}</option>)}</select>
+                  <select name="visitante">{equipos.map((e:any)=><option value={e.equipo}>{e.equipo}</option>)}</select>
+                  <input name="golesLocal" type="number" value="0" />
+                  <input name="golesVisitante" type="number" value="0" />
+                  <button type="submit">Guardar partido</button>
+                </form>
+              </details>
+
+              <div class="space-y-2">
+                {(partidos[grupo] || []).map((p:any)=>(
+                  <div class="flex justify-between bg-black/40 p-2 rounded">
+                    <span>{p.local} {p.golesLocal}-{p.golesVisitante} {p.visitante}</span>
+                    <div class="flex gap-2">
+                      <button class="edit-btn" data-id={p.id}>✏️</button>
+                      <button class="delete-btn" data-id={p.id}>🗑️</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          )}
+
         </div>
       ))}
     </div>
+
   </section>
 </Layout>
+```
