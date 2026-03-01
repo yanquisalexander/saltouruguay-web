@@ -1,14 +1,17 @@
 import type { APIRoute } from "astro";
-import redis from "@/lib/redis";
+import cacheService from "@/services/cache";
 import { getSession } from "auth-astro/server";
 
 const key = "tournament:rocket-league:partidos";
 
-// Helper para obtener datos de Redis de forma limpia
+// create a cache client once
+const cache = cacheService.create();
+
+// Helper para obtener datos almacenados (usa cacheService)
 const getData = async () => {
-  const stored = await redis.get(key);
+  const stored = await cache.get<Record<string, any[]>>(key);
   if (!stored) return { A: [], B: [], C: [], D: [] };
-  return typeof stored === "string" ? JSON.parse(stored) : stored;
+  return stored;
 };
 
 // --- GET: Obtener partidos ---
@@ -41,9 +44,9 @@ export const POST: APIRoute = async ({ request }) => {
 
   // Validar que el grupo existe
   if (!partidos[body.grupo]) partidos[body.grupo] = [];
-  
+
   partidos[body.grupo].push(match);
-  await redis.set(key, JSON.stringify(partidos));
+  await cache.set(key, partidos);
 
   return new Response(JSON.stringify(match), { status: 201 });
 };
@@ -66,9 +69,9 @@ export const DELETE: APIRoute = async ({ request }) => {
       partidos[grupo] = partidos[grupo].filter((p: any) => p.id !== id);
     });
 
-    await redis.set(key, JSON.stringify(partidos));
-    
-    return new Response(JSON.stringify({ ok: true }), { 
+    await cache.set(key, partidos);
+
+    return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: { "Content-Type": "application/json" }
     });
@@ -104,7 +107,7 @@ export const PUT: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: "Partido no encontrado" }), { status: 404 });
     }
 
-    await redis.set(key, JSON.stringify(partidos));
+    await cache.set(key, partidos);
     return new Response(JSON.stringify({ ok: true }), { status: 200 });
   } catch (err) {
     return new Response(JSON.stringify({ error: "Error al actualizar" }), { status: 500 });
