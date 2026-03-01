@@ -13,7 +13,7 @@ const calcular = (teams: any[]) =>
   (teams || [])
     .map((t) => ({
       ...t,
-      PJ: (t.PG || 0) + (t.PP || 0),
+      PJ: (t.PG || 0) + (t.PE || 0) + (t.PP || 0),
       DG: (t.GF || 0) - (t.GC || 0),
     }))
     .sort(
@@ -49,7 +49,7 @@ try {
 
 // 3. Resetear estadísticas temporales para recalcular con los partidos actuales
 const resetStats = (teams: any[]) =>
-  teams.map((t) => ({ ...t, PG: 0, PP: 0, GF: 0, GC: 0, PUNTOS: 0 }));
+  teams.map((t) => ({ ...t, PG: 0, PE: 0, PP: 0, GF: 0, GC: 0, PUNTOS: 0 }));
 
 // 4. Procesar resultados de los partidos en la tabla
 for (const grupo of ["A", "B", "C", "D"]) {
@@ -74,6 +74,11 @@ for (const grupo of ["A", "B", "C", "D"]) {
       visitante.PG++;
       visitante.PUNTOS += 3;
       local.PP++;
+    } else {
+      local.PE++;
+      local.PUNTOS += 1;
+      visitante.PE++;
+      visitante.PUNTOS += 1;
     }
   }
 }
@@ -122,6 +127,7 @@ const gruposFinales = ["A", "B", "C", "D"].map((g) => ({
                   <th class="px-2 py-3 border border-white/10 text-center text-amber-300">PTS</th>
                   <th class="px-2 py-3 border border-white/10 text-center">PJ</th>
                   <th class="px-2 py-3 border border-white/10 text-center">PG</th>
+                  <th class="px-2 py-3 border border-white/10 text-center">PE</th>
                   <th class="px-2 py-3 border border-white/10 text-center">PP</th>
                   <th class="px-2 py-3 border border-white/10 text-center">DG</th>
                 </tr>
@@ -136,6 +142,7 @@ const gruposFinales = ["A", "B", "C", "D"].map((g) => ({
                     <td class="px-2 py-2 border border-white/10 text-center font-bold text-amber-300">{team.PUNTOS}</td>
                     <td class="px-2 py-2 border border-white/10 text-center">{team.PJ}</td>
                     <td class="px-2 py-2 border border-white/10 text-center text-green-400">{team.PG}</td>
+                    <td class="px-2 py-2 border border-white/10 text-center text-yellow-400">{team.PE}</td>
                     <td class="px-2 py-2 border border-white/10 text-center text-red-400">{team.PP}</td>
                     <td class="px-2 py-2 border border-white/10 text-center text-white/60">{team.DG}</td>
                   </tr>

@@ -1,9 +1,18 @@
 import type { APIRoute } from "astro";
 import cacheService from "@/services/cache";
+import { getSession } from "auth-astro/server";
 
 const key = "tournament:rocket-league:partidos";
 
 export const PUT: APIRoute = async ({ params, request }) => {
+  const session = await getSession(request);
+  const isAdmin =
+    (session?.user as any)?.admin === true ||
+    (session?.user as any)?.isAdmin === true;
+  if (!isAdmin) {
+    return new Response(JSON.stringify({ error: "No autorizado" }), { status: 401 });
+  }
+
   try {
     const id = params.id;
     const body = await request.json();
@@ -30,7 +39,15 @@ export const PUT: APIRoute = async ({ params, request }) => {
   }
 };
 
-export const DELETE: APIRoute = async ({ params }) => {
+export const DELETE: APIRoute = async ({ params, request }) => {
+  const session = await getSession(request);
+  const isAdmin =
+    (session?.user as any)?.admin === true ||
+    (session?.user as any)?.isAdmin === true;
+  if (!isAdmin) {
+    return new Response(JSON.stringify({ error: "No autorizado" }), { status: 401 });
+  }
+
   try {
     const id = params.id;
 

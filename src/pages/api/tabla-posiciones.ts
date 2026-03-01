@@ -25,8 +25,11 @@ export const GET: APIRoute = async () => {
 
 export const POST: APIRoute = async (context: APIContext) => {
     const session = await getSession(context.request);
-    if (!session || !session.user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    const isAdmin =
+        (session?.user as any)?.admin === true ||
+        (session?.user as any)?.isAdmin === true;
+    if (!isAdmin) {
+        return new Response(JSON.stringify({ error: "No autorizado" }), { status: 401 });
     }
 
     try {
