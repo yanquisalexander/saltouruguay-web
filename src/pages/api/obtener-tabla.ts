@@ -12,7 +12,8 @@ export const GET: APIRoute = async () => {
   const tabla: any = {};
 
   Object.keys(equipos).forEach((g) => {
-    tabla[g] = generarTabla(equipos[g], partidos[g] || []);
+    const grp = g as keyof typeof equipos;
+    tabla[grp] = generarTabla(equipos[grp], (partidos[grp] as any[]) || []);
   });
 
   return new Response(JSON.stringify(tabla));
