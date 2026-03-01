@@ -4,239 +4,245 @@ import tabla from "@/data/tabla-posiciones.json";
 import { getSession } from "auth-astro/server";
 import redis from "@/lib/redis";
 
-const calcular = (teams: any[]) =>
-  (teams || [])
-    .map((t) => {
-      const PG = t.PG || 0;
-      const PP = t.PP || 0;
-      const GF = t.GF || 0;
-      const GC = t.GC || 0;
-
-      return {
-        ...t,
-        PJ: PG + PP,
-        DG: GF - GC,
-      };
-    })
-    .sort(
-      (a, b) =>
-        (b.PUNTOS || 0) - (a.PUNTOS || 0) ||
-        (b.DG || 0) - (a.DG || 0) ||
-        (b.GF || 0) - (a.GF || 0),
-    );
-
 const session = await getSession(Astro.request);
 const isAdmin =
   (session?.user as any)?.admin === true ||
   (session?.user as any)?.isAdmin === true;
 
-let tablaData: any = tabla;
-const redisKeyTabla = "tournament:rocket-league:tabla-posiciones";
+// Función para calcular PJ y DG dinámicamente
+const calcular = (teams: any[]) =>
+  (teams || [])
+    .map((t) => ({
+      ...t,
+      PJ: (t.PG || 0) + (t.PP || 0),
+      DG: (t.GF || 0) - (t.GC || 0),
+    }))
+    .sort(
+      (a, b) =>
+        (b.PUNTOS || 0) - (a.PUNTOS || 0) ||
+        (b.DG || 0) - (a.DG || 0) ||
+        (b.GF || 0) - (a.GF || 0)
+    );
 
+const redisKeyTabla = "tournament:rocket-league:tabla-posiciones";
+let tablaData: any = JSON.parse(JSON.stringify(tabla)); // Clon profundo para evitar mutar el original
 let partidos: any = { A: [], B: [], C: [], D: [] };
 
 try {
+  // 1. Intentar cargar base de tabla desde Redis si existe
   const storedTabla = await redis.get(redisKeyTabla);
   if (storedTabla) tablaData = JSON.parse(storedTabla);
 
+  // 2. Cargar partidos desde la API
   try {
     const res = await fetch(new URL("/api/partidos", Astro.url));
-    partidos = await res.json();
+    if (res.ok) partidos = await res.json();
   } catch (err) {
-    console.error("Error cargando partidos", err);
+    console.error("Error cargando partidos desde API", err);
   }
 } catch (err) {
-  console.error("Redis error", err);
+  console.error("Error conectando con Redis", err);
 }
 
-const resetStats = (teams) =>
-  teams.map(t => ({ ...t, PG:0, PP:0, GF:0, GC:0, PUNTOS:0 }));
+// 3. Resetear estadísticas temporales para recalcular con los partidos actuales
+const resetStats = (teams: any[]) =>
+  teams.map((t) => ({ ...t, PG: 0, PP: 0, GF: 0, GC: 0, PUNTOS: 0 }));
 
-for (const grupo of ["A","B","C","D"]) {
+// 4. Procesar resultados de los partidos en la tabla
+for (const grupo of ["A", "B", "C", "D"]) {
   tablaData[grupo] = resetStats(tablaData[grupo] || []);
 
   for (const p of partidos[grupo] || []) {
-    const local = tablaData[grupo].find(t => t.equipo === p.local);
-    const visitante = tablaData[grupo].find(t => t.equipo === p.visitante);
+    const local = tablaData[grupo].find((t: any) => t.equipo === p.local);
+    const visitante = tablaData[grupo].find((t: any) => t.equipo === p.visitante);
 
     if (!local || !visitante) continue;
 
     local.GF += p.golesLocal;
     local.GC += p.golesVisitante;
-
     visitante.GF += p.golesVisitante;
     visitante.GC += p.golesLocal;
 
     if (p.golesLocal > p.golesVisitante) {
-      local.PG++; local.PUNTOS += 3;
+      local.PG++;
+      local.PUNTOS += 3;
       visitante.PP++;
     } else if (p.golesLocal < p.golesVisitante) {
-      visitante.PG++; visitante.PUNTOS += 3;
+      visitante.PG++;
+      visitante.PUNTOS += 3;
       local.PP++;
     }
   }
 }
 
-const grupos = ["A", "B", "C", "D"].map((g) => ({
+const gruposFinales = ["A", "B", "C", "D"].map((g) => ({
   grupo: g,
   equipos: calcular(tablaData[g]),
 }));
 ---
 
 <Layout hideHeader title="Tabla de Posiciones" mainClassname="px-6 sm:px-10 pt-24 pb-32">
-<section class="max-w-7xl mx-auto">
-
-  <div class="text-center mb-12">
-    <p class="uppercase tracking-[0.1em] text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg">
-      TORNEO ROCKET LEAGUE
-    </p>
-
-    <h1 class="font-anton text-4xl md:text-5xl mt-2 bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
-      Tabla de Posiciones
-    </h1>
-  </div>
-
-  {isAdmin && (
-    <div class="text-center mb-8">
-      <button
-        id="resetBtn"
-        class="bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-2 rounded-lg shadow"
-      >
-        🔄 Resetear torneo
-      </button>
+  <section class="max-w-7xl mx-auto">
+    <div class="text-center mb-12">
+      <p class="uppercase tracking-[0.1em] text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg">
+        TORNEO ROCKET LEAGUE
+      </p>
+      <h1 class="font-anton text-4xl md:text-5xl mt-2 bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
+        Tabla de Posiciones
+      </h1>
     </div>
-  )}
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-  {
-    grupos.map(({ grupo, equipos }) => (
-      <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-lg">
-        <h2 class="text-center font-bold text-2xl md:text-3xl text-amber-300 mb-6">
-          GRUPO {grupo}
-        </h2>
+    {isAdmin && (
+      <div class="text-center mb-8">
+        <button
+          id="resetBtn"
+          class="bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-2 rounded-lg shadow-lg transition-all active:scale-95"
+        >
+          🔄 Resetear Torneo Completo
+        </button>
+      </div>
+    )}
 
-        <div class="overflow-x-auto">
-          <table class="w-full border-collapse text-sm">
-            <thead>
-              <tr class="bg-white/10 text-white">
-                <th class="text-center px-3 py-2 border border-white/10">POS</th>
-                <th class="text-left px-3 py-2 border border-white/10">Equipo</th>
-                <th class="text-center px-3 py-2 border border-white/10">PJ</th>
-                <th class="text-center px-3 py-2 border border-white/10">PG</th>
-                <th class="text-center px-3 py-2 border border-white/10">PP</th>
-                <th class="text-center px-3 py-2 border border-white/10">GF</th>
-                <th class="text-center px-3 py-2 border border-white/10">GC</th>
-                <th class="text-center px-3 py-2 border border-white/10">DG</th>
-                <th class="text-center px-3 py-2 border border-white/10 font-bold">PTS</th>
-              </tr>
-            </thead>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {gruposFinales.map(({ grupo, equipos }) => (
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-sm">
+          <h2 class="text-center font-bold text-3xl text-amber-300 mb-6 font-anton tracking-wider">
+            GRUPO {grupo}
+          </h2>
 
-            <tbody>
-              {equipos.map((team, i) => (
-                <tr class={i < 2 ? "bg-green-500/20" : "bg-red-500/20"}>
-                  <td class="px-3 py-2 border border-white/10 text-center font-bold">
-                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i + 1}
-                  </td>
-                  <td class="px-3 py-2 border border-white/10 text-left">{team.equipo}</td>
-                  <td class="px-3 py-2 border border-white/10 text-center">{team.PJ}</td>
-                  <td class="px-3 py-2 border border-white/10 text-center">{team.PG}</td>
-                  <td class="px-3 py-2 border border-white/10 text-center">{team.PP}</td>
-                  <td class="px-3 py-2 border border-white/10 text-center">{team.GF}</td>
-                  <td class="px-3 py-2 border border-white/10 text-center">{team.GC}</td>
-                  <td class="px-3 py-2 border border-white/10 text-center">{team.DG}</td>
-                  <td class="px-3 py-2 border border-white/10 text-center">{team.PUNTOS}</td>
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-sm mb-6">
+              <thead>
+                <tr class="bg-white/10 text-white uppercase text-xs">
+                  <th class="px-2 py-3 border border-white/10">POS</th>
+                  <th class="text-left px-3 py-3 border border-white/10">Equipo</th>
+                  <th class="px-2 py-3 border border-white/10 text-center text-amber-300">PTS</th>
+                  <th class="px-2 py-3 border border-white/10 text-center">PJ</th>
+                  <th class="px-2 py-3 border border-white/10 text-center">PG</th>
+                  <th class="px-2 py-3 border border-white/10 text-center">PP</th>
+                  <th class="px-2 py-3 border border-white/10 text-center">DG</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-</div>
-
-{isAdmin && (
-  <div class="mt-4 p-4 border-t border-white/20">
-    <p class="text-amber-400 font-bold mb-3 flex items-center gap-2">
-      <span class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
-      Panel de Control (Admin)
-    </p>
-
-    <div class="space-y-2">
-      {(partidos[grupo] || []).map(p => (
-        <div class="flex items-center justify-between gap-3 bg-white/10 hover:bg-white/15 px-3 py-2 rounded-lg transition-colors">
-          <span class="text-white text-sm font-medium">
-            {p.local} <span class="text-amber-400">{p.golesLocal}</span> - <span class="text-amber-400">{p.golesVisitante}</span> {p.visitante}
-          </span>
-
-          <div class="flex gap-2">
-            <button
-              class="edit-btn bg-blue-500 hover:bg-blue-400 text-white px-3 py-1 rounded text-xs font-bold transition-transform active:scale-95"
-              data-id={p.id}
-            >
-              ✏️
-            </button>
-            <button
-              class="delete-btn bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-xs font-bold transition-transform active:scale-95"
-              data-id={p.id}
-            >
-              🗑️
-            </button>
+              </thead>
+              <tbody>
+                {equipos.map((team, i) => (
+                  <tr class={i < 2 ? "bg-green-500/10 hover:bg-green-500/20" : "bg-red-500/10 hover:bg-red-500/20"}>
+                    <td class="px-2 py-2 border border-white/10 text-center font-bold">
+                      {i === 0 ? "🥇" : i === 1 ? "🥈" : i + 1}
+                    </td>
+                    <td class="px-3 py-2 border border-white/10 text-left font-medium">{team.equipo}</td>
+                    <td class="px-2 py-2 border border-white/10 text-center font-bold text-amber-300">{team.PUNTOS}</td>
+                    <td class="px-2 py-2 border border-white/10 text-center">{team.PJ}</td>
+                    <td class="px-2 py-2 border border-white/10 text-center text-green-400">{team.PG}</td>
+                    <td class="px-2 py-2 border border-white/10 text-center text-red-400">{team.PP}</td>
+                    <td class="px-2 py-2 border border-white/10 text-center text-white/60">{team.DG}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+
+          {isAdmin && (
+            <div class="mt-4 border-t border-white/10 pt-4">
+              <p class="text-xs font-bold text-amber-400/80 uppercase tracking-widest mb-3">Partidos Registrados</p>
+              <div class="space-y-2">
+                {(partidos[grupo] || []).map((p: any) => (
+                  <div class="flex items-center justify-between bg-black/40 p-3 rounded-lg border border-white/5 group">
+                    <span class="text-white text-sm">
+                      <span class="font-bold">{p.local}</span> {p.golesLocal} - {p.golesVisitante} <span class="font-bold">{p.visitante}</span>
+                    </span>
+                    <div class="flex gap-2">
+                      <button
+                        class="edit-btn bg-amber-500 hover:bg-amber-400 text-black p-1.5 rounded transition-colors"
+                        data-id={p.id}
+                        title="Editar resultado"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        class="delete-btn bg-red-600 hover:bg-red-500 text-white p-1.5 rounded transition-colors"
+                        data-id={p.id}
+                        title="Eliminar partido"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {(!partidos[grupo] || partidos[grupo].length === 0) && (
+                  <p class="text-white/30 text-xs italic">No hay partidos cargados</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       ))}
-      
-      {(!partidos[grupo] || partidos[grupo].length === 0) && (
-        <p class="text-white/40 text-xs italic">No hay partidos registrados en este grupo.</p>
-      )}
     </div>
-  </div>
-)}
-        </div>
-
-      </div>
-    ))
-  }
-  </div>
-
-</section>
+  </section>
+</Layout>
 
 {isAdmin && (
 <script>
-document.querySelectorAll(".delete-btn").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const id = btn.dataset.id;
-    if (!confirm("Eliminar partido?")) return;
+  // Manejo de Borrado Individual
+  document.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = (btn as HTMLElement).dataset.id;
+      if (!confirm("¿Eliminar este partido? Esto afectará la tabla inmediatamente.")) return;
 
-    await fetch("/api/partidos", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id })
+      try {
+        const res = await fetch("/api/partidos", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id })
+        });
+        if (res.ok) location.reload();
+        else alert("Error al borrar");
+      } catch (e) {
+        console.error(e);
+      }
     });
-
-    location.reload();
   });
-});
 
-document.querySelectorAll(".edit-btn").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const id = btn.dataset.id;
+  // Manejo de Edición Individual
+  document.querySelectorAll(".edit-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = (btn as HTMLElement).dataset.id;
+      const golesLocal = prompt("Nuevo score LOCAL:");
+      const golesVisitante = prompt("Nuevo score VISITANTE:");
 
-    const golesLocal = prompt("Nuevo score local");
-    const golesVisitante = prompt("Nuevo score visitante");
+      if (golesLocal === null || golesVisitante === null) return;
 
-    if (golesLocal === null || golesVisitante === null) return;
-
-    await fetch("/api/partidos", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id,
-        golesLocal: Number(golesLocal),
-        golesVisitante: Number(golesVisitante)
-      })
+      try {
+        const res = await fetch("/api/partidos", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id,
+            golesLocal: Number(golesLocal),
+            golesVisitante: Number(golesVisitante)
+          })
+        });
+        if (res.ok) location.reload();
+        else alert("Error al actualizar");
+      } catch (e) {
+        console.error(e);
+      }
     });
-
-    location.reload();
   });
-});
+
+  // Manejo de Reset Total
+  const resetBtn = document.querySelector("#resetBtn");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", async () => {
+      if (!confirm("⚠️ ¿ESTÁS SEGURO? Se borrarán TODOS los partidos de todos los grupos.")) return;
+
+      try {
+        const res = await fetch("/api/reset-torneo", { method: "POST" });
+        if (res.ok) location.reload();
+        else alert("Error al resetear");
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  }
 </script>
 )}
-
-</Layout>
