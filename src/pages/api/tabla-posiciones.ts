@@ -1,12 +1,14 @@
 import type { APIRoute, APIContext } from "astro";
-import redis from "@/lib/redis";
+import cacheService from "@/services/cache";
 import { getSession } from "auth-astro/server";
 
-const REDIS_KEY = "tournament:rocket-league:tabla-posiciones";
+const CACHE_KEY = "tournament:rocket-league:tabla-posiciones";
+// single cache client
+const cache = cacheService.create();
 
 export const GET: APIRoute = async () => {
     try {
-        const raw = await redis.get(REDIS_KEY);
+        const raw = await cache.get<string>(CACHE_KEY);
         if (raw) {
             return new Response(raw, {
                 headers: { "Content-Type": "application/json" },
@@ -30,7 +32,7 @@ export const POST: APIRoute = async (context: APIContext) => {
     try {
         const payload = await context.request.json();
         // optionally validate payload shape here
-        await redis.set(REDIS_KEY, JSON.stringify(payload));
+        await cache.set(CACHE_KEY, payload);
         return new Response(JSON.stringify({ success: true }), {
             headers: { "Content-Type": "application/json" },
         });

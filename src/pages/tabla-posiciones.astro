@@ -2,7 +2,6 @@
 import Layout from "@/layouts/Layout.astro";
 import tabla from "@/data/tabla-posiciones.json";
 import { getSession } from "auth-astro/server";
-import redis from "@/lib/redis";
 
 const session = await getSession(Astro.request);
 const isAdmin =
@@ -24,14 +23,13 @@ const calcular = (teams: any[]) =>
         (b.GF || 0) - (a.GF || 0)
     );
 
-const redisKeyTabla = "tournament:rocket-league:tabla-posiciones";
 let tablaData: any = JSON.parse(JSON.stringify(tabla)); // Clon profundo para evitar mutar el original
 let partidos: any = { A: [], B: [], C: [], D: [] };
 
 try {
-  // 1. Intentar cargar base de tabla desde Redis si existe
-  const storedTabla = await redis.get(redisKeyTabla);
-  if (storedTabla) tablaData = JSON.parse(storedTabla);
+  // 1. Intentar cargar base de tabla desde el endpoint (usa cache internamente)
+  const tablaResp = await fetch(new URL("/api/tabla-posiciones", Astro.url));
+  if (tablaResp.ok) tablaData = await tablaResp.json();
 
   // 2. Cargar partidos desde la API
   try {
@@ -41,7 +39,7 @@ try {
     console.error("Error cargando partidos desde API", err);
   }
 } catch (err) {
-  console.error("Error conectando con Redis", err);
+  console.error("Error cargando tabla de posiciones desde API", err);
 }
 
 // 3. Resetear estadísticas temporales para recalcular con los partidos actuales
