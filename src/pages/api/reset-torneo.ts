@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import redis from "@/lib/redis";
+import cacheService from "@/services/cache";
 
 export const POST: APIRoute = async () => {
   try {

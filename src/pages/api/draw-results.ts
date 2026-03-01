@@ -1,12 +1,13 @@
 import type { APIRoute, APIContext } from "astro";
-import redis from "@/lib/redis";
+import cacheService from "@/services/cache";
 import { getSession } from "auth-astro/server";
 
-const REDIS_KEY = "draw-results";
+const CACHE_KEY = "draw-results";
+const cache = cacheService.create();
 
 export const GET: APIRoute = async () => {
     try {
-        const raw = await redis.get(REDIS_KEY);
+        const raw = await cache.get<string>(CACHE_KEY);
         if (raw) {
             return new Response(raw, {
                 headers: { "Content-Type": "application/json" },
@@ -28,7 +29,7 @@ export const POST: APIRoute = async (context: APIContext) => {
 
     try {
         const payload = await context.request.json();
-        await redis.set(REDIS_KEY, JSON.stringify(payload));
+        await cache.set(CACHE_KEY, payload);
         return new Response(JSON.stringify({ success: true }), {
             headers: { "Content-Type": "application/json" },
         });

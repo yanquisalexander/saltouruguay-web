@@ -1,12 +1,13 @@
 import type { APIRoute } from "astro";
-import redis from "@/lib/redis";
+import cacheService from "@/services/cache";
 import equipos from "@/data/equipos.json";
 import { generarTabla } from "@/lib/generarTabla";
 
 const KEY = "tournament:rocket:partidos";
+const cache = cacheService.create();
 
 export const GET: APIRoute = async () => {
-  const partidos = JSON.parse((await redis.get(KEY)) || "{}");
+  const partidos = (await cache.get<Record<string, any>>(KEY)) || {};
 
   const tabla: any = {};
 
