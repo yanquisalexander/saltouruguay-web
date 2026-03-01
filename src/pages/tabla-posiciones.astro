@@ -152,34 +152,40 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
 </div>
 
 {isAdmin && (
-  <div class="mt-4 text-xs text-white/70 space-y-1">
-    <p class="font-bold mb-1">Partidos cargados</p>
+  <div class="mt-4 p-4 border-t border-white/20">
+    <p class="text-amber-400 font-bold mb-3 flex items-center gap-2">
+      <span class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
+      Panel de Control (Admin)
+    </p>
 
-    {(partidos[grupo] || []).map(p => (
-      <div class="flex items-center justify-between gap-3 bg-black/30 px-3 py-2 rounded">
-        
-        <span class="text-white text-sm">
-          {p.local} {p.golesLocal} - {p.golesVisitante} {p.visitante}
-        </span>
+    <div class="space-y-2">
+      {(partidos[grupo] || []).map(p => (
+        <div class="flex items-center justify-between gap-3 bg-white/10 hover:bg-white/15 px-3 py-2 rounded-lg transition-colors">
+          <span class="text-white text-sm font-medium">
+            {p.local} <span class="text-amber-400">{p.golesLocal}</span> - <span class="text-amber-400">{p.golesVisitante}</span> {p.visitante}
+          </span>
 
-        <div class="flex gap-2">
-          <button
-            class="edit-btn bg-amber-500 hover:bg-amber-400 text-black px-2 py-1 rounded text-xs font-bold"
-            data-id={p.id}
-          >
-            ✏️ Editar
-          </button>
-
-          <button
-            class="delete-btn bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-xs font-bold"
-            data-id={p.id}
-          >
-            🗑️ Borrar
-          </button>
+          <div class="flex gap-2">
+            <button
+              class="edit-btn bg-blue-500 hover:bg-blue-400 text-white px-3 py-1 rounded text-xs font-bold transition-transform active:scale-95"
+              data-id={p.id}
+            >
+              ✏️
+            </button>
+            <button
+              class="delete-btn bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-xs font-bold transition-transform active:scale-95"
+              data-id={p.id}
+            >
+              🗑️
+            </button>
+          </div>
         </div>
-
-      </div>
-    ))}
+      ))}
+      
+      {(!partidos[grupo] || partidos[grupo].length === 0) && (
+        <p class="text-white/40 text-xs italic">No hay partidos registrados en este grupo.</p>
+      )}
+    </div>
   </div>
 )}
         </div>
