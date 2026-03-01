@@ -26,7 +26,9 @@ const calcular = (teams: any[]) =>
     );
 
 const session = await getSession(Astro.request);
-const isAdmin = true;
+const isAdmin =
+  (session?.user as any)?.admin === true ||
+  (session?.user as any)?.isAdmin === true;
 
 let tablaData: any = tabla;
 const redisKeyTabla = "tournament:rocket-league:tabla-posiciones";
@@ -147,6 +149,35 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
               ))}
             </tbody>
           </table>
+       {isAdmin && (
+  <div class="mt-4 text-xs text-white/70 space-y-1">
+    <p class="font-bold mb-1">Partidos cargados</p>
+
+    {(partidos[grupo] || []).map(p => (
+      <div class="flex items-center justify-between gap-3 bg-black/30 px-3 py-2 rounded">
+        <span class="text-white text-sm">
+          {p.local} {p.golesLocal} - {p.golesVisitante} {p.visitante}
+        </span>
+
+        <div class="flex gap-2 shrink-0">
+          <button
+            class="edit-btn bg-amber-500 hover:bg-amber-400 text-black px-2 py-1 rounded text-xs font-bold"
+            data-id={p.id}
+          >
+            ✏️ Editar
+          </button>
+
+          <button
+            class="delete-btn bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-xs font-bold"
+            data-id={p.id}
+          >
+            🗑️ Borrar
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
         </div>
 
       </div>
@@ -158,18 +189,42 @@ const grupos = ["A", "B", "C", "D"].map((g) => ({
 
 {isAdmin && (
 <script>
-document.getElementById("resetBtn")?.addEventListener("click", async () => {
-  if (!confirm("⚠️ Esto borrará TODOS los datos del torneo. ¿Continuar?")) return;
+document.querySelectorAll(".delete-btn").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const id = btn.dataset.id;
+    if (!confirm("Eliminar partido?")) return;
 
-  const res = await fetch("/api/reset-torneo", { method: "POST" });
-  const data = await res.json();
+    await fetch("/api/partidos", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    });
 
-  if (data.ok) {
-    alert("Torneo reseteado correctamente");
     location.reload();
-  } else {
-    alert("Error reseteando torneo");
-  }
+  });
+});
+
+document.querySelectorAll(".edit-btn").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const id = btn.dataset.id;
+
+    const golesLocal = prompt("Nuevo score local");
+    const golesVisitante = prompt("Nuevo score visitante");
+
+    if (golesLocal === null || golesVisitante === null) return;
+
+    await fetch("/api/partidos", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id,
+        golesLocal: Number(golesLocal),
+        golesVisitante: Number(golesVisitante)
+      })
+    });
+
+    location.reload();
+  });
 });
 </script>
 )}
