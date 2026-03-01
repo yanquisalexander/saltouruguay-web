@@ -26,9 +26,7 @@ const calcular = (teams: any[]) =>
     );
 
 const session = await getSession(Astro.request);
-const isAdmin =
-  (session?.user as any)?.admin === true ||
-  (session?.user as any)?.isAdmin === true;
+const isAdmin = true;
 
 let tablaData: any = tabla;
 const redisKeyTabla = "tournament:rocket-league:tabla-posiciones";
