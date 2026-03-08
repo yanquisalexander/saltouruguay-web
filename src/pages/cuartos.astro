@@ -1,4 +1,5 @@
 ---
+
 import Layout from "@/layouts/Layout.astro";
 import data from "@/data/cuartos.json";
 import { getSession } from "auth-astro/server";
@@ -22,15 +23,13 @@ const semi1B = ganador(partidos?.[1]);
 
 const semi2A = ganador(partidos?.[2]);
 const semi2B = ganador(partidos?.[3]);
----
+--------------------------------------
 
 <Layout title="Bracket Torneo">
 
 <h1 style="text-align:center;margin-bottom:30px;">🏆 BRACKET TORNEO</h1>
 
 <div class="bracket">
-
-<!-- CUARTOS -->
 
 <div class="round">
 <h2>Cuartos</h2>
@@ -48,7 +47,14 @@ const semi2B = ganador(partidos?.[3]);
 </div>
 
 {isAdmin && (
-<button onclick={"editar(" + p.id + "," + p.g1 + "," + p.g2 + ")"}>
+<button
+class="edit-btn"
+data-id={p.id}
+data-g1={p.g1}
+data-g2={p.g2}
+
+>
+
 ✏️ Editar </button>
 )}
 
@@ -56,8 +62,6 @@ const semi2B = ganador(partidos?.[3]);
 ))}
 
 </div>
-
-<!-- SEMIFINALES -->
 
 <div class="round">
 <h2>Semifinales</h2>
@@ -75,35 +79,6 @@ const semi2B = ganador(partidos?.[3]);
 </div>
 
 </div>
-
-<script>
-
-function soloNumero(valor){
-return !isNaN(valor) && valor !== "" && valor >= 0
-}
-
-async function editar(id,g1,g2){
-
-let nuevo1 = prompt("Goles equipo 1:", g1)
-if(!soloNumero(nuevo1)) return alert("Solo números")
-
-let nuevo2 = prompt("Goles equipo 2:", g2)
-if(!soloNumero(nuevo2)) return alert("Solo números")
-
-await fetch("/api/cuartos",{
-method:"POST",
-headers:{ "Content-Type":"application/json"},
-body:JSON.stringify({
-id,
-g1:Number(nuevo1),
-g2:Number(nuevo2)
-})
-})
-
-location.reload()
-}
-
-</script>
 
 <style>
 
@@ -157,3 +132,53 @@ text-align:center;
 }
 
 </style>
+
+{isAdmin && (
+
+<script>
+
+document.querySelectorAll(".edit-btn").forEach(btn => {
+
+btn.addEventListener("click", async () => {
+
+const id = btn.dataset.id;
+const g1 = btn.dataset.g1;
+const g2 = btn.dataset.g2;
+
+const nuevo1 = prompt("Nuevo score equipo 1:", g1);
+const nuevo2 = prompt("Nuevo score equipo 2:", g2);
+
+if (nuevo1 === null || nuevo2 === null) return;
+
+if (isNaN(nuevo1) || isNaN(nuevo2)) {
+alert("Solo números");
+return;
+}
+
+try {
+
+const res = await fetch("/api/cuartos",{
+method:"POST",
+headers:{ "Content-Type":"application/json"},
+body:JSON.stringify({
+id:Number(id),
+g1:Number(nuevo1),
+g2:Number(nuevo2)
+})
+})
+
+if(res.ok) location.reload()
+else alert("Error al actualizar")
+
+}catch(e){
+console.error(e)
+alert("Error de red")
+}
+
+})
+
+})
+
+</script>
+
+)}
