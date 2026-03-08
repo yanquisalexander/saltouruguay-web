@@ -1,0 +1,6 @@
+[
+  { "id": 1, "equipo1": "Team FZBR", "equipo2": "YENOM", "goles1": 0, "goles2": 0 },
+  { "id": 2, "equipo1": "Alpha", "equipo2": "Omega", "goles1": 0, "goles2": 0 },
+  { "id": 3, "equipo1": "Dragons", "equipo2": "Titans", "goles1": 0, "goles2": 0 },
+  { "id": 4, "equipo1": "Phoenix", "equipo2": "Storm", "goles1": 0, "goles2": 0 }
+]
