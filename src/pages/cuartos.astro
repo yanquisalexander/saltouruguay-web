@@ -29,7 +29,6 @@ CUARTOS DE FINAL
 </h1>
 </div>
 
-
 <div class="grid md:grid-cols-2 gap-8">
 
 {partidos.map((p) => {
@@ -56,7 +55,6 @@ PARTIDO {p.id}
 </div>
 
 </div>
-
 
 {win && (
 <p class="text-center text-green-400 font-bold mt-4">
@@ -90,7 +88,6 @@ data-g2={p.goles2}
 
 </Layout>
 
-
 {isAdmin && (
 <script>
 
@@ -100,22 +97,39 @@ btn.addEventListener("click", async () => {
 
 const id = btn.dataset.id;
 
-const g1 = prompt("Nuevo score equipo 1", btn.dataset.g1);
-const g2 = prompt("Nuevo score equipo 2", btn.dataset.g2);
+const g1 = Number(prompt("Nuevo score equipo 1", btn.dataset.g1));
+const g2 = Number(prompt("Nuevo score equipo 2", btn.dataset.g2));
 
-if(g1 === null || g2 === null) return;
+if (isNaN(g1) || isNaN(g2)) {
+alert("Debes ingresar números válidos");
+return;
+}
+
+if (g1 < 0 || g2 < 0) {
+alert("Los goles no pueden ser negativos");
+return;
+}
+
+try {
 
 await fetch("/api/cuartos", {
 method:"PUT",
 headers:{ "Content-Type":"application/json" },
 body: JSON.stringify({
 id,
-goles1:Number(g1),
-goles2:Number(g2)
+goles1:g1,
+goles2:g2
 })
 });
 
 location.reload();
+
+} catch (err) {
+
+alert("Error al guardar el resultado");
+console.error(err);
+
+}
 
 });
 
