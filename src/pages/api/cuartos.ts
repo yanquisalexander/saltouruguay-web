@@ -4,34 +4,43 @@ import fs from "fs/promises";
 const file = "./src/data/cuartos.json";
 
 async function readData() {
-  const data = await fs.readFile(file, "utf-8");
-  return JSON.parse(data);
+const data = await fs.readFile(file, "utf-8");
+return JSON.parse(data);
 }
 
 async function writeData(data:any) {
-  await fs.writeFile(file, JSON.stringify(data, null, 2));
+await fs.writeFile(file, JSON.stringify(data, null, 2));
 }
 
-// Obtener partidos
+// Obtener bracket
 export const GET: APIRoute = async () => {
-  const partidos = await readData();
-  return new Response(JSON.stringify(partidos));
+
+const data = await readData();
+
+return new Response(JSON.stringify(data), {
+headers: { "Content-Type": "application/json" }
+});
+
 };
 
 // Editar resultado
-export const PUT: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request }) => {
 
-  const { id, goles1, goles2 } = await request.json();
+const { id, g1, g2 } = await request.json();
 
-  let partidos = await readData();
+const data = await readData();
 
-  partidos = partidos.map((p:any) =>
-    p.id == id
-      ? { ...p, goles1, goles2 }
-      : p
-  );
+const partido = data.cuartos.find((p:any) => p.id === id);
 
-  await writeData(partidos);
+if (partido) {
+partido.g1 = g1;
+partido.g2 = g2;
+}
 
-  return new Response(JSON.stringify({ ok: true }));
+await writeData(data);
+
+return new Response(JSON.stringify({ ok: true }), {
+headers: { "Content-Type": "application/json" }
+});
+
 };
