@@ -90,7 +90,7 @@ if(!soloNumero(nuevo1)) return alert("Solo números")
 let nuevo2 = prompt("Goles equipo 2:", g2)
 if(!soloNumero(nuevo2)) return alert("Solo números")
 
-await fetch("/api/editarResultado",{
+await fetch("/api/cuartos",{
 method:"POST",
 headers:{ "Content-Type":"application/json"},
 body:JSON.stringify({
