@@ -326,8 +326,13 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
             {/* --- HERO CONTAINER --- */}
             <div className="relative w-full max-w-7xl mx-auto">
 
+                {/* --- PARTICLE CANVAS (Background) --- */}
+                <div className="absolute -top-20 -left-20 -right-20 -bottom-20 z-0 pointer-events-none">
+                    <ParticleSystem isActive={true} />
+                </div>
+
                 {/* --- MAIN HERO SLIDER --- */}
-                <div className="relative w-full aspect-[4/5] sm:aspect-[16/9] lg:aspect-[21/9] rounded-3xl overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-[0_0_80px_rgba(145,70,255,0.15)] group">
+                <div className="relative w-full aspect-[4/5] sm:aspect-[16/9] lg:aspect-[21/9] rounded-3xl overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-[0_0_80px_rgba(145,70,255,0.15)] group z-10">
 
                     {/* SLIDES */}
                     <div className="absolute inset-0 w-full h-full">
