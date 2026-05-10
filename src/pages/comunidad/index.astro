@@ -3,6 +3,7 @@ import Layout from "@/layouts/Layout.astro";
 import cacheService from "@/services/cache";
 
 import { getTotalOfMemberCards } from "@/utils/user";
+import { LucideSwords, LucideShield, LucideFlame } from "lucide-react";
 import { getSession } from "auth-astro/server";
 import {
   LucideLock,
@@ -21,15 +22,26 @@ const session = await getSession(Astro.request);
 
 const APPS = [
   {
+    id: "Guerra de Streamers 2",
+    path: "/comunidad/guerra",
+    requiresLogin: true,
+    title: "Guerra de Streamers 2",
+    description: "Se viene la segunda edicion del evento mas grande de la comunidad",
+    image: "/images/guerra.webp",
+    icon: LucideSwords,
+    soon: false,
+    featured: true, // Ocupará 2 columnas
+    section: "main",
+  },
+  {
     id: "Torneo Rocket League",
     path: "/torneos/2",
     requiresLogin: true,
     title: "Torneo Rocket League",
-    description: "Inscribete y compite en una Liga extraordinaria",
+    description: "Se jugó un Torneo Extraordinario con 16 Equipos",
     image: "/images/rocket.webp",
     icon: LucideIdCard,
     soon: false,
-    featured: true, // Ocupará 2 columnas
     section: "main",
   },
   {
@@ -38,7 +50,7 @@ const APPS = [
     url: "https://discord.gg/trrFvPHDKd", // 👈 LINK EXTERNO
     requiresLogin: true,
     title: "Nuevo server HYTALE",
-    description: "Un nuevo juego se suma a la comundad Saltana.",
+    description: "Un nuevo juego se sumó a la comundad Saltana.",
     image: "/images/hytale.webp",
     icon: LucideWallet,
     soon: false,
