@@ -71,11 +71,11 @@ const HERO_CAPTION = "La batalla más épica de la comunidad Saltana está por c
         "
       >
         {/* Imagen */}
-        <div class="relative aspect-video w-full overflow-hidden">
+        <div class="relative w-full overflow-hidden" style="height: 520px;">
           <img
             src={HERO_IMAGE}
             alt="Guerra de Streamers 2"
-            class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"
+            class="h-full w-full object-contain transition-transform duration-700 group-hover:scale-105 opacity-90"
           />
           {/* Degradado inferior sobre la imagen */}
           <div class="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-transparent to-transparent" />
