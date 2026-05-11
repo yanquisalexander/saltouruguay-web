@@ -39,9 +39,17 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
     const [progress, setProgress] = useState(0);
     const [fadingOut, setFadingOut] = useState(false);
     const [visible, setVisible] = useState(true);
+
+    // Nuevo estado para controlar la animación de entrada (escala)
+    const [isZoomedOut, setIsZoomedOut] = useState(false);
     const alertedRef = useRef(false);
 
     useEffect(() => {
+        // Disparamos la transición de escala un instante después de montar
+        const scaleTimer = setTimeout(() => {
+            setIsZoomedOut(true);
+        }, 50);
+
         const interval = setInterval(() => {
             setProgress((prev) => {
                 if (prev >= 100) {
@@ -51,15 +59,11 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
                 // Trigger alerta al 50%
                 if (prev > 50 && !alertedRef.current) {
                     alertedRef.current = true;
-                    toast.success("Para una mejor experiencia, usa pantalla completa (F11) y activa el sonido 🔊", {
-                        position: 'top-right',
-                        richColors: true,
-                    });
-                    playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION, volume: 0.3 });
+                    // toast.success(...) y playSound(...) aquí
                 }
                 return prev + 1;
             });
-        }, 25); // Ligeramente más rápido para UX
+        }, 25);
 
         const endTimer = setTimeout(() => {
             document.dispatchEvent(new CustomEvent('splash-screen-ended'));
@@ -73,21 +77,45 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
         return () => {
             clearInterval(interval);
             clearTimeout(endTimer);
+            clearTimeout(scaleTimer);
         };
     }, [onEnd]);
 
     if (!visible) return null;
 
     return (
-        <div className={`fixed inset-0 bg-black flex flex-col justify-center items-center z-[8000] transition-opacity duration-500 ${fadingOut ? 'opacity-0' : 'opacity-100'}`}>
-            <h3 class="with-glyph flex relative w-max text-3xl transform px-2 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen !skew-x-[-20deg] -rotate-6">
-                <span class="flex !skew-x-[20deg] transform">Guerra de Streamers</span>
-            </h3>
-            <div className="w-56 mt-8 h-2 bg-gray-700 rounded-full overflow-hidden">
-                <div className="h-full bg-[#b4cd02] rounded-xl transition-all duration-75 ease-out" style={{ width: `${progress}%` }}></div>
+        // Contenedor principal: maneja el fondo negro y el fade-out final
+        <div
+            className={`fixed inset-0 bg-black z-[8000] transition-opacity duration-500 overflow-hidden ${fadingOut ? 'opacity-0' : 'opacity-100'
+                }`}
+        >
+            {/* 
+                Contenedor animado: Maneja la escala.
+                Usamos una curva cubic-bezier (0.16, 1, 0.3, 1) que da ese efecto 
+                de entrar muy rápido y frenar súper suave (estilo Bowser/Smash Bros).
+            */}
+            <div
+                className={`w-full h-full flex flex-col justify-center items-center transform transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${isZoomedOut ? 'scale-100' : 'scale-[2]'
+                    }`}
+            >
+                <h3 className="with-glyph flex relative w-max text-3xl transform px-2 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen !skew-x-[-20deg] -rotate-6">
+                    <span className="flex !skew-x-[20deg] transform">Guerra de Streamers</span>
+                </h3>
+
+                <div className="w-56 mt-8 h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-[#b4cd02] rounded-xl transition-all duration-75 ease-out"
+                        style={{ width: `${progress}%` }}
+                    ></div>
+                </div>
+
+                <span className="fixed bottom-32 text-5xl opacity-30 rotate-[32deg] select-none right-16 font-atomic-extras">
+                    &#x0055;
+                </span>
+                <span className="fixed bottom-48 text-5xl opacity-30 rotate-[-16deg] select-none left-16 font-atomic-extras">
+                    &#x0050;
+                </span>
             </div>
-            <span className="fixed bottom-32 text-5xl opacity-30 rotate-[32deg] select-none right-16 font-atomic-extras">&#x0055;</span>
-            <span className="fixed bottom-48 text-5xl opacity-30 rotate-[-16deg] select-none left-16 font-atomic-extras">&#x0050;</span>
         </div>
     );
 };

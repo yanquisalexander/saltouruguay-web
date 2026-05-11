@@ -113,7 +113,10 @@ export const playSoundWithReverb = async ({
                     const response = await fetch(sound);
                     bufferToDecode = await response.arrayBuffer();
                 } else {
-                    const response = await fetch(`${CDN_PREFIX}${sound}.mp3`);
+                    const response = await fetch(`${CDN_PREFIX}${sound}.mp3`, {
+                        credentials: 'omit', // Evita enviar cookies, por si acaso
+                        referrerPolicy: 'no-referrer', // Evita enviar el header Referer
+                    });
                     bufferToDecode = await response.arrayBuffer();
                 }
             } else {

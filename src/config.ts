@@ -27,7 +27,7 @@ export const SITEMAP_EXCLUDED_PATHS = [
     '/community/member-card',
 ]
 
-export const PUSHER_KEY = 'app-key';
+export const PUSHER_KEY = '15af022785152446b456';
 
 export const CHRISTMAS_MODE = false;
 export const LAST_EDITION_VOD_URL = 'https://www.twitch.tv/videos/2650701140';

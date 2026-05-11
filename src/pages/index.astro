@@ -53,6 +53,38 @@ const titleShadow = CHRISTMAS_MODE
       >
       </div>
 
+      {/* Fondo de partículas animadas */}
+      <div
+        class="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+        aria-hidden="true"
+      >
+        <div class="particle particle-1"></div>
+        <div class="particle particle-2"></div>
+        <div class="particle particle-3"></div>
+        <div class="particle particle-4"></div>
+        <div class="particle particle-5"></div>
+        <div class="particle particle-6"></div>
+        <div class="particle particle-7"></div>
+        <div class="particle particle-8"></div>
+        <div class="particle particle-9"></div>
+        <div class="particle particle-10"></div>
+        <div class="particle particle-11"></div>
+        <div class="particle particle-12"></div>
+        <div class="particle particle-13"></div>
+        <div class="particle particle-14"></div>
+        <div class="particle particle-15"></div>
+      </div>
+
+      {/* Formas geométricas flotantes */}
+      <div
+        class="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+        aria-hidden="true"
+      >
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+      </div>
+
       <div
         class="relative z-10 mx-auto flex max-w-6xl flex-col items-center gap-10 px-6 text-center"
       >
@@ -269,6 +301,197 @@ const titleShadow = CHRISTMAS_MODE
     }
     100% {
       transform: translateY(0);
+    }
+  }
+
+  /* ✨ PARTÍCULAS ANIMADAS DEL HERO */
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgba(145, 70, 255, 0.8) 0%,
+      rgba(145, 70, 255, 0) 70%
+    );
+    animation: floatParticle linear infinite;
+    opacity: 0;
+  }
+
+  .particle-1 {
+    width: 4px;
+    height: 4px;
+    left: 10%;
+    animation-duration: 20s;
+    animation-delay: 0s;
+  }
+  .particle-2 {
+    width: 6px;
+    height: 6px;
+    left: 20%;
+    animation-duration: 25s;
+    animation-delay: 2s;
+  }
+  .particle-3 {
+    width: 3px;
+    height: 3px;
+    left: 35%;
+    animation-duration: 18s;
+    animation-delay: 4s;
+  }
+  .particle-4 {
+    width: 5px;
+    height: 5px;
+    left: 50%;
+    animation-duration: 22s;
+    animation-delay: 1s;
+  }
+  .particle-5 {
+    width: 4px;
+    height: 4px;
+    left: 65%;
+    animation-duration: 28s;
+    animation-delay: 3s;
+  }
+  .particle-6 {
+    width: 7px;
+    height: 7px;
+    left: 75%;
+    animation-duration: 19s;
+    animation-delay: 5s;
+  }
+  .particle-7 {
+    width: 3px;
+    height: 3px;
+    left: 85%;
+    animation-duration: 24s;
+    animation-delay: 2s;
+  }
+  .particle-8 {
+    width: 5px;
+    height: 5px;
+    left: 90%;
+    animation-duration: 21s;
+    animation-delay: 6s;
+  }
+  .particle-9 {
+    width: 4px;
+    height: 4px;
+    left: 5%;
+    animation-duration: 26s;
+    animation-delay: 7s;
+  }
+  .particle-10 {
+    width: 6px;
+    height: 6px;
+    left: 45%;
+    animation-duration: 23s;
+    animation-delay: 8s;
+  }
+  .particle-11 {
+    width: 3px;
+    height: 3px;
+    left: 55%;
+    animation-duration: 27s;
+    animation-delay: 1s;
+  }
+  .particle-12 {
+    width: 5px;
+    height: 5px;
+    left: 30%;
+    animation-duration: 20s;
+    animation-delay: 4s;
+  }
+  .particle-13 {
+    width: 4px;
+    height: 4px;
+    left: 70%;
+    animation-duration: 22s;
+    animation-delay: 9s;
+  }
+  .particle-14 {
+    width: 6px;
+    height: 6px;
+    left: 15%;
+    animation-duration: 25s;
+    animation-delay: 3s;
+  }
+  .particle-15 {
+    width: 3px;
+    height: 3px;
+    left: 60%;
+    animation-duration: 19s;
+    animation-delay: 6s;
+  }
+
+  @keyframes floatParticle {
+    0% {
+      transform: translateY(100vh) translateX(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.6;
+    }
+    90% {
+      opacity: 0.6;
+    }
+    100% {
+      transform: translateY(-100px) translateX(50px);
+      opacity: 0;
+    }
+  }
+
+  /* 🔷 FORMAS GEOMÉTRICAS FLOTANTES */
+  .floating-shape {
+    position: absolute;
+    opacity: 0.03;
+    animation: floatShape 15s ease-in-out infinite;
+  }
+
+  .shape-1 {
+    width: 200px;
+    height: 200px;
+    top: 20%;
+    left: 10%;
+    border: 2px solid rgba(145, 70, 255, 0.5);
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    animation-duration: 20s;
+  }
+
+  .shape-2 {
+    width: 150px;
+    height: 150px;
+    top: 60%;
+    right: 15%;
+    border: 2px solid rgba(168, 85, 247, 0.5);
+    transform: rotate(45deg);
+    animation-duration: 18s;
+    animation-delay: 3s;
+  }
+
+  .shape-3 {
+    width: 100px;
+    height: 100px;
+    bottom: 25%;
+    left: 20%;
+    border: 2px solid rgba(192, 132, 252, 0.5);
+    border-radius: 50%;
+    animation-duration: 22s;
+    animation-delay: 6s;
+  }
+
+  @keyframes floatShape {
+    0%,
+    100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    25% {
+      transform: translateY(-30px) rotate(90deg);
+    }
+    50% {
+      transform: translateY(0) rotate(180deg);
+    }
+    75% {
+      transform: translateY(30px) rotate(270deg);
     }
   }
 </style>

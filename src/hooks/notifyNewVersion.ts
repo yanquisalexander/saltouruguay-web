@@ -11,7 +11,7 @@ export default function notifyNewVersion() {
             "astro:build:done": async () => {
                 try {
                     const pusher = new Pusher({
-                        host,
+                        // host,
                         port: "443",
                         appId: PUSHER_APP_ID,
                         key: PUSHER_APP_KEY,

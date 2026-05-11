@@ -45,8 +45,8 @@ class PusherService {
 
         try {
             this.pusher = new Pusher(PUSHER_KEY, {
-                wsHost: import.meta.env.DEV ? 'localhost' : 'soketi.saltouruguayserver.com',
-                wsPort: import.meta.env.DEV ? 6001 : 443,
+                //    wsHost: import.meta.env.DEV ? 'localhost' : 'soketi.saltouruguayserver.com',
+                //    wsPort: import.meta.env.DEV ? 6001 : 443,
                 cluster: 'us2',
                 enabledTransports: ['ws', 'wss'],
                 forceTLS: !import.meta.env.DEV,
@@ -114,7 +114,7 @@ class PusherService {
         this.eventListeners.set(channelName, new Map());
 
         console.log(`[Pusher] Subscribed to channel: ${channelName}`);
-        
+
         return channel;
     }
 
@@ -152,7 +152,7 @@ class PusherService {
      */
     public bind(channelName: string, eventName: string, callback: EventCallback): void {
         const channel = this.subscribe(channelName);
-        
+
         // Get or create event map for this channel
         let channelEvents = this.eventListeners.get(channelName);
         if (!channelEvents) {

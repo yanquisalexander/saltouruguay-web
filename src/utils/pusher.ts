@@ -10,8 +10,8 @@ const port = import.meta.env.DEV ? "6001" : "443";
 
 
 export const pusher = new Pusher({
-    host,
-    port,
+    //   host,
+    // port,
     appId: PUSHER_APP_ID,
     key: PUSHER_APP_KEY,
     secret: PUSHER_APP_SECRET,
