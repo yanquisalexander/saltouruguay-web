@@ -251,7 +251,7 @@ function Reel({ size, speed }: { size: number; speed: string }) {
 // ─── Teaser Script (Estilo Squid Game) ────────────────────────────────────────
 
 const GUERRA_TEASER_SCRIPT: ScriptItem[] = [
-    { duration: 3000, omitReverb: true, audioPath: "teaser-bg-audio", volume: 0.1 },
+    { duration: 3000, omitReverb: true, audioPath: "teaser-bg-audio", volume: 0.14 },
     { text: "Has recibido la invitación.", audioPath: "teaser-1", duration: 4000 },
     { text: "El juego está a punto de cambiar.", audioPath: "teaser-2", duration: 4000 },
     { text: "Decenas de creadores.", audioPath: "teaser-3", duration: 3500 },
