@@ -1,4 +1,4 @@
-export const CDN_PREFIX = "https://cdn.saltouruguayserver.com/sounds/";
+export const CDN_PREFIX = "https://cdn-2.saltouruguayserver.com/sounds/";
 
 export const STREAMER_WARS_SOUNDS = {
     NOTIFICATION: "notification",
