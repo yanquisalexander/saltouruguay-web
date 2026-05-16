@@ -637,7 +637,7 @@ export const server = {
     audio,
     voice,
     users: {
-        oauth,
+        //oauth,
         twoFactor
     }
 }

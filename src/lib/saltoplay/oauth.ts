@@ -7,9 +7,9 @@ import {
 } from "@/db/schema";
 import { randomUUID } from "crypto";
 import { and, eq } from "drizzle-orm";
-import jwt from 'jsonwebtoken';
 import { LucideIdCard, type LucideIcon } from "lucide-preact";
 import { DateTime } from 'luxon';
+import { signHs256Jwt, verifyHs256Jwt } from "@/lib/jwt";
 
 
 export const AVAILABLE_SCOPES = [
@@ -155,23 +155,23 @@ export async function generateTokens(
     }
 
     // Generate tokens
-    const accessToken = jwt.sign(
+    const accessToken = await signHs256Jwt(
         {
             sub: userId.toString(),
             game: gameId,
             scopes
         },
         game.clientSecret,
-        { expiresIn: ACCESS_TOKEN_LIFETIME }
+        ACCESS_TOKEN_LIFETIME
     );
 
-    const refreshToken = jwt.sign(
+    const refreshToken = await signHs256Jwt(
         {
             sub: userId.toString(),
             game: gameId
         },
         game.clientSecret,
-        { expiresIn: REFRESH_TOKEN_LIFETIME }
+        REFRESH_TOKEN_LIFETIME
     );
 
     // Store tokens in database
@@ -207,7 +207,7 @@ export async function refreshAccessToken(
     // Verify refresh token
     let decoded: any;
     try {
-        decoded = jwt.verify(refreshToken, game.clientSecret);
+        decoded = await verifyHs256Jwt<{ sub: string }>(refreshToken, game.clientSecret);
     } catch (error) {
         throw new Error('Invalid refresh token');
     }
@@ -225,23 +225,23 @@ export async function refreshAccessToken(
     }
 
     // Generate new tokens
-    const newAccessToken = jwt.sign(
+    const newAccessToken = await signHs256Jwt(
         {
             sub: decoded.sub,
             game: gameId,
             scopes: existingToken.scopes.split(',')
         },
         game.clientSecret,
-        { expiresIn: ACCESS_TOKEN_LIFETIME }
+        ACCESS_TOKEN_LIFETIME
     );
 
-    const newRefreshToken = jwt.sign(
+    const newRefreshToken = await signHs256Jwt(
         {
             sub: decoded.sub,
             game: gameId
         },
         game.clientSecret,
-        { expiresIn: REFRESH_TOKEN_LIFETIME }
+        REFRESH_TOKEN_LIFETIME
     );
 
     // Update tokens in database
@@ -280,7 +280,7 @@ export async function validateAccessToken(
     // Verify token
     let decoded: any;
     try {
-        decoded = jwt.verify(accessToken, game.clientSecret);
+        decoded = await verifyHs256Jwt<{ sub: string; scopes?: string[] }>(accessToken, game.clientSecret);
     } catch (error) {
         throw new Error('Invalid access token');
     }

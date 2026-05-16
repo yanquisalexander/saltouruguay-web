@@ -27,6 +27,7 @@ export const STREAMER_WARS_SOUNDS = {
     EQUIPO_ELIMINADO: 'equipo-eliminado',
     GOLPE_CUERDA: 'golpe-cuerda',
     DISPARO_COMIENZO: 'disparo-comienzo',
+    JOURNEY_TITLE_BG: 'journey-title-bg',
     EPISODE_0: 'episode-0',
     EPISODE_1: 'episode-1',
     EPISODE_2: 'episode-2',
@@ -83,122 +84,100 @@ export const playSoundWithReverb = async ({
     return new Promise(async (resolve, reject) => {
         try {
             const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioCtx) {
-                throw new Error("AudioContext is not supported in this browser");
-            }
+            if (!AudioCtx) throw new Error("AudioContext is not supported in this browser");
 
             const audioContext = new AudioCtx();
-            let bufferToDecode: ArrayBuffer;
 
-            if (arrayBuffer) {
-                bufferToDecode = arrayBuffer;
-            } else if (isBase64 && sound) {
-                let base64Data: string;
-                // Si el string contiene coma, se asume formato "data:audio/mp3;base64,..."
-                if (sound.includes(',')) {
-                    base64Data = sound.split(',')[1];
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume().catch(e => console.warn('AudioContext resume failed', e));
+            }
+
+            let source: AudioBufferSourceNode | MediaElementAudioSourceNode;
+            let duration: number;
+
+            // Casos donde ya tenemos los bytes (arrayBuffer o base64): sin CORS
+            if (arrayBuffer || isBase64) {
+                let bufferToDecode: ArrayBuffer;
+
+                if (arrayBuffer) {
+                    bufferToDecode = arrayBuffer;
                 } else {
-                    // Si no se incluye el prefijo, se toma el string completo
-                    base64Data = sound;
+                    const base64Data = sound!.includes(',') ? sound!.split(',')[1] : sound!;
+                    const binaryString = atob(base64Data);
+                    const uint8Array = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        uint8Array[i] = binaryString.charCodeAt(i);
+                    }
+                    bufferToDecode = uint8Array.buffer;
                 }
-                const binaryString = atob(base64Data);
-                const len = binaryString.length;
-                const uint8Array = new Uint8Array(len);
-                for (let i = 0; i < len; i++) {
-                    uint8Array[i] = binaryString.charCodeAt(i);
-                }
-                bufferToDecode = uint8Array.buffer;
+
+                const audioBuffer = await audioContext.decodeAudioData(bufferToDecode.slice(0));
+                const bufferSource = audioContext.createBufferSource();
+                bufferSource.buffer = audioBuffer;
+                duration = audioBuffer.duration;
+                source = bufferSource;
+
             } else if (sound) {
-                if (sound.startsWith("blob:")) {
-                    const response = await fetch(sound);
-                    bufferToDecode = await response.arrayBuffer();
-                } else {
-                    const response = await fetch(`${CDN_PREFIX}${sound}.mp3`, {
-                        credentials: 'omit', // Evita enviar cookies, por si acaso
-                        referrerPolicy: 'no-referrer', // Evita enviar el header Referer
-                    });
-                    bufferToDecode = await response.arrayBuffer();
-                }
+                // URL remota o blob: usamos HTMLAudioElement para evitar CORS
+                const audioEl = new Audio(sound.startsWith('blob:') ? sound : `${CDN_PREFIX}${sound}.mp3`);
+                audioEl.crossOrigin = "anonymous";
+
+                await new Promise<void>((res, rej) => {
+                    audioEl.oncanplaythrough = () => res();
+                    audioEl.onerror = rej;
+                    audioEl.load();
+                });
+                duration = audioEl.duration;
+                source = audioContext.createMediaElementSource(audioEl);
+
             } else {
                 throw new Error("playSoundWithReverb requires either sound or arrayBuffer");
             }
 
-            if (audioContext.state === 'suspended') {
-                try {
-                    await audioContext.resume();
-                } catch (resumeError) {
-                    console.warn('AudioContext resume failed', resumeError);
-                }
-            }
+            // Grafo de audio
+            const dryGain = audioContext.createGain();
+            dryGain.gain.value = volume;
 
-            const audioBuffer = await audioContext.decodeAudioData(bufferToDecode.slice(0));
-            const source = audioContext.createBufferSource();
-            source.buffer = audioBuffer;
+            const wetGain = audioContext.createGain();
+            wetGain.gain.value = volume * reverbAmount;
 
-            // Nodo de ganancia general (opcional, si deseas controlar el volumen global)
-            // const globalGainNode = audioContext.createGain();
-            // globalGainNode.gain.value = volume;
-            // globalGainNode.connect(audioContext.destination);
-
-            // Creamos dos nodos de ganancia para cada rama: dry y wet
-            const dryGainNode = audioContext.createGain();
-            // Puedes ajustar el nivel del sonido original (dry) aquí
-            dryGainNode.gain.value = volume;
-
-            const wetGainNode = audioContext.createGain();
-            // Aquí puedes ajustar el nivel de la señal con reverb (wet)
-            // Por ejemplo, podrías hacer algo como volume * reverbAmount, o asignarle un valor fijo
-            wetGainNode.gain.value = volume * reverbAmount;
-
-            // Creamos el nodo convolver y asignamos el buffer de reverb
             const convolver = audioContext.createConvolver();
-            // Se asume que createReverbBuffer devuelve un AudioBuffer configurado según reverbAmount
             convolver.buffer = await createReverbBuffer(audioContext, reverbAmount);
 
-            // Conexión de la rama dry: fuente -> ganancia dry -> destino
-            source.connect(dryGainNode);
-            dryGainNode.connect(audioContext.destination);
+            source.connect(dryGain);
+            dryGain.connect(audioContext.destination);
 
-            // Conexión de la rama wet: fuente -> convolver -> ganancia wet -> destino
             source.connect(convolver);
-            convolver.connect(wetGainNode);
-            wetGainNode.connect(audioContext.destination);
+            convolver.connect(wetGain);
+            wetGain.connect(audioContext.destination);
 
-            // Inicia la reproducción
-            source.start();
+            const reverbTail = (convolver.buffer?.duration ?? 0) * 1000 + 200;
 
-            source.onended = () => {
-                // 1. Obtenemos la duración del "impulso" del reverb (la cola)
-                // Si no hay buffer, asumimos 0.
-                const reverbTailDuration = convolver.buffer ? convolver.buffer.duration : 0;
-
-                // 2. Convertimos a milisegundos
-                // Agregamos un pequeño margen de seguridad (ej. 200ms) para evitar clics al final
-                const timeToWait = (reverbTailDuration * 1000) + 200;
-
+            const cleanup = async () => {
                 setTimeout(async () => {
-                    // 3. Cerramos el contexto SOLO cuando el reverb haya terminado
-                    try {
-                        if (audioContext.state !== 'closed') {
-                            await audioContext.close();
-                        }
-                    } catch (e) {
-                        console.warn("El contexto ya estaba cerrado", e);
-                    }
-
-                    if (sound && sound.startsWith("blob:")) {
-                        URL.revokeObjectURL(sound);
-                    }
+                    if (audioContext.state !== 'closed') await audioContext.close().catch(() => { });
+                    if (sound?.startsWith('blob:')) URL.revokeObjectURL(sound);
                     resolve();
-                }, timeToWait);
+                }, reverbTail);
             };
+
+            if (source instanceof AudioBufferSourceNode) {
+                source.onended = cleanup;
+                source.start();
+            } else {
+                // MediaElementAudioSourceNode
+                const audioEl = (source as any).mediaElement as HTMLAudioElement;
+                audioEl.crossOrigin = "anonymous";
+                audioEl.onended = cleanup;
+                audioEl.play();
+            }
+
         } catch (error) {
             console.error("Error al reproducir el sonido:", error);
             reject(error);
         }
     });
 };
-
 
 
 // Función auxiliar para crear un buffer de reverb

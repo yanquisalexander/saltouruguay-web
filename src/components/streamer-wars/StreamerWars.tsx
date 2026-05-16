@@ -35,35 +35,23 @@ import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 import type { Players } from "../admin/streamer-wars/Players";
 import { InmersiveInstructions } from "./InmersiveInstructions";
 
+
+
 const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
     const [progress, setProgress] = useState(0);
     const [fadingOut, setFadingOut] = useState(false);
     const [visible, setVisible] = useState(true);
 
-    // Nuevo estado para controlar la animación de entrada (escala)
-    const [isZoomedOut, setIsZoomedOut] = useState(false);
-    const alertedRef = useRef(false);
-
     useEffect(() => {
-        // Disparamos la transición de escala un instante después de montar
-        const scaleTimer = setTimeout(() => {
-            setIsZoomedOut(true);
-        }, 50);
-
         const interval = setInterval(() => {
             setProgress((prev) => {
                 if (prev >= 100) {
                     clearInterval(interval);
                     return 100;
                 }
-                // Trigger alerta al 50%
-                if (prev > 50 && !alertedRef.current) {
-                    alertedRef.current = true;
-                    // toast.success(...) y playSound(...) aquí
-                }
                 return prev + 1;
             });
-        }, 25);
+        }, 20);
 
         const endTimer = setTimeout(() => {
             document.dispatchEvent(new CustomEvent('splash-screen-ended'));
@@ -71,49 +59,78 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
             setTimeout(() => {
                 setVisible(false);
                 onEnd();
-            }, 500);
-        }, 2500);
+            }, 600);
+        }, 2800);
 
         return () => {
             clearInterval(interval);
             clearTimeout(endTimer);
-            clearTimeout(scaleTimer);
         };
     }, [onEnd]);
 
     if (!visible) return null;
 
     return (
-        // Contenedor principal: maneja el fondo negro y el fade-out final
         <div
-            className={`fixed inset-0 bg-black z-[8000] transition-opacity duration-500 overflow-hidden ${fadingOut ? 'opacity-0' : 'opacity-100'
+            className={`fixed inset-0 bg-[#050505] z-[8000] flex items-center justify-center transition-all duration-700 ${fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
                 }`}
         >
-            {/* 
-                Contenedor animado: Maneja la escala.
-                Usamos una curva cubic-bezier (0.16, 1, 0.3, 1) que da ese efecto 
-                de entrar muy rápido y frenar súper suave (estilo Bowser/Smash Bros).
-            */}
-            <div
-                className={`w-full h-full flex flex-col justify-center items-center transform transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${isZoomedOut ? 'scale-100' : 'scale-[2]'
-                    }`}
-            >
-                <h3 className="with-glyph flex relative w-max text-3xl transform px-2 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen !skew-x-[-20deg] -rotate-6">
-                    <span className="flex !skew-x-[20deg] transform">Guerra de Streamers</span>
-                </h3>
+            {/* AMBIENTE: Sutil resplandor verde en el fondo */}
+            <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[radial-gradient(circle_at_center,_#b4cd02_0%,_transparent_70%)]" />
 
-                <div className="w-56 mt-8 h-2 bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                        className="h-full bg-[#b4cd02] rounded-xl transition-all duration-75 ease-out"
-                        style={{ width: `${progress}%` }}
-                    ></div>
+            {/* LÍNEAS DE ESCANEO SUTILES */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+                <div className="w-full h-full bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]" />
+            </div>
+
+            {/* CONTENEDOR CENTRAL (Sin animaciones de zoom) */}
+            <div className="relative flex flex-col items-center">
+
+                {/* LOGO: Mix de Atomic y Anton */}
+                <div className="relative mb-12 text-center">
+                    <h3 className="text-7xl font-atomic italic  text-white leading-none select-none">
+                        GUERRA DE
+                    </h3>
+                    <h3 className="text-7xl font-atomic italic  text-[#b4cd02] leading-none -mt-2 ml-12 select-none">
+                        STREAMERS
+                    </h3>
+
+                    {/* Acento visual con Anton */}
+                    <div className="absolute -right-8 -top-4 opacity-10">
+                        <span className="font-anton text-8xl text-white">II</span>
+                    </div>
                 </div>
 
-                <span className="fixed bottom-32 text-5xl opacity-30 rotate-[32deg] select-none right-16 font-atomic-extras">
+                {/* BARRA DE CARGA REFINADA */}
+                <div className="relative w-72">
+                    <div className="flex justify-between mb-3 font-anton text-xs tracking-[0.2em] text-[#b4cd02] uppercase opacity-80">
+                        <span>Loading</span>
+                        <span>{progress}%</span>
+                    </div>
+
+                    <div className="h-[3px] w-full bg-neutral-900 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-[#b4cd02] transition-all duration-100 ease-out shadow-[0_0_15px_rgba(180,205,2,0.4)]"
+                            style={{ width: `${progress}%` }}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* ELEMENTOS ATOMIC-EXTRAS REPOSICIONADOS */}
+            <div className="fixed inset-0 pointer-events-none select-none">
+                <span className="absolute top-1/2 left-12 -translate-y-1/2 text-7xl opacity-[0.05] rotate-12 font-atomic-extras text-[#b4cd02]">
                     &#x0055;
                 </span>
-                <span className="fixed bottom-48 text-5xl opacity-30 rotate-[-16deg] select-none left-16 font-atomic-extras">
+                <span className="absolute top-1/2 right-12 -translate-y-1/2 text-7xl opacity-[0.05] -rotate-12 font-atomic-extras text-[#b4cd02]">
                     &#x0050;
+                </span>
+            </div>
+
+            {/* TEXTO INFERIOR CON FONT-TEKO */}
+            <div className="fixed bottom-12 w-full text-center">
+                <span className="font-teko text-xl tracking-[0.5em] text-neutral-700 uppercase">
+                    Temporada 2026
                 </span>
             </div>
         </div>

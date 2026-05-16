@@ -24,14 +24,14 @@ import { Tooltip } from "@/components/Tooltip";
 const MAX_MESSAGES = 100; // Límite para evitar lag en el DOM
 
 // Estilos reutilizables estilo 8-bit
-const RETRO_BOX = "border-2 border-white bg-neutral-900 shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)]";
-const RETRO_BTN = "active:translate-y-1 active:shadow-none transition-all border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]";
+const MODERN_BOX = "bg-black border border-neutral-800 relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,1)]";
+const MODERN_BTN = "active:scale-95 transition-all duration-300 border border-neutral-800 bg-neutral-900/50 hover:border-pink-500/50 hover:bg-neutral-800";
 
 const parseLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.replace(
         urlRegex,
-        (url) => `<a href="${url}" target="_blank" class="text-yellow-400 hover:bg-yellow-400 hover:text-black transition-colors underline decoration-dashed decoration-2">${url}</a>`
+        (url) => `<a href="${url}" target="_blank" class="text-pink-400 hover:text-pink-300 transition-colors underline decoration-dashed decoration-1">${url}</a>`
     );
 };
 
@@ -51,11 +51,11 @@ const parseEmotesToHTML = (text: string) => {
 
 const EmotePicker = ({ onSelect }: { onSelect: (emote: keyof typeof EMOTES) => void }) => {
     return (
-        <div class={`grid grid-cols-5 gap-2 p-2 bg-neutral-800 w-64 max-h-64 overflow-y-auto ${RETRO_BOX}`}>
+        <div class={`grid grid-cols-5 gap-2 p-2 bg-black/90 backdrop-blur-md w-64 max-h-64 overflow-y-auto ${MODERN_BOX}`}>
             {Object.keys(EMOTES).map((emote) => (
                 <button
                     key={emote}
-                    class="w-10 h-10 bg-black/40 hover:bg-lime-500/20 border border-transparent hover:border-lime-500 flex items-center justify-center image-pixelated"
+                    class="w-10 h-10 bg-black/40 hover:bg-pink-500/20 border border-transparent hover:border-pink-500 flex items-center justify-center transition-all duration-300 rounded"
                     onClick={() => onSelect(emote as keyof typeof EMOTES)}
                     title={`:${emote}:`}
                 >
@@ -106,10 +106,10 @@ const ChatMessageItem = memo(({
 
     if (isAnnouncement) {
         return (
-            <div class="bg-blue-900/80 text-cyan-300 p-3 border-2 border-cyan-500 shadow-[4px_4px_0px_0px_#06b6d4] mb-2 font-mono text-sm">
-                <div class="flex items-center gap-2 mb-1 border-b border-cyan-500/50 pb-1">
+            <div class="bg-pink-900/20 text-pink-300 p-3 border border-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.2)] mb-2 text-sm backdrop-blur-sm rounded">
+                <div class="flex items-center gap-2 mb-1 border-b border-pink-500/30 pb-1">
                     <LucideMegaphone size={16} />
-                    <span class="font-bold uppercase tracking-widest">Sistema</span>
+                    <span class="font-atomic uppercase tracking-widest text-pink-400">Sistema</span>
                 </div>
                 <span dangerouslySetInnerHTML={{ __html: parsedMessage }} />
             </div>
@@ -117,10 +117,10 @@ const ChatMessageItem = memo(({
     }
 
     return (
-        <div class="group relative flex gap-x-3 w-full hover:bg-white/5 p-2 items-start font-mono text-sm transition-colors border-l-2 border-transparent hover:border-lime-500/50">
+        <div class="group relative flex gap-x-3 w-full hover:bg-white/5 p-2 items-start text-sm transition-all duration-300 border-l-[3px] border-transparent hover:border-pink-500/50 hover:pl-3">
             {showModeration && (
                 <button
-                    class="absolute right-2 -top-2 opacity-0 group-hover:opacity-100 text-white bg-red-600 border-2 border-black p-1 hover:bg-red-500 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] z-10"
+                    class="absolute right-2 -top-2 opacity-0 group-hover:opacity-100 text-white bg-red-600 border border-red-800 rounded p-1 hover:bg-red-500 transition shadow-[0_0_10px_rgba(220,38,38,0.5)] z-10"
                     onClick={removeMessage}
                     title="Eliminar Mensaje"
                 >
@@ -128,19 +128,19 @@ const ChatMessageItem = memo(({
                 </button>
             )}
             <div class="flex flex-col w-full break-words min-w-0">
-                <span class={`font-bold w-max flex items-center gap-x-2 text-xs uppercase tracking-wide ${admin ? 'text-yellow-400 drop-shadow-md' : 'text-lime-400'}`}>
+                <span class={`font-atomic w-max flex items-center gap-x-2 text-xs uppercase tracking-wider ${admin ? 'text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.8)]' : 'text-neutral-400'}`}>
                     {admin && (
                         <Tooltip tooltipPosition="top" text="ADMIN / MOD">
-                            <LucideSwords size={14} class="text-yellow-400 animate-pulse" />
+                            <LucideSwords size={14} class="text-pink-400 animate-pulse" />
                         </Tooltip>
                     )}
                     {user}
-                    <span class="text-neutral-600 text-[10px] select-none">
-                        {admin ? " MOD" : "Jugador"}
+                    <span class="text-neutral-600 text-[10px] select-none tracking-normal">
+                        {admin ? " MOD" : "JUGADOR"}
                     </span>
                 </span>
                 <span
-                    class="text-neutral-200 leading-relaxed break-words"
+                    class="text-neutral-300 leading-relaxed break-words mt-1"
                     dangerouslySetInnerHTML={{ __html: parsedMessage }}
                 />
             </div>
@@ -306,17 +306,17 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
     }, [usersTyping]);
 
     return (
-        <div class={`flex flex-col w-full h-full bg-neutral-950 relative p-1 ${RETRO_BOX}`}>
-            {/* HEADER RETRO */}
-            <div class="bg-neutral-800 border-b-2 border-white/20 p-2 flex items-center justify-between select-none">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2 tracking-wider">
-                    <LucideMessageCircle class="text-lime-500" size={20} />
-                    CHAT_ROOM_V1
+        <div class={`flex flex-col w-full h-full bg-neutral-950/80 backdrop-blur-md relative p-0 ${MODERN_BOX} rounded-lg`}>
+            {/* HEADER MODERN */}
+            <div class="bg-gradient-to-b from-neutral-900 to-black border-b border-neutral-800 p-3 flex items-center justify-between select-none">
+                <h3 class="text-lg font-atomic text-white flex items-center gap-2 tracking-widest">
+                    <LucideMessageCircle class="text-pink-500" size={20} />
+                    COMUNICACIONES
                 </h3>
-                <div class="flex gap-1">
-                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                    <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div class="flex gap-2">
+                    <div class="w-2 h-2 bg-pink-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(236,72,153,0.8)]"></div>
+                    <div class="w-2 h-2 bg-neutral-600 rounded-full"></div>
+                    <div class="w-2 h-2 bg-neutral-600 rounded-full"></div>
                 </div>
             </div>
 
@@ -324,14 +324,13 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                class="flex-1 overflow-y-auto max-h-[400px] p-4 flex flex-col gap-y-1 relative scrollbar-retro"
-                style={{ imageRendering: "pixelated" }}
+                class="flex-1 overflow-y-auto max-h-[400px] p-4 flex flex-col gap-y-2 relative scrollbar-squid"
             >
                 {/* Overlay de Bloqueo */}
                 {chatLocked && (
-                    <div class="absolute inset-0 bg-black/80 z-20 flex flex-col items-center justify-center text-red-500 font-mono p-4 text-center backdrop-blur-sm">
-                        <LucideLock size={48} class="mb-2 animate-bounce" />
-                        <span class="text-xl font-bold border-2 border-red-500 p-2 bg-black uppercase">
+                    <div class="absolute inset-0 bg-black/80 z-20 flex flex-col items-center justify-center text-red-500 font-anton p-4 text-center backdrop-blur-md">
+                        <LucideLock size={48} class="mb-2 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)] rounded-full" />
+                        <span class="text-xl font-atomic tracking-widest border border-red-500/50 p-3 bg-red-950/30 uppercase rounded">
                             SYSTEM_LOCK: ACTIVO
                         </span>
                     </div>
@@ -356,20 +355,20 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
 
             {/* BOTÓN DE NUEVOS MENSAJES */}
             {!isUserAtBottom && (
-                <div class="absolute bottom-20 left-0 right-0 flex justify-center z-10">
+                <div class="absolute bottom-20 left-0 right-0 flex justify-center z-10 transition-all duration-300">
                     <button
                         onClick={scrollToBottom}
-                        class={`bg-lime-500 text-black font-bold px-4 py-1 text-xs uppercase flex items-center gap-2 animate-bounce ${RETRO_BTN}`}
+                        class={`bg-pink-600/90 text-white font-anton tracking-wide px-4 py-2 text-xs uppercase flex items-center gap-2 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.5)] ${MODERN_BTN}`}
                     >
-                        New Msg <LucideChevronDown size={16} />
+                        Nuevos Mensajes <LucideChevronDown size={16} />
                     </button>
                 </div>
             )}
 
             {/* AREA DE ESCRITURA */}
-            <div class="bg-neutral-900 p-2 border-t-2 border-white/20">
+            <div class="bg-black/50 p-3 border-t border-neutral-800">
                 <div
-                    class="text-lime-500 text-[10px] font-mono h-4 overflow-hidden mb-1 animate-pulse"
+                    class="text-pink-500/70 text-[10px] font-anton h-4 overflow-hidden mb-1 animate-pulse tracking-widest uppercase"
                     dangerouslySetInnerHTML={{ __html: usersTypingText }}
                 />
 
@@ -383,10 +382,10 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                             disabled={chatLocked}
                             maxLength={200}
                             rows={1}
-                            class="w-full h-12 bg-black text-white font-mono text-sm p-2 pr-10 resize-none outline-none border-2 border-neutral-700 focus:border-lime-500 transition-colors placeholder:text-neutral-700"
-                            placeholder={chatLocked ? "TRANSMISIÓN DE DATOS DETENIDA..." : "Insertar comando..."}
+                            class="w-full h-12 bg-neutral-900/50 text-white text-sm p-3 pr-10 resize-none outline-none border border-neutral-800 focus:border-pink-500/50 transition-colors placeholder:text-neutral-600 rounded"
+                            placeholder={chatLocked ? "TRANSMISIÓN DETENIDA..." : "Mensaje al sistema..."}
                         />
-                        <span class={`absolute right-2 bottom-2 text-[10px] ${textInput.length > 180 ? 'text-red-500' : 'text-neutral-600'}`}>
+                        <span class={`absolute right-2 bottom-3 text-[10px] font-anton tracking-wide ${textInput.length > 180 ? 'text-red-500' : 'text-neutral-600'}`}>
                             {textInput.length}/200
                         </span>
                     </div>
@@ -396,7 +395,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                             activator={
                                 <button
                                     disabled={chatLocked}
-                                    class={`bg-neutral-700 text-white p-2 h-full flex items-center justify-center hover:bg-neutral-600 disabled:opacity-50 ${RETRO_BTN}`}
+                                    class={`text-neutral-400 p-2 h-full flex items-center justify-center disabled:opacity-50 rounded ${MODERN_BTN}`}
                                 >
                                     <LucideSmilePlus size={20} />
                                 </button>
@@ -410,7 +409,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                     <button
                         disabled={sending || !textInput.trim() || chatLocked}
                         onClick={sendMessage}
-                        class={`bg-lime-600 text-white p-3 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-lime-500 ${RETRO_BTN}`}
+                        class={`text-white p-3 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed rounded bg-pink-600/80 shadow-[0_0_10px_rgba(236,72,153,0.3)] ${MODERN_BTN}`}
                     >
                         <LucideSend size={20} />
                     </button>

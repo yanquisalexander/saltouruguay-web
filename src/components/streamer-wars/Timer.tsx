@@ -10,34 +10,41 @@ export const Timer = ({ seconds, onEnd }: TimerProps) => {
     const [timeLeft, setTimeLeft] = useState(seconds);
     const [isVisible, setIsVisible] = useState(true);
 
-    useEffect(() => {
-        setTimeLeft(seconds);
-    }, [seconds]);
-
+    // Efecto para verificar cuando llega a cero y limpiar
     useEffect(() => {
         if (timeLeft <= 0) {
-            setTimeout(() => {
+            const timeout = setTimeout(() => {
                 setIsVisible(false);
                 onEnd();
             }, 500);
-            return;
+            return () => clearTimeout(timeout);
         }
+    }, [timeLeft, onEnd]);
 
-        let interval: number;
-        interval = window.setInterval(() => {
-            setTimeLeft((prev) => {
-                if (prev <= 1) {
-                    clearInterval(interval);
-                    document.dispatchEvent(new CustomEvent("timer-ended"));
-                    return 0;
-                }
+    // Efecto estricto basado en la fecha (Date.now()) para evitar pausas o desincronización
+    useEffect(() => {
+        const endTime = Date.now() + seconds * 1000;
+        let lastSoundSecond = seconds;
+
+        const interval = window.setInterval(() => {
+            const left = Math.ceil((endTime - Date.now()) / 1000);
+
+            if (left < lastSoundSecond && left > 0) {
                 playSound({ sound: STREAMER_WARS_SOUNDS.TICK, volume: 1 });
-                return prev - 1;
-            });
-        }, 1000);
+                lastSoundSecond = left;
+            }
+
+            if (left <= 0) {
+                clearInterval(interval);
+                setTimeLeft(0);
+                document.dispatchEvent(new CustomEvent("timer-ended"));
+            } else {
+                setTimeLeft(left);
+            }
+        }, 100); // Chequea cada 100ms para asegurar precisión
 
         return () => window.clearInterval(interval);
-    }, [timeLeft, onEnd]);
+    }, [seconds]);
 
     if (!isVisible) return null;
 

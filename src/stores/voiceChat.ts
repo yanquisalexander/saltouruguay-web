@@ -4,25 +4,27 @@ export interface VoiceGlobalState {
   currentTeamId?: string | null;
   voiceEnabledTeams: Record<string, boolean>; // teamId -> enabled
   spectatingTeams: Record<string, boolean>; // teamId -> spectating
-  peerConnections: Record<string, RTCPeerConnection>; // userId -> connection
-  localStream: MediaStream | null;
   isLocalMicEnabled: boolean; // PTT state
   isPTTActive: boolean; // whether V key is pressed
   isAdminSpectator: boolean;
   currentUserId?: string;
+  peerCount: number;
+  talkingUsers: string[];
+  connectionError: string | null;
 }
 
 interface VoiceActions {
   setCurrentTeamId: (teamId: string | null) => void;
   setVoiceEnabled: (teamId: string, enabled: boolean) => void;
   setSpectatingTeam: (teamId: string, spectating: boolean) => void;
-  addPeerConnection: (userId: string, connection: RTCPeerConnection) => void;
-  removePeerConnection: (userId: string) => void;
-  setLocalStream: (stream: MediaStream | null) => void;
   setLocalMicEnabled: (enabled: boolean) => void;
-  setPTTActive: (active: boolean) => void;
+  setIsPTTActive: (active: boolean) => void;
   setIsAdminSpectator: (isSpectator: boolean) => void;
   setCurrentUserId: (userId: string) => void;
+  setPeerCount: (count: number) => void;
+  addTalkingUser: (userId: string) => void;
+  removeTalkingUser: (userId: string) => void;
+  setConnectionError: (error: string | null) => void;
   cleanup: () => void;
 }
 
@@ -30,12 +32,13 @@ const initialState: VoiceGlobalState = {
   currentTeamId: null,
   voiceEnabledTeams: {},
   spectatingTeams: {},
-  peerConnections: {},
-  localStream: null,
   isLocalMicEnabled: false,
   isPTTActive: false,
   isAdminSpectator: false,
   currentUserId: undefined,
+  peerCount: 0,
+  talkingUsers: [],
+  connectionError: null,
 };
 
 export const useVoiceChatStore = create<VoiceGlobalState & VoiceActions>((set, get) => ({
@@ -59,41 +62,32 @@ export const useVoiceChatStore = create<VoiceGlobalState & VoiceActions>((set, g
       },
     })),
 
-  addPeerConnection: (userId, connection) =>
-    set((state) => ({
-      peerConnections: {
-        ...state.peerConnections,
-        [userId]: connection,
-      },
-    })),
-
-  removePeerConnection: (userId) =>
-    set((state) => {
-      const { [userId]: removed, ...rest } = state.peerConnections;
-      removed?.close();
-      return { peerConnections: rest };
-    }),
-
-  setLocalStream: (stream) => set({ localStream: stream }),
-
   setLocalMicEnabled: (enabled) => set({ isLocalMicEnabled: enabled }),
 
-  setPTTActive: (active) => set({ isPTTActive: active }),
+  setIsPTTActive: (active) => set({ isPTTActive: active }),
 
   setIsAdminSpectator: (isSpectator) => set({ isAdminSpectator: isSpectator }),
 
   setCurrentUserId: (userId) => set({ currentUserId: userId }),
 
+  setPeerCount: (count) => set({ peerCount: count }),
+
+  addTalkingUser: (userId) =>
+    set((state) => ({ talkingUsers: [...state.talkingUsers.filter(id => id !== userId), userId] })),
+
+  removeTalkingUser: (userId) =>
+    set((state) => ({ talkingUsers: state.talkingUsers.filter(id => id !== userId) })),
+
+  setConnectionError: (error) => set({ connectionError: error }),
+
   cleanup: () => {
-    const state = get();
-
-    // Close all peer connections
-    Object.values(state.peerConnections).forEach((pc) => pc.close());
-
-    // Stop local stream tracks
-    state.localStream?.getTracks().forEach((track) => track.stop());
-
-    // Reset to initial state
-    set(initialState);
+    // Keep teams and settings, reset others
+    set((state) => ({
+      peerCount: 0,
+      talkingUsers: [],
+      isLocalMicEnabled: false,
+      isPTTActive: false,
+      connectionError: null
+    }));
   },
 }));
