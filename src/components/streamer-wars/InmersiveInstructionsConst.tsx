@@ -2,6 +2,7 @@ import { type JSX } from "preact";
 import { useEffect, useState, useRef } from "preact/hooks";
 import { SimonSaysButtons } from "./games/SimonSaysButtons";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import type { Players } from "../admin/streamer-wars/Players";
 
 // Reutilizamos la interfaz ScriptItem (si está exportada, sino redfínela)
 export interface ScriptItem {
@@ -59,6 +60,195 @@ const SimonSaysExample = () => {
                 onColorShowed={(color: string) => { void playSound({ sound: STREAMER_WARS_SOUNDS.CLICK_SIMON_SAYS }); }}
                 onClick={() => { }} // No hacer nada en el ejemplo
             />
+        </div>
+    );
+};
+
+const VoteContinue = ({ players }: { players?: Players[] }) => {
+    const [count, setCount] = useState(0);
+    const [showResult, setShowResult] = useState(false);
+    const intervalRef = useRef<number | null>(null);
+
+    const TOTAL = players?.filter(p => !p.eliminated).length || 50;
+
+    useEffect(() => {
+        const startDelay = setTimeout(() => {
+            const steps = 60;
+            const duration = 1800;
+            const interval = duration / steps;
+
+            intervalRef.current = window.setInterval(() => {
+                setCount(prev => {
+                    const next = Math.min(prev + Math.ceil(TOTAL / steps), TOTAL);
+                    if (next >= TOTAL) {
+                        clearInterval(intervalRef.current!);
+                        setTimeout(() => setShowResult(true), 400);
+                    }
+                    return next;
+                });
+            }, interval);
+        }, 1000);
+
+        return () => {
+            clearTimeout(startDelay);
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, []);
+
+    return (
+        <div style={{
+            background: "#0a0a0a",
+            minHeight: "480px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "2.5rem 1.5rem",
+            fontFamily: "'Noto Serif KR', serif",
+            position: "relative",
+        }}>
+            {/* Diamond */}
+            <div style={{
+                width: 14, height: 14,
+                background: "#e31b5a",
+                transform: "rotate(45deg)",
+                marginBottom: "1.5rem"
+            }} />
+
+            {/* Label */}
+            <div style={{
+                fontSize: 11,
+                letterSpacing: "0.35em",
+                color: "#e31b5a",
+                textTransform: "uppercase",
+                marginBottom: "0.6rem",
+                fontFamily: "monospace"
+            }}>
+                <span style={{
+                    display: "inline-block",
+                    width: 5, height: 5,
+                    borderRadius: "50%",
+                    background: "#e31b5a",
+                    marginRight: 7,
+                    verticalAlign: "middle",
+                    animation: "blink 1.1s infinite"
+                }} />
+                Votación en curso
+            </div>
+
+            {/* Title */}
+            <div style={{
+                fontSize: 26,
+                fontWeight: 300,
+                color: "#f0ece0",
+                textAlign: "center",
+                letterSpacing: "0.05em",
+                marginBottom: "0.4rem",
+                lineHeight: 1.4
+            }}>
+                ¿Desean continuar<br />en el juego?
+            </div>
+
+            <div style={{
+                fontSize: 13,
+                color: "#888",
+                letterSpacing: "0.12em",
+                marginBottom: "2.5rem",
+                fontFamily: "monospace"
+            }}>
+                Mayoría decide — jugadores: {TOTAL}
+            </div>
+
+            <div style={{ width: 60, height: 1, background: "#333", marginBottom: "2rem" }} />
+
+            {/* Buttons */}
+            <div style={{ display: "flex", gap: "3.5rem", marginBottom: "2.5rem" }}>
+                {/* Circle */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
+                    <div style={{
+                        width: 80, height: 80,
+                        borderRadius: "50%",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        border: "2px solid #3a8fd1",
+                        background: "rgba(58,143,209,0.06)"
+                    }}>
+                        <svg width={38} height={38} viewBox="0 0 38 38" fill="none">
+                            <circle cx="19" cy="19" r="13" stroke="#3a8fd1" strokeWidth="2.5" />
+                        </svg>
+                    </div>
+                    <span style={{ fontSize: 11, letterSpacing: "0.25em", color: "#555", fontFamily: "monospace", textTransform: "uppercase" }}>
+                        Continuar
+                    </span>
+                </div>
+
+                {/* Cross */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
+                    <div style={{
+                        width: 80, height: 80,
+                        borderRadius: "50%",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        border: "2px solid #e31b5a",
+                        background: "rgba(227,27,90,0.06)"
+                    }}>
+                        <svg width={38} height={38} viewBox="0 0 38 38" fill="none">
+                            <line x1="11" y1="11" x2="27" y2="27" stroke="#e31b5a" strokeWidth="2.5" strokeLinecap="round" />
+                            <line x1="27" y1="11" x2="11" y2="27" stroke="#e31b5a" strokeWidth="2.5" strokeLinecap="round" />
+                        </svg>
+                    </div>
+                    <span style={{ fontSize: 11, letterSpacing: "0.25em", color: "#555", fontFamily: "monospace", textTransform: "uppercase" }}>
+                        Abandonar
+                    </span>
+                </div>
+            </div>
+
+            {/* Tally */}
+            <div style={{ width: "100%", maxWidth: 320 }}>
+                {/* Continue bar */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                    <svg width={22} height={22} viewBox="0 0 22 22" fill="none">
+                        <circle cx="11" cy="11" r="7" stroke="#3a8fd1" strokeWidth="1.8" />
+                    </svg>
+                    <div style={{ flex: 1, height: 4, background: "#1a1a1a", borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{
+                            height: "100%",
+                            borderRadius: 2,
+                            background: "#3a8fd1",
+                            width: `${(count / TOTAL) * 100}%`,
+                            transition: "width 0.05s linear"
+                        }} />
+                    </div>
+                    <span style={{ fontFamily: "monospace", fontSize: 12, color: "#555", minWidth: 32, textAlign: "right" }}>
+                        {count}
+                    </span>
+                </div>
+
+                {/* Leave bar */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <svg width={22} height={22} viewBox="0 0 22 22" fill="none">
+                        <line x1="6" y1="6" x2="16" y2="16" stroke="#e31b5a" strokeWidth="1.8" strokeLinecap="round" />
+                        <line x1="16" y1="6" x2="6" y2="16" stroke="#e31b5a" strokeWidth="1.8" strokeLinecap="round" />
+                    </svg>
+                    <div style={{ flex: 1, height: 4, background: "#1a1a1a", borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{ height: "100%", borderRadius: 2, background: "#e31b5a", width: "0%" }} />
+                    </div>
+                    <span style={{ fontFamily: "monospace", fontSize: 12, color: "#555", minWidth: 32, textAlign: "right" }}>0</span>
+                </div>
+            </div>
+
+            {/* Result */}
+            {showResult && (
+                <div style={{ marginTop: "1.8rem", textAlign: "center" }}>
+                    <div style={{ fontSize: 11, letterSpacing: "0.3em", color: "#555", fontFamily: "monospace", marginBottom: "0.5rem", textTransform: "uppercase" }}>
+                        resultado final
+                    </div>
+                    <div style={{ fontSize: 20, fontWeight: 400, color: "#f0ece0", letterSpacing: "0.08em" }}>
+                        El juego <span style={{ color: "#3a8fd1", fontWeight: 700 }}>continúa</span>
+                    </div>
+                    <div style={{ marginTop: "0.35rem", fontSize: 11, color: "#444", letterSpacing: "0.2em", fontFamily: "monospace", textTransform: "uppercase" }}>
+                        {TOTAL} votos — unánime
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -142,5 +332,34 @@ export const INSTRUCTIONS_REGISTRY: Record<string, ScriptItem[]> = {
                 // playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION, volume: 0.8 });
             }
         }
+    ],
+    "vote-continue": [
+        {
+            text: "El juego continuará sólo si la mayoría lo decide.",
+            audioPath: "instructions/vote-intro",
+            duration: 4000,
+            execute: () => {
+                playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION, volume: 0.8 });
+            }
+        },
+        {
+            text: "Presionen círculo para continuar... o X para abandonar.",
+            audioPath: "instructions/vote-choose",
+            duration: 5000,
+            component: <VoteContinue />  // el widget de abajo
+        },
+        {
+            text: "Los votos han sido contados.",
+            audioPath: "instructions/vote-result",
+            duration: 3500
+        },
+        {
+            text: "Decisión unánime. El juego continúa.",
+            audioPath: "instructions/vote-unanimous",
+            duration: 4000,
+            omitReverb: true
+        }
     ]
 };
+
+

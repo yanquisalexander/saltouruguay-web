@@ -464,7 +464,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                         <WaitingScreen players={players} expectedPlayers={expectedPlayers} />
                     )}
 
-                    <InmersiveInstructions />
+                    <InmersiveInstructions players={players} />
 
                     <WelcomeToStreamerWars
                         session={session}
