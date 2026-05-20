@@ -1,6 +1,6 @@
 import { defineMiddleware } from "astro:middleware";
 import { getSession } from "auth-astro/server";
-import { getSessionById } from "./utils/user";
+import { isTwoFactorVerified } from "./lib/auth/session-flags";
 
 // 1. Mover constantes fuera del handler para evitar recrearlas en cada petición
 const ENABLE_MAINTENANCE = import.meta.env.MAINTENANCE_MODE === "true"; // Mejor usar variables de entorno
@@ -69,24 +69,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     // 8. LÓGICA DE 2FA (Optimizada)
-    // Solo verifica DB extra si tiene 2FA activado y no estamos ya en la página de 2FA
+    // Verifica flag de sesión 2FA en Redis
     if (user.twoFactorEnabled && pathname !== "/two-factor") {
-        /* CRÍTICO: getSessionById hace una llamada a DB extra. 
-           Si es posible, intenta meter el flag 'twoFactorVerified' dentro del 
-           objeto `session` original (en el callback de Auth.js/NextAuth jwt/session)
-           para evitar esta segunda consulta a base de datos.
-        */
-        const serverSession = await getSessionById(user.sessionId!);
-
-        if (!serverSession?.twoFactorVerified) {
+        const isVerified = user.sessionId ? await isTwoFactorVerified(user.sessionId) : false;
+        if (!isVerified) {
             return redirect("/two-factor", 302);
         }
     }
 
     // Si tiene 2FA verificado pero intenta entrar al login de 2fa, redirigir
     if (user.twoFactorEnabled && pathname === "/two-factor") {
-        const serverSession = await getSessionById(user.sessionId!);
-        if (serverSession?.twoFactorVerified) return redirect("/", 302);
+        const isVerified = user.sessionId ? await isTwoFactorVerified(user.sessionId) : false;
+        if (isVerified) return redirect("/", 302);
     }
 
     return next();

@@ -2,11 +2,10 @@ import "dotenv/config";
 
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { eq } from "drizzle-orm";
 
 import { client } from "@/db/client";
 import { UsersTable } from "@/db/schema";
-import { getUserSubscription, saveSession, destroySession } from "@/utils/user";
+import { getUserSubscription } from "@/utils/user";
 
 /**
  * Twitch OAuth scopes required by the application.
@@ -99,33 +98,6 @@ export const auth = betterAuth({
             },
         },
 
-        /**
-         * session.create — called after every new browser session is created.
-         * Saves the session to our custom `SessionsTable` so the rest of the
-         * app can continue to look up session data via `getSessionById`.
-         */
-        session: {
-            create: {
-                after: async (session, context) => {
-                    await syncBetterAuthSession(session, context);
-                },
-            },
-
-            /**
-             * session.delete — called when better-auth destroys a session
-             * (e.g. sign-out).  Mirrors the original `signOut` event handler
-             * that called `destroySession`.
-             */
-            delete: {
-                after: async (session) => {
-                    if (session.token) {
-                        destroySession(session.token).catch((err) =>
-                            console.error("[better-auth] Error destroying session:", err)
-                        );
-                    }
-                },
-            },
-        },
     },
 });
 
@@ -222,45 +194,4 @@ async function syncTwitchUser(
             console.error("[better-auth] Error registering EventSub:", e);
         }
     })();
-}
-
-/**
- * Persists a new better-auth session into our custom `SessionsTable`.
- *
- * better-auth's session `token` field is used as the `sessionId` so that the
- * rest of the application (which calls `getSessionById(sessionId)`) continues
- * to work without changes.
- */
-async function syncBetterAuthSession(session: any, context: any) {
-    if (!context?.context?.adapter) return;
-
-    // Find the Twitch account linked to this better-auth user
-    const account = await context.context.adapter
-        .findOne({
-            model: "account",
-            where: [
-                { field: "userId", value: session.userId },
-                { field: "providerId", value: "twitch" },
-            ],
-        })
-        .catch(() => null);
-
-    if (!account?.accountId) return;
-
-    // Resolve the integer user ID from our UsersTable
-    const appUser = await client.query.UsersTable.findFirst({
-        where: eq(UsersTable.twitchId, account.accountId as string),
-        columns: { id: true },
-    }).catch(() => null);
-
-    if (!appUser) return;
-
-    // Save to our SessionsTable using the better-auth session token as the
-    // sessionId so existing code (`getSessionById`, middleware, etc.) works.
-    await saveSession(
-        appUser.id,
-        session.token as string,
-        (session.userAgent as string | null) ?? "Unknown",
-        (session.ipAddress as string | null) ?? "Unknown"
-    ).catch((err) => console.error("[better-auth] Error saving session:", err));
 }

@@ -2,7 +2,6 @@ import { AVAILABLE_SCOPES, generateAuthorizationCode, getOauthClient } from "@/l
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
-import { getSessionById } from "@/utils/user";
 import { verifyTwoFactor, disableTwoFactorAuth, enableTwoFactorAuth, generateRecoveryCodes, generateTotpSecret, generateTotpQrCode, firstVerification, encrypt, decrypt } from "@/lib/auth/two-factor";
 import { client } from "@/db/client";
 import { eq } from "drizzle-orm";
@@ -22,14 +21,6 @@ export const twoFactor = {
                 })
             }
 
-            const serverSession = await getSessionById(session.user.sessionId!);
-
-            if (!serverSession) {
-                throw new ActionError({
-                    code: "NOT_FOUND",
-                    message: "Session not found",
-                });
-            }
             const encryptedSecret = await client.query.UsersTable.findFirst({
                 where: eq(UsersTable.id, session.user.id),
                 columns: {
@@ -54,7 +45,7 @@ export const twoFactor = {
             const isValid = await verifyTwoFactor(
                 session.user.id,
                 code,
-                serverSession.sessionId, // Pasar el sessionId para marcarlo como verificado
+                session.user.sessionId,
             );
 
             if (!isValid) {
@@ -79,15 +70,6 @@ export const twoFactor = {
                     code: "UNAUTHORIZED",
                     message: "User not authenticated",
                 })
-            }
-
-            const serverSession = await getSessionById(session.user.sessionId!);
-
-            if (!serverSession) {
-                throw new ActionError({
-                    code: "NOT_FOUND",
-                    message: "Session not found",
-                });
             }
 
             const encryptedSecret = await client.query.UsersTable.findFirst({
@@ -174,15 +156,6 @@ export const twoFactor = {
                 })
             }
 
-            const serverSession = await getSessionById(session.user.sessionId!);
-
-            if (!serverSession) {
-                throw new ActionError({
-                    code: "NOT_FOUND",
-                    message: "Session not found",
-                });
-            }
-
             // Encriptar el secreto base32 para guardarlo
             const encryptedSecret = encrypt(secret);
 
@@ -207,4 +180,3 @@ export const twoFactor = {
         }
     })
 }
-
