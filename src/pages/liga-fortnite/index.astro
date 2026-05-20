@@ -1,22 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { getSession } from "auth-astro/server";
-
 export const prerender = false;
-
-const session = await getSession(Astro.request);
-console.log("SESSION COMPLETA:", JSON.stringify(session, null, 2));
-// Usamos username (handle único de Discord) si está disponible, sino display name
-const discordUser: string | null = (session?.user as any)?.discordUsername ?? session?.user?.name ?? null;
-
-// ── Admins ── Agregá o quitá usernames de Discord acá
-const ADMINS: string[] = [
-  "saltouruguay",
-  "xdiegouy",
-  // agregá más admins acá
-];
-
-const isAdmin = discordUser !== null && ADMINS.includes(discordUser.toLowerCase());
 
 const DIVISIONALES = [
   { id: "clasificatoria",   label: "Clasificatoria",    icon: "🛡️", cols: 3, max: 100 },
@@ -78,26 +62,16 @@ const NOVEDADES = [
             <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
               Usuario de Discord
             </label>
-            <div class="relative">
-              <input
-                id="inp-name"
-                type="text"
-                value={discordUser ?? ""}
-                placeholder={discordUser ? discordUser : "Iniciá sesión para continuar"}
-                readonly={!!discordUser}
-                maxlength="32"
-                class={`w-full px-4 py-3 rounded-xl border border-current/10 bg-current/[0.03]
-                       text-sm font-medium placeholder:opacity-30
-                       focus:outline-none focus:border-current/30 focus:bg-current/[0.05]
-                       transition-all duration-200
-                       ${discordUser ? "opacity-70 cursor-not-allowed select-none" : "opacity-40 cursor-not-allowed"}`}
-              />
-              {discordUser && (
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-[0.15em] opacity-40">
-                  ✓ Discord
-                </span>
-              )}
-            </div>
+            <input
+              id="inp-name"
+              type="text"
+              placeholder="tunombre"
+              maxlength="32"
+              class="w-full px-4 py-3 rounded-xl border border-current/10 bg-white
+                     text-sm font-medium text-black placeholder:text-black/30
+                     focus:outline-none focus:border-current/30
+                     transition-all duration-200"
+            />
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -134,37 +108,18 @@ const NOVEDADES = [
 
         <div id="msg-feedback" class="hidden text-xs font-bold uppercase tracking-[0.15em] text-center py-3 px-4 rounded-xl"></div>
 
-        {/* Botón según estado de sesión */}
-        {!discordUser ? (
-          <a
-            href="/api/auth/signin/discord"
-            class="inline-flex items-center justify-center gap-3 px-12 py-5 text-sm font-black uppercase tracking-[0.25em]
-                   text-white rounded-full
-                   bg-gradient-to-br from-[#5865F2] to-[#4752C4]
-                   hover:from-[#6a77f5] hover:to-[#5562d4]
-                   hover:scale-105 hover:shadow-[0_0_30px_rgba(88,101,242,0.5)]
-                   active:scale-95 transition-all duration-300 ease-out
-                   border border-white/20 shadow-xl w-full text-center"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
-            </svg>
-            Iniciá sesión con Discord
-          </a>
-        ) : (
-          <button
-            type="submit"
-            class="inline-block px-12 py-5 text-sm font-black uppercase tracking-[0.25em]
-                   text-white rounded-full
-                   bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700
-                   hover:from-blue-500 hover:via-indigo-500 hover:to-purple-600
-                   hover:scale-105 hover:shadow-[0_0_30px_rgba(79,70,229,0.5)]
-                   active:scale-95 transition-all duration-300 ease-out
-                   border border-white/20 shadow-xl w-full"
-          >
-            Inscribirme a la Liga
-          </button>
-        )}
+        <button
+          type="submit"
+          class="inline-block px-12 py-5 text-sm font-black uppercase tracking-[0.25em]
+                 text-white rounded-full
+                 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700
+                 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-600
+                 hover:scale-105 hover:shadow-[0_0_30px_rgba(79,70,229,0.5)]
+                 active:scale-95 transition-all duration-300 ease-out
+                 border border-white/20 shadow-xl w-full"
+        >
+          Inscribirme a la Liga
+        </button>
       </form>
     </div>
 
@@ -177,12 +132,10 @@ const NOVEDADES = [
         <span class="h-[1px] flex-1 bg-current" />
       </div>
 
-      {isAdmin && (
-        <p class="text-[10px] font-bold uppercase tracking-[0.15em] opacity-30 mb-10">
-          Arrastrá los jugadores entre divisionales para moverlos
-        </p>
-      )}
-      {!isAdmin && <div class="mb-10" />}
+      <p id="drag-tip" class="text-[10px] font-bold uppercase tracking-[0.15em] opacity-30 mb-10 hidden">
+        Arrastrá los jugadores entre divisionales para moverlos
+      </p>
+      <div id="drag-tip-spacer" class="mb-10"></div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="divisionales-grid">
         {DIVISIONALES.map((div) => (
@@ -215,18 +168,16 @@ const NOVEDADES = [
               ></div>
             </div>
 
-            {/* Botón gestionar — solo admins */}
-            {isAdmin && (
-              <button
-                onclick={`openManage('${div.id}')`}
-                class="mt-3 w-full py-2 text-[9px] font-black uppercase tracking-[0.2em]
-                       rounded-xl border border-current/10 bg-current/[0.03]
-                       hover:bg-current/[0.08] hover:border-current/25
-                       active:scale-95 transition-all duration-200 cursor-pointer opacity-60 hover:opacity-100"
-              >
-                ⚙ Gestionar jugadores
-              </button>
-            )}
+            <button
+              id={`btn-manage-${div.id}`}
+              onclick={`openManage('${div.id}')`}
+              class="mt-3 w-full py-2 text-[9px] font-black uppercase tracking-[0.2em]
+                     rounded-xl border border-current/10 bg-current/[0.03]
+                     hover:bg-current/[0.08] hover:border-current/25
+                     active:scale-95 transition-all duration-200 cursor-pointer opacity-60 hover:opacity-100 hidden admin-only"
+            >
+              ⚙ Gestionar jugadores
+            </button>
           </div>
         ))}
       </div>
@@ -239,90 +190,96 @@ const NOVEDADES = [
     </div>
 
     {/* --- PANEL ADMIN: solo visible para admins --- */}
-    {isAdmin && (
-      <div class="w-full max-w-7xl mt-16">
+    <div id="panel-admin" class="w-full max-w-7xl mt-16 hidden">
 
-        <div class="flex items-center w-full max-w-sm gap-4 mb-8 mx-auto">
-          <span class="h-[1px] flex-1 bg-current opacity-20" />
-          <div class="flex items-center gap-2">
-            <span class="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">Panel Admin</span>
-            <span class="text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-full border border-current/20 bg-current/5 opacity-60">
-              Solo vos ves esto
-            </span>
-          </div>
-          <span class="h-[1px] flex-1 bg-current opacity-20" />
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-          {DIVISIONALES.map((div) => (
-            <div class="flex flex-col gap-3 p-5 rounded-2xl border border-current/10 bg-current/[0.02]">
-
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-lg">{div.icon}</span>
-                <p class="text-xs font-black uppercase tracking-[0.15em]">{div.label}</p>
-              </div>
-
-              <div class="flex flex-col gap-2">
-                <div class="flex flex-col gap-1">
-                  <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-40">Usuario de Discord</label>
-                  <input
-                    type="text"
-                    id={`admin-discord-${div.id}`}
-                    placeholder="nombreusuario"
-                    maxlength="32"
-                    class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white
-                           text-xs font-medium text-black placeholder:text-black/30
-                           focus:outline-none focus:border-current/20
-                           transition-all duration-200"
-                  />
-                </div>
-                <div class="flex flex-col gap-1">
-                  <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-40">Epic Games ID</label>
-                  <input
-                    type="text"
-                    id={`admin-epic-${div.id}`}
-                    placeholder="NombreEnFortnite"
-                    maxlength="30"
-                    class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white
-                           text-xs font-medium text-black placeholder:text-black/30
-                           focus:outline-none focus:border-current/20
-                           transition-all duration-200"
-                  />
-                </div>
-                <div class="flex flex-col gap-1">
-                  <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-40">Plataforma</label>
-                  <select
-                    id={`admin-platform-${div.id}`}
-                    class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white
-                           text-xs font-medium text-black placeholder:text-black/30
-                           focus:outline-none focus:border-current/20
-                           transition-all duration-200 cursor-pointer"
-                  >
-                    <option value="PC">PC</option>
-                    <option value="PS5">PlayStation 5</option>
-                    <option value="Xbox">Xbox</option>
-                    <option value="Switch">Nintendo Switch</option>
-                    <option value="Mobile">Mobile</option>
-                  </select>
-                </div>
-              </div>
-
-              <div id={`admin-msg-${div.id}`} class="hidden text-[9px] font-bold uppercase tracking-[0.15em] text-center py-2 px-3 rounded-lg"></div>
-
-              <button
-                onclick={`adminAdd('${div.id}')`}
-                class="w-full py-2.5 text-[10px] font-black uppercase tracking-[0.2em]
-                       rounded-xl border border-current/15 bg-current/[0.04]
-                       hover:bg-current/[0.09] hover:border-current/30
-                       active:scale-95 transition-all duration-200 cursor-pointer"
-              >
-                + Agregar a {div.label}
-              </button>
-            </div>
-          ))}
+      {/* Header del panel */}
+      <div class="flex items-center gap-3 mb-8 px-6 py-4 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+        <span class="text-xl">⚙️</span>
+        <div class="text-left">
+          <p class="text-sm font-black uppercase tracking-[0.2em] text-amber-500">Panel de Administración</p>
+          <p class="text-[10px] opacity-60 mt-0.5">Solo los administradores ven esta sección</p>
         </div>
       </div>
-    )}
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+        {DIVISIONALES.map((div) => (
+          <div class="flex flex-col gap-4 p-6 rounded-2xl border-2 border-amber-500/20 bg-amber-500/5">
+
+            {/* Título */}
+            <div class="flex items-center gap-2 pb-3 border-b border-amber-500/20">
+              <span class="text-xl">{div.icon}</span>
+              <p class="text-sm font-black uppercase tracking-[0.15em]">{div.label}</p>
+            </div>
+
+            {/* Campos */}
+            <div class="flex flex-col gap-3">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">
+                  Usuario de Discord
+                </label>
+                <input
+                  type="text"
+                  id={`admin-discord-${div.id}`}
+                  placeholder="nombreusuario"
+                  maxlength="32"
+                  class="w-full px-3 py-2.5 rounded-xl border border-amber-500/20 bg-white
+                         text-sm font-medium text-black placeholder:text-black/30
+                         focus:outline-none focus:border-amber-500/60
+                         transition-all duration-200"
+                />
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">
+                  Epic Games ID
+                </label>
+                <input
+                  type="text"
+                  id={`admin-epic-${div.id}`}
+                  placeholder="NombreEnFortnite"
+                  maxlength="30"
+                  class="w-full px-3 py-2.5 rounded-xl border border-amber-500/20 bg-white
+                         text-sm font-medium text-black placeholder:text-black/30
+                         focus:outline-none focus:border-amber-500/60
+                         transition-all duration-200"
+                />
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">
+                  Plataforma
+                </label>
+                <select
+                  id={`admin-platform-${div.id}`}
+                  class="w-full px-3 py-2.5 rounded-xl border border-amber-500/20 bg-white
+                         text-sm font-medium text-black
+                         focus:outline-none focus:border-amber-500/60
+                         transition-all duration-200 cursor-pointer"
+                >
+                  <option value="PC">PC</option>
+                  <option value="PS5">PlayStation 5</option>
+                  <option value="Xbox">Xbox</option>
+                  <option value="Switch">Nintendo Switch</option>
+                  <option value="Mobile">Mobile</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Feedback */}
+            <div id={`admin-msg-${div.id}`} class="hidden text-[10px] font-bold uppercase tracking-[0.15em] text-center py-2 px-3 rounded-xl"></div>
+
+            {/* Botón */}
+            <button
+              onclick={`adminAdd('${div.id}')`}
+              class="w-full py-3 text-[11px] font-black uppercase tracking-[0.2em]
+                     rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-500
+                     hover:bg-amber-500/20 hover:border-amber-500/60
+                     active:scale-95 transition-all duration-200 cursor-pointer"
+            >
+              + Agregar jugador
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
 
     <div class="w-24 h-1 bg-current opacity-10 rounded-full my-20"></div>
 
@@ -346,7 +303,7 @@ const NOVEDADES = [
               <img
                 src={novedad.imagen}
                 alt={novedad.titulo}
-                class="w-full h-60 object-cover object-center transform transition-transform duration-700 group-hover/novedad:scale-105"
+                class="w-full h-40 object-cover object-center transform transition-transform duration-700 group-hover/novedad:scale-105"
                 loading={i === 0 ? "eager" : "lazy"}
               />
             </div>
@@ -383,29 +340,37 @@ const NOVEDADES = [
   <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
   {/* Panel */}
-  <div class="relative w-full max-w-lg bg-[var(--color-background-primary,#fff)] dark:bg-[#111] rounded-2xl border border-current/10 shadow-2xl overflow-hidden">
+  <div class="relative w-full max-w-lg bg-[#1a1a2e] text-white rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
 
     {/* Header */}
-    <div class="flex items-center justify-between px-6 py-4 border-b border-current/10">
-      <div>
-        <p id="modal-div-icon" class="text-xl mb-0.5"></p>
-        <h3 id="modal-title" class="text-sm font-black uppercase tracking-[0.15em]"></h3>
+    <div class="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-amber-500/10">
+      <div class="flex items-center gap-3">
+        <button onclick="closeManage()"
+          class="flex items-center gap-1.5 text-white/50 hover:text-white transition-colors cursor-pointer text-[10px] font-black uppercase tracking-[0.15em] mr-1">
+          ← Atrás
+        </button>
+        <span class="text-white/20">|</span>
+        <span class="text-xl" id="modal-div-icon"></span>
+        <div>
+          <h3 id="modal-title" class="text-sm font-black uppercase tracking-[0.15em] text-white"></h3>
+          <p class="text-[9px] text-amber-400/70 uppercase tracking-widest mt-0.5">Gestión de jugadores</p>
+        </div>
       </div>
-      <button onclick="closeManage()" class="text-current opacity-40 hover:opacity-100 transition-opacity text-xl font-bold cursor-pointer">✕</button>
+      <button onclick="closeManage()" class="text-white/40 hover:text-white transition-colors text-xl font-bold cursor-pointer leading-none">✕</button>
     </div>
 
     {/* Lista de jugadores */}
     <div id="modal-list" class="max-h-[55vh] overflow-y-auto px-4 py-3 flex flex-col gap-2"></div>
 
     {/* Empty state */}
-    <div id="modal-empty" class="hidden px-6 py-10 text-center opacity-30">
-      <p class="text-[10px] font-bold uppercase tracking-[0.2em]">Sin jugadores en esta divisional</p>
+    <div id="modal-empty" class="hidden px-6 py-10 text-center">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Sin jugadores en esta divisional</p>
     </div>
 
     {/* Footer */}
-    <div class="px-6 py-4 border-t border-current/10">
-      <p class="text-[9px] font-bold uppercase tracking-[0.15em] opacity-30 text-center">
-        Panel de administración · Solo vos ves esto
+    <div class="px-6 py-3 border-t border-white/10 bg-white/5">
+      <p class="text-[9px] font-bold uppercase tracking-[0.15em] text-white/30 text-center">
+        ⚙️ Panel de administración · Solo vos ves esto
       </p>
     </div>
   </div>
@@ -418,29 +383,36 @@ const NOVEDADES = [
   onclick="closeEditIfBackdrop(event)"
 >
   <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-  <div class="relative w-full max-w-sm bg-[var(--color-background-primary,#fff)] dark:bg-[#111] rounded-2xl border border-current/10 shadow-2xl p-6">
+  <div class="relative w-full max-w-sm bg-[#1a1a2e] text-white rounded-2xl border border-white/10 shadow-2xl p-6">
     <div class="flex items-center justify-between mb-5">
-      <h3 class="text-sm font-black uppercase tracking-[0.15em]">Editar jugador</h3>
-      <button onclick="closeEdit()" class="text-current opacity-40 hover:opacity-100 transition-opacity text-xl font-bold cursor-pointer">✕</button>
+      <div class="flex items-center gap-3">
+        <button onclick="closeEdit()"
+          class="flex items-center gap-1.5 text-white/50 hover:text-white transition-colors cursor-pointer text-[10px] font-black uppercase tracking-[0.15em]">
+          ← Atrás
+        </button>
+        <span class="text-white/20">|</span>
+        <h3 class="text-sm font-black uppercase tracking-[0.15em] text-white">Editar jugador</h3>
+      </div>
+      <button onclick="closeEdit()" class="text-white/40 hover:text-white transition-colors text-xl font-bold cursor-pointer leading-none">✕</button>
     </div>
 
     <input type="hidden" id="edit-player-id" />
 
     <div class="flex flex-col gap-3">
       <div class="flex flex-col gap-1">
-        <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-50">Usuario de Discord</label>
+        <label class="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-400">Usuario de Discord</label>
         <input id="edit-discord" type="text" maxlength="32"
-          class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white text-black text-xs font-medium focus:outline-none focus:border-current/30 transition-all" />
+          class="w-full px-3 py-2.5 rounded-xl border border-white/20 bg-white text-black text-sm font-medium placeholder:text-black/30 focus:outline-none focus:border-amber-500/50 transition-all" />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-50">Epic Games ID</label>
+        <label class="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-400">Epic Games ID</label>
         <input id="edit-epic" type="text" maxlength="30"
-          class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white text-black text-xs font-medium focus:outline-none focus:border-current/30 transition-all" />
+          class="w-full px-3 py-2.5 rounded-xl border border-white/20 bg-white text-black text-sm font-medium placeholder:text-black/30 focus:outline-none focus:border-amber-500/50 transition-all" />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-50">Plataforma</label>
+        <label class="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-400">Plataforma</label>
         <select id="edit-platform"
-          class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white text-black text-xs font-medium focus:outline-none focus:border-current/30 transition-all cursor-pointer">
+          class="w-full px-3 py-2.5 rounded-xl border border-white/20 bg-white text-black text-sm font-medium focus:outline-none focus:border-amber-500/50 transition-all cursor-pointer">
           <option value="PC">PC</option>
           <option value="PS5">PlayStation 5</option>
           <option value="Xbox">Xbox</option>
@@ -449,9 +421,9 @@ const NOVEDADES = [
         </select>
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-50">Divisional</label>
+        <label class="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-400">Divisional</label>
         <select id="edit-division"
-          class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white text-black text-xs font-medium focus:outline-none focus:border-current/30 transition-all cursor-pointer">
+          class="w-full px-3 py-2.5 rounded-xl border border-white/20 bg-white text-black text-sm font-medium focus:outline-none focus:border-amber-500/50 transition-all cursor-pointer">
           <option value="clasificatoria">🛡️ Clasificatoria</option>
           <option value="semi_profesional">⚡ Semi Profesional</option>
           <option value="profesional">👑 Profesional</option>
@@ -488,12 +460,35 @@ const NOVEDADES = [
     joinDate: string;
   }
 
+  // ── Admin check (client-side) ───────────────────────────────────────────────
+  const ADMINS = ['saltouruguay', 'xdiegouy'];
+
+  function checkAdmin() {
+    const stored = localStorage.getItem("fn_admin_discord") || "";
+    return ADMINS.includes(stored.toLowerCase());
+  }
+
+  function applyAdminUI() {
+    const admin = checkAdmin();
+    // drag tip
+    const tip = document.getElementById("drag-tip");
+    const spacer = document.getElementById("drag-tip-spacer");
+    if (tip) tip.classList.toggle("hidden", !admin);
+    if (spacer) spacer.classList.toggle("hidden", admin);
+    // panel & buttons
+    document.getElementById("panel-admin")?.classList.toggle("hidden", !admin);
+    document.querySelectorAll(".admin-only").forEach((el) => {
+      el.classList.toggle("hidden", !admin);
+    });
+  }
+
   let players: Player[] = JSON.parse(localStorage.getItem("fn_liga_players") || "[]");
   let dragId: string | null = null;
 
   function init() {
     players.forEach((p) => renderPlayerCard(p));
     updateAllCounts();
+    applyAdminUI();
   }
 
   (window as any).handleSubmit = function (e: Event) {
@@ -534,8 +529,11 @@ const NOVEDADES = [
 
     players.push(player);
     saveState();
+    // Guardar discord para reconocer admin en próximas visitas
+    localStorage.setItem("fn_admin_discord", name);
     renderPlayerCard(player);
     updateAllCounts();
+    applyAdminUI();
 
     (document.getElementById("inp-name") as HTMLInputElement).value = "";
     (document.getElementById("inp-epic") as HTMLInputElement).value = "";
@@ -599,3 +597,294 @@ const NOVEDADES = [
 
     grid.appendChild(card);
   }
+
+  (window as any).onDragOver = function (e: DragEvent) {
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).classList.add("bg-current/[0.05]", "border-current/30", "scale-[1.005]");
+  };
+
+  (window as any).onDragLeave = function (e: DragEvent) {
+    (e.currentTarget as HTMLElement).classList.remove("bg-current/[0.05]", "border-current/30", "scale-[1.005]");
+  };
+
+  (window as any).onDrop = function (e: DragEvent) {
+    e.preventDefault();
+    const zone = (e.currentTarget as HTMLElement);
+    zone.classList.remove("bg-current/[0.05]", "border-current/30", "scale-[1.005]");
+
+    if (!dragId) return;
+
+    const targetDiv = zone.dataset.division!;
+    const player = players.find((p) => p.id === dragId);
+    if (!player || player.division === targetDiv) return;
+
+    // Check max capacity of target division
+    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
+    const currentCount = players.filter((p) => p.division === targetDiv).length;
+    if (currentCount >= maxMap[targetDiv]) {
+      const labelMap: Record<string, string> = { clasificatoria: "Clasificatoria", semi_profesional: "Semi Profesional", profesional: "Profesional" };
+      showMsg(`${labelMap[targetDiv]} está llena (máximo ${maxMap[targetDiv]} jugadores)`, "error");
+      return;
+    }
+
+    const oldDiv = player.division;
+    player.division = targetDiv;
+
+    saveState();
+    renderPlayerCard(player);
+
+    // Si la división origen quedó vacía, mostrar empty y ocultar grid
+    const remaining = players.filter((p) => p.division === oldDiv);
+    if (remaining.length === 0) {
+      document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
+      document.getElementById(`grid-${oldDiv}`)!.classList.add("hidden");
+    }
+
+    updateAllCounts();
+  };
+
+  function updateAllCounts() {
+    ["clasificatoria", "semi_profesional", "profesional"].forEach((div) => {
+      const count = players.filter((p) => p.division === div).length;
+      const el = document.getElementById(`count-${div}`)!;
+      const maxMap2: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
+      const max = maxMap2[div] || 100;
+      el.textContent = `${count} / ${max} jugadores`;
+    });
+  }
+
+  function saveState() {
+    localStorage.setItem("fn_liga_players", JSON.stringify(players));
+  }
+
+  // ── Admin: agregar jugador manualmente ────────────────────────────────────
+  (window as any).adminAdd = function (divId: string) {
+    const nameEl = document.getElementById(`admin-discord-${divId}`) as HTMLInputElement;
+    const epicEl = document.getElementById(`admin-epic-${divId}`) as HTMLInputElement;
+    const platformEl = document.getElementById(`admin-platform-${divId}`) as HTMLSelectElement;
+    const msgEl = document.getElementById(`admin-msg-${divId}`)!;
+
+    const name = nameEl.value.trim();
+    const epic = epicEl.value.trim();
+    const platform = platformEl.value;
+
+    const showAdminMsg = (text: string, type: "success" | "error") => {
+      msgEl.textContent = type === "success" ? `✓ ${text}` : `⚠ ${text}`;
+      msgEl.className = `text-[9px] font-bold uppercase tracking-[0.15em] text-center py-2 px-3 rounded-lg ${
+        type === "success"
+          ? "bg-green-500/10 text-green-400 border border-green-500/20"
+          : "bg-red-500/10 text-red-400 border border-red-500/20"
+      }`;
+      setTimeout(() => { msgEl.className = "hidden"; }, 3500);
+    };
+
+    if (!name || !epic) {
+      showAdminMsg("Completá Discord y Epic ID", "error");
+      return;
+    }
+    if (players.find((p) => p.epic.toLowerCase() === epic.toLowerCase())) {
+      showAdminMsg("Epic ID ya registrado", "error");
+      return;
+    }
+    if (players.find((p) => p.name.toLowerCase() === name.toLowerCase())) {
+      showAdminMsg("Discord ya registrado", "error");
+      return;
+    }
+
+    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
+    const currentCount = players.filter((p) => p.division === divId).length;
+    if (currentCount >= maxMap[divId]) {
+      showAdminMsg(`División llena (máx. ${maxMap[divId]})`, "error");
+      return;
+    }
+
+    const player: Player = {
+      id: Date.now().toString(),
+      name,
+      epic,
+      platform,
+      division: divId,
+      joinDate: new Date().toLocaleDateString("es-UY", { day: "2-digit", month: "2-digit", year: "2-digit" }),
+    };
+
+    players.push(player);
+    saveState();
+    renderPlayerCard(player);
+    updateAllCounts();
+
+    nameEl.value = "";
+    epicEl.value = "";
+    showAdminMsg(`${name} agregado`, "success");
+  };
+
+  // ── Modal gestión ──────────────────────────────────────────────────────────
+  let currentManageDiv = "";
+
+  (window as any).openManage = function (divId: string) {
+    currentManageDiv = divId;
+    const divMeta: Record<string, { label: string; icon: string }> = {
+      clasificatoria:   { label: "Clasificatoria",   icon: "🛡️" },
+      semi_profesional: { label: "Semi Profesional", icon: "⚡" },
+      profesional:      { label: "Profesional",      icon: "👑" },
+    };
+    const meta = divMeta[divId];
+    document.getElementById("modal-title")!.textContent = meta.label;
+    document.getElementById("modal-div-icon")!.textContent = meta.icon;
+    refreshModalList(divId);
+    const modal = document.getElementById("manage-modal")!;
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    document.body.style.overflow = "hidden";
+  };
+
+  function refreshModalList(divId: string) {
+    const list = document.getElementById("modal-list")!;
+    const empty = document.getElementById("modal-empty")!;
+    const divPlayers = players.filter((p) => p.division === divId);
+    list.innerHTML = "";
+
+    if (divPlayers.length === 0) {
+      empty.classList.remove("hidden");
+      return;
+    }
+    empty.classList.add("hidden");
+
+    divPlayers.forEach((p) => {
+      const row = document.createElement("div");
+      row.className = "flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all";
+      row.innerHTML = `
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-bold text-white truncate">${p.name}</p>
+          <p class="text-[10px] text-white/40 truncate mt-0.5">(${p.epic}) · ${p.platform}</p>
+        </div>
+        <button onclick="openEdit('${p.id}')"
+          class="flex-shrink-0 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.15em]
+                 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400
+                 hover:bg-amber-500/25 active:scale-95 transition-all cursor-pointer">
+          Editar
+        </button>
+        <button onclick="deletePlayer('${p.id}')"
+          class="flex-shrink-0 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.15em]
+                 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400
+                 hover:bg-red-500/25 active:scale-95 transition-all cursor-pointer">
+          Borrar
+        </button>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  (window as any).closeManage = function () {
+    const modal = document.getElementById("manage-modal")!;
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    document.body.style.overflow = "";
+  };
+
+  (window as any).closeManageIfBackdrop = function (e: MouseEvent) {
+    if (e.target === document.getElementById("manage-modal")) {
+      (window as any).closeManage();
+    }
+  };
+
+  (window as any).deletePlayer = function (id: string) {
+    const p = players.find((x) => x.id === id);
+    if (!p) return;
+    const oldDiv = p.division;
+    players = players.filter((x) => x.id !== id);
+    saveState();
+    document.getElementById(`player-${id}`)?.remove();
+    if (players.filter((x) => x.division === oldDiv).length === 0) {
+      document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
+      document.getElementById(`grid-${oldDiv}`)!.classList.add("hidden");
+    }
+    updateAllCounts();
+    refreshModalList(currentManageDiv);
+  };
+
+  // ── Modal edición ───────────────────────────────────────────────────────────
+  (window as any).openEdit = function (id: string) {
+    const p = players.find((x) => x.id === id);
+    if (!p) return;
+    (document.getElementById("edit-player-id") as HTMLInputElement).value = p.id;
+    (document.getElementById("edit-discord") as HTMLInputElement).value = p.name;
+    (document.getElementById("edit-epic") as HTMLInputElement).value = p.epic;
+    (document.getElementById("edit-platform") as HTMLSelectElement).value = p.platform;
+    (document.getElementById("edit-division") as HTMLSelectElement).value = p.division;
+    document.getElementById("edit-msg")!.className = "hidden";
+    const modal = document.getElementById("edit-modal")!;
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  };
+
+  (window as any).closeEdit = function () {
+    const modal = document.getElementById("edit-modal")!;
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  };
+
+  (window as any).closeEditIfBackdrop = function (e: MouseEvent) {
+    if (e.target === document.getElementById("edit-modal")) {
+      (window as any).closeEdit();
+    }
+  };
+
+  (window as any).saveEdit = function () {
+    const id = (document.getElementById("edit-player-id") as HTMLInputElement).value;
+    const newName = (document.getElementById("edit-discord") as HTMLInputElement).value.trim();
+    const newEpic = (document.getElementById("edit-epic") as HTMLInputElement).value.trim();
+    const newPlatform = (document.getElementById("edit-platform") as HTMLSelectElement).value;
+    const newDivision = (document.getElementById("edit-division") as HTMLSelectElement).value;
+    const msgEl = document.getElementById("edit-msg")!;
+
+    const showEditMsg = (text: string, type: "success" | "error") => {
+      msgEl.textContent = type === "success" ? `✓ ${text}` : `⚠ ${text}`;
+      msgEl.className = `text-[9px] font-bold uppercase tracking-[0.15em] text-center py-2 px-3 rounded-lg ${
+        type === "success"
+          ? "bg-green-500/10 text-green-400 border border-green-500/20"
+          : "bg-red-500/10 text-red-400 border border-red-500/20"
+      }`;
+    };
+
+    if (!newName || !newEpic) { showEditMsg("Completá todos los campos", "error"); return; }
+
+    const dup = players.find((x) => x.id !== id && (
+      x.epic.toLowerCase() === newEpic.toLowerCase() ||
+      x.name.toLowerCase() === newName.toLowerCase()
+    ));
+    if (dup) { showEditMsg("Discord o Epic ID ya en uso", "error"); return; }
+
+    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
+    const p = players.find((x) => x.id === id)!;
+    if (p.division !== newDivision) {
+      const count = players.filter((x) => x.division === newDivision).length;
+      if (count >= maxMap[newDivision]) {
+        showEditMsg(`${newDivision.replace("_", " ")} está llena`, "error");
+        return;
+      }
+    }
+
+    const oldDiv = p.division;
+    p.name = newName;
+    p.epic = newEpic;
+    p.platform = newPlatform;
+    p.division = newDivision;
+
+    saveState();
+    renderPlayerCard(p);
+
+    if (oldDiv !== newDivision && players.filter((x) => x.division === oldDiv).length === 0) {
+      document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
+      document.getElementById(`grid-${oldDiv}`)!.classList.add("hidden");
+    }
+
+    updateAllCounts();
+    showEditMsg("Guardado", "success");
+    setTimeout(() => {
+      (window as any).closeEdit();
+      refreshModalList(currentManageDiv);
+    }, 800);
+  };
+
+  document.addEventListener("DOMContentLoaded", init);
+</script>
