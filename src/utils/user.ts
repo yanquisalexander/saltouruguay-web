@@ -1,9 +1,9 @@
 import { SALTO_BROADCASTER_ID } from "@/config";
 import { client } from "@/db/client";
-import { MemberCards, SessionsTable, UserAchievementsTable, UsersTable, UserSuspensionsTable } from "@/db/schema";
+import { MemberCards, UserAchievementsTable, UsersTable, UserSuspensionsTable } from "@/db/schema";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
 import { createUserApiClient, createStaticAuthProvider } from "@/lib/Twitch";
-import { and, count, eq, gt, ilike, lt, or, desc, type InferInsertModel } from "drizzle-orm";
+import { and, count, eq, gt, ilike, lt, or, desc } from "drizzle-orm";
 import { unlockAchievement } from "./achievements";
 import { ACHIEVEMENTS } from "@/consts/Achievements";
 import { experimental_AstroContainer } from "astro/container";
@@ -254,64 +254,14 @@ export const getUserSuspensions = async (userId: number) => {
 }
 
 
-export const saveSession = async (
-    userId: number,
-    sessionId: string,
-    userAgent: string,
-    ip: string
-) => {
-    try {
-        console.log("Saving session for user:", userId, "Session ID:", sessionId);
-        const [newSession] = await client
-            .insert(SessionsTable)
-            .values({
-                userId,
-                sessionId,
-                userAgent,
-                ip,
-                lastActivity: new Date(),
-            })
-            .returning();
-
-
-
-        return newSession;
-    } catch (error) {
-        console.error("Error saving session:", error);
-        throw error;
-    }
-};
-
-export const updateSession = async (sessionId: string, updates: Partial<InferInsertModel<typeof SessionsTable>>) => {
-    try {
-        const updatedSession = await client
-            .update(SessionsTable)
-            .set(updates)
-            .where(eq(SessionsTable.sessionId, sessionId))
-            .returning();
-
-        return updatedSession[0];
-    } catch (error) {
-        console.error("Error updating session:", error);
-        throw error;
-    }
-};
-
-export const sendNewLoginDetectedEmail = async (sessionId: string, request: Request) => {
-    // Originalmente, las sesiones no tienen
-    // datos como IP, ya que no tenemos
-    // acceso a la request durante el jwt en
-    // auth-astro
-    // Por lo que en el callback, llamamos a
-    // este método para actualizar la sesión, y enviar
-    // el email
-
-    const session = await getSessionById(sessionId);
-    if (!session) return;
-
-    const user = session.user;
-    if (!user) return;
-
+/**
+ * Sends a "new login detected" notification email to the user.
+ *
+ * Previously this function accepted a `sessionId` and looked up the user in
+ * `SessionsTable`.  SessionsTable has been removed; the caller now passes the
+ * user's email address directly (available from the auth session).
+ */
+export const sendNewLoginDetectedEmail = async (userEmail: string, request: Request) => {
     const IP_HEADERS = [
         "x-vercel-forwarded-for",
         "x-forwarded-for",
@@ -323,11 +273,9 @@ export const sendNewLoginDetectedEmail = async (sessionId: string, request: Requ
     ];
 
     const clientIp = IP_HEADERS.map(header => request.headers.get(header)).find(ip => ip !== undefined) ?? "unknown";
-    const userAgent = request.headers.get("user-agent")!;
-    // Actualiza la sesión con la nueva información
-    await updateSession(sessionId, { ip: clientIp!, userAgent });
+    const userAgent = request.headers.get("user-agent") ?? "Unknown";
 
-    const ipInfo = await getIpInfo(clientIp!);
+    const ipInfo = await getIpInfo(clientIp);
     const container = await experimental_AstroContainer.create();
     const emailBody = await container.renderToString(NewLoginDetected, {
         props: {
@@ -338,87 +286,13 @@ export const sendNewLoginDetectedEmail = async (sessionId: string, request: Requ
         }
     });
 
-
     const emailSubject = "Nuevo inicio de sesión detectado";
 
-    if (user.email && import.meta.env.PROD) {
-        await sendNotificationEmail(
-            user.email,
-            emailSubject,
-            emailBody,
-        );
+    if (userEmail && import.meta.env.PROD) {
+        await sendNotificationEmail(userEmail, emailSubject, emailBody);
     }
 }
 
-export const destroySession = async (sessionId: string) => {
-    try {
-        const deletedSession = await client
-            .delete(SessionsTable)
-            .where(eq(SessionsTable.sessionId, sessionId))
-            .returning({ deletedSessionId: SessionsTable.sessionId });
-
-        return deletedSession[0]?.deletedSessionId;
-    } catch (error) {
-        console.error("Error destroying session:", error);
-        throw error;
-    }
-};
-
-export const getSessionById = async (sessionId: string) => {
-    try {
-        const session = await client.query.SessionsTable.findFirst({
-            where: eq(SessionsTable.sessionId, sessionId),
-            with: {
-                user: {
-                    columns: {
-                        id: true,
-                        username: true,
-                        email: true,
-                        displayName: true,
-                        avatar: true,
-                    }
-                }
-            }
-        });
-
-        return session;
-    } catch (error) {
-        console.error("Error fetching session:", error);
-        throw error;
-    }
-};
-
-export const updateSessionActivity = async (sessionId: string) => {
-    try {
-        const updatedSession = await client
-            .update(SessionsTable)
-            .set({
-                lastActivity: new Date(),
-                updatedAt: new Date()
-            })
-            .where(eq(SessionsTable.sessionId, sessionId))
-            .returning();
-
-        return updatedSession[0];
-    } catch (error) {
-        console.error("Error updating session activity:", error);
-        throw error;
-    }
-};
-
-export const destroyAllSessions = async (userId: number) => {
-    try {
-        const deletedSessions = await client
-            .delete(SessionsTable)
-            .where(eq(SessionsTable.userId, userId))
-            .returning({ deletedSessionId: SessionsTable.sessionId });
-
-        return deletedSessions;
-    } catch (error) {
-        console.error("Error destroying all sessions:", error);
-        throw error;
-    }
-}
 export const handleTwitchRevoke = async (twitchId: string) => {
     const user = await client.query.UsersTable.findFirst({
         where: eq(UsersTable.twitchId, twitchId),
@@ -426,14 +300,10 @@ export const handleTwitchRevoke = async (twitchId: string) => {
 
     if (!user) return;
 
-    /* 
-     Revoke all sessions for this user
-    */
-
-    await client
-        .delete(SessionsTable)
-        .where(eq(SessionsTable.userId, user.id))
-        .execute();
+    // Sessions are now managed entirely by better-auth; they will naturally
+    // become invalid when the revoked Twitch token is next validated.
+    // TODO: call auth.api.revokeUserSessions once we have a better-auth user
+    //       ID lookup by twitchId.
 
 
     // Send an email to the user informing them that their Twitch account has been revoked
