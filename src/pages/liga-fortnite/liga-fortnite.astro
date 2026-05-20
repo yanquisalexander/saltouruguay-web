@@ -1,27 +1,12 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 
-export const prerender = false; // necesita interactividad en runtime
+export const prerender = false;
 
 const DIVISIONALES = [
-  {
-    id: "clasificatoria",
-    label: "Clasificatoria",
-    description: "División de entrada. Todos los nuevos jugadores comienzan aquí.",
-    icon: "🛡️",
-  },
-  {
-    id: "semi_profesional",
-    label: "Semi Profesional",
-    description: "Jugadores con experiencia comprobada en competitivo.",
-    icon: "⚡",
-  },
-  {
-    id: "profesional",
-    label: "Profesional",
-    description: "La élite de la liga. Solo los mejores llegan aquí.",
-    icon: "👑",
-  },
+  { id: "clasificatoria",   label: "Clasificatoria",    icon: "🛡️" },
+  { id: "semi_profesional", label: "Semi Profesional",  icon: "⚡" },
+  { id: "profesional",      label: "Profesional",       icon: "👑" },
 ];
 ---
 
@@ -59,13 +44,13 @@ const DIVISIONALES = [
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex flex-col gap-1.5">
             <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
-              Nombre / Apodo
+              Usuario de Discord
             </label>
             <input
               id="inp-name"
               type="text"
-              placeholder="Tu nombre"
-              maxlength="30"
+              placeholder="tunombre"
+              maxlength="32"
               class="w-full px-4 py-3 rounded-xl border border-current/10 bg-current/[0.03]
                      text-sm font-medium placeholder:opacity-30
                      focus:outline-none focus:border-current/30 focus:bg-current/[0.05]
@@ -89,7 +74,7 @@ const DIVISIONALES = [
             />
           </div>
 
-          <div class="flex flex-col gap-1.5">
+          <div class="flex flex-col gap-1.5 md:col-span-2">
             <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
               Plataforma
             </label>
@@ -105,23 +90,6 @@ const DIVISIONALES = [
               <option value="Xbox">Xbox</option>
               <option value="Switch">Nintendo Switch</option>
               <option value="Mobile">Mobile</option>
-            </select>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
-              Modo preferido
-            </label>
-            <select
-              id="inp-mode"
-              class="w-full px-4 py-3 rounded-xl border border-current/10 bg-current/[0.03]
-                     text-sm font-medium
-                     focus:outline-none focus:border-current/30 focus:bg-current/[0.05]
-                     transition-all duration-200 cursor-pointer"
-            >
-              <option value="Solo">Solo</option>
-              <option value="Dúo">Dúo</option>
-              <option value="Escuadra">Escuadra</option>
             </select>
           </div>
         </div>
@@ -163,13 +131,9 @@ const DIVISIONALES = [
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="divisionales-grid">
         {DIVISIONALES.map((div) => (
           <div class="flex flex-col items-center">
-            {/* Header de la divisional */}
             <div class="w-full flex flex-col items-center mb-6">
               <span class="text-2xl mb-2">{div.icon}</span>
               <h2 class="text-lg font-black uppercase tracking-tight">{div.label}</h2>
-              <p class="text-[10px] font-medium opacity-40 uppercase tracking-widest mt-1 max-w-[200px]">
-                {div.description}
-              </p>
               <span
                 id={`count-${div.id}`}
                 class="mt-2 text-[10px] font-bold uppercase tracking-[0.2em] opacity-50"
@@ -178,13 +142,11 @@ const DIVISIONALES = [
               </span>
             </div>
 
-            {/* Zona de drop */}
             <div
               id={`zone-${div.id}`}
               data-division={div.id}
               class="w-full min-h-[300px] rounded-2xl border border-current/10 bg-current/[0.01]
-                     flex flex-col gap-3 p-4
-                     transition-all duration-200"
+                     flex flex-col gap-3 p-4 transition-all duration-200"
               ondragover="onDragOver(event)"
               ondragleave="onDragLeave(event)"
               ondrop="onDrop(event)"
@@ -210,13 +172,11 @@ const DIVISIONALES = [
 </Layout>
 
 <script>
-  // ── Estado global ────────────────────────────────────────────────────────────
   interface Player {
     id: string;
     name: string;
     epic: string;
     platform: string;
-    mode: string;
     division: string;
     joinDate: string;
   }
@@ -224,23 +184,20 @@ const DIVISIONALES = [
   let players: Player[] = JSON.parse(localStorage.getItem("fn_liga_players") || "[]");
   let dragId: string | null = null;
 
-  // ── Inicialización ───────────────────────────────────────────────────────────
   function init() {
     players.forEach((p) => renderPlayerCard(p));
     updateAllCounts();
   }
 
-  // ── Inscripción ──────────────────────────────────────────────────────────────
   (window as any).handleSubmit = function (e: Event) {
     e.preventDefault();
 
     const name = (document.getElementById("inp-name") as HTMLInputElement).value.trim();
     const epic = (document.getElementById("inp-epic") as HTMLInputElement).value.trim();
     const platform = (document.getElementById("inp-platform") as HTMLSelectElement).value;
-    const mode = (document.getElementById("inp-mode") as HTMLSelectElement).value;
 
     if (!name || !epic) {
-      showMsg("Completá tu nombre y Epic Games ID", "error");
+      showMsg("Completá tu usuario de Discord y Epic Games ID", "error");
       return;
     }
 
@@ -249,12 +206,16 @@ const DIVISIONALES = [
       return;
     }
 
+    if (players.find((p) => p.name.toLowerCase() === name.toLowerCase())) {
+      showMsg("Ya existe un jugador con ese usuario de Discord", "error");
+      return;
+    }
+
     const player: Player = {
       id: Date.now().toString(),
       name,
       epic,
       platform,
-      mode,
       division: "clasificatoria",
       joinDate: new Date().toLocaleDateString("es-UY", { day: "2-digit", month: "2-digit", year: "2-digit" }),
     };
@@ -278,12 +239,9 @@ const DIVISIONALES = [
         ? "bg-green-500/10 text-green-400 border border-green-500/20"
         : "bg-red-500/10 text-red-400 border border-red-500/20"
     }`;
-    setTimeout(() => {
-      el.className = "hidden";
-    }, 3500);
+    setTimeout(() => { el.className = "hidden"; }, 3500);
   }
 
-  // ── Render tarjeta de jugador ────────────────────────────────────────────────
   function getInitials(name: string) {
     return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "??";
   }
@@ -316,7 +274,7 @@ const DIVISIONALES = [
       <div class="flex-1 min-w-0 text-left">
         <p class="text-sm font-bold leading-tight truncate">${player.name}</p>
         <p class="text-[10px] font-medium opacity-40 uppercase tracking-widest truncate">
-          ${platformIcon[player.platform] || "🎮"} ${player.platform} · ${player.mode} · ${player.joinDate}
+          ${platformIcon[player.platform] || "🎮"} ${player.platform} · ${player.joinDate}
         </p>
       </div>
       <div class="opacity-20 group-hover/card:opacity-50 transition-opacity flex-shrink-0 text-lg select-none">⠿</div>
@@ -334,16 +292,13 @@ const DIVISIONALES = [
     zone.appendChild(card);
   }
 
-  // ── Drag & Drop ──────────────────────────────────────────────────────────────
   (window as any).onDragOver = function (e: DragEvent) {
     e.preventDefault();
-    const zone = (e.currentTarget as HTMLElement);
-    zone.classList.add("bg-current/[0.05]", "border-current/30", "scale-[1.01]");
+    (e.currentTarget as HTMLElement).classList.add("bg-current/[0.05]", "border-current/30", "scale-[1.01]");
   };
 
   (window as any).onDragLeave = function (e: DragEvent) {
-    const zone = (e.currentTarget as HTMLElement);
-    zone.classList.remove("bg-current/[0.05]", "border-current/30", "scale-[1.01]");
+    (e.currentTarget as HTMLElement).classList.remove("bg-current/[0.05]", "border-current/30", "scale-[1.01]");
   };
 
   (window as any).onDrop = function (e: DragEvent) {
@@ -363,16 +318,13 @@ const DIVISIONALES = [
     saveState();
     renderPlayerCard(player);
 
-    // Mostrar empty en la zona origen si quedó vacía
-    const remaining = players.filter((p) => p.division === oldDiv);
-    if (remaining.length === 0) {
+    if (players.filter((p) => p.division === oldDiv).length === 0) {
       document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
     }
 
     updateAllCounts();
   };
 
-  // ── Utilidades ───────────────────────────────────────────────────────────────
   function updateAllCounts() {
     ["clasificatoria", "semi_profesional", "profesional"].forEach((div) => {
       const count = players.filter((p) => p.division === div).length;
@@ -385,6 +337,5 @@ const DIVISIONALES = [
     localStorage.setItem("fn_liga_players", JSON.stringify(players));
   }
 
-  // ── Arrancar ─────────────────────────────────────────────────────────────────
   document.addEventListener("DOMContentLoaded", init);
 </script>
