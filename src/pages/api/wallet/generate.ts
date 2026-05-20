@@ -1,5 +1,5 @@
 import { getSession } from 'auth-astro/server';
-import jwt from 'jsonwebtoken';
+import { signRs256Jwt } from '@/lib/jwt';
 
 /**
  * Endpoint para generar un Save URL (Save to Google Wallet) firmado con la Service Account.
@@ -7,9 +7,6 @@ import jwt from 'jsonwebtoken';
  * - GOOGLE_SERVICE_ACCOUNT_KEY: contenido JSON de la Service Account (como string). Ej: cat key.json | base64 o JSON directo.
  * - WALLET_ISSUER_ID: issuerId provisto por Google Wallet (numero)
  * - WALLET_CLASS_SUFFIX (opcional): sufijo para classId. Default: 'member_card_v1'
- *
- * Dependencias:
- *   pnpm add jsonwebtoken
  *
  * Seguridad: NO almacenar la clave en el repo. Usa secrets del proveedor (Vercel/Cloudflare/etc.).
  */
@@ -99,7 +96,7 @@ export async function POST({ request }: { request: Request }) {
         };
 
         // Firmar JWT con RS256
-        const token = jwt.sign(jwtBody, privateKey, { algorithm: 'RS256' });
+        const token = await signRs256Jwt(jwtBody, privateKey);
 
         const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
 

@@ -1813,7 +1813,7 @@ export const eliminatePlayer = async (playerNumber: number) => {
         // Envía el evento a Pusher con los datos actualizados.
         await pusher.trigger("streamer-wars", "player-eliminated", {
             playerNumber,
-            audioBase64: audioPayload,
+            audioBase64: import.meta.env.DEV ? null : audioPayload,
         });
 
         try {
@@ -1980,7 +1980,7 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
 
         console.log({ user });
 
-        if (!user || !user.discordId) {
+        if (import.meta.env.PROD && (!user || !user.discordId)) {
             return {
                 success: false,
                 error: "Parece que tu usuario no está asociado a Discord. Por favor, contacta a un moderador",
@@ -2109,7 +2109,7 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
             .execute()
             .then((res) => res[0]);
 
-        if (!user || !user.discordId) {
+        if (import.meta.env.PROD && (!user || !user.discordId)) {
             return {
                 success: false,
                 error: "Parece que el usuario no está asociado a Discord. No se pudo remover el rol",

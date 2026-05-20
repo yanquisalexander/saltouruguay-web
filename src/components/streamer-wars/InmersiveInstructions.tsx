@@ -3,8 +3,13 @@ import pusherClient from "@/services/pusher.client";
 import { cloneElement, type JSX } from "preact";
 import { useEffect, useState, useRef } from "preact/hooks";
 import { INSTRUCTIONS_REGISTRY, type ScriptItem } from "./InmersiveInstructionsConst";
+import type { Players } from "../admin/streamer-wars/Players";
 
-export const InmersiveInstructions = () => {
+interface InmersiveInstructionsProps {
+    players?: Players[];
+}
+
+export const InmersiveInstructions = ({ players }: InmersiveInstructionsProps) => {
     // Estado para el script activo actual
     const [activeScript, setActiveScript] = useState<ScriptItem[] | null>(null);
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -154,7 +159,7 @@ export const InmersiveInstructions = () => {
                     {currentItem?.component && (
                         <div className="animate-fade-in-up">
                             {typeof currentItem.component === "function"
-                                ? cloneElement(currentItem.component({}), { key: currentIndex })
+                                ? cloneElement(currentItem.component({ players }), { key: currentIndex })
                                 : cloneElement(currentItem.component as JSX.Element, { key: currentIndex })}
                         </div>
                     )}
