@@ -8,6 +8,15 @@ const session = await getSession(Astro.request);
 // Usamos username (handle único de Discord) si está disponible, sino display name
 const discordUser: string | null = (session?.user as any)?.discordUsername ?? session?.user?.name ?? null;
 
+// ── Admins ── Agregá o quitá usernames de Discord acá
+const ADMINS: string[] = [
+  "saltouruguay",
+  "xdiegouy",
+  // agregá más admins acá
+];
+
+const isAdmin = discordUser !== null && ADMINS.includes(discordUser.toLowerCase());
+
 const DIVISIONALES = [
   { id: "clasificatoria",   label: "Clasificatoria",    icon: "🛡️", cols: 3, max: 100 },
   { id: "semi_profesional", label: "Semi Profesional",  icon: "⚡",  cols: 1, max: 16  },
@@ -97,9 +106,9 @@ const NOVEDADES = [
               type="text"
               placeholder="NombreEnFortnite"
               maxlength="30"
-              class="w-full px-4 py-3 rounded-xl border border-current/10 bg-current/[0.03]
-                     text-sm font-medium placeholder:opacity-30
-                     focus:outline-none focus:border-current/30 focus:bg-current/[0.05]
+              class="w-full px-4 py-3 rounded-xl border border-current/10 bg-white
+                     text-sm font-medium text-black placeholder:text-black/30
+                     focus:outline-none focus:border-current/30
                      transition-all duration-200"
             />
           </div>
@@ -108,9 +117,9 @@ const NOVEDADES = [
             <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">Plataforma</label>
             <select
               id="inp-platform"
-              class="w-full px-4 py-3 rounded-xl border border-current/10 bg-current/[0.03]
-                     text-sm font-medium
-                     focus:outline-none focus:border-current/30 focus:bg-current/[0.05]
+              class="w-full px-4 py-3 rounded-xl border border-current/10 bg-white
+                     text-sm font-medium text-black
+                     focus:outline-none focus:border-current/30
                      transition-all duration-200 cursor-pointer"
             >
               <option value="PC">PC</option>
@@ -167,9 +176,12 @@ const NOVEDADES = [
         <span class="h-[1px] flex-1 bg-current" />
       </div>
 
-      <p class="text-[10px] font-bold uppercase tracking-[0.15em] opacity-30 mb-10">
-        Arrastrá los jugadores entre divisionales para moverlos
-      </p>
+      {isAdmin && (
+        <p class="text-[10px] font-bold uppercase tracking-[0.15em] opacity-30 mb-10">
+          Arrastrá los jugadores entre divisionales para moverlos
+        </p>
+      )}
+      {!isAdmin && <div class="mb-10" />}
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="divisionales-grid">
         {DIVISIONALES.map((div) => (
@@ -201,6 +213,19 @@ const NOVEDADES = [
                 class={`grid gap-1.5 w-full hidden ${div.cols === 1 ? "grid-cols-1" : "grid-cols-3"}`}
               ></div>
             </div>
+
+            {/* Botón gestionar — solo admins */}
+            {isAdmin && (
+              <button
+                onclick={`openManage('${div.id}')`}
+                class="mt-3 w-full py-2 text-[9px] font-black uppercase tracking-[0.2em]
+                       rounded-xl border border-current/10 bg-current/[0.03]
+                       hover:bg-current/[0.08] hover:border-current/25
+                       active:scale-95 transition-all duration-200 cursor-pointer opacity-60 hover:opacity-100"
+              >
+                ⚙ Gestionar jugadores
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -211,6 +236,92 @@ const NOVEDADES = [
         </p>
       </div>
     </div>
+
+    {/* --- PANEL ADMIN: solo visible para admins --- */}
+    {isAdmin && (
+      <div class="w-full max-w-7xl mt-16">
+
+        <div class="flex items-center w-full max-w-sm gap-4 mb-8 mx-auto">
+          <span class="h-[1px] flex-1 bg-current opacity-20" />
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">Panel Admin</span>
+            <span class="text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-full border border-current/20 bg-current/5 opacity-60">
+              Solo vos ves esto
+            </span>
+          </div>
+          <span class="h-[1px] flex-1 bg-current opacity-20" />
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+          {DIVISIONALES.map((div) => (
+            <div class="flex flex-col gap-3 p-5 rounded-2xl border border-current/10 bg-current/[0.02]">
+
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-lg">{div.icon}</span>
+                <p class="text-xs font-black uppercase tracking-[0.15em]">{div.label}</p>
+              </div>
+
+              <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-1">
+                  <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-40">Usuario de Discord</label>
+                  <input
+                    type="text"
+                    id={`admin-discord-${div.id}`}
+                    placeholder="nombreusuario"
+                    maxlength="32"
+                    class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white
+                           text-xs font-medium text-black placeholder:text-black/30
+                           focus:outline-none focus:border-current/20
+                           transition-all duration-200"
+                  />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-40">Epic Games ID</label>
+                  <input
+                    type="text"
+                    id={`admin-epic-${div.id}`}
+                    placeholder="NombreEnFortnite"
+                    maxlength="30"
+                    class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white
+                           text-xs font-medium text-black placeholder:text-black/30
+                           focus:outline-none focus:border-current/20
+                           transition-all duration-200"
+                  />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-40">Plataforma</label>
+                  <select
+                    id={`admin-platform-${div.id}`}
+                    class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white
+                           text-xs font-medium text-black placeholder:text-black/30
+                           focus:outline-none focus:border-current/20
+                           transition-all duration-200 cursor-pointer"
+                  >
+                    <option value="PC">PC</option>
+                    <option value="PS5">PlayStation 5</option>
+                    <option value="Xbox">Xbox</option>
+                    <option value="Switch">Nintendo Switch</option>
+                    <option value="Mobile">Mobile</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id={`admin-msg-${div.id}`} class="hidden text-[9px] font-bold uppercase tracking-[0.15em] text-center py-2 px-3 rounded-lg"></div>
+
+              <button
+                onclick={`adminAdd('${div.id}')`}
+                class="w-full py-2.5 text-[10px] font-black uppercase tracking-[0.2em]
+                       rounded-xl border border-current/15 bg-current/[0.04]
+                       hover:bg-current/[0.09] hover:border-current/30
+                       active:scale-95 transition-all duration-200 cursor-pointer"
+              >
+                + Agregar a {div.label}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
 
     <div class="w-24 h-1 bg-current opacity-10 rounded-full my-20"></div>
 
@@ -230,11 +341,11 @@ const NOVEDADES = [
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
         {NOVEDADES.map((novedad, i) => (
           <div class="group/novedad flex flex-col rounded-2xl border border-current/10 bg-current/[0.01] hover:bg-current/[0.04] hover:border-current/20 overflow-hidden transition-all duration-300">
-            <div class="relative w-full aspect-video overflow-hidden bg-current/5">
+            <div class="relative w-full overflow-hidden bg-current/5 rounded-t-2xl">
               <img
                 src={novedad.imagen}
                 alt={novedad.titulo}
-                class="w-full h-full object-cover transform transition-transform duration-700 group-hover/novedad:scale-105"
+                class="w-full h-60 object-cover object-center transform transition-transform duration-700 group-hover/novedad:scale-105"
                 loading={i === 0 ? "eager" : "lazy"}
               />
             </div>
@@ -260,6 +371,111 @@ const NOVEDADES = [
 
   </div>
 </Layout>
+
+{/* ── MODAL GESTIÓN (solo renderizado para admins, controlado por JS) ── */}
+<div
+  id="manage-modal"
+  class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+  onclick="closeManageIfBackdrop(event)"
+>
+  {/* Backdrop */}
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+
+  {/* Panel */}
+  <div class="relative w-full max-w-lg bg-[var(--color-background-primary,#fff)] dark:bg-[#111] rounded-2xl border border-current/10 shadow-2xl overflow-hidden">
+
+    {/* Header */}
+    <div class="flex items-center justify-between px-6 py-4 border-b border-current/10">
+      <div>
+        <p id="modal-div-icon" class="text-xl mb-0.5"></p>
+        <h3 id="modal-title" class="text-sm font-black uppercase tracking-[0.15em]"></h3>
+      </div>
+      <button onclick="closeManage()" class="text-current opacity-40 hover:opacity-100 transition-opacity text-xl font-bold cursor-pointer">✕</button>
+    </div>
+
+    {/* Lista de jugadores */}
+    <div id="modal-list" class="max-h-[55vh] overflow-y-auto px-4 py-3 flex flex-col gap-2"></div>
+
+    {/* Empty state */}
+    <div id="modal-empty" class="hidden px-6 py-10 text-center opacity-30">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em]">Sin jugadores en esta divisional</p>
+    </div>
+
+    {/* Footer */}
+    <div class="px-6 py-4 border-t border-current/10">
+      <p class="text-[9px] font-bold uppercase tracking-[0.15em] opacity-30 text-center">
+        Panel de administración · Solo vos ves esto
+      </p>
+    </div>
+  </div>
+</div>
+
+{/* Modal de edición de jugador */}
+<div
+  id="edit-modal"
+  class="fixed inset-0 z-[60] hidden items-center justify-center p-4"
+  onclick="closeEditIfBackdrop(event)"
+>
+  <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+  <div class="relative w-full max-w-sm bg-[var(--color-background-primary,#fff)] dark:bg-[#111] rounded-2xl border border-current/10 shadow-2xl p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-sm font-black uppercase tracking-[0.15em]">Editar jugador</h3>
+      <button onclick="closeEdit()" class="text-current opacity-40 hover:opacity-100 transition-opacity text-xl font-bold cursor-pointer">✕</button>
+    </div>
+
+    <input type="hidden" id="edit-player-id" />
+
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-1">
+        <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-50">Usuario de Discord</label>
+        <input id="edit-discord" type="text" maxlength="32"
+          class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white text-black text-xs font-medium focus:outline-none focus:border-current/30 transition-all" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-50">Epic Games ID</label>
+        <input id="edit-epic" type="text" maxlength="30"
+          class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white text-black text-xs font-medium focus:outline-none focus:border-current/30 transition-all" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-50">Plataforma</label>
+        <select id="edit-platform"
+          class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white text-black text-xs font-medium focus:outline-none focus:border-current/30 transition-all cursor-pointer">
+          <option value="PC">PC</option>
+          <option value="PS5">PlayStation 5</option>
+          <option value="Xbox">Xbox</option>
+          <option value="Switch">Nintendo Switch</option>
+          <option value="Mobile">Mobile</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[9px] font-bold uppercase tracking-[0.2em] opacity-50">Divisional</label>
+        <select id="edit-division"
+          class="w-full px-3 py-2.5 rounded-xl border border-current/10 bg-white text-black text-xs font-medium focus:outline-none focus:border-current/30 transition-all cursor-pointer">
+          <option value="clasificatoria">🛡️ Clasificatoria</option>
+          <option value="semi_profesional">⚡ Semi Profesional</option>
+          <option value="profesional">👑 Profesional</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="edit-msg" class="hidden mt-3 text-[9px] font-bold uppercase tracking-[0.15em] text-center py-2 px-3 rounded-lg"></div>
+
+    <div class="flex gap-2 mt-5">
+      <button onclick="saveEdit()"
+        class="flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl
+               bg-gradient-to-br from-blue-600 to-indigo-700 text-white
+               hover:opacity-90 active:scale-95 transition-all cursor-pointer border border-white/10">
+        Guardar cambios
+      </button>
+      <button onclick="closeEdit()"
+        class="px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl
+               border border-current/10 bg-current/[0.04] hover:bg-current/[0.09]
+               active:scale-95 transition-all cursor-pointer">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
 
 <script>
   interface Player {
@@ -382,65 +598,3 @@ const NOVEDADES = [
 
     grid.appendChild(card);
   }
-
-  (window as any).onDragOver = function (e: DragEvent) {
-    e.preventDefault();
-    (e.currentTarget as HTMLElement).classList.add("bg-current/[0.05]", "border-current/30", "scale-[1.005]");
-  };
-
-  (window as any).onDragLeave = function (e: DragEvent) {
-    (e.currentTarget as HTMLElement).classList.remove("bg-current/[0.05]", "border-current/30", "scale-[1.005]");
-  };
-
-  (window as any).onDrop = function (e: DragEvent) {
-    e.preventDefault();
-    const zone = (e.currentTarget as HTMLElement);
-    zone.classList.remove("bg-current/[0.05]", "border-current/30", "scale-[1.005]");
-
-    if (!dragId) return;
-
-    const targetDiv = zone.dataset.division!;
-    const player = players.find((p) => p.id === dragId);
-    if (!player || player.division === targetDiv) return;
-
-    // Check max capacity of target division
-    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
-    const currentCount = players.filter((p) => p.division === targetDiv).length;
-    if (currentCount >= maxMap[targetDiv]) {
-      const labelMap: Record<string, string> = { clasificatoria: "Clasificatoria", semi_profesional: "Semi Profesional", profesional: "Profesional" };
-      showMsg(`${labelMap[targetDiv]} está llena (máximo ${maxMap[targetDiv]} jugadores)`, "error");
-      return;
-    }
-
-    const oldDiv = player.division;
-    player.division = targetDiv;
-
-    saveState();
-    renderPlayerCard(player);
-
-    // Si la división origen quedó vacía, mostrar empty y ocultar grid
-    const remaining = players.filter((p) => p.division === oldDiv);
-    if (remaining.length === 0) {
-      document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
-      document.getElementById(`grid-${oldDiv}`)!.classList.add("hidden");
-    }
-
-    updateAllCounts();
-  };
-
-  function updateAllCounts() {
-    ["clasificatoria", "semi_profesional", "profesional"].forEach((div) => {
-      const count = players.filter((p) => p.division === div).length;
-      const el = document.getElementById(`count-${div}`)!;
-      const maxMap2: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
-      const max = maxMap2[div] || 100;
-      el.textContent = `${count} / ${max} jugadores`;
-    });
-  }
-
-  function saveState() {
-    localStorage.setItem("fn_liga_players", JSON.stringify(players));
-  }
-
-  document.addEventListener("DOMContentLoaded", init);
-</script>
