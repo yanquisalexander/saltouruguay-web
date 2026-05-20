@@ -8,6 +8,28 @@ const DIVISIONALES = [
   { id: "semi_profesional", label: "Semi Profesional",  icon: "⚡" },
   { id: "profesional",      label: "Profesional",       icon: "👑" },
 ];
+
+// ── Novedades ── Editá este array para agregar/quitar noticias
+const NOVEDADES = [
+  {
+    imagen: "/images/acreconre/novedades/novedad-1.webp",
+    titulo: "Arranca la primera temporada",
+    fecha: "Mayo 2025",
+    tag: "Anuncio",
+  },
+  {
+    imagen: "/images/acreconre/novedades/novedad-2.webp",
+    titulo: "Inscripciones abiertas hasta el 31 de mayo",
+    fecha: "Mayo 2025",
+    tag: "Inscripciones",
+  },
+  {
+    imagen: "/images/acreconre/novedades/novedad-3.webp",
+    titulo: "Reglamento oficial publicado",
+    fecha: "Mayo 2025",
+    tag: "Reglamento",
+  },
+];
 ---
 
 <Layout
@@ -162,12 +184,63 @@ const DIVISIONALES = [
         ))}
       </div>
 
+      <div class="pt-8 opacity-30">
+        <p class="text-[10px] font-bold uppercase tracking-[0.15em]">
+          Asociación de Creadores de Contenido de la Región · Liga Fortnite
+        </p>
+      </div>
+    </div>
+
+    <div class="w-24 h-1 bg-current opacity-10 rounded-full my-20"></div>
+
+    {/* --- BLOQUE 4: NOVEDADES --- */}
+    <div class="w-full max-w-6xl animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
+
+      <p class="text-xs font-bold uppercase tracking-[0.25em] opacity-40 mb-4">
+        Últimas novedades
+      </p>
+      <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-3">
+        Lo que está<br class="hidden md:block" />
+        <span class="opacity-40 font-light">pasando en la liga</span>
+      </h2>
+
+      <div class="w-24 h-1 bg-current opacity-10 rounded-full my-10 mx-auto"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+        {NOVEDADES.map((novedad, i) => (
+          <div class="group/novedad flex flex-col rounded-2xl border border-current/10 bg-current/[0.01] hover:bg-current/[0.04] hover:border-current/20 overflow-hidden transition-all duration-300">
+            <div class="relative w-full aspect-video overflow-hidden bg-current/5">
+              <img
+                src={novedad.imagen}
+                alt={novedad.titulo}
+                class="w-full h-full object-cover transform transition-transform duration-700 group-hover/novedad:scale-105"
+                loading={i === 0 ? "eager" : "lazy"}
+              />
+            </div>
+            <div class="flex flex-col flex-1 p-5 gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border border-current/15 bg-current/5">
+                  {novedad.tag}
+                </span>
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40">
+                  {novedad.fecha}
+                </p>
+              </div>
+              <p class="text-base font-black uppercase tracking-tight leading-tight mt-1">
+                {novedad.titulo}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div class="pt-16 opacity-30">
         <p class="text-[10px] font-bold uppercase tracking-[0.15em]">
           Asociación de Creadores de Contenido de la Región · Liga Fortnite
         </p>
       </div>
     </div>
+
   </div>
 </Layout>
 
