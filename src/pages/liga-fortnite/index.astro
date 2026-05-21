@@ -504,7 +504,7 @@ const NOVEDADES = [
 
   // Jugadores inyectados desde el servidor (base de datos)
   let players: Player[] = (window as any).__FN_PLAYERS__ || [];
-  let dragId: string | null = null;
+  let dragId: number | null = null;
 
   function init() {
     players.forEach((p) => renderPlayerCard(p));
@@ -613,7 +613,7 @@ const NOVEDADES = [
          <p class="text-[9px] font-medium opacity-40 w-full truncate">(${player.epic})</p>`;
 
     card.addEventListener("dragstart", () => {
-      dragId = player.id;
+      dragId = player.id as number;
       setTimeout(() => card.classList.add("opacity-30"), 0);
     });
     card.addEventListener("dragend", () => {
@@ -809,17 +809,18 @@ const NOVEDADES = [
     }
   };
 
-  (window as any).deletePlayer = async function (id: number) {
-    const p = players.find((x) => x.id === id);
+  (window as any).deletePlayer = async function (id: string) {
+    const numId = parseInt(id);
+    const p = players.find((x) => x.id === numId);
     if (!p) return;
     const oldDiv = p.division;
 
     try {
-      const res = await fetch(`/api/fortnite-league/player/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/fortnite-league/player/${numId}`, { method: "DELETE" });
       if (!res.ok) { alert("Error al borrar jugador"); return; }
 
-      players = players.filter((x) => x.id !== id);
-      document.getElementById(`player-${id}`)?.remove();
+      players = players.filter((x) => x.id !== numId);
+      document.getElementById(`player-${numId}`)?.remove();
       if (players.filter((x) => x.division === oldDiv).length === 0) {
         document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
         document.getElementById(`grid-${oldDiv}`)!.classList.add("hidden");
@@ -833,9 +834,10 @@ const NOVEDADES = [
 
   // ── Modal edición ───────────────────────────────────────────────────────────
   (window as any).openEdit = function (id: string) {
-    const p = players.find((x) => x.id === id);
+    const numId = parseInt(id);
+    const p = players.find((x) => x.id === numId);
     if (!p) return;
-    (document.getElementById("edit-player-id") as HTMLInputElement).value = p.id;
+    (document.getElementById("edit-player-id") as HTMLInputElement).value = String(p.id);
     (document.getElementById("edit-discord") as HTMLInputElement).value = p.name;
     (document.getElementById("edit-epic") as HTMLInputElement).value = p.epic;
     (document.getElementById("edit-platform") as HTMLSelectElement).value = p.platform;
@@ -877,14 +879,15 @@ const NOVEDADES = [
 
     if (!newName || !newEpic) { showEditMsg("Completá todos los campos", "error"); return; }
 
-    const dup = players.find((x) => x.id !== id && (
+    const numId = parseInt(id);
+    const dup = players.find((x) => x.id !== numId && (
       x.epic.toLowerCase() === newEpic.toLowerCase() ||
       x.name.toLowerCase() === newName.toLowerCase()
     ));
     if (dup) { showEditMsg("Discord o Epic ID ya en uso", "error"); return; }
 
     const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
-    const p = players.find((x) => x.id === id)!;
+    const p = players.find((x) => x.id === numId)!;
     if (p.division !== newDivision) {
       const count = players.filter((x) => x.division === newDivision).length;
       if (count >= maxMap[newDivision]) {
@@ -900,7 +903,7 @@ const NOVEDADES = [
     p.division = newDivision;
 
     try {
-      const res = await fetch(`/api/fortnite-league/player/${id}`, {
+      const res = await fetch(`/api/fortnite-league/player/${numId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ discordUsername: newName, epicId: newEpic, platform: newPlatform, division: newDivision }),
