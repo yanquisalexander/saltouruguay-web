@@ -1,11 +1,7 @@
 export const prerender = false;
 
 import { client } from "@/db/client";
-// ... resto del código
-
-import { client } from "@/db/client";
 import { FortniteLeagueInscriptionsTable } from "@/db/schema";
-import { eq } from "drizzle-orm";
 
 // GET — obtener todos los jugadores
 export async function GET() {
