@@ -1,0 +1,263 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { client } from "@/db/client";
+import { FortniteLeagueInscriptionsTable, FortniteLeagueScoresTable } from "@/db/schema";
+import { getSession } from "auth-astro/server";
+
+export const prerender = false;
+
+// ── Verificar que sea admin ──────────────────────────────────────────────────
+const ADMINS = ["saltouruguay", "xdiegouy"];
+
+const session = await getSession(Astro.request);
+const discordUser: string | null =
+  (session?.user as any)?.discordUsername ?? session?.user?.name ?? null;
+const isAdmin = discordUser !== null && ADMINS.includes(discordUser.toLowerCase());
+
+// Si no es admin, redirigir
+if (!isAdmin) {
+  return Astro.redirect("/liga-fortnite");
+}
+
+// ── Cargar jugadores y puntajes ──────────────────────────────────────────────
+const players = await client.select().from(FortniteLeagueInscriptionsTable).execute();
+const scores  = await client.select().from(FortniteLeagueScoresTable).execute();
+
+// Mapear puntajes por inscriptionId para acceso rápido
+const scoresMap = Object.fromEntries(scores.map((s) => [s.inscriptionId, s]));
+
+const DIVISIONALES = [
+  { id: "clasificatoria",   label: "Clasificatoria",   icon: "🛡️" },
+  { id: "semi_profesional", label: "Semi Profesional", icon: "⚡"  },
+  { id: "profesional",      label: "Profesional",      icon: "👑"  },
+];
+---
+
+<Layout
+  title="Admin · Tabla de Puntos | Liga Fortnite"
+  description="Panel de administración de puntajes de la Liga Fortnite."
+>
+  <div class="flex flex-col items-center justify-start min-h-[90vh] py-20 px-4">
+
+    {/* Header */}
+    <div class="w-full max-w-6xl mb-12">
+      <a
+        href="/liga-fortnite"
+        class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity mb-8"
+      >
+        ← Volver a la Liga
+      </a>
+
+      <p class="text-xs font-bold uppercase tracking-[0.25em] opacity-40 mb-2">
+        Panel de Administración
+      </p>
+      <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-2">
+        Tabla de <span class="opacity-40 font-light">Puntos</span>
+      </h1>
+      <p class="text-[10px] font-bold uppercase tracking-[0.15em] opacity-30 mt-3">
+        Los cambios se guardan automáticamente al hacer clic en Guardar
+      </p>
+    </div>
+
+    {/* Tablas por divisional */}
+    <div class="w-full max-w-6xl space-y-16">
+      {DIVISIONALES.map((div) => {
+        const divPlayers = players
+          .filter((p) => p.division === div.id)
+          .sort((a, b) => {
+            const sa = scoresMap[a.id]?.total ?? 0;
+            const sb = scoresMap[b.id]?.total ?? 0;
+            return sb - sa;
+          });
+
+        return (
+          <div>
+            {/* Título divisional */}
+            <div class="flex items-center gap-4 mb-6">
+              <span class="text-2xl">{div.icon}</span>
+              <h2 class="text-xl font-black uppercase tracking-tight">{div.label}</h2>
+              <span class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-30">
+                {divPlayers.length} jugadores
+              </span>
+            </div>
+
+            {divPlayers.length === 0 ? (
+              <div class="w-full py-10 rounded-2xl border border-current/10 bg-current/[0.01] text-center">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-30">Sin jugadores en esta divisional</p>
+              </div>
+            ) : (
+              <div class="w-full rounded-2xl border border-current/10 overflow-hidden">
+                {/* Cabecera */}
+                <div class="grid grid-cols-[2rem_1fr_8rem_8rem_8rem_8rem_6rem] gap-0 px-4 py-3 border-b border-current/10 bg-current/[0.03]">
+                  <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Pos</p>
+                  <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Jugador</p>
+                  <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 text-center">Partida 1</p>
+                  <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 text-center">Partida 2</p>
+                  <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 text-center">Partida 3</p>
+                  <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 text-center">Total</p>
+                  <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 text-center">Acción</p>
+                </div>
+
+                {/* Filas */}
+                {divPlayers.map((player, idx) => {
+                  const score = scoresMap[player.id];
+                  return (
+                    <div
+                      class={`grid grid-cols-[2rem_1fr_8rem_8rem_8rem_8rem_6rem] gap-0 px-4 py-3 items-center border-b border-current/10 last:border-0 ${idx === 0 ? "bg-amber-500/5" : "hover:bg-current/[0.02]"} transition-colors`}
+                      id={`row-${player.id}`}
+                    >
+                      {/* Posición */}
+                      <p class={`text-sm font-black ${idx === 0 ? "text-amber-400" : idx === 1 ? "opacity-60" : idx === 2 ? "opacity-40" : "opacity-20"}`}>
+                        {idx + 1}
+                      </p>
+
+                      {/* Jugador */}
+                      <div class="min-w-0 pr-2">
+                        <p class="text-sm font-bold truncate">{player.discordUsername}</p>
+                        <p class="text-[9px] opacity-40 truncate">({player.epicId}) · {player.platform}</p>
+                      </div>
+
+                      {/* Partida 1 */}
+                      <div class="px-1">
+                        <input
+                          type="number"
+                          min="0"
+                          max="999"
+                          id={`set1-${player.id}`}
+                          value={score?.set1 ?? 0}
+                          class="w-full px-2 py-1.5 rounded-lg border border-current/10 bg-white
+                                 text-sm font-bold text-black text-center
+                                 focus:outline-none focus:border-amber-500/50
+                                 transition-all duration-200"
+                          oninput={`calcTotal(${player.id})`}
+                        />
+                      </div>
+
+                      {/* Partida 2 */}
+                      <div class="px-1">
+                        <input
+                          type="number"
+                          min="0"
+                          max="999"
+                          id={`set2-${player.id}`}
+                          value={score?.set2 ?? 0}
+                          class="w-full px-2 py-1.5 rounded-lg border border-current/10 bg-white
+                                 text-sm font-bold text-black text-center
+                                 focus:outline-none focus:border-amber-500/50
+                                 transition-all duration-200"
+                          oninput={`calcTotal(${player.id})`}
+                        />
+                      </div>
+
+                      {/* Partida 3 */}
+                      <div class="px-1">
+                        <input
+                          type="number"
+                          min="0"
+                          max="999"
+                          id={`set3-${player.id}`}
+                          value={score?.set3 ?? 0}
+                          class="w-full px-2 py-1.5 rounded-lg border border-current/10 bg-white
+                                 text-sm font-bold text-black text-center
+                                 focus:outline-none focus:border-amber-500/50
+                                 transition-all duration-200"
+                          oninput={`calcTotal(${player.id})`}
+                        />
+                      </div>
+
+                      {/* Total */}
+                      <div class="text-center px-1">
+                        <span
+                          id={`total-${player.id}`}
+                          class="text-lg font-black text-amber-400"
+                        >
+                          {score?.total ?? 0}
+                        </span>
+                      </div>
+
+                      {/* Botón guardar */}
+                      <div class="text-center">
+                        <button
+                          onclick={`saveScore(${player.id})`}
+                          id={`btn-${player.id}`}
+                          class="px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.15em]
+                                 rounded-lg border border-current/15 bg-current/[0.04]
+                                 hover:bg-amber-500/15 hover:border-amber-500/40 hover:text-amber-500
+                                 active:scale-95 transition-all duration-200 cursor-pointer"
+                        >
+                          Guardar
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+
+    <div class="pt-16 opacity-20 mt-8">
+      <p class="text-[10px] font-bold uppercase tracking-[0.15em]">
+        Asociación de Creadores de Contenido de la Región · Admin
+      </p>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Calcular total en tiempo real
+  (window as any).calcTotal = function (playerId: number) {
+    const s1 = parseInt((document.getElementById(`set1-${playerId}`) as HTMLInputElement).value) || 0;
+    const s2 = parseInt((document.getElementById(`set2-${playerId}`) as HTMLInputElement).value) || 0;
+    const s3 = parseInt((document.getElementById(`set3-${playerId}`) as HTMLInputElement).value) || 0;
+    const total = s1 + s2 + s3;
+    const totalEl = document.getElementById(`total-${playerId}`);
+    if (totalEl) totalEl.textContent = String(total);
+  };
+
+  // Guardar puntaje en la base de datos
+  (window as any).saveScore = async function (playerId: number) {
+    const s1 = parseInt((document.getElementById(`set1-${playerId}`) as HTMLInputElement).value) || 0;
+    const s2 = parseInt((document.getElementById(`set2-${playerId}`) as HTMLInputElement).value) || 0;
+    const s3 = parseInt((document.getElementById(`set3-${playerId}`) as HTMLInputElement).value) || 0;
+
+    const btn = document.getElementById(`btn-${playerId}`) as HTMLButtonElement;
+    const original = btn.textContent;
+    btn.textContent = "...";
+    btn.disabled = true;
+
+    try {
+      const res = await fetch("/api/fortnite-league/scores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inscriptionId: playerId, set1: s1, set2: s2, set3: s3 }),
+      });
+
+      if (res.ok) {
+        btn.textContent = "✓";
+        btn.classList.add("text-green-400", "border-green-500/30", "bg-green-500/10");
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove("text-green-400", "border-green-500/30", "bg-green-500/10");
+          btn.disabled = false;
+        }, 1500);
+      } else {
+        btn.textContent = "Error";
+        btn.classList.add("text-red-400");
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove("text-red-400");
+          btn.disabled = false;
+        }, 2000);
+      }
+    } catch {
+      btn.textContent = "Error";
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.disabled = false;
+      }, 2000);
+    }
+  };
+</script>

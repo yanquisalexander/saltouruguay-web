@@ -12,8 +12,8 @@ const dbPlayers = await client
 
 const DIVISIONALES = [
   { id: "clasificatoria",   label: "Clasificatoria",    icon: "🛡️", cols: 3, max: 100 },
-  { id: "semi_profesional", label: "Semi Profesional",  icon: "⚡",  cols: 1, max: 18  },
-  { id: "profesional",      label: "Profesional",       icon: "👑", cols: 1, max: 18  },
+  { id: "semi_profesional", label: "Semi Profesional",  icon: "⚡",  cols: 1, max: 16  },
+  { id: "profesional",      label: "Profesional",       icon: "👑", cols: 1, max: 16  },
 ];
 
 const NOVEDADES = [
@@ -201,12 +201,23 @@ const NOVEDADES = [
     <div id="panel-admin" class="w-full max-w-7xl mt-16 hidden">
 
       {/* Header del panel */}
-      <div class="flex items-center gap-3 mb-8 px-6 py-4 rounded-2xl bg-amber-500/10 border border-amber-500/30">
-        <span class="text-xl">⚙️</span>
-        <div class="text-left">
-          <p class="text-sm font-black uppercase tracking-[0.2em] text-amber-500">Panel de Administración</p>
-          <p class="text-[10px] opacity-60 mt-0.5">Solo los administradores ven esta sección</p>
+      <div class="flex items-center justify-between gap-3 mb-8 px-6 py-4 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+        <div class="flex items-center gap-3">
+          <span class="text-xl">⚙️</span>
+          <div class="text-left">
+            <p class="text-sm font-black uppercase tracking-[0.2em] text-amber-500">Panel de Administración</p>
+            <p class="text-[10px] opacity-60 mt-0.5">Solo los administradores ven esta sección</p>
+          </div>
         </div>
+        <a
+          href="/liga-fortnite/admin-puntos"
+          class="inline-flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.2em]
+                 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-500
+                 hover:bg-amber-500/20 hover:border-amber-500/60
+                 active:scale-95 transition-all duration-200 flex-shrink-0"
+        >
+          📊 Tabla de puntos
+        </a>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
@@ -645,7 +656,7 @@ const NOVEDADES = [
     if (!player || player.division === targetDiv) return;
 
     // Check max capacity of target division
-    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 18, profesional: 18 };
+    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
     const currentCount = players.filter((p) => p.division === targetDiv).length;
     if (currentCount >= maxMap[targetDiv]) {
       const labelMap: Record<string, string> = { clasificatoria: "Clasificatoria", semi_profesional: "Semi Profesional", profesional: "Profesional" };
@@ -673,7 +684,7 @@ const NOVEDADES = [
     ["clasificatoria", "semi_profesional", "profesional"].forEach((div) => {
       const count = players.filter((p) => p.division === div).length;
       const el = document.getElementById(`count-${div}`)!;
-      const maxMap2: Record<string, number> = { clasificatoria: 100, semi_profesional: 18, profesional: 18 };
+      const maxMap2: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
       const max = maxMap2[div] || 100;
       el.textContent = `${count} / ${max} jugadores`;
     });
@@ -705,7 +716,7 @@ const NOVEDADES = [
 
     if (!name || !epic) { showAdminMsg("Completá Discord y Epic ID", "error"); return; }
 
-    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 18, profesional: 18 };
+    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
     const currentCount = players.filter((p) => p.division === divId).length;
     if (currentCount >= maxMap[divId]) { showAdminMsg(`División llena (máx. ${maxMap[divId]})`, "error"); return; }
 
@@ -886,7 +897,7 @@ const NOVEDADES = [
     ));
     if (dup) { showEditMsg("Discord o Epic ID ya en uso", "error"); return; }
 
-    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 18, profesional: 18 };
+    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
     const p = players.find((x) => x.id === numId)!;
     if (p.division !== newDivision) {
       const count = players.filter((x) => x.division === newDivision).length;
