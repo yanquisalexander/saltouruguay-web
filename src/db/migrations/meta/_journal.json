@@ -470,6 +470,13 @@
       "when": 1771604278264,
       "tag": "0066_overjoyed_sharon_ventura",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1779332135618,
+      "tag": "0067_sloppy_power_man",
+      "breakpoints": true
     }
   ]
 }

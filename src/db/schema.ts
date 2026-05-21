@@ -1304,3 +1304,15 @@ export const tournamentMatchesRelations = relations(TournamentMatchesTable, ({ o
         relationName: "wonMatches"
     }),
 }));
+
+export const FortniteLeagueInscriptionsTable = pgTable('fortnite_league_inscriptions', {
+    id: serial('id').primaryKey(),
+    discordUsername: varchar('discord_username').notNull(),
+    epicId: varchar('epic_id').notNull().unique(),
+    platform: varchar('platform', { enum: ['PC', 'PS5', 'Xbox', 'Switch', 'Mobile'] }).notNull().default('PC'),
+    division: varchar('division', { enum: ['clasificatoria', 'semi_profesional', 'profesional'] }).notNull().default('clasificatoria'),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueDiscord: unique().on(t.discordUsername),
+}));

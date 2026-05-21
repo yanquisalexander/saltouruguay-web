@@ -1,6 +1,14 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { client } from "@/db/client";
+import { FortniteLeagueInscriptionsTable } from "@/db/schema";
 export const prerender = false;
+
+// Cargar jugadores desde la base de datos
+const dbPlayers = await client
+  .select()
+  .from(FortniteLeagueInscriptionsTable)
+  .execute();
 
 const DIVISIONALES = [
   { id: "clasificatoria",   label: "Clasificatoria",    icon: "🛡️", cols: 3, max: 100 },
@@ -330,6 +338,18 @@ const NOVEDADES = [
   </div>
 </Layout>
 
+{/* Datos del servidor para el JS */}
+<script define:vars={{ dbPlayers }}>
+  window.__FN_PLAYERS__ = dbPlayers.map((p) => ({
+    id: p.id,
+    name: p.discordUsername,
+    epic: p.epicId,
+    platform: p.platform,
+    division: p.division,
+    joinDate: new Date(p.createdAt).toLocaleDateString("es-UY", { day: "2-digit", month: "2-digit", year: "2-digit" }),
+  }));
+</script>
+
 {/* ── MODAL GESTIÓN (solo renderizado para admins, controlado por JS) ── */}
 <div
   id="manage-modal"
@@ -452,7 +472,7 @@ const NOVEDADES = [
 
 <script>
   interface Player {
-    id: string;
+    id: number;
     name: string;
     epic: string;
     platform: string;
@@ -482,7 +502,8 @@ const NOVEDADES = [
     });
   }
 
-  let players: Player[] = JSON.parse(localStorage.getItem("fn_liga_players") || "[]");
+  // Jugadores inyectados desde el servidor (base de datos)
+  let players: Player[] = (window as any).__FN_PLAYERS__ || [];
   let dragId: string | null = null;
 
   function init() {
@@ -491,7 +512,7 @@ const NOVEDADES = [
     applyAdminUI();
   }
 
-  (window as any).handleSubmit = function (e: Event) {
+  (window as any).handleSubmit = async function (e: Event) {
     e.preventDefault();
 
     const name = (document.getElementById("inp-name") as HTMLInputElement).value.trim();
@@ -502,43 +523,48 @@ const NOVEDADES = [
       showMsg("Completá tu usuario de Discord y Epic Games ID", "error");
       return;
     }
-    if (players.find((p) => p.epic.toLowerCase() === epic.toLowerCase())) {
-      showMsg("Ya existe un jugador con ese Epic Games ID", "error");
-      return;
+
+    const btn = document.querySelector('#form-inscripcion button[type="submit"]') as HTMLButtonElement;
+    if (btn) { btn.disabled = true; btn.textContent = "Inscribiendo..."; }
+
+    try {
+      const res = await fetch("/api/fortnite-league/players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discordUsername: name, epicId: epic, platform }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg(data.error || "Error al inscribirse", "error");
+        return;
+      }
+
+      const player: Player = {
+        id: data.player.id,
+        name: data.player.discordUsername,
+        epic: data.player.epicId,
+        platform: data.player.platform,
+        division: data.player.division,
+        joinDate: new Date(data.player.createdAt).toLocaleDateString("es-UY", { day: "2-digit", month: "2-digit", year: "2-digit" }),
+      };
+
+      players.push(player);
+      localStorage.setItem("fn_admin_discord", name);
+      renderPlayerCard(player);
+      updateAllCounts();
+      applyAdminUI();
+
+      (document.getElementById("inp-name") as HTMLInputElement).value = "";
+      (document.getElementById("inp-epic") as HTMLInputElement).value = "";
+      showMsg(`¡${name} fue inscrito en Clasificatoria!`, "success");
+
+    } catch (err) {
+      showMsg("Error de conexión, intentá de nuevo", "error");
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Inscribirme a la Liga"; }
     }
-    if (players.find((p) => p.name.toLowerCase() === name.toLowerCase())) {
-      showMsg("Ya existe un jugador con ese usuario de Discord", "error");
-      return;
-    }
-
-    // Clasificatoria max check
-    const clCount = players.filter((p) => p.division === "clasificatoria").length;
-    if (clCount >= 100) {
-      showMsg("Clasificatoria está llena (máximo 100 jugadores)", "error");
-      return;
-    }
-
-    const player: Player = {
-      id: Date.now().toString(),
-      name,
-      epic,
-      platform,
-      division: "clasificatoria",
-      joinDate: new Date().toLocaleDateString("es-UY", { day: "2-digit", month: "2-digit", year: "2-digit" }),
-    };
-
-    players.push(player);
-    saveState();
-    // Guardar discord para reconocer admin en próximas visitas
-    localStorage.setItem("fn_admin_discord", name);
-    renderPlayerCard(player);
-    updateAllCounts();
-    applyAdminUI();
-
-    (document.getElementById("inp-name") as HTMLInputElement).value = "";
-    (document.getElementById("inp-epic") as HTMLInputElement).value = "";
-
-    showMsg(`¡${name} fue inscrito en Clasificatoria!`, "success");
   };
 
   function showMsg(text: string, type: "success" | "error") {
@@ -653,12 +679,11 @@ const NOVEDADES = [
     });
   }
 
-  function saveState() {
-    localStorage.setItem("fn_liga_players", JSON.stringify(players));
-  }
+  // saveState ya no usa localStorage — los datos van a la base de datos via API
+  function saveState() {}
 
   // ── Admin: agregar jugador manualmente ────────────────────────────────────
-  (window as any).adminAdd = function (divId: string) {
+  (window as any).adminAdd = async function (divId: string) {
     const nameEl = document.getElementById(`admin-discord-${divId}`) as HTMLInputElement;
     const epicEl = document.getElementById(`admin-epic-${divId}`) as HTMLInputElement;
     const platformEl = document.getElementById(`admin-platform-${divId}`) as HTMLSelectElement;
@@ -670,7 +695,7 @@ const NOVEDADES = [
 
     const showAdminMsg = (text: string, type: "success" | "error") => {
       msgEl.textContent = type === "success" ? `✓ ${text}` : `⚠ ${text}`;
-      msgEl.className = `text-[9px] font-bold uppercase tracking-[0.15em] text-center py-2 px-3 rounded-lg ${
+      msgEl.className = `text-[10px] font-bold uppercase tracking-[0.15em] text-center py-2 px-3 rounded-xl ${
         type === "success"
           ? "bg-green-500/10 text-green-400 border border-green-500/20"
           : "bg-red-500/10 text-red-400 border border-red-500/20"
@@ -678,43 +703,40 @@ const NOVEDADES = [
       setTimeout(() => { msgEl.className = "hidden"; }, 3500);
     };
 
-    if (!name || !epic) {
-      showAdminMsg("Completá Discord y Epic ID", "error");
-      return;
-    }
-    if (players.find((p) => p.epic.toLowerCase() === epic.toLowerCase())) {
-      showAdminMsg("Epic ID ya registrado", "error");
-      return;
-    }
-    if (players.find((p) => p.name.toLowerCase() === name.toLowerCase())) {
-      showAdminMsg("Discord ya registrado", "error");
-      return;
-    }
+    if (!name || !epic) { showAdminMsg("Completá Discord y Epic ID", "error"); return; }
 
     const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
     const currentCount = players.filter((p) => p.division === divId).length;
-    if (currentCount >= maxMap[divId]) {
-      showAdminMsg(`División llena (máx. ${maxMap[divId]})`, "error");
-      return;
+    if (currentCount >= maxMap[divId]) { showAdminMsg(`División llena (máx. ${maxMap[divId]})`, "error"); return; }
+
+    try {
+      const res = await fetch("/api/fortnite-league/players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discordUsername: name, epicId: epic, platform, division: divId }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showAdminMsg(data.error || "Error al agregar", "error"); return; }
+
+      const player: Player = {
+        id: data.player.id,
+        name: data.player.discordUsername,
+        epic: data.player.epicId,
+        platform: data.player.platform,
+        division: data.player.division,
+        joinDate: new Date(data.player.createdAt).toLocaleDateString("es-UY", { day: "2-digit", month: "2-digit", year: "2-digit" }),
+      };
+
+      players.push(player);
+      renderPlayerCard(player);
+      updateAllCounts();
+      nameEl.value = "";
+      epicEl.value = "";
+      showAdminMsg(`${name} agregado`, "success");
+      refreshModalList(divId);
+    } catch {
+      showAdminMsg("Error de conexión", "error");
     }
-
-    const player: Player = {
-      id: Date.now().toString(),
-      name,
-      epic,
-      platform,
-      division: divId,
-      joinDate: new Date().toLocaleDateString("es-UY", { day: "2-digit", month: "2-digit", year: "2-digit" }),
-    };
-
-    players.push(player);
-    saveState();
-    renderPlayerCard(player);
-    updateAllCounts();
-
-    nameEl.value = "";
-    epicEl.value = "";
-    showAdminMsg(`${name} agregado`, "success");
   };
 
   // ── Modal gestión ──────────────────────────────────────────────────────────
@@ -787,19 +809,26 @@ const NOVEDADES = [
     }
   };
 
-  (window as any).deletePlayer = function (id: string) {
+  (window as any).deletePlayer = async function (id: number) {
     const p = players.find((x) => x.id === id);
     if (!p) return;
     const oldDiv = p.division;
-    players = players.filter((x) => x.id !== id);
-    saveState();
-    document.getElementById(`player-${id}`)?.remove();
-    if (players.filter((x) => x.division === oldDiv).length === 0) {
-      document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
-      document.getElementById(`grid-${oldDiv}`)!.classList.add("hidden");
+
+    try {
+      const res = await fetch(`/api/fortnite-league/player/${id}`, { method: "DELETE" });
+      if (!res.ok) { alert("Error al borrar jugador"); return; }
+
+      players = players.filter((x) => x.id !== id);
+      document.getElementById(`player-${id}`)?.remove();
+      if (players.filter((x) => x.division === oldDiv).length === 0) {
+        document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
+        document.getElementById(`grid-${oldDiv}`)!.classList.add("hidden");
+      }
+      updateAllCounts();
+      refreshModalList(currentManageDiv);
+    } catch {
+      alert("Error de conexión al borrar");
     }
-    updateAllCounts();
-    refreshModalList(currentManageDiv);
   };
 
   // ── Modal edición ───────────────────────────────────────────────────────────
@@ -829,7 +858,7 @@ const NOVEDADES = [
     }
   };
 
-  (window as any).saveEdit = function () {
+  (window as any).saveEdit = async function () {
     const id = (document.getElementById("edit-player-id") as HTMLInputElement).value;
     const newName = (document.getElementById("edit-discord") as HTMLInputElement).value.trim();
     const newEpic = (document.getElementById("edit-epic") as HTMLInputElement).value.trim();
@@ -870,20 +899,34 @@ const NOVEDADES = [
     p.platform = newPlatform;
     p.division = newDivision;
 
-    saveState();
-    renderPlayerCard(p);
+    try {
+      const res = await fetch(`/api/fortnite-league/player/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discordUsername: newName, epicId: newEpic, platform: newPlatform, division: newDivision }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showEditMsg(data.error || "Error al guardar", "error"); return; }
 
-    if (oldDiv !== newDivision && players.filter((x) => x.division === oldDiv).length === 0) {
-      document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
-      document.getElementById(`grid-${oldDiv}`)!.classList.add("hidden");
+      p.name = newName;
+      p.epic = newEpic;
+      p.platform = newPlatform;
+      p.division = newDivision;
+
+      renderPlayerCard(p);
+      if (oldDiv !== newDivision && players.filter((x) => x.division === oldDiv).length === 0) {
+        document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
+        document.getElementById(`grid-${oldDiv}`)!.classList.add("hidden");
+      }
+      updateAllCounts();
+      showEditMsg("Guardado", "success");
+      setTimeout(() => {
+        (window as any).closeEdit();
+        refreshModalList(currentManageDiv);
+      }, 800);
+    } catch {
+      showEditMsg("Error de conexión", "error");
     }
-
-    updateAllCounts();
-    showEditMsg("Guardado", "success");
-    setTimeout(() => {
-      (window as any).closeEdit();
-      refreshModalList(currentManageDiv);
-    }, 800);
   };
 
   document.addEventListener("DOMContentLoaded", init);
