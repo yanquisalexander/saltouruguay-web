@@ -2,28 +2,13 @@
 import Layout from "@/layouts/Layout.astro";
 import { client } from "@/db/client";
 import { FortniteLeagueInscriptionsTable, FortniteLeagueScoresTable } from "@/db/schema";
-import { getSession } from "auth-astro/server";
 
 export const prerender = false;
 
-// ── Verificar que sea admin ──────────────────────────────────────────────────
-const ADMINS = ["saltouruguay", "xdiegouy"];
-
-const session = await getSession(Astro.request);
-const discordUser: string | null =
-  (session?.user as any)?.discordUsername ?? session?.user?.name ?? null;
-const isAdmin = discordUser !== null && ADMINS.includes(discordUser.toLowerCase());
-
-// Si no es admin, redirigir
-if (!isAdmin) {
-  return Astro.redirect("/liga-fortnite");
-}
-
-// ── Cargar jugadores y puntajes ──────────────────────────────────────────────
+// Cargar jugadores y puntajes desde la base de datos
 const players = await client.select().from(FortniteLeagueInscriptionsTable).execute();
 const scores  = await client.select().from(FortniteLeagueScoresTable).execute();
 
-// Mapear puntajes por inscriptionId para acceso rápido
 const scoresMap = Object.fromEntries(scores.map((s) => [s.inscriptionId, s]));
 
 const DIVISIONALES = [
@@ -31,13 +16,16 @@ const DIVISIONALES = [
   { id: "semi_profesional", label: "Semi Profesional", icon: "⚡"  },
   { id: "profesional",      label: "Profesional",      icon: "👑"  },
 ];
+
+const ADMINS = ["saltouruguay", "xdiegouy"];
 ---
 
 <Layout
   title="Admin · Tabla de Puntos | Liga Fortnite"
   description="Panel de administración de puntajes de la Liga Fortnite."
 >
-  <div class="flex flex-col items-center justify-start min-h-[90vh] py-20 px-4">
+  {/* Página oculta hasta verificar admin en cliente */}
+  <div id="page-content" class="hidden flex flex-col items-center justify-start min-h-[90vh] py-20 px-4">
 
     {/* Header */}
     <div class="w-full max-w-6xl mb-12">
@@ -48,14 +36,14 @@ const DIVISIONALES = [
         ← Volver a la Liga
       </a>
 
-      <p class="text-xs font-bold uppercase tracking-[0.25em] opacity-40 mb-2">
+      <p class="text-xs font-bold uppercase tracking-[0.25em] opacity-40 mb-2 mt-6">
         Panel de Administración
       </p>
       <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-2">
         Tabla de <span class="opacity-40 font-light">Puntos</span>
       </h1>
       <p class="text-[10px] font-bold uppercase tracking-[0.15em] opacity-30 mt-3">
-        Los cambios se guardan automáticamente al hacer clic en Guardar
+        Los cambios se guardan al hacer clic en Guardar
       </p>
     </div>
 
@@ -72,7 +60,6 @@ const DIVISIONALES = [
 
         return (
           <div>
-            {/* Título divisional */}
             <div class="flex items-center gap-4 mb-6">
               <span class="text-2xl">{div.icon}</span>
               <h2 class="text-xl font-black uppercase tracking-tight">{div.label}</h2>
@@ -87,9 +74,10 @@ const DIVISIONALES = [
               </div>
             ) : (
               <div class="w-full rounded-2xl border border-current/10 overflow-hidden">
+
                 {/* Cabecera */}
                 <div class="grid grid-cols-[2rem_1fr_8rem_8rem_8rem_8rem_6rem] gap-0 px-4 py-3 border-b border-current/10 bg-current/[0.03]">
-                  <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Pos</p>
+                  <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">#</p>
                   <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Jugador</p>
                   <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 text-center">Partida 1</p>
                   <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 text-center">Partida 2</p>
@@ -103,8 +91,7 @@ const DIVISIONALES = [
                   const score = scoresMap[player.id];
                   return (
                     <div
-                      class={`grid grid-cols-[2rem_1fr_8rem_8rem_8rem_8rem_6rem] gap-0 px-4 py-3 items-center border-b border-current/10 last:border-0 ${idx === 0 ? "bg-amber-500/5" : "hover:bg-current/[0.02]"} transition-colors`}
-                      id={`row-${player.id}`}
+                      class={`grid grid-cols-[2rem_1fr_8rem_8rem_8rem_8rem_6rem] gap-0 px-4 py-3 items-center border-b border-current/10 last:border-0 transition-colors ${idx === 0 ? "bg-amber-500/5" : "hover:bg-current/[0.02]"}`}
                     >
                       {/* Posición */}
                       <p class={`text-sm font-black ${idx === 0 ? "text-amber-400" : idx === 1 ? "opacity-60" : idx === 2 ? "opacity-40" : "opacity-20"}`}>
@@ -167,10 +154,7 @@ const DIVISIONALES = [
 
                       {/* Total */}
                       <div class="text-center px-1">
-                        <span
-                          id={`total-${player.id}`}
-                          class="text-lg font-black text-amber-400"
-                        >
+                        <span id={`total-${player.id}`} class="text-lg font-black text-amber-400">
                           {score?.total ?? 0}
                         </span>
                       </div>
@@ -204,26 +188,44 @@ const DIVISIONALES = [
       </p>
     </div>
   </div>
+
+  {/* Pantalla de acceso denegado — se oculta si es admin */}
+  <div id="no-access" class="flex flex-col items-center justify-center min-h-[90vh] gap-4">
+    <p class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-30">Verificando acceso...</p>
+  </div>
+
 </Layout>
 
+<script define:vars={{ ADMINS }}>
+  const stored = localStorage.getItem("fn_admin_discord") || "";
+  const isAdmin = ADMINS.includes(stored.toLowerCase());
+
+  if (isAdmin) {
+    document.getElementById("page-content").classList.remove("hidden");
+    document.getElementById("page-content").classList.add("flex");
+    document.getElementById("no-access").classList.add("hidden");
+  } else {
+    // No es admin — redirigir
+    window.location.href = "/liga-fortnite";
+  }
+</script>
+
 <script>
-  // Calcular total en tiempo real
-  (window as any).calcTotal = function (playerId: number) {
-    const s1 = parseInt((document.getElementById(`set1-${playerId}`) as HTMLInputElement).value) || 0;
-    const s2 = parseInt((document.getElementById(`set2-${playerId}`) as HTMLInputElement).value) || 0;
-    const s3 = parseInt((document.getElementById(`set3-${playerId}`) as HTMLInputElement).value) || 0;
+  window.calcTotal = function (playerId) {
+    const s1 = parseInt(document.getElementById(`set1-${playerId}`).value) || 0;
+    const s2 = parseInt(document.getElementById(`set2-${playerId}`).value) || 0;
+    const s3 = parseInt(document.getElementById(`set3-${playerId}`).value) || 0;
     const total = s1 + s2 + s3;
     const totalEl = document.getElementById(`total-${playerId}`);
     if (totalEl) totalEl.textContent = String(total);
   };
 
-  // Guardar puntaje en la base de datos
-  (window as any).saveScore = async function (playerId: number) {
-    const s1 = parseInt((document.getElementById(`set1-${playerId}`) as HTMLInputElement).value) || 0;
-    const s2 = parseInt((document.getElementById(`set2-${playerId}`) as HTMLInputElement).value) || 0;
-    const s3 = parseInt((document.getElementById(`set3-${playerId}`) as HTMLInputElement).value) || 0;
+  window.saveScore = async function (playerId) {
+    const s1 = parseInt(document.getElementById(`set1-${playerId}`).value) || 0;
+    const s2 = parseInt(document.getElementById(`set2-${playerId}`).value) || 0;
+    const s3 = parseInt(document.getElementById(`set3-${playerId}`).value) || 0;
 
-    const btn = document.getElementById(`btn-${playerId}`) as HTMLButtonElement;
+    const btn = document.getElementById(`btn-${playerId}`);
     const original = btn.textContent;
     btn.textContent = "...";
     btn.disabled = true;

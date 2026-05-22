@@ -1,0 +1,510 @@
+---
+export const prerender = false;
+
+// Esta página lee los puntajes en tiempo real de la API
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overlay Leaderboard · Liga Fortnite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Barlow+Condensed:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: transparent;
+      font-family: 'Barlow Condensed', sans-serif;
+      width: 600px;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Controles (ocultos en OBS, visibles al abrir en browser) ── */
+    #controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .ctrl-btn {
+      padding: 10px 20px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .ctrl-btn:hover { transform: scale(1.05); }
+    .ctrl-btn:active { transform: scale(0.97); }
+
+    .btn-reveal {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #1a0e00;
+    }
+
+    .btn-reset {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .btn-div {
+      background: rgba(99,102,241,0.8);
+      color: white;
+    }
+
+    /* ── Header ── */
+    #header {
+      padding: 16px 24px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, rgba(15,15,30,0.95), rgba(25,20,50,0.95));
+      border-bottom: 2px solid rgba(245,158,11,0.4);
+      backdrop-filter: blur(10px);
+    }
+
+    #header-left { display: flex; align-items: center; gap: 12px; }
+
+    #header-icon { font-size: 28px; line-height: 1; }
+
+    #header-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: rgba(255,255,255,0.4);
+      line-height: 1;
+    }
+
+    #header-division {
+      font-size: 22px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #fff;
+      line-height: 1.1;
+    }
+
+    #live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(239,68,68,0.2);
+      border: 1px solid rgba(239,68,68,0.4);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #ef4444;
+    }
+
+    #live-dot {
+      width: 7px;
+      height: 7px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* ── Lista de jugadores (4-10) ── */
+    #list-container {
+      background: rgba(10,10,20,0.88);
+      backdrop-filter: blur(10px);
+    }
+
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: background 0.2s;
+    }
+
+    .player-row.visible {
+      animation: slideIn 0.4s forwards;
+    }
+
+    @keyframes slideIn {
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .player-row:hover { background: rgba(255,255,255,0.03); }
+
+    .rank-num {
+      font-size: 15px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.25);
+      width: 28px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .player-name {
+      flex: 1;
+      font-size: 18px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .player-points {
+      font-size: 22px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 1px;
+      flex-shrink: 0;
+    }
+
+    /* ── Divisor podio ── */
+    #podio-divider {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 24px;
+      background: rgba(245,158,11,0.08);
+      border-top: 1px solid rgba(245,158,11,0.3);
+      border-bottom: 1px solid rgba(245,158,11,0.3);
+    }
+
+    #podio-divider.visible { display: flex; }
+
+    #podio-divider span {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: rgba(245,158,11,0.6);
+      white-space: nowrap;
+    }
+
+    #podio-divider hr {
+      flex: 1;
+      border: none;
+      border-top: 1px solid rgba(245,158,11,0.2);
+    }
+
+    /* ── Podio (Top 3) ── */
+    #podio-container {
+      background: rgba(10,10,20,0.92);
+      backdrop-filter: blur(10px);
+    }
+
+    .podio-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      opacity: 0;
+      transform: scale(0.95) translateY(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .podio-row.reveal-3 { animation: revealPodio 0.6s 0s forwards cubic-bezier(0.34,1.56,0.64,1); }
+    .podio-row.reveal-2 { animation: revealPodio 0.6s 0s forwards cubic-bezier(0.34,1.56,0.64,1); }
+    .podio-row.reveal-1 { animation: revealPodio 0.7s 0s forwards cubic-bezier(0.34,1.56,0.64,1); }
+
+    @keyframes revealPodio {
+      0%   { opacity: 0; transform: scale(0.9) translateY(15px); }
+      60%  { opacity: 1; transform: scale(1.02) translateY(-3px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* Brillo de fondo al revelar */
+    .podio-row.reveal-1::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(245,158,11,0.08), transparent);
+      animation: shimmer 2s 0.3s infinite;
+    }
+
+    @keyframes shimmer {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .podio-medal {
+      font-size: 26px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
+    }
+
+    .podio-name {
+      flex: 1;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .podio-row.reveal-1 .podio-name { color: #fbbf24; }
+    .podio-row.reveal-2 .podio-name { color: #e2e8f0; }
+    .podio-row.reveal-3 .podio-name { color: #cd7c3a; }
+
+    .podio-points {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      flex-shrink: 0;
+    }
+
+    .podio-row.reveal-1 .podio-points { color: #fbbf24; text-shadow: 0 0 20px rgba(251,191,36,0.5); }
+    .podio-row.reveal-2 .podio-points { color: #e2e8f0; }
+    .podio-row.reveal-3 .podio-points { color: #cd7c3a; }
+
+    /* ── Loading ── */
+    #loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      color: rgba(255,255,255,0.3);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      background: rgba(10,10,20,0.9);
+    }
+
+    /* ── Selector divisional ── */
+    #div-selector {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 6px;
+      z-index: 100;
+    }
+
+    .div-pill {
+      padding: 6px 14px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      border-radius: 20px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.5);
+      transition: all 0.2s;
+    }
+
+    .div-pill.active {
+      background: rgba(245,158,11,0.2);
+      border-color: rgba(245,158,11,0.5);
+      color: #f59e0b;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Selector de divisional -->
+  <div id="div-selector">
+    <button class="div-pill active" onclick="setDiv('clasificatoria')">🛡️ Clas.</button>
+    <button class="div-pill" onclick="setDiv('semi_profesional')">⚡ Semi</button>
+    <button class="div-pill" onclick="setDiv('profesional')">👑 Pro</button>
+  </div>
+
+  <!-- Header -->
+  <div id="header">
+    <div id="header-left">
+      <div id="header-icon">🏆</div>
+      <div>
+        <div id="header-title">Liga Fortnite · ACRECONRE</div>
+        <div id="header-division">Clasificatoria</div>
+      </div>
+    </div>
+    <div id="live-badge">
+      <div id="live-dot"></div>
+      En vivo
+    </div>
+  </div>
+
+  <!-- Lista jugadores 4-10 -->
+  <div id="list-container">
+    <div id="loading">Cargando...</div>
+    <div id="player-list"></div>
+  </div>
+
+  <!-- Divisor podio -->
+  <div id="podio-divider">
+    <hr />
+    <span>⭐ Top 3 ⭐</span>
+    <hr />
+  </div>
+
+  <!-- Podio Top 3 -->
+  <div id="podio-container">
+    <div id="podio-list"></div>
+  </div>
+
+  <!-- Controles -->
+  <div id="controls">
+    <button class="ctrl-btn btn-reveal" onclick="revealNext()">
+      ▶ Revelar siguiente
+    </button>
+    <button class="ctrl-btn btn-reset" onclick="resetReveal()">
+      ↺ Reiniciar
+    </button>
+  </div>
+
+  <script>
+    const DIVISIONS = {
+      clasificatoria:   { label: "Clasificatoria",   icon: "🛡️" },
+      semi_profesional: { label: "Semi Profesional", icon: "⚡"  },
+      profesional:      { label: "Profesional",      icon: "👑"  },
+    };
+
+    let currentDiv = "clasificatoria";
+    let allPlayers = [];
+    let podioRevealed = 0; // 0 = nada, 1 = 3ro, 2 = 2do, 3 = 1ro
+
+    // ── Cargar datos ──────────────────────────────────────────────────────────
+    async function loadData() {
+      document.getElementById("loading").style.display = "flex";
+      document.getElementById("player-list").innerHTML = "";
+      document.getElementById("podio-list").innerHTML = "";
+      document.getElementById("podio-divider").classList.remove("visible");
+      podioRevealed = 0;
+
+      try {
+        const [playersRes, scoresRes] = await Promise.all([
+          fetch("/api/fortnite-league/players"),
+          fetch("/api/fortnite-league/scores"),
+        ]);
+
+        const { players } = await playersRes.json();
+        const { scores }  = await scoresRes.json();
+
+        const scoresMap = {};
+        scores.forEach((s) => { scoresMap[s.inscriptionId] = s; });
+
+        allPlayers = players
+          .filter((p) => p.division === currentDiv)
+          .map((p) => ({
+            id: p.id,
+            name: p.discordUsername,
+            total: scoresMap[p.id]?.total ?? 0,
+          }))
+          .sort((a, b) => b.total - a.total);
+
+        document.getElementById("loading").style.display = "none";
+        renderList();
+      } catch (e) {
+        document.getElementById("loading").textContent = "Error al cargar";
+      }
+    }
+
+    // ── Render lista (posiciones 4-10) ────────────────────────────────────────
+    function renderList() {
+      const list = document.getElementById("player-list");
+      list.innerHTML = "";
+
+      const rest = allPlayers.slice(3); // del 4to en adelante
+
+      rest.forEach((p, idx) => {
+        const rank = idx + 4;
+        const row = document.createElement("div");
+        row.className = "player-row";
+        row.style.animationDelay = `${idx * 80}ms`;
+        row.innerHTML = `
+          <span class="rank-num">${rank}</span>
+          <span class="player-name">${p.name}</span>
+          <span class="player-points">${p.total} pts</span>
+        `;
+        list.appendChild(row);
+        requestAnimationFrame(() => row.classList.add("visible"));
+      });
+
+      if (allPlayers.length === 0) {
+        list.innerHTML = `<div style="padding:30px;text-align:center;color:rgba(255,255,255,0.2);font-size:12px;letter-spacing:2px;text-transform:uppercase;">Sin jugadores</div>`;
+      }
+    }
+
+    // ── Revelar podio uno por uno ─────────────────────────────────────────────
+    function revealNext() {
+      if (podioRevealed >= 3) return;
+      podioRevealed++;
+
+      if (podioRevealed === 1) {
+        // Mostrar divisor
+        document.getElementById("podio-divider").classList.add("visible");
+      }
+
+      const podioList = document.getElementById("podio-list");
+      const pos = 3 - podioRevealed + 1; // 3, 2, 1
+      const player = allPlayers[pos - 1];
+      if (!player) { podioRevealed--; return; }
+
+      const medals = { 1: "🥇", 2: "🥈", 3: "🥉" };
+
+      const row = document.createElement("div");
+      row.className = `podio-row reveal-${pos}`;
+      row.innerHTML = `
+        <span class="podio-medal">${medals[pos]}</span>
+        <span class="podio-name">${player.name}</span>
+        <span class="podio-points">${player.total}</span>
+      `;
+
+      // Insertar al principio (el 1ro queda arriba)
+      podioList.insertBefore(row, podioList.firstChild);
+    }
+
+    function resetReveal() {
+      podioRevealed = 0;
+      document.getElementById("podio-list").innerHTML = "";
+      document.getElementById("podio-divider").classList.remove("visible");
+    }
+
+    // ── Cambiar divisional ────────────────────────────────────────────────────
+    window.setDiv = function(divId) {
+      currentDiv = divId;
+      document.querySelectorAll(".div-pill").forEach((el) => el.classList.remove("active"));
+      event.target.classList.add("active");
+      document.getElementById("header-division").textContent = DIVISIONS[divId].label;
+      document.getElementById("header-icon").textContent = "🏆";
+      resetReveal();
+      loadData();
+    };
+
+    // ── Auto-refresh cada 30 segundos ─────────────────────────────────────────
+    loadData();
+    setInterval(() => {
+      if (podioRevealed === 0) loadData(); // solo refresca si el podio no está revelado
+    }, 30000);
+  </script>
+</body>
+</html>
