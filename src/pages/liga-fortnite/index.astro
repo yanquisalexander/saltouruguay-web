@@ -12,8 +12,8 @@ const dbPlayers = await client
 
 const DIVISIONALES = [
   { id: "clasificatoria",   label: "Clasificatoria",    icon: "🛡️", cols: 3, max: 100 },
-  { id: "semi_profesional", label: "Semi Profesional",  icon: "⚡",  cols: 1, max: 16  },
-  { id: "profesional",      label: "Profesional",       icon: "👑", cols: 1, max: 16  },
+  { id: "semi_profesional", label: "Semi Profesional",  icon: "⚡",  cols: 1, max: 18  },
+  { id: "profesional",      label: "Profesional",       icon: "👑", cols: 1, max: 18  },
 ];
 
 const NOVEDADES = [
@@ -656,7 +656,7 @@ const NOVEDADES = [
     if (!player || player.division === targetDiv) return;
 
     // Check max capacity of target division
-    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
+    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 18, profesional: 18 };
     const currentCount = players.filter((p) => p.division === targetDiv).length;
     if (currentCount >= maxMap[targetDiv]) {
       const labelMap: Record<string, string> = { clasificatoria: "Clasificatoria", semi_profesional: "Semi Profesional", profesional: "Profesional" };
@@ -684,7 +684,7 @@ const NOVEDADES = [
     ["clasificatoria", "semi_profesional", "profesional"].forEach((div) => {
       const count = players.filter((p) => p.division === div).length;
       const el = document.getElementById(`count-${div}`)!;
-      const maxMap2: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
+      const maxMap2: Record<string, number> = { clasificatoria: 100, semi_profesional: 18, profesional: 18 };
       const max = maxMap2[div] || 100;
       el.textContent = `${count} / ${max} jugadores`;
     });
@@ -716,7 +716,7 @@ const NOVEDADES = [
 
     if (!name || !epic) { showAdminMsg("Completá Discord y Epic ID", "error"); return; }
 
-    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
+    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 18, profesional: 18 };
     const currentCount = players.filter((p) => p.division === divId).length;
     if (currentCount >= maxMap[divId]) { showAdminMsg(`División llena (máx. ${maxMap[divId]})`, "error"); return; }
 
@@ -897,7 +897,7 @@ const NOVEDADES = [
     ));
     if (dup) { showEditMsg("Discord o Epic ID ya en uso", "error"); return; }
 
-    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 16, profesional: 16 };
+    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 18, profesional: 18 };
     const p = players.find((x) => x.id === numId)!;
     if (p.division !== newDivision) {
       const count = players.filter((x) => x.division === newDivision).length;
