@@ -16,6 +16,8 @@ import {
     LucideBookmark,
     LucideArrowLeft,
     LucideX,
+    LucideBell,
+    LucideZap,
 } from "lucide-preact";
 import { Notifications } from "@/components/Notifications";
 import type { SaltogramPost, FriendRequest, FriendRequestState, SuggestedUser, TrendingTag, ConversationPreview } from "@/types/saltogram";
@@ -74,6 +76,106 @@ const parseRoute = (path: string): { view: ActiveView; username?: string; postId
     return { view: "home" };
 };
 
+/**
+ * Badge pill reutilizable — estilo M3 Expressive
+ */
+function Badge({ count, color = "blue" }: { count: number; color?: "blue" | "red" | "amber" }) {
+    if (count <= 0) return null;
+    const colors: Record<string, string> = {
+        blue: "bg-[#b3c8ff] text-[#001849]",
+        red: "bg-[#ffb4ab] text-[#690005]",
+        amber: "bg-[#ffddb3] text-[#4a1900]",
+    };
+    return (
+        <span
+            className={`absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1.5 text-[11px] font-bold flex items-center justify-center rounded-full ${colors[color]}`}
+        >
+            {count > 99 ? "99+" : count}
+        </span>
+    );
+}
+
+/**
+ * NavItem para la sidebar — M3 NavigationDrawerItem
+ */
+function SideNavItem({
+    item,
+    isActive,
+    onClick,
+}: {
+    item: { id: string; label: string; icon: any; badge?: number; disabled?: boolean };
+    isActive: boolean;
+    onClick: () => void;
+}) {
+    const Icon = item.icon;
+    return (
+        <li>
+            <button
+                onClick={onClick}
+                disabled={item.disabled}
+                className={`
+                    w-full flex items-center gap-3 px-4 py-3 rounded-full text-sm font-medium
+                    transition-all duration-200 relative
+                    ${isActive
+                        ? "bg-[#b3c8ff] text-[#001849]"
+                        : item.disabled
+                            ? "text-white/25 cursor-not-allowed"
+                            : "text-white/70 hover:bg-white/8 hover:text-white active:scale-[0.98]"
+                    }
+                `}
+            >
+                <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.badge && item.badge > 0 && (
+                    <span className={`
+                        text-xs px-2.5 py-0.5 rounded-full font-semibold
+                        ${isActive ? "bg-[#001849]/20 text-[#001849]" : "bg-[#b3c8ff]/15 text-[#b3c8ff]"}
+                    `}>
+                        {item.badge}
+                    </span>
+                )}
+            </button>
+        </li>
+    );
+}
+
+/**
+ * Botón de acción flotante del header — M3 IconButton tonal
+ */
+function HeaderIconBtn({
+    icon: Icon,
+    onClick,
+    active,
+    badge,
+    badgeColor,
+    label,
+}: {
+    icon: any;
+    onClick: () => void;
+    active?: boolean;
+    badge?: number;
+    badgeColor?: "blue" | "red";
+    label: string;
+}) {
+    return (
+        <button
+            onClick={onClick}
+            title={label}
+            aria-label={label}
+            className={`
+                relative p-2.5 rounded-full transition-all duration-200
+                ${active
+                    ? "bg-[#b3c8ff] text-[#001849]"
+                    : "bg-white/8 text-white/70 hover:bg-white/14 hover:text-white active:scale-[0.95]"
+                }
+            `}
+        >
+            <Icon size={20} strokeWidth={1.8} />
+            {badge !== undefined && <Badge count={badge} color={badgeColor ?? "blue"} />}
+        </button>
+    );
+}
+
 export default function SaltogramApp({
     user,
     stats,
@@ -96,50 +198,26 @@ export default function SaltogramApp({
     );
     const [conversations, setConversations] = useState<ConversationPreview[]>([]);
     const [loadingConversations, setLoadingConversations] = useState(false);
-
-    // Contadores para Badges
     const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
     const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
     const searchInputRef = useRef<HTMLInputElement>(null);
     const base = useMemo(() => normalizePath(basePath), [basePath]);
 
-    // --- LÓGICA DE POLLING OPTIMIZADA ---
-
-    // Función de ejecución única (stateless)
     const handleGlobalPoll = useCallback(async () => {
         if (!user) return;
-
         try {
-            // Llamamos a la action optimizada (Promise.all backend)
             const { data, error } = await actions.saltogram.poll({});
-
-            if (error) {
-                console.error("Poll error:", error);
-                return;
-            }
-
+            if (error) return;
             if (data) {
                 setUnreadMessagesCount(data.unreadMessages);
                 setUnreadNotificationsCount(data.unreadNotifications);
-
-                // Nota: friendRequestsState es un array local manejado por la UI y Widgets.
-                // Si quisieras sincronizarlo estrictamente con el servidor, deberías recargar la lista
-                // si data.friendRequests !== friendRequestsState.length
             }
-        } catch (error) {
-            // Fallo silencioso en background
-            console.error(error);
-        }
+        } catch { /* silencioso */ }
     }, [user]);
 
-    // Intervalo controlado: 60 segundos si hay usuario logueado.
-    // Esto evita el bucle infinito y reduce costos serverless.
     useInterval(handleGlobalPoll, user ? 60000 : null);
 
-    // --- FIN LÓGICA POLLING ---
-
-    // Calculo de mensajes no leídos (combina local con servidor)
     const unreadMessages = useMemo(
         () => {
             const fromConversations = conversations.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0);
@@ -155,15 +233,13 @@ export default function SaltogramApp({
             const { data, error } = await actions.messages.getConversations();
             if (error) throw new Error(error.message);
             setConversations(data?.conversations ?? []);
-        } catch (err) {
-            console.error(err);
+        } catch {
             toast.error("No pudimos cargar tus mensajes");
         } finally {
             setLoadingConversations(false);
         }
     }, [user]);
 
-    // Search Logic
     useEffect(() => {
         if (searchQuery.length < 2) {
             setSearchResults([]);
@@ -175,45 +251,33 @@ export default function SaltogramApp({
                 setSearchLoading(true);
                 const { data, error } = await actions.saltogram.searchUsers({ query: searchQuery });
                 if (error) throw new Error(error.message);
-                if (isMounted) {
-                    setSearchResults(data?.users ?? []);
-                }
-            } catch (err) {
-                if (isMounted) {
-                    setSearchResults([]);
-                }
+                if (isMounted) setSearchResults(data?.users ?? []);
+            } catch {
+                if (isMounted) setSearchResults([]);
             } finally {
                 if (isMounted) setSearchLoading(false);
             }
         }, 250);
-        return () => {
-            isMounted = false;
-            clearTimeout(timeout);
-        };
+        return () => { isMounted = false; clearTimeout(timeout); };
     }, [searchQuery]);
 
     useEffect(() => {
-        if (activeView === "direct") {
-            loadConversations();
-        }
+        if (activeView === "direct") loadConversations();
     }, [activeView, loadConversations]);
 
-    // Focus input when mobile search opens
     useEffect(() => {
         if (mobileSearchOpen && searchInputRef.current) {
             searchInputRef.current.focus();
         }
     }, [mobileSearchOpen]);
 
-    const navItems = useMemo(() => (
-        [
-            { id: "home" as const, label: "Inicio", icon: LucideHome, path: "/saltogram" },
-            { id: "explore" as const, label: "Explorar", icon: LucideCompass, path: "/saltogram/explore" },
-            { id: "direct" as const, label: "Mensajes", icon: LucideSend, badge: unreadMessages, path: "/saltogram/direct" },
-            { id: "requests" as const, label: "Solicitudes", icon: LucideUsers, badge: friendRequestsState.length, path: "/saltogram/requests" },
-            { id: "profile" as const, label: "Perfil", icon: LucideUserCircle, disabled: !user, path: user ? `/saltogram/u/${user.username}` : "#" },
-        ]
-    ), [friendRequestsState.length, unreadMessages, user]);
+    const navItems = useMemo(() => ([
+        { id: "home" as const, label: "Inicio", icon: LucideHome, path: "/saltogram" },
+        { id: "explore" as const, label: "Explorar", icon: LucideCompass, path: "/saltogram/explore" },
+        { id: "direct" as const, label: "Mensajes", icon: LucideSend, badge: unreadMessages, path: "/saltogram/direct" },
+        { id: "requests" as const, label: "Solicitudes", icon: LucideUsers, badge: friendRequestsState.length, path: "/saltogram/requests" },
+        { id: "profile" as const, label: "Perfil", icon: LucideUserCircle, disabled: !user, path: user ? `/saltogram/u/${user.username}` : "#" },
+    ]), [friendRequestsState.length, unreadMessages, user]);
 
     const handleNavClick = (item: typeof navItems[0]) => {
         if (item.id === "profile" && !user) {
@@ -224,51 +288,57 @@ export default function SaltogramApp({
     };
 
     const handleRouteChange = (e: RouterOnChangeArgs) => {
-        const current = parseRoute(e.url);
-        setActiveView(current.view);
+        setActiveView(parseRoute(e.url).view);
     };
 
-    const renderSearchResults = () => {
-        if (!searchOpen && !mobileSearchOpen) return null;
+    /** Dropdown de resultados de búsqueda */
+    const SearchResultsDropdown = ({ mobile = false }: { mobile?: boolean }) => {
         if (searchQuery.length < 2) return null;
 
         return (
-            <div className={`${mobileSearchOpen ? 'relative w-full' : 'absolute mt-2 w-full'} bg-[#0c0c0f]/95 border border-white/10 rounded-2xl shadow-2xl max-h-72 overflow-y-auto z-40`}>
+            <div className={`
+                ${mobile ? "relative w-full mt-2" : "absolute top-full left-0 right-0 mt-2"}
+                bg-[#1a1b2e] border border-white/10 rounded-[28px] shadow-2xl
+                max-h-72 overflow-y-auto z-50 overflow-hidden
+            `}>
                 {searchLoading ? (
-                    <div className="flex items-center gap-2 px-4 py-3 text-white/60 text-sm">
+                    <div className="flex items-center gap-3 px-5 py-4 text-white/50 text-sm">
                         <LucideLoader2 size={16} className="animate-spin" />
-                        Buscando...
+                        Buscando…
                     </div>
+                ) : searchResults.length > 0 ? (
+                    searchResults.map((result) => (
+                        <button
+                            key={result.id}
+                            onClick={() => {
+                                setSearchOpen(false);
+                                setMobileSearchOpen(false);
+                                setSearchQuery("");
+                                route(`/saltogram/u/${result.username}`);
+                            }}
+                            className="
+                                w-full flex items-center gap-3 px-5 py-3.5
+                                hover:bg-white/6 text-left transition-colors
+                                border-b border-white/6 last:border-0
+                                active:bg-white/10
+                            "
+                        >
+                            <img
+                                src={result.avatar || `https://ui-avatars.com/api/?name=${result.displayName}`}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-[#b3c8ff]/30"
+                                alt={result.displayName}
+                            />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm text-white font-semibold truncate">{result.displayName}</p>
+                                <p className="text-xs text-white/40 truncate">@{result.username}</p>
+                            </div>
+                            <LucideChevronRight size={16} className="text-white/25 shrink-0" />
+                        </button>
+                    ))
                 ) : (
-                    searchResults.length > 0 ? (
-                        searchResults.map((result) => (
-                            <button
-                                key={result.id}
-                                onClick={() => {
-                                    setSearchOpen(false);
-                                    setMobileSearchOpen(false);
-                                    setSearchQuery("");
-                                    route(`/saltogram/u/${result.username}`);
-                                }}
-                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-left transition-colors border-b border-white/5 last:border-0"
-                            >
-                                <img
-                                    src={result.avatar || `https://ui-avatars.com/api/?name=${result.displayName}`}
-                                    className="w-8 h-8 rounded-full border border-white/10 object-cover"
-                                    alt={result.displayName}
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-white font-semibold truncate">{result.displayName}</p>
-                                    <p className="text-xs text-white/40 truncate">@{result.username}</p>
-                                </div>
-                                <LucideChevronRight size={16} className="text-white/30" />
-                            </button>
-                        ))
-                    ) : (
-                        <div className="px-4 py-3 text-white/40 text-sm text-center">
-                            No se encontraron resultados
-                        </div>
-                    )
+                    <div className="px-5 py-4 text-white/40 text-sm text-center">
+                        Sin resultados para "{searchQuery}"
+                    </div>
                 )}
             </div>
         );
@@ -276,106 +346,181 @@ export default function SaltogramApp({
 
     return (
         <div className="w-full relative">
-            <header className="sticky top-4 z-30 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl px-4 py-3 flex items-center justify-between gap-4 shadow-2xl transition-all duration-300">
+            {/* ===================== HEADER ===================== */}
+            {/*
+             * M3 Expressive: "Top App Bar" adaptado.
+             * Superficie con color tonal primario oscuro, forma de contenedor redondeado.
+             */}
+            <header className="
+                sticky top-3 z-30
+                bg-[#0f1124]/90 backdrop-blur-2xl
+                border border-white/8
+                rounded-[32px]
+                px-4 py-2.5
+                flex items-center justify-between gap-3
+                shadow-[0_4px_32px_rgba(0,0,0,0.4)]
+                transition-all duration-300
+            ">
                 {!mobileSearchOpen ? (
                     <>
-                        <div className="flex items-center gap-3 shrink-0">
-                            <a href="/" data-astro-reload className="text-white/60 hover:text-white transition-colors p-1" aria-label="Volver al sitio principal" title="Volver al sitio principal">
-                                <LucideArrowLeft size={20} />
+                        {/* Logo / Branding */}
+                        <div className="flex items-center gap-2.5 shrink-0">
+                            <a
+                                href="/"
+                                data-astro-reload
+                                className="
+                                    p-2.5 rounded-full text-white/60
+                                    hover:bg-white/8 hover:text-white
+                                    transition-all duration-200
+                                "
+                                aria-label="Volver al sitio principal"
+                            >
+                                <LucideArrowLeft size={20} strokeWidth={1.8} />
                             </a>
-                            <div className="hidden sm:block">
-                                <p className="text-[10px] uppercase tracking-[0.4em] text-white/40 leading-none mb-1">Saltogram</p>
-                                <h1 className="text-xl font-anton text-white leading-none">Comunidad</h1>
+
+                            <div className="hidden sm:flex items-center gap-2">
+                                {/* Icono tonal M3 */}
+                                <div className="w-9 h-9 rounded-[14px] bg-[#b3c8ff]/15 flex items-center justify-center">
+                                    <LucideZap size={18} className="text-[#b3c8ff]" strokeWidth={2} />
+                                </div>
+                                <div>
+                                    <p className="text-[9px] uppercase tracking-[0.45em] text-white/35 leading-none mb-0.5">Social</p>
+                                    <h1 className="text-[17px] font-bold text-white leading-none tracking-tight">Saltogram</h1>
+                                </div>
                             </div>
                             <div className="sm:hidden">
-                                <h1 className="text-xl font-anton text-white">Saltogram</h1>
+                                <div className="w-9 h-9 rounded-[14px] bg-[#b3c8ff]/15 flex items-center justify-center">
+                                    <LucideZap size={18} className="text-[#b3c8ff]" strokeWidth={2} />
+                                </div>
                             </div>
                         </div>
 
-                        {/* Desktop Search Bar */}
-                        <div className="flex-1 max-w-xl relative hidden sm:block">
-                            <LucideSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={16} />
-                            <input
-                                value={searchQuery}
-                                onChange={(event) => {
-                                    setSearchQuery((event.target as HTMLInputElement).value);
-                                    setSearchOpen(true);
-                                }}
-                                onFocus={() => setSearchOpen(true)}
-                                placeholder="Buscar perfiles o etiquetas"
-                                className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/40 transition-all focus:bg-white/10"
-                            />
-                            {renderSearchResults()}
+                        {/* Barra de búsqueda Desktop — M3 SearchBar */}
+                        <div className="flex-1 max-w-lg relative hidden sm:block">
+                            <div className="relative">
+                                <LucideSearch
+                                    className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35 pointer-events-none"
+                                    size={16}
+                                    strokeWidth={1.8}
+                                />
+                                <input
+                                    value={searchQuery}
+                                    onChange={(e) => {
+                                        setSearchQuery((e.target as HTMLInputElement).value);
+                                        setSearchOpen(true);
+                                    }}
+                                    onFocus={() => setSearchOpen(true)}
+                                    placeholder="Buscar perfiles o etiquetas…"
+                                    className="
+                                        w-full bg-white/6 border border-white/8
+                                        rounded-full py-2.5 pl-10 pr-10
+                                        text-sm text-white placeholder:text-white/35
+                                        focus:outline-none focus:bg-white/10 focus:border-[#b3c8ff]/40
+                                        focus:ring-2 focus:ring-[#b3c8ff]/20
+                                        transition-all duration-200
+                                    "
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => { setSearchQuery(""); setSearchResults([]); }}
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/35 hover:text-white p-0.5"
+                                    >
+                                        <LucideX size={14} />
+                                    </button>
+                                )}
+                            </div>
+                            {searchOpen && <SearchResultsDropdown />}
                         </div>
 
-                        {/* Mobile Actions */}
-                        <div className="flex items-center gap-2 shrink-0">
-                            {/* Mobile Search Button */}
+                        {/* Acciones del header */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            {/* Botón búsqueda móvil */}
                             <button
                                 onClick={() => setMobileSearchOpen(true)}
-                                className="sm:hidden p-2.5 rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+                                className="sm:hidden p-2.5 rounded-full bg-white/6 text-white/60 hover:bg-white/12 hover:text-white transition-all duration-200"
                             >
-                                <LucideSearch size={18} />
+                                <LucideSearch size={19} strokeWidth={1.8} />
                             </button>
 
-                            <button
+                            <HeaderIconBtn
+                                icon={LucideSend}
                                 onClick={() => route("/saltogram/direct")}
-                                className={`p-2.5 rounded-full border transition-colors relative ${activeView === "direct" ? "bg-white text-black border-white" : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white"}`}
-                                title="Mensajes"
-                            >
-                                <LucideSend size={18} />
-                                {unreadMessages > 0 && (
-                                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border border-[#0c0c0f]">
-                                        {unreadMessages}
-                                    </span>
-                                )}
-                            </button>
+                                active={activeView === "direct"}
+                                badge={unreadMessages}
+                                badgeColor="blue"
+                                label="Mensajes"
+                            />
 
-                            <button
+                            <HeaderIconBtn
+                                icon={LucideUsers}
                                 onClick={() => route("/saltogram/requests")}
-                                className={`p-2.5 rounded-full border transition-colors relative ${activeView === "requests" ? "bg-white text-black border-white" : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white"}`}
-                                title="Solicitudes"
-                            >
-                                <LucideUsers size={18} />
-                                {friendRequestsState.length > 0 && (
-                                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border border-[#0c0c0f]">
-                                        {friendRequestsState.length}
-                                    </span>
-                                )}
-                            </button>
+                                active={activeView === "requests"}
+                                badge={friendRequestsState.length}
+                                badgeColor="red"
+                                label="Solicitudes"
+                            />
 
-                            <div className="w-px h-8 bg-white/10 mx-1 hidden sm:block"></div>
+                            <div className="w-px h-7 bg-white/10 mx-0.5 hidden sm:block" />
 
                             <Notifications unreadCount={unreadNotificationsCount} />
+
+                            {/* Avatar del usuario */}
+                            {user && (
+                                <button
+                                    onClick={() => route(`/saltogram/u/${user.username}`)}
+                                    className="ml-1 relative group"
+                                    title="Ver mi perfil"
+                                >
+                                    <img
+                                        src={user.image || `https://ui-avatars.com/api/?name=${user.name}`}
+                                        alt={user.name ?? "Usuario"}
+                                        className="
+                                            w-9 h-9 rounded-full object-cover
+                                            border-2 border-transparent
+                                            group-hover:border-[#b3c8ff]/60
+                                            transition-all duration-200
+                                        "
+                                    />
+                                    {/* Indicador de estado activo */}
+                                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#69ffa0] rounded-full border-2 border-[#0f1124]" />
+                                </button>
+                            )}
                         </div>
                     </>
                 ) : (
-                    /* Mobile Expanded Search Bar */
-                    <div className="flex items-center w-full gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                    /* Búsqueda móvil expandida */
+                    <div className="flex items-center w-full gap-2.5 animate-in fade-in slide-in-from-top-1 duration-200">
                         <div className="relative flex-1">
-                            <LucideSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={16} />
+                            <LucideSearch
+                                className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35 pointer-events-none"
+                                size={16}
+                                strokeWidth={1.8}
+                            />
                             <input
                                 ref={searchInputRef}
                                 value={searchQuery}
-                                onInput={(event) => setSearchQuery((event.target as HTMLInputElement).value)}
-                                placeholder="Buscar..."
-                                className="w-full bg-white/10 border border-white/20 rounded-full py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
+                                onInput={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
+                                placeholder="Buscar…"
+                                className="
+                                    w-full bg-white/8 border border-[#b3c8ff]/30
+                                    rounded-full py-2.5 pl-10 pr-10
+                                    text-sm text-white placeholder:text-white/35
+                                    focus:outline-none focus:ring-2 focus:ring-[#b3c8ff]/30
+                                    transition-all
+                                "
                             />
                             {searchQuery && (
                                 <button
                                     onClick={() => setSearchQuery("")}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/35 hover:text-white"
                                 >
                                     <LucideX size={14} />
                                 </button>
                             )}
                         </div>
                         <button
-                            onClick={() => {
-                                setMobileSearchOpen(false);
-                                setSearchQuery("");
-                            }}
-                            className="text-sm font-medium text-white/60 hover:text-white px-2"
+                            onClick={() => { setMobileSearchOpen(false); setSearchQuery(""); }}
+                            className="text-sm font-medium text-[#b3c8ff] hover:text-white px-1 transition-colors shrink-0"
                         >
                             Cancelar
                         </button>
@@ -383,74 +528,90 @@ export default function SaltogramApp({
                 )}
             </header>
 
-            {/* Mobile Search Results Overlay */}
+            {/* Resultados búsqueda móvil — overlay */}
             {mobileSearchOpen && searchQuery.length >= 2 && (
-                <div className="fixed inset-x-4 top-[88px] z-20 sm:hidden">
-                    {renderSearchResults()}
+                <div className="fixed inset-x-4 top-[5.5rem] z-20 sm:hidden">
+                    <SearchResultsDropdown mobile />
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_300px] gap-6 mt-6">
-                <aside className="hidden lg:flex flex-col gap-4 sticky top-24 h-fit">
-                    <nav className="bg-white/5 rounded-3xl border border-white/10 p-4">
-                        <p className="text-xs uppercase tracking-[0.3em] text-white/40 mb-3">Principal</p>
-                        <ul className="space-y-1">
+            {/* ===================== LAYOUT PRINCIPAL ===================== */}
+            <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)_300px] gap-5 mt-5">
+
+                {/* ---- SIDEBAR IZQUIERDA (M3 Navigation Drawer) ---- */}
+                <aside className="hidden lg:flex flex-col gap-3 sticky top-[5rem] h-fit">
+
+                    {/* Navigation rail */}
+                    <nav className="
+                        bg-[#0f1124]/80 backdrop-blur-xl
+                        rounded-[28px] border border-white/8
+                        p-3
+                    ">
+                        <p className="text-[10px] uppercase tracking-[0.35em] text-white/30 px-4 mb-2 mt-1">Navegación</p>
+                        <ul className="space-y-0.5">
                             {navItems.map((item) => (
-                                <li key={item.id}>
-                                    <button
-                                        onClick={() => handleNavClick(item)}
-                                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-2xl text-sm font-medium transition ${activeView === item.id
-                                            ? "bg-white text-black"
-                                            : item.disabled
-                                                ? "text-white/30"
-                                                : "text-white/70 hover:bg-white/10"
-                                            }`}
-                                        disabled={item.disabled}
-                                    >
-                                        <item.icon size={16} />
-                                        <span>{item.label}</span>
-                                        {item.badge && item.badge > 0 && (
-                                            <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                                                {item.badge}
-                                            </span>
-                                        )}
-                                    </button>
-                                </li>
+                                <SideNavItem
+                                    key={item.id}
+                                    item={item}
+                                    isActive={activeView === item.id}
+                                    onClick={() => handleNavClick(item)}
+                                />
                             ))}
                         </ul>
                     </nav>
 
+                    {/* Tarjeta de usuario — M3 Card tonal */}
                     {user && (
-                        <div className="bg-white/5 rounded-3xl border border-white/10 p-4 flex items-center gap-3">
-                            <img
-                                src={user.image || `https://ui-avatars.com/api/?name=${user.name}`}
-                                alt={user.name ?? "Usuario"}
-                                className="w-12 h-12 rounded-2xl border border-white/10 object-cover"
-                            />
-                            <div className="flex-1">
-                                <p className="text-xs text-white/40">Conectado</p>
-                                <p className="text-sm font-semibold text-white leading-tight">{user.name}</p>
+                        <div className="
+                            bg-[#b3c8ff]/8 rounded-[28px] border border-[#b3c8ff]/12
+                            p-4 flex items-center gap-3
+                        ">
+                            <div className="relative shrink-0">
+                                <img
+                                    src={user.image || `https://ui-avatars.com/api/?name=${user.name}`}
+                                    alt={user.name ?? "Usuario"}
+                                    className="w-11 h-11 rounded-[18px] border-2 border-[#b3c8ff]/25 object-cover"
+                                />
+                                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#69ffa0] rounded-full border-2 border-[#0f1124]" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs text-[#b3c8ff]/60">Conectado como</p>
+                                <p className="text-sm font-semibold text-white leading-tight truncate">{user.name}</p>
                                 <button
                                     onClick={() => route(`/saltogram/u/${user.username}`)}
-                                    className="text-xs text-white/60 hover:text-white flex items-center gap-1"
+                                    className="text-xs text-[#b3c8ff]/70 hover:text-[#b3c8ff] flex items-center gap-0.5 transition-colors mt-0.5"
                                 >
-                                    Ver perfil <LucideChevronRight size={12} />
+                                    Ver perfil <LucideChevronRight size={11} />
                                 </button>
                             </div>
                         </div>
                     )}
 
-                    <div className="bg-white/5 rounded-3xl border border-white/10 p-4">
-                        <p className="text-xs uppercase tracking-[0.3em] text-white/40 mb-3">Tendencias</p>
-                        <ul className="space-y-2">
-                            {trendingTags.map((tag) => (
+                    {/* Tendencias — M3 Card outlined */}
+                    <div className="
+                        bg-white/3 rounded-[28px] border border-white/7
+                        p-4
+                    ">
+                        <p className="text-[10px] uppercase tracking-[0.35em] text-white/30 mb-3">Tendencias</p>
+                        <ul className="space-y-1">
+                            {trendingTags.map((tag, idx) => (
                                 <li key={tag.tag}>
                                     <a
                                         href={`${base}?tag=${tag.tag.replace("#", "")}`}
-                                        className="flex items-center justify-between text-sm text-white/70 hover:text-white"
+                                        className="
+                                            flex items-center justify-between
+                                            px-3 py-2 rounded-full text-sm
+                                            text-white/60 hover:text-white hover:bg-white/6
+                                            transition-all duration-150
+                                        "
                                     >
-                                        <span>{tag.tag}</span>
-                                        <span className="text-xs text-white/40">{tag.count}</span>
+                                        <div className="flex items-center gap-2.5">
+                                            <span className="text-[10px] text-white/20 font-mono w-4">{idx + 1}</span>
+                                            <span className="text-[#b3c8ff]/80 font-medium">{tag.tag}</span>
+                                        </div>
+                                        <span className="text-xs text-white/30 bg-white/5 px-2 py-0.5 rounded-full">
+                                            {tag.count}
+                                        </span>
                                     </a>
                                 </li>
                             ))}
@@ -458,39 +619,63 @@ export default function SaltogramApp({
                     </div>
                 </aside>
 
-                <Router onChange={handleRouteChange}>
-                    <FeedView path="/saltogram" view="home" user={user} />
-                    <FeedView path="/saltogram/explore" view="explore" user={user} />
-                    <ProfileView path="/saltogram/u/:username" user={user} />
-                    <ProfileView path="/saltogram/profile" user={user} />
-                    <PostView path="/saltogram/post/:postId" user={user} initialPost={initialPost} />
-                    <DirectView path="/saltogram/direct" user={user} conversations={conversations} loadingConversations={loadingConversations} loadConversations={loadConversations} />
-                    <ChatView path="/saltogram/direct/:partnerId" user={user} />
-                    <RequestsView path="/saltogram/requests" friendRequestsState={friendRequestsState} setFriendRequestsState={setFriendRequestsState} />
-                </Router>
+                {/* ---- CONTENIDO PRINCIPAL ---- */}
+                <main>
+                    <Router onChange={handleRouteChange}>
+                        <FeedView path="/saltogram" view="home" user={user} />
+                        <FeedView path="/saltogram/explore" view="explore" user={user} />
+                        <ProfileView path="/saltogram/u/:username" user={user} />
+                        <ProfileView path="/saltogram/profile" user={user} />
+                        <PostView path="/saltogram/post/:postId" user={user} initialPost={initialPost} />
+                        <DirectView
+                            path="/saltogram/direct"
+                            user={user}
+                            conversations={conversations}
+                            loadingConversations={loadingConversations}
+                            loadConversations={loadConversations}
+                        />
+                        <ChatView path="/saltogram/direct/:partnerId" user={user} />
+                        <RequestsView
+                            path="/saltogram/requests"
+                            friendRequestsState={friendRequestsState}
+                            setFriendRequestsState={setFriendRequestsState}
+                        />
+                    </Router>
+                </main>
 
-                <aside className="hidden xl:flex flex-col gap-4 sticky top-24 h-fit">
-                    <div className="bg-white/5 rounded-3xl border border-white/10 p-4">
-                        <p className="text-xs uppercase tracking-[0.3em] text-white/40 mb-2">Actividad</p>
-                        <h3 className="text-lg font-anton text-white mb-4">Resumen</h3>
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-2xl bg-blue-500/10 text-blue-300 border border-blue-500/30">
-                                    <LucideSparkles size={16} />
+                {/* ---- SIDEBAR DERECHA ---- */}
+                <aside className="hidden xl:flex flex-col gap-3 sticky top-[5rem] h-fit">
+
+                    {/* Resumen de actividad — M3 Card elevado */}
+                    <div className="
+                        bg-[#0f1124]/80 backdrop-blur-xl rounded-[28px]
+                        border border-white/8 p-5
+                    ">
+                        <p className="text-[10px] uppercase tracking-[0.35em] text-white/30 mb-1">Actividad</p>
+                        <h3 className="text-base font-bold text-white mb-4 tracking-tight">Tu resumen</h3>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            {/* Stat card — M3 tonal container */}
+                            <div className="
+                                bg-[#b3c8ff]/10 rounded-[20px] p-3.5
+                                border border-[#b3c8ff]/12
+                            ">
+                                <div className="w-8 h-8 rounded-full bg-[#b3c8ff]/15 flex items-center justify-center mb-2">
+                                    <LucideSparkles size={15} className="text-[#b3c8ff]" strokeWidth={2} />
                                 </div>
-                                <div>
-                                    <p className="text-xs text-white/40">Destacados</p>
-                                    <p className="text-sm text-white font-semibold">{stats.likes} reacciones</p>
-                                </div>
+                                <p className="text-2xl font-bold text-white leading-none">{stats.likes}</p>
+                                <p className="text-xs text-white/45 mt-0.5">reacciones</p>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-2xl bg-yellow-500/10 text-yellow-300 border border-yellow-500/30">
-                                    <LucideBookmark size={16} />
+
+                            <div className="
+                                bg-[#ffddb3]/8 rounded-[20px] p-3.5
+                                border border-[#ffddb3]/10
+                            ">
+                                <div className="w-8 h-8 rounded-full bg-[#ffddb3]/12 flex items-center justify-center mb-2">
+                                    <LucideBookmark size={15} className="text-[#ffddb3]" strokeWidth={2} />
                                 </div>
-                                <div>
-                                    <p className="text-xs text-white/40">Entradas</p>
-                                    <p className="text-sm text-white font-semibold">{stats.posts} publicados</p>
-                                </div>
+                                <p className="text-2xl font-bold text-white leading-none">{stats.posts}</p>
+                                <p className="text-xs text-white/45 mt-0.5">publicaciones</p>
                             </div>
                         </div>
                     </div>
@@ -504,21 +689,67 @@ export default function SaltogramApp({
                 </aside>
             </div>
 
-            <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-md md:hidden z-40">
-                <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-3xl px-4 py-2 flex items-center justify-between">
-                    {navItems.map((item) => (
-                        <button
-                            key={item.id}
-                            onClick={() => handleNavClick(item)}
-                            className={`flex flex-col items-center flex-1 gap-1 text-[11px] ${activeView === item.id ? "text-white" : "text-white/40"}`}
-                            disabled={item.disabled}
-                        >
-                            <item.icon size={18} />
-                            {item.label}
-                        </button>
-                    ))}
+            {/* ===================== BOTTOM NAV MÓVIL (M3 Navigation Bar) ===================== */}
+            <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[420px] md:hidden z-40">
+                <div className="
+                    bg-[#0f1124]/95 backdrop-blur-2xl
+                    border border-white/10
+                    rounded-[32px] px-2 py-2
+                    flex items-center justify-around
+                    shadow-[0_8px_32px_rgba(0,0,0,0.5)]
+                ">
+                    {navItems.map((item) => {
+                        const isActive = activeView === item.id;
+                        const Icon = item.icon;
+                        return (
+                            <button
+                                key={item.id}
+                                onClick={() => handleNavClick(item)}
+                                disabled={item.disabled}
+                                className={`
+                                    flex flex-col items-center gap-1 flex-1 py-1.5 px-2
+                                    rounded-[20px] transition-all duration-200
+                                    ${isActive
+                                        ? "text-[#001849]"
+                                        : item.disabled
+                                            ? "text-white/20"
+                                            : "text-white/45 hover:text-white/70"
+                                    }
+                                `}
+                            >
+                                {/* Pill indicador activo */}
+                                <div className={`
+                                    relative flex items-center justify-center
+                                    h-8 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                                    ${isActive
+                                        ? "bg-[#b3c8ff] rounded-full px-5"
+                                        : "px-2"
+                                    }
+                                `}>
+                                    <Icon
+                                        size={20}
+                                        strokeWidth={isActive ? 2.5 : 1.8}
+                                        className={isActive ? "text-[#001849]" : ""}
+                                    />
+                                    {item.badge && item.badge > 0 && !isActive && (
+                                        <Badge count={item.badge} color={item.id === "requests" ? "red" : "blue"} />
+                                    )}
+                                </div>
+                                <span className={`
+                                    text-[10px] font-medium leading-none
+                                    transition-all duration-200
+                                    ${isActive ? "text-[#b3c8ff]" : ""}
+                                `}>
+                                    {item.label}
+                                </span>
+                            </button>
+                        );
+                    })}
                 </div>
             </nav>
+
+            {/* Espaciado bottom para no tapar contenido con la nav */}
+            <div className="h-20 md:hidden" />
         </div>
     );
 }
