@@ -27,7 +27,9 @@ const session = await getSession(Astro.request);
 // Enviar email si es exitoso (Server Side)
 if (session && !errorMessage) {
   try {
-    await sendNewLoginDetectedEmail(session.user.sessionId!, Astro.request);
+    if (session.user.email) {
+      await sendNewLoginDetectedEmail(session.user.email, Astro.request);
+    }
   } catch (error) {
     console.error("Error sending login email:", error);
   }

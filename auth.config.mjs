@@ -7,12 +7,9 @@ import { client } from "@/db/client";
 import { UsersTable } from "@/db/schema";
 import { createTwitchEventsInstance, TWITCH_SCOPES } from "@/lib/Twitch";
 import {
-    getUserSubscription,
-    saveSession,
-    updateSessionActivity,
-    destroySession,
-    getSessionById
+    getUserSubscription
 } from "@/utils/user";
+import { clearTwoFactorVerified } from "@/lib/auth/session-flags";
 
 export default defineConfig({
     providers: [
@@ -81,19 +78,12 @@ export default defineConfig({
                         id: upsertedUser.id
                     };
 
-                    // Generar ID de sesión
-                    const sessionId = crypto.randomUUID();
-                    token.sessionId = sessionId;
+                    // Generar ID de sesión para flags de 2FA (ahora en Redis)
+                    token.sessionId = crypto.randomUUID();
 
                     // 3. Tareas en segundo plano (No bloqueantes)
-                    // Guardamos la sesión y registramos el webhook en paralelo
+                    // Registramos el webhook sin bloquear login
                     await Promise.allSettled([
-                        saveSession(
-                            upsertedUser.id,
-                            sessionId,
-                            token.userAgent ?? "Unknown",
-                            token.user.ip ?? "Unknown"
-                        ),
                         (async () => {
                             try {
                                 const eventSub = createTwitchEventsInstance();
@@ -118,42 +108,28 @@ export default defineConfig({
                 // Si no hay sessionId en el token, retornamos la sesión tal cual (probablemente inválida)
                 if (!token.sessionId) return session;
 
-                // 4. Validación rápida de sesión
-                const existingSession = await getSessionById(token.sessionId);
-
-                if (!existingSession) {
-                    // Si la sesión no está en Redis/DB, forzamos logout en el cliente
-                    session.user = null;
-                    return session;
-                }
-
-                // 5. OPTIMIZACIÓN: Carga de datos + Actualización de actividad en PARALELO
-                const [userRecord] = await Promise.all([
-                    // A: Buscar datos completos del usuario
-                    client.query.UsersTable.findFirst({
-                        where: eq(UsersTable.twitchId, token.user.sub),
-                        columns: {
-                            id: true,
-                            admin: true,
-                            twitchId: true,
-                            twitchTier: true,
-                            discordId: true,
-                            coins: true,
-                            username: true,
-                            twoFactorEnabled: true,
+                // Buscar datos completos del usuario
+                const userRecord = await client.query.UsersTable.findFirst({
+                    where: eq(UsersTable.twitchId, token.user.sub),
+                    columns: {
+                        id: true,
+                        admin: true,
+                        twitchId: true,
+                        twitchTier: true,
+                        discordId: true,
+                        coins: true,
+                        username: true,
+                        twoFactorEnabled: true,
+                    },
+                    with: {
+                        streamerWarsPlayer: {
+                            columns: { playerNumber: true }
                         },
-                        with: {
-                            streamerWarsPlayer: {
-                                columns: { playerNumber: true }
-                            },
-                            suspensions: {
-                                columns: { startDate: true, endDate: true, status: true },
-                            }
+                        suspensions: {
+                            columns: { startDate: true, endDate: true, status: true },
                         }
-                    }),
-                    // B: Actualizar "last_active" (sin esperar respuesta)
-                    updateSessionActivity(token.sessionId)
-                ]);
+                    }
+                });
 
                 if (userRecord) {
                     const now = new Date();
@@ -190,10 +166,9 @@ export default defineConfig({
     events: {
         signOut: async ({ token }) => {
             if (token.sessionId) {
-                // Destruir sesión sin detener el proceso de logout del cliente
-                destroySession(token.sessionId).catch(error =>
-                    console.error("Error destroying session:", error)
-                );
+                clearTwoFactorVerified(token.sessionId).catch(error =>
+                    console.error("Error clearing 2FA session flag:", error)
+                )
             }
         }
     }

@@ -2,6 +2,11 @@ import { TournamentMatchStatus, TournamentParticipantStatus, TournamentStatus, T
 import { relations, sql } from "drizzle-orm";
 import { boolean, integer, jsonb, pgEnum, pgTable, serial, text, timestamp, unique, uuid, varchar, type AnyPgColumn } from "drizzle-orm/pg-core";
 
+/**
+ * @deprecated Being phased out in favour of better-auth's native `user` table.
+ * App-specific fields (coins, twitchTier, discordId, etc.) will be migrated to
+ * better-auth `additionalFields` or a separate profile table.
+ */
 export const UsersTable = pgTable("users", {
     id: serial("id").primaryKey(),
     email: varchar("email").unique().notNull(),
@@ -37,22 +42,6 @@ export const UserSuspensionsTable = pgTable("user_suspensions", {
 }, (t) => ({
     uniqueUserId: unique().on(t.userId)
 }))
-
-export const SessionsTable = pgTable("sessions", {
-    id: serial("id").primaryKey(),
-    userId: integer("user_id").notNull().references(() => UsersTable.id),
-    sessionId: varchar("session_id").notNull().unique(),
-    userAgent: text("user_agent").notNull(),
-    ip: text("ip").notNull(),
-    lastActivity: timestamp("last_activity"),
-    twoFactorVerified: boolean("two_factor_verified").notNull().default(false),
-    createdAt: timestamp("created_at")
-        .notNull()
-        .default(sql`current_timestamp`),
-    updatedAt: timestamp("updated_at")
-        .notNull()
-        .default(sql`current_timestamp`),
-});
 
 export const SaltoTagsTable = pgTable("salto_tags", {
     id: serial("id").primaryKey(),
@@ -521,15 +510,7 @@ export const userRelations = relations(UsersTable, ({ one, many }) => ({
         references: [StreamerWarsPlayersTable.userId],
     }),
     suspensions: many(UserSuspensionsTable),
-    sessions: many(SessionsTable),
     extremo3RepechajeVotes: many(Extremo3RepechajeVotesTable),
-}))
-
-export const sessionsRelations = relations(SessionsTable, ({ one }) => ({
-    user: one(UsersTable, {
-        fields: [SessionsTable.userId],
-        references: [UsersTable.id],
-    }),
 }))
 
 export const suspensionsRelations = relations(UserSuspensionsTable, ({ one }) => ({

@@ -2,9 +2,10 @@ import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
 import { client } from "@/db/client";
-import { SessionsTable, UsersTable } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { UsersTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { DateTime } from "luxon";
+import { setTwoFactorVerified } from "./session-flags";
 
 export const DATE_ADMINS_REQUIRE_TWO_FACTOR = DateTime.fromObject({
     year: 2025,
@@ -197,20 +198,8 @@ export const verifyTwoFactor = async (userId: number, token: string, sessionId?:
 
     const isValid = verifyTotp(secret, token);
 
-    console.log("sessionId:", sessionId);
-    console.log("userId:", userId);
-
-
     if (isValid && sessionId) {
-        await client
-            .update(SessionsTable)
-            .set({
-                twoFactorVerified: true,
-            })
-            .where(and(
-                eq(SessionsTable.userId, userId),
-                eq(SessionsTable.sessionId, sessionId)
-            ));
+        await setTwoFactorVerified(sessionId);
     }
 
     return isValid;
