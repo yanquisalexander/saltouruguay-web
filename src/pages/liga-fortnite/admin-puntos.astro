@@ -1,13 +1,13 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { client } from "@/db/client";
+import { client, pool } from "@/db/client";
 import { FortniteLeagueInscriptionsTable, FortniteLeagueScoresTable } from "@/db/schema";
 
 export const prerender = false;
 
-// Crear tabla si no existe (para producción sin migrations)
+// Crear tabla si no existe (para producción)
 try {
-  await client.execute(
+  await pool.query(
     "CREATE TABLE IF NOT EXISTS fortnite_league_scores (" +
     "id SERIAL PRIMARY KEY," +
     "inscription_id INTEGER NOT NULL REFERENCES fortnite_league_inscriptions(id) ON DELETE CASCADE," +
@@ -21,7 +21,7 @@ try {
     ")"
   );
 } catch (e) {
-  // La tabla ya existe, continuar
+  // continuar
 }
 
 const players = await client.select().from(FortniteLeagueInscriptionsTable).execute();
