@@ -2,7 +2,20 @@
 import Layout from "@/layouts/Layout.astro";
 import { client } from "@/db/client";
 import { FortniteLeagueInscriptionsTable } from "@/db/schema";
+import { getSession } from "auth-astro/server";
+import { getDiscordUser } from "@/services/discord";
 export const prerender = false;
+
+// Obtener sesión del usuario
+const session = await getSession(Astro.request);
+
+// Obtener información de Discord
+const discordInfo = await getDiscordUser(
+  session?.user.discordId as string,
+).catch((error) => {
+  console.error("Error getting Discord user", error);
+  return null;
+});
 
 // Cargar jugadores desde la base de datos
 const dbPlayers = await client
@@ -64,71 +77,96 @@ const NOVEDADES = [
         <span class="h-[1px] flex-1 bg-current" />
       </div>
 
-      <form id="form-inscripcion" class="flex flex-col gap-4 text-left" onsubmit="handleSubmit(event)">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
-              Usuario de Discord
-            </label>
-            <input
-              id="inp-name"
-              type="text"
-              placeholder="tunombre"
-              maxlength="32"
-              class="w-full px-4 py-3 rounded-xl border border-current/10 bg-white
-                     text-sm font-medium text-black placeholder:text-black/30
-                     focus:outline-none focus:border-current/30
-                     transition-all duration-200"
-            />
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">Epic Games ID</label>
-            <input
-              id="inp-epic"
-              type="text"
-              placeholder="NombreEnFortnite"
-              maxlength="30"
-              class="w-full px-4 py-3 rounded-xl border border-current/10 bg-white
-                     text-sm font-medium text-black placeholder:text-black/30
-                     focus:outline-none focus:border-current/30
-                     transition-all duration-200"
-            />
-          </div>
-
-          <div class="flex flex-col gap-1.5 md:col-span-2">
-            <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">Plataforma</label>
-            <select
-              id="inp-platform"
-              class="w-full px-4 py-3 rounded-xl border border-current/10 bg-white
-                     text-sm font-medium text-black
-                     focus:outline-none focus:border-current/30
-                     transition-all duration-200 cursor-pointer"
-            >
-              <option value="PC">PC</option>
-              <option value="PS5">PlayStation 5</option>
-              <option value="Xbox">Xbox</option>
-              <option value="Switch">Nintendo Switch</option>
-              <option value="Mobile">Mobile</option>
-            </select>
-          </div>
+      {!session ? (
+        <div class="flex flex-col items-center justify-center gap-4">
+          <p class="text-center text-sm opacity-70">Debes iniciar sesión para poder inscribirte.</p>
+          <button
+            onclick="window.location.href='/api/auth/signin'"
+            class="inline-block px-12 py-5 text-sm font-black uppercase tracking-[0.25em]
+                   text-white rounded-full
+                   bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700
+                   hover:from-blue-500 hover:via-indigo-500 hover:to-purple-600
+                   hover:scale-105 hover:shadow-[0_0_30px_rgba(79,70,229,0.5)]
+                   active:scale-95 transition-all duration-300 ease-out
+                   border border-white/20 shadow-xl"
+          >
+            Iniciar sesión
+          </button>
         </div>
+      ) : !session?.user.discordId || !discordInfo ? (
+        <div class="flex flex-col items-center justify-center gap-4">
+          <p class="text-center text-sm opacity-70">Debes vincular tu Discord para poder inscribirte.</p>
+          <button
+            onclick="window.location.href='/api/discord/link'"
+            class="inline-block px-12 py-5 text-sm font-black uppercase tracking-[0.25em]
+                   text-white rounded-full
+                   bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700
+                   hover:from-blue-500 hover:via-indigo-500 hover:to-purple-600
+                   hover:scale-105 hover:shadow-[0_0_30px_rgba(79,70,229,0.5)]
+                   active:scale-95 transition-all duration-300 ease-out
+                   border border-white/20 shadow-xl"
+          >
+            Vincular Discord
+          </button>
+        </div>
+      ) : (
+        <>
+          <div class="flex flex-col items-center gap-3 mb-6 p-4 rounded-xl border border-current/10 bg-current/5">
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">Usuario conectado</p>
+            <p class="text-base font-bold">{discordInfo.username}</p>
+          </div>
 
-        <div id="msg-feedback" class="hidden text-xs font-bold uppercase tracking-[0.15em] text-center py-3 px-4 rounded-xl"></div>
+          <form id="form-inscripcion" class="flex flex-col gap-4 text-left" onsubmit="handleSubmit(event)">
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">Epic Games ID</label>
+                <input
+                  id="inp-epic"
+                  type="text"
+                  placeholder="NombreEnFortnite"
+                  maxlength="30"
+                  class="w-full px-4 py-3 rounded-xl border border-current/10 bg-white
+                         text-sm font-medium text-black placeholder:text-black/30
+                         focus:outline-none focus:border-current/30
+                         transition-all duration-200"
+                />
+              </div>
 
-        <button
-          type="submit"
-          class="inline-block px-12 py-5 text-sm font-black uppercase tracking-[0.25em]
-                 text-white rounded-full
-                 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700
-                 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-600
-                 hover:scale-105 hover:shadow-[0_0_30px_rgba(79,70,229,0.5)]
-                 active:scale-95 transition-all duration-300 ease-out
-                 border border-white/20 shadow-xl w-full"
-        >
-          Inscribirme a la Liga
-        </button>
-      </form>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">Plataforma</label>
+                <select
+                  id="inp-platform"
+                  class="w-full px-4 py-3 rounded-xl border border-current/10 bg-white
+                         text-sm font-medium text-black
+                         focus:outline-none focus:border-current/30
+                         transition-all duration-200 cursor-pointer"
+                >
+                  <option value="PC">PC</option>
+                  <option value="PS5">PlayStation 5</option>
+                  <option value="Xbox">Xbox</option>
+                  <option value="Switch">Nintendo Switch</option>
+                  <option value="Mobile">Mobile</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="msg-feedback" class="hidden text-xs font-bold uppercase tracking-[0.15em] text-center py-3 px-4 rounded-xl"></div>
+
+            <button
+              type="submit"
+              class="inline-block px-12 py-5 text-sm font-black uppercase tracking-[0.25em]
+                     text-white rounded-full
+                     bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700
+                     hover:from-blue-500 hover:via-indigo-500 hover:to-purple-600
+                     hover:scale-105 hover:shadow-[0_0_30px_rgba(79,70,229,0.5)]
+                     active:scale-95 transition-all duration-300 ease-out
+                     border border-white/20 shadow-xl w-full"
+            >
+              Inscribirme a la Liga
+            </button>
+          </form>
+        </>
+      )}
     </div>
 
     {/* --- BLOQUE 3: TABLA DE DIVISIONALES --- */}
@@ -240,6 +278,7 @@ const NOVEDADES = [
                   type="text"
                   id={`admin-discord-${div.id}`}
                   placeholder="nombreusuario"
+                  value={discordInfo?.username || ""}
                   maxlength="32"
                   class="w-full px-3 py-2.5 rounded-xl border border-amber-500/20 bg-white
                          text-sm font-medium text-black placeholder:text-black/30
@@ -350,7 +389,7 @@ const NOVEDADES = [
 </Layout>
 
 {/* Datos del servidor para el JS */}
-<script define:vars={{ dbPlayers }}>
+<script define:vars={{ dbPlayers, discordUsername: discordInfo?.username || "" }}>
   window.__FN_PLAYERS__ = dbPlayers.map((p) => ({
     id: p.id,
     name: p.discordUsername,
@@ -359,6 +398,7 @@ const NOVEDADES = [
     division: p.division,
     joinDate: new Date(p.createdAt).toLocaleDateString("es-UY", { day: "2-digit", month: "2-digit", year: "2-digit" }),
   }));
+  window.__FN_DISCORD_USERNAME__ = discordUsername;
 </script>
 
 {/* ── MODAL GESTIÓN (solo renderizado para admins, controlado por JS) ── */}
@@ -526,12 +566,12 @@ const NOVEDADES = [
   (window as any).handleSubmit = async function (e: Event) {
     e.preventDefault();
 
-    const name = (document.getElementById("inp-name") as HTMLInputElement).value.trim();
+    const discordUsername = (window as any).__FN_DISCORD_USERNAME__ || "";
     const epic = (document.getElementById("inp-epic") as HTMLInputElement).value.trim();
     const platform = (document.getElementById("inp-platform") as HTMLSelectElement).value;
 
-    if (!name || !epic) {
-      showMsg("Completá tu usuario de Discord y Epic Games ID", "error");
+    if (!discordUsername || !epic) {
+      showMsg("Completá el Epic Games ID", "error");
       return;
     }
 
@@ -542,7 +582,7 @@ const NOVEDADES = [
       const res = await fetch("/api/fortnite-league/players", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ discordUsername: name, epicId: epic, platform }),
+        body: JSON.stringify({ discordUsername, epicId: epic, platform }),
       });
 
       const data = await res.json();
@@ -562,14 +602,12 @@ const NOVEDADES = [
       };
 
       players.push(player);
-      localStorage.setItem("fn_admin_discord", name);
       renderPlayerCard(player);
       updateAllCounts();
       applyAdminUI();
 
-      (document.getElementById("inp-name") as HTMLInputElement).value = "";
       (document.getElementById("inp-epic") as HTMLInputElement).value = "";
-      showMsg(`¡${name} fue inscrito en Clasificatoria!`, "success");
+      showMsg(`¡${discordUsername} fue inscrito en Clasificatoria!`, "success");
 
     } catch (err) {
       showMsg("Error de conexión, intentá de nuevo", "error");
