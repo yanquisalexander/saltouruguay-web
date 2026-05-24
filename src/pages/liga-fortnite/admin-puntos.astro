@@ -48,7 +48,6 @@ const DIVISIONALES = [
   { id: "profesional", label: "Profesional", icon: "👑" },
 ];
 
-const ADMINS = ["saltouruguay", "xdiegouy"];
 ---
 
 <Layout
@@ -245,11 +244,16 @@ const ADMINS = ["saltouruguay", "xdiegouy"];
 
 <script>
   import { $ } from "@/lib/dom-selector";
+  import { getSessionClient } from "@/lib/auth-client";  
+  
+  const init = async () => {
+  const session = await getSessionClient();
+  
+  
 
-  const ADMINS = ["saltouruguay", "xdiegouy"];
+  const isAdmin = session?.user?.isAdmin ?? false;
 
-  const stored = localStorage.getItem("fn_admin_discord") || "";
-  const isAdmin = ADMINS.includes(stored.toLowerCase());
+  console.log({ session, isAdmin });
 
   if (isAdmin) {
     $("#page-content")?.classList.replace("hidden", "flex");
@@ -336,4 +340,7 @@ const ADMINS = ["saltouruguay", "xdiegouy"];
       }, 2000);
     }
   };
+}
+
+document.addEventListener("astro:page-load", init);
 </script>
