@@ -5,6 +5,25 @@ import { FortniteLeagueInscriptionsTable, FortniteLeagueScoresTable } from "@/db
 
 export const prerender = false;
 
+// Crear tabla si no existe (para producción)
+try {
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS fortnite_league_scores (
+      id SERIAL PRIMARY KEY,
+      inscription_id INTEGER NOT NULL REFERENCES fortnite_league_inscriptions(id) ON DELETE CASCADE,
+      set1 INTEGER NOT NULL DEFAULT 0,
+      set2 INTEGER NOT NULL DEFAULT 0,
+      set3 INTEGER NOT NULL DEFAULT 0,
+      total INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+      updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+      UNIQUE(inscription_id)
+    );
+  `);
+} catch (e) {
+  // La tabla ya existe, continuar
+}
+
 // Cargar jugadores y puntajes desde la base de datos
 const players = await client.select().from(FortniteLeagueInscriptionsTable).execute();
 const scores  = await client.select().from(FortniteLeagueScoresTable).execute();
@@ -244,22 +263,3 @@ const ADMINS = ["saltouruguay", "xdiegouy"];
           btn.textContent = original;
           btn.classList.remove("text-green-400", "border-green-500/30", "bg-green-500/10");
           btn.disabled = false;
-        }, 1500);
-      } else {
-        btn.textContent = "Error";
-        btn.classList.add("text-red-400");
-        setTimeout(() => {
-          btn.textContent = original;
-          btn.classList.remove("text-red-400");
-          btn.disabled = false;
-        }, 2000);
-      }
-    } catch {
-      btn.textContent = "Error";
-      setTimeout(() => {
-        btn.textContent = original;
-        btn.disabled = false;
-      }, 2000);
-    }
-  };
-</script>
