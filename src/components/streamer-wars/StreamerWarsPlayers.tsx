@@ -18,7 +18,7 @@ export const StreamerWarsPlayers = ({ players }: { players: Players[] }) => {
                     Jugadores
                 </h3>
 
-                <div class={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(15,_minmax(0,_1fr))]`}>
+                <div class={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-15`}>
                     {
                         players.map((player, index) => (
                             <div
@@ -27,7 +27,7 @@ export const StreamerWarsPlayers = ({ players }: { players: Players[] }) => {
                                 class={`flex flex-col select-none relative overflow-hidden items-center hover:scale-105 hover:bg-lime-500/20 transition ${player.eliminated ? "pointer-events-none" : ""
                                     }`}                                >
                                 <div class="relative size-20">
-                                    <img src={player.avatar} alt={player.displayName} class={`w-full h-full ${!player.online ? "grayscale brightness-50" : ""} ${player.eliminated ? "opacity-40 !grayscale" : ""}`} />
+                                    <img src={player.avatar} alt={player.displayName} class={`w-full h-full ${!player.online ? "grayscale brightness-50" : ""} ${player.eliminated ? "opacity-40 grayscale!" : ""}`} />
                                     {
                                         player.eliminated && (<div class="absolute inset-0 bg-black/60 flex items-center justify-center">
                                             <span class="text-red-600 font-atomic text-5xl">X</span>

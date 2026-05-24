@@ -24,12 +24,12 @@ export const PlayersGrid = ({ initialPlayers }: { initialPlayers: Player[] }) =>
     }, [players]);
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-black to-gray-800">
+        <div className="flex justify-center items-center min-h-screen bg-linear-to-b from-black to-gray-800">
             <div className="grid grid-cols-7 gap-x-9 gap-y-5">
                 {players.map((jugador) => (
                     <button
                         key={jugador.playerNumber}
-                        class={`relative size-[90px] bg-[#1a1a1a] border-2 border-[#333] rotate-45 flex items-center justify-center hover:border-white transition-transform ${jugador.isEliminated ? "opacity-70 cursor-not-allowed !bg-red-500/20" : ""
+                        class={`relative size-[90px] bg-[#1a1a1a] border-2 border-[#333] rotate-45 flex items-center justify-center hover:border-white transition-transform ${jugador.isEliminated ? "opacity-70 cursor-not-allowed bg-red-500/20!" : ""
                             }
                         `}
                     >

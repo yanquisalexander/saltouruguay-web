@@ -62,7 +62,7 @@ export default function AdoptPet({ onPetCreated }: AdoptPetProps) {
         <div className="flex items-center justify-center min-h-screen p-6 ">
             <div className="max-w-2xl w-full relative">
                 {/* Background Glow */}
-                <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 blur-3xl rounded-full opacity-50"></div>
+                <div className="absolute inset-0 bg-linear-to-r from-violet-600/20 to-fuchsia-600/20 blur-3xl rounded-full opacity-50"></div>
 
                 <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl">
                     <div className="text-center space-y-8">
@@ -161,7 +161,7 @@ export default function AdoptPet({ onPetCreated }: AdoptPetProps) {
                                             onInput={(e) => setPetName((e.target as HTMLInputElement).value)}
                                             maxLength={50}
                                             placeholder="Ej: Saltito"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-hidden focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
                                             disabled={isAdopting}
                                             autoFocus
                                         />
@@ -181,7 +181,7 @@ export default function AdoptPet({ onPetCreated }: AdoptPetProps) {
                                     <button
                                         type="submit"
                                         disabled={isAdopting || !petName.trim()}
-                                        className="flex-[2] bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg shadow-violet-600/20 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                                        className="flex-2 bg-linear-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg shadow-violet-600/20 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                                     >
                                         {isAdopting ? (
                                             <>

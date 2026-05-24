@@ -72,15 +72,15 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
 
     return (
         <div
-            className={`fixed inset-0 bg-[#050505] z-[8000] flex items-center justify-center transition-all duration-700 ${fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            className={`fixed inset-0 bg-[#050505] z-8000 flex items-center justify-center transition-all duration-700 ${fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
                 }`}
         >
             {/* AMBIENTE: Sutil resplandor verde en el fondo */}
-            <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[radial-gradient(circle_at_center,_#b4cd02_0%,_transparent_70%)]" />
+            <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[radial-gradient(circle_at_center,#b4cd02_0%,transparent_70%)]" />
 
             {/* LÍNEAS DE ESCANEO SUTILES */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
-                <div className="w-full h-full bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]" />
+                <div className="w-full h-full bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-size-[100%_4px]" />
             </div>
 
             {/* CONTENEDOR CENTRAL (Sin animaciones de zoom) */}

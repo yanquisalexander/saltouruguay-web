@@ -133,7 +133,7 @@ export default function ChatView({ partnerId, user }: ChatViewProps) {
     }
 
     return (
-        <section className="bg-white/5 backdrop-blur rounded-3xl border border-white/10 flex flex-col h-[calc(100vh-140px)] md:h-[600px]">
+        <section className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 flex flex-col h-[calc(100vh-140px)] md:h-[600px]">
             {/* Header */}
             <header className="p-4 border-b border-white/10 flex items-center gap-3 bg-white/5 rounded-t-3xl">
                 <button
@@ -193,18 +193,18 @@ export default function ChatView({ partnerId, user }: ChatViewProps) {
                                                         alt="Story preview"
                                                     />
                                                 )}
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                                                <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
                                                 <div className="absolute bottom-1 right-1 w-3 h-3 bg-white rounded-full flex items-center justify-center">
                                                     {msg.story.mediaType === 'video' ? (
-                                                        <div className="w-1.5 h-1.5 bg-black rounded-sm" />
+                                                        <div className="w-1.5 h-1.5 bg-black rounded-xs" />
                                                     ) : (
-                                                        <div className="w-1 h-1.5 bg-black rounded-sm transform rotate-45 border-l border-b border-black" />
+                                                        <div className="w-1 h-1.5 bg-black rounded-xs transform rotate-45 border-l border-b border-black" />
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
                                     )}
-                                    <p className="text-sm whitespace-pre-wrap break-words">{msg.content || msg.reaction}</p>
+                                    <p className="text-sm whitespace-pre-wrap wrap-break-word">{msg.content || msg.reaction}</p>
                                     <div className={`flex items-center justify-end gap-1 mt-1 ${isMe ? "text-blue-200" : "text-white/40"}`}>
                                         <p className="text-[10px]">
                                             {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true, locale: es })}
@@ -234,7 +234,7 @@ export default function ChatView({ partnerId, user }: ChatViewProps) {
                     value={inputText}
                     onInput={(e) => setInputText((e.target as HTMLInputElement).value)}
                     placeholder="Escribe un mensaje..."
-                    className="flex-1 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/40 focus:outline-hidden focus:ring-2 focus:ring-blue-500/50 transition-all"
                 />
                 <button
                     type="submit"

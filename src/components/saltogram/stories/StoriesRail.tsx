@@ -8,7 +8,7 @@ import CreateStoryModal from "./CreateStoryModal";
 import type { Session } from "@auth/core/types";
 
 interface StoriesRailProps {
-    user?: Session['user'];
+    user?: Session["user"];
 }
 
 export default function StoriesRail({ user }: StoriesRailProps) {
@@ -18,39 +18,28 @@ export default function StoriesRail({ user }: StoriesRailProps) {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [initialStoryId, setInitialStoryId] = useState<number | undefined>(undefined);
 
-    useEffect(() => {
-        fetchStories();
-    }, []);
+    useEffect(() => { fetchStories(); }, []);
 
     const fetchStories = async () => {
         try {
-            const { data, error } = await actions.stories.getFeed();
+            const { data } = await actions.stories.getFeed();
             if (data) {
                 setFeed(data.feed);
-
-                // Check for story param
                 const urlParams = new URLSearchParams(window.location.search);
-                const storyIdParam = urlParams.get('story');
-
+                const storyIdParam = urlParams.get("story");
                 if (storyIdParam) {
                     const storyId = parseInt(storyIdParam);
                     if (!isNaN(storyId)) {
                         const userIndex = data.feed.findIndex((item: any) =>
                             item.stories.some((s: any) => s.id === storyId)
                         );
-
                         if (userIndex !== -1) {
                             setInitialStoryId(storyId);
                             setSelectedUserIndex(userIndex);
-
-                            // Remove param
-                            const newUrl = window.location.pathname;
-                            window.history.replaceState({}, '', newUrl);
                         } else {
                             toast.error("Esta historia no está disponible");
-                            const newUrl = window.location.pathname;
-                            window.history.replaceState({}, '', newUrl);
                         }
+                        window.history.replaceState({}, "", window.location.pathname);
                     }
                 }
             }
@@ -61,97 +50,110 @@ export default function StoriesRail({ user }: StoriesRailProps) {
         }
     };
 
-    const handleStoryClick = (index: number) => {
-        setSelectedUserIndex(index);
-    };
-
     const handleCloseViewer = () => {
         setSelectedUserIndex(null);
         setInitialStoryId(undefined);
-        fetchStories(); // Refresh to update seen status
-    };
-
-    const handleStoryCreated = () => {
-        setIsCreateModalOpen(false);
         fetchStories();
     };
 
     if (loading) return (
-        <div className="flex gap-4 overflow-x-auto py-4 px-2 no-scrollbar">
-            {[1, 2, 3, 4].map(i => (
-                <div key={i} className="flex-shrink-0 w-28 h-48 bg-[#242526] rounded-xl animate-pulse" />
+        <div class="flex gap-2.5 overflow-x-auto py-1 px-4 no-scrollbar">
+            {[1, 2, 3, 5].map(i => (
+                <div key={i} class="shrink-0 w-[108px] h-[172px] rounded-[20px] bg-[#2e2f31] animate-pulse" />
             ))}
         </div>
     );
 
     return (
-        <div className="relative mb-6">
-            <div className="flex gap-2 overflow-x-auto pb-4 px-0 no-scrollbar snap-x">
-                {/* Create Story Card */}
+        <div class="relative mb-6">
+            <div class="flex gap-2.5 overflow-x-auto pb-3 px-4 no-scrollbar snap-x">
+
+                {/* Crear historia */}
                 {user && (
                     <div
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="flex-shrink-0 w-28 h-48 relative rounded-xl overflow-hidden cursor-pointer group snap-start bg-[#242526] border border-white/5"
+                        class="shrink-0 w-[108px] h-[172px] rounded-[20px] overflow-hidden cursor-pointer
+                   flex flex-col bg-[#2e2f31] border border-white/[0.07] snap-start
+                   hover:scale-[1.04] active:scale-[0.97] transition-transform duration-200"
+                        style={{ transitionTimingFunction: "cubic-bezier(0.2,0,0,1)" }}
                     >
-                        <div className="h-32 w-full overflow-hidden">
+                        {/* Foto del usuario */}
+                        <div class="w-full h-[112px] overflow-hidden flex-shrink-0">
                             <img
                                 src={user.image || `https://ui-avatars.com/api/?name=${user.name}`}
                                 alt="Tu historia"
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                class="w-full h-full object-cover transition-transform duration-500 hover:scale-[1.07]"
                             />
                         </div>
-                        <div className="absolute bottom-0 inset-x-0 h-16 bg-[#242526] flex flex-col items-center justify-end pb-2">
-                            <div className="absolute -top-4 p-1 bg-[#242526] rounded-full">
-                                <div className="bg-blue-500 p-1.5 rounded-full text-white">
-                                    <LucidePlus size={20} />
-                                </div>
+
+                        {/* Parte inferior */}
+                        <div class="flex-1 bg-[#2e2f31] flex flex-col items-center justify-end pb-2.5 relative">
+                            {/* FAB M3 */}
+                            <div class="absolute -top-[18px] w-9 h-9 rounded-xl bg-blue-500
+                          flex items-center justify-center text-white
+                          border-[2.5px] border-[#2e2f31]
+                          shadow-[0_2px_8px_rgba(59,130,246,0.4)]">
+                                <LucidePlus size={18} />
                             </div>
-                            <span className="text-white text-xs font-medium mt-4">Crear historia</span>
+                            <span class="text-xs font-semibold text-white/90 mt-[22px] tracking-[0.1px]">
+                                Crear historia
+                            </span>
                         </div>
-                        {/* Overlay on hover */}
-                        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                 )}
 
-                {/* Stories List */}
-                {feed.map((item, index) => (
-                    <div
-                        key={item.user.id}
-                        onClick={() => handleStoryClick(index)}
-                        className="flex-shrink-0 w-28 h-48 relative rounded-xl overflow-hidden cursor-pointer group snap-start"
-                    >
-                        {/* Background Image (Last story thumbnail - Newest) */}
-                        {item.stories[item.stories.length - 1].mediaType === 'image' ? (
-                            <img
-                                src={item.stories[item.stories.length - 1].mediaUrl}
-                                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                        ) : (
-                            <video
-                                src={item.stories[item.stories.length - 1].mediaUrl}
-                                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                        )}
+                {/* Historias */}
+                {feed.map((item, index) => {
+                    const lastStory = item.stories[item.stories.length - 1];
+                    const isVipUnseen = item.stories.some((s: any) => s.visibility === "vip" && !s.isSeen);
+                    const ringColor = isVipUnseen
+                        ? "bg-green-500"
+                        : item.hasUnseen
+                            ? "bg-blue-500"
+                            : "bg-white/25";
 
-                        {/* Gradient Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
+                    return (
+                        <div
+                            key={item.user.id}
+                            onClick={() => setSelectedUserIndex(index)}
+                            class="shrink-0 w-[108px] h-[172px] rounded-[20px] overflow-hidden cursor-pointer
+                     relative snap-start
+                     hover:scale-[1.04] active:scale-[0.97] transition-transform duration-200"
+                            style={{ transitionTimingFunction: "cubic-bezier(0.2,0,0,1)" }}
+                        >
+                            {/* Fondo */}
+                            {lastStory.mediaType === "image" ? (
+                                <img
+                                    src={lastStory.mediaUrl}
+                                    class="absolute inset-0 w-full h-full object-cover"
+                                />
+                            ) : (
+                                <video
+                                    src={lastStory.mediaUrl}
+                                    class="absolute inset-0 w-full h-full object-cover"
+                                />
+                            )}
 
-                        {/* User Avatar Ring */}
-                        <div className={`absolute top-3 left-3 p-1 rounded-full ${item.stories.some((s: any) => s.visibility === 'vip' && !s.isSeen) ? 'bg-green-500' : item.hasUnseen ? 'bg-blue-500' : 'bg-white/30'}`}>
-                            <img
-                                src={item.user.avatar || `https://ui-avatars.com/api/?name=${item.user.displayName}`}
-                                className="w-8 h-8 rounded-full border-2 border-[#242526]"
-                            />
-                        </div>
+                            {/* Gradiente */}
+                            <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/65" />
 
-                        {/* User Name */}
-                        <div className="absolute bottom-2 left-2 right-2">
-                            <p className="text-white text-xs font-medium truncate text-shadow-sm">
+                            {/* Avatar con anillo */}
+                            <div class={`absolute top-2.5 left-2.5 p-[2.5px] rounded-full ${ringColor}`}>
+                                <img
+                                    src={item.user.avatar || `https://ui-avatars.com/api/?name=${item.user.displayName}`}
+                                    class="w-[30px] h-[30px] rounded-full border-2 border-[#242526]"
+                                />
+                            </div>
+
+                            {/* Nombre */}
+                            <p class="absolute bottom-2.5 left-2 right-2 text-white text-xs font-semibold
+                        truncate tracking-[0.1px]"
+                                style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
                                 {item.user.displayName}
                             </p>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <AnimatePresence>
@@ -171,7 +173,7 @@ export default function StoriesRail({ user }: StoriesRailProps) {
                 <CreateStoryModal
                     isOpen={isCreateModalOpen}
                     onClose={() => setIsCreateModalOpen(false)}
-                    onCreated={handleStoryCreated}
+                    onCreated={() => { setIsCreateModalOpen(false); fetchStories(); }}
                 />
             )}
         </div>

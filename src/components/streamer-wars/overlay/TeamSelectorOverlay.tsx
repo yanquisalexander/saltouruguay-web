@@ -53,7 +53,7 @@ export const TeamSelectorOverlay = ({
     return (
         <div className="mx-auto w-full max-w-7xl pt-6">
             <header className="text-center">
-                <h2 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text">
+                <h2 className="text-xl font-bold bg-linear-to-r from-white to-gray-300 text-transparent bg-clip-text">
                     Jugadores por equipo
                 </h2>
             </header>
@@ -61,7 +61,7 @@ export const TeamSelectorOverlay = ({
                 {Object.values(TEAMS).slice(0, teamsQuantity).map((team) => (
                     <div
                         key={team}
-                        className="bg-gray-900/50 rounded-xl p-2 backdrop-blur-sm border border-gray-800"
+                        className="bg-gray-900/50 rounded-xl p-2 backdrop-blur-xs border border-gray-800"
                     >
                         <div className="flex items-center justify-between ">
                             <span className="text-white font-bold">

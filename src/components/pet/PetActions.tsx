@@ -403,7 +403,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
             disabled={disabled}
             className={`flex flex-col items-center gap-2 group w-full disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 disabled:active:border-b-4 disabled:grayscale-[0.5]`}
         >
-            <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-3xl ${bgClass} ${colorClass} flex items-center justify-center shadow-lg ${borderClass} border border-b-4 active:border-b active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:border-b-4 backdrop-blur-sm`}>
+            <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-3xl ${bgClass} ${colorClass} flex items-center justify-center shadow-lg ${borderClass} border border-b-4 active:border-b active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:border-b-4 backdrop-blur-xs`}>
                 <Icon size={28} strokeWidth={2.5} />
             </div>
             <span className="text-xs font-bold text-gray-400 group-hover:text-white transition-colors">{label}</span>
@@ -495,7 +495,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
                         </div>
                         <div className="w-full bg-gray-700/50 rounded-full h-2 overflow-hidden border border-white/10">
                             <div
-                                className="bg-gradient-to-r from-blue-400 to-blue-600 h-full rounded-full transition-all duration-100 ease-out"
+                                className="bg-linear-to-r from-blue-400 to-blue-600 h-full rounded-full transition-all duration-100 ease-out"
                                 style={{ width: `${cleanliness}%` }}
                             ></div>
                         </div>
@@ -570,7 +570,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
                                         }}
                                         onDrag={(e: any, info: any) => handleFoodDrag(e, info)}
                                         onDragEnd={(e: any, info: any) => handleDragEnd(e, info, item)}
-                                        className="flex-shrink-0 w-20 h-20 bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center gap-1 cursor-grab active:cursor-grabbing hover:border-violet-500/50 hover:bg-white/10 transition-colors relative shadow-lg touch-none"
+                                        className="shrink-0 w-20 h-20 bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center gap-1 cursor-grab active:cursor-grabbing hover:border-violet-500/50 hover:bg-white/10 transition-colors relative shadow-lg touch-none"
                                     >
                                         <span className="text-3xl drop-shadow-md">🍎</span>
                                         <span className="text-[10px] font-bold text-gray-400 truncate w-full text-center px-1">{item.item.name}</span>
@@ -604,7 +604,7 @@ export default function PetActions({ petId, stats, isSleeping, onActionComplete,
                     label={isCleaningMode ? "Limpiando..." : "Limpiar"}
                     bgClass={isCleaningMode ? "bg-blue-500 text-white" : "bg-blue-500/10"}
                     colorClass={isCleaningMode ? "text-white" : "text-blue-400"}
-                    borderClass="border-blue-500/20"
+                    borderClass="border-line"
                 />
 
                 <ActionButton

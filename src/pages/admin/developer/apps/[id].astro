@@ -113,7 +113,7 @@ if (Astro.request.method === "POST") {
                 name="name"
                 value={app?.name}
                 required
-                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-hidden"
               />
             </div>
 
@@ -125,7 +125,7 @@ if (Astro.request.method === "POST") {
                 name="redirectUris"
                 required
                 rows="3"
-                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
+                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-hidden font-mono text-sm"
                 >{app?.redirectUris.join(", ")}</textarea
               >
             </div>
@@ -178,7 +178,7 @@ if (Astro.request.method === "POST") {
               </label>
               <div class="flex gap-2">
                 <code
-                  class="flex-1 bg-gray-900 p-2 rounded text-sm font-mono text-blue-400 break-all"
+                  class="flex-1 bg-gray-900 p-2 rounded-sm text-sm font-mono text-blue-400 break-all"
                 >
                   {app?.clientId}
                 </code>
@@ -191,7 +191,7 @@ if (Astro.request.method === "POST") {
               >
                 Client Secret
               </label>
-              <div class="bg-gray-900 p-2 rounded mb-2">
+              <div class="bg-gray-900 p-2 rounded-sm mb-2">
                 <code class="text-sm font-mono text-yellow-400 break-all">
                   {app?.clientSecret}
                 </code>

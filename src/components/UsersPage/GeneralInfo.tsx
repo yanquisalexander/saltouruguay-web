@@ -69,7 +69,7 @@ export const GeneralInfo = ({ session, discordUser }: { session: Session, discor
                         </label>
                         <div className="flex items-center justify-between">
                             <span className="text-white font-medium text-lg">{session.user.name}</span>
-                            <span className="text-xs bg-white/10 text-white/60 px-2 py-1 rounded">Solo lectura</span>
+                            <span className="text-xs bg-white/10 text-white/60 px-2 py-1 rounded-sm">Solo lectura</span>
                         </div>
                     </div>
 
@@ -80,7 +80,7 @@ export const GeneralInfo = ({ session, discordUser }: { session: Session, discor
                         </label>
                         <div className="flex items-center justify-between">
                             <span className="text-white font-medium text-lg truncate max-w-[200px] opacity-80">{session.user.email}</span>
-                            <div className="flex items-center gap-1 text-green-400 bg-green-500/10 px-2 py-1 rounded text-xs font-bold">
+                            <div className="flex items-center gap-1 text-green-400 bg-green-500/10 px-2 py-1 rounded-sm text-xs font-bold">
                                 <LucideCheck size={12} /> Verificado
                             </div>
                         </div>

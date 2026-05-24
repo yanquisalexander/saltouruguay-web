@@ -332,7 +332,7 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
                 </div>
 
                 {/* --- MAIN HERO SLIDER --- */}
-                <div className="relative w-full aspect-[4/5] sm:aspect-[16/9] lg:aspect-[21/9] rounded-3xl overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-[0_0_80px_rgba(145,70,255,0.15)] group z-10">
+                <div className="relative w-full aspect-4/5 sm:aspect-video lg:aspect-21/9 rounded-3xl overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-[0_0_80px_rgba(145,70,255,0.15)] group z-10">
 
                     {/* SLIDES */}
                     <div className="absolute inset-0 w-full h-full">
@@ -364,9 +364,9 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
                                     </motion.div>
 
                                     {/* Multi-layer Gradient Overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-95" />
-                                    <div className="absolute inset-0 bg-gradient-to-r from-purple-900/30 via-transparent to-transparent" />
-                                    <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-transparent to-purple-900/20" />
+                                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent opacity-95" />
+                                    <div className="absolute inset-0 bg-linear-to-r from-purple-900/30 via-transparent to-transparent" />
+                                    <div className="absolute inset-0 bg-linear-to-br from-black/40 via-transparent to-purple-900/20" />
 
                                     {/* Ambient Glow */}
                                     <motion.div
@@ -423,7 +423,7 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
                                                 {...(newsItems[selectedIndex].ctaLink.newTab && { target: "_blank", rel: "noopener noreferrer" })}
                                                 href={newsItems[selectedIndex].ctaLink.url}
                                                 onClick={(event) => handleNavigation(event as unknown as MouseEvent, newsItems[selectedIndex].ctaLink)}
-                                                className="group/btn inline-flex items-center gap-4 px-10 py-4 bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-500 hover:to-purple-400 border border-purple-400/50 rounded-2xl font-teko text-2xl font-bold uppercase tracking-wide transition-all duration-300 shadow-[0_10px40px_rgba(145,70,255,0.4)] hover:shadow-[0_15px60px_rgba(145,70,255,0.6)] hover:scale-105 hover:-translate-y-1"
+                                                className="group/btn inline-flex items-center gap-4 px-10 py-4 bg-linear-to-r from-purple-600 to-purple-500 text-white hover:from-purple-500 hover:to-purple-400 border border-purple-400/50 rounded-2xl font-teko text-2xl font-bold uppercase tracking-wide transition-all duration-300 shadow-[0_10px40px_rgba(145,70,255,0.4)] hover:shadow-[0_15px60px_rgba(145,70,255,0.6)] hover:scale-105 hover:-translate-y-1"
                                             >
                                                 <LucidePlay size={20} className="fill-white/20" />
                                                 <span>{newsItems[selectedIndex].ctaLink.text}</span>
@@ -476,7 +476,7 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
                         <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-20">
                             <motion.div
                                 key={selectedIndex}
-                                className="h-full bg-gradient-to-r from-purple-600 to-purple-400"
+                                className="h-full bg-linear-to-r from-purple-600 to-purple-400"
                                 variants={progressBarVariants}
                                 initial="hidden"
                                 animate="visible"
@@ -499,7 +499,7 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
                             {newsItems.map((news, index) => {
                                 const isActive = selectedIndex === index;
                                 return (
-                                    <li key={news.id} className="flex-shrink-0 snap-center">
+                                    <li key={news.id} className="shrink-0 snap-center">
                                         <button
                                             onClick={() => handleIndexChange(index)}
                                             aria-label={`Ver noticia: ${news.title}`}
@@ -513,14 +513,14 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
                                             `}
                                         >
                                             {/* Thumbnail Image */}
-                                            <div className="relative aspect-[16/9] overflow-hidden">
+                                            <div className="relative aspect-video overflow-hidden">
                                                 <img
                                                     className={`w-full h-full object-cover transition-all duration-700 ${isActive ? 'scale-110' : 'scale-100 group-hover:scale-105'}`}
                                                     src={news.navImage || news.background.img}
                                                     alt={news.title}
                                                     loading="lazy"
                                                 />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                                                <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent" />
 
                                                 {/* Active Indicator */}
                                                 {isActive && (

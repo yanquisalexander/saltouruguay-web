@@ -112,7 +112,7 @@ export const SecuritySection = ({ session }: { session: Session }) => {
             case 0: // QR Code Step
                 return (
                     <div class="flex flex-col items-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="p-4 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        <div className="p-4 rounded-full bg-blue-500/10 text-blue-400 border border-line">
                             <LucideQrCode size={48} />
                         </div>
 
@@ -174,7 +174,7 @@ export const SecuritySection = ({ session }: { session: Session }) => {
                                 }}
                                 maxLength={6}
                                 placeholder="000 000"
-                                class="w-full bg-[#0a0a0a] border-2 border-white/10 focus:border-purple-500 rounded-xl py-4 text-center text-3xl font-mono tracking-[0.5em] text-white placeholder:text-white/10 outline-none transition-colors"
+                                class="w-full bg-[#0a0a0a] border-2 border-white/10 focus:border-purple-500 rounded-xl py-4 text-center text-3xl font-mono tracking-[0.5em] text-white placeholder:text-white/10 outline-hidden transition-colors"
                                 autoFocus
                             />
                         </div>
@@ -226,7 +226,7 @@ export const SecuritySection = ({ session }: { session: Session }) => {
             {/* Dialog Nativo Estilizado */}
             <dialog
                 ref={dialogRef}
-                class="backdrop:bg-black/80 backdrop:backdrop-blur-sm bg-[#111] text-white border border-white/10 rounded-2xl shadow-2xl p-0 max-w-md w-full m-auto open:animate-in open:fade-in open:zoom-in-95"
+                class="backdrop:bg-black/80 backdrop:backdrop-blur-xs bg-[#111] text-white border border-white/10 rounded-2xl shadow-2xl p-0 max-w-md w-full m-auto open:animate-in open:fade-in open:zoom-in-95"
                 onClick={(e) => {
                     // Cerrar al hacer click fuera
                     const dialog = dialogRef.current;
@@ -288,7 +288,7 @@ export const SecuritySection = ({ session }: { session: Session }) => {
                                 onClick={handleTwoFactorToggle}
                                 disabled={isLoading}
                                 className={`
-                                    relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] focus:ring-blue-500
+                                    relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] focus:ring-blue-500
                                     ${twoFactorEnabled ? 'bg-green-500' : 'bg-white/20'}
                                     ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                                 `}

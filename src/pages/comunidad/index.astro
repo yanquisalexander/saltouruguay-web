@@ -191,12 +191,12 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
           <img
             src="/images/logo_salto.webp"
             alt="Salto Logo"
-            class="size-16 md:size-20 object-contain animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)]"
+            class="size-16 md:size-20 object-contain animate-sink animate-iteration-count-infinite animate-duration-(--floating-duration)"
           />
         </div>
         <h1 class="text-4xl md:text-5xl font-teko uppercase font-bold text-white tracking-wide">
           Hub{" "}
-          <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+          <span class="text-transparent bg-clip-text bg-linear-to-r from-yellow-400 to-orange-500">
             Comunitario
           </span>
         </h1>
@@ -236,7 +236,7 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
               href={href}
               target={isExternal ? "_blank" : undefined}
               rel={isExternal ? "noopener noreferrer" : undefined}
-              class={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 backdrop-blur-sm transition-all duration-300 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-400/10 ${isDisabled ? "cursor-not-allowed" : "hover:-translate-y-1"} ${item.featured ? "md:col-span-2" : "md:col-span-1"}`}
+              class={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 backdrop-blur-xs transition-all duration-300 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-400/10 ${isDisabled ? "cursor-not-allowed" : "hover:-translate-y-1"} ${item.featured ? "md:col-span-2" : "md:col-span-1"}`}
               {...(!item.soon && item.requiresLogin && !session && { "data-click-to-login": true })}
               aria-disabled={isDisabled}
             >
@@ -247,7 +247,7 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
                   alt={item.title}
                   class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-40 group-hover:opacity-50"
                 />
-                <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent" />
+                <div class="absolute inset-0 bg-linear-to-t from-gray-950 via-gray-900/60 to-transparent" />
               </div>
 
               {/* Content */}
@@ -292,7 +292,7 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
           return (
             <Tag
               href={href}
-              class={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 backdrop-blur-sm transition-all duration-300 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-400/10 md:col-span-1 ${isDisabled ? "cursor-not-allowed" : "hover:-translate-y-1"}`}
+              class={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 backdrop-blur-xs transition-all duration-300 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-400/10 md:col-span-1 ${isDisabled ? "cursor-not-allowed" : "hover:-translate-y-1"}`}
               {...(!item.soon && item.requiresLogin && !session && { "data-click-to-login": true })}
               aria-disabled={isDisabled}
             >
@@ -302,7 +302,7 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
                   alt={item.title}
                   class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-40 group-hover:opacity-50"
                 />
-                <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent" />
+                <div class="absolute inset-0 bg-linear-to-t from-gray-950 via-gray-900/60 to-transparent" />
               </div>
               <div class="relative z-10 flex h-full flex-col justify-end p-6">
                 <div class="mb-auto flex items-start justify-between">
@@ -337,7 +337,7 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
         <div class="flex items-center gap-2 mb-4 text-white/80">
           <LucideGamepad2 className="text-yellow-400" />
           <h2 class="font-teko text-2xl uppercase tracking-wide">Zona de Juegos</h2>
-          <div class="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent ml-2" />
+          <div class="h-px flex-1 bg-linear-to-r from-white/20 to-transparent ml-2" />
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 auto-rows-[200px]">
@@ -352,7 +352,7 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
                 return (
                   <Tag
                     href={href}
-                    class={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 backdrop-blur-sm transition-all duration-300 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/10 ${isDisabled ? "cursor-not-allowed" : "hover:-translate-y-1"}`}
+                    class={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 backdrop-blur-xs transition-all duration-300 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/10 ${isDisabled ? "cursor-not-allowed" : "hover:-translate-y-1"}`}
                     aria-disabled={isDisabled}
                   >
                     <div class="absolute inset-0 z-0">
@@ -361,7 +361,7 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
                         alt={item.title}
                         class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-40 group-hover:opacity-50"
                       />
-                      <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900/60 to-transparent" />
+                      <div class="absolute inset-0 bg-linear-to-t from-gray-950 via-gray-900/60 to-transparent" />
                     </div>
                     <div class="relative z-10 flex h-full flex-col justify-end p-6">
                       <div class="mb-auto flex items-start justify-between">

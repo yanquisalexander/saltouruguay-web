@@ -22,7 +22,7 @@ export default function CreateNoteModal({ isOpen, onClose, onCreated, existingNo
 
     // Clases reutilizables
     const glassPanel = "bg-[#121212]/80 backdrop-blur-xl border border-white/10 shadow-2xl";
-    const glassInput = "bg-white/5 border border-white/10 focus:border-white/30 focus:bg-black/40 transition-all outline-none text-white placeholder:text-white/30";
+    const glassInput = "bg-white/5 border border-white/10 focus:border-white/30 focus:bg-black/40 transition-all outline-hidden text-white placeholder:text-white/30";
 
     useEffect(() => {
         if (isOpen) {
@@ -96,10 +96,10 @@ export default function CreateNoteModal({ isOpen, onClose, onCreated, existingNo
     if (!isOpen) return null;
 
     const content = (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-99999 flex items-center justify-center p-4 animate-in fade-in duration-200">
             {/* Backdrop con blur */}
             <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+                className="absolute inset-0 bg-black/60 backdrop-blur-xs animate-in fade-in duration-300"
                 onClick={onClose}
             ></div>
 
@@ -143,7 +143,7 @@ export default function CreateNoteModal({ isOpen, onClose, onCreated, existingNo
                                         flex flex-col items-center justify-center gap-1
                                     `}>
                                         {selectedMusic && (
-                                            <div className="absolute -top-3 -right-3 bg-gradient-to-tr from-purple-500 to-pink-500 text-white p-1.5 rounded-full shadow-lg z-20 animate-bounce-in">
+                                            <div className="absolute -top-3 -right-3 bg-linear-to-tr from-purple-500 to-pink-500 text-white p-1.5 rounded-full shadow-lg z-20 animate-bounce-in">
                                                 <LucideMusic size={12} />
                                             </div>
                                         )}
@@ -158,7 +158,7 @@ export default function CreateNoteModal({ isOpen, onClose, onCreated, existingNo
                                             </>
                                         ) : null}
 
-                                        <p className={`font-medium leading-tight break-words w-full ${selectedMusic ? 'text-xs mt-1 text-white/90' : 'text-sm'}`}>
+                                        <p className={`font-medium leading-tight wrap-break-word w-full ${selectedMusic ? 'text-xs mt-1 text-white/90' : 'text-sm'}`}>
                                             {text || (selectedMusic ? `"${text}"` : "Tu pensamiento...")}
                                         </p>
 
@@ -168,7 +168,7 @@ export default function CreateNoteModal({ isOpen, onClose, onCreated, existingNo
                                 </div>
 
                                 {/* Avatar Preview */}
-                                <div className="w-[72px] h-[72px] rounded-full p-[3px] bg-gradient-to-tr from-purple-500 via-pink-500 to-yellow-500 shadow-lg shadow-purple-500/20">
+                                <div className="w-[72px] h-[72px] rounded-full p-[3px] bg-linear-to-tr from-purple-500 via-pink-500 to-yellow-500 shadow-lg shadow-purple-500/20">
                                     <div className="w-full h-full rounded-full border-[3px] border-[#121212] overflow-hidden bg-black">
                                         <img
                                             src={currentUser?.image || `https://ui-avatars.com/api/?name=Yo`}
@@ -202,7 +202,7 @@ export default function CreateNoteModal({ isOpen, onClose, onCreated, existingNo
                                     <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10 group hover:bg-white/10 transition-colors">
                                         <img
                                             src={selectedMusic.album.cover_small}
-                                            className="w-12 h-12 rounded-lg shadow-sm"
+                                            className="w-12 h-12 rounded-lg shadow-xs"
                                         />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-bold text-white truncate">{selectedMusic.title}</p>

@@ -47,7 +47,7 @@ export const WelcomeToStreamerWars = ({ session, bgAudio, isOpen, setIsOpen }: {
         <>
             <dialog
                 open={isOpen}
-                class={`max-w-4xl w-full fixed inset-0 z-[99999999] bg-black border border-white/40 shadow-2xl text-white 
+                class={`max-w-4xl w-full fixed inset-0 z-99999999 bg-black border border-white/40 shadow-2xl text-white 
                         ${closing ? "animate-fade-out-down animate-duration-400" : "animate-fade-in-up"}`}
             >
                 <div class="welcome-inner relative p-8">
@@ -78,9 +78,9 @@ export const WelcomeToStreamerWars = ({ session, bgAudio, isOpen, setIsOpen }: {
                     <div class="flex justify-between mt-8">
                         <button
                             onClick={handleClose}
-                            class="flex w-max transform px-2 font-rubik tracking-wider uppercase font-bold text-black mix-blend-screen bg-lime-400 hover:bg-pink-500 transition !skew-x-[-20deg]"
+                            class="flex w-max transform px-2 font-rubik tracking-wider uppercase font-bold text-black mix-blend-screen bg-lime-400 hover:bg-pink-500 transition skew-x-[-20deg]!"
                         >
-                            <span class="flex !skew-x-[20deg] transform">Vamos</span>
+                            <span class="flex skew-x-20! transform">Vamos</span>
                         </button>
                     </div>
                     <img src="/images/pink-soldier.webp"
@@ -92,7 +92,7 @@ export const WelcomeToStreamerWars = ({ session, bgAudio, isOpen, setIsOpen }: {
                         class="absolute top-4 right-0 size-28 object-contain" />
                 </div>
             </dialog>
-            <div class={`dialog-background inset-0 w-dvw h-dvh backdrop-blur-sm bg-black/75 z-[9999999] transition-opacity 
+            <div class={`dialog-background inset-0 w-dvw h-dvh backdrop-blur-xs bg-black/75 z-9999999 transition-opacity 
                         ${closing ? "opacity-0" : "animate-blurred-fade-in"}`} />
         </>
     );

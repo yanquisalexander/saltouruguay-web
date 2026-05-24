@@ -55,7 +55,7 @@ export const EventCard = ({ firstFeaturedEvent, event, index }: { firstFeaturedE
                     `}
                 />
                 {/* Overlay Gradiente para legibilidad */}
-                <div className={`absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent transition-opacity duration-300 ${firstFeaturedEvent ? 'opacity-90' : 'opacity-80 group-hover:opacity-90'}`}></div>
+                <div className={`absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent transition-opacity duration-300 ${firstFeaturedEvent ? 'opacity-90' : 'opacity-80 group-hover:opacity-90'}`}></div>
             </div>
 
             {/* --- BADGES SUPERIORES --- */}

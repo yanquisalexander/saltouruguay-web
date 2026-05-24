@@ -100,7 +100,7 @@ const glassCard =
           class="relative group rounded-3xl overflow-hidden border border-white/10 shadow-2xl aspect-video"
         >
           <div
-            class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"
+            class="absolute inset-0 bg-linear-to-t from-black/60 to-transparent z-10"
           >
           </div>
           <img
@@ -132,7 +132,7 @@ const glassCard =
       <aside class="flex flex-col gap-6 lg:sticky lg:top-28">
         {/* TARJETA DE ACCIÓN (Participar) */}
         <div
-          class="relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#1a1a1a] to-black border border-yellow-500/30 p-6 shadow-[0_0_30px_rgba(234,179,8,0.1)]"
+          class="relative overflow-hidden rounded-2xl bg-linear-to-b from-[#1a1a1a] to-black border border-yellow-500/30 p-6 shadow-[0_0_30px_rgba(234,179,8,0.1)]"
         >
           <div class="absolute top-0 right-0 p-3 opacity-10 text-yellow-500">
             <LucideCrown size={80} />
@@ -255,7 +255,7 @@ const glassCard =
                 src={event.mainOrganizer.avatar!}
               />
               <div
-                class="absolute -bottom-1 -right-1 bg-purple-500 text-[10px] font-bold px-1.5 rounded text-white border border-black"
+                class="absolute -bottom-1 -right-1 bg-purple-500 text-[10px] font-bold px-1.5 rounded-sm text-white border border-black"
               >
                 HOST
               </div>

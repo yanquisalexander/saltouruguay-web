@@ -1,6 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from "preact/hooks";
+import { useState, useEffect, useRef, useCallback, useMemo } from "preact/hooks";
 import { actions } from "astro:actions";
-import { LucideX, LucideHeart, LucideChevronLeft, LucideChevronRight, LucideEye, LucideTrash2, LucideSend, LucideStar, LucideLoader2, LucideChevronUp, LucideExternalLink } from "lucide-preact";
+import {
+    LucideX, LucideHeart, LucideChevronLeft, LucideChevronRight,
+    LucideEye, LucideTrash2, LucideSend, LucideStar, LucideLoader2,
+    LucideChevronUp, LucideExternalLink
+} from "lucide-preact";
 import type { Session } from "@auth/core/types";
 import { motion, AnimatePresence } from "motion/react";
 import { formatDistanceToNow } from "date-fns";
@@ -11,24 +15,54 @@ interface StoryViewerProps {
     feed: any[];
     initialUserIndex: number;
     onClose: () => void;
-    currentUser?: Session['user'];
+    currentUser?: Session["user"];
     initialStoryId?: number;
 }
 
-export default function StoryViewer({ feed, initialUserIndex, onClose, currentUser, initialStoryId }: StoryViewerProps) {
-    const [currentUserIndex, setCurrentUserIndex] = useState(initialUserIndex);
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-    // Initialize with first unseen story or 0
+function VisibilityBadge({ visibility }: { visibility: string }) {
+    if (visibility === "vip") return (
+        <div class="bg-green-500/15 border border-green-500/40 px-2 py-0.5 rounded-full flex items-center gap-1">
+            <LucideStar size={10} class="text-green-400 fill-green-400" />
+            <span class="text-green-400 text-[10px] font-bold uppercase tracking-wider">Mejores amigos</span>
+        </div>
+    );
+    if (visibility === "friends") return (
+        <div class="bg-blue-500/15 border border-blue-500/40 px-2 py-0.5 rounded-full">
+            <span class="text-blue-400 text-[10px] font-bold uppercase tracking-wider">Solo amigos</span>
+        </div>
+    );
+    return null;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+async function refreshMusicUrl(music: any): Promise<string> {
+    if (!music?.id) return music?.preview ?? "";
+    try {
+        const res = await fetch(`/api/deezer/track?id=${music.id}`);
+        const data = await res.json();
+        return data.preview || music.preview;
+    } catch {
+        return music.preview ?? "";
+    }
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export default function StoryViewer({
+    feed, initialUserIndex, onClose, currentUser, initialStoryId
+}: StoryViewerProps) {
+    const [currentUserIndex, setCurrentUserIndex] = useState(initialUserIndex);
     const [currentStoryIndex, setCurrentStoryIndex] = useState(() => {
         const stories = feed[initialUserIndex].stories;
-
         if (initialStoryId) {
-            const index = stories.findIndex((s: any) => s.id === initialStoryId);
-            if (index !== -1) return index;
+            const idx = stories.findIndex((s: any) => s.id === initialStoryId);
+            if (idx !== -1) return idx;
         }
-
-        const firstUnseenIndex = stories.findIndex((s: any) => !s.isSeen);
-        return firstUnseenIndex !== -1 ? firstUnseenIndex : 0;
+        const unseen = stories.findIndex((s: any) => !s.isSeen);
+        return unseen !== -1 ? unseen : 0;
     });
 
     const [progress, setProgress] = useState(0);
@@ -41,234 +75,151 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
     const [showReactions, setShowReactions] = useState(false);
     const [showViewers, setShowViewers] = useState(false);
     const [showMusicPopup, setShowMusicPopup] = useState(false);
+    const [audioUrl, setAudioUrl] = useState<string | undefined>();
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
     const imgRef = useRef<HTMLImageElement>(null);
-    const progressInterval = useRef<number | null>(null);
+    const timerRef = useRef<number | null>(null);
+    const progressRef = useRef(0);       // shadow ref — avoids stale closure in timer
+    const isFirstRender = useRef(true);
 
     const userStories = feed[currentUserIndex];
     const story = userStories.stories[currentStoryIndex];
     const isOwner = currentUser?.id && Number(currentUser.id) === story.userId;
     const music = story.metadata?.music;
-    const isMentioned = story.metadata?.texts?.some((t: any) => {
+
+    const isMentioned = useMemo(() => story.metadata?.texts?.some((t: any) => {
         if (t.mentionUserId && String(t.mentionUserId) === String(currentUser?.id)) return true;
-        if (t.mentions && Array.isArray(t.mentions)) {
-            return t.mentions.some((m: any) => String(m.userId) === String(currentUser?.id));
+        return t.mentions?.some((m: any) => String(m.userId) === String(currentUser?.id)) ?? false;
+    }), [story, currentUser?.id]);
+
+    const viewersList = useMemo(() => {
+        if (!isOwner) return [];
+        return (story.views ?? [])
+            .map((view: any) => ({
+                ...view,
+                hasLiked: story.likes?.some((l: any) => l.userId === view.userId) ?? false,
+            }))
+            .sort((a: any, b: any) => {
+                if (a.hasLiked !== b.hasLiked) return a.hasLiked ? -1 : 1;
+                return new Date(b.viewedAt).getTime() - new Date(a.viewedAt).getTime();
+            });
+    }, [story, isOwner]);
+
+    // ── Navigation ──────────────────────────────────────────────────────────────
+
+    const handleNext = useCallback(() => {
+        if (currentStoryIndex < userStories.stories.length - 1) {
+            setCurrentStoryIndex(i => i + 1);
+        } else if (currentUserIndex < feed.length - 1) {
+            setCurrentUserIndex(i => i + 1);
+        } else {
+            onClose();
         }
-        return false;
-    });
-    console.log("isMentioned:", isMentioned);
-    console.log("currentUser:", currentUser);
-    const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
+    }, [currentStoryIndex, userStories.stories.length, currentUserIndex, feed.length, onClose]);
 
-    // Process viewers list (merge views and likes)
-    const viewersList = isOwner ? (story.views || []).map((view: any) => {
-        const hasLiked = story.likes?.some((like: any) => like.userId === view.userId);
-        return { ...view, hasLiked };
-    }).sort((a: any, b: any) => {
-        // Sort by liked first, then by view date
-        if (a.hasLiked && !b.hasLiked) return -1;
-        if (!a.hasLiked && b.hasLiked) return 1;
-        return new Date(b.viewedAt).getTime() - new Date(a.viewedAt).getTime();
-    }) : [];
+    const handlePrev = useCallback(() => {
+        if (currentStoryIndex > 0) {
+            setCurrentStoryIndex(i => i - 1);
+        } else if (currentUserIndex > 0) {
+            setCurrentUserIndex(i => i - 1);
+        }
+    }, [currentStoryIndex, currentUserIndex]);
 
-    // Reset state when user changes
-    const isFirstRender = useRef(true);
+    // ── Effects ─────────────────────────────────────────────────────────────────
+
+    // Reset on user change
     useEffect(() => {
-        if (isFirstRender.current) {
-            isFirstRender.current = false;
-            return;
-        }
-
-        const stories = feed[currentUserIndex].stories;
-        const firstUnseenIndex = stories.findIndex((s: any) => !s.isSeen);
-        setCurrentStoryIndex(firstUnseenIndex !== -1 ? firstUnseenIndex : 0);
+        if (isFirstRender.current) { isFirstRender.current = false; return; }
+        const unseen = feed[currentUserIndex].stories.findIndex((s: any) => !s.isSeen);
+        setCurrentStoryIndex(unseen !== -1 ? unseen : 0);
         setProgress(0);
         setIsBuffering(true);
         setShowViewers(false);
     }, [currentUserIndex]);
 
-    // Reset state when story changes
+    // Reset on story change
     useEffect(() => {
+        progressRef.current = 0;
         setProgress(0);
         setLiked(story.isLiked);
         setLikesCount(story.likesCount);
         setShowViewers(false);
         setShowMusicPopup(false);
-
-        // Smart buffering reset
-        if (story.mediaType === 'image') {
-            if (imgRef.current?.complete) {
-                setIsBuffering(false);
-            } else {
-                setIsBuffering(true);
-            }
-        } else {
-            setIsBuffering(true);
-        }
-
-        // Mark as viewed
-        if (!story.isSeen && !isOwner) {
-            actions.stories.view({ storyId: story.id });
-        }
+        setIsBuffering(story.mediaType !== "image" || !imgRef.current?.complete);
+        if (!story.isSeen && !isOwner) actions.stories.view({ storyId: story.id });
     }, [story]);
 
-    // Refresh music URL
+    // Music URL refresh
     useEffect(() => {
-        let isMounted = true;
-
-        if (music) {
-            setIsAudioFetching(true);
-            setAudioUrl(undefined); // Clear previous URL to prevent double load
-
-            if (music.id) {
-                fetch(`/api/deezer/track?id=${music.id}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (!isMounted) return;
-                        if (data.preview) {
-                            setAudioUrl(data.preview);
-                        } else {
-                            setAudioUrl(music.preview); // Fallback
-                        }
-                    })
-                    .catch(err => {
-                        if (!isMounted) return;
-                        console.error("Error refreshing music URL:", err);
-                        setAudioUrl(music.preview); // Fallback
-                    })
-                    .finally(() => {
-                        if (isMounted) setIsAudioFetching(false);
-                    });
-            } else {
-                setAudioUrl(music.preview);
-                setIsAudioFetching(false);
-            }
-        } else {
-            setAudioUrl(undefined);
-            setIsAudioFetching(false);
-        }
-
-        return () => {
-            isMounted = false;
-        };
+        if (!music) { setAudioUrl(undefined); return; }
+        let active = true;
+        setIsAudioFetching(true);
+        setAudioUrl(undefined);
+        refreshMusicUrl(music).then(url => {
+            if (active) { setAudioUrl(url); setIsAudioFetching(false); }
+        });
+        return () => { active = false; };
     }, [music]);
 
-    // Control video playback
+    // Music + video pause/play — single unified effect
     useEffect(() => {
-        if (story.mediaType === 'video' && videoRef.current) {
-            if (isPaused) {
-                videoRef.current.pause();
-            } else {
-                videoRef.current.play().catch(() => { });
-            }
+        const audio = audioRef.current;
+        const video = videoRef.current;
+        if (story.mediaType === "video" && video) {
+            isPaused ? video.pause() : video.play().catch(() => { });
         }
-    }, [isPaused, story.mediaType]);
-
-    // Control music playback
-    useEffect(() => {
-        if (music && audioRef.current) {
-            audioRef.current.volume = 0.5; // Default volume
-            if (isPaused) {
-                audioRef.current.pause();
-            } else {
-                // If starting playback, ensure we start from the configured start time
-                // But only if we are just starting (currentTime is 0 or close to it?)
-                // Actually, we want to loop the fragment if needed?
-                // For now, just play. The initial time is set in another effect.
-                audioRef.current.play().catch(() => { });
-            }
+        if (music && audio) {
+            audio.volume = 0.5;
+            isPaused ? audio.pause() : audio.play().catch(() => { });
         }
-    }, [isPaused, music, story]);
+    }, [isPaused, story.mediaType, music]);
 
-    // Timer Logic
+    // Progress timer — uses ref shadow to avoid stale closure recreation
     useEffect(() => {
         if (isPaused || isBuffering || isAudioFetching || showViewers) return;
-
         const duration = story.duration * 1000;
-        const intervalTime = 50;
-        const step = (intervalTime / duration) * 100;
+        const step = (50 / duration) * 100;
 
-        progressInterval.current = window.setInterval(() => {
-            setProgress(prev => {
-                if (prev >= 100) {
-                    handleNext();
-                    return 0;
-                }
-                return prev + step;
-            });
-        }, intervalTime);
+        timerRef.current = window.setInterval(() => {
+            progressRef.current += step;
+            if (progressRef.current >= 100) {
+                progressRef.current = 0;
+                handleNext();
+            }
+            setProgress(progressRef.current);
+        }, 50);
 
-        return () => {
-            if (progressInterval.current) clearInterval(progressInterval.current);
-        };
-    }, [story, isPaused, isBuffering, isAudioFetching, showViewers, currentUserIndex, currentStoryIndex]);
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    }, [story, isPaused, isBuffering, isAudioFetching, showViewers, handleNext]);
 
-    const handleNext = useCallback(() => {
-        if (currentStoryIndex < userStories.stories.length - 1) {
-            setCurrentStoryIndex(prev => prev + 1);
-        } else if (currentUserIndex < feed.length - 1) {
-            setCurrentUserIndex(prev => prev + 1);
-        } else {
-            onClose();
-        }
-    }, [currentStoryIndex, userStories, currentUserIndex, feed]);
-
-    const handlePrev = useCallback(() => {
-        if (currentStoryIndex > 0) {
-            setCurrentStoryIndex(prev => prev - 1);
-        } else if (currentUserIndex > 0) {
-            setCurrentUserIndex(prev => prev - 1);
-            // Go to last story of previous user
-            // This logic is a bit complex because we need to know the length of prev user stories immediately
-            // For simplicity, we just go to the first story of prev user or handle it in effect
-        }
-    }, [currentStoryIndex, currentUserIndex]);
+    // ── Actions ──────────────────────────────────────────────────────────────────
 
     const toggleLike = async () => {
-        const newLiked = !liked;
-        setLiked(newLiked);
-        setLikesCount(prev => newLiked ? prev + 1 : prev - 1);
+        setLiked(v => !v);
+        setLikesCount(n => liked ? n - 1 : n + 1);
         await actions.stories.toggleLike({ storyId: story.id });
     };
 
     const handleReaction = async (emoji: string) => {
         try {
-            const { error } = await actions.messages.send({
-                receiverId: story.userId,
-                reaction: emoji,
-                storyId: story.id
-            });
-
+            const { error } = await actions.messages.send({ receiverId: story.userId, reaction: emoji, storyId: story.id });
             if (error) throw new Error(error.message);
-
             toast.success(`Reacción enviada: ${emoji}`);
             setIsPaused(false);
-            // Optional: Close keyboard/input focus if needed
-        } catch (e) {
-            toast.error("Error al enviar reacción");
-        }
+        } catch { toast.error("Error al enviar reacción"); }
     };
 
     const handleSendReply = async () => {
         if (!replyText.trim()) return;
-
         try {
-            const { error } = await actions.messages.send({
-                receiverId: story.userId,
-                content: replyText,
-                storyId: story.id
-            });
-
+            const { error } = await actions.messages.send({ receiverId: story.userId, content: replyText, storyId: story.id });
             if (error) throw new Error(error.message);
-
             toast.success("Mensaje enviado");
             setReplyText("");
             setIsPaused(false);
-        } catch (e) {
-            toast.error("Error al enviar mensaje");
-        }
+        } catch { toast.error("Error al enviar mensaje"); }
     };
 
     const handleDelete = async () => {
@@ -277,46 +228,28 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
         try {
             const { error } = await actions.stories.delete({ storyId: story.id });
             if (error) throw new Error(error.message);
-
             toast.success("Historia eliminada");
-
-            // If it was the only story, close viewer
-            if (userStories.stories.length === 1) {
-                onClose();
-            } else {
-                // Move to next or prev
-                if (currentStoryIndex < userStories.stories.length - 1) {
-                    // Has next story
-                    // We need to refresh the feed in parent, but for now let's just close to be safe or try to navigate
-                    // Ideally we should update the local state 'feed' but it's passed as prop.
-                    // Simplest is to close and let parent refresh.
-                    onClose();
-                } else {
-                    onClose();
-                }
-            }
-        } catch (e) {
-            toast.error("Error al eliminar");
-            setIsPaused(false);
-        }
+            onClose();
+        } catch { toast.error("Error al eliminar"); setIsPaused(false); }
     };
+
+    // ── Render ───────────────────────────────────────────────────────────────────
 
     return (
         <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
         >
-            {/* Close Button */}
+            {/* Close */}
             <button
                 onClick={onClose}
-                className="absolute top-4 right-4 z-50 text-white/80 hover:text-white p-2"
+                class="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20
+               flex items-center justify-center text-white transition-colors"
             >
-                <LucideX size={32} />
+                <LucideX size={20} />
             </button>
 
-            {/* Main Container */}
+            {/* Story card */}
             <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -326,24 +259,22 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                 dragConstraints={{ top: 0, bottom: 0 }}
                 dragElastic={{ top: 0, bottom: 0.5 }}
                 onDragEnd={(_, info) => {
-                    if (info.offset.y > 100) {
-                        onClose();
-                    } else if (info.offset.y < -50 && isOwner) {
-                        setShowViewers(true);
-                    }
+                    if (info.offset.y > 100) onClose();
+                    else if (info.offset.y < -50 && isOwner) setShowViewers(true);
                 }}
-                className="relative w-full max-w-md h-full md:h-[90vh] md:rounded-2xl overflow-hidden bg-[#1a1a1a] flex flex-col"
+                class="relative w-full max-w-md h-full md:h-[90vh] md:rounded-[28px] overflow-hidden
+               bg-[#111] flex flex-col shadow-2xl"
             >
-
-                {/* Progress Bars */}
-                <div className="absolute top-0 left-0 right-0 z-50 flex gap-1 p-2">
+                {/* Progress bars */}
+                <div class="absolute top-0 left-0 right-0 z-50 flex gap-1 p-2 pt-3">
                     {userStories.stories.map((s: any, idx: number) => (
-                        <div key={s.id} className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden">
+                        <div key={s.id} class="h-[3px] flex-1 bg-white/25 rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-white transition-all duration-100 ease-linear"
+                                class="h-full bg-white rounded-full"
                                 style={{
-                                    width: idx < currentStoryIndex ? '100%' :
-                                        idx === currentStoryIndex ? `${progress}%` : '0%'
+                                    width: idx < currentStoryIndex ? "100%"
+                                        : idx === currentStoryIndex ? `${progress}%` : "0%",
+                                    transition: idx === currentStoryIndex ? "width 50ms linear" : "none",
                                 }}
                             />
                         </div>
@@ -351,236 +282,199 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                 </div>
 
                 {/* Header */}
-                <div className="absolute top-0 left-0 right-0 z-40 p-4 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent">
-                    <div className="flex items-center gap-3 pt-2">
+                <div class="absolute top-0 left-0 right-0 z-40 px-4 pt-8 pb-10
+                    bg-gradient-to-b from-black/70 to-transparent flex items-center justify-between">
+                    <div class="flex items-center gap-3">
                         <img
                             src={userStories.user.avatar || `https://ui-avatars.com/api/?name=${userStories.user.displayName}`}
-                            className="w-10 h-10 rounded-full border border-white/20"
+                            class="w-10 h-10 rounded-full border-2 border-white/30 object-cover"
                         />
                         <div>
-                            <div className="flex items-center gap-2">
-                                <p className="text-white font-semibold text-sm">{userStories.user.displayName}</p>
-                                {story.visibility === 'vip' && (
-                                    <div className="bg-green-500/20 border border-green-500/50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                        <LucideStar size={10} className="text-green-400 fill-green-400" />
-                                        <span className="text-green-400 text-[10px] font-bold uppercase tracking-wider">Mejores Amigos</span>
-                                    </div>
-                                )}
-                                {story.visibility === 'friends' && (
-                                    <div className="bg-blue-500/20 border border-blue-500/50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                        <span className="text-blue-400 text-[10px] font-bold uppercase tracking-wider">Solo Amigos</span>
-                                    </div>
-                                )}
+                            <div class="flex items-center gap-2">
+                                <p class="text-white font-semibold text-sm leading-tight">{userStories.user.displayName}</p>
+                                <VisibilityBadge visibility={story.visibility} />
                             </div>
-                            <p className="text-white/60 text-xs">
+                            <p class="text-white/55 text-xs mt-0.5">
                                 {formatDistanceToNow(new Date(story.createdAt), { addSuffix: true, locale: es })}
                             </p>
                         </div>
                     </div>
 
-                    {/* Buffering Indicator (Top Right) */}
                     {(isBuffering || isAudioFetching) && (
-                        <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/10">
-                            <LucideLoader2 className="w-4 h-4 text-white animate-spin" />
-                            <span className="text-white/80 text-xs font-medium">Cargando...</span>
+                        <div class="bg-white/10 border border-white/15 px-3 py-1.5 rounded-full flex items-center gap-2">
+                            <LucideLoader2 class="w-3.5 h-3.5 text-white animate-spin" />
+                            <span class="text-white/80 text-xs">Cargando...</span>
                         </div>
                     )}
                 </div>
 
-                {/* Media Content */}
+                {/* Media */}
                 <div
-                    className="flex-1 relative bg-black flex items-center justify-center"
+                    class="flex-1 relative bg-black flex items-center justify-center select-none"
                     onMouseDown={() => setIsPaused(true)}
                     onMouseUp={() => setIsPaused(false)}
                     onTouchStart={() => setIsPaused(true)}
                     onTouchEnd={() => setIsPaused(false)}
-                    onContextMenu={(e) => e.preventDefault()}
+                    onContextMenu={e => e.preventDefault()}
                 >
-                    {story.mediaType === 'image' ? (
+                    {story.mediaType === "image" ? (
                         <img
-                            ref={imgRef}
-                            key={story.id}
-                            src={story.mediaUrl}
-                            className="w-full h-full object-contain"
+                            ref={imgRef} key={story.id} src={story.mediaUrl}
+                            class="w-full h-full object-contain"
                             onLoad={() => setIsBuffering(false)}
                         />
                     ) : (
                         <video
-                            ref={videoRef}
-                            key={story.id}
-                            src={story.mediaUrl}
-                            className="w-full h-full object-contain"
-                            autoPlay
-                            playsInline
-                            muted={!!music} // Mute video if music is present
+                            ref={videoRef} key={story.id} src={story.mediaUrl}
+                            class="w-full h-full object-contain"
+                            autoPlay playsInline muted={!!music}
                             onEnded={handleNext}
                             onWaiting={() => setIsBuffering(true)}
-                            onPlaying={() => setIsBuffering(false)}
                             onCanPlay={() => setIsBuffering(false)}
                         />
                     )}
 
-                    {/* Music Player */}
                     {music && audioUrl && (
                         <audio
-                            ref={audioRef}
-                            src={audioUrl}
-                            autoPlay
-                            onLoadedMetadata={(e) => {
-                                if (music?.config?.startTime) {
-                                    e.currentTarget.currentTime = music.config.startTime;
-                                }
+                            ref={audioRef} src={audioUrl} autoPlay
+                            onLoadedMetadata={e => {
+                                if (music?.config?.startTime) e.currentTarget.currentTime = music.config.startTime;
                             }}
-                            onTimeUpdate={(e) => {
-                                const audio = e.currentTarget;
-                                const startTime = music.config?.startTime || 0;
-                                const duration = music.config?.duration || 15;
-
-                                // Stop if we exceed the duration (plus a small buffer)
-                                // We don't loop here because the story should end
-                                if (audio.currentTime >= startTime + duration) {
-                                    audio.pause();
-                                }
+                            onTimeUpdate={e => {
+                                const { currentTime } = e.currentTarget;
+                                const end = (music.config?.startTime ?? 0) + (music.config?.duration ?? 15);
+                                if (currentTime >= end) e.currentTarget.pause();
                             }}
                         />
                     )}
 
-                    {/* Music Sticker */}
+                    {/* Music sticker */}
                     {music && (
                         <div
-                            className="absolute bg-white/90 backdrop-blur-md rounded-xl p-3 flex items-center gap-3 shadow-xl z-40 max-w-[80%] cursor-pointer transition-transform active:scale-95"
+                            class="absolute bg-black/60 backdrop-blur-xl rounded-2xl px-3 py-2.5
+                     flex items-center gap-3 z-40 max-w-[78%] cursor-pointer
+                     border border-white/10 active:scale-95 transition-transform"
                             style={{
-                                left: music.config ? `${music.config.x}%` : '50%',
-                                top: music.config ? `${music.config.y}%` : '50%',
-                                transform: `translate(-50%, -50%) scale(${music.config ? music.config.scale : 1}) rotate(${music.config?.rotation || 0}deg)`
+                                left: music.config ? `${music.config.x}%` : "50%",
+                                top: music.config ? `${music.config.y}%` : "50%",
+                                transform: `translate(-50%,-50%) scale(${music.config?.scale ?? 1}) rotate(${music.config?.rotation ?? 0}deg)`,
                             }}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setShowMusicPopup(!showMusicPopup);
-                            }}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onTouchStart={(e) => e.stopPropagation()}
+                            onClick={e => { e.stopPropagation(); setShowMusicPopup(v => !v); }}
+                            onMouseDown={e => e.stopPropagation()}
+                            onTouchStart={e => e.stopPropagation()}
                         >
-                            <img src={music.album.cover_medium} className="w-12 h-12 rounded-md shadow-sm pointer-events-none" />
-                            <div className="flex-1 min-w-0 pointer-events-none">
-                                <p className="font-bold text-black text-sm truncate">{music.title}</p>
-                                <p className="text-black/60 text-xs truncate">{music.artist.name}</p>
+                            <img src={music.album.cover_medium} class="w-10 h-10 rounded-xl pointer-events-none shadow-md" />
+                            <div class="flex-1 min-w-0 pointer-events-none">
+                                <p class="text-white font-semibold text-xs truncate">{music.title}</p>
+                                <p class="text-white/55 text-[11px] truncate">{music.artist.name}</p>
                             </div>
-                            <div className="w-1 h-8 bg-black/10 rounded-full mx-1 pointer-events-none" />
-                            <div className="flex gap-0.5 items-end h-4 pointer-events-none">
-                                {[1, 2, 3, 4].map(i => (
+                            {/* Animated bars */}
+                            <div class="flex gap-0.5 items-end h-3.5 pointer-events-none">
+                                {[0, 1, 2, 3].map(i => (
                                     <div
                                         key={i}
-                                        className="w-1 bg-pink-500 rounded-full animate-music-bar"
+                                        class="w-[3px] bg-pink-400 rounded-full"
                                         style={{
-                                            height: isPaused ? '20%' : `${Math.random() * 100}%`,
-                                            animation: isPaused ? 'none' : `music-bar 0.5s ease-in-out infinite alternate`,
-                                            animationDelay: `${i * 0.1}s`
+                                            height: isPaused ? "30%" : `${40 + i * 20}%`,
+                                            animation: isPaused ? "none" : `musicBar 0.5s ease-in-out ${i * 0.12}s infinite alternate`,
                                         }}
                                     />
                                 ))}
                             </div>
 
-                            {/* Popup */}
                             {showMusicPopup && (
-                                <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-[#242526] text-white text-xs font-bold py-2 px-4 rounded-xl shadow-xl whitespace-nowrap flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200 border border-white/10 z-50">
+                                <div class="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap
+                            bg-[#1e1e1e] border border-white/10 text-white text-xs font-semibold
+                            py-2 px-4 rounded-xl shadow-2xl flex items-center gap-2 z-50">
                                     <a
-                                        href={music.link || `https://www.deezer.com/search/${encodeURIComponent(music.title + " " + music.artist.name)}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 hover:text-blue-400 transition-colors"
-                                        onClick={(e) => e.stopPropagation()}
+                                        href={music.link || `https://www.deezer.com/search/${encodeURIComponent(`${music.title} ${music.artist.name}`)}`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        class="flex items-center gap-2 hover:text-blue-400 transition-colors"
+                                        onClick={e => e.stopPropagation()}
                                     >
-                                        <span>Ver en Deezer</span>
-                                        <LucideExternalLink size={14} />
+                                        Ver en Deezer <LucideExternalLink size={13} />
                                     </a>
                                 </div>
                             )}
                         </div>
-                    )}                    {/* Text Elements */}
-                    {story.metadata?.texts?.map((text: any) => (
-                        <div
-                            key={text.id}
-                            className={`absolute ${(text.mentionUserId || (text.mentions && text.mentions.length > 0)) ? 'pointer-events-auto cursor-pointer active:scale-95 transition-transform' : 'pointer-events-none'} ${text.font}`}
-                            style={{
-                                left: `${text.x}%`,
-                                top: `${text.y}%`,
-                                transform: `translate(-50%, -50%) scale(${text.scale}) rotate(${text.rotation}deg)`,
-                                color: text.color,
-                                backgroundColor: text.backgroundColor,
-                                padding: '0.5rem',
-                                borderRadius: '0.5rem',
-                                zIndex: 30
-                            }}
-                            onClick={(e) => {
-                                if (text.mentionUserId) {
-                                    e.stopPropagation();
-                                    window.location.href = `/saltogram/u/${text.mentionUsername}`;
-                                } else if (text.mentions && text.mentions.length > 0) {
-                                    e.stopPropagation();
-                                    window.location.href = `/saltogram/u/${text.mentions[0].username}`;
-                                }
-                            }}
-                        >
-                            <span className="whitespace-pre-wrap text-2xl font-bold drop-shadow-lg">
-                                {text.content}
-                            </span>
-                        </div>
-                    ))}
+                    )}
 
-                    {/* Navigation Zones */}
-                    <div className="absolute inset-0 flex">
-                        <div className="w-1/3 h-full" onClick={(e) => { e.stopPropagation(); handlePrev(); }} />
-                        <div className="w-1/3 h-full" /> {/* Center for pause */}
-                        <div className="w-1/3 h-full" onClick={(e) => { e.stopPropagation(); handleNext(); }} />
+                    {/* Text overlays */}
+                    {story.metadata?.texts?.map((text: any) => {
+                        const hasMention = text.mentionUserId || text.mentions?.length > 0;
+                        const href = text.mentionUserId
+                            ? `/saltogram/u/${text.mentionUsername}`
+                            : text.mentions?.[0] ? `/saltogram/u/${text.mentions[0].username}` : null;
+                        return (
+                            <div
+                                key={text.id}
+                                class={`absolute ${text.font} ${hasMention ? "cursor-pointer active:scale-95 transition-transform" : "pointer-events-none"}`}
+                                style={{
+                                    left: `${text.x}%`, top: `${text.y}%`,
+                                    transform: `translate(-50%,-50%) scale(${text.scale}) rotate(${text.rotation}deg)`,
+                                    color: text.color, backgroundColor: text.backgroundColor,
+                                    padding: "0.4rem 0.6rem", borderRadius: "0.5rem", zIndex: 30,
+                                }}
+                                onClick={e => { if (href) { e.stopPropagation(); window.location.href = href; } }}
+                            >
+                                <span class="whitespace-pre-wrap text-2xl font-bold drop-shadow-lg">{text.content}</span>
+                            </div>
+                        );
+                    })}
+
+                    {/* Nav zones */}
+                    <div class="absolute inset-0 flex pointer-events-none">
+                        <div class="w-1/3 h-full pointer-events-auto" onClick={e => { e.stopPropagation(); handlePrev(); }} />
+                        <div class="w-1/3 h-full" />
+                        <div class="w-1/3 h-full pointer-events-auto" onClick={e => { e.stopPropagation(); handleNext(); }} />
                     </div>
                 </div>
 
-                {/* Footer / Interactions */}
-                <div className="absolute bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                    {/* Mentioned Repost Button */}
+                {/* Footer */}
+                <div class="absolute bottom-0 left-0 right-0 z-50 px-4 pb-6 pt-16
+                    bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+
+                    {/* Repost button for mentioned users */}
                     {isMentioned && (
-                        <div className="flex justify-center mb-4 pointer-events-auto">
+                        <div class="flex justify-center mb-4">
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    toast.info("Función de repostear próximamente");
-                                }}
-                                className="bg-white hover:bg-zinc-200 text-black px-6 py-2 rounded-full font-bold text-sm shadow-lg flex items-center gap-2 transition-transform active:scale-95"
+                                onClick={e => { e.stopPropagation(); toast.info("Función de repostear próximamente"); }}
+                                class="bg-white hover:bg-white/90 active:scale-95 text-black px-6 py-2.5 rounded-full
+                       font-semibold text-sm flex items-center gap-2 transition-all shadow-lg"
                             >
-                                <LucideSend size={16} className="rotate-45" />
+                                <LucideSend size={15} class="rotate-45" />
                                 Añadir a tu historia
                             </button>
                         </div>
                     )}
 
-                    {/* Swipe Up Indicator (Only for owner) */}
+                    {/* Swipe up hint */}
                     {isOwner && !showViewers && (
                         <motion.div
-                            className="absolute -top-10 left-0 right-0 flex flex-col items-center justify-center text-white/50 pointer-events-none"
-                            animate={{ y: [0, -5, 0] }}
-                            transition={{ repeat: Infinity, duration: 1.5 }}
+                            class="flex flex-col items-center text-white/40 mb-3 pointer-events-none"
+                            animate={{ y: [0, -4, 0] }}
+                            transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
                         >
-                            <LucideChevronUp size={20} />
-                            <span className="text-[10px] font-medium uppercase tracking-wider">Desliza para ver vistas</span>
+                            <LucideChevronUp size={18} />
+                            <span class="text-[10px] uppercase tracking-widest font-medium">Ver vistas</span>
                         </motion.div>
                     )}
 
-                    {/* Quick Reactions */}
+                    {/* Reactions tray */}
                     <AnimatePresence>
                         {showReactions && !isOwner && (
                             <motion.div
-                                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                                initial={{ opacity: 0, y: 16, scale: 0.92 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 20, scale: 0.9 }}
-                                className="absolute bottom-20 left-0 right-0 flex justify-center gap-4 pointer-events-auto"
+                                exit={{ opacity: 0, y: 16, scale: 0.92 }}
+                                class="flex justify-center gap-3 mb-4"
                             >
                                 {["😂", "😮", "😍", "😢", "🔥", "👏"].map((emoji, i) => (
                                     <button
                                         key={emoji}
-                                        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleReaction(emoji); }}
-                                        className="text-4xl hover:scale-125 transition-transform drop-shadow-lg"
-                                        style={{ transitionDelay: `${i * 50}ms` }}
+                                        onMouseDown={e => { e.preventDefault(); e.stopPropagation(); handleReaction(emoji); }}
+                                        class="text-3xl hover:scale-125 active:scale-110 transition-transform drop-shadow-lg"
+                                        style={{ transitionDelay: `${i * 40}ms` }}
                                     >
                                         {emoji}
                                     </button>
@@ -589,156 +483,153 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                         )}
                     </AnimatePresence>
 
-                    <div className="flex items-center justify-between gap-3">
-                        {/* Reply Input */}
-                        {!isOwner && (
-                            <div className="relative flex-1">
-                                <input
-                                    type="text"
-                                    value={replyText}
-                                    onInput={(e) => setReplyText(e.currentTarget.value)}
-                                    placeholder={`Responder a ${userStories.user.displayName}...`}
-                                    className="w-full bg-transparent border border-white/30 rounded-full py-2.5 px-4 text-white placeholder-white/70 focus:outline-none focus:border-white/60 text-sm backdrop-blur-sm"
-                                    onFocus={() => { setIsPaused(true); setShowReactions(true); }}
-                                    onBlur={() => { setIsPaused(false); setShowReactions(false); }}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
-                                />
-                            </div>
+                    {/* Controls row */}
+                    <div class="flex items-center gap-3">
+                        {isOwner ? (
+                            <>
+                                <button
+                                    onClick={e => { e.stopPropagation(); setShowViewers(true); }}
+                                    class="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors"
+                                >
+                                    <LucideEye size={19} />
+                                    <span class="text-sm font-semibold">{story.views.length}</span>
+                                </button>
+                                <div class="flex items-center gap-1.5 text-white/70">
+                                    <LucideHeart size={19} />
+                                    <span class="text-sm font-semibold">{likesCount}</span>
+                                </div>
+                                <div class="flex-1" />
+                                <button
+                                    onClick={e => { e.stopPropagation(); handleDelete(); }}
+                                    class="w-10 h-10 rounded-full bg-white/10 hover:bg-red-500/20 hover:text-red-400
+                         flex items-center justify-center text-white/70 transition-colors"
+                                >
+                                    <LucideTrash2 size={18} />
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <div class="flex-1 relative">
+                                    <input
+                                        type="text"
+                                        value={replyText}
+                                        onInput={e => setReplyText(e.currentTarget.value)}
+                                        placeholder={`Responder a ${userStories.user.displayName}...`}
+                                        class="w-full bg-white/10 border border-white/20 rounded-full py-2.5 px-4
+                           text-white placeholder-white/50 focus:outline-none focus:border-white/50
+                           text-sm transition-colors"
+                                        onFocus={() => { setIsPaused(true); setShowReactions(true); }}
+                                        onBlur={() => { setIsPaused(false); setShowReactions(false); }}
+                                        onKeyDown={e => e.key === "Enter" && handleSendReply()}
+                                    />
+                                </div>
+                                {replyText ? (
+                                    <button
+                                        onClick={e => { e.stopPropagation(); handleSendReply(); }}
+                                        class="w-10 h-10 rounded-full bg-blue-500 hover:bg-blue-400 flex items-center
+                           justify-center text-white transition-colors active:scale-95"
+                                    >
+                                        <LucideSend size={16} class="rotate-45" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={e => { e.stopPropagation(); toggleLike(); }}
+                                        class={`w-10 h-10 rounded-full flex items-center justify-center
+                            transition-all active:scale-90
+                            ${liked ? "bg-red-500/20 text-red-400" : "bg-white/10 text-white/80 hover:text-white"}`}
+                                    >
+                                        <LucideHeart size={20} fill={liked ? "currentColor" : "none"} />
+                                    </button>
+                                )}
+                            </>
                         )}
-
-                        <div className="flex items-center gap-4 ml-auto">
-                            {isOwner ? (
-                                <>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setShowViewers(true); }}
-                                        className="flex items-center gap-1 text-white/80 mr-2 hover:text-white transition-colors"
-                                        title={`${story.views.length} vistas`}
-                                    >
-                                        <LucideEye size={20} />
-                                        <span className="text-sm font-bold">{story.views.length}</span>
-                                    </button>
-                                    <div className="flex items-center gap-1 text-white/80 mr-2" title={`${likesCount} me gusta`}>
-                                        <LucideHeart size={20} />
-                                        <span className="text-sm font-bold">{likesCount}</span>
-                                    </div>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                                        className="p-2 rounded-full text-white/80 hover:text-red-500 hover:bg-white/10 transition-colors"
-                                        title="Eliminar historia"
-                                    >
-                                        <LucideTrash2 size={24} />
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    {replyText ? (
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleSendReply(); }}
-                                            className="text-blue-500 font-semibold text-sm"
-                                        >
-                                            Enviar
-                                        </button>
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            {likesCount > 0 && (
-                                                <span className="text-white text-sm font-medium">{likesCount}</span>
-                                            )}
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); toggleLike(); }}
-                                                className={`p-2 rounded-full transition-transform active:scale-90 ${liked ? 'text-red-500' : 'text-white'}`}
-                                            >
-                                                <LucideHeart size={28} fill={liked ? "currentColor" : "none"} />
-                                            </button>
-                                            <button className="text-white p-2">
-                                                <LucideSend size={26} className="-rotate-45 mb-1" />
-                                            </button>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
                     </div>
                 </div>
             </motion.div>
 
-            {/* Desktop Navigation Arrows */}
+            {/* Desktop arrows */}
             <button
                 onClick={handlePrev}
-                className="hidden md:block absolute left-4 text-white/50 hover:text-white transition-colors"
                 disabled={currentUserIndex === 0 && currentStoryIndex === 0}
+                class="hidden md:flex absolute left-4 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20
+               items-center justify-center text-white/70 hover:text-white transition-all
+               disabled:opacity-30 disabled:cursor-not-allowed"
             >
-                <LucideChevronLeft size={48} />
+                <LucideChevronLeft size={24} />
             </button>
             <button
                 onClick={handleNext}
-                className="hidden md:block absolute right-4 text-white/50 hover:text-white transition-colors"
+                class="hidden md:flex absolute right-4 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20
+               items-center justify-center text-white/70 hover:text-white transition-all"
             >
-                <LucideChevronRight size={48} />
+                <LucideChevronRight size={24} />
             </button>
 
-            {/* Viewers Bottom Sheet */}
+            {/* Viewers bottom sheet */}
             <AnimatePresence>
                 {showViewers && isOwner && (
                     <>
                         <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             onClick={() => setShowViewers(false)}
-                            className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+                            class="fixed inset-0 bg-black/60 z-60 backdrop-blur-sm"
                         />
                         <motion.div
-                            initial={{ y: "100%" }}
-                            animate={{ y: 0 }}
-                            exit={{ y: "100%" }}
-                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                            className="fixed bottom-0 left-0 right-0 z-[70] bg-[#242526] rounded-t-3xl border-t border-white/10 max-h-[70vh] flex flex-col shadow-2xl md:max-w-md md:mx-auto"
-                            drag="y"
-                            dragConstraints={{ top: 0 }}
-                            dragElastic={0.2}
-                            onDragEnd={(_, info) => {
-                                if (info.offset.y > 100) setShowViewers(false);
-                            }}
+                            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                            transition={{ type: "spring", damping: 26, stiffness: 320 }}
+                            drag="y" dragConstraints={{ top: 0 }} dragElastic={0.2}
+                            onDragEnd={(_, info) => { if (info.offset.y > 100) setShowViewers(false); }}
+                            class="fixed bottom-0 left-0 right-0 z-70 bg-[#1e1e1e] rounded-t-[28px]
+                     border-t border-white/8 max-h-[70vh] flex flex-col shadow-2xl
+                     md:max-w-md md:mx-auto"
                         >
-                            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mt-3 mb-2" />
+                            {/* Handle */}
+                            <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mt-3 mb-1" />
 
-                            <div className="p-4 border-b border-white/10 flex items-center justify-between">
-                                <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                                    <LucideEye size={20} />
-                                    Vistas ({viewersList.length})
-                                </h3>
-                                <button onClick={() => setShowViewers(false)} className="p-2 hover:bg-white/10 rounded-full text-white/50 hover:text-white">
-                                    <LucideX size={20} />
+                            {/* Sheet header */}
+                            <div class="px-5 py-3 border-b border-white/8 flex items-center justify-between">
+                                <div class="flex items-center gap-2 text-white">
+                                    <LucideEye size={18} />
+                                    <span class="font-semibold text-base">Vistas</span>
+                                    <span class="text-white/40 text-sm font-normal">({viewersList.length})</span>
+                                </div>
+                                <button
+                                    onClick={() => setShowViewers(false)}
+                                    class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center
+                         justify-center text-white/60 hover:text-white transition-colors"
+                                >
+                                    <LucideX size={16} />
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
-                                {viewersList.length > 0 ? (
-                                    <div className="space-y-1">
-                                        {viewersList.map((viewer: any) => (
-                                            <div key={viewer.userId} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-xl transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <img
-                                                        src={viewer.user?.avatar || `https://ui-avatars.com/api/?name=${viewer.user?.displayName || 'User'}`}
-                                                        className="w-10 h-10 rounded-full border border-white/10"
-                                                    />
-                                                    <div>
-                                                        <p className="text-white font-medium text-sm">{viewer.user?.displayName}</p>
-                                                        <p className="text-white/40 text-xs">@{viewer.user?.username}</p>
-                                                    </div>
-                                                </div>
-                                                {viewer.hasLiked && (
-                                                    <div className="bg-red-500/10 p-2 rounded-full">
-                                                        <LucideHeart size={16} className="text-red-500 fill-red-500" />
-                                                    </div>
-                                                )}
+                            {/* Viewer list */}
+                            <div class="flex-1 overflow-y-auto p-3">
+                                {viewersList.length > 0 ? viewersList.map((viewer: any) => (
+                                    <div
+                                        key={viewer.userId}
+                                        class="flex items-center justify-between px-3 py-2.5 rounded-2xl
+                           hover:bg-white/5 transition-colors"
+                                    >
+                                        <div class="flex items-center gap-3">
+                                            <img
+                                                src={viewer.user?.avatar || `https://ui-avatars.com/api/?name=${viewer.user?.displayName ?? "U"}`}
+                                                class="w-10 h-10 rounded-full border border-white/10 object-cover"
+                                            />
+                                            <div>
+                                                <p class="text-white font-medium text-sm leading-tight">{viewer.user?.displayName}</p>
+                                                <p class="text-white/40 text-xs">@{viewer.user?.username}</p>
                                             </div>
-                                        ))}
+                                        </div>
+                                        {viewer.hasLiked && (
+                                            <div class="w-8 h-8 rounded-full bg-red-500/15 flex items-center justify-center">
+                                                <LucideHeart size={15} class="text-red-400 fill-red-400" />
+                                            </div>
+                                        )}
                                     </div>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center py-12 text-white/30 gap-2">
-                                        <LucideEye size={48} />
-                                        <p>Aún no hay vistas</p>
+                                )) : (
+                                    <div class="flex flex-col items-center justify-center py-16 text-white/25 gap-3">
+                                        <LucideEye size={40} />
+                                        <p class="text-sm">Aún no hay vistas</p>
                                     </div>
                                 )}
                             </div>
@@ -746,6 +637,13 @@ export default function StoryViewer({ feed, initialUserIndex, onClose, currentUs
                     </>
                 )}
             </AnimatePresence>
-        </motion.div>
+
+            <style>{`
+        @keyframes musicBar {
+          from { transform: scaleY(0.4); }
+          to   { transform: scaleY(1); }
+        }
+      `}</style>
+        </motion.div >
     );
 }

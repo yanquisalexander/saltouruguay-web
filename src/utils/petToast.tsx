@@ -3,8 +3,8 @@ import { toast } from 'sonner';
 export const petToast = {
     success: (message: string, emoji: string = '✨') => {
         toast.custom((t) => (
-            <div className="bg-gradient-to-r from-violet-600 to-indigo-600 border border-white/20 rounded-2xl p-4 shadow-2xl flex items-center gap-3 min-w-[300px] animate-fade-in-up">
-                <div className="bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-xl shadow-inner backdrop-blur-sm">
+            <div className="bg-linear-to-r from-violet-600 to-indigo-600 border border-white/20 rounded-2xl p-4 shadow-2xl flex items-center gap-3 min-w-[300px] animate-fade-in-up">
+                <div className="bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-xl shadow-inner backdrop-blur-xs">
                     {emoji}
                 </div>
                 <div className="flex-1">
@@ -16,8 +16,8 @@ export const petToast = {
     },
     error: (message: string, emoji: string = '❌') => {
         toast.custom((t) => (
-            <div className="bg-gradient-to-r from-red-600 to-pink-600 border border-white/20 rounded-2xl p-4 shadow-2xl flex items-center gap-3 min-w-[300px] animate-fade-in-up">
-                <div className="bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-xl shadow-inner backdrop-blur-sm">
+            <div className="bg-linear-to-r from-red-600 to-pink-600 border border-white/20 rounded-2xl p-4 shadow-2xl flex items-center gap-3 min-w-[300px] animate-fade-in-up">
+                <div className="bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-xl shadow-inner backdrop-blur-xs">
                     {emoji}
                 </div>
                 <div className="flex-1">
@@ -29,8 +29,8 @@ export const petToast = {
     },
     info: (message: string, emoji: string = 'ℹ️') => {
         toast.custom((t) => (
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 border border-white/20 rounded-2xl p-4 shadow-2xl flex items-center gap-3 min-w-[300px] animate-fade-in-up">
-                <div className="bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-xl shadow-inner backdrop-blur-sm">
+            <div className="bg-linear-to-r from-blue-600 to-cyan-600 border border-white/20 rounded-2xl p-4 shadow-2xl flex items-center gap-3 min-w-[300px] animate-fade-in-up">
+                <div className="bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-xl shadow-inner backdrop-blur-xs">
                     {emoji}
                 </div>
                 <div className="flex-1">

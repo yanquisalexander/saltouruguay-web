@@ -68,7 +68,7 @@ export default function NotesTray({ user }: NotesTrayProps) {
 
                         {/* Divider sutil si hay notas de amigos */}
                         {notes.length > 0 && (
-                            <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/10 to-transparent self-center mx-1"></div>
+                            <div className="w-px h-10 bg-linear-to-b from-transparent via-white/10 to-transparent self-center mx-1"></div>
                         )}
 
                         {/* Friends Notes */}

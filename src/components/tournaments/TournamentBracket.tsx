@@ -134,7 +134,7 @@ export default function TournamentBracket({ matches, participants, currentUserId
 
             {/* Update Match Modal */}
             {selectedMatch && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
                     <div className="bg-[#1a1b1e] border border-white/10 rounded-2xl w-full max-w-md p-6">
                         <h3 className="text-xl font-bold text-white mb-4">Actualizar Resultado</h3>
 
@@ -144,7 +144,7 @@ export default function TournamentBracket({ matches, participants, currentUserId
                                 <input
                                     type="number"
                                     min="0"
-                                    className="w-20 bg-black/30 border border-white/10 rounded px-2 py-1 text-white text-center"
+                                    className="w-20 bg-black/30 border border-white/10 rounded-sm px-2 py-1 text-white text-center"
                                     value={score1}
                                     onInput={(e: any) => setScore1(parseInt(e.target.value))}
                                 />
@@ -154,7 +154,7 @@ export default function TournamentBracket({ matches, participants, currentUserId
                                 <input
                                     type="number"
                                     min="0"
-                                    className="w-20 bg-black/30 border border-white/10 rounded px-2 py-1 text-white text-center"
+                                    className="w-20 bg-black/30 border border-white/10 rounded-sm px-2 py-1 text-white text-center"
                                     value={score2}
                                     onInput={(e: any) => setScore2(parseInt(e.target.value))}
                                 />

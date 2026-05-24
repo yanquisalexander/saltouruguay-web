@@ -207,7 +207,7 @@ export default function CommentSection({
                             onInput={handleInputChange}
                             placeholder={currentUserId ? (replyingTo ? `Responde a ${replyingTo.username}...` : "Escribe un comentario...") : "Inicia sesión para comentar"}
                             maxLength={500}
-                            className="flex-1 bg-transparent text-white text-sm placeholder:text-white/30 focus:outline-none py-1"
+                            className="flex-1 bg-transparent text-white text-sm placeholder:text-white/30 focus:outline-hidden py-1"
                             disabled={submitting || !currentUserId}
                         />
                         <button
@@ -333,7 +333,7 @@ const CommentItem = ({ comment, allComments, onReply, preview, isReply = false, 
                             {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: es })}
                         </span>
                     </div>
-                    <p className="text-sm text-white/80 whitespace-pre-wrap break-words leading-relaxed">
+                    <p className="text-sm text-white/80 whitespace-pre-wrap wrap-break-word leading-relaxed">
                         {formatCommentText(comment.text)}
                     </p>
                 </div>

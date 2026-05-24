@@ -106,7 +106,7 @@ export const JourneyTitle = ({ episode, onEnd }: JourneyTitleProps) => {
 
     return (
         <div
-            className={`fixed inset-0 flex flex-col justify-center items-center z-[9000] transition-opacity duration-1000 ease-in-out ${isOverlayVisible ? 'opacity-100' : 'opacity-0'}`}
+            className={`fixed inset-0 flex flex-col justify-center items-center z-9000 transition-opacity duration-1000 ease-in-out ${isOverlayVisible ? 'opacity-100' : 'opacity-0'}`}
         >
             <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" />
             {/* Glow central más sutil y enfocado para dar un aire lúgubre */}
@@ -128,7 +128,7 @@ export const JourneyTitle = ({ episode, onEnd }: JourneyTitleProps) => {
                 <div
                     className={`flex flex-col items-center transition-all duration-700 ease-out transform ${isSubtitleVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}
                 >
-                    <div className="w-[60vw] max-w-md h-[2px] bg-gradient-to-r from-transparent via-[#b4cd02] to-transparent mb-6 shadow-[0_0_20px_rgba(180,205,2,0.8)]" />
+                    <div className="w-[60vw] max-w-md h-[2px] bg-linear-to-r from-transparent via-[#b4cd02] to-transparent mb-6 shadow-[0_0_20px_rgba(180,205,2,0.8)]" />
 
                     <h2 className="text-2xl font-mono tracking-[0.25em] font-bold text-[#b4cd02] uppercase drop-shadow-[0_0_12px_rgba(180,205,2,0.6)]">
                         {episodeData.subtitle}

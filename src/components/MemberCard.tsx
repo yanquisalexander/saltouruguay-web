@@ -62,7 +62,7 @@ export const MemberCard = ({
                 </div>
 
                 <div className="absolute inset-0 bg-[url('/images/noise.png')] opacity-[0.04] mix-blend-overlay pointer-events-none"></div>
-                <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-black/80"></div>
+                <div className="absolute inset-0 bg-linear-to-r from-black/90 via-black/40 to-black/80"></div>
                 <div className={`absolute inset-0 border-[3px] rounded-[24px] pointer-events-none ${theme.border} opacity-80`}></div>
             </div>
 
@@ -86,7 +86,7 @@ export const MemberCard = ({
                             </div>
 
                             {isStreamerWars && user.playerNumber && (
-                                <div className="absolute -bottom-3 -right-2 bg-black text-lime-400 border border-lime-500 font-mono text-xs font-bold px-2 py-0.5 rounded-md shadow-lg transform rotate-[-2deg]">
+                                <div className="absolute -bottom-3 -right-2 bg-black text-lime-400 border border-lime-500 font-mono text-xs font-bold px-2 py-0.5 rounded-md shadow-lg transform -rotate-2">
                                     P-{user.playerNumber.toString().padStart(3, '0')}
                                 </div>
                             )}
@@ -98,7 +98,7 @@ export const MemberCard = ({
                             </h2>
 
                             <div className={`
-                                flex items-center gap-2 mt-2 px-3 py-1 rounded-lg w-max border backdrop-blur-sm
+                                flex items-center gap-2 mt-2 px-3 py-1 rounded-lg w-max border backdrop-blur-xs
                                 ${theme.accentBg} ${theme.badgeBorder} ${theme.accentText}
                             `}>
                                 {theme.icon}
@@ -127,16 +127,16 @@ export const MemberCard = ({
                         <span className="text-[9px] text-white/30 uppercase tracking-widest font-bold ml-1">
                             Achievements / Stickers
                         </span>
-                        <div className="flex items-center gap-3 p-2 bg-black/40 rounded-2xl border border-white/5 backdrop-blur-sm">
+                        <div className="flex items-center gap-3 p-2 bg-black/40 rounded-2xl border border-white/5 backdrop-blur-xs">
                             {selectedStickers?.list.map((sticker, index) => {
                                 const isLocked = index >= selectedStickers.limit;
                                 return (
-                                    <div key={index} className="relative group z-[999]">
+                                    <div key={index} className="relative group z-999">
                                         <div className={`
                         size-12 md:size-14 rounded-xl flex items-center justify-center transition-all
                         ${isLocked
                                                 ? 'bg-white/5 border border-white/5'
-                                                : 'bg-gradient-to-b from-white/10 to-transparent border border-white/10 shadow-inner'
+                                                : 'bg-linear-to-b from-white/10 to-transparent border border-white/10 shadow-inner'
                                             }
                     `}>
                                             {sticker ? (
@@ -159,7 +159,7 @@ export const MemberCard = ({
                                                 }}
                                                 onMouseDown={(e) => e.stopPropagation()}
                                                 onTouchStart={(e) => e.stopPropagation()}
-                                                className="absolute -top-2 -right-2 z-[100] bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:bg-red-600 hover:scale-110 cursor-pointer flex items-center justify-center"
+                                                className="absolute -top-2 -right-2 z-100 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg hover:bg-red-600 hover:scale-110 cursor-pointer flex items-center justify-center"
                                                 title="Quitar Sticker"
                                                 type="button"
                                             >

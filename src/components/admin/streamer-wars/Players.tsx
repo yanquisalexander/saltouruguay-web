@@ -588,7 +588,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             <Teams channel={globalChannel} />
 
             <dialog
-                class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+                class="max-w-[540px] w-full fixed inset-0 z-99999999 p-8 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
                 open={addNewPlayer.dialogOpen}
             >
                 <div class="rounded-lg">
@@ -668,7 +668,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                 </div>
             </dialog>
 
-            <div class="dialog-background inset-0 w-dvw h-dvh backdrop-blur-sm bg-white/5 z-[9999999] animate-blurred-fade-in"></div>
+            <div class="dialog-background inset-0 w-dvw h-dvh backdrop-blur-xs bg-white/5 z-9999999 animate-blurred-fade-in"></div>
 
             <button
                 class="bg-blue-500 text-white px-4 py-2 rounded-lg mt-8"
@@ -680,7 +680,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             </button>
 
             <dialog
-                class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+                class="max-w-[540px] w-full fixed inset-0 z-99999999 p-8 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
                 open={massElimination.dialogOpen}
             >
                 <div class="rounded-lg">
@@ -811,7 +811,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             {/* Menú contextual */}
             {contextMenu.visible && (
                 <div
-                    class="fixed z-[10000] bg-gray-800 text-white rounded shadow-lg p-2"
+                    class="fixed z-10000 bg-gray-800 text-white rounded-sm shadow-lg p-2"
                     style={{ top: contextMenu.y, left: contextMenu.x }}
                     onClick={(e) => e.stopPropagation()}
                 >
@@ -819,7 +819,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                         // Mostrar acciones según el jugador seleccionado
                         ContextualMenuActions.map(({ name, execute }) => (
                             <button
-                                class="block w-full text-left px-2 py-1 hover:bg-gray-700 rounded"
+                                class="block w-full text-left px-2 py-1 hover:bg-gray-700 rounded-sm"
                                 onClick={() => {
                                     if (contextMenu.playerNumber !== null) {
                                         execute(contextMenu.playerNumber);
@@ -833,7 +833,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
                     }
 
                     <button
-                        class="block w-full text-left px-2 py-1 hover:bg-gray-700 rounded"
+                        class="block w-full text-left px-2 py-1 hover:bg-gray-700 rounded-sm"
                         onClick={() => {
                             setContextMenu((prev) => ({ ...prev, visible: false }));
                         }}

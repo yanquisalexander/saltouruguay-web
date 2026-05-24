@@ -49,8 +49,8 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
         : "border-white/10";
 
     const dropdownHeaderGradient = CHRISTMAS_MODE
-        ? "bg-gradient-to-br from-red-900/40 via-red-900/10 to-transparent"
-        : "bg-gradient-to-br from-purple-900/20 via-transparent to-transparent";
+        ? "bg-linear-to-br from-red-900/40 via-red-900/10 to-transparent"
+        : "bg-linear-to-br from-purple-900/20 via-transparent to-transparent";
 
     const fetchUserFromServer = async () => {
         setLoading(true);
@@ -145,7 +145,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                     <div className="absolute top-0 left-0 w-full h-1 bg-white/40 blur-[2px]" />
                 )}
 
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
             </button>
         );
     }
@@ -169,7 +169,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                         {user.name}
                     </span>
 
-                    <div className="relative flex-shrink-0">
+                    <div className="relative shrink-0">
                         {/* 🎅 GORRITO DE SANTA */}
                         {CHRISTMAS_MODE && (
                             <span className="absolute -top-3.5 -left-2.5 text-2xl z-20 pointer-events-none rotate-[-15deg] filter drop-shadow-md select-none animate-pulse-slow">
@@ -180,7 +180,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                         <img
                             src={user.image || undefined}
                             alt={user.name || "User"}
-                            className={`w-9 h-9 flex-shrink-0 rounded-full object-cover border shadow-sm group-hover:scale-105 transition-transform ${isNominated
+                            className={`w-9 h-9 shrink-0 rounded-full object-cover border shadow-xs group-hover:scale-105 transition-transform ${isNominated
                                 ? 'border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.5)]'
                                 : (CHRISTMAS_MODE ? 'border-red-500/50' : 'border-white/10')
                                 }`}
@@ -202,7 +202,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                             <div className={`absolute inset-0 ${dropdownHeaderGradient}`}></div>
 
                             {/* Nieve sutil en header */}
-                            {CHRISTMAS_MODE && <div className="absolute top-0 w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>}
+                            {CHRISTMAS_MODE && <div className="absolute top-0 w-full h-px bg-linear-to-r from-transparent via-white/20 to-transparent"></div>}
 
                             <div className="relative z-10 flex items-center gap-4">
                                 <div className="relative">

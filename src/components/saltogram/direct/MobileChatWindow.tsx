@@ -133,8 +133,8 @@ export default function MobileChatWindow({ otherUserId, currentUser }: MobileCha
                         return (
                             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-2' : 'mt-0.5'}`}>
                                 <div
-                                    className={`max-w-[85%] px-4 py-2 text-base shadow-sm break-words ${isMe
-                                            ? 'bg-gradient-to-br from-electric-violet-600 to-electric-violet-500 text-white'
+                                    className={`max-w-[85%] px-4 py-2 text-base shadow-xs wrap-break-word ${isMe
+                                            ? 'bg-linear-to-br from-electric-violet-600 to-electric-violet-500 text-white'
                                             : 'bg-muted text-foreground'
                                         }`}
                                     style={{
@@ -163,7 +163,7 @@ export default function MobileChatWindow({ otherUserId, currentUser }: MobileCha
                         onInput={(e) => setNewMessage(e.currentTarget.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                         placeholder="Enviar mensaje..."
-                        className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted-foreground"
+                        className="flex-1 bg-transparent border-none outline-hidden text-foreground placeholder-muted-foreground"
                     />
                     <button
                         onClick={handleSend}

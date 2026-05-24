@@ -93,7 +93,7 @@ export const CinematicPlayer = ({ userId }: CinematicPlayerProps) => {
     return (
         <div
             className={clsx(
-                'fixed min-h-screen w-full z-[9999] inset-0 bg-black bg-opacity-90 flex items-center justify-center transition-opacity duration-500',
+                'fixed min-h-screen w-full z-9999 inset-0 bg-black bg-opacity-90 flex items-center justify-center transition-opacity duration-500',
                 {
                     'opacity-0 pointer-events-none': !isVisible,
                     'opacity-100': isVisible,

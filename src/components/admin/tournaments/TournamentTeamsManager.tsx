@@ -143,7 +143,7 @@ export default function TournamentTeamsManager({ participants: initialParticipan
                 <input
                     type="text"
                     placeholder={`Ej: ${config.teamNamePrefix} Alpha, ${config.teamNamePrefix} Rojo...`}
-                    className="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-none text-sm"
+                    className="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-hidden text-sm"
                     value={newTeamName}
                     onInput={(e: any) => setNewTeamName(e.target.value)}
                     onKeyDown={(e: any) => e.key === 'Enter' && handleAddTeam()}
@@ -210,7 +210,7 @@ export default function TournamentTeamsManager({ participants: initialParticipan
                                     key={team}
                                     className={`rounded-xl border overflow-hidden transition-colors ${isFull
                                         ? 'border-green-500/30 bg-green-500/5'
-                                        : 'border-white/10 bg-white/[0.02]'
+                                        : 'border-white/10 bg-white/2'
                                         }`}
                                 >
                                     <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10">
@@ -227,7 +227,7 @@ export default function TournamentTeamsManager({ participants: initialParticipan
                                         <button
                                             onClick={() => handleDeleteTeam(team)}
                                             disabled={savingTeams}
-                                            className="p-1 rounded text-gray-600 hover:text-red-400 transition-colors disabled:opacity-40"
+                                            className="p-1 rounded-sm text-gray-600 hover:text-red-400 transition-colors disabled:opacity-40"
                                             title="Eliminar equipo"
                                         >
                                             <LucideTrash2 className="w-3.5 h-3.5" />
@@ -270,7 +270,7 @@ function PlayerRow({ participant: p, teams, currentTeam, loading, onAssign }: {
         <div className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${loading ? 'opacity-50' : 'hover:bg-black/30'}`}>
             <img
                 src={p.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.user?.username ?? '?')}`}
-                className="w-7 h-7 rounded-full bg-black/50 flex-shrink-0"
+                className="w-7 h-7 rounded-full bg-black/50 shrink-0"
             />
             <div className="flex-1 min-w-0">
                 <div className="text-white text-sm font-medium truncate leading-tight">
@@ -294,7 +294,7 @@ function PlayerRow({ participant: p, teams, currentTeam, loading, onAssign }: {
                     disabled={loading}
                     value={currentTeam ?? ''}
                     onChange={(e: any) => onAssign(e.target.value || null)}
-                    className="text-xs bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-white focus:border-violet-500 outline-none disabled:opacity-50"
+                    className="text-xs bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-white focus:border-violet-500 outline-hidden disabled:opacity-50"
                 >
                     <option value="">Sin equipo</option>
                     {teams.map(t => (

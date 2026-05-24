@@ -98,7 +98,7 @@ export default function AdminSidebar({ session, initialPathname }: { session: Se
                         <LucideMenu size={24} />
                     </button>
                     <div className="flex items-center gap-2">
-                        <div className="size-6 rounded bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <div className="size-6 rounded-sm bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                             <span className="font-anton text-white text-xs">S</span>
                         </div>
                         <span className="font-teko text-xl text-white tracking-wide pt-0.5">ADMIN</span>
@@ -113,7 +113,7 @@ export default function AdminSidebar({ session, initialPathname }: { session: Se
                ============================================== */}
             {isMobileOpen && (
                 <div
-                    className="fixed inset-0 bg-black/80 z-[45] md:hidden backdrop-blur-sm animate-in fade-in duration-200"
+                    className="fixed inset-0 bg-black/80 z-45 md:hidden backdrop-blur-xs animate-in fade-in duration-200"
                     onClick={() => setIsMobileOpen(false)}
                 />
             )}
@@ -228,7 +228,7 @@ export default function AdminSidebar({ session, initialPathname }: { session: Se
 
                                                 {/* TOOLTIP FLOTANTE (Solo Desktop Hover cuando colapsado) */}
                                                 {collapsed && (
-                                                    <div className="hidden md:block absolute left-full ml-4 px-2.5 py-1.5 bg-white text-black text-xs font-bold rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
+                                                    <div className="hidden md:block absolute left-full ml-4 px-2.5 py-1.5 bg-white text-black text-xs font-bold rounded-sm shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
                                                         {link.label}
                                                         {/* Flechita del tooltip */}
                                                         <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-white rotate-45"></div>

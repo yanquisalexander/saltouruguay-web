@@ -251,7 +251,7 @@ export const SimonSays = ({
 
                 {/* Fondos sutiles para dar textura sin molestar */}
                 <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none"></div>
-                <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(30,41,59,0.5)_0%,_rgba(0,0,0,0.8)_100%)] pointer-events-none"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(30,41,59,0.5)_0%,rgba(0,0,0,0.8)_100%)] pointer-events-none"></div>
                 <div className="absolute inset-0 scanlines pointer-events-none z-50 opacity-10"></div>
 
                 {/* --- UI SUPERIOR: PATRÓN DEL JUGADOR (Estilo barra de estado) --- */}
@@ -268,7 +268,7 @@ export const SimonSays = ({
                                 return (
                                     <div
                                         key={index}
-                                        className={`w-3 h-3 md:w-4 md:h-4 border border-black shadow-sm ${swatchClass}`}
+                                        className={`w-3 h-3 md:w-4 md:h-4 border border-black shadow-xs ${swatchClass}`}
                                         style={{ backgroundColor: color === 'yellow' ? '#facc15' : color }}
                                     />
                                 );
@@ -308,7 +308,7 @@ export const SimonSays = ({
 
                     {!isCurrentPlayerPlaying && !isEliminated && gameIsPlaying && (
                         <div className="mb-8 flex flex-col items-center w-full">
-                            <div className="bg-neutral-800/80 px-4 py-2 border border-white/20 mb-4 backdrop-blur-sm shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
+                            <div className="bg-neutral-800/80 px-4 py-2 border border-white/20 mb-4 backdrop-blur-xs shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
                                 <span className="text-sm font-mono text-gray-300">Esperando a otros jugadores...</span>
                             </div>
 
@@ -367,7 +367,7 @@ export const SimonSays = ({
                                     </div>
 
                                     {isCompleted && (
-                                        <div className="mt-6 text-center bg-green-900/20 border-l-4 border-green-500 p-3 backdrop-blur-sm">
+                                        <div className="mt-6 text-center bg-green-900/20 border-l-4 border-green-500 p-3 backdrop-blur-xs">
                                             <p className="text-lg font-bold font-mono text-green-400">
                                                 ¡Nivel Completado!
                                             </p>

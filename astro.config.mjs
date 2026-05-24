@@ -4,7 +4,6 @@ import { defineConfig, envField } from 'astro/config';
 /* import rollupPluginNodeBuiltins from 'rollup-plugin-node-builtins';
  */
 import vercel from '@astrojs/vercel';
-import tailwind from '@astrojs/tailwind';
 import preact from '@astrojs/preact';
 
 import auth from 'auth-astro';
@@ -14,12 +13,13 @@ import sitemap from '@astrojs/sitemap';
 import { SITEMAP_EXCLUDED_PATHS } from "./src/config";
 import notifyNewVersion from "./src/hooks/notifyNewVersion";
 
+import tailwindcss from '@tailwindcss/vite';
+
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
   adapter: vercel(),
   integrations: [
-    tailwind({ applyBaseStyles: false }),
     preact({
       compat: true
     }),
@@ -63,9 +63,11 @@ export default defineConfig({
         'react/jsx-runtime': 'preact/jsx-runtime',
       },
     },
+
     optimizeDeps: {
       exclude: ['edge-tts', 'motion/react']
     },
 
+    plugins: [tailwindcss()],
   }
 });

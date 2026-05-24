@@ -40,7 +40,7 @@ const cardClass =
   "relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 backdrop-blur-md p-8 shadow-2xl transition-all hover:border-indigo-500/30";
 
 const inputClass =
-  "appearance-none block w-full px-4 py-3 border border-white/10 rounded-xl bg-white/5 shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 sm:text-sm text-white transition-all hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed";
+  "appearance-none block w-full px-4 py-3 border border-white/10 rounded-xl bg-white/5 shadow-xs placeholder-gray-500 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 sm:text-sm text-white transition-all hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed";
 
 const PLATFORMS = [
   { id: "youtube", name: "YouTube" },
@@ -60,7 +60,7 @@ const PLATFORMS = [
     >
     </div>
     <div
-      class="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent"
+      class="absolute inset-0 bg-linear-to-t from-[#050505] via-[#050505]/80 to-transparent"
     >
     </div>
     <div
@@ -92,7 +92,7 @@ const PLATFORMS = [
       </div>
 
       <h1
-        class="text-5xl md:text-7xl font-anton text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50 drop-shadow-sm tracking-tight uppercase mb-4"
+        class="text-5xl md:text-7xl font-anton text-transparent bg-clip-text bg-linear-to-b from-white via-white to-white/50 drop-shadow-xs tracking-tight uppercase mb-4"
       >
         Únete a <span class="text-indigo-500">ACRECONRE</span>
       </h1>
@@ -332,7 +332,7 @@ const PLATFORMS = [
                 <LucideFileText size={16} class="text-indigo-400" />
                 Términos y Condiciones
               </h2>
-              <div class="h-48 overflow-y-auto p-6 rounded-2xl border border-white/10 bg-black/40 text-sm text-white/60 space-y-4 custom-scrollbar backdrop-blur-sm">
+              <div class="h-48 overflow-y-auto p-6 rounded-2xl border border-white/10 bg-black/40 text-sm text-white/60 space-y-4 custom-scrollbar backdrop-blur-xs">
                 <section>
                   <h3 class="font-bold text-white mb-1">
                     1. Adhesión y participación
@@ -417,7 +417,7 @@ const PLATFORMS = [
                 name="terms"
                 type="checkbox"
                 required
-                class="h-5 w-5 rounded border-white/20 bg-white/10 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0 transition-all cursor-pointer"
+                class="h-5 w-5 rounded-sm border-white/20 bg-white/10 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0 transition-all cursor-pointer"
               />
               <label
                 for="terms"

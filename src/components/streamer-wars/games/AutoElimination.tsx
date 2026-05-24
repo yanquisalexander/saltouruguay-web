@@ -118,7 +118,7 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
                     </span>
                 ) : canAutoEliminate ? (
                     <button
-                        class="font-rubik uppercase bg-gradient-to-br from-red-400 to-red-600 hover:scale-110 hover:saturate-200 transition-all text-white size-48 rounded-full"
+                        class="font-rubik uppercase bg-linear-to-br from-red-400 to-red-600 hover:scale-110 hover:saturate-200 transition-all text-white size-48 rounded-full"
                         onClick={handleClick}
                     >
                         Aceptar oferta

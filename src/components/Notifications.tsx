@@ -161,7 +161,7 @@ export const Notifications = ({ unreadCount }: { unreadCount?: number }) => {
                     <div className="bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/5">
 
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/[0.02]">
+                        <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/2">
                             <h3 className="font-anton text-lg tracking-wide text-white">Notificaciones</h3>
                             <div className="flex gap-3">
                                 {!isSubscribed && (
@@ -247,7 +247,7 @@ const NotificationItem = ({ data, isRead }: { data: Notification, isRead: boolea
                 group relative block p-4 transition-all duration-300 border-l-2
                 ${isRead
                     ? 'border-transparent hover:bg-white/5 opacity-60 hover:opacity-100'
-                    : 'border-yellow-500 bg-white/[0.03] hover:bg-white/[0.07]'
+                    : 'border-yellow-500 bg-white/3 hover:bg-white/[0.07]'
                 }
             `}
         >
@@ -255,7 +255,7 @@ const NotificationItem = ({ data, isRead }: { data: Notification, isRead: boolea
             {data.imageURL && (
                 <div className="absolute top-0 right-0 w-24 h-full overflow-hidden opacity-20 mask-image-l-fade pointer-events-none">
                     <img src={data.imageURL} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
-                    <div className="absolute inset-0 bg-gradient-to-l from-transparent to-[#0a0a0a]"></div>
+                    <div className="absolute inset-0 bg-linear-to-l from-transparent to-[#0a0a0a]"></div>
                 </div>
             )}
 
@@ -265,7 +265,7 @@ const NotificationItem = ({ data, isRead }: { data: Notification, isRead: boolea
                     mt-1 size-8 rounded-lg flex items-center justify-center shrink-0 border
                     ${isRead
                         ? 'bg-white/5 border-white/5 text-white/30'
-                        : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                        : 'bg-blue-500/10 border-line text-blue-400'
                     }
                 `}>
                     {data.tags[0]?.type === 'ads' ? <LucideMegaphone size={14} /> : <LucideBell size={14} />}
@@ -286,7 +286,7 @@ const NotificationItem = ({ data, isRead }: { data: Notification, isRead: boolea
                     {/* Tags & Action */}
                     <div className="flex items-center gap-2">
                         {data.tags.map(tag => (
-                            <span key={tag.title} className="text-[9px] px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-white/40 uppercase tracking-wider">
+                            <span key={tag.title} className="text-[9px] px-1.5 py-0.5 rounded-sm border border-white/10 bg-white/5 text-white/40 uppercase tracking-wider">
                                 {tag.title || 'Info'}
                             </span>
                         ))}

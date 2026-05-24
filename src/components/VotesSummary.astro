@@ -25,7 +25,7 @@ const { votes } = Astro.props;
         <h2 class="text-3xl md:text-4xl font-anton uppercase text-white tracking-wide text-center">
           Tus Votos Registrados
         </h2>
-        <div class="h-1 w-24 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mt-2" />
+        <div class="h-1 w-24 bg-linear-to-r from-blue-600 to-purple-600 rounded-full mt-2" />
       </div>
 
       {/* Grid de Categorías */}
@@ -74,7 +74,7 @@ const { votes } = Astro.props;
                           alt={nomineeFromConst?.displayName || nominee.id}
                           class="size-12 rounded-full object-cover border-2 border-white/10"
                         />
-                        <div class="absolute -bottom-1 -right-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-black shadow-sm">
+                        <div class="absolute -bottom-1 -right-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-black shadow-xs">
                           #{index + 1}
                         </div>
                       </div>
@@ -94,7 +94,7 @@ const { votes } = Astro.props;
               </div>
 
               {/* Decoración inferior */}
-              <div class="h-1 w-full bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+              <div class="h-1 w-full bg-linear-to-r from-transparent via-blue-500/20 to-transparent" />
             </article>
           );
         })}

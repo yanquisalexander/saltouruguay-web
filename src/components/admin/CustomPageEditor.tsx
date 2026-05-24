@@ -21,7 +21,7 @@ const ConfirmDialog = ({ open, onConfirm, onCancel, message }: { open: boolean, 
     }, [open]);
     return (
         <>
-            <dialog ref={dialogRef} className="max-w-[420px] w-full fixed inset-0 z-[99999999] p-0 animate-fade-in-up bg-[#18181b] border border-yellow-500/30 rounded-xl shadow-2xl text-white backdrop:backdrop-blur-sm backdrop:bg-black/40">
+            <dialog ref={dialogRef} className="max-w-[420px] w-full fixed inset-0 z-99999999 p-0 animate-fade-in-up bg-[#18181b] border border-yellow-500/30 rounded-xl shadow-2xl text-white backdrop:backdrop-blur-xs backdrop:bg-black/40">
                 <form method="dialog" className="absolute top-4 right-4">
                     <button type="button" onClick={onCancel} className="text-white/60 hover:text-white/90">
                         <svg width="28" height="28" viewBox="0 0 24 24"><path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z" /></svg>
@@ -31,13 +31,13 @@ const ConfirmDialog = ({ open, onConfirm, onCancel, message }: { open: boolean, 
                     <div className="text-yellow-400 text-3xl font-bold mb-4">⚠️ Advertencia</div>
                     <div className="text-white/80 mb-8 text-center leading-relaxed">{message}</div>
                     <div className="flex flex-col gap-3 w-full">
-                        <button type="button" onClick={onConfirm} className="w-full py-3 rounded-lg bg-[#53FC18] hover:bg-[#43db12] text-black font-bold shadow text-lg transition">Publicar de todos modos</button>
+                        <button type="button" onClick={onConfirm} className="w-full py-3 rounded-lg bg-[#53FC18] hover:bg-[#43db12] text-black font-bold shadow-sm text-lg transition">Publicar de todos modos</button>
                         <button type="button" onClick={onCancel} className="w-full py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 font-bold text-lg transition">Cancelar</button>
                     </div>
                 </div>
             </dialog>
             {open && (
-                <div className="dialog-backdrop fixed inset-0 z-[9999999] backdrop-blur-sm bg-black/40 animate-blurred-fade-in"></div>
+                <div className="dialog-backdrop fixed inset-0 z-9999999 backdrop-blur-xs bg-black/40 animate-blurred-fade-in"></div>
             )}
             <style>{`
                 @keyframes fade-in-up { from { opacity: 0; transform: translateY(40px);} to { opacity: 1; transform: none; } }
@@ -291,7 +291,7 @@ export const CustomPageEditor = ({ customPage }: { customPage: Awaited<ReturnTyp
                     value={title}
                     onInput={(e) => setTitle((e.target as HTMLInputElement).value)}
                     placeholder="Título de la página..."
-                    className="w-full bg-transparent border-none text-4xl md:text-5xl font-anton uppercase text-white placeholder:text-white/20 focus:ring-0 focus:outline-none p-0"
+                    className="w-full bg-transparent border-none text-4xl md:text-5xl font-anton uppercase text-white placeholder:text-white/20 focus:ring-0 focus:outline-hidden p-0"
                 />
 
                 {/* Slug / Permalink */}
@@ -302,7 +302,7 @@ export const CustomPageEditor = ({ customPage }: { customPage: Awaited<ReturnTyp
                         value={permalink}
                         onInput={(e) => setPermalink((e.target as HTMLInputElement).value)}
                         placeholder="slug-de-la-pagina"
-                        className="bg-transparent border-none text-white/80 focus:ring-0 focus:outline-none p-0 w-48 sm:w-64 placeholder:text-white/20"
+                        className="bg-transparent border-none text-white/80 focus:ring-0 focus:outline-hidden p-0 w-48 sm:w-64 placeholder:text-white/20"
                     />
                 </div>
 
@@ -322,7 +322,7 @@ export const CustomPageEditor = ({ customPage }: { customPage: Awaited<ReturnTyp
             {/* --- EDITOR CANVAS --- */}
             <div className="relative group">
                 {/* Decoración de borde */}
-                <div className="absolute -inset-px bg-gradient-to-b from-white/10 to-transparent rounded-2xl opacity-50 pointer-events-none"></div>
+                <div className="absolute -inset-px bg-linear-to-b from-white/10 to-transparent rounded-2xl opacity-50 pointer-events-none"></div>
 
                 <div className="bg-[#0c0c0e] rounded-2xl min-h-[500px] p-8 md:p-12 shadow-2xl relative">
                     <div id={editorContainerId} className="dark-editor-js prose prose-invert max-w-none"></div>
@@ -343,7 +343,7 @@ export const CustomPageEditor = ({ customPage }: { customPage: Awaited<ReturnTyp
                         {history.map((h, i) => (
                             <div key={h.id} className="relative pl-8 group">
                                 {/* Dot */}
-                                <div className="absolute -left-[5px] top-1.5 size-2.5 rounded-full bg-white/20 border border-[#09090b] group-hover:bg-[#53FC18] group-hover:shadow-[0_0_10px_rgba(83,252,24,0.5)] transition-all"></div>
+                                <div className="absolute left-[-5px] top-1.5 size-2.5 rounded-full bg-white/20 border border-[#09090b] group-hover:bg-[#53FC18] group-hover:shadow-[0_0_10px_rgba(83,252,24,0.5)] transition-all"></div>
 
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/5 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
                                     <div>

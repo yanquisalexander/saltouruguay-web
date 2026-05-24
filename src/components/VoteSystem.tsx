@@ -118,7 +118,7 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                     <div class="text-center space-y-2 animate-fade-in">
                         <div class="flex items-center justify-center gap-3">
                             <LucideMinus class="w-8 h-8 text-yellow-500 hidden md:block" />
-                            <h1 class="text-3xl md:text-5xl font-anton text-white uppercase tracking-wide px-2 break-words">
+                            <h1 class="text-3xl md:text-5xl font-anton text-white uppercase tracking-wide px-2 wrap-break-word">
                                 {currentCategory.name}
                             </h1>
                             <LucideMinus class="w-8 h-8 text-yellow-500 hidden md:block" />
@@ -157,8 +157,8 @@ export const VoteSystem = ({ user, categories }: { user: Session['user'] | null,
                         {/* Contenedor BLINDADO para responsive */}
                         <div class="w-full relative max-w-full">
                             {/* Degradados visuales */}
-                            <div class="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-black/80 to-transparent pointer-events-none z-10"></div>
-                            <div class="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-black/80 to-transparent pointer-events-none z-10"></div>
+                            <div class="absolute inset-y-0 left-0 w-8 bg-linear-to-r from-black/80 to-transparent pointer-events-none z-10"></div>
+                            <div class="absolute inset-y-0 right-0 w-8 bg-linear-to-l from-black/80 to-transparent pointer-events-none z-10"></div>
 
                             {/* TU LÓGICA DE SCROLL ORIGINAL */}
                             <div class="overflow-x-auto w- scrollbar-hide snap-x" style={{ scrollbarColor: '#5865F2 #060109', scrollbarWidth: 'thin' }}>

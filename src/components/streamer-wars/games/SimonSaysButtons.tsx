@@ -37,7 +37,7 @@ export const SimonSaysButtons = ({
                     key={name}
                     className={`
             size-48 flex justify-center items-center text-xl font-teko uppercase italic font-medium 
-            cursor-pointer transition-transform rounded-3xl bg-gradient-to-b ${gradient}
+            cursor-pointer transition-transform rounded-3xl bg-linear-to-b ${gradient}
             ${activeButton === name ? "scale-125" : ""}
             transition-all duration-300
             ${showingPattern ? "pointer-events-none" : "hover:scale-105 active:scale-95"}

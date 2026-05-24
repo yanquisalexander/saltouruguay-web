@@ -75,7 +75,7 @@ export default function ProfileView({ user, username }: ProfileViewProps) {
 
     return (
         <section className="space-y-6">
-            <div className="bg-white/5 backdrop-blur rounded-3xl border border-white/10 p-6 flex flex-col md:flex-row gap-4 items-start">
+            <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 p-6 flex flex-col md:flex-row gap-4 items-start">
                 <img
                     src={profileUser.avatar || `https://ui-avatars.com/api/?name=${profileUser.displayName}`}
                     className="w-20 h-20 rounded-2xl border border-white/10 object-cover"
@@ -85,12 +85,12 @@ export default function ProfileView({ user, username }: ProfileViewProps) {
                     <div className="flex items-center gap-3 mb-1">
                         <h1 className="text-2xl font-anton text-white">{profileUser.displayName}</h1>
                         {profileUser.tier && profileUser.tier > 0 && (
-                            <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-xs border border-purple-500/30 font-medium">
+                            <span className="px-2 py-0.5 rounded-sm bg-purple-500/20 text-purple-300 text-xs border border-purple-500/30 font-medium">
                                 VIP
                             </span>
                         )}
                         {profileUser.admin && (
-                            <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-300 text-xs border border-red-500/30 font-medium">
+                            <span className="px-2 py-0.5 rounded-sm bg-red-500/20 text-red-300 text-xs border border-red-500/30 font-medium">
                                 ADMIN
                             </span>
                         )}

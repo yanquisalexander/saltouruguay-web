@@ -278,7 +278,7 @@ export const TeamSelector = ({
                                     <span className="font-press-start-2p text-xs text-white uppercase drop-shadow-md">
                                         {getTranslation(team)}
                                     </span>
-                                    <span className="font-mono font-bold text-white bg-black/30 px-2 py-1 text-xs rounded-sm">
+                                    <span className="font-mono font-bold text-white bg-black/30 px-2 py-1 text-xs rounded-xs">
                                         {players.length}/{playersPerTeam}
                                     </span>
                                 </div>
@@ -303,7 +303,7 @@ export const TeamSelector = ({
                                                     className="w-8 h-8 bg-gray-800 [image-rendering:pixelated]"
                                                 />
                                                 {isCaptain && (
-                                                    <div className="absolute -top-2 -right-2 bg-yellow-400 text-black p-0.5 border border-black shadow-sm z-10">
+                                                    <div className="absolute -top-2 -right-2 bg-yellow-400 text-black p-0.5 border border-black shadow-xs z-10">
                                                         <LucideCrown size={10} fill="currentColor" />
                                                     </div>
                                                 )}
@@ -322,7 +322,7 @@ export const TeamSelector = ({
                                 </div>
 
                                 {/* Scanlines decorativos */}
-                                <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-0 bg-[length:100%_2px,3px_100%]" />
+                                <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-0 bg-size-[100%_2px,3px_100%]" />
                             </div>
                         );
                     })}

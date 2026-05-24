@@ -75,7 +75,7 @@ export default function MusicPicker({ onSelect, onClose }: MusicPickerProps) {
                         value={query}
                         onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
                         placeholder="Buscar música..."
-                        className="w-full bg-[#242526] text-white rounded-full py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                        className="w-full bg-[#242526] text-white rounded-full py-2 pl-10 pr-4 focus:outline-hidden focus:ring-2 focus:ring-purple-500/50"
                         autoFocus
                     />
                 </div>
@@ -91,7 +91,7 @@ export default function MusicPicker({ onSelect, onClose }: MusicPickerProps) {
                     <div className="space-y-1">
                         {results.map(track => (
                             <div key={track.id} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg group">
-                                <div className="relative w-12 h-12 rounded overflow-hidden shrink-0">
+                                <div className="relative w-12 h-12 rounded-sm overflow-hidden shrink-0">
                                     <img src={track.album.cover_small} alt={track.title} className="w-full h-full object-cover" />
                                     <button
                                         onClick={(e) => { e.stopPropagation(); togglePreview(track.preview); }}

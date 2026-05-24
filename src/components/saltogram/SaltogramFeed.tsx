@@ -7,10 +7,12 @@ import { toast } from "sonner";
 import {
     LucideLoader2,
     LucideArrowUp,
-    LucideFilter,
     LucideFlame,
     LucideClock,
-    LucideCamera
+    LucideCamera,
+    LucideImage,
+    LucideSmile,
+    LucideX,
 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 import { useInterval } from "@/utils/client/hooks/useInterval";
@@ -29,14 +31,11 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
     const [sort, setSort] = useState<"recent" | "popular">("recent");
     const [tag, setTag] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
-    // Estado para notificar al usuario
     const [hasNewPosts, setHasNewPosts] = useState(false);
 
     const observerRef = useRef<IntersectionObserver | null>(null);
     const lastPostRef = useRef<HTMLDivElement | null>(null);
 
-    // --- DATA FETCHING (Carga inicial e infinito) ---
     const fetchPosts = async (pageNum: number, reset = false) => {
         try {
             const params = new URLSearchParams({
@@ -57,48 +56,28 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
                 setHasMore(false);
             }
         } catch (error) {
-            console.error(error);
             toast.error("Error al cargar el feed");
         } finally {
             setLoading(false);
         }
     };
 
-    // --- POLLING OPTIMIZADO (Short Polling) ---
     const checkForNewPosts = useCallback(async () => {
-        // Obtenemos el ID más alto actual de la lista visible
-        // Usamos reduce para seguridad (por si el orden visual no coincide con IDs o hay pins)
         const lastPostId = posts.reduce((max, p) => (p.id > max ? p.id : max), 0);
-
         if (lastPostId === 0) return;
-
         try {
             const response = await fetch(`/api/saltogram/poll?lastPostId=${lastPostId}`);
             if (response.ok) {
                 const data = await response.json();
-                if (data.hasNewPosts) {
-                    setHasNewPosts(true);
-                }
+                if (data.hasNewPosts) setHasNewPosts(true);
             }
-        } catch (error) {
-            // Fallo silencioso, reintentará en el siguiente intervalo
-            console.error("Polling error", error);
-        }
+        } catch { /* silencioso */ }
     }, [posts]);
 
-    // Intervalo de 30 segundos (30000ms).
-    // Solo se activa si:
-    // 1. NO estamos viendo un perfil específico (!targetUserId)
-    // 2. NO sabemos ya que hay posts nuevos (!hasNewPosts)
-    // 3. Ya tenemos posts cargados (posts.length > 0)
     const shouldPoll = !targetUserId && !hasNewPosts && posts.length > 0;
-
     useInterval(checkForNewPosts, shouldPoll ? 30000 : null);
 
-    // --- EFECTOS ESTÁNDAR ---
-
     useEffect(() => {
-        // Read tag from URL
         const urlParams = new URLSearchParams(window.location.search);
         const tagParam = urlParams.get("tag");
         if (tagParam) setTag(tagParam);
@@ -109,11 +88,10 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
         setPosts([]);
         setHasMore(true);
         setPage(1);
-        setHasNewPosts(false); // Resetear alerta al cambiar filtros
+        setHasNewPosts(false);
         fetchPosts(1, true);
     }, [sort, tag, targetUserId]);
 
-    // Infinite Scroll
     useEffect(() => {
         if (loading || !hasMore) return;
         observerRef.current = new IntersectionObserver((entries) => {
@@ -125,7 +103,6 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
 
     useEffect(() => { if (page > 1) fetchPosts(page); }, [page]);
 
-    // --- HANDLERS ---
     const handleNewPost = (newPost: SaltogramPost) => {
         setPosts([newPost, ...posts]);
         setIsModalOpen(false);
@@ -148,64 +125,119 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
         }
     }, []);
 
-    // --- RENDER ---
     return (
-        <div className="relative space-y-8">
-            {/* NEW POSTS TOAST (Floating Pill) */}
+        <div className="relative space-y-4">
+
+            {/* ── BANNER "nuevas publicaciones" ── M3 suggestion chip flotante */}
             {hasNewPosts && (
-                <div className="sticky top-24 z-30 flex justify-center animate-bounce-in">
+                <div className="sticky top-[4.5rem] z-30 flex justify-center pointer-events-none">
                     <button
                         onClick={handleLoadNewPosts}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full shadow-xl shadow-blue-900/30 transition-transform hover:scale-105 active:scale-95 border border-blue-400/50 backdrop-blur-md"
+                        className="
+                            pointer-events-auto
+                            flex items-center gap-2 px-5 py-2.5
+                            bg-[#b3c8ff] text-[#001849]
+                            text-sm font-semibold rounded-full
+                            shadow-[0_4px_24px_rgba(0,0,0,0.5)]
+                            hover:bg-[#c5d5ff] active:scale-95
+                            transition-all duration-200
+                            animate-in fade-in slide-in-from-top-2
+                        "
                     >
-                        <LucideArrowUp size={16} />
-                        <span className="text-sm uppercase tracking-wide">Nuevas Publicaciones</span>
+                        <LucideArrowUp size={15} strokeWidth={2.5} />
+                        Nuevas publicaciones
                     </button>
                 </div>
             )}
 
-            {/* CREATE POST WIDGET */}
+            {/* ── CREAR PUBLICACIÓN ── M3 Card tonal */}
             {user && !targetUserId && (
-                <div className="bg-[#242526] rounded-xl p-4 shadow-sm border border-white/5">
-                    <div className="flex gap-3">
-                        <a href={`/saltogram/u/${user.username}`}>
+                <div className="
+                    bg-[#1a1b2e] rounded-[28px]
+                    border border-[#2a2d4a]
+                    p-4
+                ">
+                    <div className="flex gap-3 items-center">
+                        <a href={`/saltogram/u/${user.username}`} className="shrink-0">
                             <img
                                 src={user.image || `https://ui-avatars.com/api/?name=${user.name}`}
-                                alt={user.name || "User"}
-                                className="w-10 h-10 rounded-full object-cover bg-gray-700"
+                                alt={user.name || "Usuario"}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-[#2a2d4a]"
                             />
                         </a>
                         <button
                             onClick={() => setIsModalOpen(true)}
-                            className="flex-1 bg-[#3a3b3c] hover:bg-[#4e4f50] rounded-full px-4 py-2 text-left text-[#b0b3b8] transition-colors text-sm sm:text-base"
+                            className="
+                                flex-1 text-left text-sm text-[#8a8fa8]
+                                bg-[#12131f] hover:bg-[#1e2038]
+                                border border-[#2a2d4a]
+                                rounded-full px-5 py-2.5
+                                transition-colors duration-200
+                            "
                         >
                             ¿Qué estás pensando, {user.name?.split(' ')[0]}?
                         </button>
                     </div>
-                    <div className="border-t border-white/10 mt-3 pt-3 flex justify-between px-2">
-                        <button onClick={() => setIsModalOpen(true)} className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-white/5 rounded-lg transition-colors text-[#b0b3b8] font-medium text-sm">
-                            <LucideCamera className="text-green-500" size={20} />
-                            <span>Foto/Video</span>
+
+                    {/* Acciones rápidas */}
+                    <div className="flex items-center justify-around mt-3 pt-3 border-t border-[#2a2d4a]">
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="
+                                flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
+                                text-[#8eca8e] hover:bg-[#8eca8e]/10
+                                transition-all duration-200
+                            "
+                        >
+                            <LucideImage size={18} strokeWidth={1.8} />
+                            <span className="hidden sm:inline">Foto/Video</span>
                         </button>
-                        <button onClick={() => setIsModalOpen(true)} className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-white/5 rounded-lg transition-colors text-[#b0b3b8] font-medium text-sm">
-                            <LucideFlame className="text-yellow-500" size={20} />
-                            <span>Sentimiento</span>
+                        <div className="w-px h-5 bg-[#2a2d4a]" />
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="
+                                flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
+                                text-[#f9c96a] hover:bg-[#f9c96a]/10
+                                transition-all duration-200
+                            "
+                        >
+                            <LucideSmile size={18} strokeWidth={1.8} />
+                            <span className="hidden sm:inline">Sentimiento</span>
+                        </button>
+                        <div className="w-px h-5 bg-[#2a2d4a]" />
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="
+                                flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
+                                text-[#b3c8ff] hover:bg-[#b3c8ff]/10
+                                transition-all duration-200
+                            "
+                        >
+                            <LucideCamera size={18} strokeWidth={1.8} />
+                            <span className="hidden sm:inline">Publicar</span>
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* NOTES TRAY */}
+            {/* ── NOTES TRAY ── */}
             {!targetUserId && <NotesTray user={user} />}
 
-            {/* FILTROS */}
-            <div className="flex flex-col gap-4">
+            {/* ── FILTROS ── */}
+            <div className="flex flex-col gap-3">
+
+                {/* Tag activo — M3 filter chip */}
                 {tag && (
-                    <div className="flex items-center justify-between p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl animate-fade-in">
-                        <div className="flex items-center gap-2 text-purple-300">
-                            <LucideFilter size={18} />
-                            <span className="font-bold">Filtrando por: <span className="text-white">#{tag}</span></span>
-                        </div>
+                    <div className="
+                        flex items-center justify-between
+                        px-4 py-3
+                        bg-[#2a1f4a] border border-[#7c5cbf]/40
+                        rounded-[20px]
+                        animate-in fade-in duration-200
+                    ">
+                        <span className="text-sm text-[#c9b3ff] font-medium">
+                            Filtrando por <span className="text-white font-semibold">#{tag}</span>
+                        </span>
                         <button
                             onClick={() => {
                                 setTag(null);
@@ -213,55 +245,98 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
                                 url.searchParams.delete("tag");
                                 window.history.pushState({}, "", url);
                             }}
-                            className="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg transition-colors"
+                            className="
+                                flex items-center gap-1.5 text-xs text-[#c9b3ff]
+                                bg-[#c9b3ff]/10 hover:bg-[#c9b3ff]/20
+                                px-3 py-1.5 rounded-full
+                                transition-colors duration-200
+                            "
                         >
-                            Limpiar filtro
+                            <LucideX size={12} />
+                            Quitar
                         </button>
                     </div>
                 )}
 
+                {/* Sort toggle — M3 segmented button */}
                 <div className="flex items-center justify-between">
-                    <div className="inline-flex p-1 bg-white/5 rounded-xl border border-white/5">
+                    <div className="
+                        flex p-1 gap-1
+                        bg-[#12131f] border border-[#2a2d4a]
+                        rounded-full
+                    ">
                         <button
                             onClick={() => setSort("recent")}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${sort === "recent" ? "bg-purple-600 text-white shadow-lg" : "text-white/50 hover:text-white hover:bg-white/5"}`}
+                            className={`
+                                flex items-center gap-2 px-4 py-2 rounded-full
+                                text-sm font-semibold transition-all duration-200
+                                ${sort === "recent"
+                                    ? "bg-[#b3c8ff] text-[#001849]"
+                                    : "text-[#6b7099] hover:text-white hover:bg-white/5"
+                                }
+                            `}
                         >
-                            <LucideClock size={16} /> Recientes
+                            <LucideClock size={15} strokeWidth={sort === "recent" ? 2.5 : 1.8} />
+                            Recientes
                         </button>
                         <button
                             onClick={() => setSort("popular")}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${sort === "popular" ? "bg-yellow-500 text-black shadow-lg" : "text-white/50 hover:text-white hover:bg-white/5"}`}
+                            className={`
+                                flex items-center gap-2 px-4 py-2 rounded-full
+                                text-sm font-semibold transition-all duration-200
+                                ${sort === "popular"
+                                    ? "bg-[#f9c96a] text-[#2a1800]"
+                                    : "text-[#6b7099] hover:text-white hover:bg-white/5"
+                                }
+                            `}
                         >
-                            <LucideFlame size={16} /> Populares
+                            <LucideFlame size={15} strokeWidth={sort === "popular" ? 2.5 : 1.8} />
+                            Populares
                         </button>
                     </div>
 
-                    <div className="hidden md:flex text-xs text-white/30 font-mono items-center gap-2">
-                        <LucideFilter size={12} /> {posts.length} resultados
-                    </div>
+                    {posts.length > 0 && (
+                        <span className="hidden md:block text-xs text-[#6b7099] tabular-nums">
+                            {posts.length} publicaciones
+                        </span>
+                    )}
                 </div>
 
-                {/* FEED CONTENT */}
-                <div className="space-y-6">
+                {/* ── LISTA DE POSTS ── */}
+                <div className="space-y-4">
                     {loading && posts.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4">
-                            <LucideLoader2 class="animate-spin-clockwise animate-iteration-count-infinite text-purple-500" size={40} />
-                            <p className="text-white/50 font-rubik animate-pulse">Sincronizando feed...</p>
+                            <LucideLoader2 size={32} className="animate-spin text-[#b3c8ff]" strokeWidth={1.5} />
+                            <p className="text-[#6b7099] text-sm animate-pulse">Sincronizando feed…</p>
                         </div>
                     ) : posts.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-[#0a0a0a]/60 border border-white/5 rounded-3xl">
-                            <div className="p-4 bg-white/5 rounded-full mb-4 text-white/20">
-                                <LucideCamera size={48} />
+                        <div className="
+                            flex flex-col items-center justify-center
+                            py-20 px-6 text-center
+                            bg-[#1a1b2e] border border-[#2a2d4a]
+                            rounded-[28px]
+                        ">
+                            <div className="
+                                w-16 h-16 rounded-[22px]
+                                bg-[#b3c8ff]/10 border border-[#b3c8ff]/15
+                                flex items-center justify-center mb-4
+                            ">
+                                <LucideCamera size={28} className="text-[#b3c8ff]/60" strokeWidth={1.5} />
                             </div>
-                            <h3 className="text-2xl font-anton text-white uppercase tracking-wide mb-2">Está muy tranquilo por aquí</h3>
-                            <p className="text-white/50 max-w-sm mx-auto mb-6">
-                                Sé el primero en compartir algo épico con la comunidad.
+                            <h3 className="text-lg font-bold text-white mb-2">Está muy tranquilo por aquí</h3>
+                            <p className="text-sm text-[#6b7099] max-w-xs mx-auto mb-6">
+                                Sé el primero en compartir algo con la comunidad.
                             </p>
                             <button
-                                onClick={() => user ? setIsModalOpen(true) : toast.error("Debes iniciar sesión para publicar")}
-                                className="px-6 py-2 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                                onClick={() => user ? setIsModalOpen(true) : toast.error("Debés iniciar sesión para publicar")}
+                                className="
+                                    px-6 py-2.5 rounded-full text-sm font-semibold
+                                    bg-[#b3c8ff] text-[#001849]
+                                    hover:bg-[#c5d5ff] active:scale-95
+                                    transition-all duration-200
+                                "
                             >
-                                Crear Publicación
+                                Crear publicación
                             </button>
                         </div>
                     ) : (
@@ -269,30 +344,40 @@ export default function SaltogramFeed({ user, targetUserId }: SaltogramFeedProps
                             <div
                                 key={post.id}
                                 ref={index === posts.length - 1 ? lastPostRef : null}
-                                className="animate-fade-in-up"
-                                style={{ animationDelay: `${index * 50}ms` }}
+                                className="animate-in fade-in slide-in-from-bottom-2"
+                                style={{ animationDelay: `${Math.min(index * 40, 300)}ms` }}
                             >
                                 <PostCard post={post} currentUserId={user?.id} isAdmin={user?.isAdmin} />
                             </div>
                         ))
                     )}
 
+                    {/* Spinner de carga incremental */}
                     {loading && posts.length > 0 && (
-                        <div className="flex justify-center py-8">
-                            <LucideLoader2 className="animate-spin text-white/30" size={24} />
+                        <div className="flex justify-center py-6">
+                            <LucideLoader2 size={22} className="animate-spin text-[#6b7099]" strokeWidth={1.5} />
+                        </div>
+                    )}
+
+                    {/* Fin del feed */}
+                    {!hasMore && posts.length > 0 && (
+                        <div className="flex items-center gap-3 py-6 px-4">
+                            <div className="flex-1 h-px bg-[#2a2d4a]" />
+                            <span className="text-xs text-[#6b7099] shrink-0">Fin del feed</span>
+                            <div className="flex-1 h-px bg-[#2a2d4a]" />
                         </div>
                     )}
                 </div>
-
-                {user && (
-                    <CreatePostModal
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
-                        onPostCreated={handleNewPost}
-                        user={user}
-                    />
-                )}
             </div>
+
+            {user && (
+                <CreatePostModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    onPostCreated={handleNewPost}
+                    user={user}
+                />
+            )}
         </div>
     );
 }

@@ -21,7 +21,7 @@ const Badge = ({ children, variant = "default" }: { children: any, variant?: "su
         warning: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
     };
     return (
-        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${styles[variant]}`}>
+        <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider border ${styles[variant]}`}>
             {children}
         </span>
     );
@@ -115,7 +115,7 @@ export default function CustomPagesManager() {
                             placeholder="Buscar páginas..."
                             value={search}
                             onInput={(e) => setSearch((e.target as HTMLInputElement).value)}
-                            className="w-full md:w-64 bg-[#09090b] border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-white/30 transition-all"
+                            className="w-full md:w-64 bg-[#09090b] border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/20 focus:outline-hidden focus:border-white/30 transition-all"
                         />
                     </div>
 
@@ -133,7 +133,7 @@ export default function CustomPagesManager() {
             <div className="bg-[#09090b] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
 
                 {/* Header Tabla */}
-                <div className="grid grid-cols-12 gap-4 p-4 border-b border-white/5 bg-white/[0.02] text-xs font-bold text-white/30 uppercase tracking-widest">
+                <div className="grid grid-cols-12 gap-4 p-4 border-b border-white/5 bg-white/2 text-xs font-bold text-white/30 uppercase tracking-widest">
                     <div className="col-span-6 md:col-span-4">Título / Slug</div>
                     <div className="hidden md:block col-span-2">Estado</div>
                     <div className="hidden md:block col-span-2">Autor</div>
@@ -160,7 +160,7 @@ export default function CustomPagesManager() {
 
                 {/* Rows */}
                 {!loading && filteredPages.map(page => (
-                    <div key={page.id} className="grid grid-cols-12 gap-4 p-4 items-center border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                    <div key={page.id} className="grid grid-cols-12 gap-4 p-4 items-center border-b border-white/5 hover:bg-white/2 transition-colors group">
 
                         {/* Title & Slug */}
                         <div className="col-span-6 md:col-span-4 min-w-0">
@@ -223,7 +223,7 @@ export default function CustomPagesManager() {
             {/* --- MODAL CREAR --- */}
             {isCreateOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsCreateOpen(false)} />
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-xs" onClick={() => setIsCreateOpen(false)} />
                     <div className="relative w-full max-w-md bg-[#0c0c0e] border border-white/10 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-200">
                         <h3 className="text-xl font-anton text-white uppercase mb-6">Nueva Página</h3>
 
@@ -233,7 +233,7 @@ export default function CustomPagesManager() {
                                 <input
                                     autoFocus
                                     type="text"
-                                    className="w-full bg-[#18181b] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-[#53FC18]/50 focus:ring-1 focus:ring-[#53FC18]/20 transition-all"
+                                    className="w-full bg-[#18181b] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-hidden focus:border-[#53FC18]/50 focus:ring-1 focus:ring-[#53FC18]/20 transition-all"
                                     placeholder="Ej: Reglas del Servidor"
                                     value={newPage.title}
                                     onInput={(e) => setNewPage({ ...newPage, title: (e.target as HTMLInputElement).value })}
@@ -246,7 +246,7 @@ export default function CustomPagesManager() {
                                     <span className="text-xs mr-1">/p/</span>
                                     <input
                                         type="text"
-                                        className="bg-transparent border-none w-full text-white placeholder:text-white/20 focus:outline-none p-0 text-sm font-mono"
+                                        className="bg-transparent border-none w-full text-white placeholder:text-white/20 focus:outline-hidden p-0 text-sm font-mono"
                                         placeholder={newPage.defaultSlug || "reglas-del-servidor"}
                                         value={newPage.slug}
                                         onInput={(e) => setNewPage({ ...newPage, slug: (e.target as HTMLInputElement).value })}
@@ -277,7 +277,7 @@ export default function CustomPagesManager() {
             {/* --- MODAL BORRAR --- */}
             {deleteId !== null && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setDeleteId(null)} />
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-xs" onClick={() => setDeleteId(null)} />
                     <div className="relative w-full max-w-sm bg-[#0c0c0e] border border-red-500/20 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-200">
                         <div className="size-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-4 mx-auto">
                             <Trash2 size={24} />

@@ -149,7 +149,7 @@ const customParsers = {
         const alignClass = alignment === 'center' ? 'text-center' : 'text-left';
 
         return `
-            <blockquote class="my-10 border-l-4 border-[#53FC18] pl-6 py-2 bg-gradient-to-r from-[#53FC18]/10 to-transparent rounded-r-xl">
+            <blockquote class="my-10 border-l-4 border-[#53FC18] pl-6 py-2 bg-linear-to-r from-[#53FC18]/10 to-transparent rounded-r-xl">
                 <p class="text-xl md:text-2xl italic font-serif text-white/90 mb-2 ${alignClass}">"${text}"</p>
                 ${caption ? `<footer class="text-sm font-bold text-[#53FC18] tracking-widest uppercase ${alignClass}">— ${caption}</footer>` : ''}
             </blockquote>
@@ -189,7 +189,7 @@ const customParsers = {
                 : 'px-4 py-3 text-white/70 border-b border-white/5 font-mono text-sm';
 
             const cells = row.map((cell) => `<${cellTag} class="${cellClass}">${cell}</${cellTag}>`).join('');
-            return `<tr class="${index % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.02]'} hover:bg-white/5 transition-colors">${cells}</tr>`;
+            return `<tr class="${index % 2 === 0 ? 'bg-transparent' : 'bg-white/2'} hover:bg-white/5 transition-colors">${cells}</tr>`;
         }).join('');
 
         return `

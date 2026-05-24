@@ -69,7 +69,7 @@ export const AutoEliminationOverlay = ({
                         );
                         if (!player) return null;
                         return (
-                            <div className="max-w-3xl w-full mx-auto bg-gray-900/50 rounded-xl p-4 backdrop-blur-sm 
+                            <div className="max-w-3xl w-full mx-auto bg-gray-900/50 rounded-xl p-4 backdrop-blur-xs 
                             border border-gray-800 transition-all duration-300 hover:border-gray-700">
                                 <div className="flex items-center gap-4">
                                     <img

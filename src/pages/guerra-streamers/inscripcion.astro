@@ -58,9 +58,9 @@ const IS_USER_INSCRIBED = await client
   <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
     <header class="flex flex-col items-center justify-center space-y-4 mb-16">
       <h1
-        class="with-glyph flex relative w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen !skew-x-[-20deg] -rotate-6"
+        class="with-glyph flex relative w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen skew-x-[-20deg]! -rotate-6"
       >
-        <span class="flex !skew-x-[20deg] transform">
+        <span class="flex skew-x-20! transform">
           Guerra de Streamers
         </span>
       </h1>
@@ -162,7 +162,7 @@ const IS_USER_INSCRIBED = await client
 
   <dialog
     id="inscripcion-modal"
-    class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+    class="max-w-[540px] w-full fixed inset-0 z-99999999 p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
   >
     <form id="login-modal-close" class="absolute top-5 right-5">
       <button type="button" class="text-white">
@@ -267,7 +267,7 @@ const IS_USER_INSCRIBED = await client
 <style>
   h1.with-glyph:after {
     content: "a";
-    @apply !font-atomic-extras text-[80px] mt-8 absolute inset-x-0 text-center;
+    @apply font-atomic-extras! text-[80px] mt-8 absolute inset-x-0 text-center;
     z-index: -1;
   }
 

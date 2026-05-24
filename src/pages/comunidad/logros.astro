@@ -44,7 +44,7 @@ const formatDate = (dateString: Date) => {
   <div class="flex flex-col max-w-6xl mx-auto min-h-screen mt-8 px-4 pb-20">
     {/* --- HEADER --- */}
     <header
-      class="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-gray-900 via-gray-900 to-black p-8 shadow-2xl mb-8"
+      class="relative overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-gray-900 via-gray-900 to-black p-8 shadow-2xl mb-8"
     >
       <div
         class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5 pointer-events-none"
@@ -72,7 +72,7 @@ const formatDate = (dateString: Date) => {
               class="font-teko text-4xl md:text-5xl font-bold text-white uppercase tracking-wide leading-none"
             >
               Salón de <span
-                class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500"
+                class="text-transparent bg-clip-text bg-linear-to-r from-yellow-400 to-orange-500"
                 >Logros</span
               >
             </h1>
@@ -85,7 +85,7 @@ const formatDate = (dateString: Date) => {
 
         {/* Progress Circle / Stat */}
         <div
-          class="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-sm"
+          class="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-xs"
         >
           <div class="text-right">
             <span
@@ -124,14 +124,14 @@ const formatDate = (dateString: Date) => {
     {/* --- PROGRESS BAR COMPACT --- */}
     <div class="mb-10 relative group">
       <div
-        class="absolute -inset-1 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-lg blur opacity-10 group-hover:opacity-20 transition duration-1000 group-hover:duration-200"
+        class="absolute -inset-1 bg-linear-to-r from-yellow-500 to-orange-600 rounded-lg blur-sm opacity-10 group-hover:opacity-20 transition duration-1000 group-hover:duration-200"
       >
       </div>
       <div
         class="relative h-4 w-full bg-gray-900 rounded-full border border-white/10 overflow-hidden"
       >
         <div
-          class="h-full bg-gradient-to-r from-yellow-400 to-orange-500 shadow-[0_0_15px_rgba(234,179,8,0.5)] transition-all duration-1000 ease-out"
+          class="h-full bg-linear-to-r from-yellow-400 to-orange-500 shadow-[0_0_15px_rgba(234,179,8,0.5)] transition-all duration-1000 ease-out"
           style={{ width: `${progressPercentage}%` }}
         >
           <div
@@ -190,7 +190,7 @@ const formatDate = (dateString: Date) => {
             >
               {/* Glow Background for unlocked */}
               {isUnlocked && (
-                <div class="absolute inset-0 bg-gradient-to-b from-yellow-500/5 to-transparent pointer-events-none" />
+                <div class="absolute inset-0 bg-linear-to-b from-yellow-500/5 to-transparent pointer-events-none" />
               )}
 
               <div class="p-5 flex flex-col h-full relative z-10">
@@ -265,10 +265,10 @@ const formatDate = (dateString: Date) => {
     {/* --- DIALOG MODAL --- */}
     <dialog
       id="achievement-dialog"
-      class="backdrop:bg-black/80 backdrop:backdrop-blur-sm bg-transparent p-0 max-w-lg w-full rounded-2xl"
+      class="backdrop:bg-black/80 backdrop:backdrop-blur-xs bg-transparent p-0 max-w-lg w-full rounded-2xl"
     >
       <div
-        class="bg-gradient-to-br from-gray-900 via-gray-900 to-black border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
+        class="bg-linear-to-br from-gray-900 via-gray-900 to-black border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
       >
         {/* Header con icono */}
         <div
@@ -276,7 +276,7 @@ const formatDate = (dateString: Date) => {
           class="relative p-8 flex flex-col items-center text-center border-b border-white/10"
         >
           <div
-            class="absolute inset-0 bg-gradient-to-b from-yellow-500/10 to-transparent pointer-events-none"
+            class="absolute inset-0 bg-linear-to-b from-yellow-500/10 to-transparent pointer-events-none"
             id="dialog-glow"
           >
           </div>
@@ -406,8 +406,8 @@ const formatDate = (dateString: Date) => {
         // Actualizar estado visual
         if (dialogGlow) {
           dialogGlow.className = isUnlocked
-            ? "absolute inset-0 bg-gradient-to-b from-yellow-500/10 to-transparent pointer-events-none"
-            : "absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none";
+            ? "absolute inset-0 bg-linear-to-b from-yellow-500/10 to-transparent pointer-events-none"
+            : "absolute inset-0 bg-linear-to-b from-white/5 to-transparent pointer-events-none";
         }
 
         if (dialogIconContainer) {

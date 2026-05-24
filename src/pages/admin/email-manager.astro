@@ -45,7 +45,7 @@ if (selectedTemplate) {
     <h1 class="text-4xl font-bold">Gestor de Emails</h1>
 
     <div class="">
-      <button id="downloadEmails" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+      <button id="downloadEmails" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-sm">
         <LucideDownload class="w-6 h-6 mr-2 inline-block" />
         Descargar Emails
       </button>
@@ -72,7 +72,7 @@ if (selectedTemplate) {
             type="text"
             id="emailTitle"
             placeholder="Título del email"
-            class="w-full p-2 border rounded mt-2 bg-transparent"
+            class="w-full p-2 border rounded-sm mt-2 bg-transparent"
           />
 
           <!-- Campo para el email -->
@@ -80,7 +80,7 @@ if (selectedTemplate) {
             type="email"
             id="emailInput"
             placeholder="Correo del destinatario"
-            class="w-full p-2 border rounded mt-2 bg-transparent"
+            class="w-full p-2 border rounded-sm mt-2 bg-transparent"
           />
 
           <label class="flex items-center gap-2 mt-2">
@@ -88,12 +88,12 @@ if (selectedTemplate) {
             Enviar a todos
           </label>
 
-          <button id="sendEmail" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+          <button id="sendEmail" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-sm">
             Enviar Email
           </button>
 
           <h3 class="text-lg font-medium mt-4">Previsualización:</h3>
-          <div id="email-preview" class="mt-2 p-4 border rounded w-full" set:html={bodyOfEmail} />
+          <div id="email-preview" class="mt-2 p-4 border rounded-sm w-full" set:html={bodyOfEmail} />
         </div>
 
         <div id="email-body" data-html-body={bodyOfEmail} />

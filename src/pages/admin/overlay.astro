@@ -80,7 +80,7 @@ const nomineesMap = NOMINEES;
             >
                 <div
                     id="selection-placeholder"
-                    class="absolute inset-0 bg-[#111]/90 z-10 flex items-center justify-center rounded-2xl backdrop-blur-sm"
+                    class="absolute inset-0 bg-[#111]/90 z-10 flex items-center justify-center rounded-2xl backdrop-blur-xs"
                 >
                     <p
                         class="text-white/40 uppercase tracking-widest font-bold"
@@ -242,7 +242,7 @@ const nomineesMap = NOMINEES;
             // Present Button (Triggers update immediately)
             const presentBtn = document.createElement("button");
             presentBtn.className =
-                "px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold uppercase tracking-wide transition-colors flex items-center gap-1 shadow-lg shadow-blue-900/20";
+                "px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-sm text-xs font-bold uppercase tracking-wide transition-colors flex items-center gap-1 shadow-lg shadow-blue-900/20";
             presentBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Presentar`;
             presentBtn.onclick = (e) => {
                 e.stopPropagation();

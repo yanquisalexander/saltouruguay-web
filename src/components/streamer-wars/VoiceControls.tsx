@@ -100,13 +100,13 @@ export const VoiceControls = ({ isAdmin }: VoiceControlsProps) => {
 
             <div className="space-y-3">
               {Object.values(TEAMS).map(team => (
-                <div key={team} className="flex items-center justify-between gap-3 p-3 bg-gray-800/50 rounded">
+                <div key={team} className="flex items-center justify-between gap-3 p-3 bg-gray-800/50 rounded-sm">
                   <span className="text-sm text-white capitalize font-medium">{team}</span>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEnableVoice(team)}
                       disabled={loading || enabledTeams[team]}
-                      className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:opacity-50 text-white rounded flex items-center gap-1"
+                      className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:opacity-50 text-white rounded-sm flex items-center gap-1"
                     >
                       <LucideVolume2 className="w-3 h-3" />
                       ON
@@ -114,7 +114,7 @@ export const VoiceControls = ({ isAdmin }: VoiceControlsProps) => {
                     <button
                       onClick={() => handleDisableVoice(team)}
                       disabled={loading || !enabledTeams[team]}
-                      className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:opacity-50 text-white rounded flex items-center gap-1"
+                      className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:opacity-50 text-white rounded-sm flex items-center gap-1"
                     >
                       <LucideVolumeX className="w-3 h-3" />
                       OFF
@@ -122,7 +122,7 @@ export const VoiceControls = ({ isAdmin }: VoiceControlsProps) => {
                     <button
                       onClick={() => handleSpectate(team, !spectatingTeams[team])}
                       disabled={loading}
-                      className={`px-3 py-1.5 text-xs ${spectatingTeams[team] ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-600 hover:bg-gray-700'} disabled:opacity-50 text-white rounded flex items-center gap-1`}
+                      className={`px-3 py-1.5 text-xs ${spectatingTeams[team] ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-600 hover:bg-gray-700'} disabled:opacity-50 text-white rounded-sm flex items-center gap-1`}
                     >
                       <LucideEye className="w-3 h-3" />
                       {spectatingTeams[team] ? 'SPECTEANDO' : 'SPECTEAR'}
@@ -134,7 +134,7 @@ export const VoiceControls = ({ isAdmin }: VoiceControlsProps) => {
 
             <div className="mt-4 pt-4 border-t border-gray-700">
               <p className="text-sm text-gray-400">
-                Los jugadores deben mantener presionada la tecla <kbd className="px-1 py-0.5 bg-gray-700 rounded text-white">V</kbd> para hablar
+                Los jugadores deben mantener presionada la tecla <kbd className="px-1 py-0.5 bg-gray-700 rounded-sm text-white">V</kbd> para hablar
               </p>
             </div>
           </div>

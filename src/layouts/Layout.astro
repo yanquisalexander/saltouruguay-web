@@ -93,8 +93,10 @@ preload?.push({
     />
     <ClientRouter />
     <LoadingIndicator color="#1f97ff" height="3px" />
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7631620665837459"
-     crossorigin="anonymous"></script>
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7631620665837459"
+      crossorigin="anonymous"></script>
     <!-- <meta
       id="current-user-data"
       data-user={JSON.stringify({ user: session?.user || null })}
@@ -114,6 +116,8 @@ preload?.push({
     <SignInModal />
     {!hideFooter && <SiteFooter />}
     <style is:global>
+      @reference "../assets/styles/global.css";
+
       @font-face {
         font-family: "Atomic Marker";
         font-style: normal;

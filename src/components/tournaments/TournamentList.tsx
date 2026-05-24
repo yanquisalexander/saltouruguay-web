@@ -40,7 +40,7 @@ export default function TournamentList({ tournaments: initialTournaments }: { to
                         href={`/torneos/${tournament.id}`}
                         className={`group relative bg-[#1a1b1e] border border-white/10 rounded-2xl overflow-hidden hover:border-violet-500/50 transition-all hover:shadow-xl hover:shadow-violet-900/10 block ${isFeatured ? 'md:col-span-2 lg:col-span-2' : ''}`}
                     >
-                        <div className={`${isFeatured ? 'h-48' : 'h-32'} bg-gradient-to-br from-violet-900/50 to-black relative`}>
+                        <div className={`${isFeatured ? 'h-48' : 'h-32'} bg-linear-to-br from-violet-900/50 to-black relative`}>
                             {isFeatured && (
                                 <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-yellow-400 text-black uppercase tracking-wide">
                                     Destacado

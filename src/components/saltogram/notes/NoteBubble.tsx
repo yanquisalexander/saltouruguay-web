@@ -29,7 +29,7 @@ export default function NoteBubble({ note, user, isCurrentUser, onClick }: NoteB
 
     return (
         <div
-            className="flex flex-col items-center gap-3 relative group cursor-pointer w-[84px] flex-shrink-0 pt-8"
+            className="flex flex-col items-center gap-3 relative group cursor-pointer w-[84px] shrink-0 pt-8"
             onClick={handleClick}
         >
             {/* --- BUBBLE (La nota en sí) --- */}
@@ -57,13 +57,13 @@ export default function NoteBubble({ note, user, isCurrentUser, onClick }: NoteB
                                                 {note.musicArtist}
                                             </span>
                                             {note.text && (
-                                                <p className="text-[11px] font-medium leading-tight break-words line-clamp-2 mt-1 w-full text-center text-white/90">
+                                                <p className="text-[11px] font-medium leading-tight wrap-break-word line-clamp-2 mt-1 w-full text-center text-white/90">
                                                     "{note.text}"
                                                 </p>
                                             )}
                                         </div>
                                     ) : (
-                                        <p className="text-[11px] font-medium leading-tight break-words line-clamp-3 text-center text-white/90">
+                                        <p className="text-[11px] font-medium leading-tight wrap-break-word line-clamp-3 text-center text-white/90">
                                             {note.text || "..."}
                                         </p>
                                     )}
@@ -76,7 +76,7 @@ export default function NoteBubble({ note, user, isCurrentUser, onClick }: NoteB
                         {/* SOLUCIÓN PUNTA FLECHA: Usamos un SVG para dibujar la punta perfecta.
                            Esto evita los problemas de bordes dobles o alineación de la rotación CSS.
                         */}
-                        <div className="absolute -bottom-[6px] z-0">
+                        <div className="absolute bottom-[-6px] z-0">
                             <svg width="12" height="6" viewBox="0 0 12 6" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path
                                     d="M6 6L0 0H12L6 6Z"
@@ -95,7 +95,7 @@ export default function NoteBubble({ note, user, isCurrentUser, onClick }: NoteB
                 <div className={`
                     w-[68px] h-[68px] rounded-full p-[3px] transition-all duration-300
                     ${note
-                        ? "bg-gradient-to-tr from-purple-500 via-pink-500 to-yellow-500 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
+                        ? "bg-linear-to-tr from-purple-500 via-pink-500 to-yellow-500 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
                         : "bg-white/10 group-hover:bg-white/20 border border-white/5"
                     }
                 `}>

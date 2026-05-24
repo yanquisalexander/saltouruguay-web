@@ -109,7 +109,7 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
 
             {Object.keys(playersTeams).length === 0 ? (
                 <div className="text-center mx-auto max-w-[50ch]">
-                    <LucideLoader size={28} class="mx-auto my-6 animate-spin-clockwise animate-duration-[2000ms] animate-iteration-count-infinite" />
+                    <LucideLoader size={28} class="mx-auto my-6 animate-spin-clockwise animate-duration-2000 animate-iteration-count-infinite" />
                     <p>Cargando equipos...</p>
                     <p>
                         ¿Mucho rato esperando? Verifica que antes los jugadores hayan sido <span class="font-bold text-lime-500">asignados a equipos</span>.
@@ -154,7 +154,7 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
                                     team !== currentUserTeamName ? null :
                                         <div
                                             key={team}
-                                            className="bg-gray-900/50 rounded-xl p-4 backdrop-blur-sm 
+                                            className="bg-gray-900/50 rounded-xl p-4 backdrop-blur-xs 
                 border border-gray-800 transition-all duration-300 hover:border-gray-700"
                                         >
                                             <div className="flex items-center justify-between mb-4">

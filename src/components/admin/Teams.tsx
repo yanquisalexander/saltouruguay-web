@@ -74,14 +74,14 @@ export const Teams = ({ channel }: { channel: Channel }) => {
     return (
         <div className="w-full max-w-6xl pt-16">
             <header className="text-center">
-                <h2 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text">
+                <h2 className="text-xl font-bold bg-linear-to-r from-white to-gray-300 text-transparent bg-clip-text">
                     Jugadores por equipo
                 </h2>
             </header>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
                 {Object.values(TEAMS).map((team) => (
                     <div
-                        className="bg-gray-900/50 rounded-xl p-4 backdrop-blur-sm 
+                        className="bg-gray-900/50 rounded-xl p-4 backdrop-blur-xs 
                         border border-gray-800 transition-all duration-300 hover:border-gray-700"
                     >
                         <div className="flex items-center justify-between mb-4">

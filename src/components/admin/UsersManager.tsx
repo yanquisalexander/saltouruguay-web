@@ -75,7 +75,7 @@ export default function UsersManager() {
                                 placeholder="Buscar..."
                                 value={search}
                                 onChange={(e) => setSearch((e.target as HTMLInputElement).value)}
-                                className="w-full px-2 py-1 text-xs bg-[#09090f] text-slate-300 border border-slate-600 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
+                                className="w-full px-2 py-1 text-xs bg-[#09090f] text-slate-300 border border-slate-600 rounded-md focus:outline-hidden focus:ring-3 focus:ring-blue-500"
                             />
                         </th>
                         <th className="h-12 px-4 text-left align-middle font-medium text-slate-400">Correo</th>

@@ -56,7 +56,7 @@ export const Timer = ({ seconds, onEnd }: TimerProps) => {
 
     return (
         <div
-            className={` z-[8000] transition-opacity duration-500`}
+            className={` z-8000 transition-opacity duration-500`}
         >
             <div className=" font-mono select-none text-lg text-gray-300">
                 {formatTime(timeLeft)}

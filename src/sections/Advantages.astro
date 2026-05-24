@@ -59,7 +59,7 @@ const ADVANTAGES = [
         class="text-4xl md:text-6xl font-anton text-white uppercase tracking-tight"
       >
         Comunidad <span
-          class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500"
+          class="text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-purple-500"
           >Oficial</span
         >
       </h2>
@@ -85,7 +85,7 @@ const ADVANTAGES = [
             <div class="absolute inset-0 z-0">
               {/* Gradiente de color base */}
               <div
-                class={`absolute inset-0 bg-gradient-to-b ${item.theme.gradient} opacity-20 group-hover:opacity-40 transition-opacity duration-500`}
+                class={`absolute inset-0 bg-linear-to-b ${item.theme.gradient} opacity-20 group-hover:opacity-40 transition-opacity duration-500`}
               />
 
               {/* Imagen del producto */}
@@ -98,7 +98,7 @@ const ADVANTAGES = [
               </div>
 
               {/* Overlay oscuro para leer texto */}
-              <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
+              <div class="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
             </div>
 
             {/* 2. CONTENIDO (Flotando encima) */}

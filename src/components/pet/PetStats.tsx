@@ -12,7 +12,7 @@ interface PetStatsProps {
 export default function PetStats({ stats }: PetStatsProps) {
     const renderStat = (icon: string, value: number, colorClass: string) => (
         <div className="flex flex-col items-center gap-1 group cursor-help transition-transform hover:scale-105">
-            <div className="relative w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center shadow-lg border border-white/10 overflow-hidden backdrop-blur-sm">
+            <div className="relative w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center shadow-lg border border-white/10 overflow-hidden backdrop-blur-xs">
                 <div
                     className={`absolute bottom-0 left-0 right-0 ${colorClass} opacity-30 transition-all duration-1000`}
                     style={{ height: `${value}%` }}

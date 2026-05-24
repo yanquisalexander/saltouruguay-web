@@ -231,7 +231,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                         <input
                             type="text"
                             required
-                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-none"
+                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-hidden"
                             value={formData.name}
                             onInput={(e: any) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                         />
@@ -241,7 +241,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                         <label className="text-sm font-medium text-gray-300">Fecha de Inicio</label>
                         <input
                             type="datetime-local"
-                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-none [color-scheme:dark]"
+                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-hidden scheme-dark"
                             value={formData.startDate}
                             onInput={(e: any) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
                         />
@@ -252,7 +252,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                     <label className="text-sm font-medium text-gray-300">Descripción</label>
                     <textarea
                         rows={4}
-                        className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-none resize-none"
+                        className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-hidden resize-none"
                         value={formData.description}
                         onInput={(e: any) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                     />
@@ -262,7 +262,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-gray-300">Estado</label>
                         <select
-                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-none"
+                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-hidden"
                             value={formData.status}
                             onChange={(e: any) => setFormData(prev => ({ ...prev, status: e.target.value }))}
                         >
@@ -286,7 +286,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                             min={2}
                             max={1024}
                             placeholder="Sin límite"
-                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-none"
+                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-blue-500 outline-hidden"
                             value={formData.maxParticipants}
                             onInput={(e: any) => setFormData(prev => ({ ...prev, maxParticipants: e.target.value }))}
                         />
@@ -305,8 +305,8 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                         <button
                             type="button"
                             onClick={() => setParticipantsVisible(prev => !prev)}
-                            className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${participantsVisible ? 'bg-green-600' : 'bg-white/10'}`}>
-                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${participantsVisible ? 'translate-x-6' : ''}`} />
+                            className={`relative shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${participantsVisible ? 'bg-green-600' : 'bg-white/10'}`}>
+                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${participantsVisible ? 'translate-x-6' : ''}`} />
                         </button>
                     </div>
                 </div>
@@ -322,8 +322,8 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                         <button
                             type="button"
                             onClick={() => setIsFeatured(prev => !prev)}
-                            className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${isFeatured ? 'bg-yellow-400' : 'bg-white/10'}`}>
-                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${isFeatured ? 'translate-x-6' : ''}`} />
+                            className={`relative shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${isFeatured ? 'bg-yellow-400' : 'bg-white/10'}`}>
+                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${isFeatured ? 'translate-x-6' : ''}`} />
                         </button>
                     </div>
 
@@ -332,7 +332,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                         <input
                             type="text"
                             placeholder="Ej: torneorocketleague2026"
-                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-yellow-400 outline-none"
+                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-yellow-400 outline-hidden"
                             value={externalChallongeId}
                             onInput={(e: any) => setExternalChallongeId(e.target.value)}
                             onKeyDown={(e: KeyboardEvent) => { if ((e as any).key === 'Enter') e.preventDefault(); }}
@@ -354,13 +354,13 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                             <button
                                 type="button"
                                 onClick={() => setShowTeamsFeatured(prev => !prev)}
-                                className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${showTeamsFeatured ? 'bg-blue-500' : 'bg-white/10'}`}>
-                                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${showTeamsFeatured ? 'translate-x-6' : ''}`} />
+                                className={`relative shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${showTeamsFeatured ? 'bg-blue-500' : 'bg-white/10'}`}>
+                                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${showTeamsFeatured ? 'translate-x-6' : ''}`} />
                             </button>
                         </div>
                         {showTeamsFeatured && (
-                            <div className="mt-3 flex items-start gap-3 p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg">
-                                <LucideUsers className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                            <div className="mt-3 flex items-start gap-3 p-3 bg-blue-500/5 border border-line rounded-lg">
+                                <LucideUsers className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
                                 <p className="text-xs text-blue-300">
                                     <strong>Equipos destacados activos:</strong> Los equipos de este torneo se mostrarán en la página principal
                                     con un diseño especial que incluye avatares de los jugadores y estadísticas del equipo.
@@ -371,7 +371,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                 </div>
 
                 {/* Teams Configuration */}
-                <div className="space-y-4 p-5 bg-white/[0.03] border border-white/10 rounded-xl">
+                <div className="space-y-4 p-5 bg-white/3 border border-white/10 rounded-xl">
                     <div className="flex items-center justify-between">
                         <div>
                             <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
@@ -383,7 +383,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                         <button
                             type="button"
                             onClick={() => setTeamConfig(prev => ({ ...prev, teamsEnabled: !prev.teamsEnabled }))}
-                            className={`relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${teamConfig.teamsEnabled ? 'bg-violet-600' : 'bg-white/10'
+                            className={`relative shrink-0 w-12 h-6 rounded-full transition-colors duration-200 ${teamConfig.teamsEnabled ? 'bg-violet-600' : 'bg-white/10'
                                 }`}
                         >
                             <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${teamConfig.teamsEnabled ? 'translate-x-6' : ''
@@ -400,7 +400,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                                         type="number"
                                         min={2}
                                         max={50}
-                                        className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-none"
+                                        className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-hidden"
                                         value={teamConfig.playersPerTeam}
                                         onInput={(e: any) => setTeamConfig(prev => ({ ...prev, playersPerTeam: parseInt(e.target.value) || 2 }))}
                                     />
@@ -413,7 +413,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                                         type="text"
                                         maxLength={30}
                                         placeholder="Ej: Equipo, Team, Clan..."
-                                        className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-none"
+                                        className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-hidden"
                                         value={teamConfig.teamNamePrefix}
                                         onInput={(e: any) => setTeamConfig(prev => ({ ...prev, teamNamePrefix: e.target.value }))}
                                     />
@@ -427,7 +427,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                                         min={2}
                                         max={256}
                                         placeholder="Sin límite"
-                                        className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-none"
+                                        className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-hidden"
                                         value={teamConfig.maxTeams}
                                         onInput={(e: any) => setTeamConfig(prev => ({ ...prev, maxTeams: e.target.value }))}
                                     />
@@ -436,7 +436,7 @@ export default function TournamentSettingsForm({ tournament }: Props) {
                             </div>
 
                             <div className="flex items-start gap-3 p-3 bg-violet-500/5 border border-violet-500/20 rounded-lg">
-                                <LucideShield className="w-4 h-4 text-violet-400 mt-0.5 flex-shrink-0" />
+                                <LucideShield className="w-4 h-4 text-violet-400 mt-0.5 shrink-0" />
                                 <p className="text-xs text-violet-300">
                                     <strong>Modo Equipos activo:</strong> Cada slot del bracket representará un equipo en lugar de un jugador individual.
                                     Se requieren <strong>{teamConfig.playersPerTeam} jugadores</strong> por equipo.

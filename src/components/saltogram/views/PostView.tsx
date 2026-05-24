@@ -71,7 +71,7 @@ export default function PostView({ user, postId, initialPost }: PostViewProps) {
 
     return (
         <section className="space-y-6">
-            <div className="bg-white/5 backdrop-blur rounded-3xl border border-white/10 p-4">
+            <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 p-4">
                 <PostCard post={post} currentUserId={user?.id} isAdmin={user?.isAdmin} />
             </div>
 

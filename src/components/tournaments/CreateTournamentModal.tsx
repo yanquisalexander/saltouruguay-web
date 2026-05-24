@@ -33,7 +33,7 @@ export default function CreateTournamentModal({ onClose, onCreated }: { onClose:
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
             <div className="bg-[#1a1b1e] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
                 <div className="p-6 border-b border-white/10 flex justify-between items-center">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -48,7 +48,7 @@ export default function CreateTournamentModal({ onClose, onCreated }: { onClose:
                         <input
                             type="text"
                             required
-                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-none"
+                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-hidden"
                             value={formData.name}
                             onInput={(e: any) => setFormData({ ...formData, name: e.target.value })}
                         />
@@ -57,7 +57,7 @@ export default function CreateTournamentModal({ onClose, onCreated }: { onClose:
                     <div>
                         <label className="block text-sm font-medium text-gray-400 mb-1">Formato</label>
                         <select
-                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-none"
+                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-hidden"
                             value={formData.format}
                             onChange={(e: any) => setFormData({ ...formData, format: e.target.value })}
                         >
@@ -75,7 +75,7 @@ export default function CreateTournamentModal({ onClose, onCreated }: { onClose:
                                 type="number"
                                 min="2"
                                 max="128"
-                                className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-none"
+                                className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-hidden"
                                 value={formData.maxParticipants}
                                 onInput={(e: any) => setFormData({ ...formData, maxParticipants: parseInt(e.target.value) })}
                             />
@@ -83,7 +83,7 @@ export default function CreateTournamentModal({ onClose, onCreated }: { onClose:
                         <div>
                             <label className="block text-sm font-medium text-gray-400 mb-1">Privacidad</label>
                             <select
-                                className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-none"
+                                className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-hidden"
                                 value={formData.privacy}
                                 onChange={(e: any) => setFormData({ ...formData, privacy: e.target.value })}
                             >
@@ -96,7 +96,7 @@ export default function CreateTournamentModal({ onClose, onCreated }: { onClose:
                     <div>
                         <label className="block text-sm font-medium text-gray-400 mb-1">Descripción</label>
                         <textarea
-                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-none h-24 resize-none"
+                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-hidden h-24 resize-none"
                             value={formData.description}
                             onInput={(e: any) => setFormData({ ...formData, description: e.target.value })}
                         ></textarea>

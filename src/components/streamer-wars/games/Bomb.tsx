@@ -200,7 +200,7 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
         }
         if (gameStatus === 'completed') {
             return (
-                <div class="flex flex-col items-center justify-center h-full w-full p-4 text-center bg-green-900/30 z-20 relative backdrop-blur-sm">
+                <div class="flex flex-col items-center justify-center h-full w-full p-4 text-center bg-green-900/30 z-20 relative backdrop-blur-xs">
                     <h2 class="text-4xl font-bold mb-6 text-green-400 font-squids drop-shadow-[0_0_15px_rgba(74,222,128,0.8)]">¡DESACTIVADA!</h2>
                     <div class="text-9xl mb-6 drop-shadow-lg">✅</div>
                 </div>
@@ -208,7 +208,7 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
         }
         if (gameStatus === 'failed') {
             return (
-                <div class="flex flex-col items-center justify-center h-full w-full p-4 text-center bg-red-950/50 z-20 relative backdrop-blur-sm">
+                <div class="flex flex-col items-center justify-center h-full w-full p-4 text-center bg-red-950/50 z-20 relative backdrop-blur-xs">
                     <h2 class="text-5xl font-bold mb-6 text-red-500 font-squids drop-shadow-[0_0_20px_rgba(239,68,68,1)]">¡BOOM!</h2>
                     <div class="text-9xl mb-6 drop-shadow-lg">💥</div>
                     <p className="text-xl font-mono text-red-300">Has sido eliminado</p>
@@ -243,7 +243,7 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
     // Contenedor Base Común (con estilos retro restaurados)
     const BaseContainer = ({ children }: { children: preact.ComponentChildren }) => (
         <div className={`w-full h-full text-white overflow-hidden relative flex flex-col
-            bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/50 via-neutral-950 to-neutral-950
+            bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-red-900/50 via-neutral-950 to-neutral-950
             border-4 border-red-900/60 shadow-[inset_0_0_30px_rgba(220,38,38,0.3)]
             transition-all duration-200
             ${isShaking ? 'animate-shake bomb-container-shaking' : ''}`}>
@@ -296,7 +296,7 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
             <div className="w-full bg-neutral-950 h-3 flex-none border-b border-red-900/30 relative overflow-hidden">
                 <div className="absolute inset-0 bg-stripes-red-black opacity-10"></div>
                 <div
-                    className="bg-gradient-to-r from-green-600 to-green-400 h-full transition-all duration-500 ease-out shadow-[0_0_15px_rgba(74,222,128,0.6)] relative z-10"
+                    className="bg-linear-to-r from-green-600 to-green-400 h-full transition-all duration-500 ease-out shadow-[0_0_15px_rgba(74,222,128,0.6)] relative z-10"
                     style={{ width: `${(challengesCompleted / 5) * 100}%` }}
                 />
             </div>
@@ -313,14 +313,14 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
                                 <div className="w-16 h-1 bg-yellow-500/30 rotate-45 transform origin-bottom-left"></div>
                             </div>
 
-                            <span className="inline-block mb-6 text-xs md:text-sm font-bold bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-sm font-mono uppercase tracking-widest border border-yellow-500/30">
+                            <span className="inline-block mb-6 text-xs md:text-sm font-bold bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-xs font-mono uppercase tracking-widest border border-yellow-500/30">
                                 {currentChallenge.type === 'math' && '📊 Matemáticas'}
                                 {currentChallenge.type === 'logic' && '🧩 Lógica'}
                                 {currentChallenge.type === 'word' && '📝 Palabra'}
                                 {currentChallenge.type === 'sequence' && '🔢 Secuencia'}
                             </span>
 
-                            <h3 className="text-xl md:text-3xl lg:text-4xl font-bold text-white font-press-start-2p break-words leading-relaxed text-center drop-shadow-md">
+                            <h3 className="text-xl md:text-3xl lg:text-4xl font-bold text-white font-press-start-2p wrap-break-word leading-relaxed text-center drop-shadow-md">
                                 {currentChallenge.question}
                             </h3>
 
@@ -347,7 +347,7 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
                             type="text"
                             onInput={handleInput}
                             placeholder="Escribe tu respuesta..."
-                            className="w-full h-full px-4 py-4 bg-neutral-800/80 border-2 border-gray-600 rounded-lg text-white text-lg md:text-xl focus:border-red-500 focus:ring-2 focus:ring-red-500/30 focus:outline-none font-mono uppercase placeholder:normal-case transition-all text-center md:text-left"
+                            className="w-full h-full px-4 py-4 bg-neutral-800/80 border-2 border-gray-600 rounded-lg text-white text-lg md:text-xl focus:border-red-500 focus:ring-2 focus:ring-red-500/30 focus:outline-hidden font-mono uppercase placeholder:normal-case transition-all text-center md:text-left"
                             disabled={isSubmitting}
                             autoComplete="off"
                         />

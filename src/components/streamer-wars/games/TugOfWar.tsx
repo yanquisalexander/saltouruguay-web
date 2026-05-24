@@ -211,7 +211,7 @@ export const TugOfWar = ({
     return (
         <>
             {isStarting && countdownText && (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[10000]">
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-10000">
                     <div className="text-4xl font-bold text-white font-press-start-2p">
                         {countdownText}
                     </div>
@@ -247,7 +247,7 @@ export const TugOfWar = ({
 
             </Instructions>
 
-            <div className="flex relative flex-col items-center justify-center h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-600/70 via-transparent to-transparent text-white p-8">
+            <div className="flex relative flex-col items-center justify-center h-full bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-red-600/70 via-transparent to-transparent text-white p-8">
                 <h2 className="text-3xl font-bold mb-8 font-squids">
                     Tira y Afloja
                 </h2>

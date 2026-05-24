@@ -382,7 +382,7 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
                 </p>
             </Instructions>
 
-            <div className="flex flex-col items-center justify-center h-full w-full bg-gradient-to-b from-blue-900 via-blue-800 to-cyan-900 text-white p-4 relative overflow-hidden">
+            <div className="flex flex-col items-center justify-center h-full w-full bg-linear-to-b from-blue-900 via-blue-800 to-cyan-900 text-white p-4 relative overflow-hidden">
 
                 {/* Visual Background Effects */}
                 <div className="absolute inset-0 opacity-20 pointer-events-none">

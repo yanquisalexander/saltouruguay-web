@@ -16,7 +16,7 @@ export const prerender = true;
 
 // Lógica de estilos condicionales
 const subtitleGradient = CHRISTMAS_MODE
-  ? "from-red-500 via-green-500 to-red-500 bg-[length:200%_auto] animate-shine"
+  ? "from-red-500 via-green-500 to-red-500 bg-size-[200%_auto] animate-shine"
   : "from-blue-400 to-purple-500";
 
 const titleShadow = CHRISTMAS_MODE
@@ -90,7 +90,7 @@ const titleShadow = CHRISTMAS_MODE
       >
         {/* Alertas - Con un toque de glassmorphism */}
         <div
-          class="flex w-full max-w-md flex-col items-center gap-3 animate-fade-in-down backdrop-blur-sm"
+          class="flex w-full max-w-md flex-col items-center gap-3 animate-fade-in-down backdrop-blur-xs"
         >
           <Required2FA server:defer />
         </div>
@@ -133,7 +133,7 @@ const titleShadow = CHRISTMAS_MODE
               /* Subtítulo - Gradiente metálico/sutil en lugar de colores planos */
             }
             <h2
-              class="bg-gradient-to-r from-white via-white/80 to-white/40 bg-clip-text font-sans text-lg font-medium tracking-[0.2em] text-transparent md:text-xl"
+              class="bg-linear-to-r from-white via-white/80 to-white/40 bg-clip-text font-sans text-lg font-medium tracking-[0.2em] text-transparent md:text-xl"
             >
               SERVER COMMUNITY
             </h2>

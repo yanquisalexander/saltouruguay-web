@@ -46,7 +46,7 @@ export default function ChatDock({ currentUser }: { currentUser: any }) {
                             </button>
                             <button
                                 onClick={() => closeChat(chat.id)}
-                                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-xs"
                             >
                                 <LucideX size={12} />
                             </button>

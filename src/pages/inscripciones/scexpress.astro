@@ -64,9 +64,9 @@ const IS_USER_INSCRIBED = await client
       />
 
       <h1
-        class="with-glyph flex relative w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-minecraftia tracking-wider font-bold text-[#FF4444] mix-blend-screen !skew-x-[-20deg] -rotate-6"
+        class="with-glyph flex relative w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-minecraftia tracking-wider font-bold text-[#FF4444] mix-blend-screen skew-x-[-20deg]! -rotate-6"
       >
-        <span class="flex !skew-x-[20deg] transform"> Inscripción </span>
+        <span class="flex skew-x-20! transform"> Inscripción </span>
       </h1>
     </header>
     {
@@ -171,7 +171,7 @@ const IS_USER_INSCRIBED = await client
   <!-- Modal de inscripción -->
   <dialog
     id="inscripcion-modal"
-    class="max-w-[640px] w-full fixed inset-0 z-[99999999] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+    class="max-w-[640px] w-full fixed inset-0 z-99999999 p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
   >
     <form id="inscripcion-modal-close" class="absolute top-5 right-5">
       <button type="button" class="text-white">
@@ -198,7 +198,7 @@ const IS_USER_INSCRIBED = await client
             id="instagram"
             name="instagram"
             placeholder="Tu nickname o link de Instagram"
-            class="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-[#FF4444] focus:outline-none"
+            class="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-[#FF4444] focus:outline-hidden"
             required
           />
           <small class="text-gray-400 text-sm"
@@ -246,7 +246,7 @@ const IS_USER_INSCRIBED = await client
             id="minecraft_username"
             name="minecraft_username"
             placeholder="Tu usuario exacto de Minecraft"
-            class="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-[#FF4444] focus:outline-none"
+            class="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-[#FF4444] focus:outline-hidden"
             required
           />
           <small class="text-gray-400 text-sm"
@@ -264,7 +264,7 @@ const IS_USER_INSCRIBED = await client
             name="content_channel"
             type="url"
             placeholder="Link a tu canal de YouTube, Twitch, etc."
-            class="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-[#FF4444] focus:outline-none"
+            class="px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:border-[#FF4444] focus:outline-hidden"
           />
           <small class="text-gray-400 text-sm"
             >Si tienes un canal donde creas contenido, déjanos el link para
@@ -287,7 +287,7 @@ const IS_USER_INSCRIBED = await client
   <!-- Modal de confirmación -->
   <dialog
     id="confirmation-modal"
-    class="max-w-[540px] w-full fixed inset-0 z-[99999999] p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
+    class="max-w-[540px] w-full fixed inset-0 z-99999999 p-8 pt-20 animate-fade-in-up bg-[#0b1422] border border-line rounded-xl shadow-2xl text-white"
   >
     <form id="confirmation-modal-close" class="absolute top-5 right-5">
       <button type="button" class="text-white">

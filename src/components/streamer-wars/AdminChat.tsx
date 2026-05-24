@@ -122,7 +122,7 @@ export const AdminChat = ({ isAdmin }: AdminChatProps) => {
     if (!isAdmin || !isOpen) return null;
 
     return (
-        <div class="fixed inset-0 z-[10000] flex items-end justify-start p-6 pointer-events-none">
+        <div class="fixed inset-0 z-10000 flex items-end justify-start p-6 pointer-events-none">
             <div class="w-full max-w-xl bg-[#0a0a0a] border-4 border-[#b4cd02] shadow-[12px_12px_0px_0px_rgba(0,0,0,0.7)] pointer-events-auto flex flex-col overflow-hidden">
 
                 {/* CABECERA MÁS LIMPIA */}
@@ -168,7 +168,7 @@ export const AdminChat = ({ isAdmin }: AdminChatProps) => {
                             value={command}
                             onInput={(e) => setCommand((e.target as HTMLInputElement).value)}
                             placeholder="Escribe un comando..."
-                            class="w-full bg-transparent text-white outline-none font-anton text-xl tracking-wide"
+                            class="w-full bg-transparent text-white outline-hidden font-anton text-xl tracking-wide"
                             autoComplete="off"
                         />
                     </form>

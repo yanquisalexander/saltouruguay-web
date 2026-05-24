@@ -51,10 +51,10 @@ export function Progress({
     <div className={cn("flex flex-col gap-4 w-full max-w-4xl", className)}>
       {/* Team names */}
       <div className="flex justify-between text-xs font-thin uppercase font-press-start-2p">
-        <span className={cn("text-white px-2 py-1 rounded", teamAColor)}>
+        <span className={cn("text-white px-2 py-1 rounded-sm", teamAColor)}>
           {teamAName}
         </span>
-        <span className={cn("text-white px-2 py-1 rounded", teamBColor)}>
+        <span className={cn("text-white px-2 py-1 rounded-sm", teamBColor)}>
           {teamBName}
         </span>
       </div>
@@ -83,7 +83,7 @@ export function Progress({
         >
           {/* Flag triangle */}
           <div className="absolute -top-1 left-1/2 transform -translate-x-1/2">
-            <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-yellow-400" />
+            <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-8 border-b-yellow-400" />
           </div>
         </div>
       </div>

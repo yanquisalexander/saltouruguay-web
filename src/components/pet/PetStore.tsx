@@ -165,8 +165,8 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
 
                 {/* Inventory Summary */}
                 {inventory.length > 0 && (
-                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex items-center gap-4 overflow-x-auto custom-scrollbar">
-                        <div className="flex-shrink-0 font-bold text-blue-200 text-sm uppercase tracking-wider">
+                    <div className="bg-blue-500/10 border border-line rounded-2xl p-4 flex items-center gap-4 overflow-x-auto custom-scrollbar">
+                        <div className="shrink-0 font-bold text-blue-200 text-sm uppercase tracking-wider">
                             Tu Inventario:
                         </div>
                         <div className="flex gap-2">
@@ -203,7 +203,7 @@ export default function PetStore({ onItemPurchased }: PetStoreProps) {
                                     className={`group relative bg-black/40 backdrop-blur-md border rounded-3xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${RARITY_COLORS[item.rarity]}`}
                                 >
                                     {/* Item Icon/Preview */}
-                                    <div className="w-full aspect-square bg-gradient-to-br from-white/5 to-white/0 rounded-2xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform duration-500">
+                                    <div className="w-full aspect-square bg-linear-to-br from-white/5 to-white/0 rounded-2xl flex items-center justify-center text-6xl mb-4 group-hover:scale-105 transition-transform duration-500">
                                         {item.category === 'food' && (
                                             item.name.toLowerCase().includes('manzana') ? '🍎' :
                                                 item.name.toLowerCase().includes('sandwich') ? '🥪' :

@@ -35,7 +35,7 @@ const PlayersProgress = ({ players, currentPlayers, patternsProgress }) => {
                                     return (
                                         <div
                                             key={index}
-                                            class={`size-5 rounded-full col-span-1 bg-gradient-to-br ${colorClass}`}
+                                            class={`size-5 rounded-full col-span-1 bg-linear-to-br ${colorClass}`}
                                         ></div>
                                     );
                                 })}
@@ -173,7 +173,7 @@ export const SimonSaysOverlay = ({ channel, players, pusher }) => {
 
     return (
         <div class="grid grid-cols-12 h-screen gap-2 text-white animate-fade-in">
-            <div class="col-span-4 flex flex-col justify-center items-center bg-gradient-to-r from-black/80 via-black/40 to-transparent">
+            <div class="col-span-4 flex flex-col justify-center items-center bg-linear-to-r from-black/80 via-black/40 to-transparent">
                 <h2 class="text-2xl font-atomic mt-8 text-lime-500">
                     Simón dice
                 </h2>

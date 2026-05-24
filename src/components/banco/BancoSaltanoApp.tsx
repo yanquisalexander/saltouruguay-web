@@ -150,7 +150,7 @@ export default function BancoSaltanoApp() {
         <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto px-4 pb-20">
 
             {/* HEADER: TIPO DASHBOARD */}
-            <header className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-gray-900 via-gray-900 to-black p-8 shadow-2xl">
+            <header className="relative overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-gray-900 via-gray-900 to-black p-8 shadow-2xl">
                 <div className="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5 pointer-events-none"></div>
 
                 <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -179,7 +179,7 @@ export default function BancoSaltanoApp() {
             </header>
 
             {/* NAVIGATION TABS */}
-            <div className="flex p-1 bg-gray-900/40 backdrop-blur-sm rounded-xl border border-white/10 w-full md:w-max mx-auto overflow-x-auto">
+            <div className="flex p-1 bg-gray-900/40 backdrop-blur-xs rounded-xl border border-white/10 w-full md:w-max mx-auto overflow-x-auto">
                 {[
                     { id: 'summary', icon: LucideWallet, label: 'Resumen' },
                     { id: 'transactions', icon: LucideHistory, label: 'Historial' },
@@ -245,7 +245,7 @@ export default function BancoSaltanoApp() {
 
                         {/* Banner de Bonus (Ocupa todo el ancho si está disponible) */}
                         {accountSummary.canClaimDailyBonus && (
-                            <div className="md:col-span-3 relative overflow-hidden rounded-2xl border border-green-500/50 bg-gradient-to-r from-green-900/40 to-black p-8 flex flex-col md:flex-row items-center justify-between gap-6 group">
+                            <div className="md:col-span-3 relative overflow-hidden rounded-2xl border border-green-500/50 bg-linear-to-r from-green-900/40 to-black p-8 flex flex-col md:flex-row items-center justify-between gap-6 group">
                                 <div className="absolute inset-0 bg-[url('/noise.png')] opacity-20 mix-blend-overlay"></div>
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
 
@@ -286,7 +286,7 @@ export default function BancoSaltanoApp() {
                                     setTransactionFilter(value || undefined);
                                     loadTransactions(value || undefined);
                                 }}
-                                className="bg-black/50 border border-white/10 text-white/80 text-sm rounded-lg px-4 py-2 font-rubik focus:outline-none focus:border-yellow-500/50"
+                                className="bg-black/50 border border-white/10 text-white/80 text-sm rounded-lg px-4 py-2 font-rubik focus:outline-hidden focus:border-yellow-500/50"
                             >
                                 <option value="">Todos</option>
                                 <option value="game_reward">Premios</option>
@@ -337,7 +337,7 @@ export default function BancoSaltanoApp() {
                 {viewMode === 'daily-bonus' && accountSummary && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
                         {/* Panel de Racha Visual */}
-                        <div className="relative overflow-hidden rounded-2xl border border-yellow-500/20 bg-gradient-to-b from-yellow-900/10 to-black p-8 flex flex-col items-center justify-center text-center min-h-[300px]">
+                        <div className="relative overflow-hidden rounded-2xl border border-yellow-500/20 bg-linear-to-b from-yellow-900/10 to-black p-8 flex flex-col items-center justify-center text-center min-h-[300px]">
                             <div className="absolute inset-0 bg-[url('/images/sun-pattern.svg')] opacity-5 animate-[spin_60s_linear_infinite]"></div>
                             <LucideSparkles className="text-yellow-400 mb-6 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]" size={64} />
 

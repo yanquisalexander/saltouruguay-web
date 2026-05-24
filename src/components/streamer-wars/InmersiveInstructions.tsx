@@ -133,19 +133,19 @@ export const InmersiveInstructions = ({ players }: InmersiveInstructionsProps) =
 
     return (
         <div
-            className={`fixed inset-0 bg-black/90 flex min-h-dvh h-full w-full flex-col justify-center items-center z-[9000] transition-opacity duration-500 ${fadeClass}`}
+            className={`fixed inset-0 bg-black/90 flex min-h-dvh h-full w-full flex-col justify-center items-center z-9000 transition-opacity duration-500 ${fadeClass}`}
         >
             {/* Timer en la esquina superior derecha */}
-            <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-500 z-[10001]">
+            <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-500 z-10001">
                 {minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}
             </div>
 
             {/* Decoración de fondo */}
-            <span className="fixed top-32 text-5xl opacity-10 rotate-[12deg] select-none left-16 font-atomic-extras text-lime-900">
+            <span className="fixed top-32 text-5xl opacity-10 rotate-12 select-none left-16 font-atomic-extras text-lime-900">
                 INSTRUCTION
             </span>
 
-            <div className="p-8 backdrop-blur-sm text-white text-center w-full max-w-4xl flex flex-col items-center">
+            <div className="p-8 backdrop-blur-xs text-white text-center w-full max-w-4xl flex flex-col items-center">
 
                 {/* Header dinámico */}
                 <header className="mb-12">

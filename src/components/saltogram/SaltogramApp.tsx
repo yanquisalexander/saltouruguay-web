@@ -415,7 +415,7 @@ export default function SaltogramApp({
                                         w-full bg-white/6 border border-white/8
                                         rounded-full py-2.5 pl-10 pr-10
                                         text-sm text-white placeholder:text-white/35
-                                        focus:outline-none focus:bg-white/10 focus:border-[#b3c8ff]/40
+                                        focus:outline-hidden focus:bg-white/10 focus:border-[#b3c8ff]/40
                                         focus:ring-2 focus:ring-[#b3c8ff]/20
                                         transition-all duration-200
                                     "
@@ -505,7 +505,7 @@ export default function SaltogramApp({
                                     w-full bg-white/8 border border-[#b3c8ff]/30
                                     rounded-full py-2.5 pl-10 pr-10
                                     text-sm text-white placeholder:text-white/35
-                                    focus:outline-none focus:ring-2 focus:ring-[#b3c8ff]/30
+                                    focus:outline-hidden focus:ring-2 focus:ring-[#b3c8ff]/30
                                     transition-all
                                 "
                             />
@@ -530,7 +530,7 @@ export default function SaltogramApp({
 
             {/* Resultados búsqueda móvil — overlay */}
             {mobileSearchOpen && searchQuery.length >= 2 && (
-                <div className="fixed inset-x-4 top-[5.5rem] z-20 sm:hidden">
+                <div className="fixed inset-x-4 top-22 z-20 sm:hidden">
                     <SearchResultsDropdown mobile />
                 </div>
             )}
@@ -539,7 +539,7 @@ export default function SaltogramApp({
             <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)_300px] gap-5 mt-5">
 
                 {/* ---- SIDEBAR IZQUIERDA (M3 Navigation Drawer) ---- */}
-                <aside className="hidden lg:flex flex-col gap-3 sticky top-[5rem] h-fit">
+                <aside className="hidden lg:flex flex-col gap-3 sticky top-20 h-fit">
 
                     {/* Navigation rail */}
                     <nav className="
@@ -644,7 +644,7 @@ export default function SaltogramApp({
                 </main>
 
                 {/* ---- SIDEBAR DERECHA ---- */}
-                <aside className="hidden xl:flex flex-col gap-3 sticky top-[5rem] h-fit">
+                <aside className="hidden xl:flex flex-col gap-3 sticky top-20 h-fit">
 
                     {/* Resumen de actividad — M3 Card elevado */}
                     <div className="

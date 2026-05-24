@@ -54,7 +54,7 @@ export default function PetAvatar({ appearance, stats, isSleeping, isEating, isC
                     {/* Random dirt spots - Darker and more visible, clustered around center */}
                     <div className="absolute -translate-x-10 -translate-y-10 w-20 h-20 bg-[#3e2723] rounded-full blur-md opacity-80 mix-blend-multiply"></div>
                     <div className="absolute translate-x-12 translate-y-8 w-24 h-24 bg-[#2d1b18] rounded-full blur-lg opacity-70 mix-blend-multiply"></div>
-                    <div className="absolute translate-x-8 -translate-y-12 w-14 h-14 bg-[#4e342e] rounded-full blur-sm opacity-90 mix-blend-multiply"></div>
+                    <div className="absolute translate-x-8 -translate-y-12 w-14 h-14 bg-[#4e342e] rounded-full blur-xs opacity-90 mix-blend-multiply"></div>
                     <div className="absolute -translate-x-8 translate-y-16 w-16 h-16 bg-[#3e2723] rounded-full blur-md opacity-80 mix-blend-multiply"></div>
                     <div className="absolute -translate-x-16 translate-y-0 w-12 h-12 bg-[#2d1b18] rounded-full blur-md opacity-60 mix-blend-multiply"></div>
 
@@ -77,17 +77,17 @@ export default function PetAvatar({ appearance, stats, isSleeping, isEating, isC
 
             {/* Status indicators - Floating bubbles */}
             {stats.hunger < 20 && (
-                <div className="absolute -top-4 -right-4 w-12 h-12 bg-red-500/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg animate-bounce border border-white/20 z-20">
+                <div className="absolute -top-4 -right-4 w-12 h-12 bg-red-500/90 backdrop-blur-xs rounded-full flex items-center justify-center shadow-lg animate-bounce border border-white/20 z-20">
                     <span className="text-2xl">🍽️</span>
                 </div>
             )}
             {stats.energy < 20 && (
-                <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-orange-500/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg animate-pulse border border-white/20 z-20">
+                <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-orange-500/90 backdrop-blur-xs rounded-full flex items-center justify-center shadow-lg animate-pulse border border-white/20 z-20">
                     <span className="text-2xl">💤</span>
                 </div>
             )}
             {stats.hygiene < 20 && (
-                <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-yellow-500/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg animate-bounce border border-white/20 z-20">
+                <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-yellow-500/90 backdrop-blur-xs rounded-full flex items-center justify-center shadow-lg animate-bounce border border-white/20 z-20">
                     <span className="text-2xl">🧼</span>
                 </div>
             )}

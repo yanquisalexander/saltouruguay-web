@@ -46,7 +46,7 @@ export default function TournamentParticipantsManager({ participants: initialPar
                 <input
                     type="text"
                     placeholder="Buscar participante..."
-                    className="w-full bg-black/30 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white focus:border-blue-500 outline-none"
+                    className="w-full bg-black/30 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white focus:border-blue-500 outline-hidden"
                     value={search}
                     onInput={(e: any) => setSearch(e.target.value)}
                 />
@@ -99,7 +99,7 @@ export default function TournamentParticipantsManager({ participants: initialPar
                                 <td className="p-3 text-right">
                                     <button
                                         onClick={() => handleKick(p.userId, p.user?.username || 'Usuario')}
-                                        className="p-1.5 rounded bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
+                                        className="p-1.5 rounded-sm bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
                                         title="Expulsar"
                                     >
                                         <LucideUserX className="w-4 h-4" />

@@ -11,7 +11,7 @@ import { ChatRoom } from "./ChatRoom";
 
 // --- ESTILOS MODERNOS ---
 const MODERN_BOX = "bg-black border border-neutral-800 relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,1)]";
-const MODERN_CARD = "group border border-neutral-800/50 bg-neutral-900/20 hover:border-pink-500/50 transition-all duration-500 backdrop-blur-sm";
+const MODERN_CARD = "group border border-neutral-800/50 bg-neutral-900/20 hover:border-pink-500/50 transition-all duration-500 backdrop-blur-xs";
 
 const ModernLoader = () => (
     <div className="flex gap-x-2 items-center justify-center">
@@ -59,15 +59,15 @@ export const WaitingRoom = ({ session, channel }: WaitingRoomProps) => {
         <div class="grid p-4 gap-y-6 md:gap-y-0 md:gap-x-6 grid-cols-1 md:grid-cols-12 h-full bg-[#050505] text-neutral-200">
 
             {/* COLUMNA IZQUIERDA: CHAT */}
-            <div class="flex w-full h-[500px] md:h-full col-span-1 md:col-span-4 rounded-sm overflow-hidden border border-neutral-800/50">
+            <div class="flex w-full h-[500px] md:h-full col-span-1 md:col-span-4 rounded-xs overflow-hidden border border-neutral-800/50">
                 <ChatRoom session={session} channel={channel} />
             </div>
 
             {/* COLUMNA DERECHA: LOBBY */}
-            <div class={`col-span-1 md:col-span-8 w-full flex flex-col items-center justify-center p-8 rounded-sm ${MODERN_BOX}`}>
+            <div class={`col-span-1 md:col-span-8 w-full flex flex-col items-center justify-center p-8 rounded-xs ${MODERN_BOX}`}>
 
                 {/* AMBIENTE: Luces difusas fucsia (Squid Game Vibes) */}
-                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-pink-500/50 to-transparent shadow-[0_0_15px_rgba(236,72,153,0.5)]" />
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-linear-to-r from-transparent via-pink-500/50 to-transparent shadow-[0_0_15px_rgba(236,72,153,0.5)]" />
                 <div class="absolute -top-40 -left-40 w-96 h-96 bg-pink-600/10 rounded-full blur-[100px] pointer-events-none" />
 
                 {/* CONTENIDO CENTRAL */}
@@ -122,7 +122,7 @@ export const WaitingRoom = ({ session, channel }: WaitingRoomProps) => {
                 </span>
 
                 {/* SCANLINE SUTIL */}
-                <div class="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]" />
+                <div class="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-size-[100%_4px]" />
             </div>
         </div>
     );

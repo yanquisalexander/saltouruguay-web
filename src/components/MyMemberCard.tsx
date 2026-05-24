@@ -144,7 +144,7 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
                 <div className="relative flex flex-col items-center">
 
                     {/* Elemento oculto para generación de imagen (Alta Calidad) */}
-                    <div className="absolute -left-[9999px] top-0 pointer-events-none">
+                    <div className="absolute left-[-9999px] top-0 pointer-events-none">
                         <div id="member-card-hidden" className="w-[800px] h-[400px] p-4 bg-transparent">
                             <MemberCard
                                 number={parseInt(session?.user?.id as string)}
@@ -157,10 +157,10 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
                     </div>
 
                     {/* Spotlight de fondo */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-b from-purple-500/20 to-transparent blur-[100px] rounded-full pointer-events-none"></div>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-linear-to-b from-purple-500/20 to-transparent blur-[100px] rounded-full pointer-events-none"></div>
 
                     {/* Contenedor 3D Interactivo */}
-                    <div className="relative z-10 w-full max-w-2xl aspect-[2/1] perspective-1000 group">
+                    <div className="relative z-10 w-full max-w-2xl aspect-2/1 perspective-1000 group">
                         <Container3D>
                             <MemberCard
                                 number={parseInt(session?.user?.id as string)}
@@ -215,7 +215,7 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
                                     toast.error(e.message || 'No se pudo generar la pass');
                                 }
                             }}
-                            className="relative flex items-center gap-2 px-6 py-3 rounded-xl font-bold uppercase tracking-wide bg-gradient-to-r from-blue-600 to-sky-500 text-white hover:opacity-95 shadow-lg"
+                            className="relative flex items-center gap-2 px-6 py-3 rounded-xl font-bold uppercase tracking-wide bg-linear-to-r from-blue-600 to-sky-500 text-white hover:opacity-95 shadow-lg"
                         >
                             <Sparkles size={16} />
                             <span>Añadir a Google Wallet</span>
@@ -268,7 +268,7 @@ export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'clas
                             <h3 className="text-white font-anton text-lg uppercase tracking-wide flex items-center gap-2">
                                 <Sticker size={18} className="text-green-400" /> Stickers
                             </h3>
-                            <span className="text-xs font-rubik text-white/40 bg-white/5 px-2 py-1 rounded">
+                            <span className="text-xs font-rubik text-white/40 bg-white/5 px-2 py-1 rounded-sm">
                                 {selectedStickers.list.filter(Boolean).length} / {selectedStickers.limit} Usados
                             </span>
                         </div>

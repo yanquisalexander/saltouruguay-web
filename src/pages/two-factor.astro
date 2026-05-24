@@ -36,14 +36,14 @@ if (!session) {
     >
       {/* Glow superior */}
       <div
-        class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50"
+        class="absolute top-0 inset-x-0 h-1 bg-linear-to-r from-transparent via-blue-500 to-transparent opacity-50"
       >
       </div>
 
       {/* Header */}
       <div class="text-center mb-8">
         <div
-          class="inline-flex items-center justify-center p-4 bg-blue-500/10 rounded-2xl text-blue-400 mb-4 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)]"
+          class="inline-flex items-center justify-center p-4 bg-blue-500/10 rounded-2xl text-blue-400 mb-4 border border-line shadow-[0_0_15px_rgba(59,130,246,0.15)]"
         >
           <LucideShieldCheck size={32} />
         </div>
@@ -96,7 +96,7 @@ if (!session) {
               autocomplete="one-time-code"
               placeholder="000 000"
               maxlength="6"
-              class="w-full bg-[#050505] border border-white/10 focus:border-blue-500 rounded-xl py-4 text-center text-3xl font-mono tracking-[0.5em] text-white placeholder:text-white/10 outline-none transition-all shadow-inner focus:shadow-[0_0_20px_rgba(59,130,246,0.1)]"
+              class="w-full bg-[#050505] border border-white/10 focus:border-blue-500 rounded-xl py-4 text-center text-3xl font-mono tracking-[0.5em] text-white placeholder:text-white/10 outline-hidden transition-all shadow-inner focus:shadow-[0_0_20px_rgba(59,130,246,0.1)]"
               required
               autofocus
             />

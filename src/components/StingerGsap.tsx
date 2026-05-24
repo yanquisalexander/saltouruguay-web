@@ -45,7 +45,7 @@ export default function StingerGsap() {
     return (
         <div
             ref={containerRef}
-            className="fixed inset-0 z-[99999] bg-black flex items-center justify-center opacity-0 pointer-events-none"
+            className="fixed inset-0 z-99999 bg-black flex items-center justify-center opacity-0 pointer-events-none"
         >
             {/* Logo y loader */}
             <div className="flex flex-col items-center gap-4 z-10">

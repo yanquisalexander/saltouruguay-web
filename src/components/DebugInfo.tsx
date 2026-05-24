@@ -101,7 +101,7 @@ export const DebugInfo = () => {
 
             {/* Panel de detalles */}
             {selectedLog && (
-                <div class="fixed bottom-0 right-0 w-80 bg-gray-900 z-[1002] shadow-lg rounded-tl-md border-l border-t overflow-y-auto p-4 h-[calc(100%-8rem)]">
+                <div class="fixed bottom-0 right-0 w-80 bg-gray-900 z-1002 shadow-lg rounded-tl-md border-l border-t overflow-y-auto p-4 h-[calc(100%-8rem)]">
                     <h3 class="text-sm font-bold">Request Details</h3>
                     <div class="mt-2 text-sm">
                         <p><strong>Path:</strong> {selectedLog.path}</p>
@@ -110,11 +110,11 @@ export const DebugInfo = () => {
                         {selectedLog.init && (
                             <>
                                 <h4 class="mt-2 font-bold">Init:</h4>
-                                <pre class="text-xs bg-black p-2 rounded">{JSON.stringify(selectedLog.init, null, 2)}</pre>
+                                <pre class="text-xs bg-black p-2 rounded-sm">{JSON.stringify(selectedLog.init, null, 2)}</pre>
                             </>
                         )}
                         <h4 class="mt-2 font-bold">Headers:</h4>
-                        <ul class="text-xs bg-black p-2 rounded">
+                        <ul class="text-xs bg-black p-2 rounded-sm">
                             {selectedLog.headers.map(([key, value], index) => (
                                 <li key={index}>
                                     <strong>{key}:</strong> {value}

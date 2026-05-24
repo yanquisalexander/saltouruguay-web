@@ -160,7 +160,7 @@ const getBadgeStyles = (label: string, colorClassName?: string) => {
 
                     {/* Underline activo — glow energy bar */}
                     <span
-                      class={`nav-underline absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-gradient-to-r ${underlineActiveColor} rounded-full transition-all duration-300 ${
+                      class={`nav-underline absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-linear-to-r ${underlineActiveColor} rounded-full transition-all duration-300 ${
                         currentPath.startsWith(link.url)
                           ? "w-full opacity-100"
                           : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-60"
@@ -169,7 +169,7 @@ const getBadgeStyles = (label: string, colorClassName?: string) => {
                     {/* Glow debajo del underline (solo activo) */}
                     {currentPath.startsWith(link.url) && (
                       <span
-                        class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-full blur-sm bg-gradient-to-r ${underlineActiveColor} rounded-full opacity-60`}
+                        class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-full blur-xs bg-linear-to-r ${underlineActiveColor} rounded-full opacity-60`}
                       />
                     )}
                   </a>
@@ -180,7 +180,7 @@ const getBadgeStyles = (label: string, colorClassName?: string) => {
 
           {/* --- CENTRO (Logo Escritorio) --- */}
           <div
-            class={`hidden md:flex flex-shrink-0 mx-4 relative group logo-wrap ${CHRISTMAS_MODE ? "christmas-logo-nav" : ""}`}
+            class={`hidden md:flex shrink-0 mx-4 relative group logo-wrap ${CHRISTMAS_MODE ? "christmas-logo-nav" : ""}`}
           >
             <a
               href="/"
@@ -233,7 +233,7 @@ const getBadgeStyles = (label: string, colorClassName?: string) => {
                     )}
 
                     <span
-                      class={`nav-underline absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-gradient-to-r ${underlineActiveColor} rounded-full transition-all duration-300 ${
+                      class={`nav-underline absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-linear-to-r ${underlineActiveColor} rounded-full transition-all duration-300 ${
                         currentPath.startsWith(link.url)
                           ? "w-full opacity-100"
                           : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-60"
@@ -241,7 +241,7 @@ const getBadgeStyles = (label: string, colorClassName?: string) => {
                     />
                     {currentPath.startsWith(link.url) && (
                       <span
-                        class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-full blur-sm bg-gradient-to-r ${underlineActiveColor} rounded-full opacity-60`}
+                        class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-full blur-xs bg-linear-to-r ${underlineActiveColor} rounded-full opacity-60`}
                       />
                     )}
                   </a>
@@ -288,11 +288,11 @@ const getBadgeStyles = (label: string, colorClassName?: string) => {
       {/* --- MENU MÓVIL --- */}
       <div
         id="mobile-drawer"
-        class="fixed inset-0 z-[40] hidden pointer-events-none"
+        class="fixed inset-0 z-40 hidden pointer-events-none"
       >
         <div
           id="drawer-bg"
-          class="absolute inset-0 bg-black/85 backdrop-blur-sm opacity-0 transition-opacity duration-300 pointer-events-auto"
+          class="absolute inset-0 bg-black/85 backdrop-blur-xs opacity-0 transition-opacity duration-300 pointer-events-auto"
         />
 
         <nav
@@ -380,6 +380,7 @@ const getBadgeStyles = (label: string, colorClassName?: string) => {
 }
 
 <style>
+  @reference "../assets/styles/global.css";
   /* SCROLL — isla compacta con glassmorphism */
   :global(#site-header.is-scrolled) {
     @apply py-2;

@@ -92,7 +92,7 @@ export default function NoteBottomSheet({ note, onClose, currentUser, onDelete, 
 
     const content = (
         <AnimatePresence>
-            <div className="fixed inset-0 z-[99999] flex items-end justify-center pointer-events-none">
+            <div className="fixed inset-0 z-99999 flex items-end justify-center pointer-events-none">
 
                 {/* Backdrop con Blur */}
                 <motion.div
@@ -134,8 +134,8 @@ export default function NoteBottomSheet({ note, onClose, currentUser, onDelete, 
                         <div className="flex flex-col items-center gap-4 relative z-10">
                             <div className="relative group cursor-pointer">
                                 {/* Glow effect */}
-                                <div className="absolute inset-0 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
-                                <div className="w-[88px] h-[88px] rounded-full p-[3px] bg-gradient-to-tr from-purple-500 to-pink-500 relative z-10">
+                                <div className="absolute inset-0 bg-linear-to-tr from-purple-500 to-pink-500 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
+                                <div className="w-[88px] h-[88px] rounded-full p-[3px] bg-linear-to-tr from-purple-500 to-pink-500 relative z-10">
                                     <div className="w-full h-full rounded-full border-4 border-[#121212] overflow-hidden bg-black">
                                         <img
                                             src={note.user.avatar || note.user.image || `https://ui-avatars.com/api/?name=${note.user.displayName || note.user.name}`}
@@ -167,7 +167,7 @@ export default function NoteBottomSheet({ note, onClose, currentUser, onDelete, 
                                     <div className="absolute -top-4 -left-4 text-white/5 group-hover:text-white/10 transition-colors">
                                         <LucideMessageCircle size={80} />
                                     </div>
-                                    <p className="text-lg font-medium text-center text-white/90 leading-relaxed relative z-10 break-words">
+                                    <p className="text-lg font-medium text-center text-white/90 leading-relaxed relative z-10 wrap-break-word">
                                         "{note.text}"
                                     </p>
                                 </div>
@@ -184,7 +184,7 @@ export default function NoteBottomSheet({ note, onClose, currentUser, onDelete, 
                                     <div className="absolute inset-0 bg-black/40"></div>
 
                                     <div className="relative z-10 p-4 flex items-center gap-4">
-                                        <div className="relative w-14 h-14 flex-shrink-0 cursor-pointer" onClick={togglePlay}>
+                                        <div className="relative w-14 h-14 shrink-0 cursor-pointer" onClick={togglePlay}>
                                             <img
                                                 src={note.musicCover}
                                                 className={`w-full h-full rounded-xl object-cover shadow-lg ${isPlaying ? 'animate-pulse' : ''}`}

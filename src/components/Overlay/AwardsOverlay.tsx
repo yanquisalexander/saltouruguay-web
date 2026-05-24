@@ -136,7 +136,7 @@ export const AwardsOverlay = () => {
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95, filter: "blur(5px)" }}
                           transition={{ duration: 0.7, type: "spring", bounce: 0.2 }}
-                          className="relative w-full max-w-[450px] aspect-[3/4] rounded-[2rem] overflow-hidden border-[4px] border-white/10 bg-[#111] shadow-[0_0_60px_rgba(0,0,0,0.7)]"
+                          className="relative w-full max-w-[450px] aspect-3/4 rounded-4xl overflow-hidden border-4 border-white/10 bg-[#111] shadow-[0_0_60px_rgba(0,0,0,0.7)]"
                         >
                           <div className="absolute inset-0 overflow-hidden">
                             <motion.img
@@ -147,7 +147,7 @@ export const AwardsOverlay = () => {
                               transition={{ duration: 20, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
                               onError={(e: any) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${nominee.displayName}&background=222&color=fff&size=512` }}
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-90"></div>
+                            <div className="absolute inset-0 bg-linear-to-t from-black via-black/30 to-transparent opacity-90"></div>
                           </div>
 
                           <div className="absolute bottom-0 left-0 w-full p-8 flex flex-col items-center text-center pb-10">
@@ -175,7 +175,7 @@ export const AwardsOverlay = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.9, filter: "blur(5px)" }}
                           transition={{ delay: i * 0.1, duration: 0.5, type: "spring", bounce: 0.2 }}
-                          className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white/10 bg-[#111] shadow-2xl"
+                          className="relative aspect-3/4 rounded-2xl overflow-hidden border-2 border-white/10 bg-[#111] shadow-2xl"
                         >
                           <div className="absolute inset-0 overflow-hidden">
                             <motion.img
@@ -186,7 +186,7 @@ export const AwardsOverlay = () => {
                               transition={{ duration: 12, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
                               onError={(e: any) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${nominee.displayName}&background=222&color=fff&size=512` }}
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-90"></div>
+                            <div className="absolute inset-0 bg-linear-to-t from-black via-black/30 to-transparent opacity-90"></div>
                           </div>
 
                           <div className="absolute bottom-0 left-0 w-full p-4 flex flex-col items-center text-center pb-5">
@@ -234,7 +234,7 @@ export const AwardsOverlay = () => {
 
                 {/* Imagen Ganador */}
                 <div className="relative mb-8">
-                  <div className="absolute inset-0 rounded-full border-[8px] border-yellow-500 blur-md opacity-60 animate-pulse"></div>
+                  <div className="absolute inset-0 rounded-full border-8 border-yellow-500 blur-md opacity-60 animate-pulse"></div>
                   <motion.div
                     className="size-[280px] rounded-full overflow-hidden border-[6px] border-yellow-500 shadow-[0_0_60px_rgba(234,179,8,0.3)] bg-black"
                     layoutId={winnerDetails.id}
@@ -250,7 +250,7 @@ export const AwardsOverlay = () => {
                   </div>
                 </div>
 
-                <h2 className="text-xl text-white/60 font-mono uppercase tracking-[0.2em] mb-4 bg-black/40 px-4 py-1 rounded backdrop-blur-sm">
+                <h2 className="text-xl text-white/60 font-mono uppercase tracking-[0.2em] mb-4 bg-black/40 px-4 py-1 rounded-sm backdrop-blur-xs">
                   {category.name}
                 </h2>
 

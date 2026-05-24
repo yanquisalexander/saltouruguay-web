@@ -16,7 +16,7 @@ export const WaitingScreen = ({ players, expectedPlayers = 50 }: WaitingScreenPr
         <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center overflow-hidden">
 
             {/* LÍNEAS DE ESCANEO CASI INVISIBLES (Coherencia con Splash) */}
-            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]" />
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-size-[100%_4px]" />
 
             {/* CONTENIDO CENTRAL */}
             <div className="relative flex flex-col items-center gap-12">

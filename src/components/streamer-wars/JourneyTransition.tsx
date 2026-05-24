@@ -37,7 +37,7 @@ const CreditsRoll = ({ duration, players }: { duration: number, players?: Player
 
     return (
         <div
-            class="absolute inset-0 z-[9999] flex justify-center bg-black pointer-events-none animate-fade-in"
+            class="absolute inset-0 z-9999 flex justify-center bg-black pointer-events-none animate-fade-in"
             style={{ animationDuration: "2000ms" }}
         >
             {/* El contenedor visible, que actúa como la ventana */}
@@ -187,7 +187,7 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
                     }}>
                     {players?.filter(player => !player.eliminated).map((player: Players) => (
                         <li class="flex flex-col items-center space-y-2">
-                            <img src={player.avatar} alt="" class="grayscale-[20%] size-7 rounded-md" />
+                            <img src={player.avatar} alt="" class="grayscale-20 size-7 rounded-md" />
                             <span class="font-mono text-neutral-400 text-lg">#{player.playerNumber.toString().padStart(3, "0")}</span>
                         </li>
                     ))}
@@ -427,19 +427,19 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
 
     return (
         <div
-            className={`fixed inset-0 bg-black ${isCreditsRoll ? "" : "flex"} min-h-screen h-full flex-col justify-center items-center z-[9000] transition-opacity duration-500 ${fadeClass}`}
-        > <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300 z-[10001]">
+            className={`fixed inset-0 bg-black ${isCreditsRoll ? "" : "flex"} min-h-screen h-full flex-col justify-center items-center z-9000 transition-opacity duration-500 ${fadeClass}`}
+        > <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300 z-10001">
                 {minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}
             </div>
-            <div className="p-8 backdrop-blur-sm text-white text-center">
+            <div className="p-8 backdrop-blur-xs text-white text-center">
                 <header>
-                    <h1 className="text-3xl font-mono font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text">
+                    <h1 className="text-3xl font-mono font-bold bg-linear-to-r from-white to-gray-300 text-transparent bg-clip-text">
                         {phase === "start" ? `Día #0${CURRENT_DAY}` : `Día #0${CURRENT_DAY} finalizado`}
                     </h1>
                 </header>
                 {script[currentIndex]?.component && (() => {
                     return (
-                        <div className={`mt-8 ${isCreditsRoll ? "fixed inset-0 z-[9999] h-screen w-full" : ""}`}>
+                        <div className={`mt-8 ${isCreditsRoll ? "fixed inset-0 z-9999 h-screen w-full" : ""}`}>
                             {/* 
                             Pass props to the component here
                             */}
@@ -467,7 +467,7 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
             }
 
 
-            <span className="fixed bottom-32 text-5xl opacity-30 rotate-[32deg] select-none right-16 font-atomic-extras">
+            <span className="fixed bottom-32 text-5xl opacity-30 rotate-32 select-none right-16 font-atomic-extras">
                 &#x0055;
             </span>
             <span className="fixed bottom-48 text-5xl opacity-30 rotate-[-16deg] select-none left-16 font-atomic-extras">

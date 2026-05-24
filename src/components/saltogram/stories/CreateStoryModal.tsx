@@ -530,10 +530,10 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
 
     return (
         // CAMBIO: Padding 0 en móvil, p-4 en desktop.
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-0 md:p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-0 md:p-4">
 
             {/* CAMBIO: Full screen en móvil (rounded-none, border-none, h-full), Modal en desktop */}
-            <div className="bg-black md:bg-[#242526] w-full h-full md:h-auto md:max-w-[400px] md:aspect-[9/16] md:max-h-[85vh] rounded-none md:rounded-2xl overflow-hidden shadow-2xl md:border border-white/10 animate-in fade-in zoom-in-95 duration-200 flex flex-col relative">
+            <div className="bg-black md:bg-[#242526] w-full h-full md:h-auto md:max-w-[400px] md:aspect-9/16 md:max-h-[85vh] rounded-none md:rounded-2xl overflow-hidden shadow-2xl md:border border-white/10 animate-in fade-in zoom-in-95 duration-200 flex flex-col relative">
 
                 {/* Header */}
                 {!isCameraOpen && (
@@ -581,7 +581,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
 
                                 <button
                                     onClick={capturePhoto}
-                                    className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center hover:scale-105 transition-transform active:scale-95 bg-white/20 backdrop-blur-sm"
+                                    className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center hover:scale-105 transition-transform active:scale-95 bg-white/20 backdrop-blur-xs"
                                 >
                                     <div className="w-16 h-16 bg-white rounded-full"></div>
                                 </button>
@@ -753,7 +753,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                                             onPointerMove={handlePointerMove}
                                             onPointerUp={handlePointerUp}
                                         >
-                                            <img src={selectedMusic.album.cover_medium} className="w-12 h-12 rounded-lg shadow-sm pointer-events-none" />
+                                            <img src={selectedMusic.album.cover_medium} className="w-12 h-12 rounded-lg shadow-xs pointer-events-none" />
                                             <div className="min-w-0 pointer-events-none">
                                                 <p className="text-black font-bold text-sm truncate">{selectedMusic.title}</p>
                                                 <p className="text-black/60 text-xs truncate">{selectedMusic.artist.name}</p>
@@ -820,7 +820,7 @@ export default function CreateStoryModal({ isOpen, onClose, onCreated }: CreateS
                                                     setTextInput(target.value);
                                                     handleUpdateText(editingTextId, { content: target.value });
                                                 }}
-                                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/50 focus:outline-none focus:border-white/50"
+                                                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/50 focus:outline-hidden focus:border-white/50"
                                                 placeholder="Escribe algo..."
                                                 autoFocus
                                             />

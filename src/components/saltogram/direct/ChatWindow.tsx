@@ -138,7 +138,7 @@ export default function ChatWindow({ otherUser, currentUser, initialMessages }: 
 
                                     {/* Text Content */}
                                     {msg.content && (
-                                        <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                                        <p className="text-sm whitespace-pre-wrap wrap-break-word">{msg.content}</p>
                                     )}
 
                                     <p className={`text-[10px] mt-1 text-right ${isMe ? 'text-blue-200' : 'text-white/40'}`}>

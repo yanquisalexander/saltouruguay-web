@@ -60,7 +60,7 @@ export const VoteNominee = ({
                             ${category.isEventsCategory ? 'opacity-60' : 'opacity-80 mask-image-b-fade'}
                         `}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
+                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent"></div>
                 </div>
 
                 {/* BADGE DE ORDEN (#1, #2) */}

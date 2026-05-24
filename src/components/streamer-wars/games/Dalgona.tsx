@@ -507,7 +507,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
     if (gameStatus === 'waiting') {
         return (
-            <div className="flex items-center justify-center h-full bg-gradient-to-b from-amber-900 to-amber-950">
+            <div className="flex items-center justify-center h-full bg-linear-to-b from-amber-900 to-amber-950">
                 <div className="text-center text-white p-8 bg-black/50 border-8 border-yellow-600">
                     <h2 className="text-3xl font-bold mb-4 text-yellow-300" style={{ fontFamily: '"Press Start 2P", monospace', textShadow: '4px 4px 0px #000' }}>
                         DALGONA
@@ -521,7 +521,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
     if (gameStatus === 'completed') {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-green-900 to-green-950">
+            <div className="flex items-center justify-center min-h-screen bg-linear-to-b from-green-900 to-green-950">
                 <div className="text-center text-white p-12 bg-black/70 border-8 border-green-400">
                     <h2 className="text-5xl font-bold mb-6 text-green-400 animate-pulse" style={{ fontFamily: '"Press Start 2P", monospace', textShadow: '4px 4px 0px #000' }}>
                         ¡EXITO!
@@ -536,7 +536,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
     if (gameStatus === 'failed') {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-red-900 to-red-950">
+            <div className="flex items-center justify-center min-h-screen bg-linear-to-b from-red-900 to-red-950">
                 <div className="text-center text-white p-12 bg-black/70 border-8 border-red-600">
                     <h2 className="text-5xl font-bold mb-6 text-red-500" style={{ fontFamily: '"Press Start 2P", monospace', textShadow: '4px 4px 0px #000' }}>
                         ELIMINADO
@@ -552,7 +552,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
     const percentageRemoved = totalRemovablePixels > 0 ? (pixelsRemoved / totalRemovablePixels) * 100 : 0;
 
     return (
-        <div className="h-full relative p-5 bg-gradient-to-b from-amber-900 to-amber-950" style={{ cursor: 'crosshair' }}>
+        <div className="h-full relative p-5 bg-linear-to-b from-amber-900 to-amber-950" style={{ cursor: 'crosshair' }}>
             <h2 className="text-3xl font-bold mb-4 text-center text-yellow-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]" style={{ fontFamily: '"Press Start 2P", monospace', fontSize: '1.5rem', textShadow: '4px 4px 0px #000' }}>
                 DALGONA
             </h2>
@@ -588,7 +588,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                 <div className="w-full bg-gray-900 h-8 relative overflow-hidden border-4 border-gray-700">
                     <div 
                         className={`h-full transition-all duration-300 ${
-                            percentageRemoved >= 95 ? 'bg-green-500' : 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                            percentageRemoved >= 95 ? 'bg-green-500' : 'bg-linear-to-r from-yellow-500 to-orange-500'
                         }`}
                         style={{ width: `${Math.min(percentageRemoved, 100)}%` }}
                     />

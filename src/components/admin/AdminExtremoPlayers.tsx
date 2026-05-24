@@ -109,11 +109,11 @@ export default function AdminExtremoPlayers() {
         return (
             <div className="space-y-6">
                 <h2 className="text-2xl font-bold font-anton text-white">Gestión de Jugadores - SaltoCraft Extremo 3</h2>
-                <div className="bg-zinc-900/50 backdrop-blur-sm p-6 rounded-lg border border-neutral-800 shadow-lg text-center">
+                <div className="bg-zinc-900/50 backdrop-blur-xs p-6 rounded-lg border border-neutral-800 shadow-lg text-center">
                     <p className="text-gray-300 mb-4 font-rubik">No hay jugadores registrados aún.</p>
                     <button
                         onClick={seedPlayers}
-                        className="px-4 py-2 bg-electric-violet-500 text-white rounded font-rubik hover:bg-electric-violet-600 transition-colors"
+                        className="px-4 py-2 bg-electric-violet-500 text-white rounded-sm font-rubik hover:bg-electric-violet-600 transition-colors"
                     >
                         Inicializar Jugadores desde Inscripciones
                     </button>
@@ -141,7 +141,7 @@ export default function AdminExtremoPlayers() {
             <div className="flex items-center gap-4">
                 <button
                     onClick={seedPlayers}
-                    className="px-4 py-2 bg-electric-violet-500 text-white rounded font-rubik hover:bg-electric-violet-600 transition-colors"
+                    className="px-4 py-2 bg-electric-violet-500 text-white rounded-sm font-rubik hover:bg-electric-violet-600 transition-colors"
                 >
                     Añadir jugadores faltantes (Desde inscripción)
                 </button>
@@ -155,7 +155,7 @@ export default function AdminExtremoPlayers() {
                         value={search}
                         onInput={e => setSearch((e.target as HTMLInputElement).value)}
                         placeholder="Buscar jugador confirmado..."
-                        className="w-full md:w-96 px-3 py-2 rounded border border-neutral-700 bg-zinc-900/70 text-white font-rubik focus:outline-none focus:border-electric-violet-500 transition"
+                        className="w-full md:w-96 px-3 py-2 rounded-sm border border-neutral-700 bg-zinc-900/70 text-white font-rubik focus:outline-hidden focus:border-electric-violet-500 transition"
                     />
                 </div>
             )}
@@ -163,7 +163,7 @@ export default function AdminExtremoPlayers() {
             {/* Lista de confirmados filtrados */}
             <div className="grid gap-4">
                 {filteredConfirmed.map((player) => (
-                    <div key={player.id} className="bg-zinc-900/50 backdrop-blur-sm p-4 rounded-lg border border-neutral-800 shadow-lg hover:bg-zinc-800/50 transition-colors">
+                    <div key={player.id} className="bg-zinc-900/50 backdrop-blur-xs p-4 rounded-lg border border-neutral-800 shadow-lg hover:bg-zinc-800/50 transition-colors">
                         <div className="flex items-center justify-between">
                             <div>
                                 {/* Username editable */}
@@ -189,7 +189,7 @@ export default function AdminExtremoPlayers() {
                                                 setEditingId(null);
                                             }
                                         }}
-                                        className="font-semibold text-white font-minecraftia bg-zinc-800 px-2 py-1 rounded border border-electric-violet-500 focus:outline-none w-48"
+                                        className="font-semibold text-white font-minecraftia bg-zinc-800 px-2 py-1 rounded-sm border border-electric-violet-500 focus:outline-hidden w-48"
                                     />
                                 ) : (
                                     <h3
@@ -213,7 +213,7 @@ export default function AdminExtremoPlayers() {
                                         type="checkbox"
                                         checked={player.isConfirmedPlayer}
                                         onChange={(e: any) => updatePlayer(player.id, 'isConfirmedPlayer', e.currentTarget?.checked)}
-                                        className="rounded bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
+                                        className="rounded-sm bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
                                     />
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -222,7 +222,7 @@ export default function AdminExtremoPlayers() {
                                         type="checkbox"
                                         checked={player.isRepechaje}
                                         onChange={(e: any) => updatePlayer(player.id, 'isRepechaje', e.currentTarget?.checked)}
-                                        className="rounded bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
+                                        className="rounded-sm bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
                                     />
                                 </div>
 
@@ -230,7 +230,7 @@ export default function AdminExtremoPlayers() {
                                     <label className="text-sm text-gray-300 font-rubik">Vidas:</label>
                                     <button
                                         onClick={() => updatePlayer(player.id, 'livesCount', Math.max(0, player.livesCount - 1))}
-                                        className="px-2 py-1 bg-red-600 text-white rounded font-rubik hover:bg-red-700 transition-colors"
+                                        className="px-2 py-1 bg-red-600 text-white rounded-sm font-rubik hover:bg-red-700 transition-colors"
                                     >
                                         -
                                     </button>
@@ -246,7 +246,7 @@ export default function AdminExtremoPlayers() {
                                     </div>
                                     <button
                                         onClick={() => updatePlayer(player.id, 'livesCount', Math.min(3, player.livesCount + 1))}
-                                        className="px-2 py-1 bg-green-600 text-white rounded font-rubik hover:bg-green-700 transition-colors"
+                                        className="px-2 py-1 bg-green-600 text-white rounded-sm font-rubik hover:bg-green-700 transition-colors"
                                     >
                                         +
                                     </button>
@@ -260,7 +260,7 @@ export default function AdminExtremoPlayers() {
             {/* El resto de jugadores no confirmados */}
             <div className="grid gap-4 mt-8">
                 {players.filter((p) => !p.isConfirmedPlayer).map((player) => (
-                    <div key={player.id} className="bg-zinc-900/30 p-4 rounded-lg border border-neutral-800 shadow hover:bg-zinc-800/30 transition-colors opacity-80">
+                    <div key={player.id} className="bg-zinc-900/30 p-4 rounded-lg border border-neutral-800 shadow-sm hover:bg-zinc-800/30 transition-colors opacity-80">
                         <div className="flex items-center justify-between">
                             <div>
                                 <h3 className={`font-semibold text-white font-minecraftia ${player.livesCount === 0
@@ -279,7 +279,7 @@ export default function AdminExtremoPlayers() {
                                         type="checkbox"
                                         checked={player.isConfirmedPlayer}
                                         onChange={(e: any) => updatePlayer(player.id, 'isConfirmedPlayer', e.currentTarget?.checked)}
-                                        className="rounded bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
+                                        className="rounded-sm bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
                                     />
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -288,7 +288,7 @@ export default function AdminExtremoPlayers() {
                                         type="checkbox"
                                         checked={player.isRepechaje}
                                         onChange={(e: any) => updatePlayer(player.id, 'isRepechaje', e.currentTarget?.checked)}
-                                        className="rounded bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
+                                        className="rounded-sm bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
                                     />
                                 </div>
 
@@ -296,7 +296,7 @@ export default function AdminExtremoPlayers() {
                                     <label className="text-sm text-gray-300 font-rubik">Vidas:</label>
                                     <button
                                         onClick={() => updatePlayer(player.id, 'livesCount', Math.max(0, player.livesCount - 1))}
-                                        className="px-2 py-1 bg-red-600 text-white rounded font-rubik hover:bg-red-700 transition-colors"
+                                        className="px-2 py-1 bg-red-600 text-white rounded-sm font-rubik hover:bg-red-700 transition-colors"
                                     >
                                         -
                                     </button>
@@ -312,7 +312,7 @@ export default function AdminExtremoPlayers() {
                                     </div>
                                     <button
                                         onClick={() => updatePlayer(player.id, 'livesCount', Math.min(3, player.livesCount + 1))}
-                                        className="px-2 py-1 bg-green-600 text-white rounded font-rubik hover:bg-green-700 transition-colors"
+                                        className="px-2 py-1 bg-green-600 text-white rounded-sm font-rubik hover:bg-green-700 transition-colors"
                                     >
                                         +
                                     </button>

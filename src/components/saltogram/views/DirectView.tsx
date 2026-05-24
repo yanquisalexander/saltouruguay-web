@@ -20,7 +20,7 @@ export default function DirectView({ user, conversations, loadingConversations, 
     }, []);
 
     return (
-        <section className="bg-white/5 backdrop-blur rounded-3xl border border-white/10 p-6">
+        <section className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 p-6">
             <header className="flex items-center justify-between mb-6">
                 <div>
                     <p className="text-xs uppercase tracking-[0.2em] text-white/40">Mensajes Directos</p>

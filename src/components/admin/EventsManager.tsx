@@ -239,15 +239,15 @@ export default function EventsManager() {
 
     // --- FORMATTERS ---
     const getStatusBadge = (event: typeof events[number]) => {
-        if (!event.startDate) return <span class="px-2 py-1 rounded text-xs bg-gray-800 text-gray-400">Borrador</span>;
+        if (!event.startDate) return <span class="px-2 py-1 rounded-sm text-xs bg-gray-800 text-gray-400">Borrador</span>;
 
         const start = DateTime.fromJSDate(event.startDate);
         const end = event.endDate ? DateTime.fromJSDate(event.endDate) : null;
         const now = DateTime.local();
 
-        if (end && end < now) return <span class="px-2 py-1 rounded text-xs bg-red-900/30 text-red-400 border border-red-900/50">Finalizado</span>;
-        if (start <= now && (!end || end > now)) return <span class="px-2 py-1 rounded text-xs bg-green-900/30 text-green-400 border border-green-900/50 animate-pulse">En curso</span>;
-        return <span class="px-2 py-1 rounded text-xs bg-blue-900/30 text-blue-400 border border-blue-900/50">Próximo</span>;
+        if (end && end < now) return <span class="px-2 py-1 rounded-sm text-xs bg-red-900/30 text-red-400 border border-red-900/50">Finalizado</span>;
+        if (start <= now && (!end || end > now)) return <span class="px-2 py-1 rounded-sm text-xs bg-green-900/30 text-green-400 border border-green-900/50 animate-pulse">En curso</span>;
+        return <span class="px-2 py-1 rounded-sm text-xs bg-blue-900/30 text-blue-400 border border-blue-900/50">Próximo</span>;
     };
 
     // --- RENDER FORM ---
@@ -261,7 +261,7 @@ export default function EventsManager() {
                         type="text"
                         value={data.name}
                         onInput={(e) => onChangeInput(e, 'name', isNew)}
-                        className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"
+                        className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-hidden transition-colors"
                         placeholder="Ej: Torneo de Bedwars"
                     />
                 </div>
@@ -273,7 +273,7 @@ export default function EventsManager() {
                             type="datetime-local"
                             value={data.startDate || ""}
                             onInput={(e) => onChangeDate(e, 'startDate', isNew)}
-                            className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-none"
+                            className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-hidden"
                             style={{ colorScheme: "dark" }}
                         />
                     </div>
@@ -283,7 +283,7 @@ export default function EventsManager() {
                             type="datetime-local"
                             value={data.endDate || ""}
                             onInput={(e) => onChangeDate(e, 'endDate', isNew)}
-                            className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-none"
+                            className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-hidden"
                             style={{ colorScheme: "dark" }}
                         />
                     </div>
@@ -297,7 +297,7 @@ export default function EventsManager() {
                             type="text"
                             value={data.location || ""}
                             onInput={(e) => onChangeInput(e, 'location', isNew)}
-                            className="w-full p-3 pl-10 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-none"
+                            className="w-full p-3 pl-10 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-hidden"
                             placeholder="Ej: Discord, Twitch, Lobby 1"
                         />
                     </div>
@@ -308,7 +308,7 @@ export default function EventsManager() {
                     <textarea
                         value={data.description || ""}
                         onInput={(e) => onChangeInput(e, 'description', isNew)}
-                        className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl h-32 resize-none focus:border-blue-500 focus:outline-none"
+                        className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl h-32 resize-none focus:border-blue-500 focus:outline-hidden"
                         placeholder="Detalles del evento..."
                     />
                 </div>
@@ -319,7 +319,7 @@ export default function EventsManager() {
                         id={isNew ? "new-featured" : "edit-featured"}
                         checked={data.featured}
                         onChange={(e) => onChangeInput(e, 'featured', isNew)}
-                        className="w-5 h-5 rounded border-gray-600 text-blue-600 focus:ring-blue-500 bg-gray-700"
+                        className="w-5 h-5 rounded-sm border-gray-600 text-blue-600 focus:ring-blue-500 bg-gray-700"
                     />
                     <label htmlFor={isNew ? "new-featured" : "edit-featured"} className="text-sm font-medium text-white cursor-pointer select-none">
                         Destacar evento
@@ -378,7 +378,7 @@ export default function EventsManager() {
                 </div>
 
                 <div className="bg-blue-900/10 border border-blue-900/20 p-3 rounded-lg flex gap-3 items-start">
-                    <div className="p-1 bg-blue-500/20 rounded text-blue-400 mt-0.5"><Upload size={14} /></div>
+                    <div className="p-1 bg-blue-500/20 rounded-sm text-blue-400 mt-0.5"><Upload size={14} /></div>
                     <p className="text-xs text-blue-200/70 leading-relaxed">
                         La imagen se subirá automáticamente al guardar. Asegúrate de tener derechos sobre la imagen utilizada.
                     </p>
@@ -439,7 +439,7 @@ export default function EventsManager() {
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {events.map(event => (
-                                <tr key={event.id} className="group hover:bg-white/[0.02] transition-colors">
+                                <tr key={event.id} className="group hover:bg-white/2 transition-colors">
                                     <td className="p-4">
                                         <div className="size-12 rounded-lg bg-white/5 overflow-hidden border border-white/10">
                                             <img
@@ -515,7 +515,7 @@ export default function EventsManager() {
             {/* MODAL CREAR */}
             <dialog
                 ref={dialogRef}
-                className="backdrop:bg-black/80 backdrop:backdrop-blur-sm bg-[#111] text-white border border-white/10 rounded-2xl shadow-2xl p-0 w-full max-w-4xl m-auto open:animate-in open:fade-in open:zoom-in-95"
+                className="backdrop:bg-black/80 backdrop:backdrop-blur-xs bg-[#111] text-white border border-white/10 rounded-2xl shadow-2xl p-0 w-full max-w-4xl m-auto open:animate-in open:fade-in open:zoom-in-95"
                 onClick={(e) => e.target === dialogRef.current && closeDialog()}
             >
                 <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#15151a]">
@@ -534,7 +534,7 @@ export default function EventsManager() {
             {/* MODAL EDITAR */}
             <dialog
                 ref={editorDialogRef}
-                className="backdrop:bg-black/80 backdrop:backdrop-blur-sm bg-[#111] text-white border border-white/10 rounded-2xl shadow-2xl p-0 w-full max-w-4xl m-auto open:animate-in open:fade-in open:zoom-in-95"
+                className="backdrop:bg-black/80 backdrop:backdrop-blur-xs bg-[#111] text-white border border-white/10 rounded-2xl shadow-2xl p-0 w-full max-w-4xl m-auto open:animate-in open:fade-in open:zoom-in-95"
                 onClick={(e) => e.target === editorDialogRef.current && closeEditorDialog()}
             >
                 <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#15151a]">

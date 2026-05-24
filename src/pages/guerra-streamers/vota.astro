@@ -30,9 +30,9 @@ return new Response(null, { status: 404 })
     </header>
     <div class="flex flex-col w-full justify-center items-center gap-4">
       <h1
-        class="with-glyph flex relative w-max text-3xl transform px-2 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen !skew-x-[-20deg] -rotate-6"
+        class="with-glyph flex relative w-max text-3xl transform px-2 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen skew-x-[-20deg]! -rotate-6"
       >
-        <span class="flex !skew-x-[20deg] transform"> Votación </span>
+        <span class="flex skew-x-20! transform"> Votación </span>
       </h1>
       <div class="flex flex-col w-full mt-8 max-w-[50ch] gap-4">
         <p class="text-center font-teko text-3xl text-white">
@@ -61,16 +61,16 @@ return new Response(null, { status: 404 })
             {!userHasVoted ? (
               <button
                 data-player-id={player.playerNumber}
-                class="vote-btn bg-[#b4cd02]  text-black font-bold py-2 px-8 -skew-x-[20deg]  hover:bg-[#86b700] transition-colors"
+                class="vote-btn bg-[#b4cd02]  text-black font-bold py-2 px-8 skew-x-[-20deg]  hover:bg-[#86b700] transition-colors"
               >
-                <span class="inline-block !skew-x-[20deg] "> Votar </span>
+                <span class="inline-block skew-x-20! "> Votar </span>
               </button>
             ) : (
               <button
                 disabled
-                class="bg-neutral-500 text-white cursor-not-allowed font-bold py-2 px-8 -skew-x-[20deg]  hover:bg-neutral-600 transition-colors"
+                class="bg-neutral-500 text-white cursor-not-allowed font-bold py-2 px-8 skew-x-[-20deg]  hover:bg-neutral-600 transition-colors"
               >
-                <span class="inline-block !skew-x-[20deg] "> Ya votaste </span>
+                <span class="inline-block skew-x-20! "> Ya votaste </span>
               </button>
             )}
           </div>
@@ -83,7 +83,7 @@ return new Response(null, { status: 404 })
 <style>
   h1.with-glyph:after {
     content: "a";
-    @apply !font-atomic-extras text-[80px] mt-8 absolute inset-x-0 text-center;
+    @apply font-atomic-extras! text-[80px] mt-8 absolute inset-x-0 text-center;
     z-index: -1;
   }
 

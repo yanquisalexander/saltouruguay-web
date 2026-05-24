@@ -117,7 +117,7 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
     return (
         <dialog
             ref={dialogRef}
-            class="fixed bottom-20 left-4 z-[10000] bg-slate-900 text-white border-4 border-slate-600 p-0 min-w-[400px] max-w-[600px] w-full max-h-[80vh] overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] rounded-sm backdrop:bg-black/50"
+            class="fixed bottom-20 left-4 z-10000 bg-slate-900 text-white border-4 border-slate-600 p-0 min-w-[400px] max-w-[600px] w-full max-h-[80vh] overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] rounded-xs backdrop:bg-black/50"
         >
             {/* Retro Header */}
             <div class="bg-slate-800 p-3 border-b-4 border-slate-600 flex justify-between items-center sticky top-0 z-10">
@@ -166,7 +166,7 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
                                 `}
                             >
                                 {/* Status Indicator Light */}
-                                <div class={`absolute top-2 right-2 w-2 h-2 rounded-sm ${isPlaying ? 'bg-green-500 animate-pulse shadow-[0_0_5px_#22c55e]' : 'bg-slate-800'}`} />
+                                <div class={`absolute top-2 right-2 w-2 h-2 rounded-xs ${isPlaying ? 'bg-green-500 animate-pulse shadow-[0_0_5px_#22c55e]' : 'bg-slate-800'}`} />
 
                                 <div class="flex flex-col gap-2">
                                     <span class="text-xs font-press-start-2p text-slate-300 truncate pr-4" title={audio.name}>
@@ -209,7 +209,7 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
                                     </div>
 
                                     {/* Volume Slider */}
-                                    <div class="flex items-center gap-2 mt-1 bg-slate-900/50 p-1 rounded border border-white/5">
+                                    <div class="flex items-center gap-2 mt-1 bg-slate-900/50 p-1 rounded-sm border border-white/5">
                                         <span class="text-[10px] text-slate-500">VOL</span>
                                         <input
                                             type="range"

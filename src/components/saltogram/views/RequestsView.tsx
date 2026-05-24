@@ -46,7 +46,7 @@ export default function RequestsView({ friendRequestsState, setFriendRequestsSta
     };
 
     return (
-        <section className="bg-white/5 backdrop-blur rounded-3xl border border-white/10 p-6">
+        <section className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 p-6">
             <header className="mb-6">
                 <p className="text-xs uppercase tracking-[0.2em] text-white/40">Solicitudes</p>
                 <h2 className="text-2xl font-anton text-white">Amistades pendientes</h2>

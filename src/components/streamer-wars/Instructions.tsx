@@ -128,7 +128,7 @@ export const Instructions = ({
 
     return (
         <div
-            className={`fixed inset-0 bg-black z-[8000] transition-opacity duration-500 flex flex-col ${fadeClass}`}
+            className={`fixed inset-0 bg-black z-8000 transition-opacity duration-500 flex flex-col ${fadeClass}`}
         >
             {customLayout ? (
                 <div className="flex flex-col justify-center items-center h-full w-full relative">
@@ -149,7 +149,7 @@ export const Instructions = ({
                         <div className="text-sm font-mono text-gray-300 mb-2">
                             {formatTime(timeLeft)}
                         </div>
-                        <h1 className="text-3xl font-mono font-bold bg-gradient-to-r from-white to-gray-200 text-transparent bg-clip-text">
+                        <h1 className="text-3xl font-mono font-bold bg-linear-to-r from-white to-gray-200 text-transparent bg-clip-text">
                             {customTitle ?? "Instrucciones"}
                         </h1>
                     </header>
@@ -180,7 +180,7 @@ export const Instructions = ({
                                                                 key={kIdx}
                                                                 className={cn(
                                                                     "flex items-center justify-center select-none",
-                                                                    !imageSrc && "bg-white text-black font-black text-xl px-3 py-1 rounded min-w-[40px] text-center border-b-4 border-gray-400 active:border-b-0 active:translate-y-1"
+                                                                    !imageSrc && "bg-white text-black font-black text-xl px-3 py-1 rounded-sm min-w-[40px] text-center border-b-4 border-gray-400 active:border-b-0 active:translate-y-1"
                                                                 )}
                                                             >
                                                                 {imageSrc ? (
@@ -218,10 +218,10 @@ export const Instructions = ({
                         style={{
                             "--spin-duration": "6s"
                         }}
-                        className="fixed with-360-y-spin bottom-32 text-5xl opacity-70 rotate-[32deg] select-none right-16 font-atomic-extras z-[9000] pointer-events-none text-white">
+                        className="fixed with-360-y-spin bottom-32 text-5xl opacity-70 rotate-32 select-none right-16 font-atomic-extras z-9000 pointer-events-none text-white">
                         &#x0055;
                     </span>
-                    <span className="fixed bottom-48 text-5xl opacity-70 rotate-[-16deg] select-none left-16 font-atomic-extras z-[9000] pointer-events-none text-white">
+                    <span className="fixed bottom-48 text-5xl opacity-70 rotate-[-16deg] select-none left-16 font-atomic-extras z-9000 pointer-events-none text-white">
                         &#x0050;
                     </span>
                 </div>

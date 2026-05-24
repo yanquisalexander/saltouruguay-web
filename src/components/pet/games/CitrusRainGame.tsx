@@ -205,10 +205,10 @@ export default function CitrusRainGame({ onComplete, onClose, appearance }: Citr
         playerXRef.current = newX;
     }; return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fade-in">
-            <div className="w-full max-w-md h-[600px] bg-gradient-to-b from-sky-900 to-sky-950 rounded-3xl border border-white/20 shadow-2xl relative overflow-hidden flex flex-col">
+            <div className="w-full max-w-md h-[600px] bg-linear-to-b from-sky-900 to-sky-950 rounded-3xl border border-white/20 shadow-2xl relative overflow-hidden flex flex-col">
 
                 {/* Header */}
-                <div className="p-4 flex justify-between items-center z-10 bg-black/20 backdrop-blur-sm">
+                <div className="p-4 flex justify-between items-center z-10 bg-black/20 backdrop-blur-xs">
                     <div className="flex items-center gap-2">
                         <span className="text-2xl">🍊</span>
                         <span className="font-bold text-white">Lluvia de Cítricos</span>
@@ -228,7 +228,7 @@ export default function CitrusRainGame({ onComplete, onClose, appearance }: Citr
                     onTouchMove={handleTouchMove}
                 >
                     {gameState === 'intro' && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 z-20 bg-black/40 backdrop-blur-sm">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 z-20 bg-black/40 backdrop-blur-xs">
                             <h3 className="text-3xl font-black text-orange-400 mb-4 drop-shadow-lg">¡Atrapa la Fruta!</h3>
                             <p className="text-white/80 mb-8 text-lg">
                                 Mueve a tu mascota para atrapar naranjas y limones.

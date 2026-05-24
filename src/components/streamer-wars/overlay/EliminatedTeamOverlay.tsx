@@ -63,14 +63,14 @@ export const EliminatedTeamOverlay = ({
     return (
         <>
             {/* Banner superior siempre visible */}
-            <div class="fixed font-squids bg-gradient-to-r from-lime-500 to-lime-400 text-black text-2xl text-center w-full py-3">
+            <div class="fixed font-squids bg-linear-to-r from-lime-500 to-lime-400 text-black text-2xl text-center w-full py-3">
                 Soborno al capitan
             </div>
 
             {/* Panel persistente: muestra siempre la lista de equipos */}
             <div className="p-4 pt-36">
                 {/* Encabezado con mensaje de espera o nombre del equipo eliminado */}
-                <h2 className="text-2xl font-medium text-center text-white animate-pulse animate-iteration-count-infinite animate-duration-[3000ms] mb-4">
+                <h2 className="text-2xl font-medium text-center text-white animate-pulse animate-iteration-count-infinite animate-duration-3000 mb-4">
                     {eliminatedTeam
                         ? `El equipo ${getTranslation(eliminatedTeam)} ha sido eliminado`
                         : <span dangerouslySetInnerHTML={{ __html: "&nbsp;" }}></span>
@@ -151,10 +151,10 @@ export const EliminatedTeamOverlay = ({
             {/* Overlay del mensaje con efecto fade in/out (solo se activa al aceptar el soborno) */}
             {eliminatedTeam && (
                 <div
-                    className={`fixed inset-0 bg-black bg-opacity-100 flex flex-col items-center justify-center z-50 transition-all animate-duration-[2500ms] ${showing ? "animate-fade-in" : "animate-fade-out pointer-events-none"}`}
+                    className={`fixed inset-0 bg-black bg-opacity-100 flex flex-col items-center justify-center z-50 transition-all animate-duration-2500 ${showing ? "animate-fade-in" : "animate-fade-out pointer-events-none"}`}
                 >
                     <span
-                        class="relative flex flex-col justify-center text-center animate-duration-[4000ms] animate-scale">
+                        class="relative flex flex-col justify-center text-center animate-duration-4000 animate-scale">
                         <span class="font-squids  text-lg text-center mb-8 font-bold text-neutral-400">
                             Gracias por participar
                         </span>

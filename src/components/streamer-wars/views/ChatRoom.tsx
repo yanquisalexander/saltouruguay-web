@@ -55,7 +55,7 @@ const EmotePicker = ({ onSelect }: { onSelect: (emote: keyof typeof EMOTES) => v
             {Object.keys(EMOTES).map((emote) => (
                 <button
                     key={emote}
-                    class="w-10 h-10 bg-black/40 hover:bg-pink-500/20 border border-transparent hover:border-pink-500 flex items-center justify-center transition-all duration-300 rounded"
+                    class="w-10 h-10 bg-black/40 hover:bg-pink-500/20 border border-transparent hover:border-pink-500 flex items-center justify-center transition-all duration-300 rounded-sm"
                     onClick={() => onSelect(emote as keyof typeof EMOTES)}
                     title={`:${emote}:`}
                 >
@@ -106,7 +106,7 @@ const ChatMessageItem = memo(({
 
     if (isAnnouncement) {
         return (
-            <div class="bg-pink-900/20 text-pink-300 p-3 border border-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.2)] mb-2 text-sm backdrop-blur-sm rounded">
+            <div class="bg-pink-900/20 text-pink-300 p-3 border border-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.2)] mb-2 text-sm backdrop-blur-xs rounded-sm">
                 <div class="flex items-center gap-2 mb-1 border-b border-pink-500/30 pb-1">
                     <LucideMegaphone size={16} />
                     <span class="font-atomic uppercase tracking-widest text-pink-400">Sistema</span>
@@ -120,14 +120,14 @@ const ChatMessageItem = memo(({
         <div class="group relative flex gap-x-3 w-full hover:bg-white/5 p-2 items-start text-sm transition-all duration-300 border-l-[3px] border-transparent hover:border-pink-500/50 hover:pl-3">
             {showModeration && (
                 <button
-                    class="absolute right-2 -top-2 opacity-0 group-hover:opacity-100 text-white bg-red-600 border border-red-800 rounded p-1 hover:bg-red-500 transition shadow-[0_0_10px_rgba(220,38,38,0.5)] z-10"
+                    class="absolute right-2 -top-2 opacity-0 group-hover:opacity-100 text-white bg-red-600 border border-red-800 rounded-sm p-1 hover:bg-red-500 transition shadow-[0_0_10px_rgba(220,38,38,0.5)] z-10"
                     onClick={removeMessage}
                     title="Eliminar Mensaje"
                 >
                     <LucideX size={12} />
                 </button>
             )}
-            <div class="flex flex-col w-full break-words min-w-0">
+            <div class="flex flex-col w-full wrap-break-word min-w-0">
                 <span class={`font-atomic w-max flex items-center gap-x-2 text-xs uppercase tracking-wider ${admin ? 'text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.8)]' : 'text-neutral-400'}`}>
                     {admin && (
                         <Tooltip tooltipPosition="top" text="ADMIN / MOD">
@@ -140,7 +140,7 @@ const ChatMessageItem = memo(({
                     </span>
                 </span>
                 <span
-                    class="text-neutral-300 leading-relaxed break-words mt-1"
+                    class="text-neutral-300 leading-relaxed wrap-break-word mt-1"
                     dangerouslySetInnerHTML={{ __html: parsedMessage }}
                 />
             </div>
@@ -308,7 +308,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
     return (
         <div class={`flex flex-col w-full h-full bg-neutral-950/80 backdrop-blur-md relative p-0 ${MODERN_BOX} rounded-lg`}>
             {/* HEADER MODERN */}
-            <div class="bg-gradient-to-b from-neutral-900 to-black border-b border-neutral-800 p-3 flex items-center justify-between select-none">
+            <div class="bg-linear-to-b from-neutral-900 to-black border-b border-neutral-800 p-3 flex items-center justify-between select-none">
                 <h3 class="text-lg font-atomic text-white flex items-center gap-2 tracking-widest">
                     <LucideMessageCircle class="text-pink-500" size={20} />
                     COMUNICACIONES
@@ -330,7 +330,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                 {chatLocked && (
                     <div class="absolute inset-0 bg-black/80 z-20 flex flex-col items-center justify-center text-red-500 font-anton p-4 text-center backdrop-blur-md">
                         <LucideLock size={48} class="mb-2 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)] rounded-full" />
-                        <span class="text-xl font-atomic tracking-widest border border-red-500/50 p-3 bg-red-950/30 uppercase rounded">
+                        <span class="text-xl font-atomic tracking-widest border border-red-500/50 p-3 bg-red-950/30 uppercase rounded-sm">
                             SYSTEM_LOCK: ACTIVO
                         </span>
                     </div>
@@ -382,7 +382,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                             disabled={chatLocked}
                             maxLength={200}
                             rows={1}
-                            class="w-full h-12 bg-neutral-900/50 text-white text-sm p-3 pr-10 resize-none outline-none border border-neutral-800 focus:border-pink-500/50 transition-colors placeholder:text-neutral-600 rounded"
+                            class="w-full h-12 bg-neutral-900/50 text-white text-sm p-3 pr-10 resize-none outline-hidden border border-neutral-800 focus:border-pink-500/50 transition-colors placeholder:text-neutral-600 rounded-sm"
                             placeholder={chatLocked ? "TRANSMISIÓN DETENIDA..." : "Mensaje al sistema..."}
                         />
                         <span class={`absolute right-2 bottom-3 text-[10px] font-anton tracking-wide ${textInput.length > 180 ? 'text-red-500' : 'text-neutral-600'}`}>
@@ -395,7 +395,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                             activator={
                                 <button
                                     disabled={chatLocked}
-                                    class={`text-neutral-400 p-2 h-full flex items-center justify-center disabled:opacity-50 rounded ${MODERN_BTN}`}
+                                    class={`text-neutral-400 p-2 h-full flex items-center justify-center disabled:opacity-50 rounded-sm ${MODERN_BTN}`}
                                 >
                                     <LucideSmilePlus size={20} />
                                 </button>
@@ -409,7 +409,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                     <button
                         disabled={sending || !textInput.trim() || chatLocked}
                         onClick={sendMessage}
-                        class={`text-white p-3 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed rounded bg-pink-600/80 shadow-[0_0_10px_rgba(236,72,153,0.3)] ${MODERN_BTN}`}
+                        class={`text-white p-3 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed rounded-sm bg-pink-600/80 shadow-[0_0_10px_rgba(236,72,153,0.3)] ${MODERN_BTN}`}
                     >
                         <LucideSend size={20} />
                     </button>

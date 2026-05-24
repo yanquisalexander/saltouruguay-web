@@ -173,12 +173,12 @@ export default function PetApp() {
             <div className="h-full flex flex-col w-full bg-gray-950 text-white font-sans items-center justify-center p-4 relative overflow-hidden">
                 {/* Background */}
                 <div className="absolute inset-0 bg-black z-0"></div>
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black opacity-50"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-gray-900 via-black to-black opacity-50"></div>
 
                 <div className="z-10 text-center flex flex-col items-center gap-6 animate-fade-in max-w-md mx-auto">
                     <div className="text-8xl mb-4 animate-bounce grayscale opacity-50">🪦</div>
                     <h2 className="text-5xl font-black text-gray-500 tracking-tighter">R.I.P.</h2>
-                    <div className="bg-gray-900/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-800">
+                    <div className="bg-gray-900/50 backdrop-blur-xs p-6 rounded-2xl border border-gray-800">
                         <p className="text-xl text-gray-300 font-medium">
                             <span className="text-violet-400 font-bold">{pet.name}</span> ha pasado a mejor vida.
                         </p>
@@ -202,7 +202,7 @@ export default function PetApp() {
     return (
         <div className="h-full flex flex-col w-full bg-gray-950 text-white font-sans overflow-hidden relative">
             {/* Background Effects */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-violet-900/20 via-gray-950 to-gray-950 pointer-events-none"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-violet-900/20 via-gray-950 to-gray-950 pointer-events-none"></div>
             <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#8b5cf6 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
 
             {/* Navigation - Simple top bar */}
@@ -286,7 +286,7 @@ export default function PetApp() {
                         </div>
 
                         {/* Actions - Bottom */}
-                        <div className="mb-4 z-10 bg-black/40 backdrop-blur-xl p-4 rounded-[2rem] border border-white/10 shadow-2xl animate-fade-in-up">
+                        <div className="mb-4 z-10 bg-black/40 backdrop-blur-xl p-4 rounded-4xl border border-white/10 shadow-2xl animate-fade-in-up">
                             <PetActions
                                 petId={pet.id}
                                 stats={pet.currentStats}

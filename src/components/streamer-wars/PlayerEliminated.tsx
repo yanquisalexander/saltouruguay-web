@@ -102,14 +102,14 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
             {/* Canvas fuera del div con key para que no se destruya en cada activación */}
             <canvas
                 ref={canvasRef}
-                class={`z-[6500] fixed inset-0 w-full h-full pointer-events-none ${showing ? '' : 'hidden'}`}
+                class={`z-6500 fixed inset-0 w-full h-full pointer-events-none ${showing ? '' : 'hidden'}`}
             />
             <div
                 key={key}
-                class={`z-[6500] fixed inset-0 bottom-0 left-0 right-0 min-h-screen w-full bg-black/80 p-4 flex items-center justify-center transition animate-duration-[2500ms] ${showing ? "animate-fade-in" : "animate-fade-out pointer-events-none"}`}>
+                class={`z-6500 fixed inset-0 bottom-0 left-0 right-0 min-h-screen w-full bg-black/80 p-4 flex items-center justify-center transition animate-duration-2500 ${showing ? "animate-fade-in" : "animate-fade-out pointer-events-none"}`}>
                 <div class="relative z-10 text-white p-4 rounded-lg">
                     <span
-                        class="relative flex flex-col justify-center text-center animate-duration-[4000ms] animate-scale">
+                        class="relative flex flex-col justify-center text-center animate-duration-4000 animate-scale">
                         <span class="font-squids text-lg text-center mb-8 font-bold text-neutral-400">
                             Gracias por participar
                         </span>
@@ -138,7 +138,7 @@ export const PlayerEliminated = ({ playerNumber, session }: { playerNumber: numb
                 <h2 className="text-2xl fixed bottom-16 font-atomic text-neutral-500 select-none -skew-y-6">
                     <span className="tracking-wider">Guerra de Streamers</span>
                 </h2>
-                <span className="fixed bottom-32 text-5xl opacity-30 rotate-[32deg] select-none right-16 font-atomic-extras">
+                <span className="fixed bottom-32 text-5xl opacity-30 rotate-32 select-none right-16 font-atomic-extras">
                     &#x0055;
                 </span>
                 <span className="fixed bottom-48 text-5xl opacity-30 rotate-[-16deg] select-none left-16 font-atomic-extras">

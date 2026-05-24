@@ -11,7 +11,7 @@ import { usePusher } from "@/hooks/usePusher";
 let GENERAL_ACTIONS = [
     {
         name: "Anunciar dificultades técnicas",
-        classes: "bg-red-500 hover:bg-red-600 !text-black",
+        classes: "bg-red-500 hover:bg-red-600 text-black!",
         icon: LucideBellRing,
         execute: async () => {
             toast.promise(actions.streamerWars.techDifficulties(), {
@@ -23,7 +23,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Desbloquear jornada",
-        classes: "bg-green-500 hover:bg-green-600 !text-black",
+        classes: "bg-green-500 hover:bg-green-600 text-black!",
         icon: LucideLockKeyholeOpen,
         execute: async () => {
             toast.promise(actions.streamerWars.setDayAsAvailable(), {
@@ -35,7 +35,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Finalizar jornada",
-        classes: "bg-blue-500 hover:bg-blue-600 !text-black",
+        classes: "bg-blue-500 hover:bg-blue-600 text-black!",
         icon: LucideFlag,
         execute: async () => {
             toast.promise(actions.streamerWars.finishDay(), {
@@ -47,7 +47,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Iniciar Simón Dice",
-        classes: "bg-yellow-500 hover:bg-yellow-600 !text-black",
+        classes: "bg-yellow-500 hover:bg-yellow-600 text-black!",
         icon: LucideFlag,
         execute: async () => {
             toast.promise(actions.games.simonSays.startGame(), {
@@ -59,7 +59,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Siguiente ronda Simón Dice",
-        classes: "bg-yellow-500 hover:bg-yellow-600 !text-black",
+        classes: "bg-yellow-500 hover:bg-yellow-600 text-black!",
         icon: LucideFlag,
         execute: async () => {
             toast.promise(actions.games.simonSays.advanceToNextRoundForCurrentPlayers(), {
@@ -71,7 +71,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Simón Dice: Siguiente ronda con otros jugadores",
-        classes: "bg-sky-500 hover:bg-sky-600 !text-black",
+        classes: "bg-sky-500 hover:bg-sky-600 text-black!",
         icon: LucideFlag,
         execute: async () => {
             toast.promise(actions.games.simonSays.nextRoundWithOtherPlayers(), {
@@ -83,7 +83,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Enviar Jugadores a Sala de Espera",
-        classes: "bg-purple-500 hover:bg-purple-600 !text-black",
+        classes: "bg-purple-500 hover:bg-purple-600 text-black!",
         icon: LucideCoffee,
         execute: async () => {
             toast.promise(actions.streamerWars.sendToWaitingRoom(), {
@@ -95,7 +95,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Limpiar el chat",
-        classes: "bg-gray-500 hover:bg-gray-600 !text-black",
+        classes: "bg-gray-500 hover:bg-gray-600 text-black!",
         icon: LucideTrash2,
         execute: async () => {
             toast.promise(actions.streamerWars.clearChat(), {
@@ -107,7 +107,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Reiniciar Roles",
-        classes: "bg-gray-500 hover:bg-gray-600 !text-black",
+        classes: "bg-gray-500 hover:bg-gray-600 text-black!",
         icon: LucideRefreshCw,
         execute: async () => {
             toast.promise(actions.streamerWars.resetRoles(), {
@@ -118,7 +118,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Quitar aislamiento de jugadores",
-        classes: "bg-gray-500 hover:bg-gray-600 !text-black",
+        classes: "bg-gray-500 hover:bg-gray-600 text-black!",
         icon: LucideGavel,
         execute: async () => {
             toast.promise(actions.streamerWars.unaislateAllPlayers(), {
@@ -129,7 +129,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Recargar overlay",
-        classes: "bg-lime-500 hover:bg-lime-600 !text-black",
+        classes: "bg-lime-500 hover:bg-lime-600 text-black!",
         icon: LucideRefreshCw,
         execute: async () => {
             toast.promise(actions.streamerWars.reloadOverlay(), {
@@ -141,7 +141,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Bloquear chat",
-        classes: "bg-red-500 hover:bg-red-600 !text-black",
+        classes: "bg-red-500 hover:bg-red-600 text-black!",
         icon: LucideMessageSquareLock,
         execute: async () => {
             toast.promise(actions.streamerWars.lockChat(), {
@@ -153,7 +153,7 @@ let GENERAL_ACTIONS = [
     },
     {
         name: "Desbloquear chat",
-        classes: "bg-green-500 hover:bg-green-600 !text-black",
+        classes: "bg-green-500 hover:bg-green-600 text-black!",
         icon: LucideMessageSquareLock,
         execute: async () => {
             toast.promise(actions.streamerWars.unlockChat(), {
@@ -176,7 +176,7 @@ export const StreamerWarsAdmin = ({ session }: { session: Session }) => {
                 ...GENERAL_ACTIONS,
                 {
                     name: "Notificar nueva versión",
-                    classes: "bg-purple-500 hover:bg-purple-600 !text-black",
+                    classes: "bg-purple-500 hover:bg-purple-600 text-black!",
                     icon: LucideFlag,
                     execute: async () => {
                         toast.promise(actions.streamerWars.notifyNewVersion(), {

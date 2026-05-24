@@ -276,7 +276,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
         const words = phrase.phrase.split(" ");
 
         return (
-            <div className="flex flex-wrap gap-6 justify-center items-center mb-8 p-6 bg-black/40 border-4 border-black rounded-xl backdrop-blur-sm">
+            <div className="flex flex-wrap gap-6 justify-center items-center mb-8 p-6 bg-black/40 border-4 border-black rounded-xl backdrop-blur-xs">
                 {words.map((word: string, wordIndex: number) => (
                     <div key={wordIndex} className="flex gap-2">
                         {word.split("").map((char: string, charIndex: number) => {
@@ -319,10 +319,10 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
         return (
             <div className="relative flex items-center justify-center">
                 {/* Borde exterior de la ruleta estilo 8-bit */}
-                <div className="absolute rounded-full border-[12px] border-black w-[20rem] h-[20rem] md:w-[34rem] md:h-[34rem] z-0 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]"></div>
+                <div className="absolute rounded-full border-12 border-black w-[20rem] h-80 md:w-136 md:h-136 z-0 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]"></div>
 
                 <motion.div
-                    className={`relative rounded-full border-8 border-yellow-500 overflow-hidden w-[18rem] h-[18rem] md:w-[32rem] md:h-[32rem] z-10`}
+                    className={`relative rounded-full border-8 border-yellow-500 overflow-hidden w-[18rem] h-72 md:w-lg md:h-128 z-10`}
                     style={{
                         rotate: wheelRotation,
                         background: "conic-gradient(from 0deg, #ef4444 0deg 45deg, #3b82f6 45deg 90deg, #22c55e 90deg 135deg, #eab308 135deg 180deg, #a855f7 180deg 225deg, #ec4899 225deg 270deg, #64748b 270deg 315deg, #f97316 315deg 360deg)"
@@ -366,9 +366,9 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                         filter: "drop-shadow(4px 4px 0px rgba(0,0,0,0.8))"
                     }}
                 >
-                    <div className="w-0 h-0 border-l-[25px] border-l-transparent border-r-[25px] border-r-transparent border-t-[50px] border-t-red-600 relative">
+                    <div className="w-0 h-0 border-l-25 border-l-transparent border-r-25 border-r-transparent border-t-50 border-t-red-600 relative">
                         {/* Borde simulado del puntero */}
-                        <div className="absolute -top-[54px] -left-[29px] w-0 h-0 border-l-[29px] border-l-transparent border-r-[29px] border-r-transparent border-t-[58px] border-t-black -z-10"></div>
+                        <div className="absolute top-[-54px] left-[-29px] w-0 h-0 border-l-29 border-l-transparent border-r-29 border-r-transparent border-t-58 border-t-black -z-10"></div>
                     </div>
                 </div>
             </div>
@@ -377,7 +377,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
 
     if (gameState === "loading") {
         return (
-            <div className="flex items-center justify-center min-h-dvh bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900 via-purple-900 to-slate-900">
+            <div className="flex items-center justify-center min-h-dvh bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-blue-900 via-purple-900 to-slate-900">
                 <div className="flex flex-col items-center gap-4">
                     <div className="animate-spin w-16 h-16 border-8 border-yellow-400 border-t-transparent rounded-full"></div>
                     <div className="text-yellow-400 font-press-start-2p animate-pulse">CARGANDO...</div>
@@ -413,7 +413,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
 
             <div
                 ref={gameContainerRef}
-                className={`h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900 via-purple-900 to-slate-900 text-white ${isFullscreen ? "p-4 overflow-y-auto" : "p-4"}`}
+                className={`h-full bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-blue-900 via-purple-900 to-slate-900 text-white ${isFullscreen ? "p-4 overflow-y-auto" : "p-4"}`}
             >
                 <div className="max-w-6xl mx-auto flex flex-col items-center min-h-full">
                     {/* Header */}
@@ -501,7 +501,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                                         font-press-start-2p text-xl py-6 px-12 border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all
                                         ${isSpinning || gameState === "guessing"
                                             ? "bg-gray-500 text-gray-300 cursor-not-allowed shadow-none translate-y-1"
-                                            : "bg-gradient-to-b from-yellow-400 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-black active:translate-y-1 active:shadow-none animate-pulse"
+                                            : "bg-linear-to-b from-yellow-400 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-black active:translate-y-1 active:shadow-none animate-pulse"
                                         }
                                     `}
                                 >
@@ -615,7 +615,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase }: RuletaLocaProps) =
                                 type="text"
                                 value={solveGuess}
                                 onInput={(e) => setSolveGuess((e.target as HTMLInputElement).value)}
-                                className="w-full bg-black border-4 border-white text-yellow-400 font-press-start-2p text-center p-4 mb-6 uppercase outline-none focus:border-yellow-400"
+                                className="w-full bg-black border-4 border-white text-yellow-400 font-press-start-2p text-center p-4 mb-6 uppercase outline-hidden focus:border-yellow-400"
                                 placeholder="FRASE..."
                                 autoFocus
                             />

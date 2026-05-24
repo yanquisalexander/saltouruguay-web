@@ -196,13 +196,13 @@ export default function CreatePostModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
             {/* Backdrop */}
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-xs" onClick={onClose}></div>
 
             {/* Modal Panel */}
             <div className="relative z-10 bg-[#0a0a0a] rounded-3xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl shadow-purple-900/20">
 
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/[0.02]">
+                <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/2">
                     <h2 className="text-2xl font-anton text-white uppercase tracking-wide">
                         Crear Publicación
                     </h2>
@@ -268,7 +268,7 @@ export default function CreatePostModal({
                                 placeholder="¿Qué estás pensando, Saltano?"
                                 maxLength={500}
                                 rows={3}
-                                className="w-full p-0 bg-transparent text-white text-lg placeholder:text-white/30 resize-none focus:outline-none min-h-[80px] custom-scrollbar"
+                                className="w-full p-0 bg-transparent text-white text-lg placeholder:text-white/30 resize-none focus:outline-hidden min-h-[80px] custom-scrollbar"
                                 disabled={submitting}
                             />
                             <p className={`text-xs text-right mt-2 font-mono transition-colors ${text.length > 450 ? 'text-red-400' : 'text-white/30'}`}>
@@ -394,7 +394,7 @@ export default function CreatePostModal({
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="p-6 border-t border-white/5 bg-white/[0.02] flex items-center justify-end gap-4">
+                    <div className="p-6 border-t border-white/5 bg-white/2 flex items-center justify-end gap-4">
                         <button
                             type="button"
                             onClick={onClose}
@@ -407,7 +407,7 @@ export default function CreatePostModal({
                             type="submit"
                             disabled={submitting || (!text.trim() && !image)}
                             className={`
-                                relative flex items-center gap-2 px-8 py-2.5 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-purple-900/20 hover:shadow-purple-900/40 disabled:opacity-50 disabled:cursor-not-allowed hover:translate-y-0
+                                relative flex items-center gap-2 px-8 py-2.5 bg-linear-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-purple-900/20 hover:shadow-purple-900/40 disabled:opacity-50 disabled:cursor-not-allowed hover:translate-y-0
                                 ${submitting ? '' : 'hover:-translate-y-0.5'}
                             `}
                         >
@@ -427,7 +427,7 @@ export default function CreatePostModal({
 
             {/* Music Picker Overlay */}
             {showMusicPicker && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
                     <div className="w-full max-w-md h-[80vh] bg-[#242526] rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative flex flex-col">
                         <MusicPicker
                             onSelect={(track) => {
@@ -442,7 +442,7 @@ export default function CreatePostModal({
 
             {/* Event Picker Overlay */}
             {showEventPicker && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
                     <div className="w-full max-w-md h-[60vh] bg-[#242526] rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative flex flex-col">
                         <EventPicker
                             onSelect={(event) => {

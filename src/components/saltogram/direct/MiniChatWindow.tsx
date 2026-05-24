@@ -97,7 +97,7 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
     return (
         <div className="w-80 h-96 bg-card rounded-t-xl border border-border shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-200">
             {/* Header */}
-            <div className="p-3 bg-card border-b border-border flex items-center justify-between shadow-sm z-10 cursor-pointer" onClick={() => minimizeChat(otherUser.id)}>
+            <div className="p-3 bg-card border-b border-border flex items-center justify-between shadow-xs z-10 cursor-pointer" onClick={() => minimizeChat(otherUser.id)}>
                 <div className="flex items-center gap-2">
                     <div className="relative">
                         <img
@@ -144,8 +144,8 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
                         return (
                             <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${isFirstInGroup ? 'mt-2' : 'mt-0.5'}`}>
                                 <div
-                                    className={`max-w-[85%] px-3 py-2 text-sm shadow-sm break-words ${isMe
-                                        ? 'bg-gradient-to-br from-electric-violet-600 to-electric-violet-500 text-white'
+                                    className={`max-w-[85%] px-3 py-2 text-sm shadow-xs wrap-break-word ${isMe
+                                        ? 'bg-linear-to-br from-electric-violet-600 to-electric-violet-500 text-white'
                                         : 'bg-muted text-foreground'
                                         }`}
                                     style={{
@@ -177,7 +177,7 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
                         onInput={(e) => setNewMessage(e.currentTarget.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                         placeholder="Aa"
-                        className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-sm"
+                        className="flex-1 bg-transparent border-none outline-hidden text-foreground placeholder-muted-foreground text-sm"
                     />
                     <button
                         onClick={handleSend}

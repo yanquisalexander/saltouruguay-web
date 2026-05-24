@@ -19,14 +19,14 @@ const hasVoted = Array.isArray(votes) && votes.length > 0;
       bg-violet-900/30 hover:bg-violet-900/50 
       border border-violet-500/30 hover:border-yellow-500/50
       hover:scale-105 hover:shadow-[0_0_20px_rgba(139,92,246,0.3)]
-      backdrop-blur-sm overflow-hidden"
+      backdrop-blur-xs overflow-hidden"
     >
       {/* Efecto de brillo sutil en el fondo al hacer hover */}
-      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+      <div class="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
 
       <div class="flex items-center gap-2 mb-0.5">
         <LucideTicket class="w-4 h-4 text-yellow-500 animate-pulse" />
-        <span class="text-yellow-400 font-bold font-rubik text-sm tracking-wider uppercase drop-shadow-sm">
+        <span class="text-yellow-400 font-bold font-rubik text-sm tracking-wider uppercase drop-shadow-xs">
           #SaltoAwards2025
         </span>
         <LucideTicket class="w-4 h-4 text-yellow-500 animate-pulse" />

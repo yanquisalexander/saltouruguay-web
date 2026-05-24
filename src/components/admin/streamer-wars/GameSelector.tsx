@@ -7,7 +7,7 @@ export const GAMES = [
         id: "TeamSelector",
         name: "Selector de equipos",
         icon: "🔢",
-        classNames: "bg-gradient-to-r from-blue-500 to-blue-700",
+        classNames: "bg-linear-to-r from-blue-500 to-blue-700",
         props: {
             teamsQuantity: {
                 type: Number,
@@ -27,42 +27,42 @@ export const GAMES = [
         id: "SimonSays",
         name: "Simón dice",
         icon: "🔴",
-        classNames: "bg-gradient-to-r from-red-500 to-red-700",
+        classNames: "bg-linear-to-r from-red-500 to-red-700",
         props: {}
     },
     {
         id: "CaptainBribery",
         name: "Soborno al capitán",
         icon: "💰",
-        classNames: "bg-gradient-to-r from-yellow-500 to-yellow-700",
+        classNames: "bg-linear-to-r from-yellow-500 to-yellow-700",
         props: {}
     },
     {
         id: "AutoElimination",
         name: "Autoeliminación",
         icon: "🚫",
-        classNames: "bg-gradient-to-r from-gray-500 to-gray-700",
+        classNames: "bg-linear-to-r from-gray-500 to-gray-700",
         props: {}
     },
     {
         id: "Dalgona",
         name: "Dalgona (Ppopgi)",
         icon: "🍪",
-        classNames: "bg-gradient-to-r from-orange-500 to-orange-700",
+        classNames: "bg-linear-to-r from-orange-500 to-orange-700",
         props: {}
     },
     {
         id: "TugOfWar",
         name: "Tug of War (Juego de la Cuerda)",
         icon: "🪢",
-        classNames: "bg-gradient-to-r from-green-500 to-green-700",
+        classNames: "bg-linear-to-r from-green-500 to-green-700",
         props: {}
     },
     {
         id: "Bomb",
         name: "Desactivar la Bomba",
         icon: "💣",
-        classNames: "bg-gradient-to-r from-red-500 to-red-700",
+        classNames: "bg-linear-to-r from-red-500 to-red-700",
         props: {}
     }
     // Más juegos pueden añadirse con sus propias props
@@ -98,7 +98,7 @@ const GameConfigurator = ({
                             propName,
                             parseInt(e.currentTarget.value)
                         )}
-                        class="border bg-neutral-950 rounded p-1 w-16 text-center"
+                        class="border bg-neutral-950 rounded-sm p-1 w-16 text-center"
                     />
                 </div>
             ))}

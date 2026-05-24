@@ -66,7 +66,7 @@ export function Tooltip({
                     style={floatingStyles}
                     {...getFloatingProps()}
                     className={cn(
-                        'px-2 z-10 py-1 text-sm text-white bg-[#121226] border rounded border-midu-primary/20',
+                        'px-2 z-10 py-1 text-sm text-white bg-[#121226] border rounded-sm border-midu-primary/20',
                         tooltipClassName
                     )}
                 >
@@ -76,8 +76,8 @@ export function Tooltip({
                         context={context}
                         className={cn(
                             'fill-midu-primary/20',
-                            tooltipPosition === 'top' && 'mt-[1px]',
-                            tooltipPosition === 'bottom' && 'mb-[1px]'
+                            tooltipPosition === 'top' && 'mt-px',
+                            tooltipPosition === 'bottom' && 'mb-px'
                         )}
                     />
                 </div>

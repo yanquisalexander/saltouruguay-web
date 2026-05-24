@@ -318,7 +318,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         return (
             <div className="flex items-center justify-center h-full">
                 <div className="text-center text-white">
-                    <h2 className="text-3xl font-squids mb-4 bg-gradient-to-br from-orange-600 to-yellow-200 text-transparent bg-clip-text">Dalgona</h2>
+                    <h2 className="text-3xl font-squids mb-4 bg-linear-to-br from-orange-600 to-yellow-200 text-transparent bg-clip-text">Dalgona</h2>
                     <p className="text-xl">Esperando que el juego comience...</p>
                 </div>
             </div>
@@ -327,7 +327,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
     if (gameStatus === 'completed') {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-green-900 to-green-950">
+            <div className="flex items-center justify-center min-h-screen bg-linear-to-b from-green-900 to-green-950">
                 <div className="text-center text-white">
                     <h2 className="text-4xl font-bold mb-4">¡Completado! ✓</h2>
                     <p className="text-xl">Has superado el desafío Dalgona</p>
@@ -338,7 +338,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
     if (gameStatus === 'failed') {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-red-900 to-red-950">
+            <div className="flex items-center justify-center min-h-screen bg-linear-to-b from-red-900 to-red-950">
                 <div className="text-center text-white">
                     <h2 className="text-4xl font-bold mb-4">Eliminado ✗</h2>
                     <p className="text-xl">No lograste completar el desafío</p>
@@ -349,7 +349,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
     return (
         <div className="h-full relative p-5">
-            <h2 className="text-2xl font-squids mb-4 bg-gradient-to-br from-orange-600 to-yellow-200 text-transparent bg-clip-text">Dalgona</h2>
+            <h2 className="text-2xl font-squids mb-4 bg-linear-to-br from-orange-600 to-yellow-200 text-transparent bg-clip-text">Dalgona</h2>
             <div className="text-center text-white mb-6">
                 <p className="text-xl mb-2">Traza la forma con cuidado</p>
                 <p className="text-lg">

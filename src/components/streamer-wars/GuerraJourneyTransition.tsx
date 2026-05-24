@@ -372,10 +372,10 @@ export const GuerraJourneyTeaser = () => {
 
     return (
         <div
-            className={`fixed inset-0 bg-[#050505] flex min-h-screen h-full flex-col justify-center items-center z-[99999] transition-opacity duration-500 ${fadeClass}`}
+            className={`fixed inset-0 bg-[#050505] flex min-h-screen h-full flex-col justify-center items-center z-99999 transition-opacity duration-500 ${fadeClass}`}
         >
             {/* Timer Ominoso */}
-            <div className="fixed font-mono top-0 right-8 mt-6 text-xl text-red-600/70 z-[10001] animate-pulse">
+            <div className="fixed font-mono top-0 right-8 mt-6 text-xl text-red-600/70 z-10001 animate-pulse">
                 {minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}
             </div>
 
@@ -402,7 +402,7 @@ export const GuerraJourneyTeaser = () => {
             <h2 className="z-[9998!important] text-2xl fixed bottom-16 inset-x-0 font-atomic text-center mx-auto text-neutral-800 select-none -skew-y-6 opacity-50">
                 <span className="tracking-widest uppercase">Guerra de Streamers II</span>
             </h2>
-            <span className="fixed bottom-32 text-5xl opacity-10 rotate-[32deg] select-none right-16 font-atomic-extras text-red-500">
+            <span className="fixed bottom-32 text-5xl opacity-10 rotate-32 select-none right-16 font-atomic-extras text-red-500">
                 &#x0055;
             </span>
             <span className="fixed bottom-48 text-5xl opacity-10 rotate-[-16deg] select-none left-16 font-atomic-extras text-red-500">

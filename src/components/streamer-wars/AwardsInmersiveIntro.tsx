@@ -20,9 +20,9 @@ const INTRO_SCRIPT: ScriptItem[] = [
 
             <div className="flex flex-col items-center animate-fade-in-up">
                 <div class="relative animate-fade-in-up" style="--floating-duration: 5000ms">
-                    <img src="/images/trofeo-awards.webp" alt="Trofeo SaltoAwards" class="size-28 md:size-24 w-auto object-contain aspect-square animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)] saturate-150" /> <img src="/images/trofeo-awards.webp" alt="" aria-hidden="true" class="absolute blur-md brightness-125 saturate-200 inset-0 size-28 md:size-24 w-auto object-contain aspect-square z-[-1] animate-sink animate-iteration-count-infinite animate-duration-[var(--floating-duration)]" />
+                    <img src="/images/trofeo-awards.webp" alt="Trofeo SaltoAwards" class="size-28 md:size-24 w-auto object-contain aspect-square animate-sink animate-iteration-count-infinite animate-duration-(--floating-duration) saturate-150" /> <img src="/images/trofeo-awards.webp" alt="" aria-hidden="true" class="absolute blur-md brightness-125 saturate-200 inset-0 size-28 md:size-24 w-auto object-contain aspect-square z-[-1] animate-sink animate-iteration-count-infinite animate-duration-(--floating-duration)" />
                 </div>
-                <h1 className="text-8xl md:text-9xl font-teko text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 uppercase tracking-wider">
+                <h1 className="text-8xl md:text-9xl font-teko text-transparent bg-clip-text bg-linear-to-r from-purple-500 to-pink-500 uppercase tracking-wider">
                     SALTO
                 </h1>
                 <h2 className="text-6xl md:text-7xl font-teko text-yellow-500 uppercase tracking-widest -mt-4">
@@ -167,8 +167,8 @@ export const AwardsInmersiveIntro = () => {
     const seconds = Math.floor(remainingTime % 60);
 
     return createPortal(
-        <div className={`fixed inset-0 bg-black/95 flex min-h-screen h-full flex-col justify-center items-center z-[10000] transition-opacity duration-500 ${isFadingOut ? 'opacity-0' : 'opacity-100'}`}>
-            <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300 z-[10001]">
+        <div className={`fixed inset-0 bg-black/95 flex min-h-screen h-full flex-col justify-center items-center z-10000 transition-opacity duration-500 ${isFadingOut ? 'opacity-0' : 'opacity-100'}`}>
+            <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300 z-10001">
                 {minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}
             </div>
             <div className="absolute inset-0 overflow-hidden pointer-events-none">

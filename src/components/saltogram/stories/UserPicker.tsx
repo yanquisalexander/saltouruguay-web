@@ -54,7 +54,7 @@ export default function UserPicker({ onSelect, onClose }: UserPickerProps) {
                         value={query}
                         onInput={(e) => setQuery(e.currentTarget.value)}
                         placeholder="Buscar usuario..."
-                        className="w-full bg-black/20 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-white placeholder-white/50 focus:outline-none focus:border-white/30"
+                        className="w-full bg-black/20 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-white placeholder-white/50 focus:outline-hidden focus:border-white/30"
                         autoFocus
                     />
                 </div>

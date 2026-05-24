@@ -252,7 +252,7 @@ export default function SaltoJumpGame({ onComplete, onClose, appearance }: Salto
             onClick={handleJump}
         >
             {/* Background Elements */}
-            <div className="absolute inset-0 bg-gradient-to-b from-sky-800 to-sky-900"></div>
+            <div className="absolute inset-0 bg-linear-to-b from-sky-800 to-sky-900"></div>
 
             {/* Clouds / Stars */}
             <div className="absolute top-10 left-10 text-white/20 text-4xl animate-pulse">☁️</div>
@@ -304,7 +304,7 @@ export default function SaltoJumpGame({ onComplete, onClose, appearance }: Salto
                                 <div className="absolute top-1 left-1 w-2 h-2 bg-gray-400 rounded-full opacity-50"></div>
                             </div>
                         ) : (
-                            <div className="w-full h-4 bg-blue-500/80 rounded-full blur-sm scale-x-150"></div>
+                            <div className="w-full h-4 bg-blue-500/80 rounded-full blur-xs scale-x-150"></div>
                         )}
                     </div>
                 ))}
@@ -327,7 +327,7 @@ export default function SaltoJumpGame({ onComplete, onClose, appearance }: Salto
 
             {/* UI Overlays */}
             {gameState === 'intro' && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50">
                     <div className="bg-gray-900 p-8 rounded-3xl border border-white/10 text-center max-w-xs mx-4 shadow-2xl">
                         <div className="w-20 h-20 bg-violet-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg rotate-3">
                             <LucideArrowUp size={40} className="text-white" />

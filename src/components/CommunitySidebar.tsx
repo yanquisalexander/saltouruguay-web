@@ -13,7 +13,7 @@ interface SidebarProps {
 }
 
 const MENU_ITEMS = [
-    { label: "Inicio", href: "/", icon: LucideHome, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+    { label: "Inicio", href: "/", icon: LucideHome, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-line" },
     { label: "Comunidad", href: "/comunidad", icon: LucideUsers, color: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/20" },
     { label: "Banco", href: "/comunidad/banco", icon: LucidePiggyBank, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
     { label: "Mascota", href: "/comunidad/mascota", icon: LucidePawPrint, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20" },
@@ -72,7 +72,7 @@ export default function CommunitySidebar({ mobile }: SidebarProps) {
 
                             {/* Tooltip (Solo Desktop) */}
                             {!mobile && (
-                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-2 py-1 bg-black/90 text-white text-xs font-bold rounded border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 backdrop-blur-md">
+                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-2 py-1 bg-black/90 text-white text-xs font-bold rounded-sm border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 backdrop-blur-md">
                                     {item.label}
                                     {/* Flechita del tooltip */}
                                     <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-black/90"></div>
