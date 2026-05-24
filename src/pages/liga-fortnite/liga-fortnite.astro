@@ -2,20 +2,18 @@
 import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
 
-export const prerender = false;
-
+/* 
+  Paso 1:
+  Obtenemos la sesión del usuario
+*/
 const session = await getSession(Astro.request);
-// Usamos username (handle único de Discord) si está disponible, sino display name
-const discordUser: string | null = (session?.user as any)?.discordUsername ?? session?.user?.name ?? null;
 
-// ── Admins ── Agregá o quitá usernames de Discord acá
-const ADMINS: string[] = [
-  "saltouruguay",
-  "xdiegouy",
-  // agregá más admins acá
-];
-
-const isAdmin = discordUser !== null && ADMINS.includes(discordUser.toLowerCase());
+/* 
+  Paso 2:
+  Usamos el parámetro `isAdmin` de la sesión para determinar 
+  si el usuario es admin o no.
+*/
+const isAdmin = session?.user.isAdmin;
 
 const DIVISIONALES = [
   { id: "clasificatoria",   label: "Clasificatoria",    icon: "🛡️", cols: 3, max: 100 },
