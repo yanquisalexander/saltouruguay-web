@@ -35,7 +35,7 @@ const session = await getSession(Astro.request);
 const HAS_DISCORD_LINKED = !!session?.user.discordId;
 
 const discordInfo = await getDiscordUser(
-  session?.user.discordId as string
+  session?.user.discordId as string,
 ).catch((error) => {
   console.error("Error getting Discord user", error);
   return null;
@@ -60,9 +60,7 @@ const IS_USER_INSCRIBED = await client
       <h1
         class="with-glyph flex relative w-max text-3xl transform px-2 animate-fade-in-up animate-delay-150 font-atomic tracking-wider font-bold text-[#b4cd02] mix-blend-screen skew-x-[-20deg]! -rotate-6"
       >
-        <span class="flex skew-x-20! transform">
-          Guerra de Streamers
-        </span>
+        <span class="flex skew-x-20! transform"> Guerra de Streamers </span>
       </h1>
     </header>
     {
@@ -225,7 +223,7 @@ const IS_USER_INSCRIBED = await client
     const $inscripcionModal = $("#inscripcion-modal") as HTMLDialogElement;
 
     const $closeInscripcionModal = $inscripcionModal.querySelector(
-      "#login-modal-close button"
+      "#login-modal-close button",
     );
 
     $closeInscripcionModal?.addEventListener("click", () => {
@@ -253,7 +251,11 @@ const IS_USER_INSCRIBED = await client
       });
 
       if (error) {
-        toast.error(typeof error === 'string' ? error : (error.message || JSON.stringify(error)));
+        toast.error(
+          typeof error === "string"
+            ? error
+            : error.message || JSON.stringify(error),
+        );
         return;
       }
 
@@ -265,6 +267,8 @@ const IS_USER_INSCRIBED = await client
 </script>
 
 <style>
+  @reference "../assets/styles/global.css";
+
   h1.with-glyph:after {
     content: "a";
     @apply font-atomic-extras! text-[80px] mt-8 absolute inset-x-0 text-center;
