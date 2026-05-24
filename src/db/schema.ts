@@ -1304,3 +1304,29 @@ export const tournamentMatchesRelations = relations(TournamentMatchesTable, ({ o
         relationName: "wonMatches"
     }),
 }));
+
+export const FortniteLeagueInscriptionsTable = pgTable('fortnite_league_inscriptions', {
+    id: serial('id').primaryKey(),
+    discordUsername: varchar('discord_username').notNull(),
+    epicId: varchar('epic_id').notNull().unique(),
+    platform: varchar('platform', { enum: ['PC', 'PS5', 'Xbox', 'Switch', 'Mobile'] }).notNull().default('PC'),
+    division: varchar('division', { enum: ['clasificatoria', 'semi_profesional', 'profesional'] }).notNull().default('clasificatoria'),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueDiscord: unique().on(t.discordUsername),
+}));
+// ── Agregá esto al final de src/db/schema.ts (después de FortniteLeagueInscriptionsTable) ──
+
+export const FortniteLeagueScoresTable = pgTable('fortnite_league_scores', {
+    id: serial('id').primaryKey(),
+    inscriptionId: integer('inscription_id').notNull().references(() => FortniteLeagueInscriptionsTable.id, { onDelete: 'cascade' }),
+    set1: integer('set1').notNull().default(0),
+    set2: integer('set2').notNull().default(0),
+    set3: integer('set3').notNull().default(0),
+    total: integer('total').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueInscription: unique().on(t.inscriptionId),
+}));

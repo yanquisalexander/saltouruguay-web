@@ -1,0 +1,947 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { client } from "@/db/client";
+import { FortniteLeagueInscriptionsTable } from "@/db/schema";
+export const prerender = false;
+
+// Cargar jugadores desde la base de datos
+const dbPlayers = await client
+  .select()
+  .from(FortniteLeagueInscriptionsTable)
+  .execute();
+
+const DIVISIONALES = [
+  { id: "clasificatoria",   label: "Clasificatoria",    icon: "🛡️", cols: 3, max: 100 },
+  { id: "semi_profesional", label: "Semi Profesional",  icon: "⚡",  cols: 1, max: 18  },
+  { id: "profesional",      label: "Profesional",       icon: "👑", cols: 1, max: 18  },
+];
+
+const NOVEDADES = [
+  {
+    imagen: "/images/liga.webp",
+    titulo: "Arrancó la cuarta temporada",
+    fecha: "Enero 2026",
+    tag: "Inscripciones abiertas",
+  },
+  {
+    imagen: "/images/tabla-semiprofesional.webp",
+    titulo: "Se jugó la Divisional Semi Profesional",
+    fecha: "Abril 2026",
+    tag: "Anuncio",
+  },
+  {
+    imagen: "/images/tabla-profesional.webp",
+    titulo: "Se jugó la Divisional Profesional",
+    fecha: "Abril 2026",
+    tag: "Anuncio",
+  },
+];
+---
+
+<Layout
+  title="Liga Fortnite | ACRECONRE"
+  description="Inscribite a la Liga Fortnite oficial de ACRECONRE. Competí en tres divisionales: Clasificatoria, Semi Profesional y Profesional."
+>
+  <div class="flex flex-col items-center justify-center min-h-[90vh] py-20 px-4 text-center">
+
+    {/* --- BLOQUE 1: ENCABEZADO --- */}
+    <p class="text-xs font-bold uppercase tracking-[0.25em] opacity-40 mb-4">
+      ACRECONRE · Competitivo
+    </p>
+
+    <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none max-w-4xl mb-2">
+      Liga Fortnite<br class="hidden md:block" />
+      <span class="opacity-40 font-light">Inscribite y competí</span>
+    </h1>
+
+    <div class="w-24 h-1 bg-current opacity-10 rounded-full my-12"></div>
+
+    {/* --- BLOQUE 2: FORMULARIO DE INSCRIPCIÓN --- */}
+    <div class="w-full max-w-xl mb-20">
+      <div class="flex items-center w-full max-w-xs gap-4 mb-8 opacity-50 mx-auto">
+        <span class="h-[1px] flex-1 bg-current" />
+        <h3 class="text-xs font-bold uppercase tracking-[0.2em]">Inscripción</h3>
+        <span class="h-[1px] flex-1 bg-current" />
+      </div>
+
+      <form id="form-inscripcion" class="flex flex-col gap-4 text-left" onsubmit="handleSubmit(event)">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
+              Usuario de Discord
+            </label>
+            <input
+              id="inp-name"
+              type="text"
+              placeholder="tunombre"
+              maxlength="32"
+              class="w-full px-4 py-3 rounded-xl border border-current/10 bg-white
+                     text-sm font-medium text-black placeholder:text-black/30
+                     focus:outline-none focus:border-current/30
+                     transition-all duration-200"
+            />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">Epic Games ID</label>
+            <input
+              id="inp-epic"
+              type="text"
+              placeholder="NombreEnFortnite"
+              maxlength="30"
+              class="w-full px-4 py-3 rounded-xl border border-current/10 bg-white
+                     text-sm font-medium text-black placeholder:text-black/30
+                     focus:outline-none focus:border-current/30
+                     transition-all duration-200"
+            />
+          </div>
+
+          <div class="flex flex-col gap-1.5 md:col-span-2">
+            <label class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">Plataforma</label>
+            <select
+              id="inp-platform"
+              class="w-full px-4 py-3 rounded-xl border border-current/10 bg-white
+                     text-sm font-medium text-black
+                     focus:outline-none focus:border-current/30
+                     transition-all duration-200 cursor-pointer"
+            >
+              <option value="PC">PC</option>
+              <option value="PS5">PlayStation 5</option>
+              <option value="Xbox">Xbox</option>
+              <option value="Switch">Nintendo Switch</option>
+              <option value="Mobile">Mobile</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="msg-feedback" class="hidden text-xs font-bold uppercase tracking-[0.15em] text-center py-3 px-4 rounded-xl"></div>
+
+        <button
+          type="submit"
+          class="inline-block px-12 py-5 text-sm font-black uppercase tracking-[0.25em]
+                 text-white rounded-full
+                 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700
+                 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-600
+                 hover:scale-105 hover:shadow-[0_0_30px_rgba(79,70,229,0.5)]
+                 active:scale-95 transition-all duration-300 ease-out
+                 border border-white/20 shadow-xl w-full"
+        >
+          Inscribirme a la Liga
+        </button>
+      </form>
+    </div>
+
+    {/* --- BLOQUE 3: TABLA DE DIVISIONALES --- */}
+    <div class="w-full max-w-7xl animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+
+      <div class="flex items-center w-full max-w-xs gap-4 mb-8 opacity-50 mx-auto">
+        <span class="h-[1px] flex-1 bg-current" />
+        <h3 class="text-xs font-bold uppercase tracking-[0.2em]">Divisionales</h3>
+        <span class="h-[1px] flex-1 bg-current" />
+      </div>
+
+      <p id="drag-tip" class="text-[10px] font-bold uppercase tracking-[0.15em] opacity-30 mb-10 hidden">
+        Arrastrá los jugadores entre divisionales para moverlos
+      </p>
+      <div id="drag-tip-spacer" class="mb-10"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="divisionales-grid">
+        {DIVISIONALES.map((div) => (
+          <div class="flex flex-col items-center">
+            <div class="w-full flex flex-col items-center mb-6">
+              <span class="text-2xl mb-2">{div.icon}</span>
+              <h2 class="text-lg font-black uppercase tracking-tight">{div.label}</h2>
+              <span id={`count-${div.id}`} class="mt-2 text-[10px] font-bold uppercase tracking-[0.2em] opacity-50">
+                0 jugadores
+              </span>
+            </div>
+
+            <div
+              id={`zone-${div.id}`}
+              data-division={div.id}
+              data-max={div.max}
+              class="w-full rounded-2xl border border-current/10 bg-current/[0.01]
+                     flex flex-col gap-0 p-3 transition-all duration-200"
+              ondragover="onDragOver(event)"
+              ondragleave="onDragLeave(event)"
+              ondrop="onDrop(event)"
+            >
+              <div id={`empty-${div.id}`} class="flex flex-col items-center justify-center opacity-20 py-16">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em]">Sin jugadores</p>
+              </div>
+              <div
+                id={`grid-${div.id}`}
+                data-cols={div.cols}
+                class={`grid gap-1.5 w-full hidden ${div.cols === 1 ? "grid-cols-1" : "grid-cols-3"}`}
+              ></div>
+            </div>
+
+            <button
+              id={`btn-manage-${div.id}`}
+              onclick={`openManage('${div.id}')`}
+              class="mt-3 w-full py-2 text-[9px] font-black uppercase tracking-[0.2em]
+                     rounded-xl border border-current/10 bg-current/[0.03]
+                     hover:bg-current/[0.08] hover:border-current/25
+                     active:scale-95 transition-all duration-200 cursor-pointer opacity-60 hover:opacity-100 hidden admin-only"
+            >
+              ⚙ Gestionar jugadores
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div class="pt-8 opacity-30">
+        <p class="text-[10px] font-bold uppercase tracking-[0.15em]">
+          Asociación de Creadores de Contenido de la Región · Liga Fortnite
+        </p>
+      </div>
+    </div>
+
+    {/* --- PANEL ADMIN: solo visible para admins --- */}
+    <div id="panel-admin" class="w-full max-w-7xl mt-16 hidden">
+
+      {/* Header del panel */}
+      <div class="flex items-center justify-between gap-3 mb-8 px-6 py-4 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+        <div class="flex items-center gap-3">
+          <span class="text-xl">⚙️</span>
+          <div class="text-left">
+            <p class="text-sm font-black uppercase tracking-[0.2em] text-amber-500">Panel de Administración</p>
+            <p class="text-[10px] opacity-60 mt-0.5">Solo los administradores ven esta sección</p>
+          </div>
+        </div>
+        <a
+          href="/liga-fortnite/admin-puntos"
+          class="inline-flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.2em]
+                 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-500
+                 hover:bg-amber-500/20 hover:border-amber-500/60
+                 active:scale-95 transition-all duration-200 flex-shrink-0"
+        >
+          📊 Tabla de puntos
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+        {DIVISIONALES.map((div) => (
+          <div class="flex flex-col gap-4 p-6 rounded-2xl border-2 border-amber-500/20 bg-amber-500/5">
+
+            {/* Título */}
+            <div class="flex items-center gap-2 pb-3 border-b border-amber-500/20">
+              <span class="text-xl">{div.icon}</span>
+              <p class="text-sm font-black uppercase tracking-[0.15em]">{div.label}</p>
+            </div>
+
+            {/* Campos */}
+            <div class="flex flex-col gap-3">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">
+                  Usuario de Discord
+                </label>
+                <input
+                  type="text"
+                  id={`admin-discord-${div.id}`}
+                  placeholder="nombreusuario"
+                  maxlength="32"
+                  class="w-full px-3 py-2.5 rounded-xl border border-amber-500/20 bg-white
+                         text-sm font-medium text-black placeholder:text-black/30
+                         focus:outline-none focus:border-amber-500/60
+                         transition-all duration-200"
+                />
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">
+                  Epic Games ID
+                </label>
+                <input
+                  type="text"
+                  id={`admin-epic-${div.id}`}
+                  placeholder="NombreEnFortnite"
+                  maxlength="30"
+                  class="w-full px-3 py-2.5 rounded-xl border border-amber-500/20 bg-white
+                         text-sm font-medium text-black placeholder:text-black/30
+                         focus:outline-none focus:border-amber-500/60
+                         transition-all duration-200"
+                />
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">
+                  Plataforma
+                </label>
+                <select
+                  id={`admin-platform-${div.id}`}
+                  class="w-full px-3 py-2.5 rounded-xl border border-amber-500/20 bg-white
+                         text-sm font-medium text-black
+                         focus:outline-none focus:border-amber-500/60
+                         transition-all duration-200 cursor-pointer"
+                >
+                  <option value="PC">PC</option>
+                  <option value="PS5">PlayStation 5</option>
+                  <option value="Xbox">Xbox</option>
+                  <option value="Switch">Nintendo Switch</option>
+                  <option value="Mobile">Mobile</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Feedback */}
+            <div id={`admin-msg-${div.id}`} class="hidden text-[10px] font-bold uppercase tracking-[0.15em] text-center py-2 px-3 rounded-xl"></div>
+
+            {/* Botón */}
+            <button
+              onclick={`adminAdd('${div.id}')`}
+              class="w-full py-3 text-[11px] font-black uppercase tracking-[0.2em]
+                     rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-500
+                     hover:bg-amber-500/20 hover:border-amber-500/60
+                     active:scale-95 transition-all duration-200 cursor-pointer"
+            >
+              + Agregar jugador
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="w-24 h-1 bg-current opacity-10 rounded-full my-20"></div>
+
+    {/* --- BLOQUE 4: NOVEDADES --- */}
+    <div class="w-full max-w-6xl animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
+
+      <p class="text-xs font-bold uppercase tracking-[0.25em] opacity-40 mb-4">
+        Últimas novedades
+      </p>
+      <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-3">
+        Lo que está<br class="hidden md:block" />
+        <span class="opacity-40 font-light">pasando en la liga</span>
+      </h2>
+
+      <div class="w-24 h-1 bg-current opacity-10 rounded-full my-10 mx-auto"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+        {NOVEDADES.map((novedad, i) => (
+          <div class="group/novedad flex flex-col rounded-2xl border border-current/10 bg-current/[0.01] hover:bg-current/[0.04] hover:border-current/20 overflow-hidden transition-all duration-300">
+            <div class="relative w-full overflow-hidden bg-current/5 rounded-t-2xl">
+              <img
+                src={novedad.imagen}
+                alt={novedad.titulo}
+                class="w-full h-40 object-cover object-center transform transition-transform duration-700 group-hover/novedad:scale-105"
+                loading={i === 0 ? "eager" : "lazy"}
+              />
+            </div>
+            <div class="flex flex-col flex-1 p-5 gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border border-current/15 bg-current/5">
+                  {novedad.tag}
+                </span>
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40">{novedad.fecha}</p>
+              </div>
+              <p class="text-base font-black uppercase tracking-tight leading-tight mt-1">{novedad.titulo}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div class="pt-16 opacity-30">
+        <p class="text-[10px] font-bold uppercase tracking-[0.15em]">
+          Asociación de Creadores de Contenido de la Región · Liga Fortnite
+        </p>
+      </div>
+    </div>
+
+  </div>
+</Layout>
+
+{/* Datos del servidor para el JS */}
+<script define:vars={{ dbPlayers }}>
+  window.__FN_PLAYERS__ = dbPlayers.map((p) => ({
+    id: p.id,
+    name: p.discordUsername,
+    epic: p.epicId,
+    platform: p.platform,
+    division: p.division,
+    joinDate: new Date(p.createdAt).toLocaleDateString("es-UY", { day: "2-digit", month: "2-digit", year: "2-digit" }),
+  }));
+</script>
+
+{/* ── MODAL GESTIÓN (solo renderizado para admins, controlado por JS) ── */}
+<div
+  id="manage-modal"
+  class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+  onclick="closeManageIfBackdrop(event)"
+>
+  {/* Backdrop */}
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+
+  {/* Panel */}
+  <div class="relative w-full max-w-lg bg-[#1a1a2e] text-white rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
+
+    {/* Header */}
+    <div class="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-amber-500/10">
+      <div class="flex items-center gap-3">
+        <button onclick="closeManage()"
+          class="flex items-center gap-1.5 text-white/50 hover:text-white transition-colors cursor-pointer text-[10px] font-black uppercase tracking-[0.15em] mr-1">
+          ← Atrás
+        </button>
+        <span class="text-white/20">|</span>
+        <span class="text-xl" id="modal-div-icon"></span>
+        <div>
+          <h3 id="modal-title" class="text-sm font-black uppercase tracking-[0.15em] text-white"></h3>
+          <p class="text-[9px] text-amber-400/70 uppercase tracking-widest mt-0.5">Gestión de jugadores</p>
+        </div>
+      </div>
+      <button onclick="closeManage()" class="text-white/40 hover:text-white transition-colors text-xl font-bold cursor-pointer leading-none">✕</button>
+    </div>
+
+    {/* Lista de jugadores */}
+    <div id="modal-list" class="max-h-[55vh] overflow-y-auto px-4 py-3 flex flex-col gap-2"></div>
+
+    {/* Empty state */}
+    <div id="modal-empty" class="hidden px-6 py-10 text-center">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Sin jugadores en esta divisional</p>
+    </div>
+
+    {/* Footer */}
+    <div class="px-6 py-3 border-t border-white/10 bg-white/5">
+      <p class="text-[9px] font-bold uppercase tracking-[0.15em] text-white/30 text-center">
+        ⚙️ Panel de administración · Solo vos ves esto
+      </p>
+    </div>
+  </div>
+</div>
+
+{/* Modal de edición de jugador */}
+<div
+  id="edit-modal"
+  class="fixed inset-0 z-[60] hidden items-center justify-center p-4"
+  onclick="closeEditIfBackdrop(event)"
+>
+  <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+  <div class="relative w-full max-w-sm bg-[#1a1a2e] text-white rounded-2xl border border-white/10 shadow-2xl p-6">
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-3">
+        <button onclick="closeEdit()"
+          class="flex items-center gap-1.5 text-white/50 hover:text-white transition-colors cursor-pointer text-[10px] font-black uppercase tracking-[0.15em]">
+          ← Atrás
+        </button>
+        <span class="text-white/20">|</span>
+        <h3 class="text-sm font-black uppercase tracking-[0.15em] text-white">Editar jugador</h3>
+      </div>
+      <button onclick="closeEdit()" class="text-white/40 hover:text-white transition-colors text-xl font-bold cursor-pointer leading-none">✕</button>
+    </div>
+
+    <input type="hidden" id="edit-player-id" />
+
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-1">
+        <label class="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-400">Usuario de Discord</label>
+        <input id="edit-discord" type="text" maxlength="32"
+          class="w-full px-3 py-2.5 rounded-xl border border-white/20 bg-white text-black text-sm font-medium placeholder:text-black/30 focus:outline-none focus:border-amber-500/50 transition-all" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-400">Epic Games ID</label>
+        <input id="edit-epic" type="text" maxlength="30"
+          class="w-full px-3 py-2.5 rounded-xl border border-white/20 bg-white text-black text-sm font-medium placeholder:text-black/30 focus:outline-none focus:border-amber-500/50 transition-all" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-400">Plataforma</label>
+        <select id="edit-platform"
+          class="w-full px-3 py-2.5 rounded-xl border border-white/20 bg-white text-black text-sm font-medium focus:outline-none focus:border-amber-500/50 transition-all cursor-pointer">
+          <option value="PC">PC</option>
+          <option value="PS5">PlayStation 5</option>
+          <option value="Xbox">Xbox</option>
+          <option value="Switch">Nintendo Switch</option>
+          <option value="Mobile">Mobile</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-400">Divisional</label>
+        <select id="edit-division"
+          class="w-full px-3 py-2.5 rounded-xl border border-white/20 bg-white text-black text-sm font-medium focus:outline-none focus:border-amber-500/50 transition-all cursor-pointer">
+          <option value="clasificatoria">🛡️ Clasificatoria</option>
+          <option value="semi_profesional">⚡ Semi Profesional</option>
+          <option value="profesional">👑 Profesional</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="edit-msg" class="hidden mt-3 text-[9px] font-bold uppercase tracking-[0.15em] text-center py-2 px-3 rounded-lg"></div>
+
+    <div class="flex gap-2 mt-5">
+      <button onclick="saveEdit()"
+        class="flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl
+               bg-gradient-to-br from-blue-600 to-indigo-700 text-white
+               hover:opacity-90 active:scale-95 transition-all cursor-pointer border border-white/10">
+        Guardar cambios
+      </button>
+      <button onclick="closeEdit()"
+        class="px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl
+               border border-current/10 bg-current/[0.04] hover:bg-current/[0.09]
+               active:scale-95 transition-all cursor-pointer">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  interface Player {
+    id: number;
+    name: string;
+    epic: string;
+    platform: string;
+    division: string;
+    joinDate: string;
+  }
+
+  // ── Admin check (client-side) ───────────────────────────────────────────────
+  const ADMINS = ['saltouruguay', 'xdiegouy'];
+
+  function checkAdmin() {
+    const stored = localStorage.getItem("fn_admin_discord") || "";
+    return ADMINS.includes(stored.toLowerCase());
+  }
+
+  function applyAdminUI() {
+    const admin = checkAdmin();
+    // drag tip
+    const tip = document.getElementById("drag-tip");
+    const spacer = document.getElementById("drag-tip-spacer");
+    if (tip) tip.classList.toggle("hidden", !admin);
+    if (spacer) spacer.classList.toggle("hidden", admin);
+    // panel & buttons
+    document.getElementById("panel-admin")?.classList.toggle("hidden", !admin);
+    document.querySelectorAll(".admin-only").forEach((el) => {
+      el.classList.toggle("hidden", !admin);
+    });
+  }
+
+  // Jugadores inyectados desde el servidor (base de datos)
+  let players: Player[] = (window as any).__FN_PLAYERS__ || [];
+  let dragId: number | null = null;
+
+  function init() {
+    players.forEach((p) => renderPlayerCard(p));
+    updateAllCounts();
+    applyAdminUI();
+  }
+
+  (window as any).handleSubmit = async function (e: Event) {
+    e.preventDefault();
+
+    const name = (document.getElementById("inp-name") as HTMLInputElement).value.trim();
+    const epic = (document.getElementById("inp-epic") as HTMLInputElement).value.trim();
+    const platform = (document.getElementById("inp-platform") as HTMLSelectElement).value;
+
+    if (!name || !epic) {
+      showMsg("Completá tu usuario de Discord y Epic Games ID", "error");
+      return;
+    }
+
+    const btn = document.querySelector('#form-inscripcion button[type="submit"]') as HTMLButtonElement;
+    if (btn) { btn.disabled = true; btn.textContent = "Inscribiendo..."; }
+
+    try {
+      const res = await fetch("/api/fortnite-league/players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discordUsername: name, epicId: epic, platform }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg(data.error || "Error al inscribirse", "error");
+        return;
+      }
+
+      const player: Player = {
+        id: data.player.id,
+        name: data.player.discordUsername,
+        epic: data.player.epicId,
+        platform: data.player.platform,
+        division: data.player.division,
+        joinDate: new Date(data.player.createdAt).toLocaleDateString("es-UY", { day: "2-digit", month: "2-digit", year: "2-digit" }),
+      };
+
+      players.push(player);
+      localStorage.setItem("fn_admin_discord", name);
+      renderPlayerCard(player);
+      updateAllCounts();
+      applyAdminUI();
+
+      (document.getElementById("inp-name") as HTMLInputElement).value = "";
+      (document.getElementById("inp-epic") as HTMLInputElement).value = "";
+      showMsg(`¡${name} fue inscrito en Clasificatoria!`, "success");
+
+    } catch (err) {
+      showMsg("Error de conexión, intentá de nuevo", "error");
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = "Inscribirme a la Liga"; }
+    }
+  };
+
+  function showMsg(text: string, type: "success" | "error") {
+    const el = document.getElementById("msg-feedback")!;
+    el.textContent = type === "success" ? `✓ ${text}` : `⚠ ${text}`;
+    el.className = `text-xs font-bold uppercase tracking-[0.15em] text-center py-3 px-4 rounded-xl ${
+      type === "success"
+        ? "bg-green-500/10 text-green-400 border border-green-500/20"
+        : "bg-red-500/10 text-red-400 border border-red-500/20"
+    }`;
+    setTimeout(() => { el.className = "hidden"; }, 3500);
+  }
+
+  function renderPlayerCard(player: Player) {
+    const grid = document.getElementById(`grid-${player.division}`)!;
+    const emptyEl = document.getElementById(`empty-${player.division}`)!;
+
+    // Mostrar grid, ocultar empty
+    emptyEl.classList.add("hidden");
+    grid.classList.remove("hidden");
+
+    // Quitar tarjeta previa si existe (por movimiento entre divisionales)
+    const existing = document.getElementById(`player-${player.id}`);
+    if (existing) existing.remove();
+
+    const card = document.createElement("div");
+    card.id = `player-${player.id}`;
+    card.draggable = true;
+    const isWide = player.division !== "clasificatoria";
+    card.className = isWide
+      ? "group/card flex items-center gap-3 px-4 py-3 rounded-xl " +
+        "border border-current/10 bg-current/[0.02] hover:bg-current/[0.06] hover:border-current/25 " +
+        "transition-all duration-200 cursor-grab active:cursor-grabbing active:scale-95 active:opacity-50"
+      : "group/card flex flex-col items-center justify-center gap-0.5 p-2 rounded-xl " +
+        "border border-current/10 bg-current/[0.02] hover:bg-current/[0.06] hover:border-current/25 " +
+        "transition-all duration-200 cursor-grab active:cursor-grabbing active:scale-95 active:opacity-50 " +
+        "text-center min-h-[64px]";
+
+    card.innerHTML = isWide
+      ? `<div class="flex-1 min-w-0 flex items-baseline gap-2">
+           <p class="text-[12px] font-bold leading-tight truncate">${player.name}</p>
+           <p class="text-[10px] font-medium opacity-40 truncate flex-shrink-0">(${player.epic})</p>
+         </div>
+         <div class="opacity-20 group-hover/card:opacity-50 transition-opacity flex-shrink-0 select-none text-sm">⠿</div>`
+      : `<p class="text-[11px] font-bold leading-tight w-full truncate">${player.name}</p>
+         <p class="text-[9px] font-medium opacity-40 w-full truncate">(${player.epic})</p>`;
+
+    card.addEventListener("dragstart", () => {
+      dragId = player.id as number;
+      setTimeout(() => card.classList.add("opacity-30"), 0);
+    });
+    card.addEventListener("dragend", () => {
+      card.classList.remove("opacity-30");
+      dragId = null;
+    });
+
+    grid.appendChild(card);
+  }
+
+  (window as any).onDragOver = function (e: DragEvent) {
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).classList.add("bg-current/[0.05]", "border-current/30", "scale-[1.005]");
+  };
+
+  (window as any).onDragLeave = function (e: DragEvent) {
+    (e.currentTarget as HTMLElement).classList.remove("bg-current/[0.05]", "border-current/30", "scale-[1.005]");
+  };
+
+  (window as any).onDrop = function (e: DragEvent) {
+    e.preventDefault();
+    const zone = (e.currentTarget as HTMLElement);
+    zone.classList.remove("bg-current/[0.05]", "border-current/30", "scale-[1.005]");
+
+    if (!dragId) return;
+
+    const targetDiv = zone.dataset.division!;
+    const player = players.find((p) => p.id === dragId);
+    if (!player || player.division === targetDiv) return;
+
+    // Check max capacity of target division
+    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 18, profesional: 18 };
+    const currentCount = players.filter((p) => p.division === targetDiv).length;
+    if (currentCount >= maxMap[targetDiv]) {
+      const labelMap: Record<string, string> = { clasificatoria: "Clasificatoria", semi_profesional: "Semi Profesional", profesional: "Profesional" };
+      showMsg(`${labelMap[targetDiv]} está llena (máximo ${maxMap[targetDiv]} jugadores)`, "error");
+      return;
+    }
+
+    const oldDiv = player.division;
+    player.division = targetDiv;
+
+    saveState();
+    renderPlayerCard(player);
+
+    // Si la división origen quedó vacía, mostrar empty y ocultar grid
+    const remaining = players.filter((p) => p.division === oldDiv);
+    if (remaining.length === 0) {
+      document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
+      document.getElementById(`grid-${oldDiv}`)!.classList.add("hidden");
+    }
+
+    updateAllCounts();
+  };
+
+  function updateAllCounts() {
+    ["clasificatoria", "semi_profesional", "profesional"].forEach((div) => {
+      const count = players.filter((p) => p.division === div).length;
+      const el = document.getElementById(`count-${div}`)!;
+      const maxMap2: Record<string, number> = { clasificatoria: 100, semi_profesional: 18, profesional: 18 };
+      const max = maxMap2[div] || 100;
+      el.textContent = `${count} / ${max} jugadores`;
+    });
+  }
+
+  // saveState ya no usa localStorage — los datos van a la base de datos via API
+  function saveState() {}
+
+  // ── Admin: agregar jugador manualmente ────────────────────────────────────
+  (window as any).adminAdd = async function (divId: string) {
+    const nameEl = document.getElementById(`admin-discord-${divId}`) as HTMLInputElement;
+    const epicEl = document.getElementById(`admin-epic-${divId}`) as HTMLInputElement;
+    const platformEl = document.getElementById(`admin-platform-${divId}`) as HTMLSelectElement;
+    const msgEl = document.getElementById(`admin-msg-${divId}`)!;
+
+    const name = nameEl.value.trim();
+    const epic = epicEl.value.trim();
+    const platform = platformEl.value;
+
+    const showAdminMsg = (text: string, type: "success" | "error") => {
+      msgEl.textContent = type === "success" ? `✓ ${text}` : `⚠ ${text}`;
+      msgEl.className = `text-[10px] font-bold uppercase tracking-[0.15em] text-center py-2 px-3 rounded-xl ${
+        type === "success"
+          ? "bg-green-500/10 text-green-400 border border-green-500/20"
+          : "bg-red-500/10 text-red-400 border border-red-500/20"
+      }`;
+      setTimeout(() => { msgEl.className = "hidden"; }, 3500);
+    };
+
+    if (!name || !epic) { showAdminMsg("Completá Discord y Epic ID", "error"); return; }
+
+    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 18, profesional: 18 };
+    const currentCount = players.filter((p) => p.division === divId).length;
+    if (currentCount >= maxMap[divId]) { showAdminMsg(`División llena (máx. ${maxMap[divId]})`, "error"); return; }
+
+    try {
+      const res = await fetch("/api/fortnite-league/players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discordUsername: name, epicId: epic, platform, division: divId }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showAdminMsg(data.error || "Error al agregar", "error"); return; }
+
+      const player: Player = {
+        id: data.player.id,
+        name: data.player.discordUsername,
+        epic: data.player.epicId,
+        platform: data.player.platform,
+        division: data.player.division,
+        joinDate: new Date(data.player.createdAt).toLocaleDateString("es-UY", { day: "2-digit", month: "2-digit", year: "2-digit" }),
+      };
+
+      players.push(player);
+      renderPlayerCard(player);
+      updateAllCounts();
+      nameEl.value = "";
+      epicEl.value = "";
+      showAdminMsg(`${name} agregado`, "success");
+      refreshModalList(divId);
+    } catch {
+      showAdminMsg("Error de conexión", "error");
+    }
+  };
+
+  // ── Modal gestión ──────────────────────────────────────────────────────────
+  let currentManageDiv = "";
+
+  (window as any).openManage = function (divId: string) {
+    currentManageDiv = divId;
+    const divMeta: Record<string, { label: string; icon: string }> = {
+      clasificatoria:   { label: "Clasificatoria",   icon: "🛡️" },
+      semi_profesional: { label: "Semi Profesional", icon: "⚡" },
+      profesional:      { label: "Profesional",      icon: "👑" },
+    };
+    const meta = divMeta[divId];
+    document.getElementById("modal-title")!.textContent = meta.label;
+    document.getElementById("modal-div-icon")!.textContent = meta.icon;
+    refreshModalList(divId);
+    const modal = document.getElementById("manage-modal")!;
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    document.body.style.overflow = "hidden";
+  };
+
+  function refreshModalList(divId: string) {
+    const list = document.getElementById("modal-list")!;
+    const empty = document.getElementById("modal-empty")!;
+    const divPlayers = players.filter((p) => p.division === divId);
+    list.innerHTML = "";
+
+    if (divPlayers.length === 0) {
+      empty.classList.remove("hidden");
+      return;
+    }
+    empty.classList.add("hidden");
+
+    divPlayers.forEach((p) => {
+      const row = document.createElement("div");
+      row.className = "flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all";
+      row.innerHTML = `
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-bold text-white truncate">${p.name}</p>
+          <p class="text-[10px] text-white/40 truncate mt-0.5">(${p.epic}) · ${p.platform}</p>
+        </div>
+        <button onclick="openEdit('${p.id}')"
+          class="flex-shrink-0 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.15em]
+                 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400
+                 hover:bg-amber-500/25 active:scale-95 transition-all cursor-pointer">
+          Editar
+        </button>
+        <button onclick="deletePlayer('${p.id}')"
+          class="flex-shrink-0 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.15em]
+                 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400
+                 hover:bg-red-500/25 active:scale-95 transition-all cursor-pointer">
+          Borrar
+        </button>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  (window as any).closeManage = function () {
+    const modal = document.getElementById("manage-modal")!;
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    document.body.style.overflow = "";
+  };
+
+  (window as any).closeManageIfBackdrop = function (e: MouseEvent) {
+    if (e.target === document.getElementById("manage-modal")) {
+      (window as any).closeManage();
+    }
+  };
+
+  (window as any).deletePlayer = async function (id: string) {
+    const numId = parseInt(id);
+    const p = players.find((x) => x.id === numId);
+    if (!p) return;
+    const oldDiv = p.division;
+
+    try {
+      const res = await fetch(`/api/fortnite-league/player/${numId}`, { method: "DELETE" });
+      if (!res.ok) { alert("Error al borrar jugador"); return; }
+
+      players = players.filter((x) => x.id !== numId);
+      document.getElementById(`player-${numId}`)?.remove();
+      if (players.filter((x) => x.division === oldDiv).length === 0) {
+        document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
+        document.getElementById(`grid-${oldDiv}`)!.classList.add("hidden");
+      }
+      updateAllCounts();
+      refreshModalList(currentManageDiv);
+    } catch {
+      alert("Error de conexión al borrar");
+    }
+  };
+
+  // ── Modal edición ───────────────────────────────────────────────────────────
+  (window as any).openEdit = function (id: string) {
+    const numId = parseInt(id);
+    const p = players.find((x) => x.id === numId);
+    if (!p) return;
+    (document.getElementById("edit-player-id") as HTMLInputElement).value = String(p.id);
+    (document.getElementById("edit-discord") as HTMLInputElement).value = p.name;
+    (document.getElementById("edit-epic") as HTMLInputElement).value = p.epic;
+    (document.getElementById("edit-platform") as HTMLSelectElement).value = p.platform;
+    (document.getElementById("edit-division") as HTMLSelectElement).value = p.division;
+    document.getElementById("edit-msg")!.className = "hidden";
+    const modal = document.getElementById("edit-modal")!;
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  };
+
+  (window as any).closeEdit = function () {
+    const modal = document.getElementById("edit-modal")!;
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  };
+
+  (window as any).closeEditIfBackdrop = function (e: MouseEvent) {
+    if (e.target === document.getElementById("edit-modal")) {
+      (window as any).closeEdit();
+    }
+  };
+
+  (window as any).saveEdit = async function () {
+    const id = (document.getElementById("edit-player-id") as HTMLInputElement).value;
+    const newName = (document.getElementById("edit-discord") as HTMLInputElement).value.trim();
+    const newEpic = (document.getElementById("edit-epic") as HTMLInputElement).value.trim();
+    const newPlatform = (document.getElementById("edit-platform") as HTMLSelectElement).value;
+    const newDivision = (document.getElementById("edit-division") as HTMLSelectElement).value;
+    const msgEl = document.getElementById("edit-msg")!;
+
+    const showEditMsg = (text: string, type: "success" | "error") => {
+      msgEl.textContent = type === "success" ? `✓ ${text}` : `⚠ ${text}`;
+      msgEl.className = `text-[9px] font-bold uppercase tracking-[0.15em] text-center py-2 px-3 rounded-lg ${
+        type === "success"
+          ? "bg-green-500/10 text-green-400 border border-green-500/20"
+          : "bg-red-500/10 text-red-400 border border-red-500/20"
+      }`;
+    };
+
+    if (!newName || !newEpic) { showEditMsg("Completá todos los campos", "error"); return; }
+
+    const numId = parseInt(id);
+    const dup = players.find((x) => x.id !== numId && (
+      x.epic.toLowerCase() === newEpic.toLowerCase() ||
+      x.name.toLowerCase() === newName.toLowerCase()
+    ));
+    if (dup) { showEditMsg("Discord o Epic ID ya en uso", "error"); return; }
+
+    const maxMap: Record<string, number> = { clasificatoria: 100, semi_profesional: 18, profesional: 18 };
+    const p = players.find((x) => x.id === numId)!;
+    if (p.division !== newDivision) {
+      const count = players.filter((x) => x.division === newDivision).length;
+      if (count >= maxMap[newDivision]) {
+        showEditMsg(`${newDivision.replace("_", " ")} está llena`, "error");
+        return;
+      }
+    }
+
+    const oldDiv = p.division;
+    p.name = newName;
+    p.epic = newEpic;
+    p.platform = newPlatform;
+    p.division = newDivision;
+
+    try {
+      const res = await fetch(`/api/fortnite-league/player/${numId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discordUsername: newName, epicId: newEpic, platform: newPlatform, division: newDivision }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showEditMsg(data.error || "Error al guardar", "error"); return; }
+
+      p.name = newName;
+      p.epic = newEpic;
+      p.platform = newPlatform;
+      p.division = newDivision;
+
+      renderPlayerCard(p);
+      if (oldDiv !== newDivision && players.filter((x) => x.division === oldDiv).length === 0) {
+        document.getElementById(`empty-${oldDiv}`)!.classList.remove("hidden");
+        document.getElementById(`grid-${oldDiv}`)!.classList.add("hidden");
+      }
+      updateAllCounts();
+      showEditMsg("Guardado", "success");
+      setTimeout(() => {
+        (window as any).closeEdit();
+        refreshModalList(currentManageDiv);
+      }, 800);
+    } catch {
+      showEditMsg("Error de conexión", "error");
+    }
+  };
+
+  document.addEventListener("DOMContentLoaded", init);
+</script>

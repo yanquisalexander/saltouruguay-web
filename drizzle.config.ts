@@ -11,5 +11,6 @@ export default {
         user: process.env.DB_USER || "postgres",
         password: process.env.DB_PASSWORD || "postgres",
         database: process.env.DB_NAME || "postgres",
+        ssl: false,
     },
 } satisfies Config;

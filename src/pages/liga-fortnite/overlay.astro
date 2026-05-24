@@ -1,0 +1,503 @@
+---
+export const prerender = false;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920" />
+  <title>Overlay Liga Fortnite</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: transparent !important;
+      font-family: 'Barlow Condensed', sans-serif;
+    }
+
+    /* ── Layout principal ── */
+    #app {
+      width: 1920px;
+      height: 1080px;
+      display: flex;
+      flex-direction: column;
+      padding: 40px 60px;
+      gap: 0;
+    }
+
+    /* ── Header ── */
+    #header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 40px;
+      background: linear-gradient(135deg, rgba(10,10,25,0.96), rgba(20,15,45,0.96));
+      border-bottom: 3px solid rgba(245,158,11,0.5);
+      border-radius: 16px 16px 0 0;
+      backdrop-filter: blur(20px);
+      flex-shrink: 0;
+    }
+
+    #header-left { display: flex; align-items: center; gap: 20px; }
+
+    #header-icon { font-size: 48px; line-height: 1; filter: drop-shadow(0 0 12px rgba(245,158,11,0.6)); }
+
+    #header-texts { display: flex; flex-direction: column; }
+
+    #header-subtitle {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      color: rgba(255,255,255,0.35);
+    }
+
+    #header-title {
+      font-size: 42px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: #fff;
+      line-height: 1;
+    }
+
+    #header-right { display: flex; align-items: center; gap: 20px; }
+
+    /* Selector divisional */
+    #div-selector { display: flex; gap: 10px; }
+
+    .div-pill {
+      padding: 8px 20px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      border-radius: 30px;
+      cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.4);
+      transition: all 0.2s;
+    }
+
+    .div-pill.active {
+      background: rgba(245,158,11,0.2);
+      border-color: rgba(245,158,11,0.6);
+      color: #f59e0b;
+    }
+
+    .div-pill:hover { opacity: 0.85; }
+
+    #live-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(239,68,68,0.15);
+      border: 1.5px solid rgba(239,68,68,0.4);
+      border-radius: 30px;
+      padding: 8px 20px;
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: #ef4444;
+    }
+
+    #live-dot {
+      width: 9px; height: 9px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: blink 1.2s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── Tabla ── */
+    #table-wrap {
+      flex: 1;
+      background: rgba(8,8,20,0.92);
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Cabecera tabla */
+    #table-head {
+      display: grid;
+      grid-template-columns: 80px 1fr 200px 200px 200px 220px;
+      padding: 14px 40px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+      flex-shrink: 0;
+    }
+
+    .th {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: rgba(255,255,255,0.25);
+    }
+
+    .th.center { text-align: center; }
+
+    /* Filas */
+    #table-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+    .player-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 200px 200px 200px 220px;
+      padding: 0 40px;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      flex: 1;
+      opacity: 0;
+      transform: translateX(-30px);
+      transition: background 0.2s;
+    }
+
+    .player-row.visible {
+      animation: rowIn 0.5s forwards;
+    }
+
+    @keyframes rowIn {
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Podio highlight */
+    .player-row.rank-1 { background: rgba(245,158,11,0.08); }
+    .player-row.rank-2 { background: rgba(200,200,220,0.04); }
+    .player-row.rank-3 { background: rgba(180,100,30,0.05); }
+
+    /* Columnas */
+    .col-rank {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .rank-num {
+      font-size: 28px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.2);
+      width: 36px;
+    }
+
+    .rank-medal { font-size: 28px; }
+
+    .col-player { display: flex; flex-direction: column; padding-right: 20px; }
+
+    .player-name {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rank-1 .player-name { color: #fbbf24; }
+    .rank-2 .player-name { color: #e2e8f0; }
+    .rank-3 .player-name { color: #cd7c3a; }
+
+    .player-epic {
+      font-size: 13px;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 0.5px;
+    }
+
+    .col-set {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .col-total {
+      text-align: center;
+      font-size: 36px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 1px;
+    }
+
+    .rank-1 .col-total { color: #fbbf24; text-shadow: 0 0 20px rgba(251,191,36,0.4); }
+    .rank-2 .col-total { color: #e2e8f0; }
+    .rank-3 .col-total { color: #cd7c3a; }
+
+    /* Podio oculto hasta revelar */
+    .player-row.hidden-row {
+      filter: blur(8px);
+      opacity: 0.15 !important;
+      transform: none !important;
+    }
+
+    .player-row.hidden-row.visible {
+      animation: none;
+      opacity: 0.15 !important;
+    }
+
+    .player-row.revealed {
+      filter: none !important;
+      opacity: 1 !important;
+      animation: revealRow 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards !important;
+    }
+
+    @keyframes revealRow {
+      0% { opacity: 0.15; filter: blur(8px); transform: scale(0.97); }
+      60% { transform: scale(1.01); }
+      100% { opacity: 1; filter: none; transform: scale(1); }
+    }
+
+    /* ── Footer / Controles ── */
+    #footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 40px;
+      background: rgba(10,10,25,0.95);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-radius: 0 0 16px 16px;
+      flex-shrink: 0;
+    }
+
+    #footer-brand {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: rgba(255,255,255,0.2);
+    }
+
+    #footer-controls { display: flex; gap: 12px; }
+
+    .ctrl-btn {
+      padding: 10px 24px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+
+    .ctrl-btn:hover { transform: scale(1.04); }
+    .ctrl-btn:active { transform: scale(0.97); }
+
+    .btn-reveal {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #1a0800;
+    }
+
+    .btn-reset {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Loading */
+    #loading {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.2);
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <div id="header">
+    <div id="header-left">
+      <div id="header-icon">🏆</div>
+      <div id="header-texts">
+        <div id="header-subtitle">Liga Fortnite · ACRECONRE</div>
+        <div id="header-title" id="div-label">Clasificatoria</div>
+      </div>
+    </div>
+    <div id="header-right">
+      <div id="div-selector">
+        <button class="div-pill active" onclick="setDiv('clasificatoria', this)">🛡️ Clasificatoria</button>
+        <button class="div-pill" onclick="setDiv('semi_profesional', this)">⚡ Semi Pro</button>
+        <button class="div-pill" onclick="setDiv('profesional', this)">👑 Profesional</button>
+      </div>
+      <div id="live-badge">
+        <div id="live-dot"></div>
+        En vivo
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div id="table-wrap">
+    <div id="table-head">
+      <div class="th">Pos</div>
+      <div class="th">Jugador</div>
+      <div class="th center">Partida 1</div>
+      <div class="th center">Partida 2</div>
+      <div class="th center">Partida 3</div>
+      <div class="th center">Total</div>
+    </div>
+    <div id="table-body">
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:4px;">Cargando...</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div id="footer">
+    <div id="footer-brand">Asociación de Creadores de Contenido de la Región</div>
+    <div id="footer-controls">
+      <button class="ctrl-btn btn-reveal" onclick="revealNext()">▶ Revelar siguiente podio</button>
+      <button class="ctrl-btn btn-reset" onclick="resetReveal()">↺ Ocultar podio</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const DIVISIONS = {
+    clasificatoria:   "Clasificatoria",
+    semi_profesional: "Semi Profesional",
+    profesional:      "Profesional",
+  };
+
+  const MEDALS = { 1: "🥇", 2: "🥈", 3: "🥉" };
+
+  let currentDiv = "clasificatoria";
+  let allPlayers = [];
+  let podioRevealed = 0;
+
+  async function loadData() {
+    document.getElementById("table-body").innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:4px;">Cargando...</div>';
+    podioRevealed = 0;
+
+    try {
+      const [pr, sr] = await Promise.all([
+        fetch("/api/fortnite-league/players"),
+        fetch("/api/fortnite-league/scores"),
+      ]);
+      const { players } = await pr.json();
+      const { scores }  = await sr.json();
+
+      const scoresMap = {};
+      scores.forEach((s) => { scoresMap[s.inscriptionId] = s; });
+
+      allPlayers = players
+        .filter((p) => p.division === currentDiv)
+        .map((p) => ({
+          id: p.id,
+          name: p.discordUsername,
+          epic: p.epicId,
+          set1: scoresMap[p.id]?.set1 ?? 0,
+          set2: scoresMap[p.id]?.set2 ?? 0,
+          set3: scoresMap[p.id]?.set3 ?? 0,
+          total: scoresMap[p.id]?.total ?? 0,
+        }))
+        .sort((a, b) => b.total - a.total);
+
+      renderTable();
+    } catch (e) {
+      document.getElementById("table-body").innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,0,0,0.4);font-size:14px;letter-spacing:3px;text-transform:uppercase;">Error al cargar</div>';
+    }
+  }
+
+  function renderTable() {
+    const body = document.getElementById("table-body");
+    body.innerHTML = "";
+
+    if (allPlayers.length === 0) {
+      body.innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.15);font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:4px;">Sin jugadores</div>';
+      return;
+    }
+
+    // Calcular altura por fila
+    const maxRows = Math.min(allPlayers.length, 15);
+
+    allPlayers.forEach((p, idx) => {
+      const rank = idx + 1;
+      const isPodio = rank <= 3;
+      const rankClass = rank <= 3 ? "rank-" + rank : "";
+
+      const row = document.createElement("div");
+      row.className = "player-row " + rankClass + (isPodio ? " hidden-row" : "");
+      row.id = "row-" + rank;
+      row.style.animationDelay = (idx * 60) + "ms";
+
+      row.innerHTML =
+        '<div class="col-rank">' +
+          '<span class="rank-num">' + rank + '</span>' +
+          (isPodio ? '<span class="rank-medal">' + MEDALS[rank] + '</span>' : '') +
+        '</div>' +
+        '<div class="col-player">' +
+          '<div class="player-name">' + p.name + '</div>' +
+          '<div class="player-epic">' + p.epic + '</div>' +
+        '</div>' +
+        '<div class="col-set">' + p.set1 + '</div>' +
+        '<div class="col-set">' + p.set2 + '</div>' +
+        '<div class="col-set">' + p.set3 + '</div>' +
+        '<div class="col-total">' + p.total + '</div>';
+
+      body.appendChild(row);
+
+      if (!isPodio) {
+        setTimeout(() => row.classList.add("visible"), idx * 60);
+      }
+    });
+  }
+
+  function revealNext() {
+    if (podioRevealed >= 3) return;
+    // Revelar de 3ro a 1ro
+    const rankToReveal = 3 - podioRevealed;
+    const row = document.getElementById("row-" + rankToReveal);
+    if (!row) { podioRevealed++; revealNext(); return; }
+    row.classList.remove("hidden-row");
+    row.classList.add("revealed", "visible");
+    podioRevealed++;
+  }
+
+  function resetReveal() {
+    podioRevealed = 0;
+    for (let i = 1; i <= 3; i++) {
+      const row = document.getElementById("row-" + i);
+      if (row) {
+        row.classList.add("hidden-row");
+        row.classList.remove("revealed", "visible");
+      }
+    }
+  }
+
+  window.setDiv = function(divId, btn) {
+    currentDiv = divId;
+    document.querySelectorAll(".div-pill").forEach((el) => el.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("header-title").textContent = DIVISIONS[divId];
+    loadData();
+  };
+
+  // Auto-refresh cada 30s si el podio no está siendo revelado
+  loadData();
+  setInterval(() => { if (podioRevealed === 0) loadData(); }, 30000);
+</script>
+</body>
+</html>
