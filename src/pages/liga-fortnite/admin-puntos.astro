@@ -5,26 +5,25 @@ import { FortniteLeagueInscriptionsTable, FortniteLeagueScoresTable } from "@/db
 
 export const prerender = false;
 
-// Crear tabla si no existe (para producción)
+// Crear tabla si no existe (para producción sin migrations)
 try {
-  await client.execute(`
-    CREATE TABLE IF NOT EXISTS fortnite_league_scores (
-      id SERIAL PRIMARY KEY,
-      inscription_id INTEGER NOT NULL REFERENCES fortnite_league_inscriptions(id) ON DELETE CASCADE,
-      set1 INTEGER NOT NULL DEFAULT 0,
-      set2 INTEGER NOT NULL DEFAULT 0,
-      set3 INTEGER NOT NULL DEFAULT 0,
-      total INTEGER NOT NULL DEFAULT 0,
-      created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
-      updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
-      UNIQUE(inscription_id)
-    );
-  `);
+  await client.execute(
+    "CREATE TABLE IF NOT EXISTS fortnite_league_scores (" +
+    "id SERIAL PRIMARY KEY," +
+    "inscription_id INTEGER NOT NULL REFERENCES fortnite_league_inscriptions(id) ON DELETE CASCADE," +
+    "set1 INTEGER NOT NULL DEFAULT 0," +
+    "set2 INTEGER NOT NULL DEFAULT 0," +
+    "set3 INTEGER NOT NULL DEFAULT 0," +
+    "total INTEGER NOT NULL DEFAULT 0," +
+    "created_at TIMESTAMP NOT NULL DEFAULT current_timestamp," +
+    "updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp," +
+    "UNIQUE(inscription_id)" +
+    ")"
+  );
 } catch (e) {
   // La tabla ya existe, continuar
 }
 
-// Cargar jugadores y puntajes desde la base de datos
 const players = await client.select().from(FortniteLeagueInscriptionsTable).execute();
 const scores  = await client.select().from(FortniteLeagueScoresTable).execute();
 
@@ -43,10 +42,8 @@ const ADMINS = ["saltouruguay", "xdiegouy"];
   title="Admin · Tabla de Puntos | Liga Fortnite"
   description="Panel de administración de puntajes de la Liga Fortnite."
 >
-  {/* Página oculta hasta verificar admin en cliente */}
-  <div id="page-content" class="hidden flex flex-col items-center justify-start min-h-[90vh] py-20 px-4">
+  <div id="page-content" class="hidden flex-col items-center justify-start min-h-[90vh] py-20 px-4">
 
-    {/* Header */}
     <div class="w-full max-w-6xl mb-12">
       <a
         href="/liga-fortnite"
@@ -66,7 +63,6 @@ const ADMINS = ["saltouruguay", "xdiegouy"];
       </p>
     </div>
 
-    {/* Tablas por divisional */}
     <div class="w-full max-w-6xl space-y-16">
       {DIVISIONALES.map((div) => {
         const divPlayers = players
@@ -93,8 +89,6 @@ const ADMINS = ["saltouruguay", "xdiegouy"];
               </div>
             ) : (
               <div class="w-full rounded-2xl border border-current/10 overflow-hidden">
-
-                {/* Cabecera */}
                 <div class="grid grid-cols-[2rem_1fr_8rem_8rem_8rem_8rem_6rem] gap-0 px-4 py-3 border-b border-current/10 bg-current/[0.03]">
                   <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">#</p>
                   <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Jugador</p>
@@ -105,88 +99,54 @@ const ADMINS = ["saltouruguay", "xdiegouy"];
                   <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 text-center">Acción</p>
                 </div>
 
-                {/* Filas */}
                 {divPlayers.map((player, idx) => {
                   const score = scoresMap[player.id];
                   return (
-                    <div
-                      class={`grid grid-cols-[2rem_1fr_8rem_8rem_8rem_8rem_6rem] gap-0 px-4 py-3 items-center border-b border-current/10 last:border-0 transition-colors ${idx === 0 ? "bg-amber-500/5" : "hover:bg-current/[0.02]"}`}
-                    >
-                      {/* Posición */}
+                    <div class={`grid grid-cols-[2rem_1fr_8rem_8rem_8rem_8rem_6rem] gap-0 px-4 py-3 items-center border-b border-current/10 last:border-0 transition-colors ${idx === 0 ? "bg-amber-500/5" : "hover:bg-current/[0.02]"}`}>
                       <p class={`text-sm font-black ${idx === 0 ? "text-amber-400" : idx === 1 ? "opacity-60" : idx === 2 ? "opacity-40" : "opacity-20"}`}>
                         {idx + 1}
                       </p>
-
-                      {/* Jugador */}
                       <div class="min-w-0 pr-2">
                         <p class="text-sm font-bold truncate">{player.discordUsername}</p>
                         <p class="text-[9px] opacity-40 truncate">({player.epicId}) · {player.platform}</p>
                       </div>
-
-                      {/* Partida 1 */}
                       <div class="px-1">
                         <input
-                          type="number"
-                          min="0"
-                          max="999"
+                          type="number" min="0" max="999"
                           id={`set1-${player.id}`}
                           value={score?.set1 ?? 0}
-                          class="w-full px-2 py-1.5 rounded-lg border border-current/10 bg-white
-                                 text-sm font-bold text-black text-center
-                                 focus:outline-none focus:border-amber-500/50
-                                 transition-all duration-200"
+                          class="w-full px-2 py-1.5 rounded-lg border border-current/10 bg-white text-sm font-bold text-black text-center focus:outline-none focus:border-amber-500/50 transition-all duration-200"
                           oninput={`calcTotal(${player.id})`}
                         />
                       </div>
-
-                      {/* Partida 2 */}
                       <div class="px-1">
                         <input
-                          type="number"
-                          min="0"
-                          max="999"
+                          type="number" min="0" max="999"
                           id={`set2-${player.id}`}
                           value={score?.set2 ?? 0}
-                          class="w-full px-2 py-1.5 rounded-lg border border-current/10 bg-white
-                                 text-sm font-bold text-black text-center
-                                 focus:outline-none focus:border-amber-500/50
-                                 transition-all duration-200"
+                          class="w-full px-2 py-1.5 rounded-lg border border-current/10 bg-white text-sm font-bold text-black text-center focus:outline-none focus:border-amber-500/50 transition-all duration-200"
                           oninput={`calcTotal(${player.id})`}
                         />
                       </div>
-
-                      {/* Partida 3 */}
                       <div class="px-1">
                         <input
-                          type="number"
-                          min="0"
-                          max="999"
+                          type="number" min="0" max="999"
                           id={`set3-${player.id}`}
                           value={score?.set3 ?? 0}
-                          class="w-full px-2 py-1.5 rounded-lg border border-current/10 bg-white
-                                 text-sm font-bold text-black text-center
-                                 focus:outline-none focus:border-amber-500/50
-                                 transition-all duration-200"
+                          class="w-full px-2 py-1.5 rounded-lg border border-current/10 bg-white text-sm font-bold text-black text-center focus:outline-none focus:border-amber-500/50 transition-all duration-200"
                           oninput={`calcTotal(${player.id})`}
                         />
                       </div>
-
-                      {/* Total */}
                       <div class="text-center px-1">
                         <span id={`total-${player.id}`} class="text-lg font-black text-amber-400">
                           {score?.total ?? 0}
                         </span>
                       </div>
-
-                      {/* Botón guardar */}
                       <div class="text-center">
                         <button
                           onclick={`saveScore(${player.id})`}
                           id={`btn-${player.id}`}
-                          class="px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.15em]
-                                 rounded-lg border border-current/15 bg-current/[0.04]
-                                 hover:bg-amber-500/15 hover:border-amber-500/40 hover:text-amber-500
-                                 active:scale-95 transition-all duration-200 cursor-pointer"
+                          class="px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.15em] rounded-lg border border-current/15 bg-current/[0.04] hover:bg-amber-500/15 hover:border-amber-500/40 hover:text-amber-500 active:scale-95 transition-all duration-200 cursor-pointer"
                         >
                           Guardar
                         </button>
@@ -208,54 +168,47 @@ const ADMINS = ["saltouruguay", "xdiegouy"];
     </div>
   </div>
 
-  {/* Pantalla de acceso denegado — se oculta si es admin */}
   <div id="no-access" class="flex flex-col items-center justify-center min-h-[90vh] gap-4">
     <p class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-30">Verificando acceso...</p>
   </div>
-
 </Layout>
 
-<script define:vars={{ ADMINS }}>
+<script>
+  const ADMINS = ['saltouruguay', 'xdiegouy'];
   const stored = localStorage.getItem("fn_admin_discord") || "";
   const isAdmin = ADMINS.includes(stored.toLowerCase());
 
   if (isAdmin) {
-    document.getElementById("page-content").classList.remove("hidden");
-    document.getElementById("page-content").classList.add("flex");
-    document.getElementById("no-access").classList.add("hidden");
+    const page = document.getElementById("page-content");
+    const noAccess = document.getElementById("no-access");
+    if (page) { page.classList.remove("hidden"); page.classList.add("flex"); }
+    if (noAccess) noAccess.classList.add("hidden");
   } else {
-    // No es admin — redirigir
     window.location.href = "/liga-fortnite";
   }
-</script>
 
-<script>
-  window.calcTotal = function (playerId) {
-    const s1 = parseInt(document.getElementById(`set1-${playerId}`).value) || 0;
-    const s2 = parseInt(document.getElementById(`set2-${playerId}`).value) || 0;
-    const s3 = parseInt(document.getElementById(`set3-${playerId}`).value) || 0;
-    const total = s1 + s2 + s3;
-    const totalEl = document.getElementById(`total-${playerId}`);
-    if (totalEl) totalEl.textContent = String(total);
+  window.calcTotal = function(playerId) {
+    const s1 = parseInt(document.getElementById("set1-" + playerId).value) || 0;
+    const s2 = parseInt(document.getElementById("set2-" + playerId).value) || 0;
+    const s3 = parseInt(document.getElementById("set3-" + playerId).value) || 0;
+    const el = document.getElementById("total-" + playerId);
+    if (el) el.textContent = String(s1 + s2 + s3);
   };
 
-  window.saveScore = async function (playerId) {
-    const s1 = parseInt(document.getElementById(`set1-${playerId}`).value) || 0;
-    const s2 = parseInt(document.getElementById(`set2-${playerId}`).value) || 0;
-    const s3 = parseInt(document.getElementById(`set3-${playerId}`).value) || 0;
-
-    const btn = document.getElementById(`btn-${playerId}`);
+  window.saveScore = async function(playerId) {
+    const s1 = parseInt(document.getElementById("set1-" + playerId).value) || 0;
+    const s2 = parseInt(document.getElementById("set2-" + playerId).value) || 0;
+    const s3 = parseInt(document.getElementById("set3-" + playerId).value) || 0;
+    const btn = document.getElementById("btn-" + playerId);
     const original = btn.textContent;
     btn.textContent = "...";
     btn.disabled = true;
-
     try {
       const res = await fetch("/api/fortnite-league/scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ inscriptionId: playerId, set1: s1, set2: s2, set3: s3 }),
       });
-
       if (res.ok) {
         btn.textContent = "✓";
         btn.classList.add("text-green-400", "border-green-500/30", "bg-green-500/10");
@@ -263,3 +216,15 @@ const ADMINS = ["saltouruguay", "xdiegouy"];
           btn.textContent = original;
           btn.classList.remove("text-green-400", "border-green-500/30", "bg-green-500/10");
           btn.disabled = false;
+        }, 1500);
+      } else {
+        btn.textContent = "Error";
+        btn.classList.add("text-red-400");
+        setTimeout(() => { btn.textContent = original; btn.classList.remove("text-red-400"); btn.disabled = false; }, 2000);
+      }
+    } catch {
+      btn.textContent = "Error";
+      setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
+    }
+  };
+</script>

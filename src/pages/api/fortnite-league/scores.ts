@@ -70,3 +70,24 @@ export async function POST({ request }: { request: Request }) {
         if (existing.length > 0) {
             [score] = await client
                 .update(FortniteLeagueScoresTable)
+                .set({ set1: s1, set2: s2, set3: s3, total, updatedAt: new Date() })
+                .where(eq(FortniteLeagueScoresTable.inscriptionId, inscriptionId))
+                .returning()
+                .execute();
+        } else {
+            [score] = await client
+                .insert(FortniteLeagueScoresTable)
+                .values({ inscriptionId, set1: s1, set2: s2, set3: s3, total })
+                .returning()
+                .execute();
+        }
+
+        return new Response(JSON.stringify({ score }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+        });
+    } catch (error) {
+        console.error("Error saving score:", error);
+        return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 });
+    }
+}
