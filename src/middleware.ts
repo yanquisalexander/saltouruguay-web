@@ -35,7 +35,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     // 4. MODO MANTENIMIENTO
     // Solo verifica si está activo para ahorrar procesamiento del UserAgent
-    if (ENABLE_MAINTENANCE && pathname !== "/500") {
+    if (ENABLE_MAINTENANCE && pathname !== "/500" && !context.isPrerendered) {
         const userAgent = request.headers.get('user-agent') || '';
         // Check de bot solo si es necesario
         if (!BOT_REGEX.test(userAgent)) {
