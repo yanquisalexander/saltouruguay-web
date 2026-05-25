@@ -6,391 +6,255 @@ export const prerender = false;
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=1920" />
   <title>Overlay Liga Fortnite</title>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800&display=swap" rel="stylesheet" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
-      width: 1920px;
+      width: 900px;
       height: 1080px;
       overflow: hidden;
       background: transparent !important;
       font-family: 'Barlow Condensed', sans-serif;
     }
 
-    /* ── Layout principal ── */
     #app {
-      width: 1920px;
+      width: 900px;
       height: 1080px;
       display: flex;
       flex-direction: column;
-      padding: 40px 60px;
-      gap: 0;
     }
 
-    /* ── Header ── */
+    /* ── HEADER ── */
     #header {
+      background: linear-gradient(135deg, #0f0f1e, #1a1040);
+      border-bottom: 3px solid #f59e0b;
+      padding: 20px 30px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 24px 40px;
-      background: linear-gradient(135deg, rgba(10,10,25,0.96), rgba(20,15,45,0.96));
-      border-bottom: 3px solid rgba(245,158,11,0.5);
-      border-radius: 16px 16px 0 0;
-      backdrop-filter: blur(20px);
       flex-shrink: 0;
     }
 
-    #header-left { display: flex; align-items: center; gap: 20px; }
-
-    #header-icon { font-size: 48px; line-height: 1; filter: drop-shadow(0 0 12px rgba(245,158,11,0.6)); }
-
-    #header-texts { display: flex; flex-direction: column; }
-
-    #header-subtitle {
-      font-size: 14px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 4px;
-      color: rgba(255,255,255,0.35);
+    #header-left { display: flex; align-items: center; gap: 14px; }
+    #header-icon { font-size: 40px; filter: drop-shadow(0 0 10px rgba(245,158,11,0.7)); }
+    #header-sub {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 4px; color: rgba(255,255,255,0.4); margin-bottom: 2px;
     }
-
     #header-title {
-      font-size: 42px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      color: #fff;
-      line-height: 1;
+      font-size: 34px; font-weight: 900; text-transform: uppercase;
+      letter-spacing: 2px; color: #fff; line-height: 1;
     }
-
-    #header-right { display: flex; align-items: center; gap: 20px; }
-
-    /* Selector divisional */
-    #div-selector { display: flex; gap: 10px; }
-
-    .div-pill {
-      padding: 8px 20px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 14px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      border-radius: 30px;
-      cursor: pointer;
-      border: 1.5px solid rgba(255,255,255,0.15);
-      background: rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.4);
-      transition: all 0.2s;
-    }
-
-    .div-pill.active {
-      background: rgba(245,158,11,0.2);
-      border-color: rgba(245,158,11,0.6);
-      color: #f59e0b;
-    }
-
-    .div-pill:hover { opacity: 0.85; }
 
     #live-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: flex; align-items: center; gap: 7px;
       background: rgba(239,68,68,0.15);
-      border: 1.5px solid rgba(239,68,68,0.4);
-      border-radius: 30px;
-      padding: 8px 20px;
-      font-size: 14px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      color: #ef4444;
+      border: 1.5px solid rgba(239,68,68,0.5);
+      border-radius: 30px; padding: 7px 16px;
+      font-size: 12px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 2px; color: #ef4444;
     }
-
     #live-dot {
-      width: 9px; height: 9px;
-      background: #ef4444;
-      border-radius: 50%;
-      animation: blink 1.2s infinite;
+      width: 8px; height: 8px; background: #ef4444;
+      border-radius: 50%; animation: blink 1.2s infinite;
     }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
+    /* ── DIV SELECTOR ── */
+    #div-selector {
+      display: flex; gap: 0;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; overflow: hidden; flex-shrink: 0;
     }
-
-    /* ── Tabla ── */
-    #table-wrap {
-      flex: 1;
-      background: rgba(8,8,20,0.92);
-      backdrop-filter: blur(20px);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+    .div-pill {
+      padding: 8px 16px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      cursor: pointer; border: none;
+      background: transparent; color: rgba(255,255,255,0.35);
+      transition: all 0.2s; border-right: 1px solid rgba(255,255,255,0.08);
     }
+    .div-pill:last-child { border-right: none; }
+    .div-pill.active { background: rgba(245,158,11,0.25); color: #f59e0b; }
+    .div-pill:hover:not(.active) { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); }
 
-    /* Cabecera tabla */
+    /* ── TABLE HEAD ── */
     #table-head {
       display: grid;
-      grid-template-columns: 80px 1fr 200px 200px 200px 220px;
-      padding: 14px 40px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      background: rgba(255,255,255,0.02);
+      grid-template-columns: 56px 1fr 110px 110px 110px 130px;
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
       flex-shrink: 0;
     }
-
     .th {
-      font-size: 12px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      color: rgba(255,255,255,0.25);
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 2.5px; color: rgba(255,255,255,0.3);
     }
+    .th.c { text-align: center; }
 
-    .th.center { text-align: center; }
-
-    /* Filas */
-    #table-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    /* ── TABLE BODY ── */
+    #table-body {
+      flex: 1; display: flex; flex-direction: column;
+      overflow: hidden; background: rgba(6,6,16,0.97);
+    }
 
     .player-row {
       display: grid;
-      grid-template-columns: 80px 1fr 200px 200px 200px 220px;
-      padding: 0 40px;
+      grid-template-columns: 56px 1fr 110px 110px 110px 130px;
+      padding: 0 20px;
       align-items: center;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
       flex: 1;
       opacity: 0;
-      transform: translateX(-30px);
-      transition: background 0.2s;
+      transform: translateX(-20px);
+      min-height: 0;
     }
 
-    .player-row.visible {
-      animation: rowIn 0.5s forwards;
-    }
+    .player-row.in { animation: rowIn 0.45s forwards; }
+    @keyframes rowIn { to { opacity:1; transform:translateX(0); } }
 
-    @keyframes rowIn {
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    /* Podio highlight */
-    .player-row.rank-1 { background: rgba(245,158,11,0.08); }
-    .player-row.rank-2 { background: rgba(200,200,220,0.04); }
+    .player-row.rank-1 { background: rgba(245,158,11,0.09); }
+    .player-row.rank-2 { background: rgba(180,190,210,0.04); }
     .player-row.rank-3 { background: rgba(180,100,30,0.05); }
 
-    /* Columnas */
-    .col-rank {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    /* Podio blur */
+    .player-row.blurred { filter: blur(6px); opacity: 0.12 !important; transform: none !important; animation: none !important; }
+    .player-row.revealed { filter: none !important; opacity: 1 !important; animation: pop 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards !important; }
+    @keyframes pop {
+      0%  { opacity:0.12; filter:blur(6px); transform:scale(0.97); }
+      65% { transform:scale(1.015); }
+      100%{ opacity:1; filter:none; transform:scale(1); }
     }
 
-    .rank-num {
-      font-size: 28px;
-      font-weight: 900;
-      color: rgba(255,255,255,0.2);
-      width: 36px;
+    /* Cols */
+    .col-pos { display: flex; align-items: center; gap: 6px; }
+    .pos-num { font-size: 22px; font-weight: 900; color: rgba(255,255,255,0.18); width: 28px; }
+    .pos-medal { font-size: 24px; line-height: 1; }
+
+    .col-name { padding-right: 10px; min-width: 0; }
+    .name-main {
+      font-size: 28px; font-weight: 800; color: #fff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      line-height: 1.1; letter-spacing: 0.3px;
     }
+    .name-epic { font-size: 12px; color: rgba(255,255,255,0.22); letter-spacing: 0.5px; }
 
-    .rank-medal { font-size: 28px; }
-
-    .col-player { display: flex; flex-direction: column; padding-right: 20px; }
-
-    .player-name {
-      font-size: 26px;
-      font-weight: 800;
-      color: #fff;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .rank-1 .player-name { color: #fbbf24; }
-    .rank-2 .player-name { color: #e2e8f0; }
-    .rank-3 .player-name { color: #cd7c3a; }
-
-    .player-epic {
-      font-size: 13px;
-      color: rgba(255,255,255,0.25);
-      letter-spacing: 0.5px;
-    }
+    .rank-1 .name-main { color: #fcd34d; }
+    .rank-2 .name-main { color: #e2e8f0; }
+    .rank-3 .name-main { color: #f97316; }
 
     .col-set {
       text-align: center;
-      font-size: 26px;
-      font-weight: 700;
-      color: rgba(255,255,255,0.5);
+      font-size: 26px; font-weight: 700;
+      color: rgba(255,255,255,0.55);
     }
 
     .col-total {
       text-align: center;
-      font-size: 36px;
-      font-weight: 900;
-      color: rgba(255,255,255,0.6);
-      letter-spacing: 1px;
+      font-size: 34px; font-weight: 900;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.5px;
     }
-
-    .rank-1 .col-total { color: #fbbf24; text-shadow: 0 0 20px rgba(251,191,36,0.4); }
+    .rank-1 .col-total { color: #fcd34d; text-shadow: 0 0 16px rgba(252,211,77,0.45); }
     .rank-2 .col-total { color: #e2e8f0; }
-    .rank-3 .col-total { color: #cd7c3a; }
+    .rank-3 .col-total { color: #f97316; }
 
-    /* Podio oculto hasta revelar */
-    .player-row.hidden-row {
-      filter: blur(8px);
-      opacity: 0.15 !important;
-      transform: none !important;
-    }
-
-    .player-row.hidden-row.visible {
-      animation: none;
-      opacity: 0.15 !important;
-    }
-
-    .player-row.revealed {
-      filter: none !important;
-      opacity: 1 !important;
-      animation: revealRow 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards !important;
-    }
-
-    @keyframes revealRow {
-      0% { opacity: 0.15; filter: blur(8px); transform: scale(0.97); }
-      60% { transform: scale(1.01); }
-      100% { opacity: 1; filter: none; transform: scale(1); }
-    }
-
-    /* ── Footer / Controles ── */
+    /* ── FOOTER ── */
     #footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 40px;
-      background: rgba(10,10,25,0.95);
-      border-top: 1px solid rgba(255,255,255,0.06);
-      border-radius: 0 0 16px 16px;
+      background: #0a0a18;
+      border-top: 2px solid rgba(245,158,11,0.25);
+      padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
       flex-shrink: 0;
     }
-
     #footer-brand {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      color: rgba(255,255,255,0.2);
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 3px; color: rgba(255,255,255,0.18);
     }
-
-    #footer-controls { display: flex; gap: 12px; }
-
+    #footer-controls { display: flex; gap: 10px; }
     .ctrl-btn {
-      padding: 10px 24px;
+      padding: 9px 20px;
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 13px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      border-radius: 8px;
-      cursor: pointer;
-      border: none;
-      transition: all 0.15s;
+      font-size: 12px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      border-radius: 8px; cursor: pointer; border: none; transition: all 0.15s;
     }
-
     .ctrl-btn:hover { transform: scale(1.04); }
     .ctrl-btn:active { transform: scale(0.97); }
+    .btn-reveal { background: linear-gradient(135deg,#f59e0b,#d97706); color: #1a0800; }
+    .btn-reset { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.1); }
 
-    .btn-reveal {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: #1a0800;
-    }
-
-    .btn-reset {
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.5);
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    /* Loading */
-    #loading {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(255,255,255,0.2);
-      font-size: 14px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 4px;
+    /* empty / loading */
+    .empty-msg {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.15); font-size: 14px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 4px;
     }
   </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- Header -->
+  <!-- HEADER -->
   <div id="header">
     <div id="header-left">
       <div id="header-icon">🏆</div>
-      <div id="header-texts">
-        <div id="header-subtitle">Liga Fortnite · ACRECONRE</div>
-        <div id="header-title" id="div-label">Clasificatoria</div>
+      <div>
+        <div id="header-sub">Liga Fortnite · ACRECONRE</div>
+        <div id="header-title">Clasificatoria</div>
       </div>
     </div>
-    <div id="header-right">
+    <div style="display:flex;align-items:center;gap:14px;">
       <div id="div-selector">
-        <button class="div-pill active" onclick="setDiv('clasificatoria', this)">🛡️ Clasificatoria</button>
-        <button class="div-pill" onclick="setDiv('semi_profesional', this)">⚡ Semi Pro</button>
-        <button class="div-pill" onclick="setDiv('profesional', this)">👑 Profesional</button>
+        <button class="div-pill active" onclick="setDiv('clasificatoria',this)">🛡️ Clas.</button>
+        <button class="div-pill" onclick="setDiv('semi_profesional',this)">⚡ Semi</button>
+        <button class="div-pill" onclick="setDiv('profesional',this)">👑 Pro</button>
       </div>
-      <div id="live-badge">
-        <div id="live-dot"></div>
-        En vivo
-      </div>
+      <div id="live-badge"><div id="live-dot"></div>En vivo</div>
     </div>
   </div>
 
-  <!-- Tabla -->
-  <div id="table-wrap">
-    <div id="table-head">
-      <div class="th">Pos</div>
-      <div class="th">Jugador</div>
-      <div class="th center">Partida 1</div>
-      <div class="th center">Partida 2</div>
-      <div class="th center">Partida 3</div>
-      <div class="th center">Total</div>
-    </div>
-    <div id="table-body">
-      <div style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:4px;">Cargando...</div>
-    </div>
+  <!-- TABLE HEAD -->
+  <div id="table-head" style="background:#0d0d1f;">
+    <div class="th">Pos</div>
+    <div class="th">Jugador</div>
+    <div class="th c">P1</div>
+    <div class="th c">P2</div>
+    <div class="th c">P3</div>
+    <div class="th c">Total</div>
   </div>
 
-  <!-- Footer -->
+  <!-- TABLE BODY -->
+  <div id="table-body">
+    <div class="empty-msg">Cargando...</div>
+  </div>
+
+  <!-- FOOTER -->
   <div id="footer">
     <div id="footer-brand">Asociación de Creadores de Contenido de la Región</div>
     <div id="footer-controls">
-      <button class="ctrl-btn btn-reveal" onclick="revealNext()">▶ Revelar siguiente podio</button>
-      <button class="ctrl-btn btn-reset" onclick="resetReveal()">↺ Ocultar podio</button>
+      <button class="ctrl-btn btn-reveal" onclick="revealNext()">▶ Revelar podio</button>
+      <button class="ctrl-btn btn-reset" onclick="resetReveal()">↺ Ocultar</button>
     </div>
   </div>
 
 </div>
-
 <script>
-  const DIVISIONS = {
-    clasificatoria:   "Clasificatoria",
-    semi_profesional: "Semi Profesional",
-    profesional:      "Profesional",
-  };
-
-  const MEDALS = { 1: "🥇", 2: "🥈", 3: "🥉" };
+  const DIV_LABELS = { clasificatoria:"Clasificatoria", semi_profesional:"Semi Profesional", profesional:"Profesional" };
+  const MEDALS = { 1:"🥇", 2:"🥈", 3:"🥉" };
 
   let currentDiv = "clasificatoria";
   let allPlayers = [];
   let podioRevealed = 0;
 
   async function loadData() {
-    document.getElementById("table-body").innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:4px;">Cargando...</div>';
+    document.getElementById("table-body").innerHTML = '<div class="empty-msg">Cargando...</div>';
     podioRevealed = 0;
-
     try {
       const [pr, sr] = await Promise.all([
         fetch("/api/fortnite-league/players"),
@@ -398,104 +262,80 @@ export const prerender = false;
       ]);
       const { players } = await pr.json();
       const { scores }  = await sr.json();
-
-      const scoresMap = {};
-      scores.forEach((s) => { scoresMap[s.inscriptionId] = s; });
-
+      const sm = {};
+      scores.forEach(s => { sm[s.inscriptionId] = s; });
       allPlayers = players
-        .filter((p) => p.division === currentDiv)
-        .map((p) => ({
-          id: p.id,
-          name: p.discordUsername,
-          epic: p.epicId,
-          set1: scoresMap[p.id]?.set1 ?? 0,
-          set2: scoresMap[p.id]?.set2 ?? 0,
-          set3: scoresMap[p.id]?.set3 ?? 0,
-          total: scoresMap[p.id]?.total ?? 0,
+        .filter(p => p.division === currentDiv)
+        .map(p => ({
+          id: p.id, name: p.discordUsername, epic: p.epicId,
+          set1: sm[p.id]?.set1 ?? 0, set2: sm[p.id]?.set2 ?? 0,
+          set3: sm[p.id]?.set3 ?? 0, total: sm[p.id]?.total ?? 0,
         }))
-        .sort((a, b) => b.total - a.total);
-
+        .sort((a,b) => b.total - a.total);
       renderTable();
-    } catch (e) {
-      document.getElementById("table-body").innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,0,0,0.4);font-size:14px;letter-spacing:3px;text-transform:uppercase;">Error al cargar</div>';
+    } catch(e) {
+      document.getElementById("table-body").innerHTML = '<div class="empty-msg" style="color:rgba(255,80,80,0.5);">Error al cargar</div>';
     }
   }
 
   function renderTable() {
     const body = document.getElementById("table-body");
     body.innerHTML = "";
-
-    if (allPlayers.length === 0) {
-      body.innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.15);font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:4px;">Sin jugadores</div>';
+    if (!allPlayers.length) {
+      body.innerHTML = '<div class="empty-msg">Sin jugadores en esta divisional</div>';
       return;
     }
-
-    // Calcular altura por fila
-    const maxRows = Math.min(allPlayers.length, 15);
-
     allPlayers.forEach((p, idx) => {
       const rank = idx + 1;
       const isPodio = rank <= 3;
-      const rankClass = rank <= 3 ? "rank-" + rank : "";
-
       const row = document.createElement("div");
-      row.className = "player-row " + rankClass + (isPodio ? " hidden-row" : "");
       row.id = "row-" + rank;
-      row.style.animationDelay = (idx * 60) + "ms";
-
+      row.className = "player-row" + (rank<=3?" rank-"+rank:"") + (isPodio?" blurred":"");
+      row.style.animationDelay = (idx*55)+"ms";
       row.innerHTML =
-        '<div class="col-rank">' +
-          '<span class="rank-num">' + rank + '</span>' +
-          (isPodio ? '<span class="rank-medal">' + MEDALS[rank] + '</span>' : '') +
+        '<div class="col-pos">' +
+          '<span class="pos-num">' + rank + '</span>' +
+          (isPodio ? '<span class="pos-medal">'+ MEDALS[rank] +'</span>' : '') +
         '</div>' +
-        '<div class="col-player">' +
-          '<div class="player-name">' + p.name + '</div>' +
-          '<div class="player-epic">' + p.epic + '</div>' +
+        '<div class="col-name">' +
+          '<div class="name-main">' + p.name + '</div>' +
+          '<div class="name-epic">' + p.epic + '</div>' +
         '</div>' +
         '<div class="col-set">' + p.set1 + '</div>' +
         '<div class="col-set">' + p.set2 + '</div>' +
         '<div class="col-set">' + p.set3 + '</div>' +
         '<div class="col-total">' + p.total + '</div>';
-
       body.appendChild(row);
-
-      if (!isPodio) {
-        setTimeout(() => row.classList.add("visible"), idx * 60);
-      }
+      if (!isPodio) setTimeout(() => row.classList.add("in"), idx * 55);
     });
   }
 
   function revealNext() {
     if (podioRevealed >= 3) return;
-    // Revelar de 3ro a 1ro
-    const rankToReveal = 3 - podioRevealed;
-    const row = document.getElementById("row-" + rankToReveal);
+    const rank = 3 - podioRevealed;
+    const row = document.getElementById("row-" + rank);
     if (!row) { podioRevealed++; revealNext(); return; }
-    row.classList.remove("hidden-row");
-    row.classList.add("revealed", "visible");
+    row.classList.remove("blurred");
+    row.classList.add("revealed","in");
     podioRevealed++;
   }
 
   function resetReveal() {
     podioRevealed = 0;
-    for (let i = 1; i <= 3; i++) {
-      const row = document.getElementById("row-" + i);
-      if (row) {
-        row.classList.add("hidden-row");
-        row.classList.remove("revealed", "visible");
-      }
+    for (let i=1;i<=3;i++) {
+      const r = document.getElementById("row-"+i);
+      if (r) { r.classList.add("blurred"); r.classList.remove("revealed","in"); }
     }
   }
 
   window.setDiv = function(divId, btn) {
     currentDiv = divId;
-    document.querySelectorAll(".div-pill").forEach((el) => el.classList.remove("active"));
+    document.querySelectorAll(".div-pill").forEach(el => el.classList.remove("active"));
     btn.classList.add("active");
-    document.getElementById("header-title").textContent = DIVISIONS[divId];
+    document.getElementById("header-title").textContent = DIV_LABELS[divId];
     loadData();
   };
 
-  // Auto-refresh cada 30s si el podio no está siendo revelado
   loadData();
   setInterval(() => { if (podioRevealed === 0) loadData(); }, 30000);
 </script>
