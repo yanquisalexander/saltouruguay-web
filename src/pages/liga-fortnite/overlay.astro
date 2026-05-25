@@ -293,16 +293,23 @@ function resetReveal() {
   }
 }
 
-window.setDiv = function(divId, btn) {
+function setDiv(divId, btn) {
   curDiv = divId;
   document.querySelectorAll(".dpill").forEach(el => el.classList.remove("on"));
   btn.classList.add("on");
   document.getElementById("hdr-title").textContent = LABELS[divId];
   load();
-};
+}
+
+window.setDiv = setDiv;
+window.revealNext = revealNext;
+window.resetReveal = resetReveal;
 
 load();
 setInterval(() => { if (revealed === 0) load(); }, 30000);
+window.revealNext = revealNext;
+window.resetReveal = resetReveal;
+window.setDiv = setDiv;
 </script>
 </body>
 </html>
