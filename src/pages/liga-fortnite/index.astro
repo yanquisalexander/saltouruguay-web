@@ -522,6 +522,7 @@ const NOVEDADES = [
 </div>
 
 <script>
+  import {  getSessionClient } from '@/lib/auth-client'
   interface Player {
     id: number;
     name: string;
@@ -531,16 +532,14 @@ const NOVEDADES = [
     joinDate: string;
   }
 
-  // ── Admin check (client-side) ───────────────────────────────────────────────
-  const ADMINS = ['saltouruguay', 'xdiegouy'];
 
-  function checkAdmin() {
-    const stored = localStorage.getItem("fn_admin_discord") || "";
-    return ADMINS.includes(stored.toLowerCase());
+  async function checkAdmin() {
+    const session = await getSessionClient();
+    return session?.user?.isAdmin || false;
   }
 
-  function applyAdminUI() {
-    const admin = checkAdmin();
+  async function applyAdminUI() {
+    const admin = await checkAdmin();
     // drag tip
     const tip = document.getElementById("drag-tip");
     const spacer = document.getElementById("drag-tip-spacer");
