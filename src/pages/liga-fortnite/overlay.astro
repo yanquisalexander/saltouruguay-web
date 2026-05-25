@@ -1,358 +1,308 @@
 ---
 export const prerender = false;
 ---
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Overlay Liga Fortnite</title>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800&display=swap" rel="stylesheet" />
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8" />
+<title>Overlay Liga Fortnite</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  width:900px; height:1080px; overflow:hidden;
+  background:transparent !important;
+  font-family:'Barlow Condensed',sans-serif;
+  color:#ffffff;
+}
+#app { width:900px; height:1080px; display:flex; flex-direction:column; background:transparent; }
 
-    html, body {
-  width: 900px;
-  height: 1080px;
-  overflow: hidden;
-  background: transparent !important;
-  font-family: 'Barlow Condensed', sans-serif;
-  color: #ffffff !important;
+/* HEADER */
+#hdr {
+  flex-shrink:0;
+  background:linear-gradient(135deg,#0f0f1e 0%,#1a1040 100%);
+  border-bottom:3px solid #f59e0b;
+  padding:18px 28px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+#hdr-left { display:flex; align-items:center; gap:14px; }
+#hdr-icon { font-size:38px; }
+#hdr-sub { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:4px; color:rgba(255,255,255,0.4); }
+#hdr-title { font-size:32px; font-weight:900; text-transform:uppercase; letter-spacing:2px; color:#fff; line-height:1; }
+#hdr-right { display:flex; align-items:center; gap:12px; }
+#divsel { display:flex; border:1px solid rgba(255,255,255,0.12); border-radius:8px; overflow:hidden; }
+.dpill {
+  padding:7px 14px; font-family:'Barlow Condensed',sans-serif;
+  font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:1px;
+  cursor:pointer; border:none; border-right:1px solid rgba(255,255,255,0.08);
+  background:transparent; color:rgba(255,255,255,0.35); transition:all 0.2s;
+}
+.dpill:last-child { border-right:none; }
+.dpill.on { background:rgba(245,158,11,0.22); color:#f59e0b; }
+#live {
+  display:flex; align-items:center; gap:7px;
+  background:rgba(239,68,68,0.12); border:1.5px solid rgba(239,68,68,0.45);
+  border-radius:30px; padding:7px 16px;
+  font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:2px; color:#ef4444;
+}
+#ldot { width:8px; height:8px; background:#ef4444; border-radius:50%; animation:blink 1.2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+/* TABLE HEAD */
+#thead {
+  flex-shrink:0;
+  display:table; width:100%; table-layout:fixed;
+  background:#0d0d1f;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+  padding:10px 0;
+}
+#thead tr td {
+  display:table-cell; padding:0 10px;
+  font-size:10px; font-weight:800; text-transform:uppercase;
+  letter-spacing:2.5px; color:rgba(255,255,255,0.3);
+}
+.c { text-align:center; }
+
+/* TABLE BODY */
+#tbody {
+  flex:1; overflow:hidden;
+  display:flex; flex-direction:column;
+  background:#06060f;
+}
+#empty-msg {
+  flex:1; display:flex; align-items:center; justify-content:center;
+  color:rgba(255,255,255,0.15); font-size:14px; font-weight:700;
+  text-transform:uppercase; letter-spacing:4px;
 }
 
-    #app {
-      width: 900px;
-      height: 1080px;
-      display: flex;
-      flex-direction: column;
-    }
+/* ROWS — usando table para máxima compatibilidad */
+.prow {
+  display:table; width:100%; table-layout:fixed;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  flex-shrink:0; flex:1;
+  transition:background 0.2s;
+}
+.prow td { display:table-cell; vertical-align:middle; padding:0 10px; }
+.prow.r1 { background:rgba(245,158,11,0.09); }
+.prow.r2 { background:rgba(180,190,210,0.04); }
+.prow.r3 { background:rgba(200,100,30,0.05); }
 
-    /* ── HEADER ── */
-    #header {
-      background: linear-gradient(135deg, #0f0f1e, #1a1040);
-      border-bottom: 3px solid #f59e0b;
-      padding: 20px 30px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    }
+/* blurred podio */
+.prow.blr { filter:blur(5px); opacity:0.12; }
+.prow.rev { filter:none !important; opacity:1 !important; animation:pop 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+@keyframes pop {
+  0%  { opacity:0.12; filter:blur(5px); transform:scale(0.97); }
+  65% { transform:scale(1.02); }
+  100%{ opacity:1; filter:none; transform:scale(1); }
+}
 
-    #header-left { display: flex; align-items: center; gap: 14px; }
-    #header-icon { font-size: 40px; filter: drop-shadow(0 0 10px rgba(245,158,11,0.7)); }
-    #header-sub {
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 4px; color: rgba(255,255,255,0.4); margin-bottom: 2px;
-    }
-    #header-title {
-      font-size: 34px; font-weight: 900; text-transform: uppercase;
-      letter-spacing: 2px; color: #fff; line-height: 1;
-    }
+/* col widths */
+.col-pos  { width:70px; }
+.col-name { /* takes remaining */ }
+.col-set  { width:110px; text-align:center; }
+.col-tot  { width:130px; text-align:center; }
 
-    #live-badge {
-      display: flex; align-items: center; gap: 7px;
-      background: rgba(239,68,68,0.15);
-      border: 1.5px solid rgba(239,68,68,0.5);
-      border-radius: 30px; padding: 7px 16px;
-      font-size: 12px; font-weight: 800;
-      text-transform: uppercase; letter-spacing: 2px; color: #ef4444;
-    }
-    #live-dot {
-      width: 8px; height: 8px; background: #ef4444;
-      border-radius: 50%; animation: blink 1.2s infinite;
-    }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+.pos-wrap { display:flex; align-items:center; gap:6px; }
+.pos-num  { font-size:20px; font-weight:900; color:rgba(255,255,255,0.2); }
+.pos-med  { font-size:22px; line-height:1; }
 
-    /* ── DIV SELECTOR ── */
-    #div-selector {
-      display: flex; gap: 0;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px; overflow: hidden; flex-shrink: 0;
-    }
-    .div-pill {
-      padding: 8px 16px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 13px; font-weight: 800;
-      text-transform: uppercase; letter-spacing: 1.5px;
-      cursor: pointer; border: none;
-      background: transparent; color: rgba(255,255,255,0.35);
-      transition: all 0.2s; border-right: 1px solid rgba(255,255,255,0.08);
-    }
-    .div-pill:last-child { border-right: none; }
-    .div-pill.active { background: rgba(245,158,11,0.25); color: #f59e0b; }
-    .div-pill:hover:not(.active) { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); }
+.nm-main  { font-size:26px; font-weight:800; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.15; }
+.nm-epic  { font-size:12px; color:rgba(255,255,255,0.28); }
 
-    /* ── TABLE HEAD ── */
-    #table-head {
-      display: grid;
-      grid-template-columns: 56px 1fr 110px 110px 110px 130px;
-      padding: 10px 20px;
-      background: rgba(255,255,255,0.04);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      flex-shrink: 0;
-    }
-    .th {
-      font-size: 10px; font-weight: 800; text-transform: uppercase;
-      letter-spacing: 2.5px; color: rgba(255,255,255,0.3);
-    }
-    .th.c { text-align: center; }
+.prow.r1 .nm-main { color:#fcd34d; }
+.prow.r2 .nm-main { color:#e2e8f0; }
+.prow.r3 .nm-main { color:#fb923c; }
 
-    /* ── TABLE BODY ── */
-    #table-body {
-      flex: 1; display: flex; flex-direction: column;
-      overflow: hidden; background: rgba(6,6,16,0.97);
-    }
+.sv { font-size:24px; font-weight:700; color:rgba(255,255,255,0.7); }
 
-    .player-row {
-      display: grid;
-      grid-template-columns: 56px 1fr 110px 110px 110px 130px;
-      padding: 0 20px;
-      align-items: center;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      flex: 1;
-      opacity: 0;
-      transform: translateX(-20px);
-      min-height: 0;
-    }
+.tv { font-size:32px; font-weight:900; color:rgba(255,255,255,0.8); }
+.prow.r1 .tv { color:#fcd34d; text-shadow:0 0 14px rgba(252,211,77,0.4); }
+.prow.r2 .tv { color:#e2e8f0; }
+.prow.r3 .tv { color:#fb923c; }
 
-    .player-row.in { animation: rowIn 0.45s forwards; }
-    @keyframes rowIn { to { opacity:1; transform:translateX(0); } }
-
-    .player-row.rank-1 { background: rgba(245,158,11,0.09); }
-    .player-row.rank-2 { background: rgba(180,190,210,0.04); }
-    .player-row.rank-3 { background: rgba(180,100,30,0.05); }
-
-    /* Podio blur */
-    .player-row.blurred { filter: blur(6px); opacity: 0.12 !important; transform: none !important; animation: none !important; }
-    .player-row.revealed { filter: none !important; opacity: 1 !important; animation: pop 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards !important; }
-    @keyframes pop {
-      0%  { opacity:0.12; filter:blur(6px); transform:scale(0.97); }
-      65% { transform:scale(1.015); }
-      100%{ opacity:1; filter:none; transform:scale(1); }
-    }
-
-    /* Cols */
-    .col-pos { display: flex; align-items: center; gap: 6px; }
-    .pos-num { font-size: 22px; font-weight: 900; color: rgba(255,255,255,0.18); width: 28px; }
-    .pos-medal { font-size: 24px; line-height: 1; }
-
-    .col-name { padding-right: 10px; min-width: 0; }
-    .name-main {
-      font-size: 46px; font-weight: 800; color: #fff;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      line-height: 1.1; letter-spacing: 0.3px;
-    }
-    .name-epic { font-size: 12px; color: rgba(255,255,255,0.22); letter-spacing: 0.5px; }
-
-    .rank-1 .name-main { color: #fcd34d; }
-    .rank-2 .name-main { color: #e2e8f0; }
-    .rank-3 .name-main { color: #f97316; }
-
-    .col-set {
-      text-align: center;
-      font-size: 26px; font-weight: 700;
-      color: rgba(255,255,255,0.55);
-    }
-
-    .col-total {
-      text-align: center;
-      font-size: 34px; font-weight: 900;
-      color: rgba(255,255,255,0.65);
-      letter-spacing: 0.5px;
-    }
-    .rank-1 .col-total { color: #fcd34d; text-shadow: 0 0 16px rgba(252,211,77,0.45); }
-    .rank-2 .col-total { color: #e2e8f0; }
-    .rank-3 .col-total { color: #f97316; }
-
-    /* ── FOOTER ── */
-    #footer {
-      background: #0a0a18;
-      border-top: 2px solid rgba(245,158,11,0.25);
-      padding: 14px 24px;
-      display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0;
-    }
-    #footer-brand {
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 3px; color: rgba(255,255,255,0.18);
-    }
-    #footer-controls { display: flex; gap: 10px; }
-    .ctrl-btn {
-      padding: 9px 20px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 12px; font-weight: 800;
-      text-transform: uppercase; letter-spacing: 1.5px;
-      border-radius: 8px; cursor: pointer; border: none; transition: all 0.15s;
-    }
-    .ctrl-btn:hover { transform: scale(1.04); }
-    .ctrl-btn:active { transform: scale(0.97); }
-    .btn-reveal { background: linear-gradient(135deg,#f59e0b,#d97706); color: #1a0800; }
-    .btn-reset { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.1); }
-
-    /* empty / loading */
-    .empty-msg {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      color: rgba(255,255,255,0.15); font-size: 14px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 4px;
-    }
-    .name-main { color: #fff !important; }
-.rank-1 .name-main { color: #fcd34d !important; }
-.rank-2 .name-main { color: #e2e8f0 !important; }
-.rank-3 .name-main { color: #f97316 !important; }
-.col-set { color: rgba(255,255,255,0.75) !important; }
-.col-total { color: rgba(255,255,255,0.85) !important; }
-.rank-1 .col-total { color: #fcd34d !important; }
-.rank-2 .col-total { color: #e2e8f0 !important; }
-.rank-3 .col-total { color: #f97316 !important; }
-.th { color: rgba(255,255,255,0.35) !important; }
-.pos-num { color: rgba(255,255,255,0.25) !important; }
-.name-epic { color: rgba(255,255,255,0.3) !important; }
-#header-title { color: #fff !important; }
-#header-sub { color: rgba(255,255,255,0.4) !important; }
-  </style>
+/* FOOTER */
+#ftr {
+  flex-shrink:0;
+  background:#0a0a18; border-top:2px solid rgba(245,158,11,0.22);
+  padding:13px 24px; display:flex; align-items:center; justify-content:space-between;
+}
+#ftr-brand { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:3px; color:rgba(255,255,255,0.18); }
+#ftr-btns { display:flex; gap:10px; }
+.cbtn {
+  padding:9px 20px; font-family:'Barlow Condensed',sans-serif;
+  font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:1.5px;
+  border-radius:8px; cursor:pointer; border:none; transition:all 0.15s;
+}
+.cbtn:hover { transform:scale(1.04); }
+.cbtn:active { transform:scale(0.97); }
+.cbtn-rev { background:linear-gradient(135deg,#f59e0b,#d97706); color:#1a0800; }
+.cbtn-rst { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.45); border:1px solid rgba(255,255,255,0.1); }
+</style>
 </head>
 <body>
 <div id="app">
 
-  <!-- HEADER -->
-  <div id="header">
-    <div id="header-left">
-      <div id="header-icon">🏆</div>
+  <div id="hdr">
+    <div id="hdr-left">
+      <div id="hdr-icon">🏆</div>
       <div>
-        <div id="header-sub">Liga Fortnite · ACRECONRE</div>
-        <div id="header-title">Clasificatoria</div>
+        <div id="hdr-sub">Liga Fortnite · ACRECONRE</div>
+        <div id="hdr-title">Clasificatoria</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:14px;">
-      <div id="div-selector">
-        <button class="div-pill active" onclick="setDiv('clasificatoria',this)">🛡️ Clas.</button>
-        <button class="div-pill" onclick="setDiv('semi_profesional',this)">⚡ Semi</button>
-        <button class="div-pill" onclick="setDiv('profesional',this)">👑 Pro</button>
+    <div id="hdr-right">
+      <div id="divsel">
+        <button class="dpill on" onclick="setDiv('clasificatoria',this)">🛡️ Clas.</button>
+        <button class="dpill"    onclick="setDiv('semi_profesional',this)">⚡ Semi</button>
+        <button class="dpill"    onclick="setDiv('profesional',this)">👑 Pro</button>
       </div>
-      <div id="live-badge"><div id="live-dot"></div>En vivo</div>
+      <div id="live"><div id="ldot"></div>En vivo</div>
     </div>
   </div>
 
-  <!-- TABLE HEAD -->
-  <div id="table-head" style="background:#0d0d1f;">
-    <div class="th">Pos</div>
-    <div class="th">Jugador</div>
-    <div class="th c">P1</div>
-    <div class="th c">P2</div>
-    <div class="th c">P3</div>
-    <div class="th c">Total</div>
+  <table id="thead" style="table-layout:fixed;width:100%;border-collapse:collapse;background:#0d0d1f;border-bottom:1px solid rgba(255,255,255,0.07);">
+    <colgroup>
+      <col style="width:70px">
+      <col>
+      <col style="width:110px">
+      <col style="width:110px">
+      <col style="width:110px">
+      <col style="width:130px">
+    </colgroup>
+    <tr>
+      <td style="padding:10px 10px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px;color:rgba(255,255,255,0.3);">Pos</td>
+      <td style="padding:10px 10px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px;color:rgba(255,255,255,0.3);">Jugador</td>
+      <td style="padding:10px 10px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px;color:rgba(255,255,255,0.3);text-align:center;">P1</td>
+      <td style="padding:10px 10px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px;color:rgba(255,255,255,0.3);text-align:center;">P2</td>
+      <td style="padding:10px 10px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px;color:rgba(255,255,255,0.3);text-align:center;">P3</td>
+      <td style="padding:10px 10px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px;color:rgba(255,255,255,0.3);text-align:center;">Total</td>
+    </tr>
+  </table>
+
+  <div id="tbody">
+    <div id="empty-msg">Cargando...</div>
   </div>
 
-  <!-- TABLE BODY -->
-  <div id="table-body">
-    <div class="empty-msg">Cargando...</div>
-  </div>
-
-  <!-- FOOTER -->
-  <div id="footer">
-    <div id="footer-brand">Asociación de Creadores de Contenido de la Región</div>
-    <div id="footer-controls">
-      <button class="ctrl-btn btn-reveal" onclick="revealNext()">▶ Revelar podio</button>
-      <button class="ctrl-btn btn-reset" onclick="resetReveal()">↺ Ocultar</button>
+  <div id="ftr">
+    <div id="ftr-brand">Asociación de Creadores de Contenido de la Región</div>
+    <div id="ftr-btns">
+      <button class="cbtn cbtn-rev" onclick="revealNext()">▶ Revelar podio</button>
+      <button class="cbtn cbtn-rst" onclick="resetReveal()">↺ Ocultar</button>
     </div>
   </div>
 
 </div>
 <script>
-  const DIV_LABELS = { clasificatoria:"Clasificatoria", semi_profesional:"Semi Profesional", profesional:"Profesional" };
-  const MEDALS = { 1:"🥇", 2:"🥈", 3:"🥉" };
+const LABELS = {clasificatoria:"Clasificatoria",semi_profesional:"Semi Profesional",profesional:"Profesional"};
+const MEDALS = {1:"🥇",2:"🥈",3:"🥉"};
+let curDiv = "clasificatoria", allP = [], revealed = 0;
 
-  let currentDiv = "clasificatoria";
-  let allPlayers = [];
-  let podioRevealed = 0;
-
-  async function loadData() {
-    document.getElementById("table-body").innerHTML = '<div class="empty-msg">Cargando...</div>';
-    podioRevealed = 0;
-    try {
-      const [pr, sr] = await Promise.all([
-        fetch("/api/fortnite-league/players"),
-        fetch("/api/fortnite-league/scores"),
-      ]);
-      const { players } = await pr.json();
-      const { scores }  = await sr.json();
-      const sm = {};
-      scores.forEach(s => { sm[s.inscriptionId] = s; });
-      allPlayers = players
-        .filter(p => p.division === currentDiv)
-        .map(p => ({
-          id: p.id, name: p.discordUsername, epic: p.epicId,
-          set1: sm[p.id]?.set1 ?? 0, set2: sm[p.id]?.set2 ?? 0,
-          set3: sm[p.id]?.set3 ?? 0, total: sm[p.id]?.total ?? 0,
-        }))
-        .sort((a,b) => b.total - a.total);
-      renderTable();
-    } catch(e) {
-      document.getElementById("table-body").innerHTML = '<div class="empty-msg" style="color:rgba(255,80,80,0.5);">Error al cargar</div>';
-    }
+async function load() {
+  document.getElementById("tbody").innerHTML = '<div id="empty-msg" style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.15);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:4px;">Cargando...</div>';
+  revealed = 0;
+  try {
+    const [pr,sr] = await Promise.all([fetch("/api/fortnite-league/players"),fetch("/api/fortnite-league/scores")]);
+    const {players} = await pr.json();
+    const {scores}  = await sr.json();
+    const sm = {};
+    scores.forEach(s => sm[s.inscriptionId] = s);
+    allP = players
+      .filter(p => p.division === curDiv)
+      .map(p => ({id:p.id,name:p.discordUsername,epic:p.epicId,
+        s1:sm[p.id]?.set1??0, s2:sm[p.id]?.set2??0,
+        s3:sm[p.id]?.set3??0, tot:sm[p.id]?.total??0}))
+      .sort((a,b) => b.tot - a.tot);
+    render();
+  } catch(e) {
+    document.getElementById("tbody").innerHTML = '<div id="empty-msg" style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,80,80,0.5);font-size:14px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">Error al cargar</div>';
   }
+}
 
-  function renderTable() {
-    const body = document.getElementById("table-body");
-    body.innerHTML = "";
-    if (!allPlayers.length) {
-      body.innerHTML = '<div class="empty-msg">Sin jugadores en esta divisional</div>';
-      return;
-    }
-    allPlayers.forEach((p, idx) => {
-      const rank = idx + 1;
-      const isPodio = rank <= 3;
-      const row = document.createElement("div");
-      row.id = "row-" + rank;
-      row.className = "player-row" + (rank<=3?" rank-"+rank:"") + (isPodio?" blurred":"");
-      row.style.animationDelay = (idx*55)+"ms";
-      row.innerHTML =
-        '<div class="col-pos">' +
-          '<span class="pos-num">' + rank + '</span>' +
-          (isPodio ? '<span class="pos-medal">'+ MEDALS[rank] +'</span>' : '') +
-        '</div>' +
-        '<div class="col-name">' +
-          '<div class="name-main">' + p.name + '</div>' +
-          '<div class="name-epic">' + p.epic + '</div>' +
-        '</div>' +
-        '<div class="col-set">' + p.set1 + '</div>' +
-        '<div class="col-set">' + p.set2 + '</div>' +
-        '<div class="col-set">' + p.set3 + '</div>' +
-        '<div class="col-total">' + p.total + '</div>';
-      body.appendChild(row);
-      if (!isPodio) setTimeout(() => row.classList.add("in"), idx * 55);
-    });
+function render() {
+  const body = document.getElementById("tbody");
+  body.innerHTML = "";
+  if (!allP.length) {
+    body.innerHTML = '<div id="empty-msg" style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.15);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:4px;">Sin jugadores</div>';
+    return;
   }
+  // Calcular altura de fila
+  const rowH = Math.floor(880 / Math.min(allP.length, 18));
 
-  function revealNext() {
-    if (podioRevealed >= 3) return;
-    const rank = 3 - podioRevealed;
-    const row = document.getElementById("row-" + rank);
-    if (!row) { podioRevealed++; revealNext(); return; }
-    row.classList.remove("blurred");
-    row.classList.add("revealed","in");
-    podioRevealed++;
+  allP.forEach((p, i) => {
+    const rank = i + 1;
+    const isPodio = rank <= 3;
+    const rankCls = rank<=3 ? " r"+rank : "";
+    const blrCls  = isPodio ? " blr" : "";
+
+    const tr = document.createElement("table");
+    tr.id = "row-"+rank;
+    tr.setAttribute("style",
+      "display:table;width:100%;table-layout:fixed;border-collapse:collapse;" +
+      "border-bottom:1px solid rgba(255,255,255,0.05);" +
+      "height:"+rowH+"px;" +
+      (rank===1?"background:rgba(245,158,11,0.09);":
+       rank===2?"background:rgba(180,190,210,0.04);":
+       rank===3?"background:rgba(200,100,30,0.05)":"")
+    );
+    if (isPodio) tr.style.filter = "blur(5px)";
+    if (isPodio) tr.style.opacity = "0.12";
+
+    const nameColor = rank===1?"#fcd34d":rank===2?"#e2e8f0":rank===3?"#fb923c":"#ffffff";
+    const totColor  = rank===1?"#fcd34d":rank===2?"#e2e8f0":rank===3?"#fb923c":"rgba(255,255,255,0.8)";
+
+    tr.innerHTML =
+      "<colgroup>" +
+        "<col style='width:70px'><col><col style='width:110px'><col style='width:110px'><col style='width:110px'><col style='width:130px'>" +
+      "</colgroup><tr>" +
+        "<td style='padding:0 10px;vertical-align:middle;'>" +
+          "<div style='display:flex;align-items:center;gap:5px;'>" +
+            "<span style='font-size:18px;font-weight:900;color:rgba(255,255,255,0.22);'>" + rank + "</span>" +
+            (isPodio ? "<span style='font-size:20px;'>" + MEDALS[rank] + "</span>" : "") +
+          "</div>" +
+        "</td>" +
+        "<td style='padding:0 10px;vertical-align:middle;overflow:hidden;'>" +
+          "<div style='font-size:24px;font-weight:800;color:"+nameColor+";white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15;'>" + p.name + "</div>" +
+          "<div style='font-size:11px;color:rgba(255,255,255,0.28);'>" + p.epic + "</div>" +
+        "</td>" +
+        "<td style='padding:0 10px;text-align:center;vertical-align:middle;font-size:22px;font-weight:700;color:rgba(255,255,255,0.7);'>" + p.s1 + "</td>" +
+        "<td style='padding:0 10px;text-align:center;vertical-align:middle;font-size:22px;font-weight:700;color:rgba(255,255,255,0.7);'>" + p.s2 + "</td>" +
+        "<td style='padding:0 10px;text-align:center;vertical-align:middle;font-size:22px;font-weight:700;color:rgba(255,255,255,0.7);'>" + p.s3 + "</td>" +
+        "<td style='padding:0 10px;text-align:center;vertical-align:middle;font-size:30px;font-weight:900;color:"+totColor+";'>" + p.tot + "</td>" +
+      "</tr>";
+
+    body.appendChild(tr);
+  });
+}
+
+function revealNext() {
+  if (revealed >= 3) return;
+  const rank = 3 - revealed;
+  const row = document.getElementById("row-"+rank);
+  if (!row) { revealed++; revealNext(); return; }
+  row.style.filter = "none";
+  row.style.opacity = "1";
+  row.style.animation = "pop 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards";
+  revealed++;
+}
+
+function resetReveal() {
+  revealed = 0;
+  for (let i=1;i<=3;i++) {
+    const r = document.getElementById("row-"+i);
+    if (r) { r.style.filter="blur(5px)"; r.style.opacity="0.12"; r.style.animation=""; }
   }
+}
 
-  function resetReveal() {
-    podioRevealed = 0;
-    for (let i=1;i<=3;i++) {
-      const r = document.getElementById("row-"+i);
-      if (r) { r.classList.add("blurred"); r.classList.remove("revealed","in"); }
-    }
-  }
+window.setDiv = function(divId, btn) {
+  curDiv = divId;
+  document.querySelectorAll(".dpill").forEach(el => el.classList.remove("on"));
+  btn.classList.add("on");
+  document.getElementById("hdr-title").textContent = LABELS[divId];
+  load();
+};
 
-  window.setDiv = function(divId, btn) {
-    currentDiv = divId;
-    document.querySelectorAll(".div-pill").forEach(el => el.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById("header-title").textContent = DIV_LABELS[divId];
-    loadData();
-  };
-
-  loadData();
-  setInterval(() => { if (podioRevealed === 0) loadData(); }, 30000);
+load();
+setInterval(() => { if (revealed === 0) load(); }, 30000);
 </script>
 </body>
 </html>
