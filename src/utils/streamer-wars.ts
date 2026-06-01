@@ -1859,7 +1859,7 @@ export const massEliminatePlayers = async (playerNumbers: number[]) => {
         // Envía el evento a Pusher con los datos actualizados.
         await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYERS_ELIMINATED, {
             playerNumbers,
-            audioBase64: audioPayload,
+            audioBase64: import.meta.env.DEV ? null : audioPayload,
         });
 
         // Envía el log al webhook de Discord.
