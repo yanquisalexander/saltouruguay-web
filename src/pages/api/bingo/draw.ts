@@ -5,13 +5,13 @@
 // Protegido con BINGO_ADMIN_SECRET para que solo el bolillero pueda usarlo.
 
 import type { APIRoute } from "astro";
-import Cache from "@/lib/Cache";
+import cacheService from "@/services/cache"
 import { BINGO_SECRET } from "@/config";
 
 const ADMIN_SECRET = BINGO_SECRET
 // TTL del juego en Redis: 6 horas (en segundos)
 const GAME_TTL = 60 * 60 * 6;
-const cache = new Cache({ ttl: GAME_TTL });
+const cache = cacheService.create({ ttl: GAME_TTL });
 
 export const POST: APIRoute = async ({ request }) => {
   let body: { session?: string; adminSecret?: string };

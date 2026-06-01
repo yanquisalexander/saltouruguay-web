@@ -6,10 +6,10 @@
 
 import type { APIRoute } from "astro";
 import { getSession } from "auth-astro/server";
-import Cache from "@/lib/Cache";
+import cacheService from "@/services/cache"
 
 const GAME_TTL = 60 * 60 * 6;
-const cache = new Cache({ttl: GAME_TTL})
+const cache = cacheService.create({ ttl: GAME_TTL });
 
 
 export const POST: APIRoute = async ({ request }) => {

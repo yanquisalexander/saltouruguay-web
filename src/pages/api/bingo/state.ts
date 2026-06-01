@@ -3,8 +3,8 @@
 // Devuelve el estado actual del juego (números sacados, ganador, etc.)
 
 import type { APIRoute } from "astro";
-import Cache from "@/lib/Cache"
-const cache = new Cache();
+import cacheService from "@/services/cache"
+const cache = cacheService.create()
 
 export const GET: APIRoute = async ({ request, url }) => {
   const session = url.searchParams.get("session");

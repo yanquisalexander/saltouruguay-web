@@ -4,11 +4,11 @@
 // Borra todos los datos de la sesión en Redis y empieza de cero.
 
 import type { APIRoute } from "astro";
-import Cache from "@/lib/Cache";
+import cacheService from "@/services/cache";
 import { BINGO_SECRET } from "@/config";
 
 const ADMIN_SECRET = BINGO_SECRET
-const cache = new Cache();
+const cache = cacheService.create()
 
 export const POST: APIRoute = async ({ request }) => {
   let body: { session?: string; adminSecret?: string };

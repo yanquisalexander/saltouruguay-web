@@ -4,10 +4,10 @@
 // Protegido con BINGO_ADMIN_SECRET.
 
 import type { APIRoute } from "astro";
-import Cache from "@/lib/Cache";
+import cacheService from "@/services/cache";
 import { BINGO_SECRET } from "@/config";
 
-const cache = new Cache();
+const cache = cacheService.create()
 
 const ADMIN_SECRET = BINGO_SECRET
 export const GET: APIRoute = async ({ url }) => {
