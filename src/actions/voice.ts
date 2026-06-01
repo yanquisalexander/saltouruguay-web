@@ -7,11 +7,12 @@ export const voice = {
   signal: defineAction({
     input: z.object({
       teamId: z.string(),
-      event: z.enum(["signal:offer", "signal:answer", "signal:iceCandidate", "voice:user-joined"]),
+      event: z.enum(["signal:offer", "signal:answer", "signal:iceCandidate", "voice:user-joined", "voice:ptt-start", "voice:ptt-end"]),
       data: z.object({
         fromUserId: z.union([z.string(), z.number()]).optional(),
         toUserId: z.union([z.string(), z.number()]).optional(),
         userId: z.union([z.string(), z.number()]).optional(),
+        userName: z.string().optional(),
         sdp: z.any().optional(),
         candidate: z.any().optional()
       })
@@ -163,6 +164,7 @@ export const voice = {
       await pusher.trigger(`team-${teamId}-voice-signal`, enable ? "voice:spectator-joined" : "voice:spectator-left", {
         teamId,
         spectatorId: session.user.id,
+        spectatorName: session.user.name ?? "Admin",
         timestamp: Date.now()
       });
 

@@ -479,7 +479,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                     <AdminChat session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
                     <StreamerWarsAudioManager session={session} channel={globalChannel.current} isAdmin={session.user.isAdmin || false} />
                     <VoiceControls isAdmin={session.user.isAdmin || false} />
-                    <VoiceChat userId={session.user.id} teamId={currentTeamId} isAdmin={session.user.isAdmin || false} players={players} />
+                    <VoiceChat userId={session.user.id} userName={session.user.name ?? "Player"} teamId={currentTeamId} isAdmin={session.user.isAdmin || false} players={players} />
                 </>
             )}
         </>

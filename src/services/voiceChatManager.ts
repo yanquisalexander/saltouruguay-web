@@ -8,8 +8,11 @@ import { PUSHER_EVENTS } from "@/consts/pusher";
 const ICE_SERVERS = {
     iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
-    ]
+    ],
 };
+
+const MAX_RETRY_DELAY = 30000;
+const INITIAL_RETRY_DELAY = 1000;
 
 export class VoiceChatManager {
     private static instance: VoiceChatManager;
@@ -18,10 +21,13 @@ export class VoiceChatManager {
     private pendingCandidates: Record<string, RTCIceCandidateInit[]> = {};
     private remoteAudios: Record<string, HTMLAudioElement> = {};
     private audioContexts: Record<string, AudioContext> = {};
+    private retryTimers: Record<string, number> = {};
+    private retryAttempts: Record<string, number> = {};
     private channels: Channel[] = [];
     public localStream: MediaStream | null = null;
 
     private userId: string | null = null;
+    private userName: string = "";
     private teamId: string | null = null;
     private isAdmin: boolean = false;
     private isPTTActive: boolean = false;
@@ -51,7 +57,7 @@ export class VoiceChatManager {
 
     private onFocusIn(e: FocusEvent) {
         const target = e.target as HTMLElement;
-        this.isFocusRef = (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+        this.isFocusRef = (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true');
     }
 
     private onFocusOut() {
@@ -68,6 +74,10 @@ export class VoiceChatManager {
                 this.debounceRef = window.setTimeout(() => {
                     this.localStream!.getAudioTracks().forEach(t => t.enabled = true);
                     useVoiceChatStore.getState().setLocalMicEnabled(true);
+                    this.sendSignal(this.teamId!, "voice:ptt-start", {
+                        userId: this.userId,
+                        userName: this.userName,
+                    });
                 }, 80);
             }
         }
@@ -85,21 +95,24 @@ export class VoiceChatManager {
                 this.localStream.getAudioTracks().forEach(t => t.enabled = false);
             }
             useVoiceChatStore.getState().setLocalMicEnabled(false);
+            if (this.teamId) {
+                this.sendSignal(this.teamId, "voice:ptt-end", {
+                    userId: this.userId,
+                });
+            }
         }
     }
 
     private async onDeviceChange() {
+        await this.enumerateMics();
         if (!this.localStream) return;
-        // FIX: el try nunca se abría, había un `} catch` suelto
         try {
             const newStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const newTrack = newStream.getAudioTracks()[0];
-
             if (newTrack) {
                 newTrack.enabled = this.localStream.getAudioTracks()[0]?.enabled ?? false;
                 this.localStream.getTracks().forEach(t => t.stop());
                 this.localStream = newStream;
-
                 Object.values(this.activeConnections).forEach(pc => {
                     const sender = pc.getSenders().find(s => s.track?.kind === 'audio');
                     if (sender) {
@@ -112,14 +125,56 @@ export class VoiceChatManager {
         }
     }
 
-    public async init(userId: string, teamId: string | null, isAdmin: boolean, enabledTeams: Record<string, boolean>, spectatingTeams: Record<string, boolean>) {
+    public async enumerateMics() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const mics = devices.filter(d => d.kind === 'audioinput');
+            useVoiceChatStore.getState().setAvailableMics(mics);
+        } catch (e) {
+            console.warn("Could not enumerate mics", e);
+        }
+    }
+
+    public async setMicDevice(deviceId: string) {
+        useVoiceChatStore.getState().setSelectedMicId(deviceId);
+        if (!this.localStream) return;
+        try {
+            const constraints: MediaStreamConstraints = {
+                audio: deviceId ? { deviceId: { exact: deviceId } } : true,
+            };
+            const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+            const newTrack = newStream.getAudioTracks()[0];
+            if (newTrack) {
+                newTrack.enabled = this.localStream.getAudioTracks()[0]?.enabled ?? false;
+                this.localStream.getTracks().forEach(t => t.stop());
+                this.localStream = newStream;
+                Object.values(this.activeConnections).forEach(pc => {
+                    const sender = pc.getSenders().find(s => s.track?.kind === 'audio');
+                    if (sender) {
+                        sender.replaceTrack(newTrack).catch(e => console.error("Error replacing track", e));
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Mic device switch failed", e);
+        }
+    }
+
+    public async init(
+        userId: string,
+        userName: string,
+        teamId: string | null,
+        isAdmin: boolean,
+        enabledTeams: Record<string, boolean>,
+        spectatingTeams: Record<string, boolean>,
+    ) {
         this.userId = userId;
+        this.userName = userName;
         this.teamId = teamId;
         this.isAdmin = isAdmin;
 
         const isPlayingForOwnTeam = teamId ? enabledTeams[teamId] : false;
         const isSpectatingOthers = isAdmin ? Object.values(spectatingTeams).some(v => v) : false;
-
         const wantsToListen = isPlayingForOwnTeam || isSpectatingOthers;
 
         window.removeEventListener('keydown', this.handleKeyDownFn);
@@ -134,25 +189,37 @@ export class VoiceChatManager {
         document.addEventListener('focusout', this.handleFocusOutFn);
         navigator.mediaDevices.addEventListener('devicechange', this.handleDeviceChangeFn);
 
-        if (isPlayingForOwnTeam && !this.localStream) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                stream.getAudioTracks().forEach(track => track.enabled = false);
-                this.localStream = stream;
-                useVoiceChatStore.getState().setConnectionError(null);
-            } catch (e: any) {
-                if (e.name === "NotAllowedError") useVoiceChatStore.getState().setConnectionError("Permiso denegado");
-                else useVoiceChatStore.getState().setConnectionError("Micro no encontrado");
-            }
-        }
-
+        // Always subscribe to channels first (even before voice is enabled)
+        // so we don't miss voice:enabled events
         this.setupPusher(enabledTeams, spectatingTeams);
+
+        // Acquire mic only if voice is already enabled
+        if (isPlayingForOwnTeam && !this.localStream) {
+            await this.acquireMic();
+        }
+    }
+
+    private async acquireMic() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getAudioTracks().forEach(track => track.enabled = false);
+            this.localStream = stream;
+            useVoiceChatStore.getState().setConnectionError(null);
+            await this.enumerateMics();
+        } catch (e: any) {
+            if (e.name === "NotAllowedError") useVoiceChatStore.getState().setConnectionError("Permiso denegado");
+            else useVoiceChatStore.getState().setConnectionError("Micro no encontrado");
+        }
     }
 
     private async sendSignal(targetTeamId: string, event: string, data: any) {
         if (!this.userId) return;
         try {
-            await actions.voice.signal({ teamId: targetTeamId, event: event as any, data: { fromUserId: this.userId, ...data } });
+            await actions.voice.signal({
+                teamId: targetTeamId,
+                event: event as any,
+                data: { fromUserId: this.userId, ...data },
+            });
         } catch (err) {
             console.error(`Signaling err ${event}`, err);
         }
@@ -171,14 +238,18 @@ export class VoiceChatManager {
             audio.volume = 1;
             audio.autoplay = true;
             audio.play().catch(err => console.warn("Autoplay block", err));
-
             this.remoteAudios[peerId] = audio;
             this.monitorAudioActivity(peerId, e.streams[0]);
         };
 
         pc.onconnectionstatechange = () => {
+            useVoiceChatStore.getState().setPeerConnectionState(peerId, pc.connectionState);
             if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
                 this.disconnectPeer(peerId);
+                this.scheduleRetry(peerId, channelTeamId, isSpectating);
+            } else if (pc.connectionState === 'connected') {
+                delete this.retryAttempts[peerId];
+                useVoiceChatStore.getState().setReconnecting(false);
             }
         };
 
@@ -189,6 +260,26 @@ export class VoiceChatManager {
         }
 
         return pc;
+    }
+
+    private scheduleRetry(peerId: string, channelTeamId: string, isSpectating: boolean) {
+        const attempts = this.retryAttempts[peerId] || 0;
+        const delay = Math.min(INITIAL_RETRY_DELAY * Math.pow(2, attempts), MAX_RETRY_DELAY);
+        this.retryAttempts[peerId] = attempts + 1;
+
+        useVoiceChatStore.getState().setReconnecting(true);
+
+        this.retryTimers[peerId] = window.setTimeout(() => {
+            if (!this.userId) return;
+            const pc = this.createPeerConnection(peerId, isSpectating, channelTeamId);
+            this.activeConnections[peerId] = pc;
+            useVoiceChatStore.getState().setPeerCount(Object.keys(this.activeConnections).length);
+
+            pc.createOffer()
+                .then(offer => pc.setLocalDescription(offer))
+                .then(() => this.sendSignal(channelTeamId, "signal:offer", { toUserId: peerId, sdp: pc.localDescription }))
+                .catch(e => console.error("Retry offer failed", e));
+        }, delay);
     }
 
     private monitorAudioActivity(peerId: string, stream: MediaStream) {
@@ -208,7 +299,6 @@ export class VoiceChatManager {
                 let sum = 0;
                 for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
                 const average = sum / dataArray.length;
-
                 const store = useVoiceChatStore.getState();
                 const isTalking = average > 10;
 
@@ -228,6 +318,12 @@ export class VoiceChatManager {
     }
 
     private disconnectPeer(peerId: string) {
+        if (this.retryTimers[peerId]) {
+            clearTimeout(this.retryTimers[peerId]);
+            delete this.retryTimers[peerId];
+        }
+        delete this.retryAttempts[peerId];
+
         if (this.activeConnections[peerId]) {
             this.activeConnections[peerId].close();
             delete this.activeConnections[peerId];
@@ -242,6 +338,7 @@ export class VoiceChatManager {
         }
         useVoiceChatStore.getState().setPeerCount(Object.keys(this.activeConnections).length);
         useVoiceChatStore.getState().removeTalkingUser(peerId);
+        useVoiceChatStore.getState().removePttUser(peerId);
     }
 
     private async handleWebRTCMessage(type: string, data: any, channelTeamId: string, isSpectating: boolean) {
@@ -300,20 +397,56 @@ export class VoiceChatManager {
                 .forEach(id => teamsToSubscribe.push({ id, isSpec: true }));
         }
 
-        // FIX: el forEach que contenía todos los channel.bind nunca se abría;
-        // los binds estaban sueltos dentro del bloque if (this.isAdmin)
         teamsToSubscribe.forEach(({ id: targetTeamId, isSpec }) => {
             const channelName = `team-${targetTeamId}-voice-signal`;
             const channel = pusherService.subscribe(channelName) as Channel;
             this.channels.push(channel);
 
-            channel.bind("voice:enabled", (d: any) => {
+            channel.bind("voice:enabled", async (d: any) => {
                 useVoiceChatStore.getState().setVoiceEnabled(d.teamId, true);
+                // Acquire mic now if not already acquired (init ran before voice was enabled)
+                if (!this.localStream && d.teamId === this.teamId) {
+                    await this.acquireMic();
+                }
                 this.sendSignal(d.teamId, "voice:user-joined", { userId: this.userId });
             });
 
             channel.bind("voice:disabled", (d: any) => {
                 useVoiceChatStore.getState().setVoiceEnabled(d.teamId, false);
+            });
+
+            channel.bind("voice:force-mute", (d: any) => {
+                if (d.targetUserId === this.userId) {
+                    if (this.localStream) {
+                        this.localStream.getAudioTracks().forEach(t => t.enabled = false);
+                    }
+                    useVoiceChatStore.getState().setIsPTTActive(false);
+                    useVoiceChatStore.getState().setLocalMicEnabled(false);
+                    useVoiceChatStore.getState().setForcedMute(this.userId!, true);
+                }
+            });
+
+            channel.bind("voice:spectator-joined", (d: any) => {
+                useVoiceChatStore.getState().addSpectator(targetTeamId, {
+                    id: d.spectatorId,
+                    name: d.spectatorName ?? "Admin",
+                });
+            });
+
+            channel.bind("voice:spectator-left", (d: any) => {
+                useVoiceChatStore.getState().removeSpectator(targetTeamId, d.spectatorId);
+            });
+
+            channel.bind("voice:ptt-start", (d: any) => {
+                if (d.userId !== this.userId) {
+                    useVoiceChatStore.getState().addPttUser(d.userId);
+                }
+            });
+
+            channel.bind("voice:ptt-end", (d: any) => {
+                if (d.userId !== this.userId) {
+                    useVoiceChatStore.getState().removePttUser(d.userId);
+                }
             });
 
             channel.bind("signal:offer", (d: any) => {
@@ -352,6 +485,12 @@ export class VoiceChatManager {
         document.removeEventListener('focusout', this.handleFocusOutFn);
         navigator.mediaDevices.removeEventListener('devicechange', this.handleDeviceChangeFn);
 
+        Object.keys(this.retryTimers).forEach(id => {
+            clearTimeout(this.retryTimers[id]);
+            delete this.retryTimers[id];
+        });
+        this.retryAttempts = {};
+
         Object.keys(this.activeConnections).forEach(this.disconnectPeer.bind(this));
         if (this.localStream) {
             this.localStream.getTracks().forEach(t => t.stop());
@@ -359,6 +498,6 @@ export class VoiceChatManager {
         }
         this.channels.forEach(ch => pusherService.unsubscribe(ch.name));
         this.channels = [];
-        useVoiceChatStore.getState().setPeerCount(0);
+        useVoiceChatStore.getState().cleanup();
     }
 }

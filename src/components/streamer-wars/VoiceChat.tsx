@@ -1,133 +1,307 @@
-import { useEffect } from "preact/hooks";
-import { useVoiceChatStore } from "@/stores/voiceChat";
-import { LucideMicOff, Radio } from "lucide-preact";
+import { useEffect, useRef, useState } from "preact/hooks";
+import { useVoiceChatStore, type SpectatorInfo } from "@/stores/voiceChat";
 import { type Players } from "../admin/streamer-wars/Players";
 import { VoiceChatManager } from "@/services/voiceChatManager";
 
 interface VoiceChatProps {
-  userId: string;
-  teamId: string | null;
-  isAdmin: boolean;
-  players: Players[];
+    userId: string;
+    userName: string;
+    teamId: string | null;
+    isAdmin: boolean;
+    players: Players[];
 }
 
-export const VoiceChat = ({ userId, teamId, isAdmin, players }: VoiceChatProps) => {
-  const {
-    currentTeamId,
-    voiceEnabledTeams,
-    spectatingTeams,
-    isLocalMicEnabled,
-    isAdminSpectator,
-    setCurrentTeamId,
-    setIsAdminSpectator,
-    peerCount,
-    talkingUsers,
-    connectionError
-  } = useVoiceChatStore();
+const VUMeter = ({ stream }: { stream: MediaStream | null }) => {
+    const [level, setLevel] = useState(0);
+    const rafRef = useRef<number>(0);
 
-  // 1. Sync Store State & Init Manager
-  useEffect(() => {
-    if (teamId !== currentTeamId) {
-      setCurrentTeamId(teamId);
-    }
-  }, [teamId, currentTeamId]);
+    useEffect(() => {
+        if (!stream) return;
+        try {
+            const ac = new AudioContext();
+            const source = ac.createMediaStreamSource(stream);
+            const analyser = ac.createAnalyser();
+            analyser.fftSize = 128;
+            source.connect(analyser);
+            const data = new Uint8Array(analyser.frequencyBinCount);
 
-  useEffect(() => {
-    setIsAdminSpectator(isAdmin);
-  }, [isAdmin]);
+            const tick = () => {
+                analyser.getByteFrequencyData(data);
+                let sum = 0;
+                for (let i = 0; i < data.length; i++) sum += data[i];
+                setLevel(Math.min(sum / data.length / 2.5, 1));
+                rafRef.current = requestAnimationFrame(tick);
+            };
+            tick();
 
-  useEffect(() => {
-    if (!teamId || !voiceEnabledTeams[teamId]) return;
-    const manager = VoiceChatManager.getInstance();
-    manager.init(userId, teamId, isAdmin, voiceEnabledTeams, spectatingTeams);
-  }, [userId, teamId, isAdmin, voiceEnabledTeams, spectatingTeams]);
+            return () => {
+                cancelAnimationFrame(rafRef.current);
+                ac.close();
+            };
+        } catch { }
+    }, [stream]);
 
-  // UI Setup
-  const extractTeamName = (id: string | null) => {
-    if (!id) return 'NONE';
-    // Maneja ambos formatos: "blue" o "team-blue"
-    return id.split('-').pop()?.toUpperCase() || 'UNKNOWN';
-  };
-  const teamName = extractTeamName(teamId);
-  const teamPlayers = players.filter(p => p.teamId === teamId);
+    if (!stream) return null;
 
-  // Render Check: Solo renderizar cuando el voice esté habilitado para este team
-  if (!teamId || !voiceEnabledTeams[teamId]) return null;
+    const bars = 20;
+    const activeBars = Math.round(level * bars);
 
-  return (
-    <div className={`fixed ${isAdminSpectator ? 'top-4 left-4' : 'bottom-4 right-4'} z-50 flex flex-col items-center select-none`}>
-      {/* Antena del Walkie */}
-      <div className="w-3 h-12 bg-zinc-900 rounded-t-lg -mb-2 ml-auto mr-6 border border-zinc-800 shadow-md"></div>
-
-      {/* Cuerpo Principal del Walkie Talkie */}
-      <div className="bg-zinc-800 rounded-3xl w-56 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.8)] border-2 border-zinc-700 p-4 pt-6 relative flex flex-col gap-4">
-
-        {/* LED Indicador arriba a la izquierda */}
-        <div className={`absolute top-4 right-4 w-3 h-3 rounded-full ${isLocalMicEnabled
-          ? 'bg-red-500 shadow-[0_0_15px_3px_rgba(239,68,68,0.9)] animate-pulse'
-          : 'bg-red-900 border border-red-950'
-          }`} />
-
-        {/* Pantalla Verde Retro */}
-        <div className="bg-emerald-950/80 border-4 border-zinc-900 rounded-xl p-3 text-emerald-500 font-press-start-2p flex flex-col gap-3 shadow-inner">
-          <div className="flex justify-between w-full items-center text-[9px] opacity-80">
-            <span className="flex items-center gap-1"><Radio className="w-3 h-3" /> {teamName}</span>
-            <span>CH:0{peerCount}</span>
-          </div>
-
-          <div className="text-center text-xs mt-1 relative">
-            {!isAdminSpectator && (
-              <div className={`transition-all duration-100 ${isLocalMicEnabled ? 'text-emerald-300' : 'opacity-40'}`}>
-                {isLocalMicEnabled ? '- TX -' : '- RX -'}
-              </div>
-            )}
-            {isAdminSpectator && <div className="text-emerald-700 opacity-60">SPECTATE</div>}
-            {connectionError && <div className="text-[8px] text-red-500 mt-2">{connectionError}</div>}
-          </div>
-        </div>
-
-        {/* Rejilla de altavoz perforada */}
-        <div className="w-full flex justify-center mt-1">
-          <div className="grid grid-cols-6 gap-x-2 gap-y-2 opacity-40 p-2">
-            {Array.from({ length: 18 }).map((_, i) => (
-              <div key={i} className="w-2 h-2 rounded-full bg-black shadow-inner"></div>
+    return (
+        <div class="flex items-end gap-[2px] h-5">
+            {Array.from({ length: bars }).map((_, i) => (
+                <div
+                    key={i}
+                    class={`w-[4px] rounded-xs transition-all duration-75 ${i < activeBars
+                            ? i < activeBars * 0.6
+                                ? 'bg-green-500'
+                                : i < activeBars * 0.85
+                                    ? 'bg-yellow-500'
+                                    : 'bg-red-500'
+                            : 'bg-white/5'
+                        }`}
+                    style={{ height: `${((i + 1) / bars) * 100}%` }}
+                />
             ))}
-          </div>
         </div>
+    );
+};
 
-        {/* Miembros del escuadrón */}
-        {teamPlayers.length > 0 && (
-          <div className="mt-2 bg-zinc-900/50 p-3 rounded-xl border border-zinc-700/50">
-            <div className="flex flex-wrap gap-2 justify-center">
-              {teamPlayers.slice(0, 6).map(player => {
-                const isTalking = talkingUsers.includes(player.id);
-                // Si es el usuario actual, chequeamos si su mic está habilitado
-                const isSelf = player.id === userId;
-                const active = isSelf ? isLocalMicEnabled : isTalking;
+const ParticipantAvatar = ({
+    player,
+    isSelf,
+    isTalking,
+    isPTTActive,
+    isSpectating,
+    isMuted,
+    peerState,
+}: {
+    player: { id: string; avatar: string; displayName: string };
+    isSelf: boolean;
+    isTalking: boolean;
+    isPTTActive: boolean;
+    isSpectating: boolean;
+    isMuted: boolean;
+    peerState?: string;
+}) => {
+    const showActive = isTalking || isPTTActive || (isSelf && isPTTActive);
+    const statusColor = isMuted ? 'border-red-500/50' : showActive ? 'border-electric-violet-500' : 'border-white/10';
+    const statusGlow = showActive ? 'shadow-[0_0_12px_rgba(145,70,255,0.3)]' : '';
 
-                return (
-                  <div key={player.id} className="relative group">
-                    <img
-                      src={player.avatar}
-                      alt={player.displayName}
-                      className={`w-8 h-8 rounded-full border-2 transition-all duration-150 object-cover
-                        ${active ? 'border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)] scale-110' : 'border-zinc-600 grayscale-[0.5]'}
-                      `}
-                      onError={(e) => e.currentTarget.src = "/fallback.png"}
-                    />
-                    {isSelf && !active && (
-                      <div className="absolute -bottom-1 -right-1 bg-zinc-800 rounded-full p-[2px]">
-                        <LucideMicOff className="w-3 h-3 text-red-400" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+    return (
+        <div class={`flex items-center gap-2 p-1.5 rounded-lg transition-all ${showActive ? 'bg-electric-violet-500/5' : ''}`}>
+            <div class="relative shrink-0">
+                <img
+                    src={player.avatar}
+                    alt={player.displayName}
+                    class={`w-7 h-7 rounded-full border-2 object-cover transition-all duration-150 ${statusColor} ${statusGlow}`}
+                    onError={(e) => e.currentTarget.src = "/fallback.png"}
+                />
+                {isSpectating && (
+                    <div class="absolute -top-1 -right-1 bg-blue-600 rounded-full w-3.5 h-3.5 flex items-center justify-center ring-1 ring-black">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </div>
+                )}
+                {isMuted && !isSpectating && (
+                    <div class="absolute -bottom-1 -right-1 bg-red-500/80 rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="22" y1="2" y2="22"/><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/><path d="M5 10v2a7 7 0 0 0 12 5"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/></svg>
+                    </div>
+                )}
             </div>
-          </div>
-        )}
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                    <span class={`text-[11px] font-mono truncate ${showActive ? 'text-electric-violet-300' : isSpectating ? 'text-blue-400' : 'text-white/50'}`}>
+                        {player.displayName}
+                        {isSpectating && <span class="text-blue-500 ml-1 text-[9px]">(ESP)</span>}
+                    </span>
+                </div>
+                <div class="flex gap-1 mt-0.5">
+                    {peerState && peerState !== 'connected' && (
+                        <span class="text-[8px] text-yellow-500 font-mono">{peerState}</span>
+                    )}
+                    {isSelf && isPTTActive && (
+                        <span class="text-[8px] text-green-400 font-mono">TX</span>
+                    )}
+                    {!isSelf && isTalking && (
+                        <span class="text-[8px] text-electric-violet-400 font-mono">RX</span>
+                    )}
+                </div>
+            </div>
+            {(isTalking || (isSelf && isPTTActive)) && (
+                <div class="flex items-end gap-[1.5px] h-3 shrink-0">
+                    {[1, 2, 3].map((i) => (
+                        <div
+                            key={i}
+                            class="w-[2.5px] rounded-xs bg-electric-violet-500"
+                            style={{
+                                height: `${40 + i * 20}%`,
+                                animation: `equalizer 0.${i * 2 + 3}s ease-in-out infinite`,
+                                animationDelay: `${i * 0.1}s`,
+                            }}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
-      </div>
-    </div>
-  );
+export const VoiceChat = ({ userId, userName, teamId, isAdmin, players }: VoiceChatProps) => {
+    const {
+        currentTeamId,
+        voiceEnabledTeams,
+        spectatingTeams,
+        spectatingUsers,
+        isLocalMicEnabled,
+        isPTTActive,
+        isAdminSpectator,
+        setCurrentTeamId,
+        setCurrentUserId,
+        setIsAdminSpectator,
+        peerCount,
+        peerConnectionStates,
+        talkingUsers,
+        pttActiveUsers,
+        forcedMuteTargets,
+        connectionError,
+        isReconnecting,
+        availableMics,
+        selectedMicId,
+        setSelectedMicId,
+    } = useVoiceChatStore();
+
+    const isMuted = forcedMuteTargets.includes(userId);
+
+    useEffect(() => {
+        if (teamId !== currentTeamId) {
+            setCurrentTeamId(teamId);
+        }
+    }, [teamId, currentTeamId]);
+
+    useEffect(() => {
+        setIsAdminSpectator(isAdmin);
+    }, [isAdmin]);
+
+    useEffect(() => {
+        setCurrentUserId(userId);
+        if (!teamId) return;
+        const manager = VoiceChatManager.getInstance();
+        manager.init(userId, userName, teamId, isAdmin, voiceEnabledTeams, spectatingTeams);
+    }, [userId, userName, teamId, isAdmin, voiceEnabledTeams, spectatingTeams]);
+
+    const manager = VoiceChatManager.getInstance();
+    const localStream = manager.localStream;
+
+    const extractTeamName = (id: string | null) => {
+        if (!id) return 'NONE';
+        return id.split('-').pop()?.toUpperCase() || 'UNKNOWN';
+    };
+    const teamName = extractTeamName(teamId);
+
+    const teamPlayers = players.filter(p => p.team === teamId || p.team === `team-${teamId}`);
+    const currentSpectators: SpectatorInfo[] = teamId ? spectatingUsers[teamId] || [] : [];
+    const voiceIsReady = teamId ? voiceEnabledTeams[teamId] : false;
+
+    if (!teamId || !voiceIsReady) return null;
+
+    return (
+        <div class={`fixed ${isAdminSpectator ? 'top-4 left-4' : 'bottom-4 right-4'} z-50 select-none`}>
+            <div class="bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl w-64 overflow-hidden backdrop-blur-xs">
+                {/* Header */}
+                <div class="px-4 py-3 border-b border-white/5 bg-[#15151a] flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class={`w-2 h-2 rounded-full ${isReconnecting ? 'bg-yellow-500 animate-pulse' : peerCount > 0 ? 'bg-green-500' : 'bg-white/10'}`} />
+                        <span class="text-xs font-anton uppercase tracking-wide text-white">{teamName}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        {isReconnecting && <span class="text-[8px] font-mono text-yellow-500">RECON</span>}
+                        <span class="text-[9px] font-mono text-white/30">{peerCount} CH</span>
+                    </div>
+                </div>
+
+                {/* Participant list */}
+                <div class="px-3 py-2 max-h-48 overflow-y-auto scrollbar-hide space-y-0.5">
+                    {/* Spectators */}
+                    {currentSpectators.map((spec) => (
+                        <ParticipantAvatar
+                            key={`spec-${spec.id}`}
+                            player={{ id: spec.id, avatar: "", displayName: spec.name }}
+                            isSelf={false}
+                            isTalking={false}
+                            isPTTActive={false}
+                            isSpectating={true}
+                            isMuted={false}
+                        />
+                    ))}
+
+                    {/* Team players */}
+                    {teamPlayers.map((player) => {
+                        const sid = String(player.id);
+                        const isPlayerTalking = talkingUsers.includes(sid) || talkingUsers.includes(player.id as any);
+                        const isPlayerPTT = pttActiveUsers.includes(sid) || pttActiveUsers.includes(player.id as any);
+                        const isPlayerMuted = forcedMuteTargets.includes(sid);
+                        const peerState = peerConnectionStates[sid] || peerConnectionStates[player.id as any];
+
+                        return (
+                            <ParticipantAvatar
+                                key={player.id}
+                                player={player}
+                                isSelf={false}
+                                isTalking={isPlayerTalking}
+                                isPTTActive={isPlayerPTT}
+                                isSpectating={false}
+                                isMuted={isPlayerMuted}
+                                peerState={peerState}
+                            />
+                        );
+                    })}
+
+                    {teamPlayers.length === 0 && currentSpectators.length === 0 && (
+                        <div class="text-[10px] text-white/20 font-mono text-center py-4">
+                            No players in channel
+                        </div>
+                    )}
+                </div>
+
+                {/* Control bar */}
+                <div class="px-4 py-3 border-t border-white/5 bg-black/30 space-y-2">
+                    {/* VU Meter + PTT status */}
+                    <div class="flex items-center gap-2">
+                        <VUMeter stream={localStream} />
+                        <span class={`text-[9px] font-mono whitespace-nowrap ${isPTTActive ? 'text-green-400' : isMuted ? 'text-red-400' : 'text-white/30'}`}>
+                            {isMuted ? 'MUTED' : isPTTActive ? 'TALKING' : 'HOLD [V]'}
+                        </span>
+                    </div>
+
+                    {/* Connection error */}
+                    {connectionError && (
+                        <div class="text-[9px] font-mono text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-2 py-1">
+                            {connectionError}
+                        </div>
+                    )}
+
+                    {/* Mic selector */}
+                    {availableMics.length > 1 && (
+                        <select
+                            value={selectedMicId ?? ""}
+                            onChange={(e) => {
+                                const val = (e.target as HTMLSelectElement).value;
+                                if (val) {
+                                    setSelectedMicId(val);
+                                    VoiceChatManager.getInstance().setMicDevice(val);
+                                }
+                            }}
+                            class="w-full text-[9px] font-mono bg-black/40 text-white/60 border border-white/5 rounded-lg px-2 py-1 outline-hidden cursor-pointer"
+                        >
+                            <option value="">Default Mic</option>
+                            {availableMics.map((mic) => (
+                                <option key={mic.deviceId} value={mic.deviceId}>
+                                    {mic.label || `Mic ${mic.deviceId.slice(0, 8)}`}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 };
