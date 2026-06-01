@@ -1,469 +1,430 @@
 ---
-// src/pages/bingo.astro
-// Página pública: saltouruguayserver.com/bingo?session=XXXX
-// El jugador debe estar logueado con Auth.js para reclamar su cartón.
+import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
 
 const authSession = await getSession(Astro.request);
 const sessionId = Astro.url.searchParams.get("session") ?? "";
 const isLoggedIn = !!authSession?.user;
 const username = authSession?.user?.name ?? authSession?.user?.email ?? null;
+const initials = username?.substring(0, 2).toUpperCase() ?? "";
 ---
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bingo — Salto Uruguay Server</title>
-  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --gold: #FFD700;
-      --gold2: #FFA500;
-      --dark: #0a0a1a;
-      --card: #12122a;
-      --card2: #1a1a38;
-      --accent: #7B2FBE;
-      --green: #1DB954;
-      --red: #C84B31;
-      --text: #F0F0FF;
-      --muted: #8888BB;
-      --radius: 16px;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: var(--dark);
-      color: var(--text);
-      font-family: 'Nunito', sans-serif;
-      min-height: 100vh;
-      display: flex; flex-direction: column; align-items: center;
-      padding: 24px 16px 40px;
-    }
-
-    /* HEADER */
-    .logo {
-      font-family: 'Black Han Sans', sans-serif;
-      font-size: 2.8rem;
-      letter-spacing: 0.15em;
-      background: linear-gradient(90deg, var(--gold), var(--gold2), var(--gold));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 4px;
-    }
-    .site-name { font-size: 0.8rem; color: var(--muted); margin-bottom: 28px; letter-spacing: 0.08em; text-transform: uppercase; }
-
-    /* NO SESSION */
-    .session-error {
-      background: var(--card);
-      border: 1px solid var(--red);
-      border-radius: var(--radius);
-      padding: 32px; text-align: center;
-      max-width: 400px;
-    }
-    .session-error h2 { color: var(--red); font-size: 1.2rem; margin-bottom: 10px; }
-    .session-error p { color: var(--muted); font-size: 0.9rem; }
-
-    /* LOGIN REQUIRED */
-    .login-required {
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 32px; text-align: center;
-      max-width: 400px;
-      border: 1px solid rgba(123,47,190,0.4);
-    }
-    .login-required h2 { font-family: 'Black Han Sans', sans-serif; font-size: 1.4rem; margin-bottom: 10px; color: var(--gold); }
-    .login-required p { color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; }
-    .btn-login {
-      display: inline-block;
-      background: linear-gradient(135deg, var(--accent), #9B4FDE);
-      color: #fff; border: none; border-radius: 50px;
-      padding: 14px 36px;
-      font-family: 'Black Han Sans', sans-serif;
-      font-size: 1.1rem; letter-spacing: 0.08em;
-      cursor: pointer; text-decoration: none;
-      transition: transform 0.15s, box-shadow 0.15s;
-      box-shadow: 0 4px 20px rgba(123,47,190,0.5);
-    }
-    .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(123,47,190,0.7); }
-
-    /* GAME */
-    #game-screen { width: 100%; max-width: 440px; }
-
-    /* USER INFO */
-    .user-bar {
-      display: flex; align-items: center; gap: 12px;
-      background: var(--card); border-radius: 12px;
-      padding: 12px 16px; margin-bottom: 14px;
-    }
-    .user-avatar {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: var(--accent);
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 0.9rem; color: #fff; flex-shrink: 0;
-    }
-    .user-name { font-weight: 700; font-size: 0.95rem; }
-    .user-session { font-size: 0.72rem; color: var(--muted); }
-
-    /* CURRENT NUMBER */
-    .current-row {
-      background: var(--card); border-radius: 12px;
-      padding: 14px 16px; margin-bottom: 14px;
-      display: flex; align-items: center; gap: 14px;
-    }
-    .curr-wrap {
-      width: 58px; height: 58px; border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, #fff2, transparent 60%), var(--gold2);
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Black Han Sans', sans-serif; font-size: 1.3rem; color: #1a0a00;
-      box-shadow: 0 0 16px rgba(255,165,0,0.4); flex-shrink: 0;
-      transition: all 0.3s;
-    }
-    .curr-wrap.pop { animation: ballPop 0.45s ease; }
-    @keyframes ballPop {
-      0% { transform: scale(0.6); } 70% { transform: scale(1.2); } 100% { transform: scale(1); }
-    }
-    .curr-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
-    .hist-row { display: flex; gap: 5px; flex-wrap: wrap; }
-    .hist-chip {
-      background: var(--card2); border-radius: 5px;
-      padding: 2px 7px; font-size: 0.7rem; font-weight: 700; color: var(--gold2);
-    }
-
-    /* BINGO CARD */
-    .card-wrap {
-      background: var(--card);
-      border: 2px solid rgba(123,47,190,0.35);
-      border-radius: var(--radius); padding: 18px;
-      margin-bottom: 14px;
-    }
-    .card-header {
-      display: grid; grid-template-columns: repeat(5, 1fr);
-      gap: 4px; margin-bottom: 8px;
-    }
-    .card-letter {
-      text-align: center;
-      font-family: 'Black Han Sans', sans-serif;
-      font-size: 1.5rem; padding: 6px 0;
-    }
-    .l-B { color: #FF6B6B; } .l-I { color: #FFD700; } .l-N { color: #4ECDC4; }
-    .l-G { color: #95E1D3; } .l-O { color: #F38181; }
-
-    .bingo-grid {
-      display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;
-    }
-    .cell {
-      aspect-ratio: 1; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      background: var(--card2);
-      font-family: 'Black Han Sans', sans-serif; font-size: 1.15rem;
-      cursor: pointer; border: 2px solid transparent;
-      transition: all 0.18s; user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .cell:hover:not(.free) { border-color: rgba(123,47,190,0.5); }
-    .cell:active:not(.free) { transform: scale(0.88); }
-    .cell.free {
-      background: linear-gradient(135deg, var(--accent), #9B4FDE);
-      color: #fff; cursor: default; font-size: 0.65rem; letter-spacing: 0.04em;
-    }
-    .cell.called { background: rgba(123,47,190,0.18); border-color: rgba(123,47,190,0.4); color: var(--muted); }
-    .cell.marked {
-      background: radial-gradient(circle at 35% 30%, #fff2, transparent 60%), var(--gold2);
-      color: #1a0a00; border-color: var(--gold);
-      box-shadow: 0 0 12px rgba(255,165,0,0.5);
-    }
-    .cell.marked.free { background: linear-gradient(135deg, var(--green), #15a847); color: #fff; border-color: var(--green); }
-    .cell.win-cell { animation: winAnim 0.7s ease infinite alternate; }
-    @keyframes winAnim {
-      from { box-shadow: 0 0 6px rgba(29,185,84,0.4); background: radial-gradient(circle at 35% 30%, #fff2, transparent 60%), var(--gold2); color: #1a0a00; }
-      to { box-shadow: 0 0 24px rgba(29,185,84,0.9); background: var(--green); color: #fff; }
-    }
-
-    /* PROGRESS */
-    .prog-bar-wrap { background: var(--card2); border-radius: 50px; height: 7px; margin: 12px 0; overflow: hidden; }
-    .prog-bar { height: 100%; border-radius: 50px; background: linear-gradient(90deg, var(--accent), var(--gold2)); transition: width 0.5s ease; }
-    .prog-text { font-size: 0.72rem; color: var(--muted); text-align: right; }
-
-    /* BANNERS */
-    .win-banner {
-      display: none; background: linear-gradient(135deg, #0f2a0f, #1a3d1a);
-      border: 2px solid var(--green); border-radius: var(--radius);
-      padding: 24px; text-align: center; margin-bottom: 14px;
-      animation: glow 1s ease-in-out infinite alternate;
-    }
-    .win-banner.show { display: block; }
-    @keyframes glow {
-      from { box-shadow: 0 0 20px rgba(29,185,84,0.3); }
-      to { box-shadow: 0 0 50px rgba(29,185,84,0.9); }
-    }
-    .win-title { font-family: 'Black Han Sans', sans-serif; font-size: 2.2rem; color: var(--green); }
-    .win-sub { color: #aaffaa; font-size: 0.9rem; margin-top: 8px; }
-    .other-banner {
-      display: none; background: var(--card);
-      border: 1px solid var(--red); border-radius: var(--radius);
-      padding: 14px; text-align: center; margin-bottom: 14px;
-    }
-    .other-banner.show { display: block; }
-    .other-banner p { color: var(--red); font-weight: 700; }
-    .other-banner small { color: var(--muted); font-size: 0.8rem; }
-
-    /* LOADING */
-    .loading {
-      background: var(--card); border-radius: var(--radius);
-      padding: 40px; text-align: center;
-    }
-    .spinner {
-      width: 40px; height: 40px; border: 3px solid rgba(123,47,190,0.3);
-      border-top-color: var(--accent); border-radius: 50%;
-      animation: spin 0.8s linear infinite; margin: 0 auto 16px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .hint { font-size: 0.75rem; color: var(--muted); text-align: center; padding-bottom: 8px; }
-  </style>
-</head>
-<body>
-
-<div class="logo">🎱 BINGO</div>
-<div class="site-name">saltouruguayserver.com</div>
-
-{!sessionId && (
-  <div class="session-error">
-    <h2>⚠️ Sesión inválida</h2>
-    <p>El link que usaste no tiene una sesión de bingo válida. Pedile el link correcto al streamer en el chat.</p>
+<Layout
+  title="Bingo — Salto Uruguay Server"
+  description="Jugá al bingo en vivo con el streamer en Salto Uruguay"
+  hideHeader
+  hideFooter
+  mainClassname="px-4 sm:px-6 pt-6 pb-20"
+>
+  <div class="fixed inset-0 -z-10">
+    <div class="absolute inset-0 bg-[url(/bg.svg)] opacity-30"></div>
+    <div
+      class="absolute top-0 right-0 w-[600px] h-[600px] bg-electric-violet-900/20 blur-[150px] rounded-full"
+    >
+    </div>
+    <div
+      class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-900/10 blur-[120px] rounded-full"
+    >
+    </div>
   </div>
-)}
 
-{sessionId && !isLoggedIn && (
-  <div class="login-required">
-    <h2>¡Iniciá sesión para jugar!</h2>
-    <p>Necesitás una cuenta en saltouruguayserver.com para reclamar tu cartón de bingo.</p>
-    <a class="btn-login" href={`/api/auth/signin?callbackUrl=/bingo?session=${sessionId}`}>
-      🎮 Iniciar sesión
-    </a>
-  </div>
-)}
-
-{sessionId && isLoggedIn && (
-  <div id="game-screen">
-    <div class="user-bar">
-      <div class="user-avatar" id="u-avatar">{username?.substring(0,2).toUpperCase()}</div>
-      <div>
-        <div class="user-name">{username}</div>
-        <div class="user-session">Sesión: {sessionId}</div>
-      </div>
+  <div class="max-w-md mx-auto min-h-screen flex flex-col">
+    <div class="text-center mb-6">
+      <h1
+        class="font-anton text-6xl bg-linear-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent tracking-wide leading-none"
+      >
+        BINGO
+      </h1>
+      <p
+        class="text-white/30 font-rubik text-xs uppercase tracking-[0.2em] mt-1"
+      >
+        saltouruguayserver.com
+      </p>
     </div>
 
-    <div class="win-banner" id="win-banner">
-      <div class="win-title">🏆 ¡BINGO!</div>
-      <div class="win-sub" id="win-sub"></div>
-    </div>
-    <div class="other-banner" id="other-banner">
-      <p>¡Otro jugador ganó!</p>
-      <small id="other-name"></small>
-    </div>
-
-    <div class="current-row">
-      <div>
-        <div class="curr-label">Número actual</div>
-        <div class="curr-wrap" id="curr-num">—</div>
-      </div>
-      <div style="flex:1">
-        <div class="curr-label">Anteriores</div>
-        <div class="hist-row" id="hist-row"></div>
-      </div>
-    </div>
-
-    <div id="card-area">
-      <div class="loading">
-        <div class="spinner"></div>
-        <p style="color:var(--muted);font-size:0.9rem;">Obteniendo tu cartón...</p>
-      </div>
-    </div>
-
-    <div class="hint">Tocá los números que vayan saliendo para marcarlos ✓</div>
-  </div>
-)}
-
-<script define:vars={{ sessionId, username, isLoggedIn }}>
-if (isLoggedIn && sessionId) {
-  const API = '/api/bingo';
-  let myCard = null;
-  let marked = new Set(['FREE']);
-  let lastDrawn = 0;
-  let cardRendered = false;
-
-  // ── Claim card ─────────────────────────────────────────────────────────────
-  async function claimCard() {
-    const res = await fetch(`${API}/claim`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ session: sessionId }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      document.getElementById('card-area').innerHTML =
-        `<div class="session-error"><h2>Error</h2><p>${data.error}</p></div>`;
-      return;
+    {
+      !sessionId && (
+        <div class="bg-white/5 border border-red-500/40 rounded-2xl p-8 text-center max-w-sm mx-auto w-full mt-8">
+          <div class="text-4xl mb-3">⚠️</div>
+          <h2 class="font-anton text-xl text-red-400 mb-2">Sesión inválida</h2>
+          <p class="text-white/40 font-rubik text-sm">
+            El link que usaste no tiene una sesión de bingo válida. Pedile el
+            link correcto al streamer en el chat.
+          </p>
+        </div>
+      )
     }
-    myCard = data.card;
-    // Restaurar marcados guardados en sessionStorage
-    const saved = sessionStorage.getItem('bingo-marked-' + sessionId);
-    if (saved) {
-      try { marked = new Set(JSON.parse(saved)); } catch {}
+
+    {
+      sessionId && !isLoggedIn && (
+        <div class="bg-white/5 border border-electric-violet-500/30 rounded-2xl p-8 text-center max-w-sm mx-auto w-full mt-8">
+          <h2 class="font-anton text-2xl bg-linear-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent mb-3">
+            ¡Iniciá sesión para jugar!
+          </h2>
+          <p class="text-white/40 font-rubik text-sm mb-6">
+            Necesitás una cuenta en saltouruguayserver.com para reclamar tu
+            cartón de bingo.
+          </p>
+          <a
+            href={`/api/auth/signin?callbackUrl=/bingo?session=${sessionId}`}
+            class="inline-block bg-linear-to-br from-electric-violet-500 to-fuchsia-600 text-white font-anton text-lg tracking-wider px-10 py-3 rounded-full shadow-lg shadow-electric-violet-500/40 hover:shadow-xl hover:shadow-electric-violet-500/60 hover:-translate-y-0.5 transition-all duration-200"
+          >
+            🎮 Iniciar sesión
+          </a>
+        </div>
+      )
     }
-    marked.add('FREE');
-    renderCard();
-    cardRendered = true;
+
+    {
+      sessionId && isLoggedIn && (
+        <div id="game-screen" class="flex flex-col gap-3">
+          <div class="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3 border border-white/5">
+            <div class="w-10 h-10 rounded-full bg-electric-violet-500 flex items-center justify-center font-rubik font-black text-sm text-white flex-shrink-0">
+              {initials}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-rubik font-bold text-sm text-white truncate">
+                {username}
+              </div>
+              <div class="font-rubik text-[11px] text-white/30">
+                Sesión: {sessionId}
+              </div>
+            </div>
+          </div>
+
+          <div
+            id="win-banner"
+            class="hidden bg-linear-to-br from-green-950/80 to-emerald-950/80 border-2 border-green-500 rounded-2xl p-6 text-center"
+          >
+            <div class="font-anton text-3xl text-green-400">🏆 ¡BINGO!</div>
+            <div id="win-sub" class="font-rubik text-green-200 text-sm mt-2" />
+          </div>
+
+          <div
+            id="other-banner"
+            class="hidden bg-white/5 border border-red-500/40 rounded-2xl p-4 text-center"
+          >
+            <p class="font-rubik font-bold text-red-400">¡Otro jugador ganó!</p>
+            <small id="other-name" class="text-white/40 text-xs" />
+          </div>
+
+          <div class="bg-white/5 rounded-xl px-4 py-3 border border-white/5 flex items-center gap-4">
+            <div>
+              <div class="font-rubik text-[10px] text-white/30 uppercase tracking-widest mb-1">
+                Número actual
+              </div>
+              <div
+                id="curr-num"
+                class="w-14 h-14 rounded-full bg-linear-to-br from-orange-400 to-amber-500 flex items-center justify-center font-anton text-xl text-stone-900 shadow-lg shadow-orange-500/30 flex-shrink-0 transition-all duration-300"
+              >
+                —
+              </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-rubik text-[10px] text-white/30 uppercase tracking-widest mb-1">
+                Anteriores
+              </div>
+              <div id="hist-row" class="flex gap-1.5 flex-wrap" />
+            </div>
+          </div>
+
+          <div id="card-area">
+            <div class="bg-white/5 rounded-2xl border border-white/5 p-10 text-center">
+              <div class="w-8 h-8 border-2 border-electric-violet-500/30 border-t-electric-violet-500 rounded-full animate-spin mx-auto mb-4" />
+              <p class="font-rubik text-sm text-white/40">
+                Obteniendo tu cartón...
+              </p>
+            </div>
+          </div>
+
+          <p class="font-rubik text-[11px] text-white/30 text-center">
+            Tocá los números que vayan saliendo para marcarlos ✓
+          </p>
+        </div>
+      )
+    }
+  </div>
+</Layout>
+
+<style>
+  @reference "../assets/styles/global.css";
+
+  #win-banner.show {
+    display: block;
+  }
+  #other-banner.show {
+    display: block;
   }
 
-  // ── Render card ─────────────────────────────────────────────────────────────
-  function renderCard() {
-    const area = document.getElementById('card-area');
-    area.innerHTML = `
-      <div class="card-wrap">
-        <div class="card-header">
-          <div class="card-letter l-B">B</div>
-          <div class="card-letter l-I">I</div>
-          <div class="card-letter l-N">N</div>
-          <div class="card-letter l-G">G</div>
-          <div class="card-letter l-O">O</div>
+  @keyframes win-glow {
+    from {
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+    }
+    to {
+      box-shadow: 0 0 50px rgba(34, 197, 94, 0.8);
+    }
+  }
+
+  #win-banner.show {
+    animation: win-glow 1s ease-in-out infinite alternate;
+  }
+
+  @keyframes ball-pop {
+    0% {
+      transform: scale(0.6);
+    }
+    70% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .ball-pop {
+    animation: ball-pop 0.45s ease;
+  }
+
+  @keyframes win-cell-pulse {
+    from {
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+      background: linear-gradient(to bottom right, #fbbf24, #f97316);
+      color: #1c1917;
+    }
+    to {
+      box-shadow: 0 0 24px rgba(34, 197, 94, 0.9);
+      background: #22c55e;
+      color: #fff;
+    }
+  }
+
+  .cell.win-cell {
+    animation: win-cell-pulse 0.7s ease infinite alternate;
+  }
+
+  .hist-chip {
+    @apply bg-white/[0.07] rounded px-1.5 py-0.5 text-[11px] font-rubik font-bold text-orange-300;
+  }
+</style>
+
+<script>
+  import { $, $$ } from "@/lib/dom-selector";
+  import { getSessionClient } from "@/lib/auth-client";
+
+  const sessionId = new URLSearchParams(window.location.search).get("session");
+
+  document.addEventListener("astro:page-load", async () => {
+    if (!sessionId) return;
+    const session = await getSessionClient();
+
+    const username =
+      session?.user?.username || session?.user?.email || "Jugador";
+
+    window.__bingoState = null;
+    const API = "/api/bingo";
+    let myCard = null;
+    let marked = new Set(["FREE"]);
+    let lastDrawn = 0;
+    let cardRendered = false;
+
+    async function claimCard() {
+      const res = await fetch(`${API}/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session: sessionId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const area = $("#card-area");
+        if (area) {
+          area.innerHTML = `<div class="bg-white/5 border border-red-500/40 rounded-2xl p-8 text-center"><h2 class="font-anton text-xl text-red-400 mb-2">Error</h2><p class="text-white/40 text-sm">${data.error}</p></div>`;
+        }
+        return;
+      }
+      myCard = data.card;
+      const saved = sessionStorage.getItem("bingo-marked-" + sessionId);
+      if (saved) {
+        try {
+          marked = new Set(JSON.parse(saved));
+        } catch {}
+      }
+      marked.add("FREE");
+      renderCard();
+      cardRendered = true;
+    }
+
+    function renderCard() {
+      const area = $("#card-area");
+      if (!area) return;
+      area.innerHTML = `
+      <div class="bg-white/5 border border-white/5 rounded-2xl p-4">
+        <div class="grid grid-cols-5 gap-1 mb-2">
+          <div class="text-center font-anton text-2xl text-red-400">B</div>
+          <div class="text-center font-anton text-2xl text-yellow-400">I</div>
+          <div class="text-center font-anton text-2xl text-teal-400">N</div>
+          <div class="text-center font-anton text-2xl text-emerald-300">G</div>
+          <div class="text-center font-anton text-2xl text-rose-400">O</div>
         </div>
-        <div class="bingo-grid" id="bingo-grid"></div>
-        <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
-        <div class="prog-text" id="prog-text">0 / 24 marcados</div>
+        <div id="bingo-grid" class="grid grid-cols-5 gap-1.5"></div>
+        <div class="mt-3 w-full bg-white/5 rounded-full h-2 overflow-hidden">
+          <div id="prog-bar" class="h-full rounded-full bg-linear-to-r from-electric-violet-500 to-amber-400 transition-all duration-500" style="width:0%"></div>
+        </div>
+        <div id="prog-text" class="text-right text-[11px] text-white/30 font-rubik mt-1">0 / 24 marcados</div>
       </div>
     `;
-    updateGrid();
-  }
+      updateGrid();
+    }
 
-  function updateGrid() {
-    if (!myCard) return;
-    const grid = document.getElementById('bingo-grid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    let markedCount = 0;
+    function updateGrid() {
+      if (!myCard) return;
+      const grid = $("#bingo-grid");
+      if (!grid) return;
+      grid.innerHTML = "";
+      let markedCount = 0;
+      const state = window.__bingoState || { drawn: [] };
 
-    const state = window.__bingoState || { drawn: [] };
+      const baseCls =
+        "aspect-square rounded-xl flex items-center justify-center font-anton text-lg select-none";
 
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        const val = myCard[r][c];
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.dataset.r = r;
-        cell.dataset.c = c;
-        cell.dataset.v = val;
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          const val = myCard[r][c];
+          const cell = document.createElement("div");
+          cell.className = baseCls;
 
-        if (val === 'FREE') {
-          cell.textContent = 'FREE';
-          cell.classList.add('free', 'marked');
-          markedCount++;
-        } else {
-          cell.textContent = val;
-          const isCalled = state.drawn.includes(val);
-          const isMarked = marked.has(String(val));
-          if (isMarked) { cell.classList.add('marked'); markedCount++; }
-          else if (isCalled) { cell.classList.add('called'); }
-          cell.addEventListener('click', () => toggleCell(r, c, val));
+          if (val === "FREE") {
+            cell.textContent = "FREE";
+            cell.className = `${baseCls} bg-linear-to-br from-electric-violet-500 to-fuchsia-600 text-white text-[10px] cursor-default tracking-wider`;
+            markedCount++;
+          } else {
+            cell.textContent = val;
+            cell.dataset.r = r;
+            cell.dataset.c = c;
+            cell.dataset.v = val;
+
+            const isCalled = state.drawn.includes(val);
+            const isMarked = marked.has(String(val));
+
+            if (isMarked) {
+              cell.className = `${baseCls} bg-linear-to-br from-amber-400 to-orange-500 text-stone-900 border-2 border-yellow-400 shadow-lg shadow-orange-500/40 marked`;
+              markedCount++;
+            } else if (isCalled) {
+              cell.className = `${baseCls} bg-white/[0.03] text-white/40 border border-electric-violet-500/30 cursor-pointer transition-all duration-150 hover:bg-white/[0.06] hover:border-electric-violet-500/40 active:scale-90`;
+            } else {
+              cell.className = `${baseCls} bg-white/[0.06] text-white/70 border-2 border-transparent cursor-pointer transition-all duration-150 hover:border-electric-violet-500/40 hover:bg-white/[0.09] active:scale-90`;
+            }
+
+            cell.addEventListener("click", () => toggleCell(r, c, val));
+          }
+          grid.appendChild(cell);
         }
-        grid.appendChild(cell);
+      }
+
+      const pct = Math.round((markedCount / 25) * 100);
+      const pb = $("#prog-bar");
+      const pt = $("#prog-text");
+      if (pb) pb.style.width = pct + "%";
+      if (pt) pt.textContent = markedCount - 1 + " / 24 marcados";
+    }
+
+    function toggleCell(r, c, val) {
+      const key = String(val);
+      if (marked.has(key)) marked.delete(key);
+      else marked.add(key);
+      sessionStorage.setItem(
+        "bingo-marked-" + sessionId,
+        JSON.stringify([...marked]),
+      );
+      updateGrid();
+    }
+
+    async function pollState() {
+      const res = await fetch(`${API}/state?session=${sessionId}`);
+      if (!res.ok) return;
+      const state = await res.json();
+      window.__bingoState = state;
+      const drawn = state.drawn || [];
+      const latest = drawn.length > 0 ? drawn[drawn.length - 1] : "—";
+
+      const currEl = $("#curr-num");
+      if (currEl) {
+        if (drawn.length !== lastDrawn && drawn.length > 0) {
+          currEl.classList.remove("ball-pop");
+          void currEl.offsetWidth;
+          currEl.classList.add("ball-pop");
+          lastDrawn = drawn.length;
+        }
+        currEl.textContent = latest;
+      }
+
+      const histEl = $("#hist-row");
+      if (histEl) {
+        histEl.innerHTML = drawn
+          .slice(-9)
+          .reverse()
+          .slice(1)
+          .map((n) => `<span class="hist-chip">${n}</span>`)
+          .join("");
+      }
+
+      if (cardRendered) updateGrid();
+
+      const winBanner = $("#win-banner");
+      const otherBanner = $("#other-banner");
+      if (state.gameOver) {
+        if (state.winner === username) {
+          if (winBanner) winBanner.classList.add("show");
+          const ws = $("#win-sub");
+          if (ws) ws.textContent = state.winnerType || "";
+          highlightWin(drawn);
+        } else if (state.winner) {
+          if (otherBanner) otherBanner.classList.add("show");
+          const on = $("#other-name");
+          if (on) on.textContent = state.winner + " ganó: " + state.winnerType;
+        }
       }
     }
 
-    const pct = Math.round((markedCount / 25) * 100);
-    const pb = document.getElementById('prog-bar');
-    const pt = document.getElementById('prog-text');
-    if (pb) pb.style.width = pct + '%';
-    if (pt) pt.textContent = (markedCount - 1) + ' / 24 marcados';
-  }
+    function highlightWin(drawn) {
+      if (!myCard) return;
+      const has = (n) => n === "FREE" || marked.has(String(n));
+      const toHighlight = [];
 
-  function toggleCell(r, c, val) {
-    const key = String(val);
-    if (marked.has(key)) marked.delete(key);
-    else marked.add(key);
-    sessionStorage.setItem('bingo-marked-' + sessionId, JSON.stringify([...marked]));
-    updateGrid();
-  }
-
-  // ── Poll state ──────────────────────────────────────────────────────────────
-  async function pollState() {
-    const res = await fetch(`${API}/state?session=${sessionId}`);
-    if (!res.ok) return;
-    const state = await res.json();
-    window.__bingoState = state;
-
-    const drawn = state.drawn || [];
-    const latest = drawn.length > 0 ? drawn[drawn.length - 1] : '—';
-
-    // Current number
-    const currEl = document.getElementById('curr-num');
-    if (currEl) {
-      if (drawn.length !== lastDrawn && drawn.length > 0) {
-        currEl.classList.remove('pop');
-        void currEl.offsetWidth;
-        currEl.classList.add('pop');
-        lastDrawn = drawn.length;
+      for (let r = 0; r < 5; r++) {
+        if (myCard[r].every(has)) {
+          for (let c = 0; c < 5; c++) toHighlight.push([r, c]);
+          break;
+        }
       }
-      currEl.textContent = latest;
-    }
-
-    // History chips
-    const histEl = document.getElementById('hist-row');
-    if (histEl) {
-      histEl.innerHTML = drawn.slice(-9).reverse().slice(1).map(n =>
-        `<span class="hist-chip">${n}</span>`
-      ).join('');
-    }
-
-    // Update grid highlights
-    if (cardRendered) updateGrid();
-
-    // Winner logic
-    const winBanner = document.getElementById('win-banner');
-    const otherBanner = document.getElementById('other-banner');
-    if (state.gameOver) {
-      if (state.winner === username) {
-        if (winBanner) { winBanner.classList.add('show'); }
-        const ws = document.getElementById('win-sub');
-        if (ws) ws.textContent = state.winnerType || '';
-        highlightWin(drawn);
-      } else if (state.winner) {
-        if (otherBanner) otherBanner.classList.add('show');
-        const on = document.getElementById('other-name');
-        if (on) on.textContent = state.winner + ' ganó: ' + state.winnerType;
+      for (let c = 0; c < 5; c++) {
+        if (myCard.every((row) => has(row[c]))) {
+          for (let r = 0; r < 5; r++) toHighlight.push([r, c]);
+          break;
+        }
       }
-    }
-  }
+      if ([0, 1, 2, 3, 4].every((i) => has(myCard[i][i]))) {
+        for (let i = 0; i < 5; i++) toHighlight.push([i, i]);
+      }
+      if ([0, 1, 2, 3, 4].every((i) => has(myCard[i][4 - i]))) {
+        for (let i = 0; i < 5; i++) toHighlight.push([i, 4 - i]);
+      }
+      if (myCard.flat().every(has)) {
+        for (let r = 0; r < 5; r++)
+          for (let c = 0; c < 5; c++) toHighlight.push([r, c]);
+      }
 
-  function highlightWin(drawn) {
-    if (!myCard) return;
-    const has = (n) => n === 'FREE' || marked.has(String(n));
-    let toHighlight = [];
-
-    for (let r = 0; r < 5; r++) {
-      if (myCard[r].every(has)) { for (let c=0;c<5;c++) toHighlight.push([r,c]); break; }
+      $$(".cell").forEach((cell) => {
+        const r = parseInt(cell.dataset.r);
+        const c = parseInt(cell.dataset.c);
+        if (toHighlight.some(([tr, tc]) => tr === r && tc === c)) {
+          cell.classList.add("win-cell");
+        }
+      });
     }
-    for (let c = 0; c < 5; c++) {
-      if (myCard.every(row => has(row[c]))) { for (let r=0;r<5;r++) toHighlight.push([r,c]); break; }
-    }
-    if ([0,1,2,3,4].every(i => has(myCard[i][i]))) { for (let i=0;i<5;i++) toHighlight.push([i,i]); }
-    if ([0,1,2,3,4].every(i => has(myCard[i][4-i]))) { for (let i=0;i<5;i++) toHighlight.push([i,4-i]); }
-    if (myCard.flat().every(has)) { for(let r=0;r<5;r++) for(let c=0;c<5;c++) toHighlight.push([r,c]); }
 
-    document.querySelectorAll('.cell').forEach(cell => {
-      const r = parseInt(cell.dataset.r), c = parseInt(cell.dataset.c);
-      if (toHighlight.some(([tr,tc]) => tr===r && tc===c)) cell.classList.add('win-cell');
+    claimCard().then(() => {
+      pollState();
+      setInterval(pollState, 2500);
     });
-  }
-
-  // Init
-  claimCard().then(() => {
-    pollState();
-    setInterval(pollState, 2500);
   });
-}
 </script>
-</body>
-</html>
