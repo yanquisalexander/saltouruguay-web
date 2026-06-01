@@ -10,7 +10,6 @@ import {
 } from "@/consts/Sounds";
 import { LucideSiren } from "lucide-preact";
 import { navigate } from "astro/virtual-modules/transitions-router.js";
-import { decodeAudioFromPusher } from "@/services/pako-compress.client";
 import { AVAILABLE_AUDIOS, type AudioState } from "@/types/audio";
 import { actions } from "astro:actions";
 import { usePusher } from "@/hooks/usePusher";
@@ -166,17 +165,14 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         // Store handler references for cleanup
         const handlers = new Map<string, (data: any) => void>();
 
-        const handleAudioBlob = (audioBase64: string, volume = 0.5, reverb = 0.0) => {
+        const handleAudioUrl = async (audioUrl: string, volume = 0.5, reverb = 0.0) => {
             try {
-                const audioBytes = decodeAudioFromPusher(audioBase64);
-                const audioBuffer = audioBytes.buffer.slice(
-                    audioBytes.byteOffset,
-                    audioBytes.byteOffset + audioBytes.byteLength
-                );
+                const response = await fetch(audioUrl);
+                const arrayBuffer = await response.arrayBuffer();
 
                 const timeoutId = window.setTimeout(() => {
                     playSoundWithReverb({
-                        arrayBuffer: audioBuffer,
+                        arrayBuffer,
                         volume,
                         reverbAmount: reverb,
                     }).catch((err) => console.error("Error reproduciendo audio remoto", err));
@@ -184,19 +180,19 @@ export const useStreamerWarsSocket = (session: Session | null) => {
 
                 timeouts.push(timeoutId);
             } catch (e) {
-                console.error("Error decoding audio blob", e);
+                console.error("Error fetching audio from URL", e);
             }
         };
 
-        const handlePlayerEliminated = async ({ playerNumber: pNum, audioBase64 }: { playerNumber: number | number[]; audioBase64: string }) => {
+        const handlePlayerEliminated = async ({ playerNumber: pNum, audioUrl }: { playerNumber: number | number[]; audioUrl: string }) => {
             console.info("Player eliminated:", pNum);
             await playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.05 });
             setRecentlyEliminatedPlayer(pNum);
-            setTimeout(() => handleAudioBlob(audioBase64, 0.5, 0.7), 500);
+            if (audioUrl) setTimeout(() => handleAudioUrl(audioUrl, 0.5, 0.7), 500);
         };
 
-        const handleMegaphony = ({ audioBase64 }: { audioBase64: string }) => {
-            handleAudioBlob(audioBase64, 0.8, 0.5);
+        const handleMegaphony = ({ audioUrl }: { audioUrl: string }) => {
+            handleAudioUrl(audioUrl, 0.8, 0.5);
         };
 
         const handleIsolation = (targetNumbers: number | number[]) => {
@@ -249,8 +245,8 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                 console.log("Episode title received:", episode);
             };
 
-            const handlePlayersEliminated = ({ playerNumbers, audioBase64 }: { playerNumbers: number | number[], audioBase64: string }) => {
-                handlePlayerEliminated({ playerNumber: playerNumbers, audioBase64 });
+            const handlePlayersEliminated = ({ playerNumbers, audioUrl }: { playerNumbers: number | number[], audioUrl: string }) => {
+                handlePlayerEliminated({ playerNumber: playerNumbers, audioUrl });
             };
 
             const handleReloadForUser = ({ playerNumber: pNum }: { playerNumber: number }) => {

@@ -10,7 +10,7 @@ import { DISCORD_LOGS_WEBHOOK_TOKEN } from "astro:env/server";
 import { getTranslation } from "./translate";
 import { getLiveStreams } from "./twitch-runtime";
 import { CINEMATICS } from "@/consts/cinematics";
-import { encodeAudioForPusher } from "@/services/pako-compress";
+import { uploadAudio } from "@/services/audio-storage";
 import { DalgonaShape, type DalgonaShapeData, createDalgonaShapeData, generateDalgonaImage } from "@/services/dalgona-image-generator";
 import { PUSHER_CHANNELS, PUSHER_EVENTS, PUSHER_EVENTS_SIMON, PUSHER_EVENTS_DALGONA, PUSHER_EVENTS_BOMB, PUSHER_EVENTS_TUG_OF_WAR, PUSHER_EVENTS_FISHING, PUSHER_EVENTS_AUTO_ELIM, PUSHER_EVENTS_CINEMATIC, CACHE_KEYS } from "@/consts/pusher";
 
@@ -550,13 +550,12 @@ export const games = {
             });
 
             try {
-                // Genera el audio.
                 const audioBase64 = await tts(`Jugador, ${playerNumber}. pasa!`);
 
-                const audioPayload = encodeAudioForPusher(audioBase64!);
+                const audioUrl = await uploadAudio(audioBase64!);
 
                 await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.MEGAPHONY, {
-                    audioBase64: audioPayload,
+                    audioUrl,
                 });
             } catch (error) {
 
@@ -678,10 +677,10 @@ export const games = {
             try {
                 const audioBase64 = await tts(`Atención jugadores. El minijuego "Dalgona" ha finalizado. Los jugadores que no lograron superar el desafío serán eliminados.`);
 
-                const audioPayload = encodeAudioForPusher(audioBase64!);
+                const audioUrl = await uploadAudio(audioBase64!);
 
                 await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.MEGAPHONY, {
-                    audioBase64: audioPayload,
+                    audioUrl,
                 });
 
                 // Esperar unos segundos para que se escuche el anuncio antes de eliminar jugadores
@@ -969,10 +968,10 @@ export const games = {
 
                 try {
                     const audioBase64 = await tts(`¡El equipo ${winningTeam.name} ha ganado la partida de Tug of War!`);
-                    const audioPayload = encodeAudioForPusher(audioBase64!);
+                    const audioUrl = await uploadAudio(audioBase64!);
 
                     await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.MEGAPHONY, {
-                        audioBase64: audioPayload,
+                        audioUrl,
                     });
                 } catch (error) {
                     console.error("Error generating megaphone audio:", error);
@@ -1257,10 +1256,10 @@ export const games = {
 
                     try {
                         const audioBase64 = await tts(`Jugador ${playerNumber}, pasa!`);
-                        const audioPayload = encodeAudioForPusher(audioBase64!);
+                        const audioUrl = await uploadAudio(audioBase64!);
 
                         await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.MEGAPHONY, {
-                            audioBase64: audioPayload,
+                            audioUrl,
                         });
                     } catch (error) {
                         console.error("Error generating TTS:", error);
@@ -1809,12 +1808,12 @@ export const eliminatePlayer = async (playerNumber: number) => {
         // Genera el audio.
         const audioBase64 = await tts(`Jugador, ${playerNumber}, eliminado`);
 
-        const audioPayload = encodeAudioForPusher(audioBase64!);
+        const audioUrl = import.meta.env.DEV ? null : await uploadAudio(audioBase64!);
 
         // Envía el evento a Pusher con los datos actualizados.
         await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_ELIMINATED, {
             playerNumber,
-            audioBase64: import.meta.env.DEV ? null : audioPayload,
+            audioUrl,
         });
 
         try {
@@ -1854,12 +1853,12 @@ export const massEliminatePlayers = async (playerNumbers: number[]) => {
             )}. han sido eliminados`
         );
 
-        const audioPayload = encodeAudioForPusher(audioBase64!);
+        const audioUrl = import.meta.env.DEV ? null : await uploadAudio(audioBase64!);
 
         // Envía el evento a Pusher con los datos actualizados.
         await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYERS_ELIMINATED, {
             playerNumbers,
-            audioBase64: import.meta.env.DEV ? null : audioPayload,
+            audioUrl,
         });
 
         // Envía el log al webhook de Discord.
@@ -3052,18 +3051,13 @@ export const getCurrentTimer = async (): Promise<{ startedAt: number; duration: 
 };
 
 export const broadcastToMegaphone = async (message: string) => {
-    /* 
-        Genera un audio con el mensaje usando una TTS API
-    */
-
     try {
-        // Genera el audio.
         const audioBase64 = await tts(message)
 
-        const audioPayload = encodeAudioForPusher(audioBase64!);
+        const audioUrl = await uploadAudio(audioBase64!);
 
         await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.MEGAPHONY, {
-            audioBase64: audioPayload,
+            audioUrl,
         });
     } catch (error) {
         console.error("Error broadcasting to megaphone:", error);

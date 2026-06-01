@@ -26,57 +26,34 @@ interface DalgonaImageOptions {
 export function generateDalgonaSVG(options: DalgonaImageOptions): string {
     const { shape, size = 400 } = options;
 
-    // Cookie background color - caramel/honey color
-    const cookieColor = `hsl(30, 70%, 60%)`;
+    // Cookie background - light caramel (bright enough to stay above threshold even with texture)
+    const cookieColor = `hsl(30, 75%, 70%)`;
 
-    // Darker outline for the shape
-    const shapeColor = `hsl(30, 60%, 45%)`;
+    // Dark fill for the shape impression (deep pressed area, well below threshold)
+    const shapeFill = `hsl(25, 55%, 22%)`;
+    const shapeStroke = `hsl(25, 60%, 16%)`;
 
     // Generate shape path based on type
     const shapePath = getShapePath(shape, size);
 
+    // Clean cookie shape: bright caramel circle with dark filled shape
+    // No SVG filters — they render inconsistently when drawn to canvas via drawImage
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-        <!-- Cookie texture -->
-        <filter id="cookieTexture">
-            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" result="noise"/>
-            <feColorMatrix in="noise" type="saturate" values="0.3"/>
-            <feComponentTransfer>
-                <feFuncA type="discrete" tableValues="0.5"/>
-            </feComponentTransfer>
-            <feBlend in="SourceGraphic" in2="noise" mode="multiply"/>
-        </filter>
-        
-        <!-- Inner shadow for shape -->
-        <filter id="innerShadow">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-            <feOffset dx="2" dy="2" result="offsetblur"/>
-            <feFlood flood-color="#000000" flood-opacity="0.3"/>
-            <feComposite in2="offsetblur" operator="in"/>
-            <feMerge>
-                <feMergeNode/>
-                <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-        </filter>
-    </defs>
-    
     <!-- Cookie background circle -->
     <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 10}" 
             fill="${cookieColor}" 
-            filter="url(#cookieTexture)"
-            stroke="${shapeColor}" 
+            stroke="${shapeStroke}" 
             stroke-width="2"/>
     
-    <!-- Shape outline (pressed into the cookie) -->
+    <!-- Shape impression (dark filled area) -->
     <g transform="translate(${size / 2}, ${size / 2})">
         <path d="${shapePath}" 
-              fill="none" 
-              stroke="${shapeColor}" 
-              stroke-width="4" 
+              fill="${shapeFill}" 
+              stroke="${shapeStroke}" 
+              stroke-width="3" 
               stroke-linecap="round"
-              stroke-linejoin="round"
-              filter="url(#innerShadow)"/>
+              stroke-linejoin="round"/>
     </g>
 </svg>`;
 }
