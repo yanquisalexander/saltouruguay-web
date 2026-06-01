@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { Button } from "@/components/ui/8bit/button";
 import type { JSX } from "preact/jsx-runtime";
+import { PUSHER_EVENTS_BOMB } from "@/consts/pusher";
 
 interface BombProps {
     session: Session;
@@ -84,7 +85,7 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
             setTimeout(() => setIsShaking(false), 500);
         };
 
-        channel.bind('bomb:start', (data: { playerNumber: number; challenge: BombChallenge; challengesCompleted: number; errorsCount: number }) => {
+        channel.bind(PUSHER_EVENTS_BOMB.START, (data: { playerNumber: number; challenge: BombChallenge; challengesCompleted: number; errorsCount: number }) => {
             if (data.playerNumber === playerNumber) {
                 setCurrentChallenge(data.challenge);
                 setChallengesCompleted(data.challengesCompleted);
@@ -96,7 +97,7 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
             }
         });
 
-        channel.bind('bomb:game-started', () => {
+        channel.bind(PUSHER_EVENTS_BOMB.GAME_STARTED, () => {
             if (gameStatus === 'waiting') {
                 setCurrentChallenge(null);
                 setChallengesCompleted(0);
@@ -107,7 +108,7 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
             }
         });
 
-        channel.bind('bomb:next-challenge', (data: { playerNumber: number; challenge: BombChallenge; challengesCompleted: number; errorsCount: number }) => {
+        channel.bind(PUSHER_EVENTS_BOMB.NEXT_CHALLENGE, (data: { playerNumber: number; challenge: BombChallenge; challengesCompleted: number; errorsCount: number }) => {
             if (data.playerNumber === playerNumber) {
                 setCurrentChallenge(data.challenge);
                 setChallengesCompleted(data.challengesCompleted);
@@ -117,7 +118,7 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
             }
         });
 
-        channel.bind('bomb:error', (data: { playerNumber: number; errorsCount: number; errorsRemaining: number }) => {
+        channel.bind(PUSHER_EVENTS_BOMB.ERROR, (data: { playerNumber: number; errorsCount: number; errorsRemaining: number }) => {
             if (data.playerNumber === playerNumber) {
                 triggerShake();
                 setErrorsCount(data.errorsCount);
@@ -127,7 +128,7 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
             }
         });
 
-        channel.bind('bomb:success', (data: { playerNumber: number }) => {
+        channel.bind(PUSHER_EVENTS_BOMB.SUCCESS, (data: { playerNumber: number }) => {
             if (data.playerNumber === playerNumber) {
                 setGameStatus('completed');
                 setCurrentChallenge(null);
@@ -137,7 +138,7 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
             toast.success(`Jugador #${data.playerNumber.toString().padStart(3, '0')}, pasa!`);
         });
 
-        channel.bind('bomb:failed', (data: { playerNumber: number }) => {
+        channel.bind(PUSHER_EVENTS_BOMB.FAILED, (data: { playerNumber: number }) => {
             if (data.playerNumber === playerNumber) {
                 triggerShake();
                 setGameStatus('failed');
@@ -145,7 +146,7 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
             }
         });
 
-        channel.bind('bomb:game-ended', () => {
+        channel.bind(PUSHER_EVENTS_BOMB.GAME_ENDED, () => {
             if (gameStatus === 'playing') {
                 setGameStatus('failed');
                 setCurrentChallenge(null);
@@ -153,13 +154,13 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
         });
 
         return () => {
-            channel.unbind('bomb:start');
-            channel.unbind('bomb:game-started');
-            channel.unbind('bomb:next-challenge');
-            channel.unbind('bomb:error');
-            channel.unbind('bomb:success');
-            channel.unbind('bomb:failed');
-            channel.unbind('bomb:game-ended');
+            channel.unbind(PUSHER_EVENTS_BOMB.START);
+            channel.unbind(PUSHER_EVENTS_BOMB.GAME_STARTED);
+            channel.unbind(PUSHER_EVENTS_BOMB.NEXT_CHALLENGE);
+            channel.unbind(PUSHER_EVENTS_BOMB.ERROR);
+            channel.unbind(PUSHER_EVENTS_BOMB.SUCCESS);
+            channel.unbind(PUSHER_EVENTS_BOMB.FAILED);
+            channel.unbind(PUSHER_EVENTS_BOMB.GAME_ENDED);
         };
     }, [session.user?.id, pusher, gameStatus, playerNumber, resetAnswerField]);
 

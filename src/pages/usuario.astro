@@ -18,8 +18,9 @@ if (!session) {
   return Astro.redirect("/");
 }
 
-const discordUser = session?.user?.discordId
-  ? await getDiscordUser(session.user.discordId)
+const discordAccount = session?.user?.linkedAccounts?.discord;
+const discordUser = discordAccount
+  ? await getDiscordUser(discordAccount.providerUserId)
   : null;
 
 // Estilos Glass

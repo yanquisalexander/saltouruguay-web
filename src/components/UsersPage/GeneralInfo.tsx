@@ -11,7 +11,7 @@ export const GeneralInfo = ({ session, discordUser }: { session: Session, discor
     const handleDiscordUnlink = async () => {
         setUnlinkingDiscord(true);
         try {
-            const response = await fetch('/api/discord/unlink', { method: 'POST' });
+            const response = await fetch('/api/linked-accounts/discord/unlink', { method: 'POST' });
             const data = await response.json();
             if (response.ok) {
                 toast.success(data.message || "Desvinculado correctamente");
@@ -47,7 +47,7 @@ export const GeneralInfo = ({ session, discordUser }: { session: Session, discor
             username: discordUser ? `${discordUser.username}#${discordUser.discriminator}` : null,
             status: discordUser ? "Conectado" : "No conectado",
             canUnlink: true,
-            action: discordUser ? handleDiscordUnlink : () => location.href = "/api/discord/link"
+            action: discordUser ? handleDiscordUnlink : () => location.href = "/api/linked-accounts/discord/link"
         },
     ];
 

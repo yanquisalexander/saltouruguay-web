@@ -5,6 +5,7 @@ import type { Players } from "@/components/admin/streamer-wars/Players";
 import { SimonSaysOverlay } from "./SimonSaysOverlay";
 import type Pusher from "pusher-js";
 import { PlayerEliminated } from "../PlayerEliminated";
+import { PUSHER_EVENTS } from "@/consts/pusher";
 import { TeamSelectorOverlay } from "./TeamSelectorOverlay";
 import { EliminatedTeamOverlay } from "./EliminatedTeamOverlay";
 import { AutoEliminationOverlay } from "./AutoEliminationOverlay";
@@ -64,7 +65,7 @@ export const GlobalOverlay = () => {
                 data?.players.map((player: any) => ({ ...player, online: false })) || []
             );
 
-            globalChannel.current?.bind("reload-overlay", () => {
+            globalChannel.current?.bind(PUSHER_EVENTS.RELOAD_OVERLAY, () => {
                 location.reload();
             });
 

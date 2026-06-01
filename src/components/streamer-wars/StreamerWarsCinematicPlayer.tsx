@@ -4,6 +4,7 @@ import { $ } from "@/lib/dom-selector";
 import { LucideVolume2, LucideVolumeX, LucideX } from "lucide-preact";
 import { toast } from "sonner";
 import { usePusherChannel } from '@/hooks/usePusherChannel';
+import { PUSHER_CHANNELS, PUSHER_EVENTS_CINEMATIC } from "@/consts/pusher";
 
 interface StreamerWarsCinematicPlayerProps {
     userId: string; // Identificador único del usuario actual
@@ -20,7 +21,7 @@ export const StreamerWarsCinematicPlayer = ({ userId }: StreamerWarsCinematicPla
 
     // Memoize events to prevent re-binding
     const events = useMemo(() => ({
-        'new-event': (data: { targetUsers: string[] | 'everyone'; videoUrl: string }) => {
+        [PUSHER_EVENTS_CINEMATIC.NEW_EVENT]: (data: { targetUsers: string[] | 'everyone'; videoUrl: string }) => {
             if (window.location.pathname.includes('admin')) {
                 console.warn("Se ha recibido una cinemática, pero no se mostrará en la vista de administrador");
                 return;
@@ -33,7 +34,7 @@ export const StreamerWarsCinematicPlayer = ({ userId }: StreamerWarsCinematicPla
     }), [userId]);
 
     usePusherChannel({
-        channelName: 'streamer-wars-cinematic',
+        channelName: PUSHER_CHANNELS.CINEMATIC,
         events
     });
 

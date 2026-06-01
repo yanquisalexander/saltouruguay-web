@@ -4,6 +4,7 @@ import { cloneElement, type JSX } from "preact";
 import { useEffect, useState, useRef } from "preact/hooks";
 import { INSTRUCTIONS_REGISTRY, type ScriptItem } from "./InmersiveInstructionsConst";
 import type { Players } from "../admin/streamer-wars/Players";
+import { PUSHER_CHANNELS, PUSHER_EVENTS } from "@/consts/pusher";
 
 interface InmersiveInstructionsProps {
     players?: Players[];
@@ -25,17 +26,15 @@ export const InmersiveInstructions = ({ players }: InmersiveInstructionsProps) =
 
     // 1. ESCUCHAR PUSHER
     useEffect(() => {
-        const channel = pusherClient.subscribe("streamer-wars");
+        const channel = pusherClient.subscribe(PUSHER_CHANNELS.GLOBAL);
 
-        channel.bind("inmersive-instructions", (data: { id: string }) => {
+        const handleInstructions = (data: { id: string }) => {
             console.log("Instrucción inmersiva recibida:", data.id);
             const script = INSTRUCTIONS_REGISTRY[data.id];
 
             if (script) {
-                // Si ya hay algo reproduciéndose, forzamos el reset
                 if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-                // Precargar sonidos de este script específico
                 script.forEach(item => {
                     if (item.audioPath) {
                         const audio = new Audio(`${CDN_PREFIX}scripts/${item.audioPath}.mp3`);
@@ -52,11 +51,12 @@ export const InmersiveInstructions = ({ players }: InmersiveInstructionsProps) =
             } else {
                 console.warn(`No se encontró script para el ID: ${data.id}`);
             }
-        });
+        };
+
+        channel.bind(PUSHER_EVENTS.INMERSIVE_INSTRUCTIONS, handleInstructions);
 
         return () => {
-            channel.unbind("inmersive-instructions");
-            pusherClient.unsubscribe("streamer-wars"); // Opcional si usas el canal en otros lados
+            channel.unbind(PUSHER_EVENTS.INMERSIVE_INSTRUCTIONS, handleInstructions);
         };
     }, []);
 
@@ -131,6 +131,23 @@ export const InmersiveInstructions = ({ players }: InmersiveInstructionsProps) =
     const minutes = Math.floor(remainingTime / 60);
     const seconds = Math.floor(remainingTime % 60);
 
+    const renderComponent = () => {
+        if (!currentItem?.component) return null;
+        const el = typeof currentItem.component === "function"
+            ? currentItem.component({ players })
+            : currentItem.component;
+        return cloneElement(el as JSX.Element, { key: currentIndex });
+    };
+
+    // Full-screen cinematic: no wrapper chrome at all
+    if (currentItem?.fullScreen) {
+        return (
+            <div className={`fixed inset-0 bg-black z-9000 transition-opacity duration-500 ${fadeClass}`}>
+                {renderComponent()}
+            </div>
+        );
+    }
+
     return (
         <div
             className={`fixed inset-0 bg-black/90 flex min-h-dvh h-full w-full flex-col justify-center items-center z-9000 transition-opacity duration-500 ${fadeClass}`}
@@ -147,27 +164,20 @@ export const InmersiveInstructions = ({ players }: InmersiveInstructionsProps) =
 
             <div className="p-8 backdrop-blur-xs text-white text-center w-full max-w-4xl flex flex-col items-center">
 
-                {/* Header dinámico */}
-                <header className="mb-12">
-                    <h1 className="text-2xl font-mono font-bold text-lime-500 uppercase tracking-[0.2em] border-b border-lime-900 pb-2">
-                        {activeId?.replace("-", " ")}
-                    </h1>
-                </header>
+                {/* Header eliminado — los títulos autogenerados se veían mal */}
 
                 {/* Componente visual del paso actual */}
                 <div className="min-h-[200px] flex items-center justify-center">
                     {currentItem?.component && (
                         <div className="animate-fade-in-up">
-                            {typeof currentItem.component === "function"
-                                ? cloneElement(currentItem.component({ players }), { key: currentIndex })
-                                : cloneElement(currentItem.component as JSX.Element, { key: currentIndex })}
+                            {renderComponent()}
                         </div>
                     )}
                 </div>
 
             </div>
-            {/* Texto de subtítulo/instrucción */}
-            {currentItem?.text && (
+            {/* Texto de subtítulo/instrucción — oculto en fullScreen */}
+            {currentItem?.text && !currentItem?.fullScreen && (
                 <div className="mt-12 fixed bottom-16 bg-neutral-900/40 px-2 py-1 max-w-2xl w-full mx-auto">
                     <p className="font-mono text-center text-white text-md leading-relaxed">
                         {currentItem.text}

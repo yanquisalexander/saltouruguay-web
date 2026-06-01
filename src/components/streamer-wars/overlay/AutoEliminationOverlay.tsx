@@ -2,6 +2,7 @@ import { actions } from "astro:actions";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
 import type Pusher from "pusher-js";
+import { PUSHER_CHANNELS, PUSHER_EVENTS_AUTO_ELIM } from "@/consts/pusher";
 
 export const AutoEliminationOverlay = ({
     channel,
@@ -24,7 +25,7 @@ export const AutoEliminationOverlay = ({
 
 
     useEffect(() => {
-        channelRef.current = pusher?.subscribe("auto-elimination");
+        channelRef.current = pusher?.subscribe(PUSHER_CHANNELS.AUTO_ELIMINATION);
         const handlePlayerAutoEliminated = (data: { playerNumber: number }) => {
             setEliminatedPlayers((prev) => {
                 if (!prev.includes(data.playerNumber)) {
@@ -45,9 +46,9 @@ export const AutoEliminationOverlay = ({
 
 
 
-        channelRef.current?.bind("player-autoeliminated", handlePlayerAutoEliminated);
+        channelRef.current?.bind(PUSHER_EVENTS_AUTO_ELIM.PLAYER_AUTOELIMINATED, handlePlayerAutoEliminated);
         return () => {
-            channelRef.current?.unbind("player-autoeliminated", handlePlayerAutoEliminated);
+            channelRef.current?.unbind(PUSHER_EVENTS_AUTO_ELIM.PLAYER_AUTOELIMINATED, handlePlayerAutoEliminated);
         };
     }, [pusher]);
 

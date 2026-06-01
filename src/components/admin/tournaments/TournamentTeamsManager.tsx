@@ -275,9 +275,9 @@ function PlayerRow({ participant: p, teams, currentTeam, loading, onAssign }: {
             <div className="flex-1 min-w-0">
                 <div className="text-white text-sm font-medium truncate leading-tight">
                     {p.user?.displayName}
-                    {p.user?.discordId && (
+                    {p.user?.linkedAccounts?.discord?.providerUserId && (
                         <a
-                            href={`https://discord.com/users/${p.user.discordId}`}
+                            href={`https://discord.com/users/${p.user.linkedAccounts?.discord?.providerUserId}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="ml-2 inline-flex items-center text-xs text-gray-400 hover:text-white"

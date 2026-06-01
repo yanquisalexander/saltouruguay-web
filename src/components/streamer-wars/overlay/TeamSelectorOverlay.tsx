@@ -5,6 +5,7 @@ import { useEffect, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
 import type Pusher from "pusher-js";
 import { actions } from "astro:actions";
+import { PUSHER_EVENTS } from "@/consts/pusher";
 
 const COLORS = [
     { team: TEAMS.BLUE, color: "#3498db" },
@@ -39,14 +40,14 @@ export const TeamSelectorOverlay = ({
         fetchTeams();
 
         // Actualizar en tiempo real según los eventos de Pusher
-        channel?.bind("player-joined", fetchTeams);
-        channel?.bind("player-removed", fetchTeams);
-        channel?.bind("captain-assigned", fetchTeams);
+        channel?.bind(PUSHER_EVENTS.PLAYER_JOINED, fetchTeams);
+        channel?.bind(PUSHER_EVENTS.PLAYER_REMOVED, fetchTeams);
+        channel?.bind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, fetchTeams);
 
         return () => {
-            channel?.unbind("player-joined", fetchTeams);
-            channel?.unbind("player-removed", fetchTeams);
-            channel?.unbind("captain-assigned", fetchTeams);
+            channel?.unbind(PUSHER_EVENTS.PLAYER_JOINED, fetchTeams);
+            channel?.unbind(PUSHER_EVENTS.PLAYER_REMOVED, fetchTeams);
+            channel?.unbind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, fetchTeams);
         };
     }, [channel]);
 

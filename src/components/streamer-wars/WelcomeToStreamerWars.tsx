@@ -45,55 +45,61 @@ export const WelcomeToStreamerWars = ({ session, bgAudio, isOpen, setIsOpen }: {
 
     return (
         <>
-            <dialog
-                open={isOpen}
-                class={`max-w-4xl w-full fixed inset-0 z-99999999 bg-black border border-white/40 shadow-2xl text-white 
-                        ${closing ? "animate-fade-out-down animate-duration-400" : "animate-fade-in-up"}`}
-            >
-                <div class="welcome-inner relative p-8">
-                    <header class="flex mb-8 justify-between items-center">
-                        <h1 class="text-2xl font-squids">
-                            ¡Bienvenido a <span class="font-atomic text-lime-500">Guerra de Streamers</span>!
-                        </h1>
-                    </header>
-                    <p class="font-mono max-w-2xl text-left">
-                        ¡Hola, <strong>{session.user?.name}</strong>! ¿Estás listo para la batalla?
-                    </p>
-                    <p class="font-mono max-w-2xl text-left mt-4">
-                        En esta guerra, lucharás contra otros streamers en una serie de minijuegos. ¡Demuestra tus habilidades y gana premios!
-                    </p>
-                    <p class="font-mono max-w-2xl text-left mt-4">
-                        Recuerda: <strong>Sigue las instrucciones</strong> y mantente atento a Discord y las notificaciones en pantalla.
-                    </p>
-                    <p class="font-mono max-w-2xl text-left mt-6">¡Buena suerte!</p>
+            <div class={`fixed inset-0 z-99999999 flex items-center justify-center transition-opacity duration-300 ${closing ? "opacity-0" : "opacity-100"}`}>
+                <div class="absolute inset-0 bg-black/75 backdrop-blur-xs" />
 
-                    <footer class="mt-8 mb-8 flex justify-center text-center">
-                        <p class="max-w-2xl text-xs font-mono">
-                            <span class="text-lime-500">Para recordar:</span> <br />Durante el evento, <strong> no puedes estar en directo</strong> en tu canal de Twitch.
-                            La organización se reserva el derecho de descalificar a cualquier streamer que no cumpla con esta regla.<br />
-                            Se tiene permitido grabar el POV para que puedas generar tu contenido posteriormente.
-                        </p>
-                    </footer>
+                <div class={`relative max-w-lg w-full mx-4 bg-[#0a0a0a] border border-[#1c1c1e] shadow-[0_0_60px_rgba(0,0,0,0.9)]
+                            ${closing ? "animate-fade-out-down animate-duration-400" : "animate-fade-in-up"}`}>
+                    {/* Top accent */}
+                    <div class="h-[2px] bg-linear-to-r from-transparent via-[#b4cd02]/50 to-transparent" />
 
-                    <div class="flex justify-between mt-8">
-                        <button
-                            onClick={handleClose}
-                            class="flex w-max transform px-2 font-rubik tracking-wider uppercase font-bold text-black mix-blend-screen bg-lime-400 hover:bg-pink-500 transition skew-x-[-20deg]!"
-                        >
-                            <span class="flex skew-x-20! transform">Vamos</span>
-                        </button>
+                    <div class="p-6 md:p-8">
+                        <div class="flex items-start justify-between gap-4">
+                            <h1 class="text-xl font-squids tracking-wide text-white">
+                                Bienvenido a <span class="font-atomic text-[#b4cd02]">Guerra de Streamers</span>
+                            </h1>
+                            <img src="/images/pink-soldier.webp"
+                                draggable={false}
+                                alt=""
+                                style={{
+                                    maskImage: "linear-gradient(to bottom, black 40%, transparent 100%)",
+                                }}
+                                class="size-20 object-contain shrink-0 -mr-2" />
+                        </div>
+
+                        <div class="mt-6 space-y-3 text-sm text-neutral-300 font-mono leading-relaxed">
+                            <p>
+                                ¡Hola, <strong class="text-white">{session.user?.name}</strong>! ¿Estás listo para la batalla?
+                            </p>
+                            <p>
+                                Lucharás contra otros streamers en una serie de minijuegos. Demostrá tus habilidades y ganá premios.
+                            </p>
+                            <p>
+                                Seguí las instrucciones y mantenete atento a Discord y las notificaciones en pantalla.
+                            </p>
+                            <p class="pt-2">¡Buena suerte!</p>
+                        </div>
+
+                        <footer class="mt-6 pt-4 border-t border-[#1c1c1e]">
+                            <p class="text-[11px] text-neutral-500 font-mono leading-relaxed text-center">
+                                <span class="text-[#b4cd02]">Para recordar:</span><br />
+                                Durante el evento <strong class="text-neutral-300">no podés estar en directo</strong> en tu canal de Twitch.<br />
+                                La organización se reserva el derecho de descalificar a cualquier streamer que no cumpla.<br />
+                                Está permitido grabar tu POV para generar contenido posterior.
+                            </p>
+                        </footer>
+
+                        <div class="flex justify-center mt-6">
+                            <button
+                                onClick={handleClose}
+                                class="px-8 py-2 bg-[#b4cd02] text-black font-anton tracking-[0.15em] uppercase text-sm hover:bg-[#b4cd02]/80 transition-colors"
+                            >
+                                Vamos
+                            </button>
+                        </div>
                     </div>
-                    <img src="/images/pink-soldier.webp"
-                        draggable={false}
-                        alt="Soldier"
-                        style={{
-                            maskImage: "linear-gradient(to top, transparent 5%, black 60%, black 100%)",
-                        }}
-                        class="absolute top-4 right-0 size-28 object-contain" />
                 </div>
-            </dialog>
-            <div class={`dialog-background inset-0 w-dvw h-dvh backdrop-blur-xs bg-black/75 z-9999999 transition-opacity 
-                        ${closing ? "opacity-0" : "animate-blurred-fade-in"}`} />
+            </div>
         </>
     );
 };

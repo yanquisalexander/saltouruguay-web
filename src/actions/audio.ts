@@ -3,9 +3,10 @@ import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
 import cacheService from "@/services/cache";
 import { pusher } from "@/utils/pusher";
+import { PUSHER_CHANNELS, PUSHER_EVENTS, CACHE_KEYS } from "@/consts/pusher";
 import { AVAILABLE_AUDIOS, type AudioState } from "@/types/audio";
 
-const AUDIO_STATE_KEY = "streamer-wars-audio-states";
+const AUDIO_STATE_KEY = CACHE_KEYS.AUDIO_STATES;
 
 const getAudioStates = async (): Promise<Record<string, AudioState>> => {
     try {
@@ -28,7 +29,7 @@ const setAudioStates = async (states: Record<string, AudioState>) => {
 };
 
 const emitAudioUpdate = async (audioId: string, action: string, data: any) => {
-    await pusher.trigger("streamer-wars", "audio-update", { audioId, action, data });
+    await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.AUDIO_UPDATE, { audioId, action, data });
 };
 
 export const audio = {
@@ -221,7 +222,7 @@ export const audio = {
             await setAudioStates(states);
 
             // Emit single update for all audios
-            await pusher.trigger("streamer-wars", "audio-mute-all", {});
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.AUDIO_MUTE_ALL, {});
 
             return { success: true };
         }
@@ -246,7 +247,7 @@ export const audio = {
             await setAudioStates(states);
 
             // Emit single update for all audios
-            await pusher.trigger("streamer-wars", "audio-stop-all", {});
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.AUDIO_STOP_ALL, {});
 
             return { success: true };
         }

@@ -3,16 +3,18 @@
  * Centralized constants for the Streamer Wars system
  */
 
-// Pusher channels
-export const PRESENCE_CHANNEL = "presence-streamer-wars";
+import { PUSHER_CHANNELS, CACHE_KEYS } from "@/consts/pusher";
 
-// Cache keys
-export const CACHE_KEY_SIMON_SAYS = "streamer-wars.simon-says";
-export const CACHE_KEY_DALGONA = "streamer-wars.dalgona:game-state";
-export const CACHE_KEY_TUG_OF_WAR = "streamer-wars.tug-of-war:game-state";
-export const CACHE_KEY_BOMB = "streamer-wars.bomb:game-state";
-export const CACHE_KEY_FISHING = "streamer-wars.fishing:game-state";
-export const CACHE_KEY_FISHING_ELIMINATED = "fishing:eliminated-players";
+// Pusher channels (re-exported from central constants)
+export const PRESENCE_CHANNEL = PUSHER_CHANNELS.PRESENCE;
+
+// Cache keys (re-exported from central constants)
+export const CACHE_KEY_SIMON_SAYS = CACHE_KEYS.SIMON_SAYS;
+export const CACHE_KEY_DALGONA = CACHE_KEYS.DALGONA;
+export const CACHE_KEY_TUG_OF_WAR = CACHE_KEYS.TUG_OF_WAR;
+export const CACHE_KEY_BOMB = CACHE_KEYS.BOMB;
+export const CACHE_KEY_FISHING = CACHE_KEYS.FISHING;
+export const CACHE_KEY_FISHING_ELIMINATED = CACHE_KEYS.FISHING_ELIMINATED;
 
 // Game settings
 export const COLORS = ["red", "blue", "green", "yellow"];

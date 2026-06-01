@@ -13,6 +13,7 @@ import {
     destroySession,
     getSessionById
 } from "@/utils/user";
+import { getLinkedAccountsSummary } from "@/lib/linked-accounts";
 
 export default defineConfig({
     providers: [
@@ -161,6 +162,8 @@ export default defineConfig({
                         (s) => s.status === "active" && (s.endDate === null || new Date(s.endDate) > now)
                     );
 
+                    const linkedAccountsSummary = await getLinkedAccountsSummary(userRecord.id);
+
                     session.user = {
                         ...session.user,
                         id: userRecord.id,
@@ -174,6 +177,7 @@ export default defineConfig({
                         isSuspended,
                         twoFactorEnabled: userRecord.twoFactorEnabled,
                         sessionId: token.sessionId,
+                        linkedAccounts: linkedAccountsSummary,
                     };
                 }
             } catch (error) {

@@ -1,7 +1,7 @@
 import { type JSX } from "preact";
 import { useEffect, useState, useRef } from "preact/hooks";
 import { SimonSaysButtons } from "./games/SimonSaysButtons";
-import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { playSound, playTick, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import type { Players } from "../admin/streamer-wars/Players";
 
 // Reutilizamos la interfaz ScriptItem (si está exportada, sino redfínela)
@@ -13,6 +13,7 @@ export interface ScriptItem {
     omitReverb?: boolean;
     volume?: number;
     execute?: () => void;
+    fullScreen?: boolean;
 }
 
 // Componente para mostrar patrón de ejemplo de Simón Dice
@@ -65,190 +66,132 @@ const SimonSaysExample = () => {
 };
 
 const VoteContinue = ({ players }: { players?: Players[] }) => {
-    const [count, setCount] = useState(0);
-    const [showResult, setShowResult] = useState(false);
-    const intervalRef = useRef<number | null>(null);
-
     const TOTAL = players?.filter(p => !p.eliminated).length || 50;
+    const [votes, setVotes] = useState(0);
+    const [phase, setPhase] = useState<"waiting" | "voting" | "result">("waiting");
+    const intervalRef = useRef<number | null>(null);
+    const startRef = useRef<number | null>(null);
 
     useEffect(() => {
-        const startDelay = setTimeout(() => {
-            const steps = 60;
-            const duration = 1800;
-            const interval = duration / steps;
-
+        startRef.current = window.setTimeout(() => {
+            setPhase("voting");
+            let count = 0;
             intervalRef.current = window.setInterval(() => {
-                setCount(prev => {
-                    const next = Math.min(prev + Math.ceil(TOTAL / steps), TOTAL);
-                    if (next >= TOTAL) {
-                        clearInterval(intervalRef.current!);
-                        setTimeout(() => setShowResult(true), 400);
-                    }
-                    return next;
-                });
-            }, interval);
-        }, 1000);
+                count++;
+                setVotes(count);
+                if (count === TOTAL || count % 5 === 0) {
+                    playTick();
+                }
+                if (count >= TOTAL) {
+                    if (intervalRef.current) clearInterval(intervalRef.current);
+                    window.setTimeout(() => setPhase("result"), 800);
+                }
+            }, 65);
+        }, 1500);
 
         return () => {
-            clearTimeout(startDelay);
+            if (startRef.current) clearTimeout(startRef.current);
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
-    }, []);
+    }, [TOTAL]);
 
     return (
-        <div style={{
-            background: "#0a0a0a",
-            minHeight: "480px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "2.5rem 1.5rem",
-            fontFamily: "'Noto Serif KR', serif",
-            position: "relative",
-        }}>
-            {/* Diamond */}
-            <div style={{
-                width: 14, height: 14,
-                background: "#e31b5a",
-                transform: "rotate(45deg)",
-                marginBottom: "1.5rem"
-            }} />
-
-            {/* Label */}
-            <div style={{
-                fontSize: 11,
-                letterSpacing: "0.35em",
-                color: "#e31b5a",
-                textTransform: "uppercase",
-                marginBottom: "0.6rem",
-                fontFamily: "monospace"
-            }}>
-                <span style={{
-                    display: "inline-block",
-                    width: 5, height: 5,
-                    borderRadius: "50%",
-                    background: "#e31b5a",
-                    marginRight: 7,
-                    verticalAlign: "middle",
-                    animation: "blink 1.1s infinite"
-                }} />
-                Votación en curso
+        <div class="fixed inset-0 h-dvh w-dvw bg-[#0a0a0a] flex flex-col items-center justify-center overflow-hidden select-none">
+            {/* Large background shapes at very low opacity */}
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="grid grid-cols-3 gap-48 opacity-[0.015]">
+                    <span class="text-[200px] text-neutral-500 font-atomic-extras">O</span>
+                    <span class="text-[200px] text-neutral-500 font-atomic-extras">△</span>
+                    <span class="text-[200px] text-neutral-500 font-atomic-extras">□</span>
+                </div>
             </div>
 
-            {/* Title */}
-            <div style={{
-                fontSize: 26,
-                fontWeight: 300,
-                color: "#f0ece0",
-                textAlign: "center",
-                letterSpacing: "0.05em",
-                marginBottom: "0.4rem",
-                lineHeight: 1.4
-            }}>
-                ¿Desean continuar<br />en el juego?
-            </div>
+            {/* Inner content */}
+            <div class="relative flex flex-col items-center">
 
-            <div style={{
-                fontSize: 13,
-                color: "#888",
-                letterSpacing: "0.12em",
-                marginBottom: "2.5rem",
-                fontFamily: "monospace"
-            }}>
-                Mayoría decide — jugadores: {TOTAL}
-            </div>
-
-            <div style={{ width: 60, height: 1, background: "#333", marginBottom: "2rem" }} />
-
-            {/* Buttons */}
-            <div style={{ display: "flex", gap: "3.5rem", marginBottom: "2.5rem" }}>
-                {/* Circle */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
-                    <div style={{
-                        width: 80, height: 80,
-                        borderRadius: "50%",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        border: "2px solid #3a8fd1",
-                        background: "rgba(58,143,209,0.06)"
-                    }}>
-                        <svg width={38} height={38} viewBox="0 0 38 38" fill="none">
-                            <circle cx="19" cy="19" r="13" stroke="#3a8fd1" strokeWidth="2.5" />
-                        </svg>
-                    </div>
-                    <span style={{ fontSize: 11, letterSpacing: "0.25em", color: "#555", fontFamily: "monospace", textTransform: "uppercase" }}>
-                        Continuar
+                {/* Status */}
+                <div class="flex items-center gap-2 mb-5">
+                    <span class={`size-2 rounded-full ${phase === "waiting" ? "bg-neutral-600" : "bg-[#b4cd02]"} ${phase === "voting" ? "animate-pulse" : ""}`} />
+                    <span class="text-xs font-mono tracking-[0.3em] uppercase">
+                        {phase === "waiting" && <span class="text-neutral-600">Iniciando votación</span>}
+                        {phase === "voting" && <span class="text-[#b4cd02]">Votación en curso</span>}
+                        {phase === "result" && <span class="text-[#b4cd02]">Votación finalizada</span>}
                     </span>
                 </div>
 
-                {/* Cross */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
-                    <div style={{
-                        width: 80, height: 80,
-                        borderRadius: "50%",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        border: "2px solid #e31b5a",
-                        background: "rgba(227,27,90,0.06)"
-                    }}>
-                        <svg width={38} height={38} viewBox="0 0 38 38" fill="none">
-                            <line x1="11" y1="11" x2="27" y2="27" stroke="#e31b5a" strokeWidth="2.5" strokeLinecap="round" />
-                            <line x1="27" y1="11" x2="11" y2="27" stroke="#e31b5a" strokeWidth="2.5" strokeLinecap="round" />
-                        </svg>
+                {/* Question */}
+                <h2 class="text-3xl md:text-4xl font-anton tracking-wider text-white text-center leading-[1.3] mb-2">
+                    ¿Desean continuar<br />en el juego?
+                </h2>
+                <p class="text-xs md:text-sm font-mono text-neutral-600 tracking-wider mb-8">
+                    Mayoría decide — jugadores: {TOTAL}
+                </p>
+
+                {/* Divider */}
+                <div class="w-16 h-px bg-neutral-800 mb-8" />
+
+                {/* Choice buttons — large O and X */}
+                <div class="flex gap-16 md:gap-24 mb-10">
+                    {/* O — Continue */}
+                    <div class="flex flex-col items-center gap-3">
+                        <div class={`size-24 md:size-28 rounded-full flex items-center justify-center border-[2.5px] transition-all duration-700
+                            ${phase === "waiting"
+                                ? "border-neutral-700 bg-neutral-900/30"
+                                : "border-[#b4cd02] bg-[#b4cd02]/[0.06] shadow-[0_0_40px_rgba(180,205,2,0.15)]"
+                            }`}>
+                            <span class={`text-3xl md:text-4xl font-bold transition-colors duration-700
+                                ${phase === "waiting" ? "text-neutral-600" : "text-[#b4cd02]"}`}>O</span>
+                        </div>
+                        <span class="text-[11px] font-mono tracking-[0.25em] text-neutral-500 uppercase">Continuar</span>
                     </div>
-                    <span style={{ fontSize: 11, letterSpacing: "0.25em", color: "#555", fontFamily: "monospace", textTransform: "uppercase" }}>
-                        Abandonar
-                    </span>
+
+                    {/* X — Abandon */}
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="size-24 md:size-28 rounded-full flex items-center justify-center border-[2.5px] border-neutral-700 bg-neutral-900/30">
+                            <span class="text-3xl md:text-4xl font-bold text-neutral-600">X</span>
+                        </div>
+                        <span class="text-[11px] font-mono tracking-[0.25em] text-neutral-500 uppercase">Abandonar</span>
+                    </div>
                 </div>
+
+                {/* Tally bars */}
+                <div class="w-full max-w-sm space-y-3">
+                    {/* O bar */}
+                    <div class="flex items-center gap-3">
+                        <span class="size-5 rounded-full border-2 border-[#b4cd02] flex items-center justify-center shrink-0">
+                            <span class={`size-2 rounded-full bg-[#b4cd02] transition-opacity duration-300 ${votes > 0 ? "opacity-100" : "opacity-0"}`} />
+                        </span>
+                        <div class="flex-1 h-3 bg-neutral-900 rounded-full overflow-hidden">
+                            <div
+                                class="h-full rounded-full bg-[#b4cd02] transition-all duration-[50ms] ease-linear"
+                                style={{ width: `${(votes / TOTAL) * 100}%` }}
+                            />
+                        </div>
+                        <span class="font-mono text-sm text-neutral-400 w-10 text-right tabular-nums">{votes}</span>
+                    </div>
+
+                    {/* X bar */}
+                    <div class="flex items-center gap-3">
+                        <span class="size-5 rounded-full border-2 border-neutral-700 flex items-center justify-center shrink-0">
+                            <span class="text-xs text-neutral-600">✕</span>
+                        </span>
+                        <div class="flex-1 h-3 bg-neutral-900 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full bg-neutral-700 w-0" />
+                        </div>
+                        <span class="font-mono text-sm text-neutral-600 w-10 text-right tabular-nums">0</span>
+                    </div>
+                </div>
+
+                {/* Result */}
+                {phase === "result" && (
+                    <div class="mt-8 text-center animate-fade-in-up">
+                        <div class="w-12 h-px bg-neutral-800 mx-auto mb-4" />
+                        <p class="text-[11px] font-mono tracking-[0.3em] text-neutral-500 uppercase mb-2">Resultado final</p>
+                        <p class="text-2xl md:text-3xl font-anton tracking-wider text-[#b4cd02] drop-shadow-[0_0_12px_rgba(180,205,2,0.3)]">EL JUEGO CONTINÚA</p>
+                        <p class="text-[11px] font-mono tracking-[0.2em] text-neutral-600 uppercase mt-2">{TOTAL} votos — unánime</p>
+                    </div>
+                )}
             </div>
-
-            {/* Tally */}
-            <div style={{ width: "100%", maxWidth: 320 }}>
-                {/* Continue bar */}
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                    <svg width={22} height={22} viewBox="0 0 22 22" fill="none">
-                        <circle cx="11" cy="11" r="7" stroke="#3a8fd1" strokeWidth="1.8" />
-                    </svg>
-                    <div style={{ flex: 1, height: 4, background: "#1a1a1a", borderRadius: 2, overflow: "hidden" }}>
-                        <div style={{
-                            height: "100%",
-                            borderRadius: 2,
-                            background: "#3a8fd1",
-                            width: `${(count / TOTAL) * 100}%`,
-                            transition: "width 0.05s linear"
-                        }} />
-                    </div>
-                    <span style={{ fontFamily: "monospace", fontSize: 12, color: "#555", minWidth: 32, textAlign: "right" }}>
-                        {count}
-                    </span>
-                </div>
-
-                {/* Leave bar */}
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <svg width={22} height={22} viewBox="0 0 22 22" fill="none">
-                        <line x1="6" y1="6" x2="16" y2="16" stroke="#e31b5a" strokeWidth="1.8" strokeLinecap="round" />
-                        <line x1="16" y1="6" x2="6" y2="16" stroke="#e31b5a" strokeWidth="1.8" strokeLinecap="round" />
-                    </svg>
-                    <div style={{ flex: 1, height: 4, background: "#1a1a1a", borderRadius: 2, overflow: "hidden" }}>
-                        <div style={{ height: "100%", borderRadius: 2, background: "#e31b5a", width: "0%" }} />
-                    </div>
-                    <span style={{ fontFamily: "monospace", fontSize: 12, color: "#555", minWidth: 32, textAlign: "right" }}>0</span>
-                </div>
-            </div>
-
-            {/* Result */}
-            {showResult && (
-                <div style={{ marginTop: "1.8rem", textAlign: "center" }}>
-                    <div style={{ fontSize: 11, letterSpacing: "0.3em", color: "#555", fontFamily: "monospace", marginBottom: "0.5rem", textTransform: "uppercase" }}>
-                        resultado final
-                    </div>
-                    <div style={{ fontSize: 20, fontWeight: 400, color: "#f0ece0", letterSpacing: "0.08em" }}>
-                        El juego <span style={{ color: "#3a8fd1", fontWeight: 700 }}>continúa</span>
-                    </div>
-                    <div style={{ marginTop: "0.35rem", fontSize: 11, color: "#444", letterSpacing: "0.2em", fontFamily: "monospace", textTransform: "uppercase" }}>
-                        {TOTAL} votos — unánime
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
@@ -345,8 +288,9 @@ export const INSTRUCTIONS_REGISTRY: Record<string, ScriptItem[]> = {
         {
             text: "Presionen círculo para continuar... o X para abandonar.",
             audioPath: "instructions/vote-choose",
-            duration: 5000,
-            component: <VoteContinue />  // el widget de abajo
+            duration: 8000,
+            fullScreen: true,
+            component: <VoteContinue />
         },
         {
             text: "Los votos han sido contados.",

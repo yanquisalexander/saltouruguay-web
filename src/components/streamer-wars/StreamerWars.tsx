@@ -34,6 +34,7 @@ import { JourneyTitle } from "./JourneyTitle";
 import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 import type { Players } from "../admin/streamer-wars/Players";
 import { InmersiveInstructions } from "./InmersiveInstructions";
+import { PUSHER_EVENTS } from "@/consts/pusher";
 
 
 
@@ -239,25 +240,25 @@ const useGameEventListeners = (
         };
 
         // Batch binding
-        channel.bind("day-available", handlers.dayAvailable);
-        channel.bind("show-waiting-screen", handlers.showWaitingScreen);
-        channel.bind("hide-waiting-screen", handlers.hideWaitingScreen);
-        channel.bind("day-finished", handlers.dayFinished);
-        channel.bind('new-version', handlers.newVersion);
-        channel.bind('tech-difficulties', handlers.techDifficulties);
-        channel.bind('player-joined', handlers.playerJoined);
-        channel.bind('episode-title', handlers.episodeTitle);
+        channel.bind(PUSHER_EVENTS.DAY_AVAILABLE, handlers.dayAvailable);
+        channel.bind(PUSHER_EVENTS.SHOW_WAITING_SCREEN, handlers.showWaitingScreen);
+        channel.bind(PUSHER_EVENTS.HIDE_WAITING_SCREEN, handlers.hideWaitingScreen);
+        channel.bind(PUSHER_EVENTS.DAY_FINISHED, handlers.dayFinished);
+        channel.bind(PUSHER_EVENTS.NEW_VERSION, handlers.newVersion);
+        channel.bind(PUSHER_EVENTS.TECH_DIFFICULTIES, handlers.techDifficulties);
+        channel.bind(PUSHER_EVENTS.PLAYER_JOINED, handlers.playerJoined);
+        channel.bind(PUSHER_EVENTS.EPISODE_TITLE, handlers.episodeTitle);
 
         return () => {
             // Batch unbinding
-            channel.unbind("day-available", handlers.dayAvailable);
-            channel.unbind("show-waiting-screen", handlers.showWaitingScreen);
-            channel.unbind("hide-waiting-screen", handlers.hideWaitingScreen);
-            channel.unbind("day-finished", handlers.dayFinished);
-            channel.unbind('new-version', handlers.newVersion);
-            channel.unbind('tech-difficulties', handlers.techDifficulties);
-            channel.unbind('player-joined', handlers.playerJoined);
-            channel.unbind('episode-title', handlers.episodeTitle);
+            channel.unbind(PUSHER_EVENTS.DAY_AVAILABLE, handlers.dayAvailable);
+            channel.unbind(PUSHER_EVENTS.SHOW_WAITING_SCREEN, handlers.showWaitingScreen);
+            channel.unbind(PUSHER_EVENTS.HIDE_WAITING_SCREEN, handlers.hideWaitingScreen);
+            channel.unbind(PUSHER_EVENTS.DAY_FINISHED, handlers.dayFinished);
+            channel.unbind(PUSHER_EVENTS.NEW_VERSION, handlers.newVersion);
+            channel.unbind(PUSHER_EVENTS.TECH_DIFFICULTIES, handlers.techDifficulties);
+            channel.unbind(PUSHER_EVENTS.PLAYER_JOINED, handlers.playerJoined);
+            channel.unbind(PUSHER_EVENTS.EPISODE_TITLE, handlers.episodeTitle);
         };
     }, [channel, session.user.id]); // Dependencias reducidas
 };
@@ -398,9 +399,9 @@ export const StreamerWars = ({ session }: { session: Session }) => {
             setPlayers(prev => prev.map(p => ({ ...p, online: onlineIds.has(p.id) })));
         };
 
-        pChannel.bind("pusher:subscription_succeeded", handleSubSuccess);
-        pChannel.bind("pusher:member_added", (m: any) => updateOnlineStatus(m.info.id, true));
-        pChannel.bind("pusher:member_removed", (m: any) => updateOnlineStatus(m.info.id, false));
+        pChannel.bind(PUSHER_EVENTS.SUBSCRIPTION_SUCCEEDED, handleSubSuccess);
+        pChannel.bind(PUSHER_EVENTS.MEMBER_ADDED, (m: any) => updateOnlineStatus(m.info.id, true));
+        pChannel.bind(PUSHER_EVENTS.MEMBER_REMOVED, (m: any) => updateOnlineStatus(m.info.id, false));
 
         return () => {
             pChannel.unbind_all();

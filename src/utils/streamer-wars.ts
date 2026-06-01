@@ -12,6 +12,7 @@ import { getLiveStreams } from "./twitch-runtime";
 import { CINEMATICS } from "@/consts/cinematics";
 import { encodeAudioForPusher } from "@/services/pako-compress";
 import { DalgonaShape, type DalgonaShapeData, createDalgonaShapeData, generateDalgonaImage } from "@/services/dalgona-image-generator";
+import { PUSHER_CHANNELS, PUSHER_EVENTS, PUSHER_EVENTS_SIMON, PUSHER_EVENTS_DALGONA, PUSHER_EVENTS_BOMB, PUSHER_EVENTS_TUG_OF_WAR, PUSHER_EVENTS_FISHING, PUSHER_EVENTS_AUTO_ELIM, PUSHER_EVENTS_CINEMATIC, CACHE_KEYS } from "@/consts/pusher";
 
 // Import from modular structure
 import { generatePlayerChallenges } from "./streamer-wars/minigames/bomb-challenges";
@@ -46,15 +47,15 @@ export type {
     FishingGameState
 };
 
-const PRESENCE_CHANNEL = "presence-streamer-wars";
+const PRESENCE_CHANNEL = PUSHER_CHANNELS.PRESENCE;
 
 // Local constants for backward compatibility (these reference the modular structure)
-const CACHE_KEY = "streamer-wars.simon-says";
-const DALGONA_CACHE_KEY = "streamer-wars.dalgona:game-state";
-const TUG_OF_WAR_CACHE_KEY = "streamer-wars.tug-of-war:game-state";
+const CACHE_KEY = CACHE_KEYS.SIMON_SAYS;
+const DALGONA_CACHE_KEY = CACHE_KEYS.DALGONA;
+const TUG_OF_WAR_CACHE_KEY = CACHE_KEYS.TUG_OF_WAR;
 const COLORS = ["red", "blue", "green", "yellow"];
 const COOLDOWN_MS = 1500; // 1.5 seconds cooldown per player
-const BOMB_CACHE_KEY = "streamer-wars.bomb:game-state";
+const BOMB_CACHE_KEY = CACHE_KEYS.BOMB;
 const MAX_CHALLENGES = 5;
 const MAX_ERRORS = 3;
 // Using imported constants: CACHE_KEY_FISHING, CACHE_KEY_FISHING_ELIMINATED
@@ -124,7 +125,7 @@ export const games = {
             };
 
             await cache.set(CACHE_KEY, newGameState);
-            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
+            await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.GAME_STATE, newGameState);
             return newGameState;
         },
 
@@ -151,7 +152,7 @@ export const games = {
 
             await cache.set(CACHE_KEY, newGameState);
 
-            await pusher.trigger("streamer-wars.simon-says", "completed-pattern", {
+            await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.COMPLETED_PATTERN, {
                 playerNumber,
             });
 
@@ -220,10 +221,10 @@ export const games = {
             };
 
             await cache.set(CACHE_KEY, newGameState);
-            await pusher.trigger("streamer-wars.simon-says", "pattern-failed", {
+            await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.PATTERN_FAILED, {
                 playerNumber,
             });
-            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
+            await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.GAME_STATE, newGameState);
 
             try {
                 await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
@@ -261,7 +262,7 @@ export const games = {
             await cache.set(CACHE_KEY, newGameState);
             // Se espera un momento antes de enviar el nuevo estado
             await new Promise((resolve) => setTimeout(resolve, 2000));
-            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
+            await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.GAME_STATE, newGameState);
 
             try {
                 await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
@@ -323,7 +324,7 @@ export const games = {
             };
 
             await cache.set(CACHE_KEY, newGameState);
-            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
+            await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.GAME_STATE, newGameState);
             return newGameState;
         },
 
@@ -406,7 +407,7 @@ export const games = {
             await cache.set(DALGONA_CACHE_KEY, gameState);
 
             // Broadcast game started to all players FIRST
-            await pusher.trigger('streamer-wars', 'dalgona:game-started', {
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_DALGONA.GAME_STARTED, {
                 totalPlayers: Object.keys(players).length,
             });
 
@@ -414,7 +415,7 @@ export const games = {
             for (const player of playersWithTeams) {
                 if (player.userId) {
                     const playerState = players[player.playerNumber];
-                    await pusher.trigger('streamer-wars', 'dalgona:start', {
+                    await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_DALGONA.START, {
                         userId: player.userId,
                         imageUrl: playerState.imageUrl,
                         lives: 3, // Changed from attemptsLeft: 2 to lives: 3
@@ -537,14 +538,14 @@ export const games = {
 
             // Notify player of success
             if (player?.user?.id) {
-                await pusher.trigger('streamer-wars', 'dalgona:success', {
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_DALGONA.SUCCESS, {
                     userId: player.user.id,
                     playerNumber,
                 });
             }
 
             // Broadcast to all
-            await pusher.trigger('streamer-wars', 'dalgona:player-completed', {
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_DALGONA.PLAYER_COMPLETED, {
                 playerNumber,
             });
 
@@ -554,7 +555,7 @@ export const games = {
 
                 const audioPayload = encodeAudioForPusher(audioBase64!);
 
-                await pusher.trigger("streamer-wars", "megaphony", {
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.MEGAPHONY, {
                     audioBase64: audioPayload,
                 });
             } catch (error) {
@@ -655,7 +656,7 @@ export const games = {
             await cache.set(DALGONA_CACHE_KEY, gameState);
 
             // Broadcast game ended
-            await pusher.trigger('streamer-wars', 'dalgona:game-ended', {
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_DALGONA.GAME_ENDED, {
                 completedPlayers: Object.values(gameState.players)
                     .filter(p => p.status === 'completed')
                     .map(p => p.playerNumber),
@@ -664,11 +665,11 @@ export const games = {
 
             // Send timer to zero
             const timerCache = createCache();
-            await timerCache.set("streamer-wars-timer", {
+            await timerCache.set(CACHE_KEYS.TIMER, {
                 startedAt: Date.now(),
                 duration: 0,
             });
-            await pusher.trigger("streamer-wars", "show-timer", {
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.SHOW_TIMER, {
                 startedAt: Date.now(),
                 duration: 0,
             });
@@ -679,7 +680,7 @@ export const games = {
 
                 const audioPayload = encodeAudioForPusher(audioBase64!);
 
-                await pusher.trigger("streamer-wars", "megaphony", {
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.MEGAPHONY, {
                     audioBase64: audioPayload,
                 });
 
@@ -851,7 +852,7 @@ export const games = {
             };
 
             await cache.set(TUG_OF_WAR_CACHE_KEY, gameState);
-            await pusher.trigger('streamer-wars', 'tug-of-war:game-started', gameState);
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_TUG_OF_WAR.GAME_STARTED, gameState);
 
             try {
                 await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
@@ -956,7 +957,7 @@ export const games = {
             await cache.set(TUG_OF_WAR_CACHE_KEY, gameState);
 
             // Broadcast state update
-            await pusher.trigger('streamer-wars', 'tug-of-war:state-update', {
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_TUG_OF_WAR.STATE_UPDATE, {
                 progress: gameState.progress,
                 status: gameState.status,
                 winner: gameState.winner,
@@ -970,7 +971,7 @@ export const games = {
                     const audioBase64 = await tts(`¡El equipo ${winningTeam.name} ha ganado la partida de Tug of War!`);
                     const audioPayload = encodeAudioForPusher(audioBase64!);
 
-                    await pusher.trigger("streamer-wars", "megaphony", {
+                    await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.MEGAPHONY, {
                         audioBase64: audioPayload,
                     });
                 } catch (error) {
@@ -1035,7 +1036,7 @@ export const games = {
             const winningTeam = gameState.winner === 'teamA' ? gameState.teams.teamA :
                 gameState.winner === 'teamB' ? gameState.teams.teamB : null;
 
-            await pusher.trigger('streamer-wars', 'tug-of-war:game-ended', {
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_TUG_OF_WAR.GAME_ENDED, {
                 winner: gameState.winner,
                 progress: gameState.progress,
                 winningTeam: winningTeam ? winningTeam.name : 'Empate',
@@ -1066,7 +1067,7 @@ export const games = {
         clearGameState: async () => {
             const cache = createCache();
             await cache.delete(TUG_OF_WAR_CACHE_KEY);
-            await pusher.trigger('streamer-wars', 'tug-of-war:game-cleared', {});
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_TUG_OF_WAR.GAME_CLEARED, {});
             return {
                 success: true,
             };
@@ -1144,7 +1145,7 @@ export const games = {
             await cache.set(BOMB_CACHE_KEY, gameState);
 
             // Broadcast game started to all players
-            await pusher.trigger('streamer-wars', 'bomb:game-started', {
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_BOMB.GAME_STARTED, {
                 totalPlayers: Object.keys(players).length,
             });
 
@@ -1152,7 +1153,7 @@ export const games = {
             for (const player of playersData) {
                 if (player.userId && players[player.playerNumber]) {
                     const playerState = players[player.playerNumber];
-                    await pusher.trigger('streamer-wars', 'bomb:start', {
+                    await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_BOMB.START, {
                         playerNumber: player.playerNumber,
                         challenge: playerState.currentChallenge,
                         challengesCompleted: 0,
@@ -1244,13 +1245,13 @@ export const games = {
 
                     // Notify player of success
                     if (player?.user?.id) {
-                        await pusher.trigger('streamer-wars', 'bomb:success', {
+                        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_BOMB.SUCCESS, {
                             playerNumber,
                         });
                     }
 
                     // Broadcast to all
-                    await pusher.trigger('streamer-wars', 'bomb:player-completed', {
+                    await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_BOMB.PLAYER_COMPLETED, {
                         playerNumber,
                     });
 
@@ -1258,7 +1259,7 @@ export const games = {
                         const audioBase64 = await tts(`Jugador ${playerNumber}, pasa!`);
                         const audioPayload = encodeAudioForPusher(audioBase64!);
 
-                        await pusher.trigger("streamer-wars", "megaphony", {
+                        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.MEGAPHONY, {
                             audioBase64: audioPayload,
                         });
                     } catch (error) {
@@ -1305,7 +1306,7 @@ export const games = {
 
                     // Send next challenge
                     if (player?.user?.id) {
-                        await pusher.trigger('streamer-wars', 'bomb:next-challenge', {
+                        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_BOMB.NEXT_CHALLENGE, {
                             playerNumber,
                             challenge: playerState.currentChallenge,
                             challengesCompleted: playerState.challengesCompleted,
@@ -1346,7 +1347,7 @@ export const games = {
 
                     // Notify player of failure
                     if (player?.user?.id) {
-                        await pusher.trigger('streamer-wars', 'bomb:failed', {
+                        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_BOMB.FAILED, {
                             playerNumber,
                         });
                     }
@@ -1392,7 +1393,7 @@ export const games = {
 
                     // Notify player of error
                     if (player?.user?.id) {
-                        await pusher.trigger('streamer-wars', 'bomb:error', {
+                        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_BOMB.ERROR, {
                             playerNumber,
                             errorsCount: playerState.errorsCount,
                             errorsRemaining: MAX_ERRORS - playerState.errorsCount,
@@ -1429,7 +1430,7 @@ export const games = {
             await cache.set(BOMB_CACHE_KEY, gameState);
 
             // Broadcast game ended
-            await pusher.trigger('streamer-wars', 'bomb:game-ended', {});
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_BOMB.GAME_ENDED, {});
 
             // Eliminate players who didn't complete
             for (const [playerNumber, playerState] of Object.entries(gameState.players)) {
@@ -1504,7 +1505,7 @@ export const games = {
             await cache.set(CACHE_KEY_FISHING, newGameState);
             await cache.set(CACHE_KEY_FISHING_ELIMINATED, []);
 
-            await pusher.trigger("streamer-wars", "fishing:game-started", newGameState);
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_FISHING.GAME_STARTED, newGameState);
 
             return newGameState;
         },
@@ -1540,7 +1541,7 @@ export const games = {
             await cache.set(CACHE_KEY_FISHING, newGameState);
 
             // Notify about elimination
-            await pusher.trigger("streamer-wars", "fishing:player-eliminated", {
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_FISHING.PLAYER_ELIMINATED, {
                 playerNumber,
             });
 
@@ -1570,7 +1571,7 @@ export const games = {
             await cache.set(CACHE_KEY_FISHING, newGameState);
 
             // Broadcast game end
-            await pusher.trigger("streamer-wars", "fishing:game-ended", {
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_FISHING.GAME_ENDED, {
                 eliminatedPlayers,
             });
 
@@ -1620,7 +1621,7 @@ export const games = {
             await cache.set(CACHE_KEY_FISHING, newGameState);
             await cache.set(CACHE_KEY_FISHING_ELIMINATED, []);
 
-            await pusher.trigger("streamer-wars", "fishing:game-reset", {});
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_FISHING.GAME_RESET, {});
 
             return newGameState;
         },
@@ -1786,7 +1787,7 @@ export const eliminatePlayer = async (playerNumber: number) => {
             };
 
             await cache.set(CACHE_KEY, newGameState);
-            await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
+            await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.GAME_STATE, newGameState);
         }
 
 
@@ -1795,8 +1796,8 @@ export const eliminatePlayer = async (playerNumber: number) => {
         */
 
         try {
-            const todayEliminateds = await cache.get("streamer-wars-today-eliminateds") as number[] ?? [];
-            await cache.set("streamer-wars-today-eliminateds", Array.from(new Set([...todayEliminateds, playerNumber])))
+            const todayEliminateds = await cache.get(CACHE_KEYS.TODAY_ELIMINATED) as number[] ?? [];
+            await cache.set(CACHE_KEYS.TODAY_ELIMINATED, Array.from(new Set([...todayEliminateds, playerNumber])))
 
 
         } catch (error) {
@@ -1811,7 +1812,7 @@ export const eliminatePlayer = async (playerNumber: number) => {
         const audioPayload = encodeAudioForPusher(audioBase64!);
 
         // Envía el evento a Pusher con los datos actualizados.
-        await pusher.trigger("streamer-wars", "player-eliminated", {
+        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_ELIMINATED, {
             playerNumber,
             audioBase64: import.meta.env.DEV ? null : audioPayload,
         });
@@ -1856,7 +1857,7 @@ export const massEliminatePlayers = async (playerNumbers: number[]) => {
         const audioPayload = encodeAudioForPusher(audioBase64!);
 
         // Envía el evento a Pusher con los datos actualizados.
-        await pusher.trigger("streamer-wars", "players-eliminated", {
+        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYERS_ELIMINATED, {
             playerNumbers,
             audioBase64: audioPayload,
         });
@@ -1876,13 +1877,13 @@ export const massEliminatePlayers = async (playerNumbers: number[]) => {
             */
 
             const cache = cacheService.create({ ttl: 60 * 60 * 48 });
-            const todayEliminateds = await cache.get("streamer-wars-today-eliminateds") as number[] ?? [];
+            const todayEliminateds = await cache.get(CACHE_KEYS.TODAY_ELIMINATED) as number[] ?? [];
 
             /* 
                 new Set()
             */
 
-            await cache.set("streamer-wars-today-eliminateds", Array.from(new Set([...todayEliminateds, ...playerNumbers])))
+            await cache.set(CACHE_KEYS.TODAY_ELIMINATED, Array.from(new Set([...todayEliminateds, ...playerNumbers])))
 
         } catch (error) {
 
@@ -1905,7 +1906,7 @@ export const revivePlayer = async (playerNumber: number) => {
             .execute();
 
         // Envía el evento a Pusher con los datos actualizados.
-        await pusher.trigger("streamer-wars", "player-revived", {
+        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_REVIVED, {
             playerNumber,
         });
     } catch (error) {
@@ -1988,7 +1989,7 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
         }
 
         const cache = cacheService.create({ ttl: 60 * 60 * 48 });
-        const gameState = await cache.get("streamer-wars-gamestate") as any
+        const gameState = await cache.get(CACHE_KEYS.GAME_STATE) as any
 
         /* 
             Check limit of players per team
@@ -2058,7 +2059,7 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
         }
 
         // Notificar al canal mediante Pusher
-        await pusher.trigger("streamer-wars", "player-joined", { playerNumber, avatar: user.avatar, displayName: user.displayName, team: teamToJoin });
+        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_JOINED, { playerNumber, avatar: user.avatar, displayName: user.displayName, team: teamToJoin });
 
         return {
             success: true,
@@ -2137,7 +2138,7 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
 
 
         // Notificar al canal mediante Pusher
-        await pusher.trigger("streamer-wars", "player-removed", { playerNumber });
+        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_REMOVED, { playerNumber });
 
         return {
             success: true,
@@ -2310,7 +2311,7 @@ export const acceptBribe = async (playerNumber: number) => {
             };
         }
 
-        await pusher.trigger("streamer-wars", "bribe-accepted", { team: teamColor });
+        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.BRIBE_ACCEPTED, { team: teamColor });
 
         return {
             success: true,
@@ -2347,7 +2348,7 @@ export const selfEliminate = async (playerNumber: number) => {
         */
 
         const cache = cacheService.create({ ttl: 60 * 60 * 48 });
-        const gameState = await cache.get("streamer-wars-self-eliminateds") as number[] ?? [];
+        const gameState = await cache.get(CACHE_KEYS.SELF_ELIMINATED) as number[] ?? [];
         if (gameState.includes(playerNumber)) {
             return {
                 success: false,
@@ -2363,8 +2364,8 @@ export const selfEliminate = async (playerNumber: number) => {
         }
 
         gameState.push(playerNumber);
-        await cache.set("streamer-wars-self-eliminateds", gameState);
-        await pusher.trigger("auto-elimination", "player-autoeliminated", { playerNumber });
+        await cache.set(CACHE_KEYS.SELF_ELIMINATED, gameState);
+        await pusher.trigger(PUSHER_CHANNELS.AUTO_ELIMINATION, PUSHER_EVENTS_AUTO_ELIM.PLAYER_AUTOELIMINATED, { playerNumber });
 
 
         try {
@@ -2397,7 +2398,7 @@ export const selfEliminate = async (playerNumber: number) => {
 
 export const getAutoEliminatedPlayers = async () => {
     const cache = cacheService.create({ ttl: 60 * 60 * 48 });
-    return await cache.get("streamer-wars-self-eliminateds") as number[]
+    return await cache.get(CACHE_KEYS.SELF_ELIMINATED) as number[]
 }
 
 export const removePlayer = async (playerNumber: number) => {
@@ -2517,7 +2518,7 @@ export const aislatePlayer = async (playerNumber: number) => {
             .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
             .execute();
 
-        await pusher.trigger("streamer-wars", "player-aislated", { playerNumber });
+        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_AISLATED, { playerNumber });
 
         try {
             await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
@@ -2554,7 +2555,7 @@ export const unaislatePlayer = async (playerNumber: number) => {
             .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
             .execute();
 
-        await pusher.trigger("streamer-wars", "player-unaislated", { playerNumber });
+        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_UNAISLATED, { playerNumber });
 
         try {
             await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
@@ -2600,7 +2601,7 @@ export const aislateMultiplePlayers = async (playerNumbers: number[]) => {
             .where(inArray(StreamerWarsPlayersTable.playerNumber, playerNumbers))
             .execute();
 
-        await pusher.trigger("streamer-wars", "players-aislated", { playerNumbers });
+        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYERS_AISLATED, { playerNumbers });
 
         for (const playerNumber of playerNumbers) {
             try {
@@ -2654,7 +2655,7 @@ export const beforeLaunchGame = async () => {
         )
     }).execute();
 
-    const res = await pusher.get({ path: "/channels/presence-streamer-wars/users" });
+    const res = await pusher.get({ path: `/channels/${PUSHER_CHANNELS.PRESENCE}/users` });
     /* { users: [ { id: 1 } ] } */
     const { users } = await res.json();
     const userIds: number[] = users ? users.map(({ id }: { id: number }) => id) : [];
@@ -2676,7 +2677,7 @@ export const unaislateAllPlayers = async () => {
             .returning({ playerNumber: StreamerWarsPlayersTable.playerNumber })
             .execute();
 
-        await pusher.trigger("streamer-wars", "players-unaislated", {});
+        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYERS_UNAISLATED, {});
 
         for (const player of players) {
             try {
@@ -2798,27 +2799,27 @@ export const getTodayEliminatedPlayers = async () => {
     */
 
     const cache = createCache();
-    return await cache.get("streamer-wars-today-eliminateds") as number[] ?? [];
+    return await cache.get(CACHE_KEYS.TODAY_ELIMINATED) as number[] ?? [];
 }
 
 export const launchGame = async (game: string, props: any) => {
     await beforeLaunchGame();
     const cache = cacheService.create({ ttl: 60 * 60 * 24 });
-    await cache.set("streamer-wars-gamestate", { game, props });
-    await pusher.trigger("streamer-wars", "launch-game", { game, props });
+    await cache.set(CACHE_KEYS.GAME_STATE, { game, props });
+    await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.LAUNCH_GAME, { game, props });
 };
 
 export const lockChat = async () => {
     const cache = createCache();
-    await cache.set("streamer-wars-chat-locked", true);
-    await pusher.trigger("streamer-wars", "lock-chat", null);
+    await cache.set(CACHE_KEYS.CHAT_LOCKED, true);
+    await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.LOCK_CHAT, null);
     return { success: true };
 };
 
 export const unlockChat = async () => {
     const cache = createCache();
-    await cache.set("streamer-wars-chat-locked", false);
-    await pusher.trigger("streamer-wars", "unlock-chat", null);
+    await cache.set(CACHE_KEYS.CHAT_LOCKED, false);
+    await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.UNLOCK_CHAT, null);
     return { success: true };
 };
 
@@ -2853,7 +2854,7 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                     return { success: false, feedback: 'Se requiere un número de episodio válido (0, 1, 2 o 3)' };
                 }
 
-                await pusher.trigger("streamer-wars", "episode-title", { episode: episodeNum });
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.EPISODE_TITLE, { episode: episodeNum });
                 return { success: true, feedback: `Episodio ${episodeNum} mostrado` };
 
             case '/team':
@@ -2875,15 +2876,15 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                         return { success: false, feedback: 'Expected debe ser un número' };
                     }
                     const cache = createCache();
-                    await cache.set("streamer-wars-expected-players", expected);
-                    await cache.set("streamer-wars-waiting-screen-visible", true);
-                    await pusher.trigger("streamer-wars", "show-waiting-screen", { expectedPlayers: expected });
+                    await cache.set(CACHE_KEYS.EXPECTED_PLAYERS, expected);
+                    await cache.set(CACHE_KEYS.WAITING_SCREEN_VISIBLE, true);
+                    await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.SHOW_WAITING_SCREEN, { expectedPlayers: expected });
                     return { success: true, feedback: `Pantalla de espera mostrada con ${expected} jugadores esperados` };
                 } else if (waitingAction === 'hide') {
                     const cache = createCache();
-                    await cache.set("streamer-wars-expected-players", 50); // Reset to default
-                    await cache.set("streamer-wars-waiting-screen-visible", false);
-                    await pusher.trigger("streamer-wars", "hide-waiting-screen", null);
+                    await cache.set(CACHE_KEYS.EXPECTED_PLAYERS, 50); // Reset to default
+                    await cache.set(CACHE_KEYS.WAITING_SCREEN_VISIBLE, false);
+                    await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.HIDE_WAITING_SCREEN, null);
                     return { success: true, feedback: 'Pantalla de espera oculta' };
                 } else {
                     return { success: false, feedback: 'Uso: /waiting show <número> o /waiting hide' };
@@ -2894,7 +2895,7 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                 if (!cinematicId || !CINEMATICS[cinematicId as keyof typeof CINEMATICS]) {
                     return { success: false, feedback: `Cinemática ${cinematicId} no encontrada` };
                 }
-                await pusher.trigger("streamer-wars-cinematic", "new-event", {
+                await pusher.trigger(PUSHER_CHANNELS.CINEMATIC, PUSHER_EVENTS_CINEMATIC.NEW_EVENT, {
                     targetUsers: 'everyone',
                     videoUrl: CINEMATICS[cinematicId as keyof typeof CINEMATICS].url
                 });
@@ -2903,16 +2904,16 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
             case '/waiting-room':
                 // Envía a todos los jugadores a la sala de espera
                 const waitingCache = cacheService.create({ ttl: 60 * 60 * 24 });
-                await waitingCache.set("streamer-wars-gamestate", null);
+                await waitingCache.set(CACHE_KEYS.GAME_STATE, null);
 
-                await pusher.trigger("streamer-wars", "send-to-waiting-room", null);
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.SEND_TO_WAITING_ROOM, null);
                 return { success: true, feedback: 'Todos los jugadores enviados a la sala de espera' };
             case '/announce':
                 const message = args.join(' ');
                 if (!message) {
                     return { success: false, feedback: 'Se requiere un mensaje para el anuncio' };
                 }
-                await pusher.trigger("streamer-wars", "new-announcement", { message });
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.NEW_ANNOUNCEMENT, { message });
                 return { success: true, feedback: 'Anuncio enviado' };
             case '/chat':
                 const chatAction = args[0];
@@ -2944,8 +2945,8 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                     return { success: false, feedback: 'Se requiere un número de segundos válido mayor a 0' };
                 }
                 const timerCache = createCache();
-                await timerCache.set("streamer-wars-timer", { startedAt: Date.now(), duration: seconds });
-                await pusher.trigger("streamer-wars", "show-timer", { seconds });
+                await timerCache.set(CACHE_KEYS.TIMER, { startedAt: Date.now(), duration: seconds });
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.SHOW_TIMER, { seconds });
                 return { success: true, feedback: `Temporizador mostrado por ${seconds} segundos` };
             case '/cuerda':
                 const cuerdaAction = args[0];
@@ -3025,7 +3026,7 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                 if (!id) {
                     return { success: false, feedback: 'Se requiere un ID para las instrucciones' };
                 }
-                await pusher.trigger("streamer-wars", "inmersive-instructions", { id });
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.INMERSIVE_INSTRUCTIONS, { id });
                 return { success: true, feedback: `Instrucciones inmersivas enviadas con ID: ${id}` };
             default:
                 return { success: false, feedback: 'Comando desconocido' };
@@ -3038,13 +3039,13 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
 
 export const getCurrentTimer = async (): Promise<{ startedAt: number; duration: number } | null> => {
     const cache = createCache();
-    const timerData = await cache.get<{ startedAt: number; duration: number }>("streamer-wars-timer");
+    const timerData = await cache.get<{ startedAt: number; duration: number }>(CACHE_KEYS.TIMER);
     if (!timerData) return null;
     const elapsed = Date.now() - timerData.startedAt;
     const totalDurationMs = timerData.duration * 1000;
     if (elapsed >= totalDurationMs) {
         // Timer expirado, limpiar
-        await cache.delete("streamer-wars-timer");
+        await cache.delete(CACHE_KEYS.TIMER);
         return null;
     }
     return timerData;
@@ -3061,7 +3062,7 @@ export const broadcastToMegaphone = async (message: string) => {
 
         const audioPayload = encodeAudioForPusher(audioBase64!);
 
-        await pusher.trigger("streamer-wars", "megaphony", {
+        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.MEGAPHONY, {
             audioBase64: audioPayload,
         });
     } catch (error) {

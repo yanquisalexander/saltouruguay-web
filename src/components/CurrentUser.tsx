@@ -90,7 +90,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
     };
 
     const linkDiscord = async () => {
-        window.location.href = `/api/discord/link`;
+        window.location.href = `/api/linked-accounts/discord/link`;
     };
 
     const toggleDropdown = () => {
@@ -244,7 +244,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                                 <span className="flex-1">Mi Perfil</span>
                             </a>
 
-                            {!user.discordId && (
+                            {!user.linkedAccounts?.discord && (
                                 <button onClick={linkDiscord} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-rubik text-white/80 hover:text-white hover:bg-[#5865F2]/20 transition-colors group text-left">
                                     <div className="p-1.5 rounded-lg bg-[#5865F2]/10 text-[#5865F2] group-hover:bg-[#5865F2] group-hover:text-white transition-colors">
                                         <LucideMessageSquare size={16} />

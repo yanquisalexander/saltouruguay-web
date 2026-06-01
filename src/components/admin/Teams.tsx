@@ -7,6 +7,7 @@ import { LucideCrown, LucideDot, LucideX } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
 import { toast } from "sonner";
+import { PUSHER_EVENTS } from "@/consts/pusher";
 
 export const Teams = ({ channel }: { channel: Channel }) => {
     const [playersTeams, setPlayersTeams] = useState<{ [team: string]: { playerNumber: number; avatar: string; displayName: string, isCaptain: boolean }[] }>({});
@@ -53,13 +54,13 @@ export const Teams = ({ channel }: { channel: Channel }) => {
 
         fetchTeams();
 
-        channel?.bind("player-joined", fetchTeams);
-        channel?.bind("player-removed", fetchTeams);
-        channel?.bind("captain-assigned", fetchTeams);
+        channel?.bind(PUSHER_EVENTS.PLAYER_JOINED, fetchTeams);
+        channel?.bind(PUSHER_EVENTS.PLAYER_REMOVED, fetchTeams);
+        channel?.bind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, fetchTeams);
 
         return () => {
-            channel?.unbind("player-joined", fetchTeams);
-            channel?.unbind("captain-assigned", fetchTeams);
+            channel?.unbind(PUSHER_EVENTS.PLAYER_JOINED, fetchTeams);
+            channel?.unbind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, fetchTeams);
         };
     }, []);
 

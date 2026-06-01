@@ -1,0 +1,179 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+import { getProvider, getLinkedAccountByProviderId, createLinkedAccount } from "@/lib/linked-accounts";
+import { SOCIAL_NETWORKS } from "@/consts/SocialNetworks";
+import {
+  LucideLoader2,
+  LucideAlertTriangle,
+  LucideCheckCircle2,
+  LucideLink,
+  LucideXCircle,
+} from "lucide-preact";
+
+const providerName = Astro.params.provider;
+const provider = providerName ? getProvider(providerName) : undefined;
+
+const LINK_ERRORS = {
+  USER_IS_NOT_MEMBER: "USER_IS_NOT_MEMBER",
+  ACCOUNT_ALREADY_LINKED: "ACCOUNT_ALREADY_LINKED",
+  GENERIC: "GENERIC_ERROR",
+};
+
+async function linkAccount(request: Request) {
+  const code = new URL(request.url).searchParams.get("code");
+  const state = new URL(request.url).searchParams.get("state");
+  const session = await getSession(request);
+
+  if (!providerName || !provider) {
+    return { error: true, code: LINK_ERRORS.GENERIC, message: "Proveedor no soportado" };
+  }
+
+  if (!code || !session) {
+    return { error: true, code: LINK_ERRORS.GENERIC, message: "Sesión inválida" };
+  }
+
+  const cookieState = Astro.cookies.get("linked_account_state")?.value;
+  if (state && cookieState && state !== cookieState) {
+    return { error: true, code: LINK_ERRORS.GENERIC, message: "State inválido" };
+  }
+  Astro.cookies.delete("linked_account_state", { path: "/" });
+
+  try {
+    const baseUrl = new URL(request.url).origin;
+    const callbackUrl = `${baseUrl}/api/linked-accounts/${providerName}/callback`;
+    const userData = await provider.handleCallback(code, callbackUrl);
+
+    const existingAccount = await getLinkedAccountByProviderId(providerName, userData.providerUserId);
+    if (existingAccount && existingAccount.userId !== session.user.id) {
+      return { error: true, code: LINK_ERRORS.ACCOUNT_ALREADY_LINKED };
+    }
+
+    await createLinkedAccount({
+      userId: session.user.id,
+      provider: providerName,
+      providerUserId: userData.providerUserId,
+      username: userData.username,
+      avatar: userData.avatar,
+      accessToken: userData.accessToken,
+      refreshToken: userData.refreshToken,
+      tokenExpiresAt: userData.expiresAt,
+      scopes: userData.scopes,
+    });
+
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    if (e instanceof Error && e.message === "USER_IS_NOT_MEMBER") {
+      return { error: true, code: LINK_ERRORS.USER_IS_NOT_MEMBER };
+    }
+    return {
+      error: true,
+      code: LINK_ERRORS.GENERIC,
+      message: e instanceof Error ? e.message : "Error interno",
+    };
+  }
+}
+
+const result = provider ? await linkAccount(Astro.request) : { error: true, code: LINK_ERRORS.GENERIC, message: "Proveedor no soportado" };
+const providerLabel = provider?.label ?? providerName ?? "Desconocido";
+const discordUrl = SOCIAL_NETWORKS.find((n) => n.name === "Discord")?.url;
+const isDiscord = providerName === "discord";
+---
+
+<Layout
+  title={`Vinculando ${providerLabel}...`}
+  hideHeader
+  hideFooter
+  mainClassname="flex flex-col items-center justify-center min-h-dvh w-full relative overflow-hidden"
+>
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+  </div>
+
+  <div class="w-full max-w-md p-4 animate-in fade-in zoom-in-95 duration-500">
+    {
+      !result.error && (
+        <div class="bg-[#0a0a0a] border border-green-500/20 rounded-2xl p-8 text-center shadow-2xl shadow-green-900/20">
+          <div class="inline-flex p-4 bg-green-500/10 rounded-full text-green-500 mb-6 border border-green-500/20">
+            <LucideCheckCircle2 size={48} />
+          </div>
+          <h1 class="text-2xl font-anton text-white uppercase tracking-wide mb-2">
+            ¡Cuenta Vinculada!
+          </h1>
+          <p class="text-white/60 font-rubik text-sm mb-6">
+            Has conectado tu {providerLabel} correctamente. Redirigiendo...
+          </p>
+          <LucideLoader2 size={24} class="animate-spin mx-auto text-white/30" />
+          <script is:inline>
+            setTimeout(() => window.location.href = "/?{providerName}Linked=true", 2000);
+          </script>
+        </div>
+      )
+    }
+
+    {
+      result.error && result.code === LINK_ERRORS.USER_IS_NOT_MEMBER && isDiscord && (
+        <div class="bg-[#0a0a0a] border border-yellow-500/20 rounded-2xl p-8 text-center shadow-2xl">
+          <div class="inline-flex p-4 bg-yellow-500/10 rounded-full text-yellow-500 mb-6 border border-yellow-500/20">
+            <LucideAlertTriangle size={48} />
+          </div>
+          <h1 class="text-2xl font-anton text-white uppercase tracking-wide mb-2">
+            Acceso Restringido
+          </h1>
+          <p class="text-white/60 font-rubik text-sm mb-6">
+            Debes ser miembro de nuestro servidor de Discord para vincular tu cuenta.
+          </p>
+          <a href={discordUrl} target="_blank"
+            class="block w-full py-3 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20">
+            Unirse al Servidor
+          </a>
+          <a href="/" class="block mt-4 text-xs text-white/30 hover:text-white transition-colors">
+            Cancelar y volver
+          </a>
+        </div>
+      )
+    }
+
+    {
+      result.error && result.code === LINK_ERRORS.ACCOUNT_ALREADY_LINKED && (
+        <div class="bg-[#0a0a0a] border border-red-500/20 rounded-2xl p-8 text-center shadow-2xl">
+          <div class="inline-flex p-4 bg-red-500/10 rounded-full text-red-500 mb-6 border border-red-500/20">
+            <LucideLink size={48} />
+          </div>
+          <h1 class="text-2xl font-anton text-white uppercase tracking-wide mb-2">
+            Cuenta en Uso
+          </h1>
+          <p class="text-white/60 font-rubik text-sm mb-6">
+            Esta cuenta de {providerLabel} ya está vinculada a otro perfil de Salto Uruguay.
+          </p>
+          <a href="/usuario"
+            class="block w-full py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-colors">
+            Volver a mi Perfil
+          </a>
+        </div>
+      )
+    }
+
+    {
+      result.error && result.code === LINK_ERRORS.GENERIC && (
+        <div class="bg-[#0a0a0a] border border-red-500/20 rounded-2xl p-8 text-center shadow-2xl">
+          <div class="inline-flex p-4 bg-red-500/10 rounded-full text-red-500 mb-6 border border-red-500/20">
+            <LucideXCircle size={48} />
+          </div>
+          <h1 class="text-2xl font-anton text-white uppercase tracking-wide mb-2">
+            Error de Conexión
+          </h1>
+          <p class="text-white/60 font-rubik text-sm mb-6">
+            {result.message || "Ocurrió un error inesperado al intentar vincular."}
+          </p>
+          <a href="/"
+            class="block w-full py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-colors">
+            Volver al Inicio
+          </a>
+        </div>
+      )
+    }
+  </div>
+</Layout>

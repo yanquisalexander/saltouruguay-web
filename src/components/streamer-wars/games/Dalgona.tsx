@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { Button as RetroButton } from "@/components/ui/8bit/button";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { PUSHER_EVENTS_DALGONA } from "@/consts/pusher";
 
 // Constants
 const DAMAGE_THROTTLE_MS = 500; // Minimum time between damage events
@@ -62,7 +63,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         if (!session.user?.id || !pusher) return;
 
         // Listen for game start event
-        channel.bind('dalgona:start', (data: { userId: number; imageUrl: string; lives: number }) => {
+        channel.bind(PUSHER_EVENTS_DALGONA.START, (data: { userId: number; imageUrl: string; lives: number }) => {
             if (data.userId === session.user.id) {
                 setImageUrl(data.imageUrl);
                 setLives(data.lives);
@@ -74,7 +75,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         });
 
         // Listen for game started event (broadcast to all)
-        channel.bind('dalgona:game-started', (data: { totalPlayers: number }) => {
+        channel.bind(PUSHER_EVENTS_DALGONA.GAME_STARTED, (data: { totalPlayers: number }) => {
             if (gameStatus === 'waiting') {
                 setImageUrl(null);
                 setLives(3);
@@ -85,7 +86,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         });
 
         // Listen for success event
-        channel.bind('dalgona:success', (data: { userId: number }) => {
+        channel.bind(PUSHER_EVENTS_DALGONA.SUCCESS, (data: { userId: number }) => {
             if (data.userId === session.user.id) {
                 setGameStatus('completed');
                 toast.success('¡Has completado el desafío Dalgona!', {
@@ -96,7 +97,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         });
 
         // Listen for damage event
-        channel.bind('dalgona:damage', (data: { userId: number; lives: number }) => {
+        channel.bind(PUSHER_EVENTS_DALGONA.DAMAGE, (data: { userId: number; lives: number }) => {
             if (data.userId === session.user.id) {
                 setLives(data.lives);
                 toast.error(`¡Cuidado! Vidas restantes: ${data.lives}`, {
@@ -106,7 +107,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         });
 
         // Listen for game ended event
-        channel.bind('dalgona:game-ended', (data: { completedPlayers: number[], eliminatedPlayers: number[] }) => {
+        channel.bind(PUSHER_EVENTS_DALGONA.GAME_ENDED, (data: { completedPlayers: number[], eliminatedPlayers: number[] }) => {
             if (data.eliminatedPlayers.includes(session.user.streamerWarsPlayerNumber!)) {
                 setGameStatus('failed');
                 toast.error('Has sido eliminado del juego', {
@@ -117,11 +118,11 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         });
 
         return () => {
-            channel.unbind('dalgona:start');
-            channel.unbind('dalgona:game-started');
-            channel.unbind('dalgona:success');
-            channel.unbind('dalgona:damage');
-            channel.unbind('dalgona:game-ended');
+            channel.unbind(PUSHER_EVENTS_DALGONA.START);
+            channel.unbind(PUSHER_EVENTS_DALGONA.GAME_STARTED);
+            channel.unbind(PUSHER_EVENTS_DALGONA.SUCCESS);
+            channel.unbind(PUSHER_EVENTS_DALGONA.DAMAGE);
+            channel.unbind(PUSHER_EVENTS_DALGONA.GAME_ENDED);
         };
     }, [session.user?.id, pusher, gameStatus]);
 

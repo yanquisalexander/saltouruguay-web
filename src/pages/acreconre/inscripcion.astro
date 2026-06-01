@@ -23,8 +23,8 @@ import Twitch from "@/icons/Twitch.astro";
 
 const session = await getSession(Astro.request);
 
-const discordInfo = session?.user.discordId
-  ? await getDiscordUser(session.user.discordId).catch(() => null)
+const discordInfo = session?.user?.linkedAccounts?.discord?.providerUserId
+  ? await getDiscordUser(session.user.linkedAccounts?.discord?.providerUserId).catch(() => null)
   : null;
 
 const isInscribed = session?.user?.id

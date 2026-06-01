@@ -3,6 +3,7 @@ import { type Players } from "@/components/admin/streamer-wars/Players";
 import { useVoiceChatStore } from "@/stores/voiceChat";
 import { actions } from "astro:actions";
 import { pusherService } from "@/services/pusher.client";
+import { PUSHER_EVENTS } from "@/consts/pusher";
 
 const ICE_SERVERS = {
     iceServers: [
@@ -16,7 +17,8 @@ export class VoiceChatManager {
     private activeConnections: Record<string, RTCPeerConnection> = {};
     private pendingCandidates: Record<string, RTCIceCandidateInit[]> = {};
     private remoteAudios: Record<string, HTMLAudioElement> = {};
-    private channels: Channel[] = []; // FIX: faltaba esta declaración
+    private audioContexts: Record<string, AudioContext> = {};
+    private channels: Channel[] = [];
     public localStream: MediaStream | null = null;
 
     private userId: string | null = null;
@@ -192,6 +194,7 @@ export class VoiceChatManager {
     private monitorAudioActivity(peerId: string, stream: MediaStream) {
         try {
             const ac = new AudioContext();
+            this.audioContexts[peerId] = ac;
             const source = ac.createMediaStreamSource(stream);
             const analyser = ac.createAnalyser();
             source.connect(analyser);
@@ -232,6 +235,10 @@ export class VoiceChatManager {
         if (this.remoteAudios[peerId]) {
             this.remoteAudios[peerId].pause();
             delete this.remoteAudios[peerId];
+        }
+        if (this.audioContexts[peerId]) {
+            this.audioContexts[peerId].close();
+            delete this.audioContexts[peerId];
         }
         useVoiceChatStore.getState().setPeerCount(Object.keys(this.activeConnections).length);
         useVoiceChatStore.getState().removeTalkingUser(peerId);
@@ -332,7 +339,7 @@ export class VoiceChatManager {
                 }
             });
 
-            channel.bind("pusher:subscription_succeeded", () => {
+            channel.bind(PUSHER_EVENTS.SUBSCRIPTION_SUCCEEDED, () => {
                 if (!isSpec) this.sendSignal(targetTeamId, "voice:user-joined", { userId: this.userId });
             });
         });

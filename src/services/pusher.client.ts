@@ -7,7 +7,7 @@
  */
 
 import Pusher, { type Channel } from 'pusher-js';
-import { PUSHER_KEY } from '@/config';
+import { PUSHER_APP_KEY, PUSHER_APP_CLUSTER } from "astro:env/client";
 
 type EventCallback = (data: any) => void;
 type ChannelEventMap = Map<string, Set<EventCallback>>;
@@ -44,10 +44,8 @@ class PusherService {
         this.isConnecting = true;
 
         try {
-            this.pusher = new Pusher(PUSHER_KEY, {
-                //    wsHost: import.meta.env.DEV ? 'localhost' : 'soketi.saltouruguayserver.com',
-                //    wsPort: import.meta.env.DEV ? 6001 : 443,
-                cluster: 'us2',
+            this.pusher = new Pusher(PUSHER_APP_KEY, {
+                cluster: PUSHER_APP_CLUSTER,
                 enabledTransports: ['ws', 'wss'],
                 forceTLS: !import.meta.env.DEV,
                 activityTimeout: 60000,

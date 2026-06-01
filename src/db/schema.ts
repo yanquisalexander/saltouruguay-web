@@ -66,6 +66,24 @@ export const SaltoTagsTable = pgTable("salto_tags", {
     updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
 });
 
+export const LinkedAccountsTable = pgTable("linked_accounts", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    provider: varchar("provider", { length: 50 }).notNull(),
+    providerUserId: varchar("provider_user_id", { length: 255 }).notNull(),
+    username: varchar("username", { length: 255 }),
+    avatar: varchar("avatar", { length: 500 }),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    tokenExpiresAt: timestamp("token_expires_at"),
+    scopes: text("scopes").array(),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueProviderUser: unique().on(t.provider, t.providerUserId),
+    uniqueUserProvider: unique().on(t.userId, t.provider),
+}));
+
 export const SaltoPlayDevelopersTable = pgTable("salto_play_developers", {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: integer("user_id")
@@ -523,6 +541,14 @@ export const userRelations = relations(UsersTable, ({ one, many }) => ({
     suspensions: many(UserSuspensionsTable),
     sessions: many(SessionsTable),
     extremo3RepechajeVotes: many(Extremo3RepechajeVotesTable),
+    linkedAccounts: many(LinkedAccountsTable),
+}))
+
+export const linkedAccountsRelations = relations(LinkedAccountsTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [LinkedAccountsTable.userId],
+        references: [UsersTable.id],
+    }),
 }))
 
 export const sessionsRelations = relations(SessionsTable, ({ one }) => ({
@@ -1152,37 +1178,6 @@ export const saltogramVipListRelations = relations(SaltogramVipListTable, ({ one
     }),
 }));
 
-export const OAuthApplicationsTable = pgTable("oauth_applications", {
-    id: uuid("id").primaryKey().defaultRandom(),
-    name: varchar("name").notNull(),
-    clientId: varchar("client_id").unique().notNull(),
-    clientSecret: varchar("client_secret").notNull(),
-    redirectUris: text("redirect_uris").array().notNull(),
-    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const OAuthCodesTable = pgTable("oauth_codes", {
-    code: varchar("code").primaryKey(),
-    clientId: varchar("client_id").notNull().references(() => OAuthApplicationsTable.clientId, { onDelete: "cascade" }),
-    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
-    expiresAt: timestamp("expires_at").notNull(),
-    redirectUri: varchar("redirect_uri"),
-    scopes: text("scopes").array(),
-    codeChallenge: varchar("code_challenge"),
-    codeChallengeMethod: varchar("code_challenge_method"),
-});
-
-export const OAuthTokensTable = pgTable("oauth_tokens", {
-    accessToken: varchar("access_token").primaryKey(),
-    refreshToken: varchar("refresh_token").unique(),
-    clientId: varchar("client_id").notNull().references(() => OAuthApplicationsTable.clientId, { onDelete: "cascade" }),
-    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
-    expiresAt: timestamp("expires_at").notNull(),
-    scopes: text("scopes").array(),
-});
-
 export const NotificationsTable = pgTable("notifications", {
     id: serial("id").primaryKey(),
     userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
@@ -1203,13 +1198,6 @@ export const PushSubscriptionsTable = pgTable("push_subscriptions", {
     auth: varchar("auth").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
 });
-
-export const oauthApplicationsRelations = relations(OAuthApplicationsTable, ({ one }) => ({
-    owner: one(UsersTable, {
-        fields: [OAuthApplicationsTable.userId],
-        references: [UsersTable.id],
-    }),
-}));
 
 // --- TOURNAMENTS SYSTEM ---
 

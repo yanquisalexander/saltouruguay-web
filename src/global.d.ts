@@ -1,6 +1,11 @@
-import type { Session as AuthSession } from "@auth/core/types";
+import type { Session as AuthSession, DefaultSession } from "@auth/core/types";
 import { JSX } from "preact";
 
+type LinkedAccountsSummary = Record<string, {
+    providerUserId: string;
+    username: string | null;
+    avatar: string | null;
+} | undefined>;
 
 declare module "@auth/core/types" {
     interface Session extends AuthSession {
@@ -16,7 +21,8 @@ declare module "@auth/core/types" {
             isSuspended?: boolean;
             sessionId?: string;
             twoFactorEnabled?: boolean;
-        } & DefaultSession["user"]; // Extiende las propiedades originales del tipo `user`
+            linkedAccounts?: LinkedAccountsSummary;
+        } & DefaultSession["user"];
     }
 }
 

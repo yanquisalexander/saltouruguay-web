@@ -32,10 +32,10 @@ En caso de cualquier consulta o duda, favor de comunicarse con el equipo de orga
 
 const session = await getSession(Astro.request);
 
-const HAS_DISCORD_LINKED = !!session?.user.discordId;
+const HAS_DISCORD_LINKED = !!session?.user?.linkedAccounts?.discord;
 
 const discordInfo = await getDiscordUser(
-  session?.user.discordId as string
+  session?.user?.linkedAccounts?.discord?.providerUserId as string
 ).catch((error) => {
   console.error("Error getting Discord user", error);
   return null;
@@ -345,7 +345,7 @@ const IS_USER_INSCRIBED = await client
     const $linkDiscordButton = $("#link-discord");
 
     $linkDiscordButton?.addEventListener("click", () => {
-      window.location.href = `/api/discord/link`;
+      window.location.href = `/api/linked-accounts/discord/link`;
     });
 
     const $logoutButton = $("#logout");

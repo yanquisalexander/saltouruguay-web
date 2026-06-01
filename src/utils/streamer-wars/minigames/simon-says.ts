@@ -7,6 +7,7 @@ import { pusher } from "@/utils/pusher";
 import { LOGS_CHANNEL_WEBHOOK_ID, sendWebhookMessage } from "@/services/discord";
 import { DISCORD_LOGS_WEBHOOK_TOKEN } from "astro:env/server";
 import { getTranslation } from "@/utils/translate";
+import { PUSHER_CHANNELS, PUSHER_EVENTS_SIMON } from "@/consts/pusher";
 
 import type { SimonSaysGameState } from "../types";
 import { CACHE_KEY_SIMON_SAYS, COLORS } from "../constants";
@@ -80,8 +81,8 @@ export const startGame = async (teams: Record<string, { players: number[] }>) =>
     };
 
     await cache.set(CACHE_KEY_SIMON_SAYS, newGameState);
-    await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
-    return newGameState;
+await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.GAME_STATE, newGameState);
+            return newGameState;
 };
 
 /**
@@ -106,7 +107,7 @@ export const completePattern = async (playerNumber: number) => {
 
     await cache.set(CACHE_KEY_SIMON_SAYS, newGameState);
 
-    await pusher.trigger("streamer-wars.simon-says", "completed-pattern", {
+            await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.COMPLETED_PATTERN, {
         playerNumber,
     });
 
@@ -173,7 +174,7 @@ export const patternFailed = async (playerNumber: number) => {
     };
 
     await cache.set(CACHE_KEY_SIMON_SAYS, newGameState);
-    await pusher.trigger("streamer-wars.simon-says", "pattern-failed", {
+            await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.PATTERN_FAILED, {
         playerNumber,
     });
     await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
@@ -267,6 +268,6 @@ export const nextRoundWithOtherPlayers = async () => {
     };
 
     await cache.set(CACHE_KEY_SIMON_SAYS, newGameState);
-    await pusher.trigger("streamer-wars.simon-says", "game-state", newGameState);
-    return newGameState;
+await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.GAME_STATE, newGameState);
+            return newGameState;
 };

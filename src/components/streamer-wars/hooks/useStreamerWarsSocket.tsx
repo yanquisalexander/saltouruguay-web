@@ -15,6 +15,7 @@ import { AVAILABLE_AUDIOS, type AudioState } from "@/types/audio";
 import { actions } from "astro:actions";
 import { usePusher } from "@/hooks/usePusher";
 import { pusherService } from "@/services/pusher.client";
+import { PUSHER_CHANNELS, PUSHER_EVENTS } from "@/consts/pusher";
 
 export const useStreamerWarsSocket = (session: Session | null) => {
     const { pusher } = usePusher();
@@ -157,8 +158,8 @@ export const useStreamerWarsSocket = (session: Session | null) => {
         let timersActive = true;
 
         // Use the singleton service to get channels
-        const channel = pusherService.subscribe("streamer-wars");
-        const presence = pusherService.subscribe("presence-streamer-wars");
+        const channel = pusherService.subscribe(PUSHER_CHANNELS.GLOBAL);
+        const presence = pusherService.subscribe(PUSHER_CHANNELS.PRESENCE);
         globalChannel.current = channel;
         presenceChannel.current = presence;
 
@@ -235,8 +236,8 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                 };
                 document.addEventListener("instructions-ended", onInstructionsEnded, { once: true });
             };
-            handlers.set("launch-game", handleLaunchGame);
-            pusherService.bind("streamer-wars", "launch-game", handleLaunchGame);
+            handlers.set(PUSHER_EVENTS.LAUNCH_GAME, handleLaunchGame);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.LAUNCH_GAME, handleLaunchGame);
 
             const handleSendToWaitingRoom = () => {
                 console.log("Send to waiting room received");
@@ -324,33 +325,33 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             };
 
             // Bind all events using the service and store references
-            handlers.set("send-to-waiting-room", handleSendToWaitingRoom);
-            handlers.set("episode-title", handleEpisodeTitle);
-            handlers.set("player-eliminated", handlePlayerEliminated);
-            handlers.set("players-eliminated", handlePlayersEliminated);
-            handlers.set("megaphony", handleMegaphony);
-            handlers.set("reload-for-user", handleReloadForUser);
-            handlers.set("new-announcement", handleNewAnnouncement);
-            handlers.set("player-aislated", handlePlayerAislated);
-            handlers.set("players-aislated", handlePlayersAislated);
-            handlers.set("audio-update", handleAudioUpdate);
-            handlers.set("audio-mute-all", handleAudioMuteAll);
-            handlers.set("audio-stop-all", handleAudioStopAll);
-            handlers.set("show-timer", handleShowTimer);
+            handlers.set(PUSHER_EVENTS.SEND_TO_WAITING_ROOM, handleSendToWaitingRoom);
+            handlers.set(PUSHER_EVENTS.EPISODE_TITLE, handleEpisodeTitle);
+            handlers.set(PUSHER_EVENTS.PLAYER_ELIMINATED, handlePlayerEliminated);
+            handlers.set(PUSHER_EVENTS.PLAYERS_ELIMINATED, handlePlayersEliminated);
+            handlers.set(PUSHER_EVENTS.MEGAPHONY, handleMegaphony);
+            handlers.set(PUSHER_EVENTS.RELOAD_FOR_USER, handleReloadForUser);
+            handlers.set(PUSHER_EVENTS.NEW_ANNOUNCEMENT, handleNewAnnouncement);
+            handlers.set(PUSHER_EVENTS.PLAYER_AISLATED, handlePlayerAislated);
+            handlers.set(PUSHER_EVENTS.PLAYERS_AISLATED, handlePlayersAislated);
+            handlers.set(PUSHER_EVENTS.AUDIO_UPDATE, handleAudioUpdate);
+            handlers.set(PUSHER_EVENTS.AUDIO_MUTE_ALL, handleAudioMuteAll);
+            handlers.set(PUSHER_EVENTS.AUDIO_STOP_ALL, handleAudioStopAll);
+            handlers.set(PUSHER_EVENTS.SHOW_TIMER, handleShowTimer);
 
-            pusherService.bind("streamer-wars", "send-to-waiting-room", handleSendToWaitingRoom);
-            pusherService.bind("streamer-wars", "episode-title", handleEpisodeTitle);
-            pusherService.bind("streamer-wars", "player-eliminated", handlePlayerEliminated);
-            pusherService.bind("streamer-wars", "players-eliminated", handlePlayersEliminated);
-            pusherService.bind("streamer-wars", "megaphony", handleMegaphony);
-            pusherService.bind("streamer-wars", "reload-for-user", handleReloadForUser);
-            pusherService.bind("streamer-wars", "new-announcement", handleNewAnnouncement);
-            pusherService.bind("streamer-wars", "player-aislated", handlePlayerAislated);
-            pusherService.bind("streamer-wars", "players-aislated", handlePlayersAislated);
-            pusherService.bind("streamer-wars", "audio-update", handleAudioUpdate);
-            pusherService.bind("streamer-wars", "audio-mute-all", handleAudioMuteAll);
-            pusherService.bind("streamer-wars", "audio-stop-all", handleAudioStopAll);
-            pusherService.bind("streamer-wars", "show-timer", handleShowTimer);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.SEND_TO_WAITING_ROOM, handleSendToWaitingRoom);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.EPISODE_TITLE, handleEpisodeTitle);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_ELIMINATED, handlePlayerEliminated);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYERS_ELIMINATED, handlePlayersEliminated);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.MEGAPHONY, handleMegaphony);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.RELOAD_FOR_USER, handleReloadForUser);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.NEW_ANNOUNCEMENT, handleNewAnnouncement);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_AISLATED, handlePlayerAislated);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYERS_AISLATED, handlePlayersAislated);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.AUDIO_UPDATE, handleAudioUpdate);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.AUDIO_MUTE_ALL, handleAudioMuteAll);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.AUDIO_STOP_ALL, handleAudioStopAll);
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.SHOW_TIMER, handleShowTimer);
         };
 
         bindChannelHandlers(channel);
@@ -377,7 +378,7 @@ export const useStreamerWarsSocket = (session: Session | null) => {
 
             // Unbind all events from this hook using stored handler references
             handlers.forEach((handler, eventName) => {
-                pusherService.unbind("streamer-wars", eventName, handler);
+                pusherService.unbind(PUSHER_CHANNELS.GLOBAL, eventName, handler);
             });
             handlers.clear();
 

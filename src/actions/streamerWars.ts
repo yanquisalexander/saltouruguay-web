@@ -4,6 +4,7 @@ import { StreamerWarsChatMessagesTable, StreamerWarsTeamPlayersTable, StreamerWa
 import Cache from "@/lib/Cache";
 import cacheService from "@/services/cache";
 import { pusher } from "@/utils/pusher";
+import { PUSHER_CHANNELS, PUSHER_EVENTS, CACHE_KEYS } from "@/consts/pusher";
 import { eliminatePlayer, removePlayer, addPlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles, acceptBribe, selfEliminate, aislatePlayer, unaislatePlayer, beforeLaunchGame, unaislateAllPlayers, getPlayersLiveOnTwitch, massEliminatePlayers, getAutoEliminatedPlayers, getTodayEliminatedPlayers, executeAdminCommand, getCurrentTimer } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
@@ -18,10 +19,10 @@ export const streamerWars = {
         handler: async ({ playerNumber }, { request }) => {
             const session = await getSession(request);
 
-            if (!session) {
+            if (!session || !session.user.isAdmin) {
                 throw new ActionError({
                     code: "UNAUTHORIZED",
-                    message: "Debes iniciar sesión para eliminar jugadores"
+                    message: "No tienes permisos para eliminar jugadores"
                 })
             }
 
@@ -36,10 +37,10 @@ export const streamerWars = {
         handler: async ({ playerNumber }, { request }) => {
             const session = await getSession(request);
 
-            if (!session) {
+            if (!session || !session.user.isAdmin) {
                 throw new ActionError({
                     code: "UNAUTHORIZED",
-                    message: "Debes iniciar sesión para revivir jugadores"
+                    message: "No tienes permisos para revivir jugadores"
                 })
             }
 
@@ -69,16 +70,12 @@ export const streamerWars = {
                 })
             }
 
-            try {
-                const isChatLocked = await cacheService.create({ ttl: 60 * 60 * 24 }).get("streamer-wars-chat-locked") as boolean;
-                if (isChatLocked) {
-                    throw new ActionError({
-                        code: "BAD_REQUEST",
-                        message: "El chat está bloqueado"
-                    })
-                }
-            } catch (error) {
-                console.error(`Error getting chat lock status: ${error}`);
+            const isChatLocked = await cacheService.create({ ttl: 60 * 60 * 24 }).get(CACHE_KEYS.CHAT_LOCKED) as boolean;
+            if (isChatLocked) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: "El chat está bloqueado"
+                })
             }
 
             try {
@@ -89,7 +86,7 @@ export const streamerWars = {
                     .execute()
 
 
-                await pusher.trigger("streamer-wars", "new-message", { id, message, user: session.user.name, admin: session.user.isAdmin });
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.NEW_MESSAGE, { id, message, user: session.user.name, admin: session.user.isAdmin });
             } catch (error) {
                 throw new ActionError({
                     code: "INTERNAL_SERVER_ERROR",
@@ -114,7 +111,7 @@ export const streamerWars = {
             }
 
             await client.delete(StreamerWarsChatMessagesTable).where(eq(StreamerWarsChatMessagesTable.id, messageId)).execute();
-            await pusher.trigger("streamer-wars", "message-deleted", { messageId });
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.MESSAGE_DELETED, { messageId });
             return { success: true }
         }
     }),
@@ -177,8 +174,8 @@ export const streamerWars = {
                     .values({ userId: session.user.id, message, isAnnouncement: true })
                     .execute();
 
-                await pusher.trigger("streamer-wars", "new-announcement", { message });
-                await pusher.trigger("streamer-wars", "new-message", { message, type: "announcement" });
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.NEW_ANNOUNCEMENT, { message });
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.NEW_MESSAGE, { message, type: "announcement" });
             } catch (error) {
                 throw new ActionError({
                     code: "INTERNAL_SERVER_ERROR",
@@ -331,8 +328,8 @@ export const streamerWars = {
             const cache = cacheService.create({ ttl: 60 * 60 * 24 });
             const gameState = await cache.get("streamer-wars-gamestate") as any
             const dayAvailable = await cache.get("streamer-wars-day-available") as boolean;
-            const expectedPlayers = await cache.get("streamer-wars-expected-players") as number || 50;
-            const waitingScreenVisible = await cache.get("streamer-wars-waiting-screen-visible") as boolean || false;
+            const expectedPlayers = await cache.get(CACHE_KEYS.EXPECTED_PLAYERS) as number || 50;
+            const waitingScreenVisible = await cache.get(CACHE_KEYS.WAITING_SCREEN_VISIBLE) as boolean || false;
 
             return { gameState, dayAvailable, expectedPlayers, waitingScreenVisible }
         }
@@ -355,7 +352,7 @@ export const streamerWars = {
                 videoUrl: `${CINEMATICS_CDN_PREFIX}/cinematica-jornada-guerra.mp4`
             }) */
 
-            await pusher.trigger("streamer-wars", "day-available", null).catch((error) => {
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.DAY_AVAILABLE, null).catch((error) => {
                 console.error(`Error triggering Pusher event: ${error}`);
             });
             return { success: true }
@@ -384,7 +381,7 @@ export const streamerWars = {
                  videoUrl: 'url',
              }); */
 
-            await pusher.trigger("streamer-wars", "day-finished", null);
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.DAY_FINISHED, null);
             return { success: true }
         }
     }),
@@ -402,7 +399,7 @@ export const streamerWars = {
             const cache = cacheService.create({ ttl: 60 * 60 * 24 });
             await cache.set("streamer-wars-gamestate", null);
 
-            await pusher.trigger("streamer-wars", "send-to-waiting-room", null);
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.SEND_TO_WAITING_ROOM, null);
             return { success: true }
         }
     }),
@@ -430,7 +427,7 @@ export const streamerWars = {
             const cache = cacheService.create({ ttl: 60 * 60 * 24 });
             await cache.set("streamer-wars-gamestate", { game, props });
 
-            await pusher.trigger("streamer-wars", "launch-game", { game, props });
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.LAUNCH_GAME, { game, props });
             return { success: true }
         }
     }),
@@ -445,7 +442,7 @@ export const streamerWars = {
                 })
             }
 
-            await pusher.trigger("streamer-wars", "clear-chat", null);
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.CLEAR_CHAT, null);
 
             await client.delete(StreamerWarsChatMessagesTable).execute();
             return { success: true }
@@ -493,8 +490,8 @@ export const streamerWars = {
                     eq(StreamerWarsTeamPlayersTable.teamId, teamId)
                 ));
 
-            await pusher.trigger("streamer-wars", "player-joined", { playerNumber, avatar: session.user.image!, displayName: session.user.name, team, isCaptain: true });
-            await pusher.trigger("streamer-wars", "captain-assigned", { playerNumber, team });
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_JOINED, { playerNumber, avatar: session.user.image!, displayName: session.user.name, team, isCaptain: true });
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.CAPTAIN_ASSIGNED, { playerNumber, team });
             return { success: true }
         }
     }),
@@ -536,7 +533,7 @@ export const streamerWars = {
                 .set({ isCaptain: false })
                 .where(eq(StreamerWarsTeamPlayersTable.id, existingCaptain.id));
 
-            await pusher.trigger("streamer-wars", "player-joined", { playerNumber: existingCaptain.playerNumber, avatar: session.user.image!, displayName: session.user.name, team, isCaptain: false });
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_JOINED, { playerNumber: existingCaptain.playerNumber, avatar: session.user.image!, displayName: session.user.name, team, isCaptain: false });
             return { success: true }
         }
     }),
@@ -580,8 +577,8 @@ export const streamerWars = {
                 .values({ userId: session.user.id, message, isAnnouncement: true })
                 .execute();
 
-            await pusher.trigger("streamer-wars", "tech-difficulties", null);
-            await pusher.trigger("streamer-wars", "new-message", { message, type: "announcement", suppressAudio: true });
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.TECH_DIFFICULTIES, null);
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.NEW_MESSAGE, { message, type: "announcement", suppressAudio: true });
 
             return { success: true }
         }
@@ -752,7 +749,7 @@ export const streamerWars = {
                 });
             }
 
-            await pusher.trigger("streamer-wars", "new-version", null);
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.NEW_VERSION, null);
             return { success: true }
         }
     }),
@@ -763,10 +760,10 @@ export const streamerWars = {
         handler: async ({ playerNumber }, { request }) => {
             const session = await getSession(request);
 
-            if (!session) {
+            if (!session || !session.user.isAdmin) {
                 throw new ActionError({
                     code: "UNAUTHORIZED",
-                    message: "Debes iniciar sesión para aislar jugadores"
+                    message: "No tienes permisos para aislar jugadores"
                 });
             }
 
@@ -788,10 +785,10 @@ export const streamerWars = {
         handler: async ({ playerNumber }, { request }) => {
             const session = await getSession(request);
 
-            if (!session) {
+            if (!session || !session.user.isAdmin) {
                 throw new ActionError({
                     code: "UNAUTHORIZED",
-                    message: "Debes iniciar sesión para aislar jugadores"
+                    message: "No tienes permisos para quitar aislamiento"
                 });
             }
 
@@ -810,10 +807,10 @@ export const streamerWars = {
         handler: async (_, { request }) => {
             const session = await getSession(request);
 
-            if (!session) {
+            if (!session || !session.user.isAdmin) {
                 throw new ActionError({
                     code: "UNAUTHORIZED",
-                    message: "Debes iniciar sesión para aislar jugadores"
+                    message: "No tienes permisos para quitar aislamiento"
                 });
             }
 
@@ -880,7 +877,7 @@ export const streamerWars = {
                 });
             }
 
-            await pusher.trigger("streamer-wars", "reload-overlay", null);
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.RELOAD_OVERLAY, null);
             return { success: true }
         }
     }),
@@ -898,7 +895,7 @@ export const streamerWars = {
                 });
             }
 
-            await pusher.trigger("streamer-wars", "reload-for-user", { playerNumber });
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.RELOAD_FOR_USER, { playerNumber });
             return { success: true }
         }
     }),
@@ -925,8 +922,8 @@ export const streamerWars = {
             }
 
             const cache = cacheService.create({ ttl: 60 * 60 * 24 });
-            await cache.set("streamer-wars-chat-locked", true);
-            await pusher.trigger("streamer-wars", "lock-chat", null);
+            await cache.set(CACHE_KEYS.CHAT_LOCKED, true);
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.LOCK_CHAT, null);
             return { success: true }
         }
     }),
@@ -942,8 +939,8 @@ export const streamerWars = {
             }
 
             const cache = cacheService.create({ ttl: 60 * 60 * 24 });
-            await cache.set("streamer-wars-chat-locked", false);
-            await pusher.trigger("streamer-wars", "unlock-chat", null);
+            await cache.set(CACHE_KEYS.CHAT_LOCKED, false);
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.UNLOCK_CHAT, null);
             return { success: true }
         }
     }),
@@ -959,7 +956,7 @@ export const streamerWars = {
             }
 
             const cache = cacheService.create({ ttl: 60 * 60 * 24 });
-            const chatLocked = await cache.get("streamer-wars-chat-locked") as boolean;
+            const chatLocked = await cache.get(CACHE_KEYS.CHAT_LOCKED) as boolean;
 
             return chatLocked
         }

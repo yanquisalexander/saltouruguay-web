@@ -1,5 +1,5 @@
-import { useEffect, useState } from "preact/hooks";
-import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { useEffect, useRef, useState } from "preact/hooks";
+import { playTick } from "@/consts/Sounds";
 
 interface TimerProps {
     seconds: number;
@@ -9,41 +9,38 @@ interface TimerProps {
 export const Timer = ({ seconds, onEnd }: TimerProps) => {
     const [timeLeft, setTimeLeft] = useState(seconds);
     const [isVisible, setIsVisible] = useState(true);
+    const onEndRef = useRef(onEnd);
+    onEndRef.current = onEnd;
 
-    // Efecto para verificar cuando llega a cero y limpiar
     useEffect(() => {
-        if (timeLeft <= 0) {
-            const timeout = setTimeout(() => {
-                setIsVisible(false);
-                onEnd();
-            }, 500);
-            return () => clearTimeout(timeout);
-        }
-    }, [timeLeft, onEnd]);
+        if (timeLeft > 0) return;
+        const timeout = setTimeout(() => {
+            setIsVisible(false);
+            onEndRef.current();
+        }, 500);
+        return () => clearTimeout(timeout);
+    }, [timeLeft]);
 
-    // Efecto estricto basado en la fecha (Date.now()) para evitar pausas o desincronización
     useEffect(() => {
-        const endTime = Date.now() + seconds * 1000;
-        let lastSoundSecond = seconds;
+        if (seconds <= 0) return;
+        setTimeLeft(seconds);
 
-        const interval = window.setInterval(() => {
-            const left = Math.ceil((endTime - Date.now()) / 1000);
+        let remaining = seconds;
 
-            if (left < lastSoundSecond && left > 0) {
-                playSound({ sound: STREAMER_WARS_SOUNDS.TICK, volume: 1 });
-                lastSoundSecond = left;
-            }
+        if (remaining > 0) playTick();
 
-            if (left <= 0) {
+        const interval = setInterval(() => {
+            remaining--;
+            if (remaining > 0) {
+                playTick();
+                setTimeLeft(remaining);
+            } else {
                 clearInterval(interval);
                 setTimeLeft(0);
-                document.dispatchEvent(new CustomEvent("timer-ended"));
-            } else {
-                setTimeLeft(left);
             }
-        }, 100); // Chequea cada 100ms para asegurar precisión
+        }, 1000);
 
-        return () => window.clearInterval(interval);
+        return () => clearInterval(interval);
     }, [seconds]);
 
     if (!isVisible) return null;
@@ -55,10 +52,8 @@ export const Timer = ({ seconds, onEnd }: TimerProps) => {
     };
 
     return (
-        <div
-            className={` z-8000 transition-opacity duration-500`}
-        >
-            <div className=" font-mono select-none text-lg text-gray-300">
+        <div className="z-8000 transition-opacity duration-500">
+            <div className="font-mono select-none text-lg text-gray-300">
                 {formatTime(timeLeft)}
             </div>
         </div>

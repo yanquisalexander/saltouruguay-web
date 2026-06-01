@@ -116,7 +116,7 @@ export const tournaments = {
                 if (!user) throw new ActionError({ code: 'UNAUTHORIZED' });
 
                 // Require Discord linked
-                if (!user.discordId) {
+                if (!user.linkedAccounts?.discord) {
                     throw new ActionError({ code: 'BAD_REQUEST', message: 'Debes vincular tu cuenta de Discord para inscribirte' });
                 }
 

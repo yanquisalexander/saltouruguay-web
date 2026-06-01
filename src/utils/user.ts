@@ -205,14 +205,6 @@ export const getUsers = async ({ page = 1, search = "", limit = 15 }) => {
     return { users: users.slice(0, limit), hasMore };
 };
 
-export const unlinkDiscord = async (userId: number) => {
-    await client
-        .update(UsersTable)
-        .set({ discordId: null })
-        .where(eq(UsersTable.id, userId))
-        .execute();
-}
-
 export const getAllUserEmails = async () => {
     /* 
         Get all emails from the UsersTable (To send emails to all users)

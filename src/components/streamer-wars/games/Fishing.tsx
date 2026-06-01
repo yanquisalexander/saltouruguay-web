@@ -6,6 +6,7 @@ import type Pusher from "pusher-js";
 import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { FISHING_VALID_KEYS } from "@/utils/streamer-wars/constants";
+import { PUSHER_CHANNELS, PUSHER_EVENTS_FISHING } from "@/consts/pusher";
 
 // ============= TYPES =============
 
@@ -292,21 +293,21 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
     // ============= PUSHER EVENTS =============
     // ... (El código de Pusher se mantiene igual, lo omito para brevedad, es idéntico al anterior) ...
     useEffect(() => {
-        const channel = pusher?.subscribe("streamer-wars");
-        channel?.bind("fishing:game-started", () => {
+        const channel = pusher?.subscribe(PUSHER_CHANNELS.GLOBAL);
+        channel?.bind(PUSHER_EVENTS_FISHING.GAME_STARTED, () => {
             setGameStatus('waiting');
             setCurrentRound(1);
             setPlayerProgress(0);
             setFishProgress(0);
             startRound();
         });
-        channel?.bind("fishing:game-ended", () => {
+        channel?.bind(PUSHER_EVENTS_FISHING.GAME_ENDED, () => {
             isPlayingRef.current = false;
             setGameStatus('ended');
             if (keyChangeTimeoutRef.current) clearTimeout(keyChangeTimeoutRef.current);
             if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
         });
-        channel?.bind("fishing:game-reset", () => {
+        channel?.bind(PUSHER_EVENTS_FISHING.GAME_RESET, () => {
             isPlayingRef.current = false;
             setGameStatus('waiting');
             setCurrentRound(1);
@@ -316,9 +317,9 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
             setActiveKeys([]);
         });
         return () => {
-            channel?.unbind("fishing:game-started");
-            channel?.unbind("fishing:game-ended");
-            channel?.unbind("fishing:game-reset");
+            channel?.unbind(PUSHER_EVENTS_FISHING.GAME_STARTED);
+            channel?.unbind(PUSHER_EVENTS_FISHING.GAME_ENDED);
+            channel?.unbind(PUSHER_EVENTS_FISHING.GAME_RESET);
         };
     }, [pusher, startRound]);
 

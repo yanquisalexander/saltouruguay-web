@@ -72,9 +72,9 @@ export default function TournamentParticipantsManager({ participants: initialPar
                                         />
                                         <div>
                                             <div className="text-white font-medium text-sm">{p.user?.displayName}
-                                                {p.user?.discordId && (
+                                                {p.user?.linkedAccounts?.discord?.providerUserId && (
                                                     <a
-                                                        href={`https://discord.com/users/${p.user.discordId}`}
+                                                        href={`https://discord.com/users/${p.user.linkedAccounts?.discord?.providerUserId}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="ml-2 inline-flex items-center text-xs text-gray-400 hover:text-white"

@@ -364,7 +364,7 @@ export const server = {
             // Try to add role on Discord
 
             try {
-                await addRoleToUserWithoutLogging(SALTO_DISCORD_GUILD_ID, session.user.discordId!, "1283086442842554521")
+                await addRoleToUserWithoutLogging(SALTO_DISCORD_GUILD_ID, session.user.linkedAccounts?.discord?.providerUserId!, "1283086442842554521")
             } catch {
                 console.error("Error adding role on Discord")
             }

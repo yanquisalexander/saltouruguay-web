@@ -19,19 +19,21 @@ import { EMOTES } from "@/consts/Emotes";
 import { GLOBAL_CDN_PREFIX } from "@/config";
 import { Popover } from "@/components/Popover";
 import { Tooltip } from "@/components/Tooltip";
+import { PUSHER_EVENTS } from "@/consts/pusher";
+import { pusherService } from "@/services/pusher.client";
+import { PUSHER_CHANNELS } from "@/consts/pusher";
 
 // --- CONSTANTES Y UTILIDADES ---
 const MAX_MESSAGES = 100; // Límite para evitar lag en el DOM
 
-// Estilos reutilizables estilo 8-bit
-const MODERN_BOX = "bg-black border border-neutral-800 relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,1)]";
-const MODERN_BTN = "active:scale-95 transition-all duration-300 border border-neutral-800 bg-neutral-900/50 hover:border-pink-500/50 hover:bg-neutral-800";
+// Estilos reutilizables
+const MODERN_BTN = "active:scale-95 transition-all duration-300 border border-neutral-800 bg-neutral-900/50 hover:border-[#b4cd02]/50 hover:bg-neutral-800";
 
 const parseLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.replace(
         urlRegex,
-        (url) => `<a href="${url}" target="_blank" class="text-pink-400 hover:text-pink-300 transition-colors underline decoration-dashed decoration-1">${url}</a>`
+        (url) => `<a href="${url}" target="_blank" class="text-[#b4cd02] hover:text-[#b4cd02]/80 transition-colors underline decoration-dashed decoration-1">${url}</a>`
     );
 };
 
@@ -51,11 +53,11 @@ const parseEmotesToHTML = (text: string) => {
 
 const EmotePicker = ({ onSelect }: { onSelect: (emote: keyof typeof EMOTES) => void }) => {
     return (
-        <div class={`grid grid-cols-5 gap-2 p-2 bg-black/90 backdrop-blur-md w-64 max-h-64 overflow-y-auto ${MODERN_BOX}`}>
+        <div class="grid grid-cols-5 gap-2 p-2 bg-[#0d0d0f] border border-[#1c1c1e] w-64 max-h-64 overflow-y-auto">
             {Object.keys(EMOTES).map((emote) => (
                 <button
                     key={emote}
-                    class="w-10 h-10 bg-black/40 hover:bg-pink-500/20 border border-transparent hover:border-pink-500 flex items-center justify-center transition-all duration-300 rounded-sm"
+                    class="w-10 h-10 bg-black/40 hover:bg-[#b4cd02]/15 border border-transparent hover:border-[#b4cd02] flex items-center justify-center transition-all duration-300 rounded-sm"
                     onClick={() => onSelect(emote as keyof typeof EMOTES)}
                     title={`:${emote}:`}
                 >
@@ -106,10 +108,10 @@ const ChatMessageItem = memo(({
 
     if (isAnnouncement) {
         return (
-            <div class="bg-pink-900/20 text-pink-300 p-3 border border-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.2)] mb-2 text-sm backdrop-blur-xs rounded-sm">
-                <div class="flex items-center gap-2 mb-1 border-b border-pink-500/30 pb-1">
+            <div class="bg-[#b4cd02]/10 text-[#b4cd02] p-3 border border-[#b4cd02]/30 shadow-[0_0_15px_rgba(180,205,2,0.1)] mb-2 text-sm backdrop-blur-xs rounded-sm">
+                <div class="flex items-center gap-2 mb-1 border-b border-[#b4cd02]/20 pb-1">
                     <LucideMegaphone size={16} />
-                    <span class="font-atomic uppercase tracking-widest text-pink-400">Sistema</span>
+                    <span class="font-atomic uppercase tracking-widest text-[#b4cd02]/90">Sistema</span>
                 </div>
                 <span dangerouslySetInnerHTML={{ __html: parsedMessage }} />
             </div>
@@ -117,7 +119,7 @@ const ChatMessageItem = memo(({
     }
 
     return (
-        <div class="group relative flex gap-x-3 w-full hover:bg-white/5 p-2 items-start text-sm transition-all duration-300 border-l-[3px] border-transparent hover:border-pink-500/50 hover:pl-3">
+        <div class="group relative flex gap-x-3 w-full hover:bg-white/5 p-2 items-start text-sm transition-all duration-300 border-l-[3px] border-transparent hover:border-[#b4cd02]/40 hover:pl-3">
             {showModeration && (
                 <button
                     class="absolute right-2 -top-2 opacity-0 group-hover:opacity-100 text-white bg-red-600 border border-red-800 rounded-sm p-1 hover:bg-red-500 transition shadow-[0_0_10px_rgba(220,38,38,0.5)] z-10"
@@ -128,10 +130,10 @@ const ChatMessageItem = memo(({
                 </button>
             )}
             <div class="flex flex-col w-full wrap-break-word min-w-0">
-                <span class={`font-atomic w-max flex items-center gap-x-2 text-xs uppercase tracking-wider ${admin ? 'text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.8)]' : 'text-neutral-400'}`}>
+                <span class={`font-atomic w-max flex items-center gap-x-2 text-xs uppercase tracking-wider ${admin ? 'text-[#b4cd02] drop-shadow-[0_0_5px_rgba(180,205,2,0.4)]' : 'text-neutral-400'}`}>
                     {admin && (
                         <Tooltip tooltipPosition="top" text="ADMIN / MOD">
-                            <LucideSwords size={14} class="text-pink-400 animate-pulse" />
+                            <LucideSwords size={14} class="text-[#b4cd02] animate-pulse" />
                         </Tooltip>
                     )}
                     {user}
@@ -207,21 +209,20 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
             }
         };
 
-        channel.bind("new-message", handleNewMessage);
-        channel.bind("clear-chat", () => {
+        const handleClearChat = () => {
             setMessages([]);
             toast.info("CHAT LIMPIADO");
-        });
-        channel.bind("lock-chat", () => {
-            setChatLocked(true);
-        });
-        channel.bind("unlock-chat", () => setChatLocked(false));
-        channel.bind("message-deleted", ({ messageId }: { messageId: number }) => {
+        };
+
+        const handleLockChat = () => setChatLocked(true);
+        const handleUnlockChat = () => setChatLocked(false);
+
+        const handleMessageDeleted = ({ messageId }: { messageId: number }) => {
             setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, deleted: true } : m));
-        });
-        channel.bind("client-typing", ({ user }: { user: string }) => {
+        };
+
+        const handleClientTyping = ({ user }: { user: string }) => {
             setUsersTyping((prev) => new Set(prev).add(user));
-            // Limpieza automática
             setTimeout(() => {
                 setUsersTyping((prev) => {
                     const next = new Set(prev);
@@ -229,10 +230,25 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                     return next;
                 });
             }, 2000);
+        };
+
+        const chatEvents = [
+            [PUSHER_EVENTS.NEW_MESSAGE, handleNewMessage],
+            [PUSHER_EVENTS.CLEAR_CHAT, handleClearChat],
+            [PUSHER_EVENTS.LOCK_CHAT, handleLockChat],
+            [PUSHER_EVENTS.UNLOCK_CHAT, handleUnlockChat],
+            [PUSHER_EVENTS.MESSAGE_DELETED, handleMessageDeleted],
+            [PUSHER_EVENTS.CLIENT_TYPING, handleClientTyping],
+        ] as const;
+
+        chatEvents.forEach(([event, handler]) => {
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, event, handler as (data: any) => void);
         });
 
         return () => {
-            channel.unbind_all();
+            chatEvents.forEach(([event, handler]) => {
+                pusherService.unbind(PUSHER_CHANNELS.GLOBAL, event, handler as (data: any) => void);
+            });
         };
     }, [channel, scrollToBottom]);
 
@@ -244,7 +260,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
         setTextInput(val);
 
         if (val.length > 0 && !typingTimeoutRef.current) {
-            channel.trigger("client-typing", { user: session.user?.name });
+            channel.trigger(PUSHER_EVENTS.CLIENT_TYPING, { user: session.user?.name });
             typingTimeoutRef.current = setTimeout(() => {
                 typingTimeoutRef.current = null;
             }, 2000);
@@ -306,15 +322,15 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
     }, [usersTyping]);
 
     return (
-        <div class={`flex flex-col w-full h-full bg-neutral-950/80 backdrop-blur-md relative p-0 ${MODERN_BOX} rounded-lg`}>
-            {/* HEADER MODERN */}
-            <div class="bg-linear-to-b from-neutral-900 to-black border-b border-neutral-800 p-3 flex items-center justify-between select-none">
+        <div class="flex flex-col w-full h-full bg-[#0d0d0f] relative p-0">
+            {/* HEADER */}
+            <div class="bg-linear-to-b from-[#0f0f11] to-[#0a0a0c] border-b border-[#18181a] p-3 flex items-center justify-between select-none">
                 <h3 class="text-lg font-atomic text-white flex items-center gap-2 tracking-widest">
-                    <LucideMessageCircle class="text-pink-500" size={20} />
+                    <LucideMessageCircle class="text-[#b4cd02]" size={20} />
                     COMUNICACIONES
                 </h3>
                 <div class="flex gap-2">
-                    <div class="w-2 h-2 bg-pink-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(236,72,153,0.8)]"></div>
+                    <div class="w-2 h-2 bg-[#b4cd02] rounded-full animate-pulse shadow-[0_0_8px_rgba(180,205,2,0.5)]"></div>
                     <div class="w-2 h-2 bg-neutral-600 rounded-full"></div>
                     <div class="w-2 h-2 bg-neutral-600 rounded-full"></div>
                 </div>
@@ -324,7 +340,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                class="flex-1 overflow-y-auto max-h-[400px] p-4 flex flex-col gap-y-2 relative scrollbar-squid"
+                class="flex-1 overflow-y-auto min-h-0 p-4 flex flex-col gap-y-2 relative scrollbar-squid"
             >
                 {/* Overlay de Bloqueo */}
                 {chatLocked && (
@@ -358,7 +374,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                 <div class="absolute bottom-20 left-0 right-0 flex justify-center z-10 transition-all duration-300">
                     <button
                         onClick={scrollToBottom}
-                        class={`bg-pink-600/90 text-white font-anton tracking-wide px-4 py-2 text-xs uppercase flex items-center gap-2 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.5)] ${MODERN_BTN}`}
+                        class={`bg-[#b4cd02]/90 text-black font-anton tracking-wide px-4 py-2 text-xs uppercase flex items-center gap-2 rounded-full shadow-[0_0_15px_rgba(180,205,2,0.3)] ${MODERN_BTN}`}
                     >
                         Nuevos Mensajes <LucideChevronDown size={16} />
                     </button>
@@ -366,9 +382,9 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
             )}
 
             {/* AREA DE ESCRITURA */}
-            <div class="bg-black/50 p-3 border-t border-neutral-800">
+            <div class="bg-[#0a0a0c] p-3 border-t border-[#18181a]">
                 <div
-                    class="text-pink-500/70 text-[10px] font-anton h-4 overflow-hidden mb-1 animate-pulse tracking-widest uppercase"
+                    class="text-[#b4cd02]/70 text-[10px] font-anton h-4 overflow-hidden mb-1 animate-pulse tracking-widest uppercase"
                     dangerouslySetInnerHTML={{ __html: usersTypingText }}
                 />
 
@@ -382,7 +398,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                             disabled={chatLocked}
                             maxLength={200}
                             rows={1}
-                            class="w-full h-12 bg-neutral-900/50 text-white text-sm p-3 pr-10 resize-none outline-hidden border border-neutral-800 focus:border-pink-500/50 transition-colors placeholder:text-neutral-600 rounded-sm"
+                            class="w-full h-12 bg-[#0d0d0f] text-white text-sm p-3 pr-10 resize-none outline-hidden border border-[#1c1c1e] focus:border-[#b4cd02]/50 transition-colors placeholder:text-neutral-700 rounded-sm"
                             placeholder={chatLocked ? "TRANSMISIÓN DETENIDA..." : "Mensaje al sistema..."}
                         />
                         <span class={`absolute right-2 bottom-3 text-[10px] font-anton tracking-wide ${textInput.length > 180 ? 'text-red-500' : 'text-neutral-600'}`}>
@@ -409,7 +425,7 @@ export const ChatRoom = ({ session, channel }: ChatProps) => {
                     <button
                         disabled={sending || !textInput.trim() || chatLocked}
                         onClick={sendMessage}
-                        class={`text-white p-3 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed rounded-sm bg-pink-600/80 shadow-[0_0_10px_rgba(236,72,153,0.3)] ${MODERN_BTN}`}
+                        class={`text-black p-3 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed rounded-sm bg-[#b4cd02]/80 shadow-[0_0_10px_rgba(180,205,2,0.2)] ${MODERN_BTN}`}
                     >
                         <LucideSend size={20} />
                     </button>

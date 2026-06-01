@@ -90,6 +90,16 @@
 @utility animate-equalizer {
   animation: equalizer 0.5s ease-in-out infinite;
 }
+@utility animate-glitch {
+  animation: glitch-line 10s ease-in-out infinite;
+}
+
+@keyframes glitch-line {
+  0%, 96%, 100% { opacity: 0; transform: translateX(-100%); }
+  97% { opacity: 0.07; transform: translateX(0); }
+  98% { opacity: 0.03; transform: translateX(1.5px); }
+  99% { opacity: 0; transform: translateX(-100%); }
+}
 @utility border-line {
   @apply border-blue-500/20;
 }

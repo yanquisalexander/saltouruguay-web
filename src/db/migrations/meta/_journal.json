@@ -477,6 +477,20 @@
       "when": 1779332135618,
       "tag": "0067_sloppy_power_man",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1780266996569,
+      "tag": "0068_cheerful_madame_masque",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1780267440173,
+      "tag": "0069_fantastic_penance",
+      "breakpoints": true
     }
   ]
 }

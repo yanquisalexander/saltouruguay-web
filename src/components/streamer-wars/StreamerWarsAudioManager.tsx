@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
 import { AVAILABLE_AUDIOS, type AudioState } from "@/types/audio";
+import { PUSHER_EVENTS } from "@/consts/pusher";
 
 interface StreamerWarsAudioManagerProps {
     session: Session;
@@ -72,22 +73,26 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
     };
 
     useEffect(() => {
+        const handleMuteAll = () => {
+            setAudioStates(prev => {
+                const updated = { ...prev };
+                Object.keys(updated).forEach(id => updated[id].volume = 0);
+                return updated;
+            });
+        };
+
+        const handleStopAll = () => {
+            setAudioStates(prev => {
+                const updated = { ...prev };
+                Object.keys(updated).forEach(id => updated[id].playing = false);
+                return updated;
+            });
+        };
+
         if (channel) {
-            channel.bind("audio-update", handleAudioUpdate);
-            channel.bind("audio-mute-all", () => {
-                setAudioStates(prev => {
-                    const updated = { ...prev };
-                    Object.keys(updated).forEach(id => updated[id].volume = 0);
-                    return updated;
-                });
-            });
-            channel.bind("audio-stop-all", () => {
-                setAudioStates(prev => {
-                    const updated = { ...prev };
-                    Object.keys(updated).forEach(id => updated[id].playing = false);
-                    return updated;
-                });
-            });
+            channel.bind(PUSHER_EVENTS.AUDIO_UPDATE, handleAudioUpdate);
+            channel.bind(PUSHER_EVENTS.AUDIO_MUTE_ALL, handleMuteAll);
+            channel.bind(PUSHER_EVENTS.AUDIO_STOP_ALL, handleStopAll);
         }
 
         actions.audio.getCurrentAudioState({}).then(result => {
@@ -96,9 +101,9 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
 
         return () => {
             if (channel) {
-                channel.unbind("audio-update", handleAudioUpdate);
-                channel.unbind("audio-mute-all");
-                channel.unbind("audio-stop-all");
+                channel.unbind(PUSHER_EVENTS.AUDIO_UPDATE, handleAudioUpdate);
+                channel.unbind(PUSHER_EVENTS.AUDIO_MUTE_ALL, handleMuteAll);
+                channel.unbind(PUSHER_EVENTS.AUDIO_STOP_ALL, handleStopAll);
             }
         };
     }, [channel]);

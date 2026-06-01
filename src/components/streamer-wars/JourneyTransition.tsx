@@ -1,4 +1,4 @@
-import { CDN_PREFIX, playSound, playSoundWithReverb, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { CDN_PREFIX, playSound, playSoundWithReverb, stopAllSounds, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { cloneElement, type JSX } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
@@ -417,6 +417,20 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
         };
     }, [phase, script, executeOnMount]);
 
+    useEffect(() => {
+        if (!import.meta.env.DEV) return;
+        const handler = (e: KeyboardEvent) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                stopAllSounds();
+                document.dispatchEvent(new CustomEvent("journey-transition-ended"));
+                setIsVisible(false);
+            }
+        };
+        addEventListener("keydown", handler);
+        return () => removeEventListener("keydown", handler);
+    }, []);
+
     if (!isVisible) return null;
 
     const minutes = Math.floor(remainingTime / 60);
@@ -424,13 +438,17 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
 
 
 
-
     return (
         <div
             className={`fixed inset-0 bg-black ${isCreditsRoll ? "" : "flex"} min-h-screen h-full flex-col justify-center items-center z-9000 transition-opacity duration-500 ${fadeClass}`}
-        > <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300 z-10001">
+        >             <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300 z-10001">
                 {minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}
             </div>
+            {import.meta.env.DEV && (
+                <div className="fixed top-0 left-8 mt-6 z-10001 font-mono text-[10px] text-neutral-600 tracking-wider uppercase">
+                    Presiona espacio para omitir
+                </div>
+            )}
             <div className="p-8 backdrop-blur-xs text-white text-center">
                 <header>
                     <h1 className="text-3xl font-mono font-bold bg-linear-to-r from-white to-gray-300 text-transparent bg-clip-text">

@@ -9,6 +9,7 @@ import { LucideCrown, LucideLoader } from "lucide-preact";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { PUSHER_EVENTS } from "@/consts/pusher";
 
 interface Props {
     session: Session;
@@ -91,8 +92,8 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
             toast.warning("Tu capitán ha aceptado el soborno. Tu equipo ha sido eliminado del juego.");
         };
 
-        channel.bind("bribe-accepted", handler);
-        return () => channel.unbind("bribe-accepted", handler);
+        channel.bind(PUSHER_EVENTS.BRIBE_ACCEPTED, handler);
+        return () => channel.unbind(PUSHER_EVENTS.BRIBE_ACCEPTED, handler);
     }, [channel]);
 
     return (

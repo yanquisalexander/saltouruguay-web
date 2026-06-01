@@ -5,6 +5,8 @@ import type Pusher from "pusher-js";
 import { toast } from "sonner";
 import { Teams } from "../Teams";
 import { CINEMATICS_CDN_PREFIX } from "@/config";
+import { pusherService } from "@/services/pusher.client";
+import { PUSHER_CHANNELS, PUSHER_EVENTS } from "@/consts/pusher";
 
 export interface Players {
     id?: number;
@@ -108,7 +110,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         playerNumber: null,
     });
 
-    const globalChannel = pusher.subscribe("streamer-wars");
+    const globalChannel = pusher.subscribe(PUSHER_CHANNELS.GLOBAL);
 
     const ContextualMenuActions = [
         {
@@ -143,9 +145,13 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
     useEffect(() => {
         if (!pusher) return;
 
-        const presenceChannel = pusher.subscribe("presence-streamer-wars");
+        const globalChannelEvents: Array<{ event: string; handler: (data: any) => void }> = [];
+        const bindGlobal = (event: string, handler: (data: any) => void) => {
+            pusherService.bind(PUSHER_CHANNELS.GLOBAL, event, handler);
+            globalChannelEvents.push({ event, handler });
+        };
 
-        presenceChannel.bind("pusher:subscription_succeeded", (members: any) => {
+        pusherService.bind(PUSHER_CHANNELS.PRESENCE, PUSHER_EVENTS.SUBSCRIPTION_SUCCEEDED, (members: any) => {
             const onlinePlayers = Object.values(members.members).map((member: any) => ({
                 ...member,
                 displayName: member.name,
@@ -160,7 +166,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             );
         });
 
-        presenceChannel.bind("pusher:member_added", (member: any) => {
+        pusherService.bind(PUSHER_CHANNELS.PRESENCE, PUSHER_EVENTS.MEMBER_ADDED, (member: any) => {
             setPlayers((prev) =>
                 prev.map((player) =>
                     player.id === member.info.id ? { ...player, online: true } : player
@@ -168,7 +174,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             );
         });
 
-        presenceChannel.bind("pusher:member_removed", (member: any) => {
+        pusherService.bind(PUSHER_CHANNELS.PRESENCE, PUSHER_EVENTS.MEMBER_REMOVED, (member: any) => {
             setPlayers((prev) =>
                 prev.map((player) =>
                     player.id === member.info.id ? { ...player, online: false } : player
@@ -176,105 +182,67 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             );
         });
 
-        pusher.channel("streamer-wars").bind(
-            "players-unaislated", () => {
-                toast.success(
-                    `Los jugadores han sido quitados del aislamiento`
-                );
-                setPlayers((prev) =>
-                    prev.map((player) =>
-                        ({ ...player, aislated: false })
-                    )
-                );
-            }
-        );
+        bindGlobal(PUSHER_EVENTS.PLAYERS_UNAISLATED, () => {
+            toast.success(`Los jugadores han sido quitados del aislamiento`);
+            setPlayers((prev) => prev.map((player) => ({ ...player, aislated: false })));
+        });
 
-        pusher?.channel("streamer-wars").bind(
-            "player-eliminated",
-            ({ playerNumber }: { playerNumber: number }) => {
-                toast.success(
-                    `Jugador #${playerNumber?.toString().padStart(3, "0")} eliminado`
-                );
-                playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.08 });
-                setPlayers((prev) =>
-                    prev.map((player) =>
-                        player.playerNumber === playerNumber
-                            ? { ...player, eliminated: true }
-                            : player
-                    )
-                );
-            }
-        );
+        bindGlobal(PUSHER_EVENTS.PLAYER_ELIMINATED, ({ playerNumber }: { playerNumber: number }) => {
+            toast.success(`Jugador #${playerNumber?.toString().padStart(3, "0")} eliminado`);
+            playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.08 });
+            setPlayers((prev) =>
+                prev.map((player) =>
+                    player.playerNumber === playerNumber ? { ...player, eliminated: true } : player
+                )
+            );
+        });
 
-        pusher.channel("streamer-wars").bind(
-            "player-aislated",
-            ({ playerNumber }: { playerNumber: number }) => {
-                toast.success(
-                    `Jugador #${playerNumber?.toString().padStart(3, "0")} aislado`
-                );
-                setPlayers((prev) =>
-                    prev.map((player) =>
-                        player.playerNumber === playerNumber
-                            ? { ...player, aislated: true }
-                            : player
-                    )
-                );
-            }
-        );
+        bindGlobal(PUSHER_EVENTS.PLAYER_AISLATED, ({ playerNumber }: { playerNumber: number }) => {
+            toast.success(`Jugador #${playerNumber?.toString().padStart(3, "0")} aislado`);
+            setPlayers((prev) =>
+                prev.map((player) =>
+                    player.playerNumber === playerNumber ? { ...player, aislated: true } : player
+                )
+            );
+        });
 
-        pusher.channel("streamer-wars").bind(
-            "players-aislated", ({ playerNumbers }: { playerNumbers: number[] }) => {
-                toast.success(
-                    `Los jugadores ${new Intl.ListFormat("es-ES").format(playerNumbers.map((playerNumber) => `#${playerNumber?.toString().padStart(3, "0")}`))} han sido aislados`
-                );
-                setPlayers((prev) =>
-                    prev.map((player) =>
-                        playerNumbers.includes(player.playerNumber)
-                            ? { ...player, aislated: true }
-                            : player
-                    )
-                );
-            }
-        );
-        pusher.channel("streamer-wars").bind(
-            "player-unaislated",
-            ({ playerNumber }: { playerNumber: number }) => {
-                toast.success(
-                    `Jugador #${playerNumber?.toString().padStart(3, "0")} quitado del aislamiento`
-                );
-                setPlayers((prev) =>
-                    prev.map((player) =>
-                        player.playerNumber === playerNumber
-                            ? { ...player, aislated: false }
-                            : player
-                    )
-                );
-            }
-        );
+        bindGlobal(PUSHER_EVENTS.PLAYERS_AISLATED, ({ playerNumbers }: { playerNumbers: number[] }) => {
+            toast.success(
+                `Los jugadores ${new Intl.ListFormat("es-ES").format(playerNumbers.map((n) => `#${n?.toString().padStart(3, "0")}`))} han sido aislados`
+            );
+            setPlayers((prev) =>
+                prev.map((player) =>
+                    playerNumbers.includes(player.playerNumber) ? { ...player, aislated: true } : player
+                )
+            );
+        });
 
-        pusher.channel("streamer-wars").bind(
-            "player-revived",
-            ({ playerNumber }: { playerNumber: number }) => {
-                toast.success(
-                    `Jugador #${playerNumber?.toString().padStart(3, "0")} revivido`
-                );
-                playSound({ sound: STREAMER_WARS_SOUNDS.BUTTON_CLICK, volume: 0.08 });
-                setPlayers((prev) =>
-                    prev.map((player) =>
-                        player.playerNumber === playerNumber
-                            ? { ...player, eliminated: false }
-                            : player
-                    )
-                );
-            }
-        );
+        bindGlobal(PUSHER_EVENTS.PLAYER_UNAISLATED, ({ playerNumber }: { playerNumber: number }) => {
+            toast.success(`Jugador #${playerNumber?.toString().padStart(3, "0")} quitado del aislamiento`);
+            setPlayers((prev) =>
+                prev.map((player) =>
+                    player.playerNumber === playerNumber ? { ...player, aislated: false } : player
+                )
+            );
+        });
+
+        bindGlobal(PUSHER_EVENTS.PLAYER_REVIVED, ({ playerNumber }: { playerNumber: number }) => {
+            toast.success(`Jugador #${playerNumber?.toString().padStart(3, "0")} revivido`);
+            playSound({ sound: STREAMER_WARS_SOUNDS.BUTTON_CLICK, volume: 0.08 });
+            setPlayers((prev) =>
+                prev.map((player) =>
+                    player.playerNumber === playerNumber ? { ...player, eliminated: false } : player
+                )
+            );
+        });
 
         fetchPlayersLiveOnTwitch();
 
-
         return () => {
-            presenceChannel.unbind_all();
-            presenceChannel.unsubscribe();
+            globalChannelEvents.forEach(({ event, handler }) => {
+                pusherService.unbind(PUSHER_CHANNELS.GLOBAL, event, handler);
+            });
+            pusherService.unsubscribe(PUSHER_CHANNELS.PRESENCE);
         };
     }, [pusher]);
 

@@ -9,6 +9,7 @@ import { Instructions } from "../Instructions";
 import { Progress } from "@/components/ui/8bit/progress";
 import { Button } from "@/components/ui/8bit/button";
 import { IS_DEV } from "@/lib/utils";
+import { PUSHER_CHANNELS, PUSHER_EVENTS_TUG_OF_WAR } from "@/consts/pusher";
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -60,9 +61,9 @@ export const TugOfWar = ({
 
     // Subscribe to Pusher events
     useEffect(() => {
-        const globalChannel = pusher?.subscribe("streamer-wars");
+        const globalChannel = pusher?.subscribe(PUSHER_CHANNELS.GLOBAL);
 
-        globalChannel?.bind("tug-of-war:game-started", (newGameState: TugOfWarGameState) => {
+        globalChannel?.bind(PUSHER_EVENTS_TUG_OF_WAR.GAME_STARTED, (newGameState: TugOfWarGameState) => {
             setIsStarting(true);
             setCountdownText("Preparados");
             playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION });
@@ -82,7 +83,7 @@ export const TugOfWar = ({
             }, 3000);
         });
 
-        globalChannel?.bind("tug-of-war:state-update", (data: { progress: number; status: string; winner?: string }) => {
+        globalChannel?.bind(PUSHER_EVENTS_TUG_OF_WAR.STATE_UPDATE, (data: { progress: number; status: string; winner?: string }) => {
             setGameState(prev => ({
                 ...prev,
                 progress: data.progress,
@@ -97,7 +98,7 @@ export const TugOfWar = ({
             }
         });
 
-        globalChannel?.bind("tug-of-war:game-ended", (data: { winner: string; progress: number; winningTeam: string }) => {
+        globalChannel?.bind(PUSHER_EVENTS_TUG_OF_WAR.GAME_ENDED, (data: { winner: string; progress: number; winningTeam: string }) => {
             setGameState(prev => ({
                 ...prev,
                 status: 'finished',
@@ -108,7 +109,7 @@ export const TugOfWar = ({
         });
 
         // Subscribe to game cleared event
-        globalChannel?.bind("tug-of-war:game-cleared", () => {
+        globalChannel?.bind(PUSHER_EVENTS_TUG_OF_WAR.GAME_CLEARED, () => {
             setGameState(prev => ({
                 ...prev,
                 status: 'waiting',
@@ -120,10 +121,10 @@ export const TugOfWar = ({
 
         // Cleanup
         return () => {
-            globalChannel?.unbind("tug-of-war:game-started");
-            globalChannel?.unbind("tug-of-war:state-update");
-            globalChannel?.unbind("tug-of-war:game-ended");
-            globalChannel?.unbind("tug-of-war:game-cleared");
+            globalChannel?.unbind(PUSHER_EVENTS_TUG_OF_WAR.GAME_STARTED);
+            globalChannel?.unbind(PUSHER_EVENTS_TUG_OF_WAR.STATE_UPDATE);
+            globalChannel?.unbind(PUSHER_EVENTS_TUG_OF_WAR.GAME_ENDED);
+            globalChannel?.unbind(PUSHER_EVENTS_TUG_OF_WAR.GAME_CLEARED);
         };
     }, [pusher, gameState.teams]);
 
@@ -217,7 +218,7 @@ export const TugOfWar = ({
                     </div>
                 </div>
             )}
-            <Instructions duration={IS_DEV ? 90000 : 90000}
+            <Instructions duration={IS_DEV ? 10_000 : 90000}
                 controls={[
                     {
                         keys: ["LEFT_CLICK"],

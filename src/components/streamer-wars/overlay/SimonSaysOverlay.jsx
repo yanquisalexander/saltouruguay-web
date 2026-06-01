@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useMemo } from "preact/hooks";
 import { SimonSaysButtons, colors } from "../games/SimonSaysButtons";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
+import { PUSHER_CHANNELS, PUSHER_EVENTS_SIMON } from "@/consts/pusher";
 
 // Componente para mostrar el progreso de los jugadores
 const PlayersProgress = ({ players, currentPlayers, patternsProgress }) => {
@@ -105,17 +106,17 @@ export const SimonSaysOverlay = ({ channel, players, pusher }) => {
     useEffect(() => {
         if (!pusher) return;
 
-        const simonSaysChannel = pusher.subscribe("streamer-wars.simon-says");
+        const simonSaysChannel = pusher.subscribe(PUSHER_CHANNELS.SIMON_SAYS);
 
-        simonSaysChannel.bind("game-state", (newGameState) => {
+        simonSaysChannel.bind(PUSHER_EVENTS_SIMON.GAME_STATE, (newGameState) => {
             if (newGameState.currentRound !== gameState.currentRound) {
                 setPlayersProgress({});
             }
             setGameState(newGameState);
         });
 
-        simonSaysChannel.bind("client-player-input", ({ playerNumber, color }) => {
-            console.log("client-player-input", { playerNumber, color });
+        simonSaysChannel.bind(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, ({ playerNumber, color }) => {
+            console.log(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, { playerNumber, color });
 
             // Actualizamos el progreso del jugador sin mutar el estado anterior
             setPlayersProgress((prevProgress) => {
@@ -127,14 +128,14 @@ export const SimonSaysOverlay = ({ channel, players, pusher }) => {
             });
         });
 
-        simonSaysChannel?.bind("completed-pattern", ({ playerNumber }) => {
+        simonSaysChannel?.bind(PUSHER_EVENTS_SIMON.COMPLETED_PATTERN, ({ playerNumber }) => {
             toast.success(
                 `Jugador #${playerNumber.toString().padStart(3, "0")} ha completado el patrón`,
                 { position: "bottom-center", richColors: true }
             );
         });
 
-        simonSaysChannel?.bind("pattern-failed", ({ playerNumber }) => {
+        simonSaysChannel?.bind(PUSHER_EVENTS_SIMON.PATTERN_FAILED, ({ playerNumber }) => {
             toast.error(
                 `Jugador #${playerNumber.toString().padStart(3, "0")} ha fallado el patrón`,
                 { position: "bottom-center", richColors: true }
@@ -151,9 +152,9 @@ export const SimonSaysOverlay = ({ channel, players, pusher }) => {
         
 
         return () => {
-            simonSaysChannel.unbind("game-state");
-            simonSaysChannel.unbind("client-player-input");
-            pusher.unsubscribe("streamer-wars.simon-says");
+            simonSaysChannel.unbind(PUSHER_EVENTS_SIMON.GAME_STATE);
+            simonSaysChannel.unbind(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT);
+            pusher.unsubscribe(PUSHER_CHANNELS.SIMON_SAYS);
         };
     }, [pusher, gameState.currentRound]);
 

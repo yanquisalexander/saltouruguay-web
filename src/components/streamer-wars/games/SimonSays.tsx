@@ -7,6 +7,8 @@ import type Pusher from "pusher-js";
 import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { SimonSaysButtons, colors } from "./SimonSaysButtons";
+import { pusherService } from "@/services/pusher.client";
+import { PUSHER_CHANNELS, PUSHER_EVENTS_SIMON } from "@/consts/pusher";
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -66,10 +68,10 @@ export const SimonSays = ({
         };
     }, []);
 
-    const simonSaysChannel = pusher?.subscribe("streamer-wars.simon-says");
+    const simonSaysChannel = pusher?.subscribe(PUSHER_CHANNELS.SIMON_SAYS);
 
     useEffect(() => {
-        simonSaysChannel?.bind("game-state", (newGameState: SimonSaysGameState) => {
+        simonSaysChannel?.bind(PUSHER_EVENTS_SIMON.GAME_STATE, (newGameState: SimonSaysGameState) => {
             setGameState(newGameState);
             if (newGameState.status === "playing") {
                 setPlayerPattern([]);
@@ -77,14 +79,14 @@ export const SimonSays = ({
             }
         });
 
-        simonSaysChannel?.bind("pattern-failed", ({ playerNumber }: { playerNumber: number }) => {
+        simonSaysChannel?.bind(PUSHER_EVENTS_SIMON.PATTERN_FAILED, ({ playerNumber }: { playerNumber: number }) => {
             toast.error(
                 `Jugador #${playerNumber.toString().padStart(3, "0")} eliminado`,
                 { position: "bottom-center" }
             );
         });
 
-        simonSaysChannel?.bind("completed-pattern", ({ playerNumber }: { playerNumber: number }) => {
+        simonSaysChannel?.bind(PUSHER_EVENTS_SIMON.COMPLETED_PATTERN, ({ playerNumber }: { playerNumber: number }) => {
             if (playerNumber === session.user.streamerWarsPlayerNumber!) return;
             toast.success(
                 `Jugador #${playerNumber.toString().padStart(3, "0")} completó el patrón`,
@@ -92,7 +94,7 @@ export const SimonSays = ({
             );
         });
 
-        simonSaysChannel?.bind("client-player-input", ({ playerNumber, color }: { playerNumber: number; color: string }) => {
+        simonSaysChannel?.bind(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, ({ playerNumber, color }: { playerNumber: number; color: string }) => {
             setRivalInputs(prev => {
                 const newInputs = { ...prev };
                 if (!newInputs[playerNumber]) newInputs[playerNumber] = [];
@@ -102,11 +104,11 @@ export const SimonSays = ({
         });
 
         return () => {
-            simonSaysChannel?.unbind("game-state");
-            simonSaysChannel?.unbind("pattern-failed");
-            simonSaysChannel?.unbind("completed-pattern");
-            simonSaysChannel?.unbind("client-player-input");
-            simonSaysChannel?.unsubscribe();
+            simonSaysChannel?.unbind(PUSHER_EVENTS_SIMON.GAME_STATE);
+            simonSaysChannel?.unbind(PUSHER_EVENTS_SIMON.PATTERN_FAILED);
+            simonSaysChannel?.unbind(PUSHER_EVENTS_SIMON.COMPLETED_PATTERN);
+            simonSaysChannel?.unbind(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT);
+            pusherService.unsubscribe(PUSHER_CHANNELS.SIMON_SAYS);
         };
     }, [simonSaysChannel, session.user.streamerWarsPlayerNumber]);
 
@@ -129,7 +131,7 @@ export const SimonSays = ({
         const updatedPattern = [...playerPattern, color];
         setPlayerPattern(updatedPattern);
 
-        simonSaysChannel.trigger("client-player-input", {
+        simonSaysChannel.trigger(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, {
             playerNumber: session.user.streamerWarsPlayerNumber!,
             color
         });

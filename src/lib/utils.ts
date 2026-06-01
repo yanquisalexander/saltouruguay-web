@@ -1,8 +1,6 @@
 import clsx, { type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { $ } from "./dom-selector";
-import Pusher from "pusher-js";
-import { PUSHER_APP_ID, PUSHER_APP_KEY } from "astro:env/client";
 const toSlug = (await import("slugify")).default;
 
 
@@ -18,16 +16,6 @@ export const showSignInDialog = () => {
     $signInDialog.showModal();
     return;
   }
-}
-
-export const createPusher = () => {
-  const host = import.meta.env.DEV ? 'localhost' : `soketi.saltouruguayserver.com`;
-  return new Pusher(PUSHER_APP_KEY, {
-    //  wsHost: host,
-    cluster: "us2",
-    enabledTransports: ['ws', 'wss'],
-    forceTLS: !import.meta.env.DEV,
-  });
 }
 
 export const slugify = (text: string) => {

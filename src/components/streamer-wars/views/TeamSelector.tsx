@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
 import { toast } from "sonner";
 import { Instructions } from "../Instructions";
+import { PUSHER_EVENTS } from "@/consts/pusher";
 
 type Player = {
     playerNumber: number;
@@ -174,14 +175,14 @@ export const TeamSelector = ({
             scheduleRefresh();
         };
 
-        channel.bind("player-joined", handlePlayerJoined);
-        channel.bind("player-removed", handlePlayerRemoved);
-        channel.bind("captain-assigned", handleCaptainAssigned);
+        channel.bind(PUSHER_EVENTS.PLAYER_JOINED, handlePlayerJoined);
+        channel.bind(PUSHER_EVENTS.PLAYER_REMOVED, handlePlayerRemoved);
+        channel.bind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, handleCaptainAssigned);
 
         return () => {
-            channel.unbind("player-joined", handlePlayerJoined);
-            channel.unbind("player-removed", handlePlayerRemoved);
-            channel.unbind("captain-assigned", handleCaptainAssigned);
+            channel.unbind(PUSHER_EVENTS.PLAYER_JOINED, handlePlayerJoined);
+            channel.unbind(PUSHER_EVENTS.PLAYER_REMOVED, handlePlayerRemoved);
+            channel.unbind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, handleCaptainAssigned);
         };
     }, [refreshPlayersTeams, scheduleRefresh]);
 

@@ -55,14 +55,47 @@ export const STREAMER_WARS_SOUNDS = {
 }
 
 
+let tickAudio: HTMLAudioElement | null = null;
+
+const getTickAudio = () => {
+    if (!tickAudio) {
+        tickAudio = new Audio(`${CDN_PREFIX}${STREAMER_WARS_SOUNDS.TICK}.mp3`);
+        tickAudio.preload = "auto";
+    }
+    return tickAudio;
+};
+
+const activeAudios = new Set<HTMLAudioElement>();
+const activeAudioContexts = new Set<AudioContext>();
+
+export const stopAllSounds = () => {
+    activeAudios.forEach((a) => { a.pause(); a.currentTime = 0 });
+    activeAudios.clear();
+    activeAudioContexts.forEach((ctx) => {
+        if (ctx.state !== "closed") ctx.close().catch(() => {});
+    });
+    activeAudioContexts.clear();
+};
+
 export const playSound = ({ sound, volume = 1 }: { sound: string; volume?: number }): Promise<void> => {
     return new Promise((resolve) => {
         const audio = new Audio(`${CDN_PREFIX}${sound}.mp3`);
         audio.volume = volume;
-        audio.play();
-        audio.onended = () => resolve();
+        activeAudios.add(audio);
+        audio.play().catch(() => activeAudios.delete(audio));
+        audio.onended = () => {
+            activeAudios.delete(audio);
+            resolve();
+        };
     });
-}
+};
+
+export const playTick = () => {
+    const audio = getTickAudio();
+    audio.currentTime = 0;
+    audio.volume = 1;
+    audio.play().catch(() => {});
+};
 
 
 
@@ -87,6 +120,7 @@ export const playSoundWithReverb = async ({
             if (!AudioCtx) throw new Error("AudioContext is not supported in this browser");
 
             const audioContext = new AudioCtx();
+            activeAudioContexts.add(audioContext);
 
             if (audioContext.state === 'suspended') {
                 await audioContext.resume().catch(e => console.warn('AudioContext resume failed', e));
@@ -155,6 +189,7 @@ export const playSoundWithReverb = async ({
 
             const cleanup = async () => {
                 setTimeout(async () => {
+                    activeAudioContexts.delete(audioContext);
                     if (audioContext.state !== 'closed') await audioContext.close().catch(() => { });
                     if (sound?.startsWith('blob:')) URL.revokeObjectURL(sound);
                     resolve();

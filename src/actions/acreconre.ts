@@ -55,9 +55,9 @@ export const acreconre = {
                     status: "pending"
                 }).execute();
 
-                // Agregar rol de Discord si tiene discordId
-                if (session.user.discordId) {
-                    await addRoleToUserWithoutLogging(SALTO_DISCORD_GUILD_ID, session.user.discordId!, ROLE_ACRECONRE).catch(err => {
+                // Agregar rol de Discord si tiene linkedAccounts.discord
+                if (session.user.linkedAccounts?.discord?.providerUserId) {
+                    await addRoleToUserWithoutLogging(SALTO_DISCORD_GUILD_ID, session.user.linkedAccounts?.discord?.providerUserId!, ROLE_ACRECONRE).catch(err => {
                         console.error("Error adding Discord role:", err);
                     });
                 }

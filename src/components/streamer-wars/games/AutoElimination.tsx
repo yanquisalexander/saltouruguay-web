@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { actions } from "astro:actions";
 import { Instructions } from "../Instructions";
+import { pusherService } from "@/services/pusher.client";
+import { PUSHER_CHANNELS, PUSHER_EVENTS_AUTO_ELIM } from "@/consts/pusher";
 
 interface AutoEliminationProps {
     pusher: Pusher;
@@ -16,8 +18,8 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
     const channelRef = useRef<Channel | null>(null);
 
     useEffect(() => {
-        // Suscribirse al canal "auto-elimination"
-        channelRef.current = pusher.subscribe("auto-elimination");
+        // Suscribirse al canal PUSHER_CHANNELS.AUTO_ELIMINATION
+        channelRef.current = pusher.subscribe(PUSHER_CHANNELS.AUTO_ELIMINATION);
 
         const handlePlayerAutoEliminated = (data: { playerNumber: number }) => {
             setAutoEliminatedPlayers((prev) => {
@@ -44,11 +46,11 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
             setAutoEliminatedPlayers(data.autoEliminatedPlayers);
         });
 
-        channelRef.current.bind("player-autoeliminated", handlePlayerAutoEliminated);
+        channelRef.current.bind(PUSHER_EVENTS_AUTO_ELIM.PLAYER_AUTOELIMINATED, handlePlayerAutoEliminated);
 
         return () => {
-            channelRef.current?.unbind("player-autoeliminated", handlePlayerAutoEliminated);
-            channelRef.current?.unsubscribe();
+            channelRef.current?.unbind(PUSHER_EVENTS_AUTO_ELIM.PLAYER_AUTOELIMINATED, handlePlayerAutoEliminated);
+            pusherService.unsubscribe(PUSHER_CHANNELS.AUTO_ELIMINATION);
         };
     }, [pusher, session]);
 

@@ -34,7 +34,7 @@ const currentInscriptions = await getCurrentInscriptions().catch((e) => {
           </div>
           <footer class="flex items-center justify-between">
             <a
-              href={`https://discord.com/users/${inscription.user?.discordId}`}
+              href={`https://discord.com/users/${inscription.user?.linkedAccounts?.discord?.providerUserId}`}
               class="text-blue-400"
             >
               <LucideExternalLink class="w-4 h-4 inline-block mr-1" />

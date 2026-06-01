@@ -6,6 +6,7 @@ import { actions } from "astro:actions";
 import { LucideCrown } from "lucide-preact";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { TEAMS } from "@/consts/Teams";
+import { PUSHER_EVENTS } from "@/consts/pusher";
 
 interface Player {
     playerNumber: number;
@@ -42,7 +43,7 @@ export const EliminatedTeamOverlay = ({
         fetchTeams();
     }, []);
 
-    // Escucha el evento "bribe-accepted" para activar el overlay
+    // Escucha el evento PUSHER_EVENTS.BRIBE_ACCEPTED para activar el overlay
     useEffect(() => {
         const handleBribeAccepted = ({ team }: { team: string }) => {
             setEliminatedTeam(team);
@@ -54,9 +55,9 @@ export const EliminatedTeamOverlay = ({
             }, 10000);
         };
 
-        channel?.bind("bribe-accepted", handleBribeAccepted);
+        channel?.bind(PUSHER_EVENTS.BRIBE_ACCEPTED, handleBribeAccepted);
         return () => {
-            channel?.unbind("bribe-accepted", handleBribeAccepted);
+            channel?.unbind(PUSHER_EVENTS.BRIBE_ACCEPTED, handleBribeAccepted);
         };
     }, [pusher, channel]);
 
