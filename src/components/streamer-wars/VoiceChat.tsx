@@ -296,6 +296,20 @@ export const VoiceChat = ({ userId, userName, teamId, isAdmin, players }: VoiceC
                                 </span>
                             </div>
 
+                            {/* PTT button for mobile / click */}
+                            <button
+                                onMouseDown={(e) => { e.preventDefault(); VoiceChatManager.getInstance().pttStart(); }}
+                                onMouseUp={() => VoiceChatManager.getInstance().pttStop()}
+                                onMouseLeave={() => VoiceChatManager.getInstance().pttStop()}
+                                onTouchStart={(e) => { e.preventDefault(); VoiceChatManager.getInstance().pttStart(); }}
+                                onTouchEnd={() => VoiceChatManager.getInstance().pttStop()}
+                                class={`w-full py-2 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider transition-all select-none touch-none ${isPTTActive
+                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30 shadow-[0_0_12px_rgba(34,197,94,0.2)]'
+                                    : 'bg-white/5 text-white/30 border border-white/5 hover:bg-white/10 active:bg-green-500/10 active:text-green-400 active:border-green-500/20'}`}
+                            >
+                                {isPTTActive ? 'HABLANDO' : 'PULSA PARA HABLAR'}
+                            </button>
+
                             {/* Mic selector */}
                             {availableMics.length > 1 && (
                                 <select

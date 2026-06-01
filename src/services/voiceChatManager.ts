@@ -64,6 +64,40 @@ export class VoiceChatManager {
         this.isFocusRef = false;
     }
 
+    public pttStart() {
+        if (this.isPTTActive) return;
+        this.isPTTActive = true;
+        useVoiceChatStore.getState().setIsPTTActive(true);
+        if (this.localStream && this.teamId) {
+            if (this.debounceRef) clearTimeout(this.debounceRef);
+            this.localStream.getAudioTracks().forEach(t => t.enabled = true);
+            useVoiceChatStore.getState().setLocalMicEnabled(true);
+            this.sendSignal(this.teamId, "voice:ptt-start", {
+                userId: this.userId,
+                userName: this.userName,
+            });
+        }
+    }
+
+    public pttStop() {
+        if (!this.isPTTActive) return;
+        this.isPTTActive = false;
+        useVoiceChatStore.getState().setIsPTTActive(false);
+        if (this.debounceRef) {
+            clearTimeout(this.debounceRef);
+            this.debounceRef = null;
+        }
+        if (this.localStream) {
+            this.localStream.getAudioTracks().forEach(t => t.enabled = false);
+        }
+        useVoiceChatStore.getState().setLocalMicEnabled(false);
+        if (this.teamId) {
+            this.sendSignal(this.teamId, "voice:ptt-end", {
+                userId: this.userId,
+            });
+        }
+    }
+
     private onKeyDown(e: KeyboardEvent) {
         if (this.isFocusRef) return;
         if (e.key.toLowerCase() === 'v' && !this.isPTTActive) {
@@ -238,13 +272,28 @@ export class VoiceChatManager {
         };
 
         pc.ontrack = (e) => {
+            console.log(`[VoiceChat] ontrack from ${peerId}, streams:`, e.streams?.length);
+            const stream = e.streams?.[0];
+            if (!stream) return;
             const audio = new Audio();
-            audio.srcObject = e.streams[0];
+            audio.srcObject = stream;
             audio.volume = 1;
-            audio.autoplay = true;
-            audio.play().catch(err => console.warn("Autoplay block", err));
+            document.body.appendChild(audio);
+            audio.play().then(() => {
+                console.log(`[VoiceChat] audio playing from ${peerId}`);
+            }).catch(err => {
+                console.warn(`[VoiceChat] Autoplay blocked for ${peerId}`, err);
+                // Retry on first user interaction
+                const resume = () => {
+                    audio.play().catch(() => {});
+                    document.removeEventListener('click', resume);
+                    document.removeEventListener('keydown', resume);
+                };
+                document.addEventListener('click', resume, { once: true });
+                document.addEventListener('keydown', resume, { once: true });
+            });
             this.remoteAudios[peerId] = audio;
-            this.monitorAudioActivity(peerId, e.streams[0]);
+            this.monitorAudioActivity(peerId, stream);
         };
 
         pc.onconnectionstatechange = () => {
@@ -335,6 +384,9 @@ export class VoiceChatManager {
         }
         if (this.remoteAudios[peerId]) {
             this.remoteAudios[peerId].pause();
+            if (this.remoteAudios[peerId].parentNode) {
+                this.remoteAudios[peerId].parentNode.removeChild(this.remoteAudios[peerId]);
+            }
             delete this.remoteAudios[peerId];
         }
         if (this.audioContexts[peerId]) {
