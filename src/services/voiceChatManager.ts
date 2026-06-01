@@ -177,6 +177,11 @@ export class VoiceChatManager {
         const isSpectatingOthers = isAdmin ? Object.values(spectatingTeams).some(v => v) : false;
         const wantsToListen = isPlayingForOwnTeam || isSpectatingOthers;
 
+        // If voice was previously active but is now disabled, release resources
+        if (!isPlayingForOwnTeam && (this.localStream || Object.keys(this.activeConnections).length > 0)) {
+            this.releaseVoice();
+        }
+
         window.removeEventListener('keydown', this.handleKeyDownFn);
         window.removeEventListener('keyup', this.handleKeyUpFn);
         document.removeEventListener('focusin', this.handleFocusInFn);
@@ -413,6 +418,9 @@ export class VoiceChatManager {
 
             channel.bind("voice:disabled", (d: any) => {
                 useVoiceChatStore.getState().setVoiceEnabled(d.teamId, false);
+                if (d.teamId === this.teamId) {
+                    this.releaseVoice();
+                }
             });
 
             channel.bind("voice:force-mute", (d: any) => {
@@ -476,6 +484,21 @@ export class VoiceChatManager {
                 if (!isSpec) this.sendSignal(targetTeamId, "voice:user-joined", { userId: this.userId });
             });
         });
+    }
+
+    private releaseVoice() {
+        if (this.localStream) {
+            this.localStream.getTracks().forEach(t => t.stop());
+            this.localStream = null;
+        }
+        Object.keys(this.retryTimers).forEach(id => {
+            clearTimeout(this.retryTimers[id]);
+            delete this.retryTimers[id];
+        });
+        this.retryAttempts = {};
+        Object.keys(this.activeConnections).forEach(this.disconnectPeer.bind(this));
+        this.isPTTActive = false;
+        useVoiceChatStore.getState().cleanup();
     }
 
     public cleanup() {

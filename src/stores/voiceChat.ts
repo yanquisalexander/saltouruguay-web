@@ -178,6 +178,9 @@ export const useVoiceChatStore = create<VoiceGlobalState & VoiceActions>((set, g
             isPTTActive: false,
             isReconnecting: false,
             connectionError: null,
+            forcedMuteTargets: [],
+            availableMics: [],
+            selectedMicId: null,
         }));
     },
 }));
