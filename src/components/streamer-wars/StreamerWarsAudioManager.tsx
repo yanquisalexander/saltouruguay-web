@@ -6,9 +6,25 @@ import { PUSHER_EVENTS } from "@/consts/pusher";
 
 interface StreamerWarsAudioManagerProps {
     session: Session;
-    channel: any; // Pusher channel
+    channel: any;
     isAdmin: boolean;
 }
+
+const Equalizer = ({ active, color }: { active: boolean; color: string }) => (
+    <div class="flex items-end gap-[2px] h-4">
+        {[1, 2, 3, 4].map((i) => (
+            <div
+                key={i}
+                class={`w-[3px] rounded-xs transition-all duration-300 ${active ? color : 'bg-white/10'}`}
+                style={{
+                    height: active ? `${40 + i * 15}%` : '20%',
+                    animation: active ? `equalizer 0.${i * 3 + 3}s ease-in-out infinite` : 'none',
+                    animationDelay: `${i * 0.12}s`,
+                }}
+            />
+        ))}
+    </div>
+);
 
 export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: StreamerWarsAudioManagerProps) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -44,7 +60,7 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
 
     useEffect(() => {
         if (isOpen) {
-            dialogRef.current?.show();
+            dialogRef.current?.showModal();
         }
     }, [isOpen]);
 
@@ -119,43 +135,60 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
 
     if (!isAdmin) return null;
 
+    const playingCount = Object.values(audioStates).filter(s => s.playing).length;
+
     return (
         <dialog
             ref={dialogRef}
-            class="fixed bottom-20 left-4 z-10000 bg-slate-900 text-white border-4 border-slate-600 p-0 min-w-[400px] max-w-[600px] w-full max-h-[80vh] overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] rounded-xs backdrop:bg-black/50"
+            onClick={(e) => e.target === dialogRef.current && dialogRef.current?.close()}
+            class="backdrop:bg-black/80 backdrop:backdrop-blur-xs bg-[#0a0a0a] text-white border border-white/10 rounded-2xl shadow-2xl p-0 w-full max-w-2xl m-auto open:animate-in open:fade-in open:zoom-in-95"
         >
-            {/* Retro Header */}
-            <div class="bg-slate-800 p-3 border-b-4 border-slate-600 flex justify-between items-center sticky top-0 z-10">
-                <h2 class="text-yellow-400 text-sm font-bold flex items-center gap-2 font-press-start-2p uppercase tracking-widest">
-                    <span class="animate-pulse">●</span> Audio Deck
-                </h2>
-                <button
-                    onClick={() => dialogRef.current?.close()}
-                    class="text-slate-400 hover:text-white hover:bg-red-500 px-2 font-mono border-2 border-transparent hover:border-white transition-all"
-                >
-                    [X]
-                </button>
+            {/* Header */}
+            <div class="p-6 border-b border-white/10 flex justify-between items-center bg-[#15151a] rounded-t-2xl">
+                <div class="flex items-center gap-3">
+                    <Equalizer active={playingCount > 0} color="bg-electric-violet-500" />
+                    <h2 class="text-xl font-anton uppercase tracking-wide text-white">
+                        Audio Deck
+                    </h2>
+                    {playingCount > 0 && (
+                        <span class="text-xs font-mono text-electric-violet-400 bg-electric-violet-500/10 border border-electric-violet-500/20 px-2 py-0.5 rounded-md">
+                            {playingCount} active
+                        </span>
+                    )}
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-mono text-white/20 tracking-widest hidden sm:block">[A]</span>
+                    <button
+                        onClick={() => dialogRef.current?.close()}
+                        class="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
             </div>
 
-            <div class="p-4 overflow-y-auto max-h-[calc(80vh-60px)] bg-slate-900">
+            {/* Body */}
+            <div class="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar scrollbar-hide">
                 {/* Global Controls */}
-                <div class="grid grid-cols-2 gap-4 mb-6 pb-6 border-b-2 border-dashed border-slate-700">
+                <div class="flex gap-3 mb-6 pb-6 border-b border-white/5">
                     <button
                         onClick={() => actions.audio.muteAll({})}
-                        class="bg-red-900 hover:bg-red-600 text-white py-3 px-4 border-b-4 border-r-4 border-red-950 active:border-0 active:translate-y-1 font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 group"
+                        class="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 rounded-xl transition-all text-sm font-bold"
                     >
-                        <span class="group-hover:animate-ping">🔇</span> SILENCE ALL
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" x2="17" y1="9" y2="15"/><line x1="17" x2="23" y1="9" y2="15"/></svg>
+                        Silence All
                     </button>
                     <button
                         onClick={() => actions.audio.stopAll({})}
-                        class="bg-orange-900 hover:bg-orange-600 text-white py-3 px-4 border-b-4 border-r-4 border-orange-950 active:border-0 active:translate-y-1 font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 group"
+                        class="flex items-center gap-2 px-4 py-2 bg-orange-500/10 hover:bg-orange-500 text-orange-400 hover:text-white border border-orange-500/20 rounded-xl transition-all text-sm font-bold"
                     >
-                        <span class="group-hover:animate-spin">⏹</span> STOP ALL
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="4" height="16" x="6" y="4" rx="1"/><rect width="4" height="16" x="14" y="4" rx="1"/></svg>
+                        Stop All
                     </button>
                 </div>
 
                 {/* Audio Grid */}
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {AVAILABLE_AUDIOS.map(audio => {
                         const state = audioStates[audio.id] || { id: audio.id, playing: false, volume: 1, loop: false };
                         const isPlaying = state.playing;
@@ -163,70 +196,70 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
                         return (
                             <div
                                 key={audio.id}
-                                class={`
-                                    relative p-3 border-2 transition-all bg-slate-950
-                                    ${isPlaying
-                                        ? 'border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.2)]'
-                                        : 'border-slate-700 hover:border-slate-500'}
-                                `}
+                                class={`group relative rounded-xl border transition-all duration-200 bg-black/40 ${isPlaying
+                                    ? 'border-electric-violet-500/40 bg-electric-violet-500/5 shadow-[0_0_20px_rgba(145,70,255,0.08)]'
+                                    : 'border-white/5 hover:border-white/10 hover:bg-white/[0.02]'}`}
                             >
-                                {/* Status Indicator Light */}
-                                <div class={`absolute top-2 right-2 w-2 h-2 rounded-xs ${isPlaying ? 'bg-green-500 animate-pulse shadow-[0_0_5px_#22c55e]' : 'bg-slate-800'}`} />
+                                <div class="p-4 flex flex-col gap-3">
+                                    {/* Top row: name + status */}
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class={`text-xs font-rubik font-semibold truncate ${isPlaying ? 'text-electric-violet-300' : 'text-white/60'}`}>
+                                            {audio.name}
+                                        </span>
+                                        <div class="flex items-center gap-1.5 shrink-0">
+                                            {isPlaying && (
+                                                <Equalizer active color="bg-electric-violet-500" />
+                                            )}
+                                            <div class={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${isPlaying ? 'bg-electric-violet-500 animate-pulse shadow-[0_0_6px_rgba(145,70,255,0.6)]' : 'bg-white/10'}`} />
+                                        </div>
+                                    </div>
 
-                                <div class="flex flex-col gap-2">
-                                    <span class="text-xs font-press-start-2p text-slate-300 truncate pr-4" title={audio.name}>
-                                        {audio.name}
-                                    </span>
-
-                                    {/* Control Row */}
-                                    <div class="flex gap-1 mt-1">
+                                    {/* Controls row */}
+                                    <div class="flex items-center gap-1.5">
                                         <button
                                             onClick={() => isPlaying ? handlePause(audio.id) : handlePlay(audio.id)}
-                                            class={`
-                                                flex-1 py-1 px-2 text-[10px] font-mono font-bold border-b-2 border-r-2 active:border-0 active:translate-y-[2px] transition-colors
-                                                ${isPlaying
-                                                    ? 'bg-yellow-600 border-yellow-800 text-white hover:bg-yellow-500'
-                                                    : 'bg-green-700 border-green-900 text-white hover:bg-green-600'}
-                                            `}
+                                            class={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${isPlaying
+                                                ? 'bg-electric-violet-500/20 text-electric-violet-300 border border-electric-violet-500/30 hover:bg-electric-violet-500/30'
+                                                : 'bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20'}`}
+                                            title={isPlaying ? 'Pause' : 'Play'}
                                         >
-                                            {isPlaying ? 'PAUSE' : 'PLAY'}
+                                            {isPlaying
+                                                ? <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                                                : <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
                                         </button>
 
                                         <button
                                             onClick={() => handleStop(audio.id)}
-                                            class="px-2 bg-slate-700 border-slate-900 border-b-2 border-r-2 active:border-0 active:translate-y-[2px] hover:bg-red-600 text-white text-[10px]"
+                                            class="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 text-white/30 border border-white/5 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30 transition-all"
+                                            title="Stop"
                                         >
-                                            ⏹
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
                                         </button>
 
                                         <button
                                             onClick={() => handleLoopToggle(audio.id)}
-                                            class={`
-                                                px-2 border-b-2 border-r-2 active:border-0 active:translate-y-[2px] text-[10px] transition-colors
-                                                ${state.loop
-                                                    ? 'bg-purple-600 border-purple-900 text-white'
-                                                    : 'bg-slate-800 border-slate-950 text-slate-500 hover:text-white'}
-                                            `}
-                                            title="Toggle Loop"
+                                            class={`flex items-center justify-center w-8 h-8 rounded-lg border transition-all ${state.loop
+                                                ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                                                : 'bg-white/5 text-white/20 border-white/5 hover:text-white/40'}`}
+                                            title="Loop"
                                         >
-                                            🔁
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/><path d="M21 3v5h-5"/></svg>
                                         </button>
-                                    </div>
 
-                                    {/* Volume Slider */}
-                                    <div class="flex items-center gap-2 mt-1 bg-slate-900/50 p-1 rounded-sm border border-white/5">
-                                        <span class="text-[10px] text-slate-500">VOL</span>
-                                        <input
-                                            type="range"
-                                            min="0"
-                                            max="100"
-                                            value={state.volume * 100}
-                                            onInput={(e) => handleVolumeChange(audio.id, parseInt((e.target as HTMLInputElement).value))}
-                                            class="flex-1 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-500 hover:accent-green-400"
-                                        />
-                                        <span class="text-[10px] font-mono w-8 text-right text-green-400">
-                                            {Math.round(state.volume * 100)}%
-                                        </span>
+                                        {/* Volume slider */}
+                                        <div class="flex-1 flex items-center gap-2 ml-1">
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="100"
+                                                value={state.volume * 100}
+                                                onInput={(e) => handleVolumeChange(audio.id, parseInt((e.target as HTMLInputElement).value))}
+                                                class="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-electric-violet-500 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-electric-violet-500 [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(145,70,255,0.4)] [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-125"
+                                            />
+                                            <span class="text-[10px] font-mono w-8 text-right text-white/40 tabular-nums">
+                                                {Math.round(state.volume * 100)}%
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -234,8 +267,10 @@ export const StreamerWarsAudioManager = ({ session, channel, isAdmin }: Streamer
                     })}
                 </div>
 
-                <div class="text-[10px] text-slate-500 mt-6 text-center font-mono border-t border-slate-800 pt-2">
-                    PRESS 'A' TO TOGGLE // ESC TO EXIT
+                {/* Footer hint */}
+                <div class="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-white/20">
+                    <span>PRESS A TO TOGGLE</span>
+                    <span class="hidden sm:block">{AVAILABLE_AUDIOS.length} TRACKS</span>
                 </div>
             </div>
         </dialog>
