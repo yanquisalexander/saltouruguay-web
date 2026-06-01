@@ -54,6 +54,16 @@ export const VoiceControls = ({ isAdmin }: VoiceControlsProps) => {
     const handleSpectate = async (teamId: string, enable: boolean) => {
         setLoading(true);
         try {
+            if (enable) {
+                // Only 1 team at a time — disable any other spectated team first
+                const currentSpectated = Object.keys(spectatingTeams).find(id => spectatingTeams[id] && id !== teamId);
+                if (currentSpectated) {
+                    const { error: disableErr } = await actions.voice.spectate({ teamId: currentSpectated, enable: false });
+                    if (!disableErr) {
+                        setSpectatingTeam(currentSpectated, false);
+                    }
+                }
+            }
             const { error } = await actions.voice.spectate({ teamId, enable });
             if (error) {
                 toast.error(`Error: ${error.message}`);

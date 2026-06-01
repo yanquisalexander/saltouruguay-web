@@ -94,7 +94,11 @@ const ParticipantAvatar = ({
                     src={player.avatar}
                     alt={player.displayName}
                     class={`w-7 h-7 rounded-full border-2 object-cover transition-all duration-150 ${statusColor} ${statusGlow}`}
-                    onError={(e) => e.currentTarget.src = "/fallback.png"}
+                    onError={(e) => {
+                        const img = e.currentTarget;
+                        if (img.src.startsWith('data:')) return;
+                        img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Crect width='28' height='28' fill='%23222'/%3E%3C/svg%3E";
+                    }}
                 />
                 {isSpectating && (
                     <div class="absolute -top-1 -right-1 bg-blue-600 rounded-full w-3.5 h-3.5 flex items-center justify-center ring-1 ring-black">
@@ -195,13 +199,20 @@ export const VoiceChat = ({ userId, userName, teamId, isAdmin, players }: VoiceC
         if (!id) return 'NONE';
         return id.split('-').pop()?.toUpperCase() || 'UNKNOWN';
     };
-    const teamName = extractTeamName(teamId);
 
+    // Spectator mode: admin can listen to another team without talking
+    const spectatedTeamId = isAdmin ? Object.keys(spectatingTeams).find(id => spectatingTeams[id]) : null;
+    const isSpectatorMode = !!spectatedTeamId;
+    const displayTeamId = spectatedTeamId || teamId;
+    const displayTeamName = extractTeamName(displayTeamId);
     const teamPlayers = players.filter(p => p.team === teamId || p.team === `team-${teamId}`);
-    const currentSpectators: SpectatorInfo[] = teamId ? spectatingUsers[teamId] || [] : [];
-    const voiceIsReady = teamId ? voiceEnabledTeams[teamId] : false;
+    const displayTeamPlayers = isSpectatorMode
+        ? players.filter(p => p.team === displayTeamId || p.team === `team-${displayTeamId}`)
+        : teamPlayers;
+    const displaySpectators: SpectatorInfo[] = displayTeamId ? spectatingUsers[displayTeamId] || [] : [];
+    const voiceIsReady = displayTeamId ? voiceEnabledTeams[displayTeamId] : false;
 
-    if (!teamId || !voiceIsReady) return null;
+    if (!displayTeamId || !voiceIsReady) return null;
 
     return (
         <div class={`fixed ${isAdminSpectator ? 'top-4 left-4' : 'bottom-4 right-4'} z-50 select-none`}>
@@ -210,7 +221,7 @@ export const VoiceChat = ({ userId, userName, teamId, isAdmin, players }: VoiceC
                 <div class="px-4 py-3 border-b border-white/5 bg-[#15151a] flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <div class={`w-2 h-2 rounded-full ${isReconnecting ? 'bg-yellow-500 animate-pulse' : peerCount > 0 ? 'bg-green-500' : 'bg-white/10'}`} />
-                        <span class="text-xs font-anton uppercase tracking-wide text-white">{teamName}</span>
+                        <span class="text-xs font-anton uppercase tracking-wide text-white">{displayTeamName}{isSpectatorMode && <span class="text-blue-400 ml-1 text-[9px] font-mono">(ESP)</span>}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         {isReconnecting && <span class="text-[8px] font-mono text-yellow-500">RECON</span>}
@@ -221,7 +232,7 @@ export const VoiceChat = ({ userId, userName, teamId, isAdmin, players }: VoiceC
                 {/* Participant list */}
                 <div class="px-3 py-2 max-h-48 overflow-y-auto scrollbar-hide space-y-0.5">
                     {/* Spectators */}
-                    {currentSpectators.map((spec) => (
+                    {displaySpectators.map((spec) => (
                         <ParticipantAvatar
                             key={`spec-${spec.id}`}
                             player={{ id: spec.id, avatar: "", displayName: spec.name }}
@@ -234,7 +245,7 @@ export const VoiceChat = ({ userId, userName, teamId, isAdmin, players }: VoiceC
                     ))}
 
                     {/* Team players */}
-                    {teamPlayers.map((player) => {
+                    {displayTeamPlayers.map((player) => {
                         const sid = String(player.id);
                         const isPlayerTalking = talkingUsers.includes(sid) || talkingUsers.includes(player.id as any);
                         const isPlayerPTT = pttActiveUsers.includes(sid) || pttActiveUsers.includes(player.id as any);
@@ -255,7 +266,7 @@ export const VoiceChat = ({ userId, userName, teamId, isAdmin, players }: VoiceC
                         );
                     })}
 
-                    {teamPlayers.length === 0 && currentSpectators.length === 0 && (
+                    {displayTeamPlayers.length === 0 && displaySpectators.length === 0 && (
                         <div class="text-[10px] text-white/20 font-mono text-center py-4">
                             No players in channel
                         </div>
@@ -264,41 +275,50 @@ export const VoiceChat = ({ userId, userName, teamId, isAdmin, players }: VoiceC
 
                 {/* Control bar */}
                 <div class="px-4 py-3 border-t border-white/5 bg-black/30 space-y-2">
-                    {/* VU Meter + PTT status */}
-                    <div class="flex items-center gap-2">
-                        <VUMeter stream={localStream} />
-                        <span class={`text-[9px] font-mono whitespace-nowrap ${isPTTActive ? 'text-green-400' : isMuted ? 'text-red-400' : 'text-white/30'}`}>
-                            {isMuted ? 'MUTED' : isPTTActive ? 'TALKING' : 'HOLD [V]'}
-                        </span>
-                    </div>
+                    {isSpectatorMode ? (
+                        <div class="flex items-center gap-2 py-1">
+                            <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                            <span class="text-[9px] font-mono text-blue-400">ESCUCHANDO</span>
+                        </div>
+                    ) : (
+                        <>
+                            {/* VU Meter + PTT status */}
+                            <div class="flex items-center gap-2">
+                                <VUMeter stream={localStream} />
+                                <span class={`text-[9px] font-mono whitespace-nowrap ${isPTTActive ? 'text-green-400' : isMuted ? 'text-red-400' : 'text-white/30'}`}>
+                                    {isMuted ? 'MUTED' : isPTTActive ? 'TALKING' : 'HOLD [V]'}
+                                </span>
+                            </div>
+
+                            {/* Mic selector */}
+                            {availableMics.length > 1 && (
+                                <select
+                                    value={selectedMicId ?? ""}
+                                    onChange={(e) => {
+                                        const val = (e.target as HTMLSelectElement).value;
+                                        if (val) {
+                                            setSelectedMicId(val);
+                                            VoiceChatManager.getInstance().setMicDevice(val);
+                                        }
+                                    }}
+                                    class="w-full text-[9px] font-mono bg-black/40 text-white/60 border border-white/5 rounded-lg px-2 py-1 outline-hidden cursor-pointer"
+                                >
+                                    <option value="">Default Mic</option>
+                                    {availableMics.map((mic) => (
+                                        <option key={mic.deviceId} value={mic.deviceId}>
+                                            {mic.label || `Mic ${mic.deviceId.slice(0, 8)}`}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                        </>
+                    )}
 
                     {/* Connection error */}
                     {connectionError && (
                         <div class="text-[9px] font-mono text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-2 py-1">
                             {connectionError}
                         </div>
-                    )}
-
-                    {/* Mic selector */}
-                    {availableMics.length > 1 && (
-                        <select
-                            value={selectedMicId ?? ""}
-                            onChange={(e) => {
-                                const val = (e.target as HTMLSelectElement).value;
-                                if (val) {
-                                    setSelectedMicId(val);
-                                    VoiceChatManager.getInstance().setMicDevice(val);
-                                }
-                            }}
-                            class="w-full text-[9px] font-mono bg-black/40 text-white/60 border border-white/5 rounded-lg px-2 py-1 outline-hidden cursor-pointer"
-                        >
-                            <option value="">Default Mic</option>
-                            {availableMics.map((mic) => (
-                                <option key={mic.deviceId} value={mic.deviceId}>
-                                    {mic.label || `Mic ${mic.deviceId.slice(0, 8)}`}
-                                </option>
-                            ))}
-                        </select>
                     )}
                 </div>
             </div>
