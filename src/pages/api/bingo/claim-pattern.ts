@@ -9,6 +9,13 @@ type ClaimType = "LINEA_HORIZONTAL" | "LINEA_VERTICAL" | "DIAGONAL" | "BINGO";
 type CardCell = number | "FREE";
 type CardMatrix = CardCell[][];
 
+interface ClaimResult {
+  ok: boolean;
+  label?: string;
+  numbers?: CardCell[];
+  numbersText?: string;
+}
+
 export const POST: APIRoute = async ({ request }) => {
   const authSession = await getSession(request);
 
@@ -75,6 +82,8 @@ export const POST: APIRoute = async ({ request }) => {
     player: username,
     type,
     label: result.label,
+    numbers: result.numbers ?? [],
+    numbersText: result.numbersText ?? "",
     timestamp: Date.now(),
   };
 
@@ -84,7 +93,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (type === "BINGO") {
     state.gameOver = true;
     state.winner = username;
-    state.winnerType = result.label;
+    state.winnerType = result.label ?? "🏆 BINGO COMPLETO";
     state.timestamp = Date.now();
 
     await cache.set(stateKey, state, GAME_TTL);
@@ -93,12 +102,21 @@ export const POST: APIRoute = async ({ request }) => {
   return json({ ok: true, claim: newClaim }, 200);
 };
 
-function checkClaim(card: CardMatrix, drawn: number[], type: ClaimType) {
-  const has = (n: CardCell) => n === "FREE" || drawn.includes(n);
+function checkClaim(
+  card: CardMatrix,
+  drawn: number[],
+  type: ClaimType,
+): ClaimResult {
+  const has = (n: CardCell) => n === "FREE" || drawn.includes(n as number);
 
   if (type === "BINGO") {
     if (card.flat().every(has)) {
-      return { ok: true, label: "🏆 BINGO COMPLETO" };
+      return {
+        ok: true,
+        label: "🏆 BINGO COMPLETO",
+        numbers: card.flat(),
+        numbersText: formatNumbers(card.flat()),
+      };
     }
 
     return { ok: false };
@@ -106,10 +124,14 @@ function checkClaim(card: CardMatrix, drawn: number[], type: ClaimType) {
 
   if (type === "LINEA_HORIZONTAL") {
     for (let r = 0; r < 5; r++) {
-      if (card[r].every(has)) {
+      const row = card[r];
+
+      if (row.every(has)) {
         return {
           ok: true,
           label: `➖ Línea horizontal fila ${r + 1}`,
+          numbers: row,
+          numbersText: formatNumbers(row),
         };
       }
     }
@@ -117,32 +139,48 @@ function checkClaim(card: CardMatrix, drawn: number[], type: ClaimType) {
 
   if (type === "LINEA_VERTICAL") {
     for (let c = 0; c < 5; c++) {
-      if (card.every((row) => has(row[c]))) {
+      const column = card.map((row) => row[c]);
+
+      if (column.every(has)) {
         return {
           ok: true,
           label: `│ Línea vertical columna ${c + 1}`,
+          numbers: column,
+          numbersText: formatNumbers(column),
         };
       }
     }
   }
 
   if (type === "DIAGONAL") {
-    if ([0, 1, 2, 3, 4].every((i) => has(card[i][i]))) {
+    const diagonalPrincipal = [0, 1, 2, 3, 4].map((i) => card[i][i]);
+
+    if (diagonalPrincipal.every(has)) {
       return {
         ok: true,
         label: "✖ Diagonal principal",
+        numbers: diagonalPrincipal,
+        numbersText: formatNumbers(diagonalPrincipal),
       };
     }
 
-    if ([0, 1, 2, 3, 4].every((i) => has(card[i][4 - i]))) {
+    const diagonalInversa = [0, 1, 2, 3, 4].map((i) => card[i][4 - i]);
+
+    if (diagonalInversa.every(has)) {
       return {
         ok: true,
         label: "✖ Diagonal inversa",
+        numbers: diagonalInversa,
+        numbersText: formatNumbers(diagonalInversa),
       };
     }
   }
 
   return { ok: false };
+}
+
+function formatNumbers(numbers: CardCell[]) {
+  return numbers.join(" - ");
 }
 
 export const OPTIONS: APIRoute = async () => {

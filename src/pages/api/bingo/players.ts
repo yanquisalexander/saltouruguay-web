@@ -27,7 +27,15 @@ export const GET: APIRoute = async ({ url }) => {
   const playerNames = (await cache.get<string[]>(playersKey)) ?? [];
 
   if (playerNames.length === 0) {
-    return json({ players: [], total: 0 }, 200);
+    return json(
+      {
+        players: [],
+        total: 0,
+        nearLineCount: 0,
+        nearBingoCount: 0,
+      },
+      200,
+    );
   }
 
   const cards = await Promise.all(
@@ -35,6 +43,9 @@ export const GET: APIRoute = async ({ url }) => {
       cache.get<PlayerData>(`bingo:${session}:card:${name}`),
     ),
   );
+
+  let nearLineCount = 0;
+  let nearBingoCount = 0;
 
   const players = playerNames
     .map((name, i) => {
@@ -51,6 +62,11 @@ export const GET: APIRoute = async ({ url }) => {
         (n) => n !== "FREE" && drawn.includes(n as number),
       ).length;
 
+      const near = analyzeNearWins(data.card, drawn);
+
+      if (near.line) nearLineCount++;
+      if (near.bingo) nearBingoCount++;
+
       return {
         name,
         marked,
@@ -62,12 +78,72 @@ export const GET: APIRoute = async ({ url }) => {
 
   players.sort((a: any, b: any) => b.marked - a.marked);
 
-  return json({ players, total: players.length }, 200);
+  return json(
+    {
+      players,
+      total: players.length,
+      nearLineCount,
+      nearBingoCount,
+    },
+    200,
+  );
 };
 
 export const OPTIONS: APIRoute = async () => {
   return new Response(null, { status: 204, headers: corsHeaders() });
 };
+
+function analyzeNearWins(card: CardMatrix, drawn: number[]) {
+  const has = (n: CardCell) => n === "FREE" || drawn.includes(n as number);
+
+  let nearLine = false;
+
+  for (let r = 0; r < 5; r++) {
+    const missing = card[r].filter((n) => !has(n));
+
+    if (missing.length === 1) {
+      nearLine = true;
+      break;
+    }
+  }
+
+  if (!nearLine) {
+    for (let c = 0; c < 5; c++) {
+      const column = card.map((row) => row[c]);
+      const missing = column.filter((n) => !has(n));
+
+      if (missing.length === 1) {
+        nearLine = true;
+        break;
+      }
+    }
+  }
+
+  if (!nearLine) {
+    const diagonalPrincipal = [0, 1, 2, 3, 4].map((i) => card[i][i]);
+    const missingDiagonalPrincipal = diagonalPrincipal.filter((n) => !has(n));
+
+    if (missingDiagonalPrincipal.length === 1) {
+      nearLine = true;
+    }
+  }
+
+  if (!nearLine) {
+    const diagonalInversa = [0, 1, 2, 3, 4].map((i) => card[i][4 - i]);
+    const missingDiagonalInversa = diagonalInversa.filter((n) => !has(n));
+
+    if (missingDiagonalInversa.length === 1) {
+      nearLine = true;
+    }
+  }
+
+  const missingFullCard = card.flat().filter((n) => !has(n));
+
+  return {
+    line: nearLine,
+    bingo: missingFullCard.length === 1,
+  };
+}
 
 function json(data: object, status: number) {
   return new Response(JSON.stringify(data), {
