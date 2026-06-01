@@ -1,17 +1,14 @@
-// src/pages/api/bingo/reset.ts
-// POST /api/bingo/reset
-// Body: { session, adminSecret }
-// Borra todos los datos de la sesión en Redis y empieza de cero.
-
 import type { APIRoute } from "astro";
 import cacheService from "@/services/cache";
 import { BINGO_SECRET } from "@/config";
 
-const ADMIN_SECRET = BINGO_SECRET
-const cache = cacheService.create()
+const ADMIN_SECRET = BINGO_SECRET;
+const GAME_TTL = 60 * 60 * 6;
+const cache = cacheService.create({ ttl: GAME_TTL });
 
 export const POST: APIRoute = async ({ request }) => {
   let body: { session?: string; adminSecret?: string };
+
   try {
     body = await request.json();
   } catch {
@@ -19,16 +16,19 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const { session, adminSecret } = body;
+
   if (!session) return json({ error: "session requerida" }, 400);
   if (adminSecret !== ADMIN_SECRET) return json({ error: "No autorizado" }, 403);
 
-  // Borrar estado del juego
-  const stateKey = `bingo:${session}:state`;
-  await cache.delete(stateKey);
-
-  // Borrar todos los cartones de jugadores
   const playersKey = `bingo:${session}:players`;
-  await cache.delete(playersKey);
+  const playerNames = (await cache.get<string[]>(playersKey)) ?? [];
+
+  await Promise.all([
+    cache.delete(`bingo:${session}:state`),
+    cache.delete(`bingo:${session}:claims`),
+    cache.delete(playersKey),
+    ...playerNames.map((name) => cache.delete(`bingo:${session}:card:${name}`)),
+  ]);
 
   return json({ ok: true, message: `Partida ${session} reiniciada` }, 200);
 };
