@@ -2656,9 +2656,9 @@ export const beforeLaunchGame = async () => {
     }).execute();
 
     const res = await pusher.get({ path: `/channels/${PUSHER_CHANNELS.PRESENCE}/users` });
-    /* { users: [ { id: 1 } ] } */
+    /* { users: [ { id: "1" } ] } — Pusher devuelve user_id como string */
     const { users } = await res.json();
-    const userIds: number[] = users ? users.map(({ id }: { id: number }) => id) : [];
+    const userIds: number[] = users ? users.map(({ id }: { id: string }) => Number(id)) : [];
 
     const playersNotConnected = players.filter(player => !userIds.includes(player.userId!)).map(player => player.playerNumber);
 

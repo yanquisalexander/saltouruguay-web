@@ -169,7 +169,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         pusherService.bind(PUSHER_CHANNELS.PRESENCE, PUSHER_EVENTS.MEMBER_ADDED, (member: any) => {
             setPlayers((prev) =>
                 prev.map((player) =>
-                    player.id === member.info.id ? { ...player, online: true } : player
+                    player.id === Number(member.id) ? { ...player, online: true } : player
                 )
             );
         });
@@ -177,7 +177,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         pusherService.bind(PUSHER_CHANNELS.PRESENCE, PUSHER_EVENTS.MEMBER_REMOVED, (member: any) => {
             setPlayers((prev) =>
                 prev.map((player) =>
-                    player.id === member.info.id ? { ...player, online: false } : player
+                    player.id === Number(member.id) ? { ...player, online: false } : player
                 )
             );
         });

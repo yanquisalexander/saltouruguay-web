@@ -218,7 +218,7 @@ export const TugOfWar = ({
                     </div>
                 </div>
             )}
-            <Instructions duration={IS_DEV ? 10_000 : 90000}
+            <Instructions duration={IS_DEV ? 10_000 : 75000}
                 controls={[
                     {
                         keys: ["LEFT_CLICK"],

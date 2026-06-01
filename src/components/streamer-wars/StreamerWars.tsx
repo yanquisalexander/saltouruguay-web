@@ -400,8 +400,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         };
 
         pChannel.bind(PUSHER_EVENTS.SUBSCRIPTION_SUCCEEDED, handleSubSuccess);
-        pChannel.bind(PUSHER_EVENTS.MEMBER_ADDED, (m: any) => updateOnlineStatus(m.info.id, true));
-        pChannel.bind(PUSHER_EVENTS.MEMBER_REMOVED, (m: any) => updateOnlineStatus(m.info.id, false));
+        pChannel.bind(PUSHER_EVENTS.MEMBER_ADDED, (m: any) => updateOnlineStatus(Number(m.id), true));
+        pChannel.bind(PUSHER_EVENTS.MEMBER_REMOVED, (m: any) => updateOnlineStatus(Number(m.id), false));
 
         return () => {
             pChannel.unbind_all();

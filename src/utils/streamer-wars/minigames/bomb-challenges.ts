@@ -1,11 +1,21 @@
 /**
  * Streamer Wars - Bomb Challenge Generators
- * Generates challenges for the Bomb minigame
+ * Generates challenges for the Bomb minigame with multiple-choice options
  */
 
 import type { BombChallenge, BombChallengeType } from "../types";
 import { getRandomItem, shuffleArray } from "../utils";
 import { MAX_CHALLENGES } from "../constants";
+
+const pickN = <T>(arr: T[], n: number): T[] => shuffleArray([...arr]).slice(0, n);
+const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const withOptions = (challenge: BombChallenge, distractors: string[]): BombChallenge => {
+    const all = shuffleArray([challenge.correctAnswer, ...distractors]);
+    // Ensure no duplicate options
+    const deduped = [...new Set(all)];
+    return { ...challenge, options: deduped.length >= 2 ? deduped : [...deduped, ...distractors].slice(0, 4) };
+};
 
 /**
  * Generate a math challenge
@@ -21,24 +31,31 @@ export const generateMathChallenge = (): BombChallenge => {
     let num1: number, num2: number, answer: number;
 
     if (op.type === 'sum') {
-        num1 = Math.floor(Math.random() * 50) + 10;
-        num2 = Math.floor(Math.random() * 50) + 10;
+        num1 = randInt(10, 50);
+        num2 = randInt(10, 50);
         answer = num1 + num2;
     } else if (op.type === 'sub') {
-        num1 = Math.floor(Math.random() * 50) + 20;
-        num2 = Math.floor(Math.random() * (num1 - 10)) + 5;
+        num1 = randInt(20, 70);
+        num2 = randInt(5, num1 - 10);
         answer = num1 - num2;
     } else {
-        num1 = Math.floor(Math.random() * 12) + 2;
-        num2 = Math.floor(Math.random() * 12) + 2;
+        num1 = randInt(2, 12);
+        num2 = randInt(2, 12);
         answer = num1 * num2;
     }
 
-    return {
-        type: 'math',
-        question: `¿Cuánto es ${num1} ${op.symbol} ${num2}?`,
-        correctAnswer: answer.toString(),
-    };
+    const distractors = new Set<number>();
+    while (distractors.size < 3) {
+        const offset = randInt(1, 15);
+        distractors.add(Math.max(1, answer + offset));
+        distractors.add(Math.max(1, answer - offset));
+    }
+    const filtered = [...distractors].filter(n => n !== answer).slice(0, 3);
+
+    return withOptions(
+        { type: 'math', question: `¿Cuánto es ${num1} ${op.symbol} ${num2}?`, correctAnswer: answer.toString() },
+        filtered.map(String)
+    );
 };
 
 /**
@@ -48,28 +65,31 @@ export const generateLogicChallenge = (): BombChallenge => {
     const challenges = [
         {
             question: "¿Qué viene primero, el huevo o la gallina?",
-            answer: "huevo"
+            answer: "huevo",
+            distractors: ["gallina", "ambos", "ninguno"]
         },
         {
             question: "¿Cuántos meses tienen 28 días?",
-            answer: "todos"
+            answer: "todos",
+            distractors: ["uno", "ninguno", "solo febrero"]
         },
         {
             question: "¿Qué es lo que se rompe sin tocarlo?",
-            answer: "promesa"
+            answer: "promesa",
+            distractors: ["vaso", "corazón", "record"]
         },
         {
             question: "¿Qué pesa más, un kilo de plumas o un kilo de hierro?",
-            answer: "igual"
+            answer: "igual",
+            distractors: ["plumas", "hierro", "depende"]
         }
     ];
 
     const selected = getRandomItem(challenges);
-    return {
-        type: 'logic',
-        question: selected.question,
-        correctAnswer: selected.answer.toLowerCase(),
-    };
+    return withOptions(
+        { type: 'logic', question: selected.question, correctAnswer: selected.answer.toLowerCase() },
+        selected.distractors
+    );
 };
 
 /**
@@ -87,25 +107,29 @@ export const generateWordChallenge = (): BombChallenge => {
     const selected = getRandomItem(words);
     const word = selected.word;
 
-    // Remove 2-3 random letters
     const lettersToRemove = Math.floor(Math.random() * 2) + 2;
-    let incomplete = word;
     const removedIndices = new Set<number>();
-
     while (removedIndices.size < lettersToRemove) {
-        const idx = Math.floor(Math.random() * word.length);
-        removedIndices.add(idx);
+        removedIndices.add(Math.floor(Math.random() * word.length));
     }
 
-    incomplete = word.split('').map((letter, idx) =>
+    const incomplete = word.split('').map((letter, idx) =>
         removedIndices.has(idx) ? '_' : letter
     ).join('');
 
-    return {
-        type: 'word',
-        question: `Completa la palabra: ${incomplete} (Pista: ${selected.hint})`,
-        correctAnswer: word.toLowerCase(),
-    };
+    const distractors = words
+        .filter(w => w.word !== word)
+        .map(w => w.word.toLowerCase())
+        .slice(0, 3);
+
+    return withOptions(
+        {
+            type: 'word',
+            question: `Completa la palabra: ${incomplete} (Pista: ${selected.hint})`,
+            correctAnswer: word.toLowerCase(),
+        },
+        distractors.length >= 2 ? distractors : ["programar", "desafio", "victoria"].filter(d => d !== word.toLowerCase())
+    );
 };
 
 /**
@@ -113,39 +137,32 @@ export const generateWordChallenge = (): BombChallenge => {
  */
 export const generateSequenceChallenge = (): BombChallenge => {
     const sequences = [
-        {
-            sequence: [2, 4, 6, 8],
-            next: 10,
-            rule: "números pares"
-        },
-        {
-            sequence: [1, 3, 5, 7],
-            next: 9,
-            rule: "números impares"
-        },
-        {
-            sequence: [5, 10, 15, 20],
-            next: 25,
-            rule: "múltiplos de 5"
-        },
-        {
-            sequence: [1, 2, 4, 8],
-            next: 16,
-            rule: "potencias de 2"
-        },
-        {
-            sequence: [10, 20, 30, 40],
-            next: 50,
-            rule: "múltiplos de 10"
-        }
+        { sequence: [2, 4, 6, 8], next: 10, rule: "números pares" },
+        { sequence: [1, 3, 5, 7], next: 9, rule: "números impares" },
+        { sequence: [5, 10, 15, 20], next: 25, rule: "múltiplos de 5" },
+        { sequence: [1, 2, 4, 8], next: 16, rule: "potencias de 2" },
+        { sequence: [10, 20, 30, 40], next: 50, rule: "múltiplos de 10" }
     ];
 
     const selected = getRandomItem(sequences);
-    return {
-        type: 'sequence',
-        question: `¿Qué número sigue en la secuencia: ${selected.sequence.join(', ')}, ?`,
-        correctAnswer: selected.next.toString(),
-    };
+    const answer = selected.next;
+
+    const distractors = new Set<number>();
+    while (distractors.size < 3) {
+        const offset = randInt(1, 12);
+        distractors.add(Math.max(1, answer + offset));
+        distractors.add(Math.max(1, answer - offset));
+    }
+    const filtered = [...distractors].filter(n => n !== answer).slice(0, 3);
+
+    return withOptions(
+        {
+            type: 'sequence',
+            question: `¿Qué número sigue en la secuencia: ${selected.sequence.join(', ')}, ?`,
+            correctAnswer: answer.toString(),
+        },
+        filtered.map(String)
+    );
 };
 
 /**
