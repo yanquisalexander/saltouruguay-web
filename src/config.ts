@@ -29,3 +29,5 @@ export const SITEMAP_EXCLUDED_PATHS = [
 
 export const CHRISTMAS_MODE = false;
 export const LAST_EDITION_VOD_URL = 'https://www.twitch.tv/videos/2650701140';
+
+export const BINGO_SECRET = 'salto2026bingo';

@@ -48,6 +48,9 @@ export default defineConfig({
       DISCORD_LOGS_WEBHOOK_TOKEN: envField.string({ context: 'server', access: 'public' }),
     },
   },
+  server: {
+    
+  },
   security: {
     /* 
       TODO: Only allow some origins
@@ -55,6 +58,10 @@ export default defineConfig({
     checkOrigin: false
   },
   vite: {
+    server: {
+      cors: true,
+      allowedHosts: true
+    },
     resolve: {
       alias: {
         react: 'preact/compat',
