@@ -34,6 +34,7 @@ const COMMANDS: Command[] = [
     { name: "/cuerda", description: "Controlar Tug of War", args: ["start|end|next|clear"] },
     { name: "/bomb", description: "Controlar Bomb", args: ["start|end|status"] },
     { name: "/fishing", description: "Controlar Fishing", args: ["start|end|reset"] },
+    { name: "/andi", description: "Controlar And I Challenge", args: ["start|next|end|reset"] },
     { name: "/revive", description: "Revivir un jugador", args: ["playerNumber"] },
     { name: "/instructions", description: "Enviar instrucciones por ID", args: ["id"] }
 ];

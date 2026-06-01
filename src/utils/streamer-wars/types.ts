@@ -92,3 +92,18 @@ export interface FishingGameState {
     eliminatedPlayers: number[]; // Player numbers that have been eliminated
     startedAt?: number;
 }
+
+// And I Challenge Game Types
+export interface AndIChallengeResult {
+    playerNumber: number;
+    rating: 'PERFECT' | 'GOOD' | 'EARLY' | 'LATE' | 'MISS';
+    ms: number;
+}
+
+export interface AndIChallengeGameState {
+    status: 'waiting' | 'playing' | 'ended';
+    players: number[]; // queue of player numbers (shuffled)
+    played: number[]; // player numbers who have already played
+    currentIndex: number; // index in the queue
+    results: AndIChallengeResult[]; // accumulated results
+}

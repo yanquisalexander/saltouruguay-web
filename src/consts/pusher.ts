@@ -120,6 +120,16 @@ export const PUSHER_EVENTS_AUTO_ELIM = {
   PLAYER_AUTOELIMINATED: 'player-autoeliminated',
 } as const;
 
+export const PUSHER_EVENTS_ANDI = {
+  GAME_STARTED: 'andi:game-started',
+  NEXT_PLAYER: 'andi:next-player',
+  CLIENT_TAP: 'client-andi:tap',
+  AUDIO_START: 'andi:audio-start',
+  RESULT: 'andi:result',
+  GAME_ENDED: 'andi:game-ended',
+  GAME_RESET: 'andi:game-reset',
+} as const;
+
 export const CACHE_KEYS = {
   GAME_STATE: 'streamer-wars-gamestate',
   TIMER: 'streamer-wars-timer',
@@ -136,4 +146,5 @@ export const CACHE_KEYS = {
   BOMB: 'streamer-wars.bomb:game-state',
   FISHING: 'streamer-wars.fishing:game-state',
   FISHING_ELIMINATED: 'fishing:eliminated-players',
+  ANDI_CHALLENGE: 'streamer-wars.andi-challenge',
 } as const;

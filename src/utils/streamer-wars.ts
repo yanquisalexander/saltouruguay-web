@@ -12,7 +12,7 @@ import { getLiveStreams } from "./twitch-runtime";
 import { CINEMATICS } from "@/consts/cinematics";
 import { uploadAudio } from "@/services/audio-storage";
 import { DalgonaShape, type DalgonaShapeData, createDalgonaShapeData, generateDalgonaImage } from "@/services/dalgona-image-generator";
-import { PUSHER_CHANNELS, PUSHER_EVENTS, PUSHER_EVENTS_SIMON, PUSHER_EVENTS_DALGONA, PUSHER_EVENTS_BOMB, PUSHER_EVENTS_TUG_OF_WAR, PUSHER_EVENTS_FISHING, PUSHER_EVENTS_AUTO_ELIM, PUSHER_EVENTS_CINEMATIC, CACHE_KEYS } from "@/consts/pusher";
+import { PUSHER_CHANNELS, PUSHER_EVENTS, PUSHER_EVENTS_SIMON, PUSHER_EVENTS_DALGONA, PUSHER_EVENTS_BOMB, PUSHER_EVENTS_TUG_OF_WAR, PUSHER_EVENTS_FISHING, PUSHER_EVENTS_AUTO_ELIM, PUSHER_EVENTS_CINEMATIC, PUSHER_EVENTS_ANDI, CACHE_KEYS } from "@/consts/pusher";
 
 // Import from modular structure
 import { generatePlayerChallenges } from "./streamer-wars/minigames/bomb-challenges";
@@ -31,7 +31,9 @@ import type {
     BombChallenge,
     BombPlayerState,
     BombGameState,
-    FishingGameState
+    FishingGameState,
+    AndIChallengeGameState,
+    AndIChallengeResult
 } from "./streamer-wars/types";
 
 // Re-export types for backward compatibility
@@ -44,7 +46,9 @@ export type {
     BombChallenge,
     BombPlayerState,
     BombGameState,
-    FishingGameState
+    FishingGameState,
+    AndIChallengeGameState,
+    AndIChallengeResult
 };
 
 const PRESENCE_CHANNEL = PUSHER_CHANNELS.PRESENCE;
@@ -1625,6 +1629,170 @@ export const games = {
             return newGameState;
         },
     },
+
+    andiChallenge: {
+        getGameState: async (): Promise<AndIChallengeGameState> => {
+            const cache = createCache();
+            return (
+                (await cache.get<AndIChallengeGameState>(CACHE_KEYS.ANDI_CHALLENGE)) ?? {
+                    status: 'waiting',
+                    players: [],
+                    played: [],
+                    currentIndex: -1,
+                    results: [],
+                }
+            );
+        },
+
+        startGame: async (): Promise<AndIChallengeGameState> => {
+            const cache = createCache();
+
+            // Get all active (non-eliminated, non-isolated) players
+            const activePlayers = await client
+                .select({ playerNumber: StreamerWarsPlayersTable.playerNumber })
+                .from(StreamerWarsPlayersTable)
+                .where(
+                    and(
+                        not(eq(StreamerWarsPlayersTable.eliminated, true)),
+                        not(eq(StreamerWarsPlayersTable.aislated, true)),
+                    )
+                )
+                .execute();
+
+            const playerNumbers = activePlayers
+                .map(p => p.playerNumber)
+                .filter((pn): pn is number => pn !== null);
+
+            if (playerNumbers.length === 0) {
+                throw new Error('No hay jugadores activos');
+            }
+
+            // Shuffle the player queue
+            const shuffled = [...playerNumbers].sort(() => Math.random() - 0.5);
+
+            const newState: AndIChallengeGameState = {
+                status: 'playing',
+                players: shuffled,
+                played: [],
+                currentIndex: 0,
+                results: [],
+            };
+
+            await cache.set(CACHE_KEYS.ANDI_CHALLENGE, newState);
+
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_ANDI.GAME_STARTED, {
+                players: shuffled,
+                currentPlayer: shuffled[0],
+                currentIndex: 0,
+            });
+
+            return newState;
+        },
+
+        nextTurn: async (): Promise<{ gameState: AndIChallengeGameState; nextPlayer: number | null }> => {
+            const cache = createCache();
+            const state = await games.andiChallenge.getGameState();
+
+            if (state.status !== 'playing') {
+                return { gameState: state, nextPlayer: null };
+            }
+
+            // Find next unplayed player
+            let nextIndex = state.currentIndex + 1;
+            while (nextIndex < state.players.length) {
+                const pn = state.players[nextIndex];
+                if (!state.played.includes(pn)) break;
+                nextIndex++;
+            }
+
+            if (nextIndex >= state.players.length) {
+                // All players have played — end game
+                state.status = 'ended';
+                state.currentIndex = -1;
+                await cache.set(CACHE_KEYS.ANDI_CHALLENGE, state);
+
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_ANDI.GAME_ENDED, {
+                    results: state.results,
+                });
+
+                return { gameState: state, nextPlayer: null };
+            }
+
+            state.currentIndex = nextIndex;
+            const nextPlayer = state.players[nextIndex];
+            await cache.set(CACHE_KEYS.ANDI_CHALLENGE, state);
+
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_ANDI.NEXT_PLAYER, {
+                playerNumber: nextPlayer,
+                currentIndex: nextIndex,
+            });
+
+            return { gameState: state, nextPlayer };
+        },
+
+        recordResult: async (playerNumber: number, ms: number): Promise<{ result: AndIChallengeResult; gameState: AndIChallengeGameState }> => {
+            const cache = createCache();
+            const state = await games.andiChallenge.getGameState();
+
+            if (state.status !== 'playing') {
+                throw new Error('El juego no está activo');
+            }
+
+            // Calculate rating
+            const W = { perfect: 80, good: 200, early: 500 };
+            const diff = Math.abs(ms);
+            const early = ms < 0;
+            let rating: AndIChallengeResult['rating'];
+            if (diff <= W.perfect) rating = 'PERFECT';
+            else if (diff <= W.good) rating = 'GOOD';
+            else if (diff <= W.early) rating = early ? 'EARLY' : 'LATE';
+            else rating = 'MISS';
+
+            const result: AndIChallengeResult = {
+                playerNumber,
+                rating,
+                ms: Math.round(diff),
+            };
+
+            state.played.push(playerNumber);
+            state.results.push(result);
+            await cache.set(CACHE_KEYS.ANDI_CHALLENGE, state);
+
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_ANDI.RESULT, result);
+
+            return { result, gameState: state };
+        },
+
+        endGame: async (): Promise<{ success: boolean }> => {
+            const cache = createCache();
+            const state = await games.andiChallenge.getGameState();
+            state.status = 'ended';
+            state.currentIndex = -1;
+            await cache.set(CACHE_KEYS.ANDI_CHALLENGE, state);
+
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_ANDI.GAME_ENDED, {
+                results: state.results,
+            });
+
+            return { success: true };
+        },
+
+        resetGame: async (): Promise<AndIChallengeGameState> => {
+            const cache = createCache();
+            const newState: AndIChallengeGameState = {
+                status: 'waiting',
+                players: [],
+                played: [],
+                currentIndex: -1,
+                results: [],
+            };
+            await cache.set(CACHE_KEYS.ANDI_CHALLENGE, newState);
+
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_ANDI.GAME_RESET, {});
+
+            return newState;
+        },
+    },
 };
 
 /**
@@ -3012,6 +3180,26 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                     return { success: true, feedback: `Minijuego Fishing reseteado` };
                 } else {
                     return { success: false, feedback: 'Uso: /fishing start|end|reset' };
+                }
+            case '/andi':
+                const andiAction = args[0];
+                if (andiAction === 'start') {
+                    const gameState = await games.andiChallenge.startGame();
+                    return { success: true, feedback: `And I Challenge iniciado con ${gameState.players.length} jugadores` };
+                } else if (andiAction === 'next') {
+                    const { nextPlayer } = await games.andiChallenge.nextTurn();
+                    if (nextPlayer === null) {
+                        return { success: true, feedback: 'And I Challenge finalizado (todos jugaron)' };
+                    }
+                    return { success: true, feedback: `Siguiente turno: jugador ${nextPlayer}` };
+                } else if (andiAction === 'end') {
+                    await games.andiChallenge.endGame();
+                    return { success: true, feedback: 'And I Challenge finalizado' };
+                } else if (andiAction === 'reset') {
+                    await games.andiChallenge.resetGame();
+                    return { success: true, feedback: 'And I Challenge reseteado' };
+                } else {
+                    return { success: false, feedback: 'Uso: /andi start|next|end|reset' };
                 }
             case '/revive':
                 const playerNumber = parseInt(args[0], 10);

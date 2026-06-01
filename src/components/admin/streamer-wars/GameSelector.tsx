@@ -64,8 +64,21 @@ export const GAMES = [
         icon: "💣",
         classNames: "bg-linear-to-r from-red-500 to-red-700",
         props: {}
+    },
+    {
+        id: "Fishing",
+        name: "Fishing (Pesca)",
+        icon: "🎣",
+        classNames: "bg-linear-to-r from-cyan-500 to-cyan-700",
+        props: {}
+    },
+    {
+        id: "AndIChallenge",
+        name: "And I Challenge",
+        icon: "🎵",
+        classNames: "bg-linear-to-r from-purple-500 to-purple-700",
+        props: {}
     }
-    // Más juegos pueden añadirse con sus propias props
 ];
 
 const GameConfigurator = ({

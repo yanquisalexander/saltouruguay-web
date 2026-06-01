@@ -24,6 +24,7 @@ import { Dalgona } from "./games/Dalgona";
 import { TugOfWar } from "./games/TugOfWar";
 import { Bomb } from "./games/Bomb";
 import { Fishing } from "./games/Fishing";
+import { AndIChallenge } from "./games/AndIChallenge";
 import { StreamerWarsAudioManager } from "./StreamerWarsAudioManager";
 import { VoiceChat } from "./VoiceChat";
 import { VoiceControls } from "./VoiceControls";
@@ -147,7 +148,8 @@ const GAME_CONFIG = {
     Dalgona,
     TugOfWar,
     Bomb,
-    Fishing
+    Fishing,
+    AndIChallenge
 };
 
 // --- HOOK PERSONALIZADO: Lógica de Eventos del Juego ---
