@@ -212,7 +212,8 @@ export const VoiceChat = ({ userId, userName, teamId, isAdmin, players }: VoiceC
     const displaySpectators: SpectatorInfo[] = displayTeamId ? spectatingUsers[displayTeamId] || [] : [];
     const voiceIsReady = displayTeamId ? voiceEnabledTeams[displayTeamId] : false;
 
-    if (!displayTeamId || !voiceIsReady) return null;
+    if (!displayTeamId) return null;
+    if (!isSpectatorMode && !voiceIsReady) return null;
 
     return (
         <div class={`fixed ${isAdminSpectator ? 'top-4 left-4' : 'bottom-4 right-4'} z-50 select-none`}>
@@ -275,7 +276,12 @@ export const VoiceChat = ({ userId, userName, teamId, isAdmin, players }: VoiceC
 
                 {/* Control bar */}
                 <div class="px-4 py-3 border-t border-white/5 bg-black/30 space-y-2">
-                    {isSpectatorMode ? (
+                    {isSpectatorMode && !voiceIsReady ? (
+                        <div class="flex items-center gap-2 py-1">
+                            <div class="w-2 h-2 rounded-full bg-white/10" />
+                            <span class="text-[9px] font-mono text-white/20">VOICE DESACTIVADO</span>
+                        </div>
+                    ) : isSpectatorMode ? (
                         <div class="flex items-center gap-2 py-1">
                             <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                             <span class="text-[9px] font-mono text-blue-400">ESCUCHANDO</span>

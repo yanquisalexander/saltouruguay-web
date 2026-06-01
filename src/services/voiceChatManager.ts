@@ -481,7 +481,7 @@ export class VoiceChatManager {
             });
 
             channel.bind(PUSHER_EVENTS.SUBSCRIPTION_SUCCEEDED, () => {
-                if (!isSpec) this.sendSignal(targetTeamId, "voice:user-joined", { userId: this.userId });
+                this.sendSignal(targetTeamId, "voice:user-joined", { userId: this.userId, userName: this.userName });
             });
         });
     }
