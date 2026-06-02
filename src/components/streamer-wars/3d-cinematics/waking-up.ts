@@ -343,7 +343,7 @@ export const wakingUp: Cinematic3DDefinition = {
     tl.to(camera.rotation, { z: 0.09, duration: 0.06, repeat: 7, yoyo: true, ease: "none" }, 20);
 
     // Alarm sound + subtitle
-    tl.call(() => { playSoundWithReverb({ sound: "scripts/3d/waking-alarm2", volume: 0.4 }); }, [], 20);
+    tl.call(() => { playSoundWithReverb({ sound: "scripts/3d/waking-alarm2", volume: 0.2 }); }, [], 20);
     tl.call(() => { if (htmlRefs.subtitleEl) htmlRefs.subtitleEl.textContent = "¡¿Qué está pasando?!"; }, [], 20);
     tl.set(htmlRefs.subtitleEl, { opacity: 1 }, 20);
     tl.set(htmlRefs.subtitleEl, { opacity: 0 }, 21);
@@ -351,7 +351,7 @@ export const wakingUp: Cinematic3DDefinition = {
     // 7. Gas
     tl.call(() => { state.gasActive = true }, [], 22);
     tl.to(state, { gasIntensity: 1.0, duration: 9, ease: "power2.in" }, 22);
-    tl.call(() => { playSound({ sound: "scripts/3d/waking-gas-2", volume: 0.2 }); }, [], 22);
+    tl.call(() => { playSound({ sound: "scripts/3d/waking-gas-2", volume: 0.15 }); }, [], 22);
 
     // 8. Blur increase
     tl.to(state, { blur: 1.5, duration: 0 }, 22);
