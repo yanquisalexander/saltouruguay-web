@@ -3,7 +3,7 @@ import { z } from "astro:schema";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
 import { SaltogramNotesTable, FriendsTable, SaltogramVipListTable } from "@/db/schema";
-import { eq, and, or, gt, desc } from "drizzle-orm";
+import { eq, and, or, gt, desc, sql, inArray } from "drizzle-orm";
 
 export const notes = {
     create: defineAction({
@@ -73,7 +73,7 @@ export const notes = {
             const userId = auth.user.id;
             const now = new Date();
 
-            // Get friends IDs
+            // Get friends IDs (needed for "friends" visibility in SQL WHERE)
             const friends = await client.query.FriendsTable.findMany({
                 where: and(
                     or(eq(FriendsTable.userId, userId), eq(FriendsTable.friendId, userId)),
@@ -82,21 +82,29 @@ export const notes = {
             });
 
             const friendIds = friends.map(f => f.userId === userId ? f.friendId : f.userId);
-            const userIdsToFetch = [userId, ...friendIds];
 
-            // Get VIP lists where current user is a member
-            const vipLists = await client.query.SaltogramVipListTable.findMany({
-                where: eq(SaltogramVipListTable.friendId, userId)
-            });
-            const vipCreatorIds = vipLists.map(v => v.userId);
+            // WHERE conditions con visibilidad en SQL (no en JS)
+            const visibilityConditions: any[] = [
+                eq(SaltogramNotesTable.userId, userId),               // Propias
+                eq(SaltogramNotesTable.visibility, 'public'),         // Públicas
+                sql`(${eq(SaltogramNotesTable.visibility, 'vip')} AND EXISTS (
+                    SELECT 1 FROM saltogram_vip_list
+                    WHERE user_id = ${SaltogramNotesTable.userId} AND friend_id = ${userId}
+                ))`,                                                  // VIP donde el user está en la lista
+            ];
 
-            // Fetch active notes
+            if (friendIds.length > 0) {
+                visibilityConditions.push(
+                    and(
+                        eq(SaltogramNotesTable.visibility, 'friends'),
+                        inArray(SaltogramNotesTable.userId, friendIds)
+                    )
+                );
+            }
+
             const notes = await client.query.SaltogramNotesTable.findMany({
                 where: and(
-                    or(
-                        ...userIdsToFetch.map(id => eq(SaltogramNotesTable.userId, id)),
-                        eq(SaltogramNotesTable.visibility, 'public')
-                    ),
+                    or(...visibilityConditions),
                     gt(SaltogramNotesTable.expiresAt, now)
                 ),
                 with: {
@@ -105,25 +113,7 @@ export const notes = {
                 orderBy: [desc(SaltogramNotesTable.createdAt)]
             });
 
-            // Filter by visibility
-            const filteredNotes = notes.filter(note => {
-                const noteUserId = note.userId;
-
-                // Always show own notes
-                if (noteUserId === userId) return true;
-
-                if (note.visibility === 'vip') {
-                    return vipCreatorIds.includes(noteUserId);
-                }
-
-                if (note.visibility === 'friends') {
-                    return friendIds.includes(noteUserId);
-                }
-
-                return true; // Public
-            });
-
-            return { notes: filteredNotes };
+            return { notes };
         }
     })
 };

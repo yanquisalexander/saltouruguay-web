@@ -6,11 +6,13 @@ import type { APIContext } from "astro";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { desc, eq, sql, and, ilike, or } from "drizzle-orm";
 import { createNotification } from "@/actions/notifications";
+import { invalidateSaltogramCache } from "@/lib/saltogram";
 
 const MAX_TEXT_LENGTH = 500;
 
 /**
  * GET - Get feed posts with pagination
+ * Optimizado: sin N+1, toda la data de reacciones se obtiene en la query principal
  */
 export const GET = async ({ request, url }: APIContext) => {
     const auth = await getAuthenticatedUser(request);
@@ -28,7 +30,7 @@ export const GET = async ({ request, url }: APIContext) => {
     const offset = (page - 1) * limit;
 
     try {
-        // Build the query
+        // Build the query — toda la data en una sola query, sin N+1
         let query = client
             .select({
                 id: SaltogramPostsTable.id,
@@ -79,6 +81,49 @@ export const GET = async ({ request, url }: APIContext) => {
                         ) c
                     )
                 `,
+                // Reacción del usuario actual (si está logueado) — subquery inline, 0 queries extra
+                userReaction: sql<string | null>`
+                    ${userId
+                        ? sql`(
+                            SELECT sr.emoji FROM saltogram_reactions sr
+                            WHERE sr.post_id = ${SaltogramPostsTable.id} AND sr.user_id = ${userId}
+                            LIMIT 1
+                        )`
+                        : sql`NULL::varchar`
+                    }
+                `,
+                // Últimas 5 reacciones con datos de usuario — subquery json_agg, 0 queries extra
+                recentReactions: sql<any[]>`
+                    (
+                        SELECT COALESCE(json_agg(r), '[]'::json)
+                        FROM (
+                            SELECT
+                                u2.id as "userId",
+                                u2.display_name as "displayName",
+                                u2.username,
+                                u2.avatar,
+                                sr2.emoji
+                            FROM saltogram_reactions sr2
+                            JOIN users u2 ON sr2.user_id = u2.id
+                            WHERE sr2.post_id = ${SaltogramPostsTable.id}
+                            ORDER BY sr2.created_at DESC
+                            LIMIT 5
+                        ) r
+                    )
+                `,
+                // Stats de reacciones agrupadas por emoji — subquery json_agg, 0 queries extra
+                reactions: sql<any[]>`
+                    (
+                        SELECT COALESCE(json_agg(rs), '[]'::json)
+                        FROM (
+                            SELECT sr3.emoji, COUNT(*)::int as count
+                            FROM saltogram_reactions sr3
+                            WHERE sr3.post_id = ${SaltogramPostsTable.id}
+                            GROUP BY sr3.emoji
+                            ORDER BY count DESC
+                        ) rs
+                    )
+                `,
             })
             .from(SaltogramPostsTable)
             .innerJoin(UsersTable, eq(SaltogramPostsTable.userId, UsersTable.id));
@@ -116,57 +161,7 @@ export const GET = async ({ request, url }: APIContext) => {
 
         const posts = await query.limit(limit).offset(offset);
 
-        // Enrich posts with user specific data and details to avoid N+1 fetches
-        const enrichedPosts = await Promise.all(posts.map(async (post) => {
-            // 1. Get user reaction
-            let userReaction = null;
-            if (userId) {
-                const result = await client
-                    .select({ emoji: SaltogramReactionsTable.emoji })
-                    .from(SaltogramReactionsTable)
-                    .where(and(
-                        eq(SaltogramReactionsTable.postId, post.id),
-                        eq(SaltogramReactionsTable.userId, userId)
-                    ))
-                    .limit(1);
-                if (result.length > 0) userReaction = result[0].emoji;
-            }
-
-            // 2. Get recent reactions (for avatars)
-            const recentReactions = await client
-                .select({
-                    userId: UsersTable.id,
-                    displayName: UsersTable.displayName,
-                    username: UsersTable.username,
-                    avatar: UsersTable.avatar,
-                    emoji: SaltogramReactionsTable.emoji,
-                })
-                .from(SaltogramReactionsTable)
-                .innerJoin(UsersTable, eq(SaltogramReactionsTable.userId, UsersTable.id))
-                .where(eq(SaltogramReactionsTable.postId, post.id))
-                .orderBy(desc(SaltogramReactionsTable.createdAt))
-                .limit(5);
-
-            // 3. Get reactions stats (counts per emoji)
-            const reactionsStats = await client
-                .select({
-                    emoji: SaltogramReactionsTable.emoji,
-                    count: sql<number>`COUNT(*)::int`,
-                })
-                .from(SaltogramReactionsTable)
-                .where(eq(SaltogramReactionsTable.postId, post.id))
-                .groupBy(SaltogramReactionsTable.emoji)
-                .orderBy(sql`count DESC`);
-
-            return {
-                ...post,
-                userReaction,
-                recentReactions,
-                reactions: reactionsStats,
-            };
-        }));
-
-        return new Response(JSON.stringify({ posts: enrichedPosts }), {
+        return new Response(JSON.stringify({ posts }), {
             status: 200,
             headers: {
                 "Content-Type": "application/json",
@@ -272,7 +267,10 @@ export const POST = async ({ request }: APIContext) => {
         // Award coins for creating post
         await awardCoins(userId, SALTOGRAM_REWARDS.CREATE_POST);
 
-        // --- NOTIFY FRIENDS ---
+        // Invalidate cache (stats + trending tags)
+        invalidateSaltogramCache().catch(() => {});
+
+        // --- NOTIFY FRIENDS (limitado a 50 para evitar saturación) ---
         try {
             const friends = await client
                 .select({
@@ -288,20 +286,25 @@ export const POST = async ({ request }: APIContext) => {
                             eq(FriendsTable.friendId, userId)
                         )
                     )
-                );
+                )
+                .limit(50);
 
             const friendIds = friends.map(f => f.userId === userId ? f.friendId : f.userId);
 
-            // Send notifications in background
-            Promise.all(friendIds.map(friendId =>
-                createNotification(friendId, {
-                    type: "saltogram_post",
-                    title: "Nueva publicación",
-                    message: `${auth.user.displayName} ha publicado algo nuevo`,
-                    link: `/saltogram/post/${newPost.id}`,
-                    image: auth.user.avatar || undefined
-                })
-            )).catch(err => console.error("Error sending friend notifications:", err));
+            // Send notifications in background (concurrente limitado a 5 a la vez)
+            const chunkSize = 5;
+            for (let i = 0; i < friendIds.length; i += chunkSize) {
+                const chunk = friendIds.slice(i, i + chunkSize);
+                await Promise.all(chunk.map(friendId =>
+                    createNotification(friendId, {
+                        type: "saltogram_post",
+                        title: "Nueva publicación",
+                        message: `${auth.user.displayName} ha publicado algo nuevo`,
+                        link: `/saltogram/post/${newPost.id}`,
+                        image: auth.user.avatar || undefined
+                    })
+                )).catch(err => console.error("Error sending friend notifications:", err));
+            }
 
         } catch (error) {
             console.error("Error fetching friends for notification:", error);

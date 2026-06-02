@@ -1,19 +1,34 @@
 import { client } from "@/db/client";
 import { SaltogramPostsTable, SaltogramReactionsTable } from "@/db/schema";
 import { count, desc } from "drizzle-orm";
+import cacheService from "@/services/cache";
+
+const CACHE_TTL = 300; // 5 minutos
 
 export const getSaltogramStats = async () => {
+    const cache = cacheService.create({ ttl: CACHE_TTL });
+
+    const cached = await cache.get<{ posts: number; likes: number }>("saltogram:stats");
+    if (cached) return cached;
+
     const [postsCount] = await client.select({ count: count() }).from(SaltogramPostsTable);
     const [likesCount] = await client.select({ count: count() }).from(SaltogramReactionsTable);
 
-    return {
+    const stats = {
         posts: postsCount?.count ?? 0,
         likes: likesCount?.count ?? 0
     };
+
+    await cache.set("saltogram:stats", stats);
+    return stats;
 }
 
 export const getTrendingTags = async () => {
-    // Fetch recent posts (e.g. last 100) to extract tags
+    const cache = cacheService.create({ ttl: CACHE_TTL });
+
+    const cached = await cache.get<{ tag: string; count: number }[]>("saltogram:trending");
+    if (cached) return cached;
+
     const posts = await client.query.SaltogramPostsTable.findMany({
         limit: 100,
         orderBy: [desc(SaltogramPostsTable.createdAt)],
@@ -34,11 +49,20 @@ export const getTrendingTags = async () => {
         }
     });
 
-    // Sort by count
     const sortedTags = Object.entries(tagCounts)
         .sort(([, a], [, b]) => b - a)
         .slice(0, 5)
         .map(([tag, count]) => ({ tag, count }));
 
+    await cache.set("saltogram:trending", sortedTags);
     return sortedTags;
+}
+
+/** Invalida los caches de saltogram (stats + trending) */
+export const invalidateSaltogramCache = async () => {
+    const cache = cacheService.create();
+    await Promise.all([
+        cache.delete("saltogram:stats"),
+        cache.delete("saltogram:trending"),
+    ]);
 }

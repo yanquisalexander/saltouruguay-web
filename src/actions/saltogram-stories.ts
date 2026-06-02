@@ -3,7 +3,7 @@ import { z } from "astro:schema";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
 import { SaltogramStoriesTable, SaltogramStoryViewsTable, SaltogramStoryLikesTable, FriendsTable, UsersTable, SaltogramVipListTable, NotificationsTable } from "@/db/schema";
-import { eq, and, or, gt, desc, asc, sql } from "drizzle-orm";
+import { eq, and, or, gt, desc, asc, sql, inArray } from "drizzle-orm";
 
 export const stories = {
     create: defineAction({
@@ -47,7 +47,7 @@ export const stories = {
             const userId = auth.user.id;
             const now = new Date();
 
-            // Get friends IDs
+            // Get friends IDs (needed for "friends" visibility in SQL WHERE)
             const friends = await client.query.FriendsTable.findMany({
                 where: and(
                     or(eq(FriendsTable.userId, userId), eq(FriendsTable.friendId, userId)),
@@ -56,21 +56,29 @@ export const stories = {
             });
 
             const friendIds = friends.map(f => f.userId === userId ? f.friendId : f.userId);
-            const userIdsToFetch = [userId, ...friendIds];
 
-            // Get VIP lists where current user is a member
-            const vipLists = await client.query.SaltogramVipListTable.findMany({
-                where: eq(SaltogramVipListTable.friendId, userId)
-            });
-            const vipCreatorIds = vipLists.map(v => v.userId);
+            // Fetch active stories con filtro de visibilidad en SQL (no en JS)
+            const visibilityConditions: any[] = [
+                eq(SaltogramStoriesTable.userId, userId),            // Propias
+                eq(SaltogramStoriesTable.visibility, 'public'),      // Públicas
+                sql`(${eq(SaltogramStoriesTable.visibility, 'vip')} AND EXISTS (
+                    SELECT 1 FROM saltogram_vip_list
+                    WHERE user_id = ${SaltogramStoriesTable.userId} AND friend_id = ${userId}
+                ))`,                                                 // VIP donde el user está en la lista
+            ];
 
-            // Fetch active stories
+            if (friendIds.length > 0) {
+                visibilityConditions.push(
+                    and(
+                        eq(SaltogramStoriesTable.visibility, 'friends'),
+                        inArray(SaltogramStoriesTable.userId, friendIds)
+                    )
+                );
+            }
+
             const stories = await client.query.SaltogramStoriesTable.findMany({
                 where: and(
-                    or(
-                        ...userIdsToFetch.map(id => eq(SaltogramStoriesTable.userId, id)),
-                        eq(SaltogramStoriesTable.visibility, 'public')
-                    ),
+                    or(...visibilityConditions),
                     gt(SaltogramStoriesTable.expiresAt, now)
                 ),
                 with: {
@@ -89,19 +97,9 @@ export const stories = {
                 orderBy: [asc(SaltogramStoriesTable.createdAt)]
             });
 
-            // Group by user
+            // Group by user (JS solo para hasUnseen/isSeen, no para filtrar visibilidad)
             const storiesByUser = stories.reduce((acc, story) => {
                 const storyUserId = story.userId;
-
-                // Filter VIP stories
-                if (story.visibility === 'vip' && storyUserId !== userId && !vipCreatorIds.includes(storyUserId)) {
-                    return acc;
-                }
-
-                // Filter Friends Only stories (if not friend and not self)
-                if (story.visibility === 'friends' && storyUserId !== userId && !friendIds.includes(storyUserId)) {
-                    return acc;
-                }
 
                 if (!acc[storyUserId]) {
                     acc[storyUserId] = {

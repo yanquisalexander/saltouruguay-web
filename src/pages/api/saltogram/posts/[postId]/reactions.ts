@@ -5,6 +5,7 @@ import type { APIContext } from "astro";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { eq, and, sql, desc } from "drizzle-orm";
 import { createNotification } from "@/actions/notifications";
+import { invalidateSaltogramCache } from "@/lib/saltogram";
 
 
 const ALLOWED_EMOJIS = ["❤️", "🔥", "😂", "👍", "😮", "😢", "😡"];
@@ -93,6 +94,8 @@ export const POST = async ({ request, params }: APIContext) => {
                 .delete(SaltogramReactionsTable)
                 .where(eq(SaltogramReactionsTable.id, existingReaction[0].id));
 
+            invalidateSaltogramCache().catch(() => {});
+
             return new Response(
                 JSON.stringify({
                     action: "removed",
@@ -113,8 +116,7 @@ export const POST = async ({ request, params }: APIContext) => {
                 emoji,
             });
 
-
-            // ...existing code...
+            invalidateSaltogramCache().catch(() => {});
 
             // Award coins to the post author (if not reacting to own post)
             if (post[0].userId !== userId) {

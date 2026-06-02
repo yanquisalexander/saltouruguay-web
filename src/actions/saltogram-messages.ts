@@ -3,7 +3,7 @@ import { z } from "astro:schema";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
 import { SaltogramMessagesTable, SaltogramStoriesTable, UsersTable } from "@/db/schema";
-import { eq, and, or, desc } from "drizzle-orm";
+import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
 
 export const messages = {
     send: defineAction({
@@ -85,41 +85,86 @@ export const messages = {
 
             const userId = auth.user.id;
 
-            // Fetch all messages involving the user
-            const allMessages = await client.query.SaltogramMessagesTable.findMany({
-                where: or(
-                    eq(SaltogramMessagesTable.senderId, userId),
-                    eq(SaltogramMessagesTable.receiverId, userId)
-                ),
-                orderBy: [desc(SaltogramMessagesTable.createdAt)],
-                with: {
-                    sender: true,
-                    receiver: true
-                }
-            });
+            // Query eficiente: latest message per partner via window function + unread counts
+            // 1. Get latest message per conversation partner (max 20 conversations)
+            const latestMessages = await client.execute(sql`
+                WITH ranked AS (
+                    SELECT *,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY CASE
+                                WHEN sender_id = ${userId} THEN receiver_id
+                                ELSE sender_id
+                            END
+                            ORDER BY created_at DESC
+                        ) as rn
+                    FROM saltogram_messages
+                    WHERE sender_id = ${userId} OR receiver_id = ${userId}
+                )
+                SELECT
+                    r.id,
+                    r.sender_id AS "senderId",
+                    r.receiver_id AS "receiverId",
+                    r.content,
+                    r.story_id AS "storyId",
+                    r.reaction,
+                    r.is_read AS "isRead",
+                    r.created_at AS "createdAt",
+                    CASE WHEN r.sender_id = ${userId} THEN r.receiver_id ELSE r.sender_id END AS "partnerId"
+                FROM ranked r
+                WHERE r.rn = 1
+                ORDER BY r.created_at DESC
+                LIMIT 20
+            `);
 
-            // Group by conversation partner
-            const conversationsMap = new Map();
-
-            for (const msg of allMessages) {
-                const otherUser = msg.senderId === userId ? msg.receiver : msg.sender;
-                const otherUserId = otherUser.id;
-
-                if (!conversationsMap.has(otherUserId)) {
-                    conversationsMap.set(otherUserId, {
-                        user: otherUser,
-                        lastMessage: msg,
-                        unreadCount: (msg.receiverId === userId && !msg.isRead) ? 1 : 0
-                    });
-                } else {
-                    const conv = conversationsMap.get(otherUserId);
-                    if (msg.receiverId === userId && !msg.isRead) {
-                        conv.unreadCount++;
-                    }
-                }
+            if (latestMessages.rows.length === 0) {
+                return { conversations: [] };
             }
 
-            return { conversations: Array.from(conversationsMap.values()) };
+            // 2. Get unread counts per partner
+            const unreadCounts = await client.execute(sql`
+                SELECT
+                    CASE
+                        WHEN sender_id = ${userId} THEN receiver_id
+                        ELSE sender_id
+                    END AS "partnerId",
+                    COUNT(*)::int AS "unreadCount"
+                FROM saltogram_messages
+                WHERE receiver_id = ${userId} AND is_read = false
+                GROUP BY "partnerId"
+            `);
+
+            const unreadMap = new Map<number, number>();
+            for (const row of unreadCounts.rows) {
+                unreadMap.set(row.partnerId as number, row.unreadCount as number);
+            }
+
+            // 3. Fetch partner user data
+            const partnerIds = latestMessages.rows.map(r => r.partnerId as number);
+            const partners = partnerIds.length > 0
+                ? await client
+                    .select({
+                        id: UsersTable.id,
+                        username: UsersTable.username,
+                        displayName: UsersTable.displayName,
+                        avatar: UsersTable.avatar,
+                    })
+                    .from(UsersTable)
+                    .where(inArray(UsersTable.id, partnerIds))
+                : [];
+
+            const partnerMap = new Map(partners.map(p => [p.id, p]));
+
+            // 4. Build response
+            const conversations = latestMessages.rows.map((msg: any) => {
+                const partnerId = msg.partnerId as number;
+                return {
+                    user: partnerMap.get(partnerId) || null,
+                    lastMessage: msg,
+                    unreadCount: unreadMap.get(partnerId) || 0,
+                };
+            }).filter(c => c.user !== null);
+
+            return { conversations };
         }
     }),
 

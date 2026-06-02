@@ -30,7 +30,7 @@ import ProfileView from "./views/ProfileView";
 import PostView from "./views/PostView";
 import FriendRequestsWidget from "./FriendRequestsWidget";
 import SuggestedUsersWidget from "./SuggestedUsersWidget";
-import { useInterval } from "@/utils/client/hooks/useInterval";
+import { useCoordinatedPoll } from "@/utils/client/useCoordinatedPoll";
 
 
 type ActiveView = "home" | "explore" | "direct" | "chat" | "requests" | "profile" | "post";
@@ -204,19 +204,22 @@ export default function SaltogramApp({
     const searchInputRef = useRef<HTMLInputElement>(null);
     const base = useMemo(() => normalizePath(basePath), [basePath]);
 
-    const handleGlobalPoll = useCallback(async () => {
-        if (!user) return;
-        try {
+    // Global poll coordinado entre pestañas via BroadcastChannel
+    const globalPollEnabled = user && activeView !== "chat" && activeView !== "post" && activeView !== "profile";
+    useCoordinatedPoll({
+        pollFn: async () => {
+            if (!user) return null;
             const { data, error } = await actions.saltogram.poll({});
-            if (error) return;
-            if (data) {
-                setUnreadMessagesCount(data.unreadMessages);
-                setUnreadNotificationsCount(data.unreadNotifications);
-            }
-        } catch { /* silencioso */ }
-    }, [user]);
-
-    useInterval(handleGlobalPoll, user ? 60000 : null);
+            return error || !data ? null : data as Record<string, unknown>;
+        },
+        onResult: (data) => {
+            setUnreadMessagesCount(data.unreadMessages as number);
+            setUnreadNotificationsCount(data.unreadNotifications as number);
+        },
+        intervalMs: 60000,
+        channelName: "saltogram-poll",
+        enabled: globalPollEnabled,
+    });
 
     const unreadMessages = useMemo(
         () => {
