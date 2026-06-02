@@ -306,9 +306,7 @@ export const playersInvite: Cinematic3DDefinition = {
     gasLight.position.set(0, 1.2, 1.0);
     vanGroup.add(gasLight);
 
-    let vanLoaded = false;
-    let vanMixer: THREE.AnimationMixer | null = null;
-    let passengerDoorAction: THREE.AnimationAction | null = null;
+    const vanData = { mixer: null as THREE.AnimationMixer | null, doorAction: null as THREE.AnimationAction | null };
 
     // ── Seated Guard ──────────────────────────────────────
     function createSeatedGuard() {
@@ -366,6 +364,59 @@ export const playersInvite: Cinematic3DDefinition = {
     guard.position.set(-0.7, 0.3, 0.7);
     vanGroup.add(guard);
 
+    // ── Van side text ───────────────────────────────────────
+    const textCanvas = document.createElement("canvas");
+    textCanvas.width = 512;
+    textCanvas.height = 256;
+    const tCtx = textCanvas.getContext("2d")!;
+    tCtx.clearRect(0, 0, 512, 256);
+
+    const fontBase = '"Atomic Marker", "Arial Black", sans-serif';
+    const textColor = "#b4cd02";
+
+    // Glow layer
+    tCtx.shadowColor = "rgba(180,205,2,0.6)";
+    tCtx.shadowBlur = 24;
+    tCtx.fillStyle = textColor;
+    tCtx.font = `bold 52px ${fontBase}`;
+    tCtx.textAlign = "center";
+    tCtx.textBaseline = "middle";
+    tCtx.fillText("GUERRA DE", 256, 90);
+
+    tCtx.shadowBlur = 32;
+    tCtx.font = `bold 68px ${fontBase}`;
+    tCtx.fillText("STREAMERS", 256, 172);
+
+    // Sharp text on top
+    tCtx.shadowBlur = 0;
+    tCtx.fillStyle = "#dae86a";
+    tCtx.font = `bold 52px ${fontBase}`;
+    tCtx.fillText("GUERRA DE", 256, 90);
+    tCtx.font = `bold 68px ${fontBase}`;
+    tCtx.fillText("STREAMERS", 256, 172);
+
+    const textTex = new THREE.CanvasTexture(textCanvas);
+    textTex.needsUpdate = true;
+
+    const textPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.4, 0.7),
+      new THREE.MeshStandardMaterial({
+        map: textTex,
+        transparent: true,
+        emissive: new THREE.Color(0xb4cd02),
+        emissiveIntensity: 0.5,
+        emissiveMap: textTex,
+        depthWrite: false,
+        roughness: 0.3,
+        metalness: 0.2,
+        side: THREE.DoubleSide,
+      }),
+    );
+    textPlane.position.set(-0.85, 1.2, -0.5);
+    textPlane.rotation.y = -Math.PI / 2;
+    vanGroup.add(textPlane);
+    disposables.push({ geo: textPlane.geometry, mat: textPlane.material });
+
     // Load van GLB
     const gltfLoader = new GLTFLoader();
     gltfLoader.load(
@@ -404,25 +455,24 @@ export const playersInvite: Cinematic3DDefinition = {
           guard.position.set(doorPos.x - 0.4, 1, 0.6);
         }
 
-        vanMixer = new THREE.AnimationMixer(model);
+        vanData.mixer = new THREE.AnimationMixer(model);
         const playerDoorClip = gltf.animations.find(c =>
           c.tracks.some(t => t.name === "Porte_avnt_2.quaternion")
         );
         if (playerDoorClip) {
-          passengerDoorAction = vanMixer.clipAction(playerDoorClip);
-          passengerDoorAction.setLoop(THREE.LoopOnce);
-          passengerDoorAction.clampWhenFinished = true;
+          vanData.doorAction = vanData.mixer.clipAction(playerDoorClip);
+          vanData.doorAction.setLoop(THREE.LoopOnce);
+          vanData.doorAction.clampWhenFinished = true;
         } else {
           const fallbackClip = gltf.animations.find(c =>
             c.tracks.some(t => t.name === "Porte_avnt_1.quaternion")
           );
           if (fallbackClip) {
-            passengerDoorAction = vanMixer.clipAction(fallbackClip);
-            passengerDoorAction.setLoop(THREE.LoopOnce);
-            passengerDoorAction.clampWhenFinished = true;
+            vanData.doorAction = vanData.mixer.clipAction(fallbackClip);
+            vanData.doorAction.setLoop(THREE.LoopOnce);
+            vanData.doorAction.clampWhenFinished = true;
           }
         }
-        vanLoaded = true;
       },
       undefined,
       () => {
@@ -430,7 +480,6 @@ export const playersInvite: Cinematic3DDefinition = {
         fallback.position.y = 1.0;
         vanGroup.add(fallback);
         track(fallback);
-        vanLoaded = true;
       },
     );
 
@@ -465,8 +514,7 @@ export const playersInvite: Cinematic3DDefinition = {
       gasState,
       gas,
       vanGroup,
-      vanMixer,
-      passengerDoorAction,
+      vanData,
       guard,
       streetLamp1,
       streetLamp2,
@@ -518,7 +566,7 @@ export const playersInvite: Cinematic3DDefinition = {
     tl.to(fpCam, { gx: 0.8, gz: 0, gy: 1.2, duration: 2, ease: "power2.out" }, 17);
 
     // Phase 4: DOOR OPENS (19s - 24s)
-    tl.call(() => { if (passengerDoorAction) passengerDoorAction.play(); }, [], 19.5);
+    tl.call(() => { if (vanData.doorAction) vanData.doorAction.play(); }, [], 19.5);
     tl.to(interiorRed, { intensity: 1.8, duration: 0.4, ease: "power2.out" }, 19.8);
     tl.to(interiorRed, { intensity: 0.6, duration: 0.15, ease: "none" }, 20.2);
     tl.to(interiorRed, { intensity: 2.0, duration: 0.3, ease: "power2.out" }, 20.4);
@@ -543,13 +591,13 @@ export const playersInvite: Cinematic3DDefinition = {
     tl.to(fpCam, { gx: 1.5, gz: 6, gy: 1.2, duration: 2, ease: "power2.inOut" }, 29);
     tl.to(guard.userData.headYaw.rotation, { y: 0, duration: 3, ease: "power2.inOut" }, 31);
     tl.call(() => {
-      if (passengerDoorAction) {
-        const clip = passengerDoorAction.getClip();
-        passengerDoorAction.stop();
-        passengerDoorAction.timeScale = -0.8;
-        passengerDoorAction.time = clip.duration;
-        passengerDoorAction.clampWhenFinished = true;
-        passengerDoorAction.play();
+      if (vanData.doorAction) {
+        const clip = vanData.doorAction.getClip();
+        vanData.doorAction.stop();
+        vanData.doorAction.timeScale = -0.8;
+        vanData.doorAction.time = clip.duration;
+        vanData.doorAction.clampWhenFinished = true;
+        vanData.doorAction.play();
       }
     }, [], 30.5);
 
@@ -584,13 +632,13 @@ export const playersInvite: Cinematic3DDefinition = {
   },
 
   animate(dt, _time, state, _scene, camera) {
-    const { fpCam, gas, vanGroup, vanMixer, streetLamp1, streetLamp2, htmlRefs, renderer } = state;
+    const { fpCam, gas, vanGroup, vanData, streetLamp1, streetLamp2, htmlRefs, renderer } = state;
     if (!fpCam) return;
 
     state.s0time += dt;
 
     // Van animation mixer
-    if (vanMixer) vanMixer.update(dt);
+    if (vanData?.mixer) vanData.mixer.update(dt);
 
     // Spring physics: head position
     const k = 5.5, d = 3.2;
