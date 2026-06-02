@@ -34,6 +34,11 @@ export default function ProfileView({ user, username }: ProfileViewProps) {
                 return res.json();
             })
             .then(data => {
+                // Si la API devuelve redirect (se buscó por ID y el username cambió)
+                if (data.redirect) {
+                    route(data.redirect, true);
+                    return;
+                }
                 setProfileUser(data.user);
                 document.title = `${data.user.displayName} - Saltogram`;
             })

@@ -1,41 +1,43 @@
 import { h } from 'preact';
+import { useEffect, useRef } from 'preact/hooks';
 import { useChatStore } from '@/stores/chatStore';
 import MiniChatWindow from './MiniChatWindow';
 import InboxWindow from './InboxWindow';
-import { LucideMessageCircle, LucideX } from 'lucide-preact';
+import { LucideMessageCircle, LucideX, LucideMinus } from 'lucide-preact';
 
-export default function ChatDock({ currentUser }: { currentUser: any }) {
-    const { openChats, minimizedChats, isInboxOpen, toggleInbox, closeChat, maximizeChat } = useChatStore();
+interface ChatDockProps {
+    currentUser: any;
+}
+
+export default function ChatDock({ currentUser }: ChatDockProps) {
+    const { openChats, minimizedChats, isInboxOpen, toggleInbox, closeChat, maximizeChat, minimizeChat } = useChatStore();
+    const storageKey = 'saltogram-chat-storage';
+
+    // ── Sincronización entre pestañas via storage event ──
+    useEffect(() => {
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key === storageKey) {
+                useChatStore.getState().syncFromStorage();
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+    }, []);
 
     if (!currentUser) return null;
 
     return (
-        <div className="fixed bottom-0 right-4 z-50 flex-row-reverse items-end gap-4 pointer-events-none hidden md:flex">
-            {/* Main Inbox Trigger */}
-            <div className="pointer-events-auto flex flex-col items-end">
-                {isInboxOpen && (
-                    <div className="mb-4 shadow-2xl rounded-t-lg overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
-                        <InboxWindow onClose={toggleInbox} />
-                    </div>
-                )}
-                <button
-                    onClick={toggleInbox}
-                    className="h-14 w-14 bg-card text-card-foreground rounded-full shadow-xl border border-border flex items-center justify-center hover:scale-105 transition-transform active:scale-95"
-                >
-                    <LucideMessageCircle className="w-7 h-7" />
-                </button>
-            </div>
-
+        <div className="fixed bottom-0 right-4 z-50 flex-row-reverse items-end gap-3 pointer-events-none hidden md:flex">
             {/* Open Chats */}
             {openChats.map(chat => {
                 const isMinimized = minimizedChats.includes(chat.id);
 
                 if (isMinimized) {
                     return (
-                        <div key={chat.id} className="pointer-events-auto relative group animate-in zoom-in duration-200">
+                        <div key={chat.id} className="pointer-events-auto relative group">
                             <button
                                 onClick={() => maximizeChat(chat.id)}
-                                className="h-12 w-12 rounded-full overflow-hidden border-2 border-border shadow-lg relative hover:ring-2 ring-primary transition-all"
+                                className="h-11 w-11 rounded-full overflow-hidden border-2 border-[#2a2d4a] shadow-lg hover:ring-2 ring-[#b3c8ff]/50 transition-all duration-200 active:scale-95"
                                 title={chat.displayName}
                             >
                                 <img
@@ -46,14 +48,16 @@ export default function ChatDock({ currentUser }: { currentUser: any }) {
                             </button>
                             <button
                                 onClick={() => closeChat(chat.id)}
-                                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-xs"
+                                className="absolute -top-1.5 -right-1.5 bg-[#ffb4ab] text-[#690005] rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-sm hover:scale-105 active:scale-90"
                             >
-                                <LucideX size={12} />
+                                <LucideX size={10} />
                             </button>
                         </div>
                     );
-                } return (
-                    <div key={chat.id} className="pointer-events-auto shadow-2xl rounded-t-xl overflow-hidden">
+                }
+
+                return (
+                    <div key={chat.id} className="pointer-events-auto shadow-2xl rounded-t-[28px] overflow-hidden">
                         <MiniChatWindow
                             otherUser={chat}
                             currentUser={currentUser}
@@ -61,6 +65,26 @@ export default function ChatDock({ currentUser }: { currentUser: any }) {
                     </div>
                 );
             })}
+
+            {/* Inbox Trigger */}
+            <div className="pointer-events-auto flex flex-col items-end">
+                {isInboxOpen && (
+                    <div className="mb-3 shadow-2xl rounded-t-[28px] overflow-hidden">
+                        <InboxWindow onClose={toggleInbox} />
+                    </div>
+                )}
+                <button
+                    onClick={toggleInbox}
+                    className={`h-12 w-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-95 ${
+                        isInboxOpen
+                            ? 'bg-[#b3c8ff] text-[#001849] hover:bg-[#c5d5ff] border border-[#b3c8ff]'
+                            : 'bg-[#0f1124]/80 backdrop-blur-xl text-white/70 hover:text-white hover:bg-[#b3c8ff]/10 border border-white/10 hover:border-[#b3c8ff]/30'
+                    }`}
+                    title="Mensajes"
+                >
+                    <LucideMessageCircle size={20} />
+                </button>
+            </div>
         </div>
     );
 }

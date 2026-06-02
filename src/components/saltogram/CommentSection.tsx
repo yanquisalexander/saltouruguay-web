@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { actions } from "astro:actions";
 import CommentReactionButton from "@/components/saltogram/CommentReactionButton";
+import { useDebounce } from "@/utils/client/hooks/useDebounce";
 
 interface CommentSectionProps {
     postId: number;
@@ -33,6 +34,8 @@ export default function CommentSection({
     const [replyingTo, setReplyingTo] = useState<{ id: number; username: string } | null>(null);
     const [mentionUsers, setMentionUsers] = useState<any[]>([]);
     const [showMentions, setShowMentions] = useState(false);
+    const [mentionQuery, setMentionQuery] = useState("");
+    const debouncedQuery = useDebounce(mentionQuery, 300);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -48,7 +51,7 @@ export default function CommentSection({
         fetchComments();
     }, [postId, preview]);
 
-    const handleInputChange = async (e: any) => {
+    const handleInputChange = (e: any) => {
         const value = e.target.value;
         setNewComment(value);
 
@@ -57,29 +60,44 @@ export default function CommentSection({
         const lastWord = textBeforeCursor.split(/\s/).pop();
 
         if (lastWord && lastWord.startsWith("@") && lastWord.length > 1) {
-            const query = lastWord.slice(1);
-            const { data } = await actions.saltogram.searchUsers({ query });
+            setMentionQuery(lastWord.slice(1));
+        } else {
+            setMentionQuery("");
+            setShowMentions(false);
+        }
+    };
+
+    // Busca usuarios con debounce
+    useEffect(() => {
+        if (!debouncedQuery) {
+            setMentionUsers([]);
+            return;
+        }
+        let active = true;
+        actions.saltogram.searchUsers({ query: debouncedQuery }).then(({ data }) => {
+            if (!active) return;
             if (data?.users && data.users.length > 0) {
                 setMentionUsers(data.users);
                 setShowMentions(true);
             } else {
                 setShowMentions(false);
             }
-        } else {
-            setShowMentions(false);
-        }
-    };
+        });
+        return () => { active = false; };
+    }, [debouncedQuery]);
 
-    const handleMentionSelect = (username: string) => {
+    const handleMentionSelect = (user: { id: number; username: string }) => {
         const cursor = inputRef.current?.selectionStart || 0;
         const textBeforeCursor = newComment.slice(0, cursor);
         const textAfterCursor = newComment.slice(cursor);
 
         const lastWordStart = textBeforeCursor.lastIndexOf("@");
-        const newText = textBeforeCursor.slice(0, lastWordStart) + `@${username} ` + textAfterCursor;
+        const mentionTag = `@[${user.id}:${user.username}]`;
+        const newText = textBeforeCursor.slice(0, lastWordStart) + mentionTag + " " + textAfterCursor;
 
         setNewComment(newText);
         setShowMentions(false);
+        setMentionQuery("");
         inputRef.current?.focus();
     };
 
@@ -132,13 +150,13 @@ export default function CommentSection({
         }
     };
 
-    const handleReply = (commentId: number, username: string) => {
+    const handleReply = (commentId: number, username: string, userId: number) => {
         const comment = comments.find(c => c.id === commentId);
         const targetId = comment?.parentId || commentId;
 
-        // If replying to a reply, add mention
+        // If replying to a reply, add mention with new format
         if (comment?.parentId) {
-            setNewComment(`@${username} `);
+            setNewComment(`@[${userId}:${username}] `);
         }
 
         setReplyingTo({ id: targetId, username });
@@ -168,7 +186,7 @@ export default function CommentSection({
                                 <button
                                     key={user.id}
                                     type="button"
-                                    onClick={() => handleMentionSelect(user.username)}
+                                    onClick={() => handleMentionSelect(user)}
                                     className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors text-left"
                                 >
                                     <img
@@ -281,9 +299,20 @@ interface CommentItemProps {
 
 const formatCommentText = (text: string) => {
     return text.split(/(\s+)/).map((part, i) => {
+        // Nuevo formato @[id:username]
+        const mentionMatch = part.match(/^@\[(\d+):([a-zA-Z0-9_]+)\]$/);
+        if (mentionMatch) {
+            const userId = mentionMatch[1];
+            const displayName = mentionMatch[2];
+            return (
+                <a key={i} href={`/saltogram/u/${userId}`} className="text-blue-400 hover:underline font-medium">
+                    @{displayName}
+                </a>
+            );
+        }
+        // Legacy @-mentions (retrocompatible)
         if (part.startsWith("@") && part.length > 1) {
             const username = part.slice(1);
-            // Simple regex to check if it's a valid username format (alphanumeric + underscore)
             if (/^[a-zA-Z0-9_]+$/.test(username)) {
                 return (
                     <a key={i} href={`/saltogram/u/${username}`} className="text-blue-400 hover:underline font-medium">
@@ -345,7 +374,7 @@ const CommentItem = ({ comment, allComments, onReply, preview, isReply = false, 
                         </div>
 
                         <button
-                            onClick={() => onReply(comment.id, comment.user.username)}
+                            onClick={() => onReply(comment.id, comment.user.username, comment.user.id)}
                             className="text-xs text-white/40 hover:text-white font-medium transition-colors"
                         >
                             Responder

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "preact/hooks";
+import { useState, useRef, useEffect, useCallback } from "preact/hooks";
 import type { SaltogramPost } from "@/types/saltogram";
 import { toast } from "sonner";
 import {
@@ -17,6 +17,7 @@ import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
 import MusicPicker from "./stories/MusicPicker";
 import EventPicker from "./EventPicker";
+import { useDebounce } from "@/utils/client/hooks/useDebounce";
 
 interface CreatePostModalProps {
     isOpen: boolean;
@@ -80,6 +81,10 @@ export default function CreatePostModal({
         }
     };
 
+    // ── @Mentions con debounce ──
+    const [mentionQuery, setMentionQuery] = useState("");
+    const debouncedQuery = useDebounce(mentionQuery, 300);
+
     // Auto-resize del textarea
     const adjustTextareaHeight = () => {
         if (textareaRef.current) {
@@ -88,7 +93,8 @@ export default function CreatePostModal({
         }
     };
 
-    const handleTextChange = async (e: any) => {
+    // Detecta @mention al escribir
+    const handleTextChange = (e: any) => {
         const val = e.target.value;
         setText(val);
         adjustTextareaHeight();
@@ -98,29 +104,45 @@ export default function CreatePostModal({
         const lastWord = textBeforeCursor.split(/\s/).pop();
 
         if (lastWord && lastWord.startsWith("@") && lastWord.length > 1) {
-            const query = lastWord.slice(1);
-            const { data } = await actions.saltogram.searchUsers({ query });
+            setMentionQuery(lastWord.slice(1));
+        } else {
+            setMentionQuery("");
+            setShowMentions(false);
+        }
+    };
+
+    // Busca usuarios con debounce
+    useEffect(() => {
+        if (!debouncedQuery) {
+            setMentionUsers([]);
+            return;
+        }
+        let active = true;
+        actions.saltogram.searchUsers({ query: debouncedQuery }).then(({ data }) => {
+            if (!active) return;
             if (data?.users && data.users.length > 0) {
                 setMentionUsers(data.users);
                 setShowMentions(true);
             } else {
                 setShowMentions(false);
             }
-        } else {
-            setShowMentions(false);
-        }
-    };
+        });
+        return () => { active = false; };
+    }, [debouncedQuery]);
 
-    const handleMentionSelect = (username: string) => {
+    // Inserta @[id:username] en vez de solo @username
+    const handleMentionSelect = (user: { id: number; username: string }) => {
         const cursor = textareaRef.current?.selectionStart || 0;
         const textBeforeCursor = text.slice(0, cursor);
         const textAfterCursor = text.slice(cursor);
 
         const lastWordStart = textBeforeCursor.lastIndexOf("@");
-        const newText = textBeforeCursor.slice(0, lastWordStart) + `@${username} ` + textAfterCursor;
+        const mentionTag = `@[${user.id}:${user.username}]`;
+        const newText = textBeforeCursor.slice(0, lastWordStart) + mentionTag + " " + textAfterCursor;
 
         setText(newText);
         setShowMentions(false);
+        setMentionQuery("");
         textareaRef.current?.focus();
     };
 
@@ -245,7 +267,7 @@ export default function CreatePostModal({
                                         <button
                                             key={user.id}
                                             type="button"
-                                            onClick={() => handleMentionSelect(user.username)}
+                                            onClick={() => handleMentionSelect(user)}
                                             className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors text-left"
                                         >
                                             <img

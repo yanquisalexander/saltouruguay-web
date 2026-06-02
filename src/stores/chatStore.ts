@@ -19,6 +19,7 @@ interface ChatState {
     maximizeChat: (userId: number) => void;
     toggleInbox: () => void;
     setInboxOpen: (isOpen: boolean) => void;
+    syncFromStorage: () => void;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -72,6 +73,21 @@ export const useChatStore = create<ChatState>()(
 
             toggleInbox: () => set({ isInboxOpen: !get().isInboxOpen }),
             setInboxOpen: (isOpen) => set({ isInboxOpen: isOpen }),
+
+            syncFromStorage: () => {
+                try {
+                    const raw = localStorage.getItem('saltogram-chat-storage');
+                    if (!raw) return;
+                    const parsed = JSON.parse(raw);
+                    if (parsed.state) {
+                        set({
+                            openChats: parsed.state.openChats || [],
+                            minimizedChats: parsed.state.minimizedChats || [],
+                            isInboxOpen: parsed.state.isInboxOpen || false,
+                        });
+                    }
+                } catch { /* silencio */ }
+            },
         }),
         {
             name: 'saltogram-chat-storage',

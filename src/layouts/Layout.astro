@@ -35,6 +35,7 @@ interface Props {
   hideFooter?: boolean;
   mainClassname?: string;
   customId?: string;
+  disableViewTransition?: boolean;
 }
 
 const session = await getSession(Astro.request);
@@ -50,6 +51,7 @@ const {
   hideFooter,
   mainClassname = "px-6 sm:px-10 pt-24",
   customId,
+  disableViewTransition = false,
 } = Astro.props;
 
 preload?.push({
@@ -91,7 +93,7 @@ preload?.push({
       canonical={canonical}
       preload={preload}
     />
-    <ClientRouter />
+    {!disableViewTransition && <ClientRouter />}
     <LoadingIndicator color="#1f97ff" height="3px" />
     <script
       async
@@ -185,6 +187,8 @@ preload?.push({
     />
 
     <KonamiCode />
+
+    <ChatDock client:only="preact" currentUser={session?.user || null} />
 
     <DebugInfo client:load transition:name="debug-info" transition:persist />
     <PushNotificationBanner client:idle />

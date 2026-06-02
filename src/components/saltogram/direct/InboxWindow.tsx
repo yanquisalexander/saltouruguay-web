@@ -4,6 +4,7 @@ import { actions } from 'astro:actions';
 import { useChatStore } from '@/stores/chatStore';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { LucideX, LucideMessageCircle, LucideLoader2 } from 'lucide-preact';
 
 interface Conversation {
     user: {
@@ -47,64 +48,70 @@ export default function InboxWindow({ onClose }: { onClose: () => void }) {
         }
     };
 
-    const handleOpenChat = (user: any) => {
-        openChat(user);
-        // Optional: close inbox when opening a chat? Maybe not, Facebook keeps it open or separate.
-        // onClose(); 
+    const handleOpenChat = (convUser: any) => {
+        openChat(convUser);
     };
 
     return (
-        <div className="w-80 h-96 bg-card border border-border rounded-t-lg shadow-xl flex flex-col">
-            <div className="p-3 border-b border-border flex justify-between items-center bg-card rounded-t-lg">
-                <h3 className="font-bold text-lg text-card-foreground">Mensajes</h3>
-                <div className="flex gap-2">
-                    <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
+        <div className="w-80 h-96 bg-[#0f1124]/95 backdrop-blur-2xl border border-white/10 shadow-2xl flex flex-col">
+            {/* Header — tonal glass */}
+            <div className="px-4 py-3 border-b border-white/8 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <LucideMessageCircle size={18} className="text-[#b3c8ff]" />
+                    <h3 className="font-bold text-base text-white">Mensajes</h3>
                 </div>
+                <button
+                    onClick={onClose}
+                    className="p-1.5 text-white/40 hover:text-white hover:bg-white/8 rounded-full transition-all duration-200 active:scale-90"
+                >
+                    <LucideX size={16} />
+                </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-card">
+            {/* Conversation List */}
+            <div className="flex-1 overflow-y-auto bg-[#0a0b1a] custom-scrollbar">
                 {loading ? (
                     <div className="flex justify-center items-center h-full">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <LucideLoader2 className="animate-spin text-[#b3c8ff]" size={24} />
                     </div>
                 ) : conversations.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">
-                        No tienes mensajes recientes.
+                    <div className="flex items-center justify-center h-full px-4">
+                        <p className="text-white/40 text-sm italic">No tienes mensajes recientes.</p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-border">
+                    <div>
                         {conversations.map((conv) => (
                             <button
                                 key={conv.user.id}
                                 onClick={() => handleOpenChat(conv.user)}
-                                className="w-full p-3 flex items-center gap-3 hover:bg-accent/50 transition-colors text-left"
+                                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.04] active:bg-white/[0.06] transition-colors duration-200 text-left border-b border-white/[0.03] last:border-b-0"
                             >
-                                <div className="relative">
+                                <div className="relative shrink-0">
                                     <img
-                                        src={conv.user.avatar || '/images/avatars/default.png'}
+                                        src={conv.user.avatar || `https://ui-avatars.com/api/?name=${conv.user.displayName}`}
                                         alt={conv.user.username}
-                                        className="w-12 h-12 rounded-full object-cover"
+                                        className="w-11 h-11 rounded-full object-cover ring-2 ring-[#b3c8ff]/10"
                                     />
                                     {conv.unreadCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold px-1.5 py-0.5 rounded-full min-w-5 text-center">
+                                        <span className="absolute -top-1 -right-1 bg-[#ffb4ab] text-[#690005] text-[11px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center leading-none shadow-sm">
                                             {conv.unreadCount}
                                         </span>
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-baseline">
-                                        <span className="font-semibold truncate text-card-foreground">
-                                            {conv.user.name || conv.user.username}
+                                    <div className="flex justify-between items-baseline gap-2">
+                                        <span className={`font-semibold text-sm truncate ${conv.unreadCount ? 'text-white' : 'text-white/70'}`}>
+                                            {conv.user.displayName}
                                         </span>
-                                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                                        <span className="text-[10px] text-white/30 whitespace-nowrap">
                                             {formatDistanceToNow(new Date(conv.lastMessage.createdAt), { addSuffix: false, locale: es })}
                                         </span>
                                     </div>
-                                    <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'font-semibold text-card-foreground' : 'text-muted-foreground'}`}>
-                                        {conv.lastMessage.senderId === conv.user.id ? '' : 'Tú: '}
-                                        {conv.lastMessage.content}
+                                    <p className={`text-sm truncate mt-0.5 ${conv.unreadCount > 0 ? 'font-medium text-white/80' : 'text-white/40'}`}>
+                                        {conv.lastMessage.senderId !== conv.user.id && (
+                                            <span className="text-[#b3c8ff]/60">Tú: </span>
+                                        )}
+                                        {conv.lastMessage.content || conv.lastMessage.reaction || ''}
                                     </p>
                                 </div>
                             </button>

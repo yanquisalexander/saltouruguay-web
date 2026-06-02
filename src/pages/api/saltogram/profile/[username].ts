@@ -4,34 +4,60 @@ import { UsersTable, SaltogramPostsTable, FriendsTable } from "@/db/schema";
 import { count, eq, and, or } from "drizzle-orm";
 
 export const GET = async ({ params }: APIContext) => {
-    const usernameParam = params.username;
-    if (!usernameParam) {
-        return new Response(JSON.stringify({ error: "Username requerido" }), {
+    const param = params.username;
+    if (!param) {
+        return new Response(JSON.stringify({ error: "Username o ID requerido" }), {
             status: 400,
             headers: { "Content-Type": "application/json" },
         });
     }
 
-    const username = usernameParam.toLowerCase();
+    // Detecta si es ID numérico o username
+    const isId = /^\d+$/.test(param);
 
-    const [user] = await client
-        .select({
-            id: UsersTable.id,
-            username: UsersTable.username,
-            displayName: UsersTable.displayName,
-            avatar: UsersTable.avatar,
-            tier: UsersTable.twitchTier,
-            admin: UsersTable.admin,
-        })
-        .from(UsersTable)
-        .where(eq(UsersTable.username, username))
-        .limit(1);
+    const [user] = isId
+        ? await client
+            .select({
+                id: UsersTable.id,
+                username: UsersTable.username,
+                displayName: UsersTable.displayName,
+                avatar: UsersTable.avatar,
+                tier: UsersTable.twitchTier,
+                admin: UsersTable.admin,
+            })
+            .from(UsersTable)
+            .where(eq(UsersTable.id, parseInt(param)))
+            .limit(1)
+        : await client
+            .select({
+                id: UsersTable.id,
+                username: UsersTable.username,
+                displayName: UsersTable.displayName,
+                avatar: UsersTable.avatar,
+                tier: UsersTable.twitchTier,
+                admin: UsersTable.admin,
+            })
+            .from(UsersTable)
+            .where(eq(UsersTable.username, param.toLowerCase()))
+            .limit(1);
 
     if (!user) {
         return new Response(JSON.stringify({ error: "Usuario no encontrado" }), {
             status: 404,
             headers: { "Content-Type": "application/json" },
         });
+    }
+
+    // Si se buscó por ID y el username actual es diferente, sugerir redirect
+    if (isId && user.username !== param) {
+        const redirectPath = `/saltogram/u/${user.username}`;
+        return new Response(
+            JSON.stringify({ redirect: redirectPath, user: null }),
+            {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+            }
+        );
     }
 
     const [postsCount] = await client

@@ -73,24 +73,30 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
     const formatText = (text: string) => {
         if (!text) return null;
         return text.split(/(\s+)/).map((word, i) => {
-            if (word.startsWith("#") && word.length > 1) {
-                const tag = word.substring(1);
+            // Nuevo formato @[id:username] → linkea por ID, muestra el username snapshot
+            const mentionMatch = word.match(/^@\[(\d+):([a-zA-Z0-9_]+)\]$/);
+            if (mentionMatch) {
+                const userId = mentionMatch[1];
+                const displayName = mentionMatch[2];
                 return (
-                    <a key={i} href={`/saltogram?tag=${tag}`} className="text-[#b3c8ff] hover:text-[#c5d5ff] font-medium hover:underline">
-                        {word}
+                    <a key={i} href={`/saltogram/u/${userId}`} className="text-[#b3c8ff] hover:text-[#c5d5ff] font-medium hover:underline">
+                        @{displayName}
                     </a>
                 );
             }
+            // Hashtags → link to tag filter
+            if (word.startsWith("#") && word.length > 1) {
+                const tag = word.substring(1);
+                return <a key={i} href={`/saltogram?tag=${tag}`} className="text-[#b3c8ff] hover:text-[#c5d5ff] font-medium hover:underline">{word}</a>;
+            }
+            // Legacy @-mentions → link to user profile (retrocompatible)
             if (word.startsWith("@") && word.length > 1) {
                 const username = word.substring(1);
                 if (/^[a-zA-Z0-9_]+$/.test(username)) {
-                    return (
-                        <a key={i} href={`/saltogram/u/${username}`} className="text-[#b3c8ff] hover:text-[#c5d5ff] font-medium hover:underline">
-                            {word}
-                        </a>
-                    );
+                    return <a key={i} href={`/saltogram/u/${username}`} className="text-[#b3c8ff] hover:text-[#c5d5ff] font-medium hover:underline">{word}</a>;
                 }
             }
+            // Plain text
             return word;
         });
     };

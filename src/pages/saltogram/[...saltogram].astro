@@ -33,8 +33,8 @@ const friendRequests = session?.user?.id
       .where(
         and(
           eq(FriendsTable.friendId, Number(session.user.id)),
-          eq(FriendsTable.status, "pending")
-        )
+          eq(FriendsTable.status, "pending"),
+        ),
       )
       .limit(4)
   : [];
@@ -175,6 +175,7 @@ const pageImage = initialPost?.imageUrl || initialProfileUser?.avatar;
   hideFooter={true}
   hideHeader={true}
   mainClassname="px-4 sm:px-8 pt-4 pb-16"
+  disableViewTransition={true}
 >
   <SaltogramApp
     client:only="preact"
