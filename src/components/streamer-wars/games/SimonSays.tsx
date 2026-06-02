@@ -138,7 +138,7 @@ export const SimonSays = ({
 
         if (color !== gameState.pattern[updatedPattern.length - 1]) {
             playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
-            await actions.games.simonSays.patternFailed({ playerNumber: session.user.id });
+            await actions.games.simonSays.patternFailed();
             return;
         }
 
@@ -147,7 +147,7 @@ export const SimonSays = ({
             setWaitingNextRound(true);
             const randomDelay = Math.floor(Math.random() * 1500) + 500;
             await sleep(randomDelay);
-            await actions.games.simonSays.completePattern({ playerNumber: session.user.id });
+            await actions.games.simonSays.completePattern();
             setPlayerPattern([]);
         }
     };

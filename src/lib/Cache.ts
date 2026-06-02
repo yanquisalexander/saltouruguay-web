@@ -80,6 +80,22 @@ class Cache {
     }
 
     /**
+     * Executes a Lua script atomically on the Redis server.
+     * @param script - The Lua script to execute.
+     * @param keys - The Redis keys the script will access.
+     * @param args - Additional arguments passed to the script.
+     * @returns The result of the script evaluation.
+     */
+    async eval<T = unknown>(script: string, keys: string[], args: (string | number)[]): Promise<T> {
+        try {
+            return await this.client.eval(script, keys.length, ...keys, ...args) as T;
+        } catch (err) {
+            console.error(`Redis EVAL error:`, err);
+            throw err;
+        }
+    }
+
+    /**
      * Closes the Redis connection.
      */
     async close(): Promise<void> {

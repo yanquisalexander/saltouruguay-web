@@ -57,7 +57,6 @@ export const Inmersive3dCinematic = ({ playerNumber }: { playerNumber?: number |
       subtitleEl: subtitleRef.current,
     };
 
-    // Apply initial canvas blur
     canvas.style.filter = "blur(10px)";
 
     const { state, timeline } = definition.setup(scene, camera, renderer, htmlRefs, playerNumber);

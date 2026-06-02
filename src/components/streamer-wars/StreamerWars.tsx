@@ -36,6 +36,7 @@ import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 import type { Players } from "../admin/streamer-wars/Players";
 import { InmersiveInstructions } from "./InmersiveInstructions";
 import { Inmersive3dCinematic } from "./Inmersive3dCinematic";
+import { Models3DPreloader } from "@/components/Models3DPreloader";
 import { PUSHER_EVENTS } from "@/consts/pusher";
 
 
@@ -455,6 +456,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
             {uiState.splashEnded && (
                 <>
+                    <Models3DPreloader />
+
                     {uiState.showingJourneyTransition && (
                         // @ts-ignore
                         <JourneyTransition key={uiState.journeyProps.key} players={players.slice(0, 50)} {...uiState.journeyProps} />

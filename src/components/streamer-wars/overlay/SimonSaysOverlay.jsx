@@ -1,5 +1,5 @@
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
-import { useEffect, useState, useCallback, useMemo } from "preact/hooks";
+import { useEffect, useState, useCallback, useMemo, useRef } from "preact/hooks";
 import { SimonSaysButtons, colors } from "../games/SimonSaysButtons";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
@@ -66,14 +66,10 @@ export const SimonSaysOverlay = ({ channel, players, pusher }) => {
 
     
 
-    const [playersProgress, setPlayersProgress] = useState([]);
+    const [playersProgress, setPlayersProgress] = useState({});
     const [activeButton, setActiveButton] = useState(null);
     const [showingPattern, setShowingPattern] = useState(false);
-
-    useEffect(() => {
-        console.log({playersProgress})
-
-    }, [playersProgress])
+    const currentRoundRef = useRef(0);
 
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -109,8 +105,9 @@ export const SimonSaysOverlay = ({ channel, players, pusher }) => {
         const simonSaysChannel = pusher.subscribe(PUSHER_CHANNELS.SIMON_SAYS);
 
         simonSaysChannel.bind(PUSHER_EVENTS_SIMON.GAME_STATE, (newGameState) => {
-            if (newGameState.currentRound !== gameState.currentRound) {
+            if (newGameState.currentRound !== currentRoundRef.current) {
                 setPlayersProgress({});
+                currentRoundRef.current = newGameState.currentRound;
             }
             setGameState(newGameState);
         });
@@ -118,7 +115,6 @@ export const SimonSaysOverlay = ({ channel, players, pusher }) => {
         simonSaysChannel.bind(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, ({ playerNumber, color }) => {
             console.log(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, { playerNumber, color });
 
-            // Actualizamos el progreso del jugador sin mutar el estado anterior
             setPlayersProgress((prevProgress) => {
                 const playerProgress = prevProgress[playerNumber] || [];
                 return {
@@ -141,7 +137,6 @@ export const SimonSaysOverlay = ({ channel, players, pusher }) => {
                 { position: "bottom-center", richColors: true }
             );
 
-            // Eliminamos al jugador del progreso
             setPlayersProgress((prevProgress) => {
                 const { [playerNumber]: _, ...rest } = prevProgress;
                 return rest;
@@ -149,14 +144,12 @@ export const SimonSaysOverlay = ({ channel, players, pusher }) => {
             
         });
 
-        
-
         return () => {
             simonSaysChannel.unbind(PUSHER_EVENTS_SIMON.GAME_STATE);
             simonSaysChannel.unbind(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT);
             pusher.unsubscribe(PUSHER_CHANNELS.SIMON_SAYS);
         };
-    }, [pusher, gameState.currentRound]);
+    }, [pusher]);
 
     useEffect(() => {
         if (gameState.pattern.length > 0 && gameState.status === "playing") {
