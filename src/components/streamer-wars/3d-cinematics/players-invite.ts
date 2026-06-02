@@ -537,6 +537,7 @@ export const playersInvite: Cinematic3DDefinition = {
 
     // Preload sounds
     const inviteSnd = [
+      "scripts/3d/player-invite-bg",
       "scripts/3d/guardia-girando-cabeza",
       "scripts/3d/jugador-subase",
       "scripts/3d/waking-gas-2",
@@ -545,6 +546,9 @@ export const playersInvite: Cinematic3DDefinition = {
 
     // ── GSAP Timeline ──────────────────────────────────────
     const tl = gsap.timeline({ delay: 0.5 });
+
+    // Play background sound immediately, but fade it in with the musical cues
+    tl.call(() => { playSound({ sound: "scripts/3d/player-invite-bg", volume: 0.1 }); }, [], 0);
 
     // Phase 1: WAITING (0s - 7s)
     tl.to(htmlRefs.overlayEl, { opacity: 0, duration: 3.5, ease: "power2.inOut" }, 0);
@@ -584,7 +588,7 @@ export const playersInvite: Cinematic3DDefinition = {
     tl.to(fpCam, { bx: -0.5, by: 1.68, rollTarget: 0, duration: 0.4, ease: "power2.in" }, 19.62);
 
     tl.to(guard.userData.headYaw.rotation, { y: -0.6, duration: 4, ease: "power3.inOut" }, 18.5);
-    tl.call(() => { playSound({ sound: "scripts/3d/guardia-girando-cabeza", volume: 0.5 }); }, [], 19);
+    tl.call(() => { playSound({ sound: "scripts/3d/guardia-girando-cabeza", volume: 0.5 }); }, [], 19.5);
     tl.to(fpCam, { gx: 1.7, gz: 1.0, gy: 1.3, duration: 2, ease: "power2.inOut" }, 21.5);
 
     // El guardia dice "Jugador, por favor subase"
