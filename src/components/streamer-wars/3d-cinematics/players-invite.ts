@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
 import gsap from "gsap/dist/gsap";
+import { playSound, playSoundWithMegaphone, playSoundWithReverb } from "@/consts/Sounds";
 import type { Cinematic3DDefinition } from "./types";
 
 function makeBox(w: number, h: number, d: number, mat: THREE.Material) {
@@ -461,7 +462,7 @@ export const playersInvite: Cinematic3DDefinition = {
         );
         if (playerDoorClip) {
           vanData.doorAction = vanData.mixer.clipAction(playerDoorClip);
-          vanData.doorAction.setLoop(THREE.LoopOnce);
+          vanData.doorAction.setLoop(THREE.LoopOnce, 0);
           vanData.doorAction.clampWhenFinished = true;
         } else {
           const fallbackClip = gltf.animations.find(c =>
@@ -534,6 +535,14 @@ export const playersInvite: Cinematic3DDefinition = {
       htmlRefs.numberEl.textContent = `PLAYER ${String(playerNumber).padStart(3, "0")}`;
     }
 
+    // Preload sounds
+    const inviteSnd = [
+      "scripts/3d/guardia-girando-cabeza",
+      "scripts/3d/jugador-subase",
+      "scripts/3d/waking-gas-2",
+    ];
+    inviteSnd.forEach(p => playSound({ sound: p, volume: 0 }));
+
     // ── GSAP Timeline ──────────────────────────────────────
     const tl = gsap.timeline({ delay: 0.5 });
 
@@ -574,8 +583,15 @@ export const playersInvite: Cinematic3DDefinition = {
     tl.to(fpCam, { bx: -0.55, by: 1.7, rollTarget: 0.02, duration: 0.12, ease: "power3.out" }, 19.5);
     tl.to(fpCam, { bx: -0.5, by: 1.68, rollTarget: 0, duration: 0.4, ease: "power2.in" }, 19.62);
 
-    tl.to(guard.userData.headYaw.rotation, { y: -0.6, duration: 2.5, ease: "power2.inOut" }, 21);
+    tl.to(guard.userData.headYaw.rotation, { y: -0.6, duration: 4, ease: "power3.inOut" }, 18.5);
+    tl.call(() => { playSound({ sound: "scripts/3d/guardia-girando-cabeza", volume: 0.5 }); }, [], 19);
     tl.to(fpCam, { gx: 1.7, gz: 1.0, gy: 1.3, duration: 2, ease: "power2.inOut" }, 21.5);
+
+    // El guardia dice "Jugador, por favor subase"
+    tl.call(() => { playSoundWithMegaphone({ sound: "scripts/3d/jugador-subase", volume: 1 }); }, [], 22.5);
+    tl.call(() => { if (htmlRefs.subtitleEl) htmlRefs.subtitleEl.textContent = "Jugador, por favor súbase"; }, [], 22.5);
+    tl.set(htmlRefs.subtitleEl, { opacity: 1 }, 22.5);
+    tl.set(htmlRefs.subtitleEl, { opacity: 0 }, 25.5);
 
     // Phase 5: ENTERING THE VAN (24s - 30s)
     tl.to(fpCam, { bx: -0.45, duration: 0.6, ease: "sine.inOut" }, 24);
@@ -604,6 +620,7 @@ export const playersInvite: Cinematic3DDefinition = {
     // Phase 6: INSIDE THE VAN (30s - 36s)
     tl.to(fpCam, { ba: 0.014, duration: 2, ease: "power2.in" }, 31);
     tl.to(interiorRed, { intensity: 2.5, duration: 2, ease: "power2.in" }, 32);
+    tl.call(() => { playSound({ sound: "scripts/3d/waking-gas-2", volume: 0.15 }); }, [], 36);
     tl.to(gasState, {
       level: 0.4, duration: 1.5, ease: "power2.in",
       onUpdate: function () { gas.setIntensity(this.targets()[0].level); },
