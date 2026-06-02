@@ -24,19 +24,24 @@ export const wakingUp: Cinematic3DDefinition = {
     camera.rotation.y = 0.05;
 
     // ── Lights ──────────────────────────────────────────────
-    const ambient = new THREE.AmbientLight(0x3a6a8a, 10.0);
+    const ambient = new THREE.AmbientLight(0x336644, 10.0);
     scene.add(ambient);
 
-    const guardRim = new THREE.PointLight(0x4a7aaa, 3.0, 15, 2);
+    const guardRim = new THREE.PointLight(0x55bb66, 3.0, 15, 2);
     guardRim.position.set(0, 3.5, -22);
     scene.add(guardRim);
 
-    makePoint(scene, -3, 3.5, -4, 0x5a9aba, 5.0, 35);
-    makePoint(scene, 3, 3.5, -4, 0x5a9aba, 5.0, 35);
-    makePoint(scene, -3, 3.5, -14, 0x4a8aaa, 4.0, 35);
-    makePoint(scene, 3, 3.5, -14, 0x4a8aaa, 4.0, 35);
-    makePoint(scene, 0, 3.5, -24, 0x3a6a8a, 3.0, 35);
-    makePoint(scene, 0, 3.5, -34, 0x2a5a7a, 2.5, 35);
+    makePoint(scene, -3, 3.5, -4, 0x66dd77, 5.0, 35);
+    makePoint(scene, 3, 3.5, -4, 0x66dd77, 5.0, 35);
+    makePoint(scene, -3, 3.5, -14, 0x55bb66, 4.0, 35);
+    makePoint(scene, 3, 3.5, -14, 0x55bb66, 4.0, 35);
+    makePoint(scene, 0, 3.5, -24, 0x44aa55, 3.0, 35);
+    makePoint(scene, 0, 3.5, -34, 0x338844, 2.5, 35);
+
+    // Green accent lights — Streamer Wars reference
+    makePoint(scene, -2.5, 1.5, -8, 0x44cc55, 1.5, 12);
+    makePoint(scene, 2.5, 1.5, -8, 0x44cc55, 1.5, 12);
+    makePoint(scene, 0, 1.5, -20, 0x44cc55, 1.5, 12);
 
     const redLight = new THREE.PointLight(0xff1500, 0, 22, 1.5);
     redLight.position.set(0, 4.5, -8);
@@ -56,7 +61,7 @@ export const wakingUp: Cinematic3DDefinition = {
     const matMask = new THREE.MeshStandardMaterial({ color: 0x0c1318, roughness: 0.3, metalness: 0.55, emissive: 0x030608, emissiveIntensity: 0.5 });
     const matCircle = new THREE.MeshStandardMaterial({ color: 0x1a0505, emissive: 0x3a0808, emissiveIntensity: 1, roughness: 0.2 });
     const matMattress = new THREE.MeshStandardMaterial({ color: 0x161e24, roughness: 1 });
-    const matStrip = new THREE.MeshStandardMaterial({ color: 0xa0c8e0, emissive: 0x385878, emissiveIntensity: 1.0, roughness: 0.2 });
+    const matStrip = new THREE.MeshStandardMaterial({ color: 0xaaeebb, emissive: 0x336644, emissiveIntensity: 1.2, roughness: 0.2 });
 
     const disposables: { geo: THREE.BufferGeometry; mat: THREE.Material }[] = [];
     const track = (m: THREE.Mesh) => disposables.push({ geo: m.geometry, mat: m.material });
@@ -376,7 +381,7 @@ export const wakingUp: Cinematic3DDefinition = {
     tl.to(state, { exposure: 0.1, duration: 8, ease: "power3.in" }, 25);
 
     // 13. Fade to black + final subtitle
-    tl.call(() => { playSoundWithReverb({ sound: "scripts/3d/waking-guardia-habla", volume: 1 }); }, [], 28);
+    tl.call(() => { playSoundWithReverb({ sound: "scripts/3d/waking-guardia-habla", volume: 1.2 }); }, [], 28);
     tl.to(htmlRefs.overlayEl, { opacity: 1, duration: 5.5, ease: "power3.in" }, 28);
     tl.call(() => { if (htmlRefs.subtitleEl) htmlRefs.subtitleEl.textContent = "(*guardia* ... todavía no es momento de despertar)"; }, [], 28);
     tl.set(htmlRefs.subtitleEl, { opacity: 1 }, 28);
