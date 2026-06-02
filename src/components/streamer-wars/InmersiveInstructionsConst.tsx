@@ -1,8 +1,11 @@
 import { type JSX } from "preact";
 import { useEffect, useState, useRef } from "preact/hooks";
 import { SimonSaysButtons } from "./games/SimonSaysButtons";
-import { playSound, playTick, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
+import { playSound, playSoundWithMegaphone, playTick, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import type { Players } from "../admin/streamer-wars/Players";
+import type { TextAnimation, Atmosphere } from "./cinematic/types";
+import type { TransitionType } from "./cinematic/transitions";
+import type { Mood } from "./cinematic/moods";
 
 // Reutilizamos la interfaz ScriptItem (si está exportada, sino redfínela)
 export interface ScriptItem {
@@ -14,6 +17,14 @@ export interface ScriptItem {
     volume?: number;
     execute?: () => void;
     fullScreen?: boolean;
+    // --- Nuevos campos cinematográficos (opcionales) ---
+    textAnimation?: TextAnimation;
+    atmosphere?: Atmosphere;
+    transitionIn?: TransitionType;
+    letterbox?: boolean;
+    shake?: boolean;
+    mood?: Mood;
+    typewriterSpeed?: number;
 }
 
 // Componente para mostrar patrón de ejemplo de Simón Dice
@@ -202,25 +213,36 @@ export const INSTRUCTIONS_REGISTRY: Record<string, ScriptItem[]> = {
     "dalgona-start": [
         {
             text: "Atención jugadores. El siguiente juego es... El Dalgona.",
-            audioPath: "instructions/dalgona-intro", // Asegúrate de tener estos audios o cambia el path
-            duration: 5000
+            audioPath: "instructions/dalgona-intro",
+            duration: 5000,
+            mood: "warning",
+            atmosphere: "scanlines",
+            textAnimation: "typewriter",
+            transitionIn: "slide-up"
         },
         {
             text: "Tienen 10 minutos para recortar la figura perfecta.",
             audioPath: "instructions/dalgona-rules-1",
             duration: 4000,
-            component: <div class="font-atomic text-lime-500 text-6xl animate-pulse">10:00</div>
+            component: <div class="font-atomic text-lime-500 text-6xl animate-pulse">10:00</div>,
+            letterbox: true
         },
         {
             text: "Si la galleta se rompe... serán eliminados.",
             audioPath: "instructions/dalgona-rules-2",
             duration: 4000,
-            omitReverb: true
+            omitReverb: true,
+            mood: "danger",
+            shake: true,
+            atmosphere: "vignette",
+            textAnimation: "typewriter"
         },
         {
             text: "¡Comiencen!",
             audioPath: "instructions/begin",
             duration: 2000,
+            mood: "triumph",
+            transitionIn: "zoom",
             execute: () => {
                 // playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION, volume: 0.8 });
             }
@@ -231,46 +253,64 @@ export const INSTRUCTIONS_REGISTRY: Record<string, ScriptItem[]> = {
             text: "Reunión de emergencia convocada.",
             audioPath: "instructions/emergency-siren",
             duration: 4000,
-            component: <div class="bg-red-600 text-white font-atomic text-4xl px-8 py-4 border-4 border-white animate-bounce">EMERGENCIA</div>
+            component: <div class="bg-red-600 text-white font-atomic text-4xl px-8 py-4 border-4 border-white animate-bounce">EMERGENCIA</div>,
+            mood: "danger",
+            atmosphere: "noise",
+            shake: true,
+            transitionIn: "glitch"
         },
         {
             text: "Todos los jugadores deben dirigirse al centro del mapa.",
             audioPath: "instructions/go-to-center",
-            duration: 5000
+            duration: 5000,
+            mood: "warning",
+            textAnimation: "typewriter"
         }
     ],
     "simon-says": [
         {
             text: "¡Atención! El siguiente minijuego es... ¡Simón Dice!",
             audioPath: "instructions/simon-intro",
-            duration: 4000
+            duration: 4000,
+            mood: "warning",
+            textAnimation: "typewriter",
+            transitionIn: "slide-up"
         },
         {
             text: "Observen el patrón que se mostrará a continuación.",
             audioPath: "instructions/simon-watch",
-            duration: 3000
+            duration: 3000,
+            textAnimation: "typewriter"
         },
         {
             text: "Memoricen la secuencia de colores.",
             audioPath: "instructions/simon-memorize",
             duration: 5000,
-            component: <SimonSaysExample key={'simonsaytutorial'} />
+            component: <SimonSaysExample key={'simonsaytutorial'} />,
+            letterbox: true
         },
         {
             text: "Repitan la secuencia exactamente como se mostró.",
             audioPath: "instructions/simon-repeat",
-            duration: 4000
+            duration: 4000,
+            transitionIn: "zoom"
         },
         {
             text: "Si fallan... serán eliminados.",
             audioPath: "instructions/simon-fail",
             duration: 3000,
-            omitReverb: true
+            omitReverb: true,
+            mood: "danger",
+            shake: true,
+            atmosphere: "vignette",
+            textAnimation: "typewriter"
         },
         {
             text: "¡Comiencen cuando estén listos!",
             audioPath: "instructions/begin",
             duration: 2000,
+            mood: "triumph",
+            transitionIn: "zoom",
             execute: () => {
                 // playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION, volume: 0.8 });
             }
@@ -278,11 +318,19 @@ export const INSTRUCTIONS_REGISTRY: Record<string, ScriptItem[]> = {
     ],
     "vote-continue": [
         {
+            audioPath: "inmersive-bg-audio/vote-continue",
+            duration: 500, // Música de fondo que dura toda la secuencia
+            volume: 0.3,
+        },
+        {
             text: "El juego continuará sólo si la mayoría lo decide.",
             audioPath: "instructions/vote-intro",
             duration: 4000,
+            atmosphere: "scanlines",
+            textAnimation: "typewriter",
+            transitionIn: "slide-up",
             execute: () => {
-                playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION, volume: 0.8 });
+                playSoundWithMegaphone({ sound: STREAMER_WARS_SOUNDS.PROBLEMAS_TECNICOS, volume: 0.8 });
             }
         },
         {
@@ -290,18 +338,23 @@ export const INSTRUCTIONS_REGISTRY: Record<string, ScriptItem[]> = {
             audioPath: "instructions/vote-choose",
             duration: 8000,
             fullScreen: true,
+            mood: "danger",
+            atmosphere: "vignette",
             component: <VoteContinue />
         },
         {
             text: "Los votos han sido contados.",
             audioPath: "instructions/vote-result",
-            duration: 3500
+            duration: 3500,
+            transitionIn: "flash"
         },
         {
             text: "Decisión unánime. El juego continúa.",
             audioPath: "instructions/vote-unanimous",
             duration: 4000,
-            omitReverb: true
+            omitReverb: true,
+            mood: "triumph",
+            textAnimation: "typewriter"
         }
     ]
 };

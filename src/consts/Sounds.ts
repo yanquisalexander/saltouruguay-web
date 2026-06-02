@@ -1,4 +1,4 @@
-export const CDN_PREFIX = "https://cdn-2.saltouruguayserver.com/sounds/";
+export const CDN_PREFIX = "https://cdn.saltouruguayserver.com/sounds/";
 
 export const STREAMER_WARS_SOUNDS = {
     NOTIFICATION: "notification",
@@ -72,7 +72,7 @@ export const stopAllSounds = () => {
     activeAudios.forEach((a) => { a.pause(); a.currentTime = 0 });
     activeAudios.clear();
     activeAudioContexts.forEach((ctx) => {
-        if (ctx.state !== "closed") ctx.close().catch(() => {});
+        if (ctx.state !== "closed") ctx.close().catch(() => { });
     });
     activeAudioContexts.clear();
 };
@@ -94,7 +94,7 @@ export const playTick = () => {
     const audio = getTickAudio();
     audio.currentTime = 0;
     audio.volume = 1;
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
 };
 
 
@@ -105,6 +105,15 @@ type PlaySoundWithReverbOptions = {
     volume?: number;
     reverbAmount?: number;
     isBase64?: boolean;
+};
+
+type PlaySoundWithMegaphoneOptions = {
+    sound?: string;
+    arrayBuffer?: ArrayBuffer;
+    volume?: number;
+    isBase64?: boolean;
+    lowCut?: number;
+    highCut?: number;
 };
 
 export const playSoundWithReverb = async ({
@@ -214,6 +223,109 @@ export const playSoundWithReverb = async ({
     });
 };
 
+export const playSoundWithMegaphone = async ({
+    sound,
+    arrayBuffer,
+    volume = 1,
+    isBase64 = false,
+    lowCut = 400,
+    highCut = 6000,
+}: PlaySoundWithMegaphoneOptions): Promise<void> => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioCtx) throw new Error("AudioContext is not supported in this browser");
+
+            const audioContext = new AudioCtx();
+            activeAudioContexts.add(audioContext);
+
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume().catch(e => console.warn('AudioContext resume failed', e));
+            }
+
+            let source: AudioBufferSourceNode | MediaElementAudioSourceNode;
+            let duration: number;
+
+            if (arrayBuffer || isBase64) {
+                let bufferToDecode: ArrayBuffer;
+
+                if (arrayBuffer) {
+                    bufferToDecode = arrayBuffer;
+                } else {
+                    const base64Data = sound!.includes(',') ? sound!.split(',')[1] : sound!;
+                    const binaryString = atob(base64Data);
+                    const uint8Array = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        uint8Array[i] = binaryString.charCodeAt(i);
+                    }
+                    bufferToDecode = uint8Array.buffer;
+                }
+
+                const audioBuffer = await audioContext.decodeAudioData(bufferToDecode.slice(0));
+                const bufferSource = audioContext.createBufferSource();
+                bufferSource.buffer = audioBuffer;
+                duration = audioBuffer.duration;
+                source = bufferSource;
+
+            } else if (sound) {
+                const audioEl = new Audio(sound.startsWith('blob:') ? sound : `${CDN_PREFIX}${sound}.mp3`);
+                audioEl.crossOrigin = "anonymous";
+
+                await new Promise<void>((res, rej) => {
+                    audioEl.oncanplaythrough = () => res();
+                    audioEl.onerror = rej;
+                    audioEl.load();
+                });
+                duration = audioEl.duration;
+                source = audioContext.createMediaElementSource(audioEl);
+
+            } else {
+                throw new Error("playSoundWithMegaphone requires either sound or arrayBuffer");
+            }
+
+            const highpassFilter = audioContext.createBiquadFilter();
+            highpassFilter.type = "highpass";
+            highpassFilter.frequency.value = lowCut;
+            highpassFilter.Q.value = 0.5;
+
+            const lowpassFilter = audioContext.createBiquadFilter();
+            lowpassFilter.type = "lowpass";
+            lowpassFilter.frequency.value = highCut;
+            lowpassFilter.Q.value = 0.5;
+
+            const gain = audioContext.createGain();
+            gain.gain.value = volume;
+
+            source.connect(highpassFilter);
+            highpassFilter.connect(lowpassFilter);
+            lowpassFilter.connect(gain);
+            gain.connect(audioContext.destination);
+
+            const cleanup = async () => {
+                setTimeout(async () => {
+                    activeAudioContexts.delete(audioContext);
+                    if (audioContext.state !== 'closed') await audioContext.close().catch(() => { });
+                    if (sound?.startsWith('blob:')) URL.revokeObjectURL(sound);
+                    resolve();
+                }, 300);
+            };
+
+            if (source instanceof AudioBufferSourceNode) {
+                source.onended = cleanup;
+                source.start();
+            } else {
+                const audioEl = (source as any).mediaElement as HTMLAudioElement;
+                audioEl.crossOrigin = "anonymous";
+                audioEl.onended = cleanup;
+                audioEl.play();
+            }
+
+        } catch (error) {
+            console.error("Error al reproducir sonido con megafonía:", error);
+            reject(error);
+        }
+    });
+};
 
 // Función auxiliar para crear un buffer de reverb
 const createReverbBuffer = async (audioContext: AudioContext, reverbAmount: number) => {

@@ -29,7 +29,7 @@ pnpm db:migrate       # tsx ./src/db/migrator.ts
 - `@/*` → `src/*` (tsconfig.json)
 - `class` attribute in both Astro and Preact/TSX (Preact supports both)
 - Environment variables in `astro.config.mjs` `env.schema`, accessed via `astro:env/client` or `astro:env/server`
-- CDN: `https://cdn-2.saltouruguayserver.com/sounds/` for audio, `https://cdn.saltouruguayserver.com` for images
+- CDN: `https://cdn.saltouruguayserver.com/sounds/` for audio, `https://cdn.saltouruguayserver.com` for images
 
 ## Project structure
 

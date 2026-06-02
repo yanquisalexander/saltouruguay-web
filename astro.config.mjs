@@ -15,6 +15,8 @@ import notifyNewVersion from "./src/hooks/notifyNewVersion";
 
 import tailwindcss from '@tailwindcss/vite';
 
+const buildHash = new Date().getTime().toString(36);
+
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
@@ -49,7 +51,7 @@ export default defineConfig({
     },
   },
   server: {
-    
+
   },
   security: {
     /* 
@@ -70,7 +72,9 @@ export default defineConfig({
         'react/jsx-runtime': 'preact/jsx-runtime',
       },
     },
-
+    define: {
+      __BUILD_HASH__: JSON.stringify(buildHash),
+    },
     optimizeDeps: {
       exclude: ['edge-tts', 'motion/react']
     },

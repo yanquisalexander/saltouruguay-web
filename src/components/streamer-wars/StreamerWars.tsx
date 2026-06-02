@@ -35,6 +35,7 @@ import { JourneyTitle } from "./JourneyTitle";
 import { useStreamerWarsSocket } from "./hooks/useStreamerWarsSocket";
 import type { Players } from "../admin/streamer-wars/Players";
 import { InmersiveInstructions } from "./InmersiveInstructions";
+import { Inmersive3dCinematic } from "./Inmersive3dCinematic";
 import { PUSHER_EVENTS } from "@/consts/pusher";
 
 
@@ -468,6 +469,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                     )}
 
                     <InmersiveInstructions players={players} />
+                    <Inmersive3dCinematic playerNumber={session.user.streamerWarsPlayerNumber} />
 
                     <WelcomeToStreamerWars
                         session={session}

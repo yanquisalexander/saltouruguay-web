@@ -36,7 +36,8 @@ const COMMANDS: Command[] = [
     { name: "/fishing", description: "Controlar Fishing", args: ["start|end|reset"] },
     { name: "/andi", description: "Controlar And I Challenge", args: ["start|next|end|reset"] },
     { name: "/revive", description: "Revivir un jugador", args: ["playerNumber"] },
-    { name: "/instructions", description: "Enviar instrucciones por ID", args: ["id"] }
+    { name: "/instructions", description: "Enviar instrucciones por ID", args: ["id"] },
+    { name: "/cinematic3d", description: "Reproducir cinemática 3D", args: ["id"] }
 ];
 
 type LogEntry = {

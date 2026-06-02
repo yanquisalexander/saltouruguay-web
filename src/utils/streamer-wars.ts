@@ -3215,6 +3215,13 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
                 }
                 await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.INMERSIVE_INSTRUCTIONS, { id });
                 return { success: true, feedback: `Instrucciones inmersivas enviadas con ID: ${id}` };
+            case '/cinematic3d':
+                const cinematic3dId = args[0];
+                if (!cinematic3dId) {
+                    return { success: false, feedback: 'Se requiere un ID de cinemática 3D' };
+                }
+                await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.INMERSIVE_3D_CINEMATIC, { id: cinematic3dId });
+                return { success: true, feedback: `Cinemática 3D "${cinematic3dId}" reproducida` };
             default:
                 return { success: false, feedback: 'Comando desconocido' };
         }

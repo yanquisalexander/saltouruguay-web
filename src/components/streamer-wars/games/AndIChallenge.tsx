@@ -5,6 +5,7 @@ import type { Channel } from "pusher-js";
 import { actions } from "astro:actions";
 import { PUSHER_CHANNELS, PUSHER_EVENTS_ANDI } from "@/consts/pusher";
 import type { Players } from "@/components/admin/streamer-wars/Players";
+import { Instructions } from "../Instructions";
 
 const TARGET_TIME = 5.388;
 const AUDIO_SRC = "https://cdn.saltouruguayserver.com/sounds/cutted-song-click-challenge.mp3?t=aaaa";
@@ -282,20 +283,55 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
         };
     }, []);
 
+    useEffect(() => {
+        document.addEventListener("instructions-ended", () => {
+            // Instructions dismissed — game is ready to start via admin
+        }, { once: true });
+    }, []);
+
     const dur = audioDuration || 25;
     const progressPct = Math.min(progress, 100);
     const targetPct = (TARGET_TIME / dur) * 100;
     const sortedResults = [...results].sort((a, b) => a.ms - b.ms);
 
     return (
-        <div
-            class="w-full h-full relative overflow-hidden flex flex-col"
-            style={{
-                background: 'radial-gradient(circle at center, rgba(147,51,234,0.4) 0%, #0a0a0f 70%)',
-                border: '4px solid rgba(147,51,234,0.3)',
-                boxShadow: 'inset 0 0 60px rgba(147,51,234,0.15)',
-            }}
-        >
+        <>
+            <Instructions duration={10000}
+                controls={[
+                    {
+                        keys: ["LEFT_CLICK"],
+                        label: "Presiona TAP en el momento exacto"
+                    }
+                ]}
+            >
+                <p class="font-mono max-w-2xl text-left">
+                    "El desafío de Whitney" es un juego de reflejos y precisión musical.
+                    <br /><br />
+                    Escucharás un fragmento de canción y deberás presionar el botón <strong>TAP</strong> exactamente en el momento indicado por el administrador.
+                    <br /><br />
+                    Tu objetivo es acercarte lo más posible al momento exacto. Mientras más cerca estés, mejor será tu puntuación:
+                </p>
+                <br />
+                <ul class="font-mono max-w-2xl text-left space-y-1 list-disc list-inside">
+                    <li><span style="color: #22c55e">PERFECTO</span> — Casi exacto</li>
+                    <li><span style="color: #06b6d4">BIEN</span> — Muy cerca</li>
+                    <li><span style="color: #f59e0b">TEMPRANO</span> — Presionaste antes</li>
+                    <li><span style="color: #f97316">TARDE</span> — Presionaste después</li>
+                    <li><span style="color: #ef4444">FALLASTE</span> — Muy lejos del momento</li>
+                </ul>
+                <br />
+                <p class="font-mono max-w-2xl text-left">
+                    ¡Pon atención al ritmo y demuestra tu precisión!
+                </p>
+            </Instructions>
+            <div
+                class="w-full h-full relative overflow-hidden flex flex-col"
+                style={{
+                    background: 'radial-gradient(circle at center, rgba(147,51,234,0.4) 0%, #0a0a0f 70%)',
+                    border: '4px solid rgba(147,51,234,0.3)',
+                    boxShadow: 'inset 0 0 60px rgba(147,51,234,0.15)',
+                }}
+            >
             <style>{`
                 @keyframes shake {
                     0%, 100% { transform: translateX(0); }
@@ -352,7 +388,7 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
             <div class="flex items-center justify-between px-4 py-2 bg-neutral-900/80 border-b-2 border-purple-700/50 backdrop-blur-md z-10">
                 <div class="flex items-center gap-3">
                     <h2 class="font-squids text-lg tracking-wider" style={{ color: '#c084fc', textShadow: '0 0 10px rgba(192,132,252,0.6)' }}>
-                        AND IIII
+                        El desafío de Whitney
                     </h2>
                     {gameStatus === 'playing' && (
                         <span class="font-mono text-[10px] uppercase tracking-widest text-purple-400/60">
@@ -379,7 +415,7 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
                             color: '#c084fc',
                             textShadow: '0 0 30px rgba(192,132,252,0.6)',
                         }}>
-                            AND IIII
+                            El desafío de Whitney
                         </span>
                         <span class="font-mono text-sm text-purple-400/60 animate-pulse">
                             ESPERANDO...
@@ -413,8 +449,8 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
                             </div>
                         )}
 
-                        {/* Progress bar — only spectators see the target */}
-                        {!myTurn && (
+                        {/* Progress bar — spectators always, player only after tapping */}
+                        {gameStatus === 'playing' && (!myTurn || phase === 'result') && (
                         <div class="w-full max-w-md flex flex-col gap-1.5">
                             <div class="flex justify-between font-mono text-[10px] text-purple-400/60">
                                 <span>{fmt((progressPct / 100) * dur)}</span>
@@ -554,5 +590,6 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
                 )}
             </div>
         </div>
+        </>
     );
 };

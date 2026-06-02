@@ -63,6 +63,7 @@ export const PUSHER_EVENTS = {
 
   // Instructions
   INMERSIVE_INSTRUCTIONS: 'inmersive-instructions',
+  INMERSIVE_3D_CINEMATIC: 'inmersive-3d-cinematic',
 
   // Presence events
   MEMBER_ADDED: 'pusher:member_added',
