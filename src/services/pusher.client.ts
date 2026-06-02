@@ -51,6 +51,7 @@ class PusherService {
                 activityTimeout: 60000,
                 pongTimeout: 30000,
                 disableStats: true,
+                authEndpoint: '/pusher/auth',
             });
 
             // Log connection state changes

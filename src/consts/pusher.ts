@@ -4,6 +4,7 @@ export const PUSHER_CHANNELS = {
   SIMON_SAYS: 'streamer-wars.simon-says',
   CINEMATIC: 'streamer-wars-cinematic',
   AUTO_ELIMINATION: 'auto-elimination',
+  DM: (a: number, b: number) => `private-saltogram-dm-${Math.min(a, b)}-${Math.max(a, b)}`,
 } as const;
 
 export const PUSHER_EVENTS = {
@@ -119,6 +120,12 @@ export const PUSHER_EVENTS_CINEMATIC = {
 
 export const PUSHER_EVENTS_AUTO_ELIM = {
   PLAYER_AUTOELIMINATED: 'player-autoeliminated',
+} as const;
+
+export const PUSHER_EVENTS_DM = {
+  NEW_MESSAGE: 'dm-new-message',
+  MESSAGE_READ: 'dm-message-read',
+  CLIENT_TYPING: 'client-dm-typing',
 } as const;
 
 export const PUSHER_EVENTS_ANDI = {

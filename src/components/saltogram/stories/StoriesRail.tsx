@@ -59,7 +59,7 @@ export default function StoriesRail({ user }: StoriesRailProps) {
     if (loading) return (
         <div class="flex gap-2.5 overflow-x-auto py-1 px-4 no-scrollbar">
             {[1, 2, 3, 5].map(i => (
-                <div key={i} class="shrink-0 w-[108px] h-[172px] rounded-[20px] bg-[#2e2f31] animate-pulse" />
+                <div key={i} class="shrink-0 w-[108px] aspect-[9/16] rounded-[20px] bg-[#2e2f31] animate-pulse" />
             ))}
         </div>
     );
@@ -72,7 +72,7 @@ export default function StoriesRail({ user }: StoriesRailProps) {
                 {user && (
                     <div
                         onClick={() => setIsCreateModalOpen(true)}
-                        class="shrink-0 w-[108px] h-[172px] rounded-[20px] overflow-hidden cursor-pointer
+                        class="shrink-0 w-[108px] aspect-[9/16] rounded-[20px] overflow-hidden cursor-pointer
                    flex flex-col bg-[#2e2f31] border border-white/[0.07] snap-start
                    hover:scale-[1.04] active:scale-[0.97] transition-transform duration-200"
                         style={{ transitionTimingFunction: "cubic-bezier(0.2,0,0,1)" }}
@@ -116,7 +116,7 @@ export default function StoriesRail({ user }: StoriesRailProps) {
                         <div
                             key={item.user.id}
                             onClick={() => setSelectedUserIndex(index)}
-                            class="shrink-0 w-[108px] h-[172px] rounded-[20px] overflow-hidden cursor-pointer
+                            class="shrink-0 w-[108px] aspect-[9/16] rounded-[20px] overflow-hidden cursor-pointer
                      relative snap-start
                      hover:scale-[1.04] active:scale-[0.97] transition-transform duration-200"
                             style={{ transitionTimingFunction: "cubic-bezier(0.2,0,0,1)" }}

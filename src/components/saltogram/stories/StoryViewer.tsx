@@ -262,7 +262,7 @@ export default function StoryViewer({
                     if (info.offset.y > 100) onClose();
                     else if (info.offset.y < -50 && isOwner) setShowViewers(true);
                 }}
-                class="relative w-full max-w-md h-full md:h-[90vh] md:rounded-[28px] overflow-hidden
+                class="relative max-w-md h-dvh md:h-auto md:aspect-9/16 md:max-h-[90vh] md:rounded-[28px] overflow-hidden w-auto
                bg-[#111] flex flex-col shadow-2xl"
             >
                 {/* Progress bars */}

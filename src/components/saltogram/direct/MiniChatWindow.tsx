@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef } from "preact/hooks";
+import { useState, useEffect, useRef, useCallback } from "preact/hooks";
 import { actions } from "astro:actions";
 import { LucideX, LucideMinus, LucideSend, LucideImage, LucideSmile, LucideLoader2 } from "lucide-preact";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useChatStore } from "@/stores/chatStore";
+import { pusherService } from "@/services/pusher.client";
+import { PUSHER_CHANNELS, PUSHER_EVENTS_DM } from "@/consts/pusher";
 
 interface MiniChatWindowProps {
     otherUser: any;
@@ -11,22 +13,74 @@ interface MiniChatWindowProps {
 }
 
 const CHANNEL_NAME = "saltogram-chat-bc";
+const TYPING_TIMEOUT = 2000;
 
 export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindowProps) {
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const [sending, setSending] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [otherTyping, setOtherTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const channelRef = useRef<BroadcastChannel | null>(null);
     const lastBroadcastRef = useRef<number>(0);
+    const typingThrottleRef = useRef<number>(0);
+    const typingTimeoutRef = useRef<number>(0);
+    const pusherUnsubRef = useRef<(() => void) | null>(null);
     const { closeChat, minimizeChat } = useChatStore();
 
     const currentUserId = Number(currentUser.id);
+    const dmChannel = PUSHER_CHANNELS.DM(currentUserId, otherUser.id);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
+
+    // ── Pusher: suscripción al canal privado DM ──
+    useEffect(() => {
+        try {
+            pusherService.bind(dmChannel, PUSHER_EVENTS_DM.NEW_MESSAGE, (data: any) => {
+                if (data.senderId === otherUser.id) {
+                    setMessages(prev => {
+                        if (prev.some(m => m.id === data.id)) return prev;
+                        const newMsg = {
+                            id: Date.now() + Math.random(),
+                            senderId: data.senderId,
+                            receiverId: currentUserId,
+                            content: data.content,
+                            createdAt: data.createdAt || new Date().toISOString(),
+                            isRead: false,
+                        };
+                        return [...prev, newMsg];
+                    });
+                    // Marcar como leído solo si la pestaña tiene foco
+                    if (document.hasFocus()) {
+                        actions.messages.markAsRead({ otherUserId: otherUser.id }).catch(() => {});
+                    }
+                }
+            });
+
+            pusherService.bind(dmChannel, PUSHER_EVENTS_DM.CLIENT_TYPING, (data: any) => {
+                if (data.senderId === otherUser.id && data.userId !== currentUserId) {
+                    setOtherTyping(true);
+                    clearTimeout(typingTimeoutRef.current);
+                    typingTimeoutRef.current = window.setTimeout(() => setOtherTyping(false), TYPING_TIMEOUT);
+                }
+            });
+
+            pusherUnsubRef.current = () => {
+                pusherService.unbindEvent(dmChannel, PUSHER_EVENTS_DM.NEW_MESSAGE);
+                pusherService.unbindEvent(dmChannel, PUSHER_EVENTS_DM.CLIENT_TYPING);
+            };
+        } catch (e) {
+            console.error("[MiniChatWindow] Pusher error:", e);
+        }
+
+        return () => {
+            pusherUnsubRef.current?.();
+            clearTimeout(typingTimeoutRef.current);
+        };
+    }, [otherUser.id]);
 
     // ── BroadcastChannel: coordinación entre pestañas ──
     useEffect(() => {
@@ -62,7 +116,7 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages]);
+    }, [messages, otherTyping]);
 
     const broadcastMessages = (msgs: any[]) => {
         if (channelRef.current) {
@@ -74,7 +128,6 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
     };
 
     const loadMessages = async () => {
-        // Si otra pestaña ya trajo datos hace < 3s, saltamos
         if (Date.now() - lastBroadcastRef.current < 3000) return;
         try {
             const { data } = await actions.messages.getConversation({ otherUserId: otherUser.id });
@@ -89,7 +142,7 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
                 });
 
                 const hasUnread = data.messages.some((m: any) => m.senderId === otherUser.id && !m.isRead);
-                if (hasUnread) {
+                if (hasUnread && document.hasFocus()) {
                     await actions.messages.markAsRead({ otherUserId: otherUser.id });
                 }
             }
@@ -99,6 +152,26 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
             setLoading(false);
         }
     };
+
+    // ── Enviar typing indicator via client event (throttled cada 2s) ──
+    const handleTyping = useCallback(() => {
+        const now = Date.now();
+        if (now - typingThrottleRef.current > 2000) {
+            typingThrottleRef.current = now;
+            try {
+                const channel = pusherService.getChannel(dmChannel);
+                if (channel) {
+                    channel.trigger(PUSHER_EVENTS_DM.CLIENT_TYPING, {
+                        senderId: currentUserId,
+                        userId: currentUserId,
+                        username: currentUser.displayName,
+                    });
+                }
+            } catch (e) {
+                // Silencio — fallback a polling
+            }
+        }
+    }, [dmChannel, currentUserId, currentUser.displayName]);
 
     const handleSend = async () => {
         if (!newMessage.trim()) return;
@@ -137,7 +210,7 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
 
     return (
         <div className="w-80 h-96 bg-[#0f1124]/95 backdrop-blur-2xl border border-white/10 shadow-2xl flex flex-col overflow-hidden">
-            {/* Header — tonal glass */}
+            {/* Header */}
             <div className="p-3 bg-[#0f1124]/90 border-b border-white/8 flex items-center justify-between z-10 cursor-pointer" onClick={() => minimizeChat(otherUser.id)}>
                 <div className="flex items-center gap-2.5">
                     <div className="relative">
@@ -219,16 +292,36 @@ export default function MiniChatWindow({ otherUser, currentUser }: MiniChatWindo
                         );
                     })
                 )}
+
+                {/* Typing indicator del otro usuario */}
+                {otherTyping && (
+                    <div className="flex items-start">
+                        <div className="bg-[#1a1b2e] text-white/50 text-xs px-3.5 py-2 rounded-[18px] rounded-tl-none animate-in fade-in duration-200">
+                            <span className="flex items-center gap-1">
+                                Escribiendo
+                                <span className="flex gap-0.5">
+                                    <span className="w-1 h-1 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                    <span className="w-1 h-1 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                    <span className="w-1 h-1 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                )}
+
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input — tonal pill */}
+            {/* Input */}
             <div className="p-2.5 bg-[#0f1124]/90 border-t border-white/8">
                 <div className="flex items-center gap-2 bg-[#1a1b2e] rounded-full px-4 py-2 border border-white/5 focus-within:border-[#b3c8ff]/30 focus-within:bg-[#1a1b2e]/80 transition-all duration-200">
                     <input
                         type="text"
                         value={newMessage}
-                        onInput={(e) => setNewMessage(e.currentTarget.value)}
+                        onInput={(e) => {
+                            setNewMessage(e.currentTarget.value);
+                            handleTyping();
+                        }}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                         placeholder="Escribe un mensaje..."
                         className="flex-1 bg-transparent border-none outline-hidden text-white placeholder-white/25 text-sm"

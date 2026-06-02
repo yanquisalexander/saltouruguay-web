@@ -4,6 +4,8 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
 import { SaltogramMessagesTable, SaltogramStoriesTable, UsersTable } from "@/db/schema";
 import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
+import { pusher } from "@/utils/pusher";
+import { PUSHER_CHANNELS, PUSHER_EVENTS_DM } from "@/consts/pusher";
 
 export const messages = {
     send: defineAction({
@@ -33,6 +35,20 @@ export const messages = {
                     storyId,
                     reaction
                 });
+
+            // Notificar via Pusher al canal privado de la DM
+            try {
+                const channel = PUSHER_CHANNELS.DM(senderId, receiverId);
+                await pusher.trigger(channel, PUSHER_EVENTS_DM.NEW_MESSAGE, {
+                    senderId,
+                    content,
+                    storyId,
+                    reaction,
+                    createdAt: new Date().toISOString(),
+                });
+            } catch (e) {
+                console.error("[Pusher] Error triggering DM event:", e);
+            }
 
             return { success: true };
         }
