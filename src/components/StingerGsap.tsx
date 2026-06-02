@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "preact/compat";
-import gsap from "gsap";
+import gsap from "gsap/dist/gsap";
 
 export default function StingerGsap() {
     const containerRef = useRef<HTMLDivElement>(null);

@@ -45,7 +45,7 @@ export const Inmersive3dCinematic = ({ playerNumber }: { playerNumber?: number |
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 3.0;
+    renderer.toneMappingExposure = 5.0;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, W / H, 0.05, 80);

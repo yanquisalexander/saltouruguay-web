@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import gsap from "gsap";
+import gsap from "gsap/dist/gsap";
 import { playSound, playSoundWithReverb } from "@/consts/Sounds";
 import type { Cinematic3DDefinition } from "./types";
 
@@ -24,7 +24,7 @@ export const wakingUp: Cinematic3DDefinition = {
     camera.rotation.y = 0.05;
 
     // ── Lights ──────────────────────────────────────────────
-    const ambient = new THREE.AmbientLight(0x2a4a6a, 7.0);
+    const ambient = new THREE.AmbientLight(0x3a6a8a, 10.0);
     scene.add(ambient);
 
     const guardRim = new THREE.PointLight(0x4a7aaa, 3.0, 15, 2);
@@ -242,7 +242,7 @@ export const wakingUp: Cinematic3DDefinition = {
       gasActive: false,
       gasIntensity: 0,
       blur: 10,
-      exposure: 3.0,
+      exposure: 5.0,
       chromaticShift: false,
 
       redLight,
