@@ -183,48 +183,24 @@ export const SimonSays = ({
         if (validRivals.length === 0) return null;
 
         return validRivals.map((rivalPlayer) => (
-            <div key={rivalPlayer.playerNumber} className="relative group">
-                {/* Avatar cuadrado con estilo pixelado */}
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-neutral-800 border-2 border-white shadow-[2px_2px_0_0_rgba(0,0,0,0.5)]">
+            <div key={rivalPlayer.playerNumber} className="flex flex-col items-center gap-1">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full ring-1 ring-white/20 overflow-hidden bg-neutral-800">
                     <img
                         src={rivalPlayer.avatar}
                         alt={`Rival #${rivalPlayer.playerNumber}`}
-                        className="w-full h-full object-cover pixelated-img opacity-90"
-                        style={{ imageRendering: "pixelated" }}
+                        className="w-full h-full object-cover opacity-90"
                         onError={(e) => { e.currentTarget.src = "/fallback.png"; }}
                     />
                 </div>
-                {/* Etiqueta simple */}
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-mono font-bold px-1 border border-white whitespace-nowrap z-10">
+                <span className="font-anton text-[10px] tracking-wider text-neutral-500">
                     #{rivalPlayer.playerNumber}
-                </div>
+                </span>
             </div>
         ));
     };
 
     return (
         <>
-            <style>{`
-                .bg-grid-pattern {
-                    background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-                    background-size: 30px 30px;
-                }
-                .scanlines {
-                    background: linear-gradient(
-                        to bottom,
-                        rgba(255,255,255,0),
-                        rgba(255,255,255,0) 50%,
-                        rgba(0,0,0,0.1) 50%,
-                        rgba(0,0,0,0.1)
-                    );
-                    background-size: 100% 4px;
-                }
-                .pixelated-img {
-                    image-rendering: pixelated;
-                }
-            `}</style>
-
             <Instructions duration={10000}
                 controls={[
                     {
@@ -233,13 +209,13 @@ export const SimonSays = ({
                     }
                 ]}
             >
-                <p class="font-mono max-w-2xl text-left">
+                <p class="font-rubik max-w-2xl text-left text-neutral-300 leading-relaxed">
                     "Simon dice" es un juego de memoria donde aparecerá una secuencia de colores. Tu tarea es repetir esa misma secuencia, siguiendo el mismo orden sin equivocarte.
                     <br />
                     Si un jugador se equivoca en algún color, quedará eliminado del juego.
                 </p>
                 <br />
-                <p class="font-mono max-w-2xl text-left">
+                <p class="font-rubik max-w-2xl text-left text-neutral-300 leading-relaxed">
                     Los jugadores irán tomando turnos uno después del otro. Cuando llegue tu turno, haz clic en los colores en el orden correcto para repetir el patrón que se mostró.
                     <br />
                     <br />
@@ -249,18 +225,16 @@ export const SimonSays = ({
             </Instructions>
 
             {/* CONTENEDOR PRINCIPAL */}
-            <div className="flex relative flex-col items-center justify-center w-full h-full bg-slate-900 text-white overflow-hidden">
+            <div className="flex relative flex-col items-center justify-center w-full h-full bg-[#050505] text-white overflow-hidden">
 
-                {/* Fondos sutiles para dar textura sin molestar */}
-                <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none"></div>
-                <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(30,41,59,0.5)_0%,rgba(0,0,0,0.8)_100%)] pointer-events-none"></div>
-                <div className="absolute inset-0 scanlines pointer-events-none z-50 opacity-10"></div>
+                {/* Fondo con gradiente radial sutil */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(30,41,59,0.15)_0%,transparent_100%)] pointer-events-none"></div>
 
-                {/* --- UI SUPERIOR: PATRÓN DEL JUGADOR (Estilo barra de estado) --- */}
+                {/* --- UI SUPERIOR: PATRÓN DEL JUGADOR (Estilo StreamerWars) --- */}
                 {!gameIsWaiting && (
-                    <div className="absolute top-4 left-4 z-20 bg-black/60 p-2 border border-white/20 backdrop-blur-md rounded-none shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
-                        <p className="text-[10px] font-mono text-gray-400 mb-1 uppercase tracking-wider">Tu Secuencia:</p>
-                        <div className="flex gap-2 h-6 min-w-[100px] items-center">
+                    <div className="absolute top-4 left-4 z-20 bg-neutral-900/60 backdrop-blur-md border border-neutral-800 rounded-lg p-3">
+                        <p className="font-anton text-[10px] tracking-[0.2em] text-neutral-500 mb-1.5 uppercase">Tu Secuencia</p>
+                        <div className="flex gap-1.5 h-6 min-w-[100px] items-center">
                             {playerPattern.map((color, index) => {
                                 const colDef = colors.find(c => c.name === color);
                                 const swatchClass = colDef?.gradient
@@ -270,26 +244,23 @@ export const SimonSays = ({
                                 return (
                                     <div
                                         key={index}
-                                        className={`w-3 h-3 md:w-4 md:h-4 border border-black shadow-xs ${swatchClass}`}
-                                        style={{ backgroundColor: color === 'yellow' ? '#facc15' : color }}
+                                        className={`w-3 h-3 rounded-sm ${swatchClass}`}
                                     />
                                 );
                             })}
-                            {playerPattern.length === 0 && <span className="text-gray-600 text-xs font-mono">esperando entrada...</span>}
+                            {playerPattern.length === 0 && <span className="text-neutral-600 text-xs font-teko tracking-wider">esperando entrada...</span>}
                         </div>
                     </div>
                 )}
 
                 {/* --- UI SUPERIOR DERECHA: TÍTULO Y RIVALES --- */}
                 <div className="absolute top-4 right-4 flex flex-col items-end gap-6 z-20">
-                    {/* Título original solicitado */}
-                    <h2 className="text-2xl md:text-3xl font-bold font-squids text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                    <h2 className="text-4xl md:text-5xl font-atomic italic text-[#b4cd02] tracking-wider drop-shadow-[0_0_15px_rgba(180,205,2,0.2)]">
                         Simon dice
                     </h2>
 
-                    {/* Lista vertical de rivales en juego */}
                     {gameIsPlaying && (
-                        <div className="flex flex-col gap-3 p-3 bg-black/30 border-l border-white/10">
+                        <div className="flex flex-col gap-3 p-3 bg-neutral-900/40 border border-neutral-800 rounded-lg">
                             {renderRivals()}
                         </div>
                     )}
@@ -301,8 +272,8 @@ export const SimonSays = ({
 
                     {/* MENSAJES DE ESTADO */}
                     {isCurrentPlayerPlaying && (
-                        <div className={`mb-8 px-8 py-3 bg-neutral-900 border-l-4 ${isEliminated ? 'border-red-600' : 'border-blue-500'} shadow-[8px_8px_0_0_rgba(0,0,0,0.4)]`}>
-                            <h3 className={`text-xl md:text-2xl font-bold font-mono tracking-tight ${isEliminated ? 'text-red-500' : 'text-blue-400'}`}>
+                        <div className={`mb-8 px-6 py-3 bg-neutral-900/60 border border-neutral-800 border-l-2 ${isEliminated ? 'border-l-red-600' : 'border-l-[#b4cd02]'} rounded-lg`}>
+                            <h3 className={`text-lg md:text-xl font-teko tracking-wider uppercase ${isEliminated ? 'text-red-500' : 'text-[#b4cd02]'}`}>
                                 {getStatusMessage()}
                             </h3>
                         </div>
@@ -310,11 +281,10 @@ export const SimonSays = ({
 
                     {!isCurrentPlayerPlaying && !isEliminated && gameIsPlaying && (
                         <div className="mb-8 flex flex-col items-center w-full">
-                            <div className="bg-neutral-800/80 px-4 py-2 border border-white/20 mb-4 backdrop-blur-xs shadow-[4px_4px_0_0_rgba(0,0,0,0.3)]">
-                                <span className="text-sm font-mono text-gray-300">Esperando a otros jugadores...</span>
+                            <div className="bg-neutral-900/40 border border-neutral-800 rounded-lg px-5 py-2 mb-4">
+                                <span className="text-sm font-teko tracking-wider text-neutral-500 uppercase">Esperando a otros jugadores...</span>
                             </div>
 
-                            {/* Visualización de lo que hacen los otros */}
                             <div className="flex gap-4 flex-wrap justify-center max-w-2xl">
                                 {(() => {
                                     const rivalsNumbers = Object.entries(gameState.currentPlayers)
@@ -326,17 +296,17 @@ export const SimonSays = ({
                                         .filter((p): p is typeof players[number] => Boolean(p && p.avatar));
 
                                     return validRivals.map(rival => (
-                                        <div key={rival.playerNumber} className="flex flex-col items-center bg-black/40 p-2 border border-white/10 shadow-lg">
+                                        <div key={rival.playerNumber} className="flex flex-col items-center bg-neutral-900/40 border border-neutral-800 rounded-lg p-2 min-w-[60px]">
                                             <div className="flex gap-1 mb-1 min-h-[12px]">
                                                 {rivalInputs[rival.playerNumber]?.map((color, i) => (
                                                     <div
                                                         key={i}
-                                                        className="w-2 h-2 border border-white/30"
+                                                        className="w-2 h-2 rounded-sm border border-white/20"
                                                         style={{ backgroundColor: color }}
                                                     />
                                                 ))}
                                             </div>
-                                            <span className="text-[10px] font-mono font-bold text-gray-400">#{rival.playerNumber}</span>
+                                            <span className="font-anton text-[10px] tracking-wider text-neutral-500">#{rival.playerNumber}</span>
                                         </div>
                                     ));
                                 })()}
@@ -344,34 +314,30 @@ export const SimonSays = ({
                         </div>
                     )}
 
-                    {/* JUEGO PRINCIPAL - CONSOLA FÍSICA */}
+                    {/* JUEGO PRINCIPAL */}
                     {gameIsPlaying && (
                         <>
                             {isEliminated ? (
-                                <div className="flex flex-col items-center justify-center p-12 bg-neutral-900 border border-red-900 shadow-[10px_10px_0_0_rgba(0,0,0,0.5)]">
-                                    <p className="text-4xl font-bold font-mono text-red-500 mb-4">
-                                        ELIMINADO
+                                <div className="flex flex-col items-center justify-center p-10 bg-neutral-900/60 border border-red-900/50 rounded-lg">
+                                    <p className="text-5xl font-teko tracking-wider text-red-500 mb-2 uppercase">
+                                        Eliminado
                                     </p>
-                                    <p className="text-sm font-mono text-gray-500">Más suerte la próxima vez</p>
+                                    <p className="text-sm font-teko tracking-wider text-neutral-600">Más suerte la próxima vez</p>
                                 </div>
                             ) : (
                                 <div className={`transition-all duration-300 ${!isCurrentPlayerPlaying ? 'opacity-50 scale-95 grayscale' : 'scale-100'}`}>
-                                    {/* Carcasa del dispositivo */}
-                                    <div className="bg-neutral-800 p-3 md:p-6 rounded-none border-t border-l border-white/10 border-b-4 border-r-4 border-black/50 shadow-[20px_20px_0_0_rgba(0,0,0,0.4)]">
-                                        {/* Panel interno oscuro */}
-                                        <div className="bg-black/40 p-4 border border-black/30 shadow-inner">
-                                            <SimonSaysButtons
-                                                activeButton={activeButton}
-                                                showingPattern={showingPattern}
-                                                onClick={isCurrentPlayerPlaying && !isCompleted ? handlePlayerInput : () => { }}
-                                            />
-                                        </div>
+                                    <div className="bg-neutral-900/60 p-4 md:p-5 rounded-2xl border border-neutral-800 shadow-lg backdrop-blur-sm">
+                                        <SimonSaysButtons
+                                            activeButton={activeButton}
+                                            showingPattern={showingPattern}
+                                            onClick={isCurrentPlayerPlaying && !isCompleted ? handlePlayerInput : () => { }}
+                                        />
                                     </div>
 
                                     {isCompleted && (
-                                        <div className="mt-6 text-center bg-green-900/20 border-l-4 border-green-500 p-3 backdrop-blur-xs">
-                                            <p className="text-lg font-bold font-mono text-green-400">
-                                                ¡Nivel Completado!
+                                        <div className="mt-6 bg-green-900/20 border border-green-900/50 rounded-lg p-3 text-center">
+                                            <p className="font-teko text-lg tracking-wider text-green-400 uppercase">
+                                                Nivel Completado
                                             </p>
                                         </div>
                                     )}
