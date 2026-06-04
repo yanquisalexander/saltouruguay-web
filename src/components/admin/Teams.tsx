@@ -1,4 +1,3 @@
-import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { TEAMS } from "@/consts/Teams";
 import { getTranslation } from "@/utils/translate";
 import { actions } from "astro:actions";
@@ -33,7 +32,7 @@ export const Teams = ({ channel }: { channel: Channel }) => {
       setAllPlayers(
         playersData.players.map((p: any) => ({
           playerNumber: p.playerNumber,
-          displayName: p.displayName || p.name || "",
+          displayName: p.displayName || "",
           avatar: p.avatar || "",
         })),
       );
