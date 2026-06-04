@@ -1,163 +1,126 @@
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { TEAMS } from "@/consts/Teams";
 import { getTranslation } from "@/utils/translate";
-import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
-import { LucideCrown, LucideDot, LucideX } from "lucide-preact";
+import { LucideCrown, LucideX, LucideStar, LucideUsers } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
 import { toast } from "sonner";
 import { PUSHER_EVENTS } from "@/consts/pusher";
 
 export const Teams = ({ channel }: { channel: Channel }) => {
-    const [playersTeams, setPlayersTeams] = useState<{ [team: string]: { playerNumber: number; avatar: string; displayName: string, isCaptain: boolean }[] }>({});
+  const [playersTeams, setPlayersTeams] = useState<{ [team: string]: { playerNumber: number; avatar: string; displayName: string; isCaptain: boolean }[] }>({});
 
-    const handleAssignCaptain = async (playerNumber: number, team: string) => {
-        const { error } = await actions.streamerWars.setTeamCaptain({ playerNumber, team });
+  const handleAssignCaptain = async (playerNumber: number, team: string) => {
+    const { error } = await actions.streamerWars.setTeamCaptain({ playerNumber, team });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Capitán asignado");
+  };
 
-        if (error) {
-            toast.error(error.message);
-            return;
-        }
+  const removeCaptain = async (team: string) => {
+    const { error } = await actions.streamerWars.removeTeamCaptain({ team });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Capitán removido");
+  };
 
-        toast.success("Capitán asignado correctamente");
+  const removePlayer = async (playerNumber: number) => {
+    const { error } = await actions.streamerWars.removePlayerFromTeam({ playerNumber });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Jugador removido del equipo");
+  };
+
+  useEffect(() => {
+    const fetchTeams = async () => {
+      const { error, data } = await actions.streamerWars.getPlayersTeams();
+      if (error) return console.error(error);
+      setPlayersTeams(data.playersTeams);
     };
-
-    const removeCaptain = async (team: string) => {
-        const { error } = await actions.streamerWars.removeTeamCaptain({ team });
-
-        if (error) {
-            toast.error(error.message);
-            return;
-        }
-
-        toast.success("Capitán removido correctamente");
+    fetchTeams();
+    channel?.bind(PUSHER_EVENTS.PLAYER_JOINED, fetchTeams);
+    channel?.bind(PUSHER_EVENTS.PLAYER_REMOVED, fetchTeams);
+    channel?.bind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, fetchTeams);
+    return () => {
+      channel?.unbind(PUSHER_EVENTS.PLAYER_JOINED, fetchTeams);
+      channel?.unbind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, fetchTeams);
     };
+  }, []);
 
-    const removePlayer = async (playerNumber: number) => {
-        const { error } = await actions.streamerWars.removePlayerFromTeam({ playerNumber });
+  const COLORS: Record<string, string> = {
+    [TEAMS.BLUE]: "#3498db",
+    [TEAMS.RED]: "#e74c3c",
+    [TEAMS.YELLOW]: "#f1c40f",
+    [TEAMS.PURPLE]: "#8e44ad",
+    [TEAMS.WHITE]: "#ecf0f1",
+  };
 
-        if (error) {
-            toast.error(error.message);
-            return;
-        }
-
-        toast.success("Jugador removido correctamente");
-    }
-
-    useEffect(() => {
-        const fetchTeams = async () => {
-            const { error, data } = await actions.streamerWars.getPlayersTeams();
-            if (error) return console.error(error);
-            setPlayersTeams(data.playersTeams);
-        };
-
-        fetchTeams();
-
-        channel?.bind(PUSHER_EVENTS.PLAYER_JOINED, fetchTeams);
-        channel?.bind(PUSHER_EVENTS.PLAYER_REMOVED, fetchTeams);
-        channel?.bind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, fetchTeams);
-
-        return () => {
-            channel?.unbind(PUSHER_EVENTS.PLAYER_JOINED, fetchTeams);
-            channel?.unbind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, fetchTeams);
-        };
-    }, []);
-
-    const COLORS = [
-        { team: TEAMS.BLUE, color: "#3498db", gradient: "from-blue-400 to-blue-600" },
-        { team: TEAMS.RED, color: "#e74c3c", gradient: "from-red-400 to-red-600" },
-        { team: TEAMS.YELLOW, color: "#f1c40f", gradient: "from-yellow-400 to-yellow-600" },
-        { team: TEAMS.PURPLE, color: "#8e44ad", gradient: "from-purple-400 to-purple-600" },
-        { team: TEAMS.WHITE, color: "#ecf0f1", gradient: "from-gray-100 to-gray-300" },
-    ];
-
-    return (
-        <div className="w-full max-w-6xl pt-16">
-            <header className="text-center">
-                <h2 className="text-xl font-bold bg-linear-to-r from-white to-gray-300 text-transparent bg-clip-text">
-                    Jugadores por equipo
-                </h2>
-            </header>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-                {Object.values(TEAMS).map((team) => (
-                    <div
-                        className="bg-gray-900/50 rounded-xl p-4 backdrop-blur-xs 
-                        border border-gray-800 transition-all duration-300 hover:border-gray-700"
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <span className="text-white font-bold">{getTranslation(team)}</span>
-                            <div className="flex items-center gap-2">
-                                <LucideDot
-                                    className="animate-pulse size-12"
-                                    color={COLORS.find(({ team: t }) => t === team)?.color}
-                                />
-
-                            </div>
-                        </div>
-                        <div className="space-y-3">
-                            {playersTeams[team]?.map(({ playerNumber, avatar, displayName, isCaptain }) => {
-                                return (
-                                    <div
-                                        key={displayName}
-                                        className="flex items-center gap-3 p-2 rounded-lg 
-                                    bg-gray-800/50 transition-all duration-300 hover:bg-gray-800/70"
-                                    >
-                                        <img
-                                            src={avatar || "/placeholder.svg"}
-                                            alt={`${displayName}'s avatar`}
-                                            className="w-8 h-8 rounded-full ring-2 ring-white/20"
-                                        />
-
-                                        <span className="text-white text-sm font-medium truncate">{displayName}</span>
-
-                                        {isCaptain ? (
-                                            <div className="flex items-center gap-1 ml-auto">
-                                                <span
-                                                    title={`Capitán del equipo ${getTranslation(team)}`}
-                                                    className="bg-lime-500 text-black font-bold text-xs px-1 rounded-tr-lg rounded-bl-lg">
-                                                    <LucideCrown size={16} />
-                                                </span>
-                                                <button
-                                                    onClick={() => removeCaptain(team)}
-                                                    className="px-2 py-1 bg-red-500 rounded-md text-xs
-                                            hover:bg-red-600 transition-colors"
-                                                    title="Remover capitán"
-                                                >
-                                                    <LucideX size={16} />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={() => handleAssignCaptain(playerNumber, team)}
-                                                className="ml-auto px-2 py-1 bg-gray-700 rounded-md text-xs
-                                            hover:bg-gray-600 transition-colors"
-                                                title="Asignar como capitán"
-                                            >
-                                                ⭐
-                                            </button>
-                                        )}
-
-                                        <span className="font-atomic text-lime-500 text-2xl">
-                                            #{playerNumber.toString().padStart(3, "0")}
-                                        </span>
-
-                                        <button
-                                            onClick={() => removePlayer(playerNumber)}
-                                            className="px-2 py-1 bg-red-500 rounded-md text-xs
-                                            hover:bg-red-600 transition-colors"
-                                            title="Remover jugador"
-                                        >
-                                            <LucideX size={16} />
-                                        </button>
-                                    </div>
-                                )
-                            }
-                            )}
-                        </div>
+  return (
+    <div class="w-full pt-10">
+      <div class="flex items-center gap-3 mb-6">
+        <LucideUsers size={16} class="text-[#b4cd02]" />
+        <span class="font-anton text-xs tracking-[0.25em] uppercase text-[#b4cd02]">Equipos</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Object.values(TEAMS).map((team) => {
+          const members = playersTeams[team] || [];
+          return (
+            <div key={team} class="bg-[#0a0a0a] border border-neutral-800 rounded-lg overflow-hidden transition-all hover:border-neutral-700">
+              <div class="flex items-center justify-between px-4 py-3 border-b border-neutral-800" style={{ borderLeftColor: COLORS[team], borderLeftWidth: 3 }}>
+                <span class="font-anton text-sm tracking-wide text-white">{getTranslation(team)}</span>
+                <span class="font-teko text-xs text-neutral-600 tracking-wider">
+                  {members.length} jugadores
+                </span>
+              </div>
+              <div class="p-3 space-y-2">
+                {members.length === 0 && (
+                  <p class="text-center text-neutral-700 font-mono text-xs py-4">Sin miembros</p>
+                )}
+                {members.map(({ playerNumber, avatar, displayName, isCaptain }) => (
+                  <div key={displayName} class="flex items-center gap-3 p-2 rounded-sm bg-neutral-900/50 border border-neutral-800/50 transition-all hover:bg-neutral-900 hover:border-neutral-700">
+                    <img
+                      src={avatar || "/placeholder.svg"}
+                      alt={displayName}
+                      class="w-7 h-7 rounded-full ring-1 ring-white/10"
+                    />
+                    <span class="text-sm text-neutral-200 font-mono truncate flex-1 min-w-0">{displayName}</span>
+                    <span class="font-atomic text-sm text-[#b4cd02] shrink-0">#{playerNumber.toString().padStart(3, "0")}</span>
+                    <div class="flex items-center gap-1 shrink-0">
+                      {isCaptain ? (
+                        <>
+                          <span class="bg-[#b4cd02]/20 text-[#b4cd02] p-1 rounded-sm" title="Capitán">
+                            <LucideCrown size={14} />
+                          </span>
+                          <button
+                            onClick={() => removeCaptain(team)}
+                            class="p-1 text-neutral-600 hover:text-red-400 transition-colors"
+                            title="Remover capitán"
+                          >
+                            <LucideX size={14} />
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => handleAssignCaptain(playerNumber, team)}
+                          class="p-1 text-neutral-600 hover:text-[#b4cd02] transition-colors"
+                          title="Asignar como capitán"
+                        >
+                          <LucideStar size={14} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => removePlayer(playerNumber)}
+                        class="p-1 text-neutral-600 hover:text-red-400 transition-colors"
+                        title="Remover jugador"
+                      >
+                        <LucideX size={14} />
+                      </button>
                     </div>
+                  </div>
                 ))}
+              </div>
             </div>
-        </div>
-    );
-}
+          );
+        })}
+      </div>
+    </div>
+  );
+};

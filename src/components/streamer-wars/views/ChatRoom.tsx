@@ -37,9 +37,10 @@ const parseLinks = (text: string) => {
     );
 };
 
+const sanitizeHTML = (text: string) => text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 const parseEmotesToHTML = (text: string) => {
     return text
-        .replace(/</g, "&lt;").replace(/>/g, "&gt;") // Sanitize basic HTML
         .replace(/\n/g, '<br>')
         .replace(/:([a-zA-Z0-9_]+):/g, (match, emote) => {
             const src = EMOTES[emote as keyof typeof EMOTES];
@@ -102,7 +103,8 @@ const ChatMessageItem = memo(({
     removeMessage,
 }: ChatMessageProps) => {
     const parsedMessage = useMemo(() => {
-        const withLinks = parseLinks(message);
+        const sanitized = sanitizeHTML(message);
+        const withLinks = parseLinks(sanitized);
         return parseEmotesToHTML(withLinks);
     }, [message]);
 

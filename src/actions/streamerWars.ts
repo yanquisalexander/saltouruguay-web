@@ -63,7 +63,7 @@ export const streamerWars = {
             }
 
             const hasLinks = /https?:\/\/\S+\.\S+/;
-            if (hasLinks.test(message)) {
+            if (hasLinks.test(message) && !session.user.isAdmin) {
                 throw new ActionError({
                     code: "BAD_REQUEST",
                     message: "No puedes enviar mensajes con links"

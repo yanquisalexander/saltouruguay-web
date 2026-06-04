@@ -8,7 +8,7 @@ import {
     playSoundWithReverb,
     STREAMER_WARS_SOUNDS,
 } from "@/consts/Sounds";
-import { LucideSiren } from "lucide-preact";
+import { swToast } from "@/components/streamer-wars/swToast";
 import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { AVAILABLE_AUDIOS, type AudioState } from "@/types/audio";
 import { actions } from "astro:actions";
@@ -200,7 +200,9 @@ export const useStreamerWarsSocket = (session: Session | null) => {
             const currentPlayerNumber = playerNumberRef.current;
             if (currentPlayerNumber && targets.includes(currentPlayerNumber)) {
                 setDayAvailable(false);
-                playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
+                playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.JUGADOR_AISLADO, volume: 0.7 }).finally(() => {
+                    setTimeout(() => navigate('/guerra-streamers'), 1000);
+                });
                 toast.error("¡Has sido aislado!", {
                     icon: <LucideSiren />,
                     description: "Un moderador analizará tu caso.",
@@ -209,7 +211,6 @@ export const useStreamerWarsSocket = (session: Session | null) => {
                     position: "bottom-center",
                     dismissible: true,
                 });
-                setTimeout(() => navigate('/guerra-streamers'), 5000);
             }
         };
 
@@ -255,17 +256,9 @@ export const useStreamerWarsSocket = (session: Session | null) => {
 
             const handleNewAnnouncement = ({ message }: { message: string }) => {
                 playSound({ sound: STREAMER_WARS_SOUNDS.ATENCION_JUGADORES, volume: 1 });
-                toast.warning("Nuevo anuncio", {
-                    icon: <LucideSiren />,
-                    description: message,
-                    richColors: true,
+                swToast.warning(message, {
+                    description: "Nuevo anuncio del sistema",
                     duration: 8000,
-                    position: "top-center",
-                    classNames: {
-                        title: 'font-bold font-mono',
-                        icon: 'flex flex-col justify-center items-center p-5 rounded-full',
-                        description: 'font-mono text-sm',
-                    }
                 });
             };
 

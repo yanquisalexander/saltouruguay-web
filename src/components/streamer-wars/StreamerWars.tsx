@@ -38,6 +38,7 @@ import { InmersiveInstructions } from "./InmersiveInstructions";
 import { Inmersive3dCinematic } from "./Inmersive3dCinematic";
 import { Models3DPreloader } from "@/components/Models3DPreloader";
 import { PUSHER_EVENTS } from "@/consts/pusher";
+import { swToast } from "./swToast";
 
 
 
@@ -222,16 +223,17 @@ const useGameEventListeners = (
             },
             techDifficulties: () => {
                 playSound({ sound: STREAMER_WARS_SOUNDS.PROBLEMAS_TECNICOS, volume: 1 });
-                toast("Estamos experimentando dificultades técnicas.", {
-                    icon: <LucideBug />,
+                console.warn("Evento de dificultades técnicas recibido");
+                swToast.warning("Estamos experimentando dificultades técnicas.", {
+                    // icon: <LucideBug />,
                     duration: 8000,
                     position: 'top-right',
-                    richColors: true,
-                    classNames: {
+                    //richColors: true,
+                    /* classNames: {
                         toast: 'bg-neutral-900 text-white border border-neutral-600',
                         icon: 'text-yellow-600 p-5 rounded-full',
                         title: 'font-rubik uppercase font-medium',
-                    }
+                    } */
                 });
             },
             playerJoined: ({ playerNumber, team }: { playerNumber: number; team: string }) => {
@@ -467,7 +469,7 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                         <JourneyTitle episode={uiState.currentEpisode} onEnd={() => updateUi({ currentEpisode: null })} />
                     )}
 
-                    {dayAvailable && uiState.showWaitingScreen && (
+                    {uiState.showWaitingScreen && (
                         <WaitingScreen players={players} expectedPlayers={expectedPlayers} />
                     )}
 
