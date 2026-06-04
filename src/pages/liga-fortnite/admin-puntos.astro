@@ -340,6 +340,10 @@ const DIVISIONALES = [
       }, 2000);
     }
   };
+
+  // ← AGREGÁ ESTAS DOS LÍNEAS
+  (window as any).calcTotal = calcTotal;
+  (window as any).saveScore = saveScore;
 }
 
 document.addEventListener("astro:page-load", init);
