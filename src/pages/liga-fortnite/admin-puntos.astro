@@ -58,7 +58,7 @@ const DIVISIONALES = [
     id="page-content"
     class="hidden flex-col items-center justify-start min-h-[90vh] py-20 px-4"
   >
-    <div class="w-full max-w-6xl mb-12">
+    <div class="w-full max-w-6xl mb-8">
       <a
         href="/liga-fortnite"
         class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity mb-8"
@@ -71,16 +71,28 @@ const DIVISIONALES = [
       >
         Panel de Administración
       </p>
-      <h1
-        class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-2"
-      >
-        Tabla de <span class="opacity-40 font-light">Puntos</span>
-      </h1>
-      <p
-        class="text-[10px] font-bold uppercase tracking-[0.15em] opacity-30 mt-3"
-      >
-        Los cambios se guardan al hacer clic en Guardar
-      </p>
+      <div class="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1
+            class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-2"
+          >
+            Tabla de <span class="opacity-40 font-light">Puntos</span>
+          </h1>
+          <p
+            class="text-[10px] font-bold uppercase tracking-[0.15em] opacity-30 mt-3"
+          >
+            Los cambios se guardan al hacer clic en Guardar Todo
+          </p>
+        </div>
+
+        <!-- BOTÓN GUARDAR GENERAL -->
+        <button
+          id="save-all-btn"
+          class="px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/60 active:scale-95 transition-all duration-200 cursor-pointer whitespace-nowrap"
+        >
+          💾 Guardar Todo
+        </button>
+      </div>
     </div>
 
     <div class="w-full max-w-6xl space-y-16">
@@ -114,7 +126,7 @@ const DIVISIONALES = [
                 </div>
               ) : (
                 <div class="w-full rounded-2xl border border-current/10 overflow-hidden">
-                  <div class="grid grid-cols-[2rem_1fr_8rem_8rem_8rem_8rem_6rem] gap-0 px-4 py-3 border-b border-current/10 bg-current/[0.03]">
+                  <div class="grid grid-cols-[2rem_1fr_8rem_8rem_8rem_8rem] gap-0 px-4 py-3 border-b border-current/10 bg-current/[0.03]">
                     <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">
                       #
                     </p>
@@ -133,9 +145,6 @@ const DIVISIONALES = [
                     <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 text-center">
                       Total
                     </p>
-                    <p class="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 text-center">
-                      Acción
-                    </p>
                   </div>
 
                   {divPlayers.map((player, idx) => {
@@ -143,7 +152,9 @@ const DIVISIONALES = [
 
                     return (
                       <div
-                        class={`grid grid-cols-[2rem_1fr_8rem_8rem_8rem_8rem_6rem] gap-0 px-4 py-3 items-center border-b border-current/10 last:border-0 transition-colors ${idx === 0 ? "bg-amber-500/5" : "hover:bg-current/[0.02]"}`}
+                        data-division={div.id}
+                        data-player-id={player.id}
+                        class={`grid grid-cols-[2rem_1fr_8rem_8rem_8rem_8rem] gap-0 px-4 py-3 items-center border-b border-current/10 last:border-0 transition-colors ${idx === 0 ? "bg-amber-500/5" : "hover:bg-current/[0.02]"}`}
                       >
                         <p
                           class={`text-sm font-black ${idx === 0 ? "text-amber-400" : idx === 1 ? "opacity-60" : idx === 2 ? "opacity-40" : "opacity-20"}`}
@@ -204,16 +215,6 @@ const DIVISIONALES = [
                             {score?.total ?? 0}
                           </span>
                         </div>
-
-                        <div class="text-center">
-                          <button
-                            onclick={`saveScore(${player.id})`}
-                            id={`btn-${player.id}`}
-                            class="px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.15em] rounded-lg border border-current/15 bg-current/[0.04] hover:bg-amber-500/15 hover:border-amber-500/40 hover:text-amber-500 active:scale-95 transition-all duration-200 cursor-pointer"
-                          >
-                            Guardar
-                          </button>
-                        </div>
                       </div>
                     );
                   })}
@@ -244,107 +245,97 @@ const DIVISIONALES = [
 
 <script>
   import { $ } from "@/lib/dom-selector";
-  import { getSessionClient } from "@/lib/auth-client";  
-  
+  import { getSessionClient } from "@/lib/auth-client";
+
   const init = async () => {
-  const session = await getSessionClient();
-  
-  
+    const session = await getSessionClient();
 
-  const isAdmin = session?.user?.isAdmin ?? false;
+    const isAdmin = session?.user?.isAdmin ?? false;
 
-  console.log({ session, isAdmin });
+    console.log({ session, isAdmin });
 
-  if (isAdmin) {
-    $("#page-content")?.classList.replace("hidden", "flex");
-    $("#no-access")?.classList.add("hidden");
-  } else {
-    window.location.href = "/liga-fortnite";
-  }
+    if (isAdmin) {
+      $("#page-content")?.classList.replace("hidden", "flex");
+      $("#no-access")?.classList.add("hidden");
+    } else {
+      window.location.href = "/liga-fortnite";
+    }
 
-  const calcTotal = (playerId: number) => {
-    const s1 =
-      parseInt(($(`#set1-${playerId}`) as HTMLInputElement)?.value || "0") || 0;
-    const s2 =
-      parseInt(($(`#set2-${playerId}`) as HTMLInputElement)?.value || "0") || 0;
-    const s3 =
-      parseInt(($(`#set3-${playerId}`) as HTMLInputElement)?.value || "0") || 0;
+    const calcTotal = (playerId: number) => {
+      const s1 =
+        parseInt(($(`#set1-${playerId}`) as HTMLInputElement)?.value || "0") || 0;
+      const s2 =
+        parseInt(($(`#set2-${playerId}`) as HTMLInputElement)?.value || "0") || 0;
+      const s3 =
+        parseInt(($(`#set3-${playerId}`) as HTMLInputElement)?.value || "0") || 0;
 
-    const $total = $(`#total-${playerId}`);
-    if ($total) $total.textContent = String(s1 + s2 + s3);
-  };
+      const $total = $(`#total-${playerId}`);
+      if ($total) $total.textContent = String(s1 + s2 + s3);
+    };
 
-  const saveScore = async (playerId: number) => {
-    const $set1 = $(`#set1-${playerId}`) as HTMLInputElement;
-    const $set2 = $(`#set2-${playerId}`) as HTMLInputElement;
-    const $set3 = $(`#set3-${playerId}`) as HTMLInputElement;
-    const $btn = $(`#btn-${playerId}`) as HTMLButtonElement;
+    const saveScore = async (playerId: number) => {
+      const s1 = parseInt(($(`#set1-${playerId}`) as HTMLInputElement)?.value || "0") || 0;
+      const s2 = parseInt(($(`#set2-${playerId}`) as HTMLInputElement)?.value || "0") || 0;
+      const s3 = parseInt(($(`#set3-${playerId}`) as HTMLInputElement)?.value || "0") || 0;
 
-    if (!$set1 || !$set2 || !$set3 || !$btn) return;
-
-    const s1 = parseInt($set1.value || "0") || 0;
-    const s2 = parseInt($set2.value || "0") || 0;
-    const s3 = parseInt($set3.value || "0") || 0;
-
-    const original = $btn.textContent;
-    $btn.textContent = "...";
-    $btn.disabled = true;
-
-    try {
-      const res = await fetch("/api/fortnite-league/scores", {
+      return fetch("/api/fortnite-league/scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          inscriptionId: playerId,
-          set1: s1,
-          set2: s2,
-          set3: s3,
-        }),
+        body: JSON.stringify({ inscriptionId: playerId, set1: s1, set2: s2, set3: s3 }),
+      });
+    };
+
+    const saveAll = async () => {
+      const $btn = document.getElementById("save-all-btn") as HTMLButtonElement;
+      if (!$btn) return;
+
+      const original = $btn.textContent;
+      $btn.textContent = "Guardando...";
+      $btn.disabled = true;
+
+      const rows = document.querySelectorAll<HTMLElement>("[data-player-id]");
+      const promises: Promise<Response>[] = [];
+
+      rows.forEach((row) => {
+        const playerId = Number(row.dataset.playerId);
+        if (!playerId) return;
+        promises.push(saveScore(playerId));
       });
 
-      if (res.ok) {
-        $btn.textContent = "✓";
-        $btn.classList.add(
-          "text-green-400",
-          "border-green-500/30",
-          "bg-green-500/10",
-        );
+      try {
+        const results = await Promise.all(promises);
+        const allOk = results.every((r) => r.ok);
 
-        setTimeout(() => {
-          $btn.textContent = original;
-          $btn.classList.remove(
-            "text-green-400",
-            "border-green-500/30",
-            "bg-green-500/10",
-          );
-          $btn.disabled = false;
-        }, 1500);
-      } else {
-        console.error("Error guardando puntaje:", await res.text());
-        $btn.textContent = "Error";
-        $btn.classList.add("text-red-400");
-
-        setTimeout(() => {
-          $btn.textContent = original;
-          $btn.classList.remove("text-red-400");
-          $btn.disabled = false;
-        }, 2000);
+        if (allOk) {
+          $btn.textContent = "✓ Todo guardado";
+          $btn.classList.add("text-green-400", "border-green-500/30", "bg-green-500/10");
+          $btn.classList.remove("text-amber-400", "border-amber-500/40", "bg-amber-500/10");
+        } else {
+          $btn.textContent = "⚠ Hubo errores";
+          $btn.classList.add("text-red-400", "border-red-500/30", "bg-red-500/10");
+          $btn.classList.remove("text-amber-400", "border-amber-500/40", "bg-amber-500/10");
+        }
+      } catch {
+        $btn.textContent = "⚠ Error de red";
+        $btn.classList.add("text-red-400", "border-red-500/30", "bg-red-500/10");
+        $btn.classList.remove("text-amber-400", "border-amber-500/40", "bg-amber-500/10");
       }
-    } catch (error) {
-      console.error("Error de red guardando puntaje:", error);
-      $btn.textContent = "Error";
 
       setTimeout(() => {
         $btn.textContent = original;
+        $btn.classList.remove(
+          "text-green-400", "border-green-500/30", "bg-green-500/10",
+          "text-red-400", "border-red-500/30", "bg-red-500/10"
+        );
+        $btn.classList.add("text-amber-400", "border-amber-500/40", "bg-amber-500/10");
         $btn.disabled = false;
       }, 2000);
-    }
+    };
+
+    document.getElementById("save-all-btn")?.addEventListener("click", saveAll);
+
+    (window as any).calcTotal = calcTotal;
   };
 
-  // ← AGREGÁ ESTAS DOS LÍNEAS
-  (window as any).calcTotal = calcTotal;
-  (window as any).saveScore = saveScore;
-}
-
-document.addEventListener("astro:page-load", init);
+  document.addEventListener("astro:page-load", init);
 </script>
