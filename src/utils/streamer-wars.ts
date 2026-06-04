@@ -2043,6 +2043,87 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
     }
 }
 
+export const assignPlayerToTeam = async (playerNumber: number, teamColor: string) => {
+    try {
+        const currentTeam = await client
+            .select()
+            .from(StreamerWarsTeamPlayersTable)
+            .where(eq(StreamerWarsTeamPlayersTable.playerNumber, playerNumber))
+            .execute()
+            .then((res) => res[0]);
+
+        if (currentTeam) {
+            await removePlayerFromTeam(playerNumber);
+        }
+
+        const team = await client
+            .select()
+            .from(StreamerWarsTeamsTable)
+            .where(eq(StreamerWarsTeamsTable.color, teamColor))
+            .execute()
+            .then((res) => res[0]);
+
+        if (!team) {
+            return { success: false, error: "El equipo no existe" };
+        }
+
+        const user = await client
+            .select({
+                id: UsersTable.id,
+                discordId: UsersTable.discordId,
+                avatar: UsersTable.avatar,
+                displayName: UsersTable.displayName,
+            })
+            .from(UsersTable)
+            .innerJoin(
+                StreamerWarsPlayersTable,
+                eq(StreamerWarsPlayersTable.userId, UsersTable.id),
+            )
+            .where(eq(StreamerWarsPlayersTable.playerNumber, playerNumber))
+            .execute()
+            .then((res) => res[0]);
+
+        if (import.meta.env.PROD && (!user || !user.discordId)) {
+            return {
+                success: false,
+                error: "El usuario no está asociado a Discord",
+            };
+        }
+
+        await client
+            .insert(StreamerWarsTeamPlayersTable)
+            .values({ playerNumber, teamId: team.id })
+            .execute();
+
+        const roleMap: Record<string, string> = {
+            red: DISCORD_ROLES.EQUIPO_ROJO,
+            blue: DISCORD_ROLES.EQUIPO_AZUL,
+            yellow: DISCORD_ROLES.EQUIPO_AMARILLO,
+            purple: DISCORD_ROLES.EQUIPO_MORADO,
+            white: DISCORD_ROLES.EQUIPO_BLANCO,
+        };
+
+        const roleId = roleMap[teamColor];
+        if (roleId && user?.discordId) {
+            try {
+                await addRoleToUser(SALTO_DISCORD_GUILD_ID, user.discordId, roleId);
+            } catch (_) {}
+        }
+
+        await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_JOINED, {
+            playerNumber,
+            avatar: user?.avatar,
+            displayName: user?.displayName,
+            team: teamColor,
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error en assignPlayerToTeam:", error);
+        return { success: false, error: "Error al asignar jugador al equipo" };
+    }
+};
+
 export const getPlayersTeams = async () => {
     try {
         const playersTeams = await client.query.StreamerWarsTeamPlayersTable.findMany({

@@ -7,7 +7,7 @@ import { Teams } from "../Teams";
 import { CINEMATICS_CDN_PREFIX } from "@/config";
 import { pusherService } from "@/services/pusher.client";
 import { PUSHER_CHANNELS, PUSHER_EVENTS } from "@/consts/pusher";
-import { LucidePlus, LucideTrash2, LucideFilm, LucideX, LucideUserPlus, LucideUsers, LucideSkull } from "lucide-preact";
+import { LucidePlus, LucideTrash2, LucideFilm, LucideX, LucideUserPlus, LucideUsers, LucideSkull, LucideShuffle } from "lucide-preact";
 
 export interface Players {
   id?: number;
@@ -28,7 +28,7 @@ const CINEMATICS_LIST = Array.from({ length: 11 }, (_, i) => ({
 }));
 
 const BTN = "flex items-center gap-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-[#b4cd02]/30 text-white font-anton text-xs tracking-[0.2em] uppercase py-2.5 px-4 rounded-sm transition-all";
-const DIALOG = "max-w-[540px] w-full fixed inset-0 z-99999999 p-8 animate-fade-in-up bg-[#0a0a0a] border border-neutral-800 rounded-lg shadow-2xl text-white";
+const DIALOG = "max-w-[540px] w-full fixed inset-0 m-auto z-99999999 p-8 animate-fade-in-up bg-[#0a0a0a] border border-neutral-800 rounded-lg shadow-2xl text-white";
 
 const Morgue = ({ players, onClick }: { players: Players[]; onClick: (playerNumber: number) => void }) => {
   return (
@@ -72,8 +72,8 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
     dialogOpen: false, loading: false, username: "", playerNumber: 0,
   });
   const [contextMenu, setContextMenu] = useState<{
-    visible: boolean; x: number; y: number; playerNumber: number | null;
-  }>({ visible: false, x: 0, y: 0, playerNumber: null });
+    visible: boolean; x: number; y: number; playerNumber: number | null; showTeams: boolean;
+  }>({ visible: false, x: 0, y: 0, playerNumber: null, showTeams: false });
 
   const globalChannel = pusher.subscribe(PUSHER_CHANNELS.GLOBAL);
 
@@ -441,24 +441,76 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
           style={{ top: contextMenu.y, left: contextMenu.x }}
           onClick={(e) => e.stopPropagation()}
         >
-          {ContextualMenuActions.map(({ name, execute }) => (
-            <button
-              class="block w-full text-left px-4 py-2 text-sm text-neutral-300 font-mono hover:bg-[#b4cd02]/10 hover:text-[#b4cd02] transition-colors"
-              onClick={() => {
-                if (contextMenu.playerNumber !== null) execute(contextMenu.playerNumber);
-                setContextMenu((prev) => ({ ...prev, visible: false }));
-              }}
-            >
-              {name}
-            </button>
-          ))}
-          <div class="border-t border-neutral-800 my-1" />
-          <button
-            class="block w-full text-left px-4 py-2 text-sm text-neutral-600 font-mono hover:bg-neutral-800 transition-colors"
-            onClick={() => setContextMenu((prev) => ({ ...prev, visible: false }))}
-          >
-            Cerrar
-          </button>
+          {!contextMenu.showTeams ? (
+            <>
+              {ContextualMenuActions.map(({ name, execute }) => (
+                <button
+                  class="block w-full text-left px-4 py-2 text-sm text-neutral-300 font-mono hover:bg-[#b4cd02]/10 hover:text-[#b4cd02] transition-colors"
+                  onClick={() => {
+                    if (contextMenu.playerNumber !== null) execute(contextMenu.playerNumber);
+                    setContextMenu((prev) => ({ ...prev, visible: false }));
+                  }}
+                >
+                  {name}
+                </button>
+              ))}
+              <div class="border-t border-neutral-800 my-1" />
+              <button
+                class="block w-full text-left px-4 py-2 text-sm text-neutral-300 font-mono hover:bg-[#b4cd02]/10 hover:text-[#b4cd02] transition-colors"
+                onClick={() => setContextMenu((prev) => ({ ...prev, showTeams: true }))}
+              >
+                <LucideShuffle size={14} class="inline-block mr-2" />
+                Asignar a equipo
+              </button>
+              <div class="border-t border-neutral-800 my-1" />
+              <button
+                class="block w-full text-left px-4 py-2 text-sm text-neutral-600 font-mono hover:bg-neutral-800 transition-colors"
+                onClick={() => setContextMenu((prev) => ({ ...prev, visible: false }))}
+              >
+                Cerrar
+              </button>
+            </>
+          ) : (
+            <>
+              <div class="px-4 py-2 text-xs font-anton tracking-wider text-[#b4cd02] uppercase border-b border-neutral-800">
+                Asignar a equipo
+              </div>
+              {[
+                { color: 'blue', label: 'Azul', dot: 'bg-blue-500' },
+                { color: 'red', label: 'Rojo', dot: 'bg-red-500' },
+                { color: 'yellow', label: 'Amarillo', dot: 'bg-yellow-400' },
+                { color: 'purple', label: 'Morado', dot: 'bg-purple-500' },
+                { color: 'white', label: 'Blanco', dot: 'bg-gray-100' },
+              ].map(({ color, label, dot }) => (
+                <button
+                  class="block w-full text-left px-4 py-2 text-sm text-neutral-300 font-mono hover:bg-[#b4cd02]/10 hover:text-[#b4cd02] transition-colors flex items-center gap-3"
+                  onClick={() => {
+                    if (contextMenu.playerNumber !== null) {
+                      toast.promise(actions.streamerWars.assignPlayerToTeam({
+                        playerNumber: contextMenu.playerNumber,
+                        team: color,
+                      }), {
+                        loading: `Asignando #${contextMenu.playerNumber} a ${label}...`,
+                        success: `Jugador #${contextMenu.playerNumber} asignado a ${label}`,
+                        error: 'Error al asignar',
+                      });
+                    }
+                    setContextMenu((prev) => ({ ...prev, visible: false, showTeams: false }));
+                  }}
+                >
+                  <span class={`w-3 h-3 rounded-full ${dot}`} />
+                  {label}
+                </button>
+              ))}
+              <div class="border-t border-neutral-800 my-1" />
+              <button
+                class="block w-full text-left px-4 py-2 text-sm text-neutral-600 font-mono hover:bg-neutral-800 transition-colors"
+                onClick={() => setContextMenu((prev) => ({ ...prev, showTeams: false }))}
+              >
+                Volver
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

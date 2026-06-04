@@ -5,7 +5,7 @@ import Cache from "@/lib/Cache";
 import cacheService from "@/services/cache";
 import { pusher } from "@/utils/pusher";
 import { PUSHER_CHANNELS, PUSHER_EVENTS, CACHE_KEYS } from "@/consts/pusher";
-import { eliminatePlayer, removePlayer, addPlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, resetRoles, acceptBribe, selfEliminate, aislatePlayer, unaislatePlayer, beforeLaunchGame, unaislateAllPlayers, getPlayersLiveOnTwitch, massEliminatePlayers, getAutoEliminatedPlayers, getTodayEliminatedPlayers, executeAdminCommand, getCurrentTimer } from "@/utils/streamer-wars";
+import { eliminatePlayer, removePlayer, addPlayer, revivePlayer, getUserIdsOfPlayers, joinTeam, removePlayerFromTeam, assignPlayerToTeam, resetRoles, acceptBribe, selfEliminate, aislatePlayer, unaislatePlayer, beforeLaunchGame, unaislateAllPlayers, getPlayersLiveOnTwitch, massEliminatePlayers, getAutoEliminatedPlayers, getTodayEliminatedPlayers, executeAdminCommand, getCurrentTimer } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
@@ -602,6 +602,32 @@ export const streamerWars = {
                 throw new ActionError({
                     code: "BAD_REQUEST",
                     message: error
+                });
+            }
+
+            return { success: true }
+        }
+    }),
+    assignPlayerToTeam: defineAction({
+        input: z.object({
+            playerNumber: z.number(),
+            team: z.string(),
+        }),
+        handler: async ({ playerNumber, team }, { request }) => {
+            const session = await getSession(request);
+
+            if (!session || !session.user.isAdmin) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No tienes permisos para asignar jugadores a equipos"
+                });
+            }
+
+            const { success, error } = await assignPlayerToTeam(playerNumber, team);
+            if (!success) {
+                throw new ActionError({
+                    code: "BAD_REQUEST",
+                    message: error || "Error al asignar jugador al equipo"
                 });
             }
 
