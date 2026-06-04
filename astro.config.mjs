@@ -48,6 +48,9 @@ export default defineConfig({
       PUSHER_APP_CLUSTER: envField.string({ context: 'client', access: 'public' }),
       CRON_SECRET: envField.string({ context: 'server', access: 'public' }),
       DISCORD_LOGS_WEBHOOK_TOKEN: envField.string({ context: 'server', access: 'public' }),
+      SUS_OAUTH_ACCESS_TOKEN_EXPIRY: envField.number({ context: 'server', access: 'public', default: 3600 }),
+      SUS_OAUTH_REFRESH_TOKEN_EXPIRY: envField.number({ context: 'server', access: 'public', default: 2592000 }),
+      SUS_OAUTH_AUTH_CODE_EXPIRY: envField.number({ context: 'server', access: 'public', default: 600 }),
     },
   },
   server: {

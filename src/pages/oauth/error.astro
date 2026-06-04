@@ -1,0 +1,64 @@
+---
+const error = Astro.url.searchParams.get("error") || "unknown";
+const errorDescription = Astro.url.searchParams.get("error_description") || Astro.url.searchParams.get("message") || "";
+const scope = Astro.url.searchParams.get("scope") || "";
+
+const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
+    invalid_request: {
+        title: "Solicitud inválida",
+        description: "Faltan parámetros requeridos o son inválidos.",
+    },
+    invalid_client: {
+        title: "Cliente inválido",
+        description: "La aplicación solicitante no existe o no está aprobada.",
+    },
+    invalid_scope: {
+        title: "Alcance inválido",
+        description: scope
+            ? `El alcance "${scope}" no está disponible.`
+            : "Se solicitaron alcances inválidos.",
+    },
+    mismatched_redirect_uri: {
+        title: "URI de redirección inválida",
+        description: "La URI de redirección no coincide con la registrada.",
+    },
+    unsupported_response_type: {
+        title: "Tipo de respuesta no soportado",
+        description: "Solo se soporta response_type=code.",
+    },
+    access_denied: {
+        title: "Acceso denegado",
+        description: "Has cancelado la autorización.",
+    },
+};
+
+import "@/assets/styles/global.css";
+
+const msg = ERROR_MESSAGES[error] || {
+    title: "Error desconocido",
+    description: errorDescription || "Ocurrió un error inesperado.",
+};
+---
+
+<!doctype html>
+<html lang="es" data-theme="dark">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Error &mdash; SaltoUruguayServer OAuth</title>
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    </head>
+    <body class="bg-[#09090b] text-white font-rubik antialiased min-h-screen flex items-center justify-center">
+        <div class="max-w-md mx-auto px-4 text-center">
+            <div class="text-6xl mb-4 text-red-400">&#10007;</div>
+            <h1 class="text-2xl font-bold mb-2">{msg.title}</h1>
+            <p class="text-white/60 mb-6">{msg.description}</p>
+            <a
+                href="/"
+                class="inline-flex items-center justify-center px-6 py-3 bg-indigo-800 hover:bg-indigo-600 text-white rounded-md transition text-sm"
+            >
+                Volver al inicio
+            </a>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,261 @@
+---
+import { getSession } from "auth-astro/server";
+import {
+  getApprovedClient,
+  getClientRedirectUris,
+  validateRedirectUri,
+} from "@/lib/oauth";
+import { AVAILABLE_SCOPES, SCOPE_META } from "@/lib/oauth/scopes";
+import "@/assets/styles/global.css";
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  const returnUrl = encodeURIComponent(Astro.url.pathname + Astro.url.search);
+  return Astro.redirect(`/?login=true&redirect=${returnUrl}`, 302);
+}
+
+const clientId = Astro.url.searchParams.get("client_id");
+const redirectUri = Astro.url.searchParams.get("redirect_uri");
+const responseType = Astro.url.searchParams.get("response_type");
+const scope = Astro.url.searchParams.get("scope");
+const state = Astro.url.searchParams.get("state");
+const codeChallenge = Astro.url.searchParams.get("code_challenge");
+const codeChallengeMethod = Astro.url.searchParams.get("code_challenge_method");
+
+if (!clientId || !redirectUri || !responseType || !scope) {
+  return Astro.redirect("/oauth/error?error=invalid_request", 302);
+}
+
+const client = await getApprovedClient(clientId);
+if (!client) {
+  return Astro.redirect("/oauth/error?error=invalid_client", 302);
+}
+
+const allowedUris = await getClientRedirectUris(client.id);
+if (!validateRedirectUri(redirectUri, allowedUris)) {
+  return Astro.redirect("/oauth/error?error=mismatch_redirect_uri", 302);
+}
+
+if (responseType !== "code") {
+  return Astro.redirect("/oauth/error?error=unsupported_response_type", 302);
+}
+
+const scopes = scope.split(" ").filter(Boolean);
+const invalidScopes = scopes.filter(
+  (s) => !(AVAILABLE_SCOPES as readonly string[]).includes(s),
+);
+if (invalidScopes.length > 0) {
+  return Astro.redirect(
+    `/oauth/error?error=invalid_scope&scope=${encodeURIComponent(invalidScopes.join(" "))}`,
+    302,
+  );
+}
+
+if (codeChallenge && codeChallengeMethod !== "S256") {
+  return Astro.redirect(
+    "/oauth/error?error=invalid_request&message=Only+S256+supported",
+    302,
+  );
+}
+
+const getScopeMeta = (scope: string) => {
+  const meta = (
+    SCOPE_META as Record<
+      string,
+      { name: string; description: string } | undefined
+    >
+  )[scope];
+  return meta ?? { name: scope, description: "Scope" };
+};
+---
+
+<!doctype html>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Autorizar &mdash; {client.name}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="bg-[#09090b] text-white font-rubik antialiased">
+    <img
+      src="/images/oauth_wallpaper.webp"
+      alt=""
+      class="fixed inset-0 object-cover w-full h-full opacity-30 blur-xs -z-10"
+    />
+    <main
+      class="mx-auto flex justify-center items-center min-h-screen h-full px-4"
+    >
+      <article
+        class="border border-dashed border-neutral-500 rounded-md px-6 py-2 max-w-md w-full bg-neutral-950"
+      >
+        <header class="py-4 flex flex-col">
+          <h2 class="text-lg mt-2 text-center items-center gap-2">
+            <strong class="text-indigo-300">{client.name}</strong> quiere acceder
+            a tu cuenta
+          </h2>
+          <div
+            class="flex items-center mb-4 mt-4 justify-between gap-4 relative w-max mx-auto"
+          >
+            <img
+              src="/favicon.svg"
+              alt="SaltoUruguayServer"
+              class="h-16 w-auto saturate-150 object-contain aspect-square bg-linear-to-br p-3 from-indigo-800 via-slate-500/30 to-slate-700/50 rounded-md"
+            />
+            <span class="text-zinc-500 animate-pulse text-2xl font-bold"
+              >&#8646;</span
+            >
+            <img
+              src={client.icon ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(client.name)}&background=random`}
+              alt={client.name}
+              class="h-16 w-auto object-cover aspect-square rounded-md"
+            />
+          </div>
+        </header>
+
+        <div class="p-6 pt-0 space-y-6">
+          <div
+            class="flex items-center gap-3 bg-zinc-900 p-2 px-6 rounded-lg mx-auto"
+          >
+            <span
+              class="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full"
+            >
+              <img
+                class="aspect-square h-full w-full"
+                alt="Avatar"
+                src={session.user?.image ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user?.name || "U")}&background=random`}
+              />
+            </span>
+            <div>
+              <p class="text-sm font-medium">
+                {session.user?.name || "Usuario"}
+              </p>
+              <p class="text-xs text-muted-foreground text-white/50">
+                {session.user?.email}
+              </p>
+            </div>
+          </div>
+
+          <p
+            class="text-white/75 text-sm text-balance text-center mt-4 max-w-[48ch] mx-auto"
+          >
+            Al hacer clic en <strong>"Autorizar"</strong> estás permitiendo a <strong
+              >{client.name}</strong
+            >:
+          </p>
+
+          <ul
+            class="text-white/75 text-sm text-balance text-center flex flex-col gap-3 mx-auto max-w-[48ch]"
+          >
+            {
+              scopes.map((s) => {
+                const meta = getScopeMeta(s);
+                return (
+                  <li class="flex items-center gap-2 justify-center">
+                    <span class="h-4 w-4 text-indigo-300 inline-flex items-center justify-center">
+                      &#10003;
+                    </span>
+                    {meta.name}
+                    <span class="text-white/40 text-xs">
+                      ({meta.description})
+                    </span>
+                  </li>
+                );
+              })
+            }
+          </ul>
+
+          <footer class="flex flex-col gap-2 pt-2">
+            <button
+              id="authorize"
+              data-client-id={clientId}
+              data-redirect-uri={redirectUri}
+              data-scope={scope}
+              data-state={state || ""}
+              data-code-challenge={codeChallenge || ""}
+              data-code-challenge-method={codeChallengeMethod || ""}
+              class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-10 px-4 py-2 w-full bg-indigo-800 hover:bg-indigo-600 transition text-white cursor-pointer"
+            >
+              Autorizar
+              <span
+                class="ml-2 h-4 w-4 inline-flex items-center justify-center text-lg font-bold"
+                >&#8250;</span
+              >
+            </button>
+            <a
+              href={redirectUri}
+              class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-10 px-4 py-2 w-full text-white/60 hover:text-white transition"
+            >
+              Cancelar
+            </a>
+          </footer>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>
+
+<script>
+  import { $ } from "@/lib/dom-selector";
+  import { actions } from "astro:actions";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const $btn = $("#authorize") as HTMLButtonElement | null;
+    console.log("Button:", $btn);
+    if (!$btn) return;
+
+    $btn.addEventListener("click", async () => {
+      const {
+        clientId,
+        redirectUri,
+        scope,
+        state,
+        codeChallenge,
+        codeChallengeMethod,
+      } = $btn.dataset;
+      console.log({
+        clientId,
+        redirectUri,
+        scope,
+        state,
+        codeChallenge,
+        codeChallengeMethod,
+      });
+      if (!clientId || !redirectUri || !scope) return;
+
+      $btn.disabled = true;
+      $btn.textContent = "Autorizando...";
+
+      const scopes = scope.split(" ").filter(Boolean);
+
+      try {
+        const resp = await actions.oauth.authorize({
+          clientId,
+          redirectUri,
+          scopes,
+          state: state || undefined,
+          codeChallenge: codeChallenge || undefined,
+          codeChallengeMethod: codeChallengeMethod || undefined,
+        });
+
+        if (resp.error) {
+          alert(resp.error.message || "Error al autorizar");
+          $btn.disabled = false;
+          $btn.textContent = "Autorizar";
+          return;
+        }
+
+        if (resp.data?.redirectUri) {
+          window.location.href = resp.data.redirectUri;
+        }
+      } catch (e) {
+        alert("Error al autorizar");
+        $btn.disabled = false;
+        $btn.textContent = "Autorizar";
+      }
+    });
+  });
+</script>

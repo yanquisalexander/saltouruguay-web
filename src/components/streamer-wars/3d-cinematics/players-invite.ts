@@ -4,6 +4,7 @@ import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
 import gsap from "gsap/dist/gsap";
 import { playSound, playSoundWithMegaphone, playSoundWithReverb } from "@/consts/Sounds";
 import type { Cinematic3DDefinition } from "./types";
+import { GLOBAL_CDN_PREFIX } from "@/config";
 
 function makeBox(w: number, h: number, d: number, mat: THREE.Material) {
   return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -24,7 +25,7 @@ function createGasSystem(parentScene: THREE.Scene, options: {
 } = {}) {
   const {
     count = 60,
-    color = new THREE.Color(0.07, 0.25, 0.2),
+    color = new THREE.Color(0.3, 0.7, 0.5),
     opacity = 0.28,
     spreadX = 8,
     spreadZ = 12,
@@ -32,16 +33,7 @@ function createGasSystem(parentScene: THREE.Scene, options: {
     spawnSide = true,
   } = options;
 
-  const sc = document.createElement("canvas");
-  sc.width = sc.height = 128;
-  const sx = sc.getContext("2d")!;
-  const sg = sx.createRadialGradient(64, 64, 2, 64, 64, 64);
-  sg.addColorStop(0, "rgba(200,240,220,0.55)");
-  sg.addColorStop(0.4, "rgba(150,210,185,0.22)");
-  sg.addColorStop(1, "rgba(80,160,140,0)");
-  sx.fillStyle = sg;
-  sx.fillRect(0, 0, 128, 128);
-  const tex = new THREE.CanvasTexture(sc);
+  const tex = new THREE.TextureLoader().load(`${GLOBAL_CDN_PREFIX}/guerra-streamers/assets/smoke.webp`);
 
   const group = new THREE.Group();
   const particles: THREE.Sprite[] = [];
@@ -57,7 +49,7 @@ function createGasSystem(parentScene: THREE.Scene, options: {
       color: color.clone(),
     });
     const sp = new THREE.Sprite(mat);
-    const scale = 0.8 + Math.random() * 2.2;
+    const scale = 1.5 + Math.random() * 3.5;
     sp.scale.set(scale, scale, 1);
 
     let px: number;
@@ -88,7 +80,7 @@ function createGasSystem(parentScene: THREE.Scene, options: {
   for (let i = 0; i < count * 0.6; i++) spawn(true);
 
   const update = (dt: number) => {
-    if (intensity > 0 && Math.random() < intensity * 3 * dt) spawn(false);
+    if (intensity > 0 && Math.random() < intensity * 5 * dt) spawn(false);
 
     for (let i = particles.length - 1; i >= 0; i--) {
       const sp = particles[i];
@@ -486,8 +478,8 @@ export const playersInvite: Cinematic3DDefinition = {
 
     // ── Gas System ──────────────────────────────────────────
     const gas = createGasSystem(scene, {
-      count: 50, color: new THREE.Color(0.07, 0.25, 0.20),
-      opacity: 0.35, spreadX: 2.5, spreadZ: 3.5, spreadY: 2.5, spawnSide: false,
+      count: 150, color: new THREE.Color(0.4, 0.9, 0.6),
+      opacity: 0.85, spreadX: 3.5, spreadZ: 4.5, spreadY: 3.0, spawnSide: false,
     });
     gas.setIntensity(0);
 
@@ -603,7 +595,7 @@ export const playersInvite: Cinematic3DDefinition = {
     tl.to(fpCam, { bx: 0.0, by: 1.5, duration: 1.2, ease: "power2.inOut" }, 25.2);
     tl.to(fpCam, { gx: 0.8, gz: 1.5, gy: 1.0, duration: 1, ease: "power2.in" }, 25.2);
     tl.to(fpCam, { gx: 2.0, gz: 1.2, gy: 0.9, duration: 0.8, ease: "power2.inOut" }, 26.2);
-    tl.to(fpCam, { bx: 0.35, by: 1.2, bz: 1.4, rollTarget: 0.08, duration: 0.8, ease: "power2.inOut" }, 26.5);
+    tl.to(fpCam, { bx: 0.35, by: 1.25, bz: 0.85, rollTarget: 0.08, duration: 0.8, ease: "power2.inOut" }, 26.5);
     tl.to(fpCam, { bx: 0.55, by: 1.55, bz: 0.7, rollTarget: 0, duration: 1.2, ease: "power2.inOut" }, 27.3);
     tl.to(fpCam, { by: 1.60, duration: 0.3, ease: "sine.inOut" }, 28.5);
     tl.to(fpCam, { by: 1.50, duration: 0.3, ease: "sine.inOut" }, 28.8);
@@ -626,7 +618,7 @@ export const playersInvite: Cinematic3DDefinition = {
     tl.to(interiorRed, { intensity: 2.5, duration: 2, ease: "power2.in" }, 32);
     tl.call(() => { playSound({ sound: "scripts/3d/waking-gas-2", volume: 0.15 }); }, [], 36);
     tl.to(gasState, {
-      level: 0.4, duration: 1.5, ease: "power2.in",
+      level: 0.7, duration: 1.5, ease: "power2.in",
       onUpdate: function () { gas.setIntensity(this.targets()[0].level); },
     }, 33);
 
@@ -634,17 +626,17 @@ export const playersInvite: Cinematic3DDefinition = {
     tl.to(fpCam, { blur: 0.4, duration: 2, ease: "power2.in" }, 36);
     tl.to(gasLight, { intensity: 3.5, duration: 3, ease: "power2.in" }, 36);
     tl.to(gasState, {
-      level: 0.85, duration: 3, ease: "power2.in",
+      level: 1.15, duration: 3, ease: "power2.in",
       onUpdate: function () { gas.setIntensity(this.targets()[0].level); },
     }, 36);
     tl.to(fpCam, { ba: 0.025, duration: 2, ease: "power2.in" }, 37);
     tl.to(fpCam, { blur: 0.8, duration: 2, ease: "power2.in" }, 38);
     tl.to(fpCam, { exposure: 0.6, duration: 3, ease: "power3.in" }, 38.5);
     tl.to(fpCam, { wobbleAmp: 0.04, duration: 3, ease: "power2.in" }, 39);
-    tl.to(fpCam, { by: 1.0, duration: 3, ease: "power3.in" }, 39);
+    tl.to(fpCam, { by: 1.25, duration: 3, ease: "power3.in" }, 39);
     tl.to(fpCam, { blur: 2.0, duration: 2.5, ease: "power2.in" }, 40);
     tl.to(fpCam, { exposure: 0.3, duration: 2.5, ease: "power3.in" }, 41);
-    tl.to(fpCam, { by: 1.0, duration: 3, ease: "power3.in" }, 41.5);
+    tl.to(fpCam, { by: 1.2, duration: 3, ease: "power3.in" }, 41.5);
     tl.to(fpCam, { blur: 4.5, duration: 2, ease: "power2.in" }, 42.5);
     tl.to(fpCam, { exposure: 0.05, duration: 3, ease: "power3.in" }, 43);
     tl.to(htmlRefs.overlayEl, { opacity: 1, duration: 3, ease: "power3.in" }, 43);

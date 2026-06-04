@@ -18,6 +18,8 @@ import { oauth } from "./users/oauth";
 import { twoFactor } from "./users/two-factor";
 import { serverTools } from "./admin/serverTools";
 import { customPages } from "./admin/customPages";
+import { oauth as adminOauth } from "./admin/oauth";
+import { oauth as userOauth } from "./oauth";
 import { friends } from "./friends";
 import { events as adminEvents } from "./admin/events";
 import { banco } from "./banco";
@@ -41,6 +43,7 @@ import { acreconre } from "./acreconre";
 
 
 export const server = {
+    oauth: userOauth,
     acreconre,
     tournaments,
     notifications,
@@ -379,6 +382,7 @@ export const server = {
         serverTools,
         customPages,
         events: adminEvents,
+        oauth: adminOauth,
         launchCinematic: defineAction({
             input: z.object({
                 url: z.string().url(),

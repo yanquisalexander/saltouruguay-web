@@ -1318,3 +1318,91 @@ export const FortniteLeagueScoresTable = pgTable('fortnite_league_scores', {
 }, (t) => ({
     uniqueInscription: unique().on(t.inscriptionId),
 }));
+
+// ── SaltoUruguayServer OAuth Tables ──
+
+export const SUSOAuthClientsTable = pgTable("sus_oauth_clients", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: varchar("name").notNull(),
+    description: text("description"),
+    icon: varchar("icon"),
+    website: varchar("website"),
+    clientSecret: varchar("client_secret").notNull(),
+    allowedScopes: text("allowed_scopes").array().notNull().default(sql`'{}'`),
+    status: varchar("status", { enum: ["pending", "approved", "denied"] }).notNull().default("pending"),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp("updated_at").notNull().default(sql`current_timestamp`),
+});
+
+export const SUSOAuthClientRedirectUrisTable = pgTable("sus_oauth_client_redirect_uris", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    clientId: uuid("client_id").notNull().references(() => SUSOAuthClientsTable.id, { onDelete: "cascade" }),
+    redirectUri: varchar("redirect_uri").notNull(),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+});
+
+export const SUSOAuthAuthorizationCodesTable = pgTable("sus_oauth_authorization_codes", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    clientId: uuid("client_id").notNull().references(() => SUSOAuthClientsTable.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    code: varchar("code").unique().notNull(),
+    scopes: text("scopes").array().notNull(),
+    redirectUri: varchar("redirect_uri").notNull(),
+    codeChallenge: varchar("code_challenge"),
+    codeChallengeMethod: varchar("code_challenge_method"),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+});
+
+export const SUSOAuthTokensTable = pgTable("sus_oauth_tokens", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    clientId: uuid("client_id").notNull().references(() => SUSOAuthClientsTable.id, { onDelete: "cascade" }),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    accessToken: varchar("access_token").unique().notNull(),
+    refreshToken: varchar("refresh_token").unique(),
+    scopes: text("scopes").array().notNull(),
+    accessTokenExpiresAt: timestamp("access_token_expires_at").notNull(),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+    revoked: boolean("revoked").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().default(sql`current_timestamp`),
+});
+
+export const susOAuthClientsRelations = relations(SUSOAuthClientsTable, ({ one, many }) => ({
+    owner: one(UsersTable, {
+        fields: [SUSOAuthClientsTable.userId],
+        references: [UsersTable.id],
+    }),
+    redirectUris: many(SUSOAuthClientRedirectUrisTable),
+    tokens: many(SUSOAuthTokensTable),
+    authorizationCodes: many(SUSOAuthAuthorizationCodesTable),
+}));
+
+export const susOAuthClientRedirectUrisRelations = relations(SUSOAuthClientRedirectUrisTable, ({ one }) => ({
+    client: one(SUSOAuthClientsTable, {
+        fields: [SUSOAuthClientRedirectUrisTable.clientId],
+        references: [SUSOAuthClientsTable.id],
+    }),
+}));
+
+export const susOAuthAuthorizationCodesRelations = relations(SUSOAuthAuthorizationCodesTable, ({ one }) => ({
+    client: one(SUSOAuthClientsTable, {
+        fields: [SUSOAuthAuthorizationCodesTable.clientId],
+        references: [SUSOAuthClientsTable.id],
+    }),
+    user: one(UsersTable, {
+        fields: [SUSOAuthAuthorizationCodesTable.userId],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const susOAuthTokensRelations = relations(SUSOAuthTokensTable, ({ one }) => ({
+    client: one(SUSOAuthClientsTable, {
+        fields: [SUSOAuthTokensTable.clientId],
+        references: [SUSOAuthClientsTable.id],
+    }),
+    user: one(UsersTable, {
+        fields: [SUSOAuthTokensTable.userId],
+        references: [UsersTable.id],
+    }),
+}));

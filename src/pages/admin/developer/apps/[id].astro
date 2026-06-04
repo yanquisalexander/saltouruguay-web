@@ -1,0 +1,23 @@
+---
+import { getSession } from "auth-astro/server";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
+import { OAuthClientEditor } from "@/components/admin/OAuthClientEditor";
+
+const session = await getSession(Astro.request);
+if (!session?.user?.isAdmin) {
+    return new Response(null, { status: 404 });
+}
+
+const { id } = Astro.params;
+if (!id) {
+    return Astro.redirect("/admin/developer/apps", 302);
+}
+---
+
+<AdminLayout title="Edit OAuth App" session={session}>
+    <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-4">
+        <AdminPageHeader title="Edit Client" pathname="/admin/developer/apps" />
+        <OAuthClientEditor client:load clientId={id} />
+    </div>
+</AdminLayout>
