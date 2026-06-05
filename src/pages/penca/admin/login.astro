@@ -1,0 +1,14 @@
+---
+const secret = Astro.url.searchParams.get("s");
+const adminSecret = import.meta.env.ADMIN_SECRET;
+
+if (secret === adminSecret) {
+  Astro.cookies.set("admin_secret", secret, { httpOnly: true, path: "/" });
+  return Astro.redirect("/penca/admin");
+}
+---
+
+<form method="get">
+  <input name="s" type="password" placeholder="Contraseña" />
+  <button type="submit">Entrar</button>
+</form>
