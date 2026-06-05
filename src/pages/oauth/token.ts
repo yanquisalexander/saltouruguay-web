@@ -6,10 +6,11 @@ import { consumeAuthCode, generateTokens, generateServiceToken, refreshTokens, g
 
 export const POST: APIRoute = async ({ request }) => {
     try {
-        const formData = await request.formData();
-        const grantType = formData.get("grant_type")?.toString();
-        const clientId = formData.get("client_id")?.toString();
-        const clientSecret = formData.get("client_secret")?.toString();
+        const body = await request.text();
+        const params = new URLSearchParams(body);
+        const grantType = params.get("grant_type");
+        const clientId = params.get("client_id");
+        const clientSecret = params.get("client_secret");
 
         if (!clientId) {
             return json({ error: "invalid_client" }, 401);
@@ -21,11 +22,11 @@ export const POST: APIRoute = async ({ request }) => {
         }
 
         if (grantType === "authorization_code") {
-            const code = formData.get("code")?.toString();
-            const rawRedirectUri = formData.get("redirect_uri")?.toString() || "";
+            const code = params.get("code");
+            const rawRedirectUri = params.get("redirect_uri") || "";
             // Decode por si el cliente envía URL-encoded (ej: oauthdebugger.com)
             const redirectUri = tryDecodeURI(rawRedirectUri);
-            const codeVerifier = formData.get("code_verifier")?.toString();
+            const codeVerifier = params.get("code_verifier");
 
             if (!code || !redirectUri) {
                 return json({ error: "invalid_request" }, 400);
@@ -75,7 +76,7 @@ export const POST: APIRoute = async ({ request }) => {
                 return json({ error: "invalid_client" }, 401);
             }
 
-            const scopeParam = formData.get("scope")?.toString();
+            const scopeParam = params.get("scope");
             const scopes = scopeParam ? scopeParam.split(" ").filter(Boolean) : [];
 
             // Validate requested scopes are allowed for this client
@@ -96,7 +97,7 @@ export const POST: APIRoute = async ({ request }) => {
                 return json({ error: "invalid_grant", error_description: e.message }, 400);
             }
         } else if (grantType === "refresh_token") {
-            const refreshTokenValue = formData.get("refresh_token")?.toString();
+            const refreshTokenValue = params.get("refresh_token");
 
             if (!refreshTokenValue) {
                 return json({ error: "invalid_request" }, 400);

@@ -1,21 +1,33 @@
 import type { APIRoute } from "astro";
 import { validateAccessToken } from "@/lib/oauth";
-import { client } from "@/db/client";
-import { UsersTable, SaltoTagsTable } from "@/db/schema";
+import { client as db } from "@/db/client";
+import { UsersTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export const GET: APIRoute = async ({ request }) => {
     const authHeader = request.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-        return json({ error: "invalid_request" }, 400);
+
+    if (!authHeader) {
+        return new Response(JSON.stringify({ error: "invalid_request" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+        });
     }
 
-    const accessToken = authHeader.slice(7);
+    const match = authHeader.match(/^Bearer (.+)$/);
+    if (!match) {
+        return new Response(JSON.stringify({ error: "invalid_token" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+        });
+    }
+
+    const accessToken = match[1];
 
     try {
         const { userId, scopes } = await validateAccessToken(accessToken);
 
-        const user = await client.query.UsersTable.findFirst({
+        const user = await db.query.UsersTable.findFirst({
             where: eq(UsersTable.id, userId),
             columns: {
                 id: true,
@@ -27,7 +39,10 @@ export const GET: APIRoute = async ({ request }) => {
         });
 
         if (!user) {
-            return json({ error: "user_not_found" }, 404);
+            return new Response(JSON.stringify({ error: "user_not_found" }), {
+                status: 404,
+                headers: { "Content-Type": "application/json" },
+            });
         }
 
         const response: Record<string, unknown> = {
@@ -44,27 +59,20 @@ export const GET: APIRoute = async ({ request }) => {
             response.email = user.email;
         }
 
-        if (scopes.includes("saltotag:read")) {
-            const saltoTag = await client.query.SaltoTagsTable.findFirst({
-                where: eq(SaltoTagsTable.userId, userId),
-                columns: { saltoTag: true, discriminator: true, totalXP: true },
-            });
-            if (saltoTag) {
-                response.saltoTag = saltoTag.saltoTag;
-                response.saltoTagDiscriminator = saltoTag.discriminator;
-                response.saltoTagXP = saltoTag.totalXP;
-            }
-        }
-
-        return json(response, 200);
-    } catch (e: any) {
-        return json({ error: "invalid_token", error_description: e.message }, 401);
+        return new Response(JSON.stringify(response), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+        });
+    } catch (error: any) {
+        return new Response(
+            JSON.stringify({
+                error: "invalid_token",
+                error_description: error.message,
+            }),
+            {
+                status: 401,
+                headers: { "Content-Type": "application/json" },
+            },
+        );
     }
 };
-
-function json(data: Record<string, unknown>, status: number) {
-    return new Response(JSON.stringify(data), {
-        status,
-        headers: { "Content-Type": "application/json" },
-    });
-}
