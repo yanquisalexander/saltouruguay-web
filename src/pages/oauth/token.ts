@@ -9,8 +9,21 @@ export const POST: APIRoute = async ({ request }) => {
         const body = await request.text();
         const params = new URLSearchParams(body);
         const grantType = params.get("grant_type");
-        const clientId = params.get("client_id");
-        const clientSecret = params.get("client_secret");
+
+        // client_id/client_secret pueden venir en el body (public client) o en
+        // Authorization: Basic (confidential client con oauth4webapi)
+        let clientId = params.get("client_id");
+        let clientSecret = params.get("client_secret");
+
+        if (!clientId) {
+            const authHeader = request.headers.get("authorization");
+            if (authHeader?.startsWith("Basic ")) {
+                const decoded = atob(authHeader.slice(6));
+                const colonIndex = decoded.indexOf(":");
+                clientId = colonIndex > 0 ? decoded.slice(0, colonIndex) : decoded;
+                clientSecret = colonIndex > 0 ? decoded.slice(colonIndex + 1) : undefined;
+            }
+        }
 
         if (!clientId) {
             return json({ error: "invalid_client" }, 401);
@@ -123,8 +136,8 @@ export const POST: APIRoute = async ({ request }) => {
             return json({ error: "unsupported_grant_type" }, 400);
         }
     } catch (e) {
-        console.error("Token endpoint error:", e);
-        return json({ error: "server_error" }, 500);
+        console.error("Token endpoint error:", e instanceof Error ? e.message : e, e instanceof Error ? e.stack : "");
+        return json({ error: "server_error", error_description: e instanceof Error ? e.message : "Unknown error" }, 500);
     }
 };
 
