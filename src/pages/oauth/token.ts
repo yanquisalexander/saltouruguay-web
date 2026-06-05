@@ -22,7 +22,9 @@ export const POST: APIRoute = async ({ request }) => {
 
         if (grantType === "authorization_code") {
             const code = formData.get("code")?.toString();
-            const redirectUri = formData.get("redirect_uri")?.toString();
+            const rawRedirectUri = formData.get("redirect_uri")?.toString() || "";
+            // Decode por si el cliente envía URL-encoded (ej: oauthdebugger.com)
+            const redirectUri = tryDecodeURI(rawRedirectUri);
             const codeVerifier = formData.get("code_verifier")?.toString();
 
             if (!code || !redirectUri) {
@@ -140,4 +142,12 @@ async function getAuthCodeRecord(code: string, clientId: string) {
         ),
         columns: { codeChallenge: true },
     });
+}
+
+function tryDecodeURI(value: string): string {
+    try {
+        return decodeURIComponent(value);
+    } catch {
+        return value;
+    }
 }
