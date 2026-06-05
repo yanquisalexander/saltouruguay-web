@@ -1,106 +1,292 @@
 ---
-const session = await getSession(Astro.request);
-
-if (!session?.user.isAdmin) {
-  return new Response(null, { status: 404 });
-}
-
 import { getSession } from "auth-astro/server";
 import { experimental_AstroContainer } from "astro/container";
-import Layout from "@/layouts/Layout.astro";
+import { checkAdmin } from "@/lib/checkAdmin";
+import AdminLayout from "@/layouts/AdminLayout.astro";
 import InscripcionExtremo from "@/email/InscripcionExtremo.astro";
-import { LucideDownload } from "lucide-preact";
+import NewLoginDetected from "@/email/NewLoginDetected.astro";
+import TwitchAuthorizationRevoked from "@/email/TwitchAuthorizationRevoked.astro";
+import {
+  LucideDownload,
+  LucideSend,
+  LucideEye,
+  LucideMail,
+  LucideAlertTriangle,
+  LucideUserX,
+  LucideSwords,
+} from "lucide-preact";
 
-const EmailComponents = {
+const session = await getSession(Astro.request);
 
-  InscripcionExtremo: (props: { name: string }) => {
-    return {
-      component: InscripcionExtremo,
-      props,
-    };
+const checkResult = await checkAdmin(session);
+if (checkResult) {
+  return checkResult;
+}
+
+const TEMPLATE_META = {
+  InscripcionExtremo: {
+    label: "Inscripción Extremo",
+    description: "Confirmación de pre-inscripción a SaltoCraft Extremo 3",
+    icon: LucideSwords,
+    color: "purple",
+    defaultProps: {},
+  },
+  NewLoginDetected: {
+    label: "Nuevo Inicio de Sesión",
+    description: "Alerta de seguridad cuando se detecta un login nuevo",
+    icon: LucideAlertTriangle,
+    color: "red",
+    defaultProps: {
+      date: new Date(),
+      location: "Montevideo, Uruguay",
+      device: "Chrome en Windows 11",
+      browser: "Chrome 125.0",
+    },
+  },
+  TwitchAuthorizationRevoked: {
+    label: "Autorización Twitch Revocada",
+    description: "Notificación cuando se desvincula la cuenta de Twitch",
+    icon: LucideUserX,
+    color: "orange",
+    defaultProps: {
+      displayName: "Usuario",
+    },
   },
 };
 
-const templateToRender = Astro.url.searchParams.get(
-  "template"
-) as keyof typeof EmailComponents;
-const selectedTemplate =
-  templateToRender && templateToRender in EmailComponents
-    ? EmailComponents[templateToRender]({ name: "Usuario" }) // Ejecutar función para obtener props
-    : null;
+const COMPONENT_MAP = {
+  InscripcionExtremo,
+  NewLoginDetected,
+  TwitchAuthorizationRevoked,
+};
+
+type TemplateKey = keyof typeof COMPONENT_MAP;
+
+const templateToRender = Astro.url.searchParams.get("template") as TemplateKey | null;
+const isValidTemplate = templateToRender && templateToRender in COMPONENT_MAP;
+
 const container = await experimental_AstroContainer.create();
 
 let bodyOfEmail = "";
-if (selectedTemplate) {
+if (isValidTemplate) {
   try {
-    bodyOfEmail = await container.renderToString(selectedTemplate.component);
+    const Component = COMPONENT_MAP[templateToRender];
+    const props = TEMPLATE_META[templateToRender].defaultProps;
+    bodyOfEmail = await container.renderToString(Component, {
+      props: Object.keys(props).length > 0 ? props : undefined,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Error rendering email template:", error);
   }
 }
 ---
 
-<Layout title="Email Manager">
-  <div class="flex flex-col items-center justify-center min-h-screen">
-    <h1 class="text-4xl font-bold">Gestor de Emails</h1>
+<AdminLayout title="Email Manager" session={session}>
+  <div class="space-y-8">
+    {/* Template Selector */}
+    <div class="grid gap-4 grid-cols-1 md:grid-cols-3">
+      {
+        (Object.keys(TEMPLATE_META) as TemplateKey[]).map((key) => {
+          const meta = TEMPLATE_META[key];
+          const Icon = meta.icon;
+          const colors = {
+            purple:
+              "border-purple-500/20 bg-purple-500/[0.04] hover:bg-purple-500/[0.08]",
+            red: "border-red-500/20 bg-red-500/[0.04] hover:bg-red-500/[0.08]",
+            orange:
+              "border-orange-500/20 bg-orange-500/[0.04] hover:bg-orange-500/[0.08]",
+          };
+          const colorMap = {
+            purple: "text-purple-400 bg-purple-500/10",
+            red: "text-red-400 bg-red-500/10",
+            orange: "text-orange-400 bg-orange-500/10",
+          };
+          const isActive = templateToRender === key;
 
-    <div class="">
-      <button id="downloadEmails" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-sm">
-        <LucideDownload class="w-6 h-6 mr-2 inline-block" />
-        Descargar Emails
-      </button>
-      
+          return (
+            <a
+              href={`?template=${key}`}
+              class={`
+                relative overflow-hidden rounded-2xl border p-5 transition-all duration-200
+                ${isActive ? "border-white/20 bg-[#0a0a0a] shadow-lg" : "border-white/5 bg-[#0a0a0a]/60 hover:border-white/10"}
+              `}
+            >
+              <div class="flex items-start gap-4">
+                <div
+                  class={`p-3 rounded-xl border ${colors[meta.color].split(" ")[0]} ${colorMap[meta.color]}`}
+                >
+                  <Icon size={20} />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3
+                    class="font-anton text-lg uppercase tracking-wide text-white truncate"
+                  >
+                    {meta.label}
+                  </h3>
+                  <p class="text-xs text-white/40 font-rubik mt-1 leading-relaxed">
+                    {meta.description}
+                  </p>
+                </div>
+                {isActive && (
+                  <div class="size-2 rounded-full bg-green-500 shrink-0 mt-2" />
+                )}
+              </div>
+            </a>
+          );
+        })
+      }
     </div>
 
-    <ul class="flex flex-col gap-4 mt-4">
-      {Object.keys(EmailComponents).map((template) => (
-        <li>
-          <a href={`?template=${template}`} class="text-blue-500 hover:underline">
-            {template}
-          </a>
-        </li>
-      ))}
-    </ul>
+    {
+      isValidTemplate && bodyOfEmail && (
+        <div class="grid gap-8 grid-cols-1 lg:grid-cols-2">
+          {/* Form Panel */}
+          <div
+            class="rounded-2xl border border-white/5 bg-[#0a0a0a] p-6 space-y-5"
+          >
+            <div class="flex items-center gap-3 pb-4 border-b border-white/5">
+              <div class="p-2 bg-white/5 rounded-lg">
+                <LucideSend size={18} class="text-white/60" />
+              </div>
+              <div>
+                <h2
+                  class="font-anton text-lg uppercase tracking-wide text-white"
+                >
+                  Enviar Email
+                </h2>
+                <p class="text-xs text-white/40 font-rubik">
+                  {TEMPLATE_META[templateToRender].label}
+                </p>
+              </div>
+            </div>
 
-    {selectedTemplate && (
-      <>
-        <div class="mt-6 w-full max-w-5xl p-4">
-          <h2 class="text-xl font-semibold">Enviar Email con {templateToRender}</h2>
-          
-          <!-- Campo para el título -->
-          <input
-            type="text"
-            id="emailTitle"
-            placeholder="Título del email"
-            class="w-full p-2 border rounded-sm mt-2 bg-transparent"
-          />
+            <div class="space-y-4">
+              <div>
+                <label
+                  for="emailTitle"
+                  class="block text-xs font-bold uppercase tracking-widest text-white/40 mb-1.5"
+                >
+                  Título del email
+                </label>
+                <input
+                  type="text"
+                  id="emailTitle"
+                  placeholder="Ej: Novedades del servidor"
+                  class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 focus:bg-white/[0.07] transition-all"
+                />
+              </div>
 
-          <!-- Campo para el email -->
-          <input
-            type="email"
-            id="emailInput"
-            placeholder="Correo del destinatario"
-            class="w-full p-2 border rounded-sm mt-2 bg-transparent"
-          />
+              <div>
+                <label
+                  for="emailInput"
+                  class="block text-xs font-bold uppercase tracking-widest text-white/40 mb-1.5"
+                >
+                  Correo del destinatario
+                </label>
+                <input
+                  type="email"
+                  id="emailInput"
+                  placeholder="usuario@ejemplo.com"
+                  class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 focus:bg-white/[0.07] transition-all"
+                />
+              </div>
 
-          <label class="flex items-center gap-2 mt-2">
-            <input type="checkbox" id="forAllUsers" />
-            Enviar a todos
-          </label>
+              <label
+                class="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5 cursor-pointer hover:bg-white/[0.05] transition-colors"
+              >
+                <input
+                  type="checkbox"
+                  id="forAllUsers"
+                  class="size-4 rounded-sm border-white/20 bg-white/5 accent-purple-500"
+                />
+                <div>
+                  <span class="text-sm text-white/70 font-medium block">
+                    Enviar a todos los usuarios
+                  </span>
+                  <span class="text-xs text-white/30 font-rubik">
+                    Se enviará a todos los correos registrados
+                  </span>
+                </div>
+              </label>
+            </div>
 
-          <button id="sendEmail" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-sm">
-            Enviar Email
-          </button>
+            <div class="flex gap-3 pt-2">
+              <button
+                id="sendEmail"
+                class="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold rounded-xl transition-colors"
+              >
+                <LucideSend size={16} />
+                Enviar Email
+              </button>
 
-          <h3 class="text-lg font-medium mt-4">Previsualización:</h3>
-          <div id="email-preview" class="mt-2 p-4 border rounded-sm w-full" set:html={bodyOfEmail} />
+              <button
+                id="downloadEmails"
+                class="flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 text-sm font-bold rounded-xl transition-colors border border-white/5"
+              >
+                <LucideDownload size={16} />
+                Descargar Emails CSV
+              </button>
+            </div>
+          </div>
+
+          {/* Preview Panel */}
+          <div class="rounded-2xl border border-white/5 bg-[#0a0a0a] overflow-hidden">
+            <div class="flex items-center gap-3 px-6 py-4 border-b border-white/5">
+              <div class="p-2 bg-white/5 rounded-lg">
+                <LucideEye size={18} class="text-white/60" />
+              </div>
+              <div>
+                <h2
+                  class="font-anton text-lg uppercase tracking-wide text-white"
+                >
+                  Previsualización
+                </h2>
+                <p class="text-xs text-white/40 font-rubik">
+                  {TEMPLATE_META[templateToRender].label}
+                </p>
+              </div>
+            </div>
+
+            {/* Email Preview Container */}
+            <div class="bg-[#050505]">
+              <div class="max-w-full overflow-auto">
+                <div
+                  class="mx-auto"
+                  style="max-width: 600px;"
+                  id="email-preview"
+                  set:html={bodyOfEmail}
+                />
+              </div>
+            </div>
+
+            <div id="email-body" data-html-body={bodyOfEmail} />
+          </div>
         </div>
+      )
+    }
 
-        <div id="email-body" data-html-body={bodyOfEmail} />
-      </>
-    )}
+    {
+      !isValidTemplate && (
+        <div class="text-center py-20">
+          <div
+            class="inline-flex items-center justify-center size-16 rounded-2xl bg-white/5 border border-white/5 mb-4"
+          >
+            <LucideMail size={28} class="text-white/30" />
+          </div>
+          <h2
+            class="font-anton text-2xl uppercase tracking-wide text-white/40"
+          >
+            Seleccioná un template
+          </h2>
+          <p class="text-sm text-white/20 font-rubik mt-2">
+            Elegí uno de los templates de arriba para previsualizar y enviar
+            emails
+          </p>
+        </div>
+      )
+    }
   </div>
-</Layout>
+</AdminLayout>
 
 <script>
   import { actions } from "astro:actions";
@@ -109,79 +295,78 @@ if (selectedTemplate) {
   import type { ActionError } from "astro:actions";
 
   document.addEventListener("astro:page-load", () => {
+    const downloadBtn = document.getElementById("downloadEmails");
+    const sendBtn = document.getElementById("sendEmail");
 
-    const getEmailsAsCSV = async () => {
-  toast.promise(
-    (async () => {
-      const { data: emails = [] } = await actions.admin.users.getAllUserEmails();
-      if (!emails.length) throw new Error("No hay emails para descargar.");
-
-      // Agregar encabezado y formatear CSV
-      const csvContent = ["Email"].concat(emails).join("\n");
-
-      const blob = new Blob([csvContent], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "emails.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    })(),
-    {
-      loading: "Generando archivo...",
-      success: "Emails descargados correctamente",
-      error: "No se pudo descargar los emails",
+    if (downloadBtn) {
+      downloadBtn.addEventListener("click", async () => {
+        toast.promise(
+          (async () => {
+            const { data: emails = [] } =
+              await actions.admin.users.getAllUserEmails();
+            if (!emails.length) throw new Error("No hay emails para descargar.");
+            const csvContent = ["Email"].concat(emails).join("\n");
+            const blob = new Blob([csvContent], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "emails.csv";
+            a.click();
+            URL.revokeObjectURL(url);
+          })(),
+          {
+            loading: "Generando archivo...",
+            success: "Emails descargados correctamente",
+            error: "No se pudo descargar los emails",
+          }
+        );
+      });
     }
-  );
-};
 
+    if (sendBtn) {
+      sendBtn.addEventListener("click", async () => {
+        const $title = $("#emailTitle") as HTMLInputElement;
+        const $email = $("#emailInput") as HTMLInputElement;
+        const $forAll = $("#forAllUsers") as HTMLInputElement;
+        const $emailBody = $("#email-body") as HTMLElement;
 
-    document.getElementById("downloadEmails")?.addEventListener("click", async () => {
-      getEmailsAsCSV();
-    });
-
-    document.getElementById("sendEmail")?.addEventListener("click", async () => {
-      const $title = $("#emailTitle") as HTMLInputElement;
-      const $email = $("#emailInput") as HTMLInputElement;
-      const $forAll = $("#forAllUsers") as HTMLInputElement;
-      const $emailBody = $("#email-body") as HTMLElement;
-
-      if (!$title.value.trim()) {
-        alert("Debes ingresar un título para el email.");
-        return;
-      }
-
-      if (!$email.value && !$forAll.checked) {
-        alert("Debes ingresar un email o seleccionar enviar a todos.");
-        return;
-      }
-
-      if (!$emailBody) {
-        alert("No se ha seleccionado un template.");
-        return;
-      }
-
-      const email = $email.value;
-      const forAll = $forAll.checked;
-
-      toast.promise(
-        actions.admin.users.sendEmails({
-          emails: email ? [email] : [],
-          title: $title.value.trim(),
-          body: $emailBody.dataset.htmlBody,
-          forAllUsers: forAll,
-        }),
-        {
-          loading: "Enviando email...",
-          success: ({ error }: { error: ActionError }) => {
-            if (error) {
-              throw new Error(error.message);
-            }
-            return "Email enviado correctamente";
-          },
-          error: "Ocurrió un error al enviar el email",
+        if (!$title.value.trim()) {
+          alert("Debés ingresar un título para el email.");
+          return;
         }
-      );
-    });
+
+        if (!$email.value && !$forAll.checked) {
+          alert("Debés ingresar un email o seleccionar enviar a todos.");
+          return;
+        }
+
+        if (!$emailBody) {
+          alert("No se ha seleccionado un template.");
+          return;
+        }
+
+        const email = $email.value;
+        const forAll = $forAll.checked;
+
+        toast.promise(
+          actions.admin.users.sendEmails({
+            emails: email ? [email] : [],
+            title: $title.value.trim(),
+            body: $emailBody.dataset.htmlBody,
+            forAllUsers: forAll,
+          }),
+          {
+            loading: "Enviando email...",
+            success: ({ error }: { error: ActionError }) => {
+              if (error) {
+                throw new Error(error.message);
+              }
+              return "Email enviado correctamente";
+            },
+            error: "Ocurrió un error al enviar el email",
+          }
+        );
+      });
+    }
   });
 </script>

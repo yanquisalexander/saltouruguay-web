@@ -289,6 +289,52 @@ export const updateSession = async (sessionId: string, updates: Partial<InferIns
     }
 };
 
+const parseUserAgent = (ua: string): { browser: string; os: string } => {
+    let browser = "Desconocido";
+    let os = "Desconocido";
+
+    if (/Android/i.test(ua)) os = "Android";
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = /iPad/i.test(ua) ? "iPad" : "iPhone";
+    else if (/Windows NT 10/i.test(ua)) os = "Windows 10";
+    else if (/Windows NT 11/i.test(ua)) os = "Windows 11";
+    else if (/Windows NT 6\.1/i.test(ua)) os = "Windows 7";
+    else if (/Windows NT 6\.3/i.test(ua)) os = "Windows 8.1";
+    else if (/Windows NT 6\.0/i.test(ua)) os = "Windows Vista";
+    else if (/Mac OS X (\d+[._]\d+)/.test(ua)) os = "macOS";
+    else if (/Linux/i.test(ua) && !/Android/i.test(ua)) os = "Linux";
+    else if (/CrOS/i.test(ua)) os = "ChromeOS";
+
+    if (/Chrome/i.test(ua) && !/Edg/i.test(ua) && !/OPR/i.test(ua)) {
+        const m = ua.match(/Chrome\/([\d.]+)/);
+        browser = m ? `Chrome ${m[1]}` : "Chrome";
+    } else if (/Firefox/i.test(ua)) {
+        const m = ua.match(/Firefox\/([\d.]+)/);
+        browser = m ? `Firefox ${m[1]}` : "Firefox";
+    } else if (/Edg/i.test(ua)) {
+        const m = ua.match(/Edg\/([\d.]+)/);
+        browser = m ? `Edge ${m[1]}` : "Edge";
+    } else if (/OPR/i.test(ua)) {
+        const m = ua.match(/OPR\/([\d.]+)/);
+        browser = m ? `Opera ${m[1]}` : "Opera";
+    } else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) {
+        const m = ua.match(/Version\/([\d.]+)/);
+        browser = m ? `Safari ${m[1]}` : "Safari";
+    } else if (/UCBrowser/i.test(ua)) {
+        const m = ua.match(/UCBrowser\/([\d.]+)/);
+        browser = m ? `UC Browser ${m[1]}` : "UC Browser";
+    } else if (/SamsungBrowser/i.test(ua)) {
+        const m = ua.match(/SamsungBrowser\/([\d.]+)/);
+        browser = m ? `Samsung Internet ${m[1]}` : "Samsung Internet";
+    }
+
+    if (os !== "Desconocido" && /Mobile|Android|iPhone/i.test(ua)) {
+        const m = ua.match(/(Android|iPhone|iPad) ([\d._]+)/);
+        if (m) os += ` ${m[2].replace(/_/g, ".")}`;
+    }
+
+    return { browser, os };
+};
+
 export const sendNewLoginDetectedEmail = async (sessionId: string, request: Request) => {
     // Originalmente, las sesiones no tienen
     // datos como IP, ya que no tenemos
@@ -316,6 +362,7 @@ export const sendNewLoginDetectedEmail = async (sessionId: string, request: Requ
 
     const clientIp = IP_HEADERS.map(header => request.headers.get(header)).find(ip => ip !== undefined) ?? "unknown";
     const userAgent = request.headers.get("user-agent")!;
+    const { browser, os } = parseUserAgent(userAgent);
     // Actualiza la sesión con la nueva información
     await updateSession(sessionId, { ip: clientIp!, userAgent });
 
@@ -325,8 +372,8 @@ export const sendNewLoginDetectedEmail = async (sessionId: string, request: Requ
         props: {
             date: new Date(),
             location: `${ipInfo?.cityName}, ${ipInfo?.regionName}, ${ipInfo?.countryName}`,
-            device: userAgent,
-            browser: userAgent,
+            device: os,
+            browser,
         }
     });
 
