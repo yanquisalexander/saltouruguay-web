@@ -56,7 +56,7 @@ export const GET: APIRoute = async ({ request }) => {
             }
         }
 
-        return json(response);
+        return json(response, 200);
     } catch (e: any) {
         return json({ error: "invalid_token", error_description: e.message }, 401);
     }
