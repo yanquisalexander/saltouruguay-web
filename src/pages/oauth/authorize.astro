@@ -71,38 +71,51 @@ const getScopeMeta = (scope: string) => {
 ---
 
 <OAuthLayout title={`Autorizar &mdash; ${client.name}`}>
-  <header class="py-4 flex flex-col">
-    <h2 class="text-lg mt-2 text-center items-center gap-2">
-      <strong class="text-indigo-300">{client.name}</strong> quiere acceder
-      a tu cuenta
-    </h2>
-    <div
-      class="flex items-center mb-4 mt-4 justify-between gap-4 relative w-max mx-auto"
-    >
-      <img
-        src="/favicon.svg"
-        alt="SaltoUruguayServer"
-        class="h-16 w-auto saturate-150 object-contain aspect-square bg-linear-to-br p-3 from-indigo-800 via-slate-500/30 to-slate-700/50 rounded-md"
-      />
-      <span class="text-zinc-500 animate-pulse text-2xl font-bold"
-        >&#8646;</span
-      >
-      <img
-        src={client.icon ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(client.name)}&background=random`}
-        alt={client.name}
-        class="h-16 w-auto object-cover aspect-square rounded-md"
-      />
+  <div id="loading-bar" class="absolute top-0 left-0 h-1 w-full bg-white/5 overflow-hidden hidden">
+    <div class="h-full bg-purple-500 animate-loading-bar"></div>
+  </div>
+
+  <header class="pt-6 pb-4 flex flex-col items-center">
+    <div class="flex items-center justify-between gap-6 mb-6">
+      <div class="relative group">
+        <div class="absolute inset-0 bg-blue-500/20 blur-xl rounded-full opacity-50 group-hover:opacity-80 transition-opacity"></div>
+        <img
+          src="/favicon.svg"
+          alt="SaltoUruguayServer"
+          class="relative size-16 object-contain drop-shadow-lg"
+        />
+      </div>
+
+      <div class="flex flex-col items-center gap-1 text-white/20">
+        <div class="flex gap-1 animate-pulse">
+          <div class="size-1.5 rounded-full bg-purple-500"></div>
+          <div class="size-1.5 rounded-full bg-purple-500/50"></div>
+          <div class="size-1.5 rounded-full bg-purple-500/20"></div>
+        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-purple-500/50">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </div>
+
+      <div class="relative group">
+        <div class="absolute inset-0 bg-purple-500/20 blur-xl rounded-full opacity-50 group-hover:opacity-80 transition-opacity"></div>
+        <img
+          src={client.icon ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(client.name)}&background=random`}
+          alt={client.name}
+          class="relative size-16 object-contain rounded-full drop-shadow-lg"
+        />
+      </div>
     </div>
+
+    <h2 class="text-lg font-anton text-white uppercase tracking-wide text-center">
+      <span class="text-purple-400">{client.name}</span> quiere acceder<br />a tu cuenta
+    </h2>
   </header>
 
-  <div class="p-6 pt-0 space-y-6">
-    <div
-      class="flex items-center gap-3 bg-zinc-900 p-2 px-6 rounded-lg mx-auto"
-    >
-      <span
-        class="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full"
-      >
+  <div class="space-y-5">
+    <div class="flex items-center gap-3 bg-white/5 p-2 px-4 rounded-xl mx-auto w-fit">
+      <span class="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-purple-500/30">
         <img
           class="aspect-square h-full w-full"
           alt="Avatar"
@@ -111,38 +124,31 @@ const getScopeMeta = (scope: string) => {
         />
       </span>
       <div>
-        <p class="text-sm font-medium">
-          {session.user?.name || "Usuario"}
-        </p>
-        <p class="text-xs text-muted-foreground text-white/50">
-          {session.user?.email}
-        </p>
+        <p class="text-sm font-medium text-white">{session.user?.name || "Usuario"}</p>
+        <p class="text-xs text-white/40">{session.user?.email}</p>
       </div>
     </div>
 
-    <p
-      class="text-white/75 text-sm text-balance text-center mt-4 max-w-[48ch] mx-auto"
-    >
-      Al hacer clic en <strong>"Autorizar"</strong> estás permitiendo a <strong
-        >{client.name}</strong
-      >:
+    <p class="text-white/60 text-sm text-balance text-center max-w-[44ch] mx-auto leading-relaxed">
+      Al hacer clic en <strong class="text-white">"Autorizar"</strong> estás permitiendo a
+      <strong class="text-white">{client.name}</strong>:
     </p>
 
-    <ul
-      class="text-white/75 text-sm text-balance text-center flex flex-col gap-3 mx-auto max-w-[48ch]"
-    >
+    <ul class="flex flex-col gap-2 mx-auto max-w-[44ch]">
       {
         scopes.map((s) => {
           const meta = getScopeMeta(s);
           return (
-            <li class="flex items-center gap-2 justify-center">
-              <span class="h-4 w-4 text-indigo-300 inline-flex items-center justify-center">
-                &#10003;
+            <li class="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3">
+              <span class="size-5 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="text-purple-400">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
               </span>
-              {meta.name}
-              <span class="text-white/40 text-xs">
-                ({meta.description})
-              </span>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-white">{meta.name}</span>
+                <span class="text-xs text-white/40">{meta.description}</span>
+              </div>
             </li>
           );
         })
@@ -158,17 +164,16 @@ const getScopeMeta = (scope: string) => {
         data-state={state || ""}
         data-code-challenge={codeChallenge || ""}
         data-code-challenge-method={codeChallengeMethod || ""}
-        class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-10 px-4 py-2 w-full bg-indigo-800 hover:bg-indigo-600 transition text-white cursor-pointer"
+        class="inline-flex items-center justify-center gap-2 rounded-xl text-sm font-bold h-11 px-6 w-full bg-purple-600 hover:bg-purple-500 active:bg-purple-700 text-white transition-all cursor-pointer shadow-lg shadow-purple-900/30"
       >
         Autorizar
-        <span
-          class="ml-2 h-4 w-4 inline-flex items-center justify-center text-lg font-bold"
-          >&#8250;</span
-        >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
       </button>
       <a
         href={redirectUri}
-        class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-10 px-4 py-2 w-full text-white/60 hover:text-white transition"
+        class="inline-flex items-center justify-center gap-2 rounded-xl text-sm font-medium h-11 px-6 w-full text-white/40 hover:text-white/80 hover:bg-white/5 transition"
       >
         Cancelar
       </a>
@@ -176,14 +181,36 @@ const getScopeMeta = (scope: string) => {
   </div>
 </OAuthLayout>
 
+<style>
+  @keyframes loading-bar {
+    0% { width: 0%; transform: translateX(-100%); }
+    50% { width: 50%; }
+    100% { width: 100%; transform: translateX(100%); }
+  }
+  .animate-loading-bar {
+    animation: loading-bar 1.5s infinite linear;
+  }
+</style>
+
 <script>
   import { $ } from "@/lib/dom-selector";
   import { actions } from "astro:actions";
 
   document.addEventListener("DOMContentLoaded", () => {
     const $btn = $("#authorize") as HTMLButtonElement | null;
-    console.log("Button:", $btn);
+    const $bar = $("#loading-bar") as HTMLDivElement | null;
     if (!$btn) return;
+
+    const showLoading = () => {
+      if ($bar) $bar.classList.remove("hidden");
+    };
+    const hideLoading = () => {
+      if ($bar) $bar.classList.add("hidden");
+    };
+    const resetBtn = () => {
+      $btn.disabled = false;
+      $btn.innerHTML = 'Autorizar <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+    };
 
     $btn.addEventListener("click", async () => {
       const {
@@ -194,18 +221,11 @@ const getScopeMeta = (scope: string) => {
         codeChallenge,
         codeChallengeMethod,
       } = $btn.dataset;
-      console.log({
-        clientId,
-        redirectUri,
-        scope,
-        state,
-        codeChallenge,
-        codeChallengeMethod,
-      });
       if (!clientId || !redirectUri || !scope) return;
 
       $btn.disabled = true;
-      $btn.textContent = "Autorizando...";
+      $btn.innerHTML = 'Autorizando... <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>';
+      showLoading();
 
       const scopes = scope.split(" ").filter(Boolean);
 
@@ -221,8 +241,8 @@ const getScopeMeta = (scope: string) => {
 
         if (resp.error) {
           alert(resp.error.message || "Error al autorizar");
-          $btn.disabled = false;
-          $btn.textContent = "Autorizar";
+          hideLoading();
+          resetBtn();
           return;
         }
 
@@ -231,8 +251,8 @@ const getScopeMeta = (scope: string) => {
         }
       } catch (e) {
         alert("Error al autorizar");
-        $btn.disabled = false;
-        $btn.textContent = "Autorizar";
+        hideLoading();
+        resetBtn();
       }
     });
   });
