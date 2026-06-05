@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { and, eq } from "drizzle-orm";
 import { client } from "@/db/client";
 import { SUSOAuthAuthorizationCodesTable } from "@/db/schema";
-import { consumeAuthCode, generateTokens, refreshTokens, getApprovedClient, getClientRedirectUris, validateRedirectUri } from "@/lib/oauth";
+import { consumeAuthCode, generateTokens, generateServiceToken, refreshTokens, getApprovedClient, getClientRedirectUris, validateRedirectUri } from "@/lib/oauth";
 
 export const POST: APIRoute = async ({ request }) => {
     try {
@@ -62,6 +62,32 @@ export const POST: APIRoute = async ({ request }) => {
                     token_type: "Bearer",
                     expires_in: tokens.expiresIn,
                     refresh_token: tokens.refreshToken,
+                    scope: scopes.join(" "),
+                });
+            } catch (e: any) {
+                return json({ error: "invalid_grant", error_description: e.message }, 400);
+            }
+        } else if (grantType === "client_credentials") {
+            // Validate client_secret
+            if (!clientSecret || client.clientSecret !== clientSecret) {
+                return json({ error: "invalid_client" }, 401);
+            }
+
+            const scopeParam = formData.get("scope")?.toString();
+            const scopes = scopeParam ? scopeParam.split(" ").filter(Boolean) : [];
+
+            // Validate requested scopes are allowed for this client
+            const invalidScopes = scopes.filter(s => !client.allowedScopes.includes(s));
+            if (invalidScopes.length > 0) {
+                return json({ error: "invalid_scope", error_description: `Scopes not allowed: ${invalidScopes.join(", ")}` }, 400);
+            }
+
+            try {
+                const tokens = await generateServiceToken({ clientId, scopes });
+                return json({
+                    access_token: tokens.accessToken,
+                    token_type: "Bearer",
+                    expires_in: tokens.expiresIn,
                     scope: scopes.join(" "),
                 });
             } catch (e: any) {

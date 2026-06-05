@@ -1,0 +1,31 @@
+---
+import "@/assets/styles/global.css";
+
+export interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="bg-[#09090b] text-white font-rubik antialiased">
+    <img
+      src="/images/oauth_wallpaper.webp"
+      alt=""
+      class="fixed inset-0 object-cover w-full h-full opacity-30 blur-xs -z-10"
+    />
+    <main class="mx-auto flex justify-center items-center min-h-screen h-full px-4">
+      <article class="border border-dashed border-neutral-500 rounded-md px-6 py-2 max-w-md w-full bg-neutral-950">
+        <slot />
+      </article>
+    </main>
+  </body>
+</html>

@@ -280,7 +280,7 @@ function NewClientForm({
   const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  const SCOPES = ["openid", "profile", "email", "saltotag:read"];
+  const SCOPES = ["openid", "profile", "email", "saltotag:read", "service:api"];
 
   const toggleScope = (scope: string) => {
     setSelectedScopes((prev) =>

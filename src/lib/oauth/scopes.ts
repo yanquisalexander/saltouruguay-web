@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-preact";
-import { LucideEye, LucideIdCard, LucideMail, LucideUser } from "lucide-preact";
+import { LucideEye, LucideIdCard, LucideMail, LucideServer, LucideUser } from "lucide-preact";
 
-export const AVAILABLE_SCOPES = ["openid", "profile", "email", "saltotag:read"] as const;
+export const AVAILABLE_SCOPES = ["openid", "profile", "email", "saltotag:read", "service:api"] as const;
 
 export type Scope = (typeof AVAILABLE_SCOPES)[number];
 
@@ -31,5 +31,10 @@ export const SCOPE_META: Record<Scope, ScopeMeta> = {
         name: "Tu SaltoTag",
         description: "Leer tu SaltoTag y experiencia",
         icon: LucideIdCard,
+    },
+    "service:api": {
+        name: "API de servicio",
+        description: "Acceso machine-to-machine a las APIs internas",
+        icon: LucideServer,
     },
 };

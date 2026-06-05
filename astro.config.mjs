@@ -51,6 +51,7 @@ export default defineConfig({
       SUS_OAUTH_ACCESS_TOKEN_EXPIRY: envField.number({ context: 'server', access: 'public', default: 3600 }),
       SUS_OAUTH_REFRESH_TOKEN_EXPIRY: envField.number({ context: 'server', access: 'public', default: 2592000 }),
       SUS_OAUTH_AUTH_CODE_EXPIRY: envField.number({ context: 'server', access: 'public', default: 600 }),
+      SUS_OAUTH_SERVICE_TOKEN_EXPIRY: envField.number({ context: 'server', access: 'public', default: 3600 }),
     },
   },
   server: {

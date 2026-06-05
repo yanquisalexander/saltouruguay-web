@@ -14,6 +14,7 @@ import { AVAILABLE_SCOPES } from "./scopes";
 const AUTH_CODE_EXPIRY = Number(import.meta.env.SUS_OAUTH_AUTH_CODE_EXPIRY ?? 600);
 const ACCESS_TOKEN_EXPIRY = Number(import.meta.env.SUS_OAUTH_ACCESS_TOKEN_EXPIRY ?? 3600);
 const REFRESH_TOKEN_EXPIRY = Number(import.meta.env.SUS_OAUTH_REFRESH_TOKEN_EXPIRY ?? 2592000);
+const SERVICE_TOKEN_EXPIRY = Number(import.meta.env.SUS_OAUTH_SERVICE_TOKEN_EXPIRY ?? 3600);
 
 function getSigningSecret(): string {
     return import.meta.env.AUTH_SECRET as string;
@@ -222,6 +223,15 @@ export async function refreshTokens(
         throw new Error("Refresh token not found or revoked");
     }
 
+    // Verify the client still allows all these scopes
+    const client = await getClient(payload.client_id);
+    if (client) {
+        const invalidScopes = tokenRecord.scopes.filter(s => !client.allowedScopes.includes(s));
+        if (invalidScopes.length > 0) {
+            throw new Error(`Scopes no longer allowed: ${invalidScopes.join(", ")}`);
+        }
+    }
+
     // Revoke old tokens for this client+user
     await db.update(SUSOAuthTokensTable)
         .set({ revoked: true })
@@ -240,9 +250,34 @@ export async function refreshTokens(
     });
 }
 
+export async function generateServiceToken(params: {
+    clientId: string;
+    scopes: string[];
+}): Promise<{ accessToken: string; expiresIn: number }> {
+    const secret = getSigningSecret();
+    const tokenId = randomUUID();
+    const now = Math.floor(Date.now() / 1000);
+
+    const accessToken = await signHs256Jwt(
+        {
+            sub: params.clientId,
+            client_id: params.clientId,
+            scopes: params.scopes,
+            type: "service",
+            token_id: tokenId,
+            jti: tokenId,
+            iat: now,
+        },
+        secret,
+        SERVICE_TOKEN_EXPIRY,
+    );
+
+    return { accessToken, expiresIn: SERVICE_TOKEN_EXPIRY };
+}
+
 export async function validateAccessToken(
     accessTokenValue: string,
-): Promise<{ userId: number; scopes: string[]; clientId: string; tokenId: string }> {
+): Promise<{ userId: number; scopes: string[]; clientId: string; tokenId: string; type: "user" | "service" }> {
     const secret = getSigningSecret();
     let payload: {
         sub: string;
@@ -263,8 +298,19 @@ export async function validateAccessToken(
         throw new Error("Invalid access token");
     }
 
-    if (payload.type !== "access") {
+    if (payload.type !== "access" && payload.type !== "service") {
         throw new Error("Invalid token type");
+    }
+
+    // Service tokens are JWT-only, not persisted to DB
+    if (payload.type === "service") {
+        return {
+            userId: 0,
+            scopes: payload.scopes || [],
+            clientId: payload.client_id,
+            tokenId: payload.token_id || payload.jti,
+            type: "service",
+        };
     }
 
     // Verify token exists in DB and is not revoked
@@ -285,6 +331,7 @@ export async function validateAccessToken(
         scopes: payload.scopes || [],
         clientId: payload.client_id,
         tokenId: payload.token_id || payload.jti,
+        type: "user",
     };
 }
 
@@ -310,6 +357,19 @@ export async function introspectToken(
             iat: number;
             token_id: string;
         }>(token, secret);
+
+        // Service tokens are JWT-only, not persisted
+        if (payload.type === "service") {
+            return {
+                active: true,
+                sub: payload.sub,
+                client_id: payload.client_id,
+                scopes: payload.scopes?.join(" "),
+                exp: payload.exp,
+                iat: payload.iat,
+                token_type: "Bearer",
+            };
+        }
 
         const tokenRecord = await db.query.SUSOAuthTokensTable.findFirst({
             where: and(
@@ -379,6 +439,7 @@ export async function createClient(params: {
     redirectUris: string[];
     allowedScopes: string[];
     userId: number;
+    status?: "pending" | "approved";
 }): Promise<{ clientId: string; clientSecret: string }> {
     const clientSecret = await generateClientSecret();
 
@@ -392,7 +453,7 @@ export async function createClient(params: {
             clientSecret,
             allowedScopes: params.allowedScopes,
             userId: params.userId,
-            status: "pending",
+            status: params.status ?? "pending",
         })
         .returning({ id: SUSOAuthClientsTable.id });
 

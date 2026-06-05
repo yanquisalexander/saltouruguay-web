@@ -62,6 +62,7 @@ export const oauth = {
                 redirectUris: input.redirectUris,
                 allowedScopes: input.allowedScopes,
                 userId: session.user.id,
+                status: "approved",
             });
 
             return { clientId, clientSecret };

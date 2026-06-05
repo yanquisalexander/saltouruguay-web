@@ -12,13 +12,31 @@ export type AuthResult = {
     clientId?: string;
 };
 
-export async function getAuthenticatedUser(request: Request): Promise<AuthResult | null> {
+export type ServiceAuthResult = {
+    type: "service";
+    scopes: string[];
+    clientId: string;
+    tokenId: string;
+};
+
+export async function getAuthenticatedUser(request: Request): Promise<(AuthResult | ServiceAuthResult) | null> {
     // 1. Try OAuth Bearer token
     const authHeader = request.headers.get("Authorization");
     if (authHeader?.startsWith("Bearer ")) {
         const token = authHeader.slice(7);
         try {
             const payload = await validateAccessToken(token);
+
+            // Service tokens have no user
+            if (payload.type === "service") {
+                return {
+                    type: "service",
+                    scopes: payload.scopes,
+                    clientId: payload.clientId,
+                    tokenId: payload.tokenId,
+                };
+            }
+
             const user = await client.query.UsersTable.findFirst({
                 where: eq(UsersTable.id, payload.userId),
             });

@@ -138,7 +138,7 @@ export function OAuthClientEditor({ clientId }: Props) {
     return <p class="text-white/60">Client not found.</p>;
   }
 
-  const SCOPES = ["openid", "profile", "email", "saltotag:read"];
+  const SCOPES = ["openid", "profile", "email", "saltotag:read", "service:api"];
 
   return (
     <div class="space-y-8">
