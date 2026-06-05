@@ -35,6 +35,7 @@ export const GET: APIRoute = async ({ request }) => {
                 displayName: true,
                 avatar: true,
                 email: true,
+                admin: true,
             },
         });
 
@@ -58,6 +59,8 @@ export const GET: APIRoute = async ({ request }) => {
         if (scopes.includes("email")) {
             response.email = user.email;
         }
+
+        response.is_admin = user.admin;
 
         return new Response(JSON.stringify(response), {
             status: 200,
