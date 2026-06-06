@@ -12,6 +12,7 @@ import {
     resetSessionScore,
     solvePuzzle,
     buyVowel,
+    normalizeLetter,
     createMultiplayerRoom,
     joinRoomByCode,
     leaveRoomByCode,
@@ -412,15 +413,25 @@ export const ruletaLoca = {
             const userId = parseInt(s.user.id);
             const room = await getCurrentRoomSession(userId);
             if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
+            if (room.session.status !== "playing") throw new ActionError({ code: "BAD_REQUEST", message: "El juego no está activo" });
 
-            const result = await solvePuzzle(room.session.id, guess);
-            if (result.success) {
+            const turnOrder = room.session.turnOrder || [];
+            const currentPlayer = turnOrder[room.session.currentTurnIdx];
+            if (currentPlayer !== userId) throw new ActionError({ code: "BAD_REQUEST", message: "No es tu turno" });
+
+            // Inline comparison (don't use shared solvePuzzle which calls single-player completeGame)
+            const normalizedPhrase = normalizeLetter(room.phrase.phrase);
+            const normalizedGuess = normalizeLetter(guess);
+            const cleanPhrase = normalizedPhrase.replace(/\s/g, "");
+            const cleanGuess = normalizedGuess.replace(/\s/g, "");
+
+            if (cleanPhrase === cleanGuess) {
                 const completed = await completeMultiplayerGame(room.session.id, userId);
 
                 await RuletaLocaPusher.puzzleSolved(room.session.roomCode, userId, completed.coinsEarned, []);
                 await RuletaLocaPusher.gameEnded(room.session.roomCode, userId, completed.scores);
 
-                return { ...result, session: completed.session, coinsEarned: completed.coinsEarned };
+                return { success: true, session: completed.session, coinsEarned: completed.coinsEarned };
             }
 
             const advanced = await advanceTurn(room.session.id);
