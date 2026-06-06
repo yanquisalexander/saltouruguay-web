@@ -35,11 +35,27 @@ type AppItem = {
   soonCustomText?: string;
   featured?: boolean;
   section: string;
+  kenBurns?: boolean;
+  animatedBorder?: boolean;
 };
 
 // --- DATA DEFINITION ---
 
 const APPS: AppItem[] = [
+  {
+    id: "penca-mundial",
+    url: "https://www.penca.saltouruguayserver.com",
+    requiresLogin: false,
+    title: "La Penca del Mundial",
+    description: "¡Pronosticá los resultados, subí en el ranking y competí contra la comunidad!",
+    image: "/images/penca-banner.webp",
+    icon: LucideTrophy,
+    soon: false,
+    featured: true,
+    section: "main",
+    kenBurns: true,
+    animatedBorder: true,
+  },
   {
     id: "Guerra de Streamers 2",
     path: "/comunidad/guerra",
@@ -53,16 +69,16 @@ const APPS: AppItem[] = [
     section: "main",
   },
   {
-  id: "liga-fortnite",
-  path: "/liga-fortnite",
-  requiresLogin: false,
-  title: "Liga Fortnite",
-  description: "Inscribite y competí en la Liga Fortnite oficial de ACRECONRE. Tres divisionales: Clasificatoria, Semi Profesional y Profesional.",
-  image: "/images/liga.webp",
-  icon: LucideTrophy,
-  soon: false,
-  section: "main",
-},
+    id: "liga-fortnite",
+    path: "/liga-fortnite",
+    requiresLogin: false,
+    title: "Liga Fortnite",
+    description: "Inscribite y competí en la Liga Fortnite oficial de ACRECONRE. Tres divisionales: Clasificatoria, Semi Profesional y Profesional.",
+    image: "/images/liga.webp",
+    icon: LucideTrophy,
+    soon: false,
+    section: "main",
+  },
   {
     id: "Torneo Rocket League",
     path: "/torneos/2",
@@ -77,12 +93,12 @@ const APPS: AppItem[] = [
   {
     id: "server-hytale",
     path: "",
-    url: "https://discord.gg/trrFvPHDKd", // Link externo
+    url: "https://discord.gg/trrFvPHDKd",
     requiresLogin: true,
     title: "Nuevo server HYTALE",
     description: "Un nuevo juego se sumó a la comunidad Saltana.",
     image: "/images/hytale.webp",
-    icon: LucideExternalLink, // FIX: ícono más representativo para link externo
+    icon: LucideExternalLink,
     soon: false,
     section: "main",
   },
@@ -116,7 +132,7 @@ const APPS: AppItem[] = [
     description: "Gestiona tus SaltoCoins.",
     image: "/images/banco.webp",
     icon: LucideWallet,
-    soon: true, // FIX: era false pero tenía soonCustomText, lo alineamos
+    soon: true,
     soonCustomText: "Próximamente",
     section: "main",
   },
@@ -185,7 +201,6 @@ if (!totalOfMemberCards) {
 
 // --- HELPER ---
 
-// Resuelve el href correcto según si hay url externa, path, o si está deshabilitado
 function resolveHref(item: AppItem, isDisabled: boolean): string {
   if (isDisabled) return "#";
   return item.url || item.path || "#";
@@ -247,7 +262,11 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
               href={href}
               target={isExternal ? "_blank" : undefined}
               rel={isExternal ? "noopener noreferrer" : undefined}
-              class={`group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 backdrop-blur-xs transition-all duration-300 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-400/10 ${isDisabled ? "cursor-not-allowed" : "hover:-translate-y-1"} ${item.featured ? "md:col-span-2" : "md:col-span-1"}`}
+              class={`group relative overflow-hidden rounded-2xl border bg-gray-900/40 backdrop-blur-xs transition-all duration-300 hover:shadow-lg ${
+                item.animatedBorder
+                  ? "border-transparent animated-border hover:shadow-purple-500/20"
+                  : "border-white/10 hover:border-yellow-400/50 hover:shadow-yellow-400/10"
+              } ${isDisabled ? "cursor-not-allowed" : "hover:-translate-y-1"} ${item.featured ? "md:col-span-2" : "md:col-span-1"}`}
               {...(!item.soon && item.requiresLogin && !session && { "data-click-to-login": true })}
               aria-disabled={isDisabled}
             >
@@ -256,7 +275,11 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
                 <img
                   src={item.image}
                   alt={item.title}
-                  class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-40 group-hover:opacity-50"
+                  class={`h-full w-full object-cover opacity-40 group-hover:opacity-55 ${
+                    item.kenBurns
+                      ? "ken-burns-img"
+                      : "transition-transform duration-700 group-hover:scale-110"
+                  }`}
                 />
                 <div class="absolute inset-0 bg-linear-to-t from-gray-950 via-gray-900/60 to-transparent" />
               </div>
@@ -264,7 +287,7 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
               {/* Content */}
               <div class="relative z-10 flex h-full flex-col justify-end p-6">
                 <div class="mb-auto flex items-start justify-between">
-                  <div class="rounded-lg bg-white/10 p-2 backdrop-blur-md text-yellow-400">
+                  <div class={`rounded-lg bg-white/10 p-2 backdrop-blur-md ${item.animatedBorder ? "text-purple-400" : "text-yellow-400"}`}>
                     <Icon size={24} />
                   </div>
                   {isDisabled && (
@@ -272,13 +295,28 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
                       {item.soon ? item.soonCustomText || "Pronto" : "Loguéate"}
                     </span>
                   )}
+                  {item.animatedBorder && !isDisabled && (
+                    <span class="rounded-full bg-purple-500/20 border border-purple-500/40 px-3 py-1 text-xs font-bold uppercase tracking-wider text-purple-300 backdrop-blur-md animate-pulse">
+                      ¡Activo!
+                    </span>
+                  )}
                 </div>
-                <h3 class="mt-4 font-teko text-3xl font-bold uppercase text-white group-hover:text-yellow-400 transition-colors">
+                <h3 class={`mt-4 font-teko text-3xl font-bold uppercase text-white transition-colors ${item.animatedBorder ? "group-hover:text-purple-300" : "group-hover:text-yellow-400"}`}>
                   {item.title}
                 </h3>
                 <p class="font-rubik text-sm text-gray-300 line-clamp-2">
                   {item.description}
                 </p>
+
+                {/* Botón hover solo para penca */}
+                {item.animatedBorder && (
+                  <div class="penca-hover-label">
+                    <span>¡Pronosticá los resultados!</span>
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                      <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                )}
               </div>
 
               {/* Lock overlay */}
@@ -407,6 +445,100 @@ function resolveHref(item: AppItem, isDisabled: boolean): string {
     </div>
   </div>
 </Layout>
+
+<style>
+  /* Ken Burns: zoom-out continuo */
+  .ken-burns-img {
+    transform-origin: center center;
+    animation: kenBurns 12s ease-in-out infinite alternate;
+  }
+
+  @keyframes kenBurns {
+    0%   { transform: scale(1.0); }
+    100% { transform: scale(1.08); }
+  }
+
+  /* Borde animado giratorio */
+  @property --angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  .animated-border {
+    position: relative;
+  }
+
+  .animated-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    padding: 2px;
+    background: conic-gradient(
+      from var(--angle),
+      #a855f7,
+      #7c3aed,
+      #fbbf24,
+      #a855f7
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: rotateBorder 4s linear infinite;
+    opacity: 0.8;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .animated-border:hover::before {
+    opacity: 1;
+    animation-duration: 2s;
+  }
+
+  @keyframes rotateBorder {
+    to { --angle: 360deg; }
+  }
+
+  /* Botón hover penca */
+  .penca-hover-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    font-weight: 700;
+    font-size: 1rem;
+    color: white;
+    letter-spacing: 0.04em;
+    z-index: 20;
+  }
+
+  .penca-hover-label span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.7rem 1.75rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #a855f7, #7c3aed);
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.6), 0 8px 20px rgba(0,0,0,0.4);
+    transform: translateY(8px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .group:hover .penca-hover-label {
+    opacity: 1;
+  }
+
+  .group:hover .penca-hover-label span {
+    transform: translateY(0);
+  }
+</style>
 
 <script>
   import { showSignInDialog } from "@/lib/utils";
