@@ -12,8 +12,7 @@ import {
     LucideCalendar,
     LucideWallet,
     LucideArrowRightLeft,
-    LucideLoader2,
-    LucideSparkles
+    LucideSparkles,
 } from 'lucide-preact';
 
 interface AccountSummary {
@@ -23,7 +22,7 @@ interface AccountSummary {
     totalTransfers: number;
     canClaimDailyBonus: boolean;
     currentStreak: number;
-    nextClaimDate?: Date;
+    nextClaimDate?: Date | string;
 }
 
 interface Transaction {
@@ -34,7 +33,7 @@ interface Transaction {
     balanceAfter: number;
     description: string | null;
     metadata: Record<string, unknown> | null;
-    createdAt: Date;
+    createdAt: Date | string;
 }
 
 interface ClaimBonusResult {
@@ -46,12 +45,14 @@ interface ClaimBonusResult {
 
 type ViewMode = 'summary' | 'transactions' | 'daily-bonus';
 
-export default function BancoSaltanoApp() {
-    // --- LÓGICA EXISTENTE (NO TOCADA) ---
+interface Props {
+    initialSummary: AccountSummary;
+}
+
+export default function BancoSaltanoApp({ initialSummary }: Props) {
     const [viewMode, setViewMode] = useState<ViewMode>('summary');
-    const [accountSummary, setAccountSummary] = useState<AccountSummary | null>(null);
+    const [accountSummary, setAccountSummary] = useState<AccountSummary>(initialSummary);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [loading, setLoading] = useState(true);
     const [claimingBonus, setClaimingBonus] = useState(false);
     const [transactionFilter, setTransactionFilter] = useState<string | undefined>(undefined);
 
@@ -61,15 +62,12 @@ export default function BancoSaltanoApp() {
 
     const loadAccountData = async () => {
         try {
-            setLoading(true);
             const result = await actions.banco.getAccountSummary();
             if (result.data) {
                 setAccountSummary(result.data as AccountSummary);
             }
         } catch (error: any) {
             toast.error(error.message || 'Error al cargar los datos');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -104,21 +102,20 @@ export default function BancoSaltanoApp() {
     };
 
     const getTransactionIcon = (type: string) => {
-        // Adaptado visualmente pero misma lógica
         const baseClass = "p-2 rounded-lg backdrop-blur-md";
         switch (type) {
             case 'deposit':
             case 'game_reward':
-                return <div className={`${baseClass} bg-green-500/10 text-green-400`}><LucideTrendingUp size={20} /></div>;
+                return <div className={`${baseClass} bg-green-500/10 text-green-400`}><LucideTrendingUp size={18} /></div>;
             case 'withdrawal':
             case 'purchase':
-                return <div className={`${baseClass} bg-red-500/10 text-red-400`}><LucideTrendingDown size={20} /></div>;
+                return <div className={`${baseClass} bg-red-500/10 text-red-400`}><LucideTrendingDown size={18} /></div>;
             case 'daily_bonus':
-                return <div className={`${baseClass} bg-yellow-500/10 text-yellow-400`}><LucideGift size={20} /></div>;
+                return <div className={`${baseClass} bg-yellow-500/10 text-yellow-400`}><LucideGift size={18} /></div>;
             case 'transfer':
-                return <div className={`${baseClass} bg-blue-500/10 text-blue-400`}><LucideArrowRightLeft size={20} /></div>;
+                return <div className={`${baseClass} bg-blue-500/10 text-blue-400`}><LucideArrowRightLeft size={18} /></div>;
             default:
-                return <div className={`${baseClass} bg-gray-500/10 text-gray-400`}><LucideCoins size={20} /></div>;
+                return <div className={`${baseClass} bg-gray-500/10 text-gray-400`}><LucideCoins size={18} /></div>;
         }
     };
 
@@ -126,7 +123,7 @@ export default function BancoSaltanoApp() {
         const labels: Record<string, string> = {
             deposit: 'Depósito',
             withdrawal: 'Retiro',
-            game_reward: 'Premio Juego',
+            game_reward: 'Premio de Juego',
             daily_bonus: 'Bonus Diario',
             purchase: 'Compra',
             transfer: 'Transferencia',
@@ -135,149 +132,136 @@ export default function BancoSaltanoApp() {
         return labels[type] || type;
     };
 
-    // --- NUEVA UI (BENTO GRID STYLE) ---
+    const formatDate = (date: Date | string) => {
+        const d = typeof date === 'string' ? new Date(date) : date;
+        return d.toLocaleDateString('es-UY', { day: 'numeric', month: 'short' });
+    };
 
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[50vh] text-center">
-                <LucideLoader2 size={48} className="text-yellow-400 animate-spin mb-4" />
-                <p className="font-teko text-2xl text-white/50 tracking-wide uppercase">Sincronizando Billetera...</p>
-            </div>
-        );
-    }
+    const isPositiveType = (type: string) =>
+        ['deposit', 'game_reward', 'daily_bonus', 'refund'].includes(type);
+
+    const tabs = [
+        { id: 'summary' as ViewMode, icon: LucideWallet, label: 'Resumen' },
+        { id: 'transactions' as ViewMode, icon: LucideHistory, label: 'Historial' },
+        { id: 'daily-bonus' as ViewMode, icon: LucideGift, label: 'Bonus Diario' },
+    ];
 
     return (
-        <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto px-4 pb-20">
+        <div class="flex flex-col gap-6 w-full pb-6">
 
-            {/* HEADER: TIPO DASHBOARD */}
-            <header className="relative overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-gray-900 via-gray-900 to-black p-8 shadow-2xl">
-                <div className="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5 pointer-events-none"></div>
+            {/* HEADER */}
+            <header class="relative overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-gray-900 via-gray-900 to-black p-6 md:p-8 shadow-2xl">
+                <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5 pointer-events-none" />
+                <div class="absolute top-0 right-0 w-72 h-72 bg-yellow-500/5 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3 pointer-events-none" />
 
-                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
-                            <LucidePiggyBank size={32} className="text-yellow-400" />
+                <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-yellow-500/10 rounded-xl border border-yellow-500/20 shadow-lg shadow-yellow-500/5">
+                            <LucidePiggyBank size={28} class="text-yellow-400" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-teko font-bold text-white uppercase tracking-wide leading-none">
-                                Banco <span className="text-yellow-400">Saltano</span>
+                            <h1 class="text-3xl md:text-4xl font-teko font-bold text-white uppercase tracking-wide leading-none">
+                                Banco <span class="text-yellow-400">Saltano</span>
                             </h1>
-                            <p className="text-sm font-rubik text-white/40">Gestiona tus SaltoCoins y recompensas diarias.</p>
+                            <p class="text-sm font-rubik text-white/40">Gestioná tus SaltoCoins y recompensas diarias</p>
                         </div>
                     </div>
 
-                    <div className="text-center md:text-right bg-white/5 px-6 py-3 rounded-xl border border-white/5 backdrop-blur-md">
-                        <span className="text-xs font-rubik text-white/50 uppercase tracking-widest block mb-1">Saldo Total</span>
-                        <div className="flex items-baseline justify-center md:justify-end gap-1">
-                            <span className="text-5xl font-teko font-bold text-white tracking-wide">
-                                {accountSummary?.balance.toLocaleString()}
+                    <div class="w-full md:w-auto bg-white/[0.03] px-5 py-3 rounded-xl border border-white/[0.06] backdrop-blur-md">
+                        <span class="text-[10px] font-rubik text-white/40 uppercase tracking-[0.15em] block mb-0.5">Saldo disponible</span>
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-4xl md:text-5xl font-teko font-bold text-white tracking-tight tabular-nums">
+                                {accountSummary.balance.toLocaleString()}
                             </span>
-                            <span className="text-xl font-teko text-yellow-400">SC</span>
+                            <span class="text-lg md:text-xl font-teko text-yellow-400 font-semibold">SC</span>
                         </div>
                     </div>
                 </div>
             </header>
 
-            {/* NAVIGATION TABS */}
-            <div className="flex p-1 bg-gray-900/40 backdrop-blur-xs rounded-xl border border-white/10 w-full md:w-max mx-auto overflow-x-auto">
-                {[
-                    { id: 'summary', icon: LucideWallet, label: 'Resumen' },
-                    { id: 'transactions', icon: LucideHistory, label: 'Historial' },
-                    { id: 'daily-bonus', icon: LucideGift, label: 'Bonus Diario' }
-                ].map((tab) => (
+            {/* TABS */}
+            <div class="flex p-1 bg-white/[0.03] backdrop-blur-xs rounded-xl border border-white/[0.06] w-full md:w-max mx-auto overflow-x-auto">
+                {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => {
-                            setViewMode(tab.id as ViewMode);
+                            setViewMode(tab.id);
                             if (tab.id === 'transactions') loadTransactions(transactionFilter);
                         }}
-                        className={`
-                            flex items-center gap-2 px-6 py-2 rounded-lg font-teko text-xl tracking-wide transition-all duration-300 whitespace-nowrap
+                        class={`
+                            relative flex items-center gap-2 px-5 py-2.5 rounded-lg font-teko text-lg tracking-wide transition-all duration-300 whitespace-nowrap
                             ${viewMode === tab.id
-                                ? 'bg-white/10 text-yellow-400 shadow-lg border border-white/10'
-                                : 'text-white/40 hover:text-white hover:bg-white/5'}
+                                ? 'bg-white/10 text-yellow-400 shadow-sm border border-white/[0.08]'
+                                : 'text-white/40 hover:text-white/70'}
                         `}
                     >
-                        <tab.icon size={18} />
+                        <tab.icon size={16} />
                         <span>{tab.label}</span>
-                        {tab.id === 'daily-bonus' && accountSummary?.canClaimDailyBonus && (
-                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse ml-1"></span>
+                        {tab.id === 'daily-bonus' && accountSummary.canClaimDailyBonus && (
+                            <span class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
                         )}
                     </button>
                 ))}
             </div>
 
-            {/* CONTENT AREA - BENTO GRID FEEL */}
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* CONTENT */}
+            <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-                {/* --- VISTA: RESUMEN --- */}
-                {viewMode === 'summary' && accountSummary && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Tarjeta de Ingresos */}
-                        <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 p-6 transition-all hover:-translate-y-1 hover:border-green-500/30">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-2 rounded-lg bg-green-500/10 text-green-400"><LucideTrendingUp size={24} /></div>
-                                <span className="text-xs font-rubik text-white/30 uppercase tracking-widest">Global</span>
-                            </div>
-                            <h3 className="text-3xl font-teko font-bold text-white mb-1">+{accountSummary.totalDeposits.toLocaleString()}</h3>
-                            <p className="text-sm font-rubik text-white/50">Ingresos Totales</p>
-                        </div>
+                {/* SUMMARY */}
+                {viewMode === 'summary' && (
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+                        <MetricCard
+                            icon={<LucideTrendingUp size={22} />}
+                            label="Ingresos totales"
+                            value={`+${accountSummary.totalDeposits.toLocaleString()}`}
+                            accent="green"
+                        />
+                        <MetricCard
+                            icon={<LucideTrendingDown size={22} />}
+                            label="Gastos totales"
+                            value={accountSummary.totalWithdrawals.toLocaleString()}
+                            accent="red"
+                        />
+                        <MetricCard
+                            icon={<LucideCalendar size={22} />}
+                            label="Racha actual"
+                            value={`${accountSummary.currentStreak} días`}
+                            accent="yellow"
+                        />
 
-                        {/* Tarjeta de Gastos */}
-                        <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 p-6 transition-all hover:-translate-y-1 hover:border-red-500/30">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-2 rounded-lg bg-red-500/10 text-red-400"><LucideTrendingDown size={24} /></div>
-                                <span className="text-xs font-rubik text-white/30 uppercase tracking-widest">Global</span>
-                            </div>
-                            <h3 className="text-3xl font-teko font-bold text-white mb-1">{accountSummary.totalWithdrawals.toLocaleString()}</h3>
-                            <p className="text-sm font-rubik text-white/50">Gastos Totales</p>
-                        </div>
-
-                        {/* Tarjeta de Racha */}
-                        <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 p-6 transition-all hover:-translate-y-1 hover:border-yellow-500/30">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-2 rounded-lg bg-yellow-500/10 text-yellow-400"><LucideCalendar size={24} /></div>
-                                <span className="text-xs font-rubik text-white/30 uppercase tracking-widest">Activo</span>
-                            </div>
-                            <h3 className="text-3xl font-teko font-bold text-white mb-1">{accountSummary.currentStreak} Días</h3>
-                            <p className="text-sm font-rubik text-white/50">Racha Actual</p>
-                        </div>
-
-                        {/* Banner de Bonus (Ocupa todo el ancho si está disponible) */}
                         {accountSummary.canClaimDailyBonus && (
-                            <div className="md:col-span-3 relative overflow-hidden rounded-2xl border border-green-500/50 bg-linear-to-r from-green-900/40 to-black p-8 flex flex-col md:flex-row items-center justify-between gap-6 group">
-                                <div className="absolute inset-0 bg-[url('/noise.png')] opacity-20 mix-blend-overlay"></div>
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
+                            <div class="md:col-span-3 relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-linear-to-r from-yellow-900/20 via-yellow-900/10 to-black p-6 flex flex-col sm:flex-row items-center justify-between gap-5 group">
+                                <div class="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none" />
+                                <div class="absolute top-0 right-0 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3 pointer-events-none" />
 
-                                <div className="relative z-10 flex items-center gap-6">
-                                    <div className="p-4 bg-green-500 text-black rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.3)] animate-bounce">
-                                        <LucideGift size={32} />
+                                <div class="relative z-10 flex items-center gap-5">
+                                    <div class="p-3.5 bg-yellow-500 text-black rounded-xl shadow-lg shadow-yellow-500/20">
+                                        <LucideGift size={26} />
                                     </div>
                                     <div>
-                                        <h3 className="text-2xl font-teko font-bold text-white uppercase tracking-wide">¡Recompensa Disponible!</h3>
-                                        <p className="text-sm font-rubik text-green-200/80">Mantén tu racha y gana más SaltoCoins gratis.</p>
+                                        <h3 class="text-xl font-teko font-bold text-white uppercase tracking-wide">¡Bonus diario disponible!</h3>
+                                        <p class="text-sm font-rubik text-yellow-200/70">Reclamá tu recompensa y mantené la racha activa</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={handleClaimDailyBonus}
                                     disabled={claimingBonus}
-                                    className="relative z-10 px-8 py-3 bg-green-500 hover:bg-green-400 text-black font-teko text-xl font-bold uppercase rounded-lg transition-all shadow-lg hover:shadow-green-500/20 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="relative z-10 px-7 py-2.5 bg-yellow-500 hover:bg-yellow-400 active:scale-95 text-black font-teko text-lg font-bold uppercase rounded-lg transition-all shadow-lg hover:shadow-yellow-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {claimingBonus ? 'Procesando...' : 'Reclamar Ahora'}
+                                    {claimingBonus ? 'Reclamando...' : 'Reclamar'}
                                 </button>
                             </div>
                         )}
                     </div>
                 )}
 
-                {/* --- VISTA: HISTORIAL --- */}
+                {/* TRANSACTIONS */}
                 {viewMode === 'transactions' && (
-                    <div className="rounded-2xl border border-white/10 bg-gray-900/40 backdrop-blur-md overflow-hidden flex flex-col min-h-[500px]">
-                        {/* Toolbar */}
-                        <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white/5">
-                            <h2 className="font-teko text-2xl text-white uppercase tracking-wide flex items-center gap-2">
-                                <LucideHistory className="text-white/50" size={20} />
-                                Últimos Movimientos
+                    <div class="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-md overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-white/[0.06] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <h2 class="font-teko text-xl text-white/80 uppercase tracking-wide flex items-center gap-2">
+                                <LucideHistory size={18} class="text-white/30" />
+                                Últimos movimientos
                             </h2>
                             <select
                                 value={transactionFilter || ''}
@@ -286,7 +270,7 @@ export default function BancoSaltanoApp() {
                                     setTransactionFilter(value || undefined);
                                     loadTransactions(value || undefined);
                                 }}
-                                className="bg-black/50 border border-white/10 text-white/80 text-sm rounded-lg px-4 py-2 font-rubik focus:outline-hidden focus:border-yellow-500/50"
+                                class="bg-black/40 border border-white/[0.08] text-white/70 text-sm rounded-lg px-3 py-1.5 font-rubik focus:outline-hidden focus:border-yellow-500/50 w-full sm:w-auto"
                             >
                                 <option value="">Todos</option>
                                 <option value="game_reward">Premios</option>
@@ -296,33 +280,35 @@ export default function BancoSaltanoApp() {
                             </select>
                         </div>
 
-                        {/* Lista */}
-                        <div className="flex-1 overflow-y-auto max-h-[600px] p-2 space-y-1">
+                        <div class="flex-1 overflow-y-auto max-h-[500px] p-2 space-y-0.5">
                             {transactions.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-white/30">
-                                    <LucideHistory size={48} className="mb-4 opacity-50" />
-                                    <p className="font-rubik">No hay transacciones registradas</p>
+                                <div class="flex flex-col items-center justify-center py-16 text-white/20">
+                                    <LucideHistory size={40} class="mb-3 opacity-50" />
+                                    <p class="font-rubik text-sm">No hay movimientos todavía</p>
                                 </div>
                             ) : (
                                 transactions.map((tx) => (
-                                    <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/5 group">
-                                        <div className="flex items-center gap-4">
+                                    <div
+                                        key={tx.id}
+                                        class="flex items-center justify-between p-3.5 rounded-xl hover:bg-white/[0.03] transition-colors border border-transparent hover:border-white/[0.04] group"
+                                    >
+                                        <div class="flex items-center gap-3.5 min-w-0">
                                             {getTransactionIcon(tx.type)}
-                                            <div>
-                                                <p className="font-teko text-xl text-white leading-none mb-1">
+                                            <div class="min-w-0">
+                                                <p class="font-teko text-lg text-white/90 leading-tight truncate">
                                                     {tx.description || getTransactionTypeLabel(tx.type)}
                                                 </p>
-                                                <p className="text-xs font-rubik text-white/40">
-                                                    {new Date(tx.createdAt).toLocaleDateString()} • ID: #{tx.id.toString().slice(-4)}
+                                                <p class="text-[11px] font-rubik text-white/30">
+                                                    {formatDate(tx.createdAt)}
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className={`font-teko text-xl font-bold tracking-wide ${['deposit', 'game_reward', 'daily_bonus', 'refund'].includes(tx.type) ? 'text-green-400' : 'text-white'}`}>
-                                                {['deposit', 'game_reward', 'daily_bonus', 'refund'].includes(tx.type) ? '+' : ''}
+                                        <div class="text-right shrink-0 ml-4">
+                                            <p class={`font-teko text-lg font-bold tracking-tight tabular-nums ${isPositiveType(tx.type) ? 'text-green-400' : 'text-white/80'}`}>
+                                                {isPositiveType(tx.type) ? '+' : ''}
                                                 {tx.amount.toLocaleString()}
                                             </p>
-                                            <p className="text-[10px] font-rubik text-white/30">
+                                            <p class="text-[10px] font-rubik text-white/20 tabular-nums">
                                                 Saldo: {tx.balanceAfter.toLocaleString()}
                                             </p>
                                         </div>
@@ -333,43 +319,53 @@ export default function BancoSaltanoApp() {
                     </div>
                 )}
 
-                {/* --- VISTA: BONUS --- */}
-                {viewMode === 'daily-bonus' && accountSummary && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-                        {/* Panel de Racha Visual */}
-                        <div className="relative overflow-hidden rounded-2xl border border-yellow-500/20 bg-linear-to-b from-yellow-900/10 to-black p-8 flex flex-col items-center justify-center text-center min-h-[300px]">
-                            <div className="absolute inset-0 bg-[url('/images/sun-pattern.svg')] opacity-5 animate-[spin_60s_linear_infinite]"></div>
-                            <LucideSparkles className="text-yellow-400 mb-6 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]" size={64} />
+                {/* DAILY BONUS */}
+                {viewMode === 'daily-bonus' && (
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
+                        <div class="md:col-span-2 relative overflow-hidden rounded-2xl border border-yellow-500/20 bg-linear-to-b from-yellow-900/10 to-black/60 p-8 flex flex-col items-center justify-center text-center min-h-[280px]">
+                            <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03] pointer-events-none" />
+                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-yellow-500/8 rounded-full blur-2xl pointer-events-none" />
 
-                            <h2 className="font-rubik text-sm text-yellow-200/50 uppercase tracking-[0.2em] font-bold mb-2">Racha Actual</h2>
-                            <div className="font-teko text-8xl font-bold text-white drop-shadow-xl">
-                                {accountSummary.currentStreak}
+                            <div class="relative z-10 flex flex-col items-center">
+                                <div class="relative mb-5">
+                                    <LucideSparkles size={48} class="text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.4)]" />
+                                    {accountSummary.currentStreak > 0 && (
+                                        <span class="absolute -top-1 -right-1 flex h-4 w-4">
+                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-40" />
+                                            <span class="relative inline-flex rounded-full h-4 w-4 bg-yellow-400" />
+                                        </span>
+                                    )}
+                                </div>
+
+                                <p class="font-rubik text-[11px] text-yellow-200/40 uppercase tracking-[0.2em] font-semibold mb-1">Racha actual</p>
+                                <p class="font-teko text-7xl md:text-8xl font-bold text-white drop-shadow-lg leading-none">
+                                    {accountSummary.currentStreak}
+                                </p>
+                                <p class="font-teko text-lg md:text-xl text-yellow-500/80 uppercase tracking-wide mt-1">Días consecutivos</p>
                             </div>
-                            <p className="font-teko text-2xl text-yellow-500 uppercase">Días Consecutivos</p>
                         </div>
 
-                        {/* Panel de Acción e Info */}
-                        <div className="flex flex-col gap-6">
-                            <div className="flex-1 rounded-2xl border border-white/10 bg-gray-900/40 p-6 backdrop-blur-md">
-                                <h3 className="font-teko text-2xl text-white uppercase mb-4 pb-2 border-b border-white/10">Desglose de Recompensa</h3>
+                        <div class="md:col-span-3 flex flex-col gap-4">
+                            <div class="flex-1 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-md">
+                                <h3 class="font-teko text-xl text-white/80 uppercase tracking-wide mb-4 pb-3 border-b border-white/[0.06]">Detalle de recompensa</h3>
 
-                                <div className="space-y-4 font-rubik text-sm">
-                                    <div className="flex justify-between items-center text-white/60">
-                                        <span>Base Diaria del Servidor</span>
-                                        <span className="font-mono text-white">100 SC</span>
+                                <div class="space-y-3 font-rubik text-sm">
+                                    <div class="flex justify-between items-center text-white/50">
+                                        <span>Base diaria</span>
+                                        <span class="font-mono text-white/80">100 SC</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-yellow-400/80">
-                                        <span className="flex items-center gap-2">
-                                            <LucideTrendingUp size={14} /> Multiplicador de Racha
+                                    <div class="flex justify-between items-center text-yellow-400/70">
+                                        <span class="flex items-center gap-1.5">
+                                            <LucideTrendingUp size={13} /> Bonus por racha
                                         </span>
-                                        <span className="font-mono text-yellow-400">+{accountSummary.currentStreak * 10} SC</span>
+                                        <span class="font-mono text-yellow-400">+{accountSummary.currentStreak * 10} SC</span>
                                     </div>
 
-                                    <div className="h-px bg-white/10 my-2"></div>
+                                    <div class="h-px bg-white/[0.06]" />
 
-                                    <div className="flex justify-between items-center bg-white/5 p-3 rounded-lg border border-white/5">
-                                        <span className="text-white font-bold uppercase">Total a Recibir</span>
-                                        <span className="font-teko text-2xl text-green-400 font-bold">
+                                    <div class="flex justify-between items-center bg-yellow-500/[0.04] p-3 rounded-lg border border-yellow-500/10">
+                                        <span class="text-white/80 font-semibold uppercase text-xs tracking-wide">Total a recibir</span>
+                                        <span class="font-teko text-2xl text-yellow-400 font-bold tabular-nums">
                                             {100 + (accountSummary.currentStreak * 10)} SC
                                         </span>
                                     </div>
@@ -380,16 +376,21 @@ export default function BancoSaltanoApp() {
                                 <button
                                     onClick={handleClaimDailyBonus}
                                     disabled={claimingBonus}
-                                    className="w-full py-5 rounded-2xl bg-yellow-500 hover:bg-yellow-400 text-black font-teko text-2xl font-bold uppercase tracking-wide shadow-[0_0_20px_rgba(234,179,8,0.2)] transition-all hover:-translate-y-1"
+                                    class="w-full py-4 rounded-2xl bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-teko text-xl font-bold uppercase tracking-wide shadow-lg shadow-yellow-500/15 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {claimingBonus ? 'Conectando con el Banco...' : '¡Reclamar Bonus Ahora!'}
+                                    {claimingBonus ? (
+                                        <span class="flex items-center justify-center gap-2">
+                                            <span class="w-4 h-4 rounded-full border-2 border-black/30 border-t-transparent animate-spin" />
+                                            Reclamando...
+                                        </span>
+                                    ) : '¡Reclamar bonus!'}
                                 </button>
                             ) : (
-                                <div className="p-6 rounded-2xl border border-white/5 bg-black/40 text-center flex flex-col items-center justify-center gap-2">
-                                    <LucideHistory className="text-white/20" size={32} />
-                                    <h3 className="font-teko text-xl text-white/40 uppercase">Ya reclamado hoy</h3>
-                                    <p className="font-rubik text-xs text-white/30">
-                                        Vuelve {accountSummary.nextClaimDate ? 'el ' + new Date(accountSummary.nextClaimDate).toLocaleDateString() : 'mañana'} para mantener tu racha.
+                                <div class="p-5 rounded-2xl border border-white/[0.04] bg-black/30 text-center flex flex-col items-center justify-center gap-2">
+                                    <LucideCalendar class="text-white/15" size={28} />
+                                    <p class="font-teko text-lg text-white/30 uppercase">Ya reclamaste hoy</p>
+                                    <p class="font-rubik text-xs text-white/20">
+                                        Volvé {accountSummary.nextClaimDate ? formatDate(accountSummary.nextClaimDate) : 'mañana'} para mantener la racha
                                     </p>
                                 </div>
                             )}
@@ -397,6 +398,32 @@ export default function BancoSaltanoApp() {
                     </div>
                 )}
             </div>
+        </div>
+    );
+}
+
+function MetricCard({ icon, label, value, accent }: {
+    icon: any;
+    label: string;
+    value: string;
+    accent: 'green' | 'red' | 'yellow';
+}) {
+    const accentStyles = {
+        green: { border: 'hover:border-green-500/30', icon: 'bg-green-500/10 text-green-400' },
+        red: { border: 'hover:border-red-500/30', icon: 'bg-red-500/10 text-red-400' },
+        yellow: { border: 'hover:border-yellow-500/30', icon: 'bg-yellow-500/10 text-yellow-400' },
+    };
+    const a = accentStyles[accent];
+
+    return (
+        <div class={`group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${a.border}`}>
+            <div class="flex items-center justify-between mb-3">
+                <div class={`p-2 rounded-lg ${a.icon}`}>
+                    {icon}
+                </div>
+            </div>
+            <p class="font-teko text-2xl md:text-3xl font-bold text-white tabular-nums leading-tight">{value}</p>
+            <p class="text-xs font-rubik text-white/40 mt-0.5">{label}</p>
         </div>
     );
 }

@@ -682,10 +682,19 @@ export const RuletaLocaGameSessionsTable = pgTable('ruleta_loca_game_sessions', 
     wheelValue: integer('wheel_value').notNull().default(0),
     revealedLetters: text('revealed_letters').array().default([]),
     guessedLetters: text('guessed_letters').array().default([]),
-    status: varchar('status', { enum: ['playing', 'won', 'lost'] }).notNull().default('playing'),
+    status: varchar('status', { enum: ['playing', 'won', 'lost', 'waiting'] }).notNull().default('playing'),
     completedAt: timestamp('completed_at'),
     createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+    // --- Multiplayer columns ---
+    roomCode: varchar('room_code', { length: 8 }).unique(),
+    ownerId: integer('owner_id').references(() => UsersTable.id, { onDelete: 'set null' }),
+    playerIds: integer('player_ids').array().default(sql`'{}'::integer[]`),
+    scores: jsonb('scores').default(sql`'{}'::jsonb`),
+    currentTurnIdx: integer('current_turn_idx').notNull().default(0),
+    turnOrder: integer('turn_order').array().default(sql`'{}'::integer[]`),
+    maxPlayers: integer('max_players').notNull().default(4),
+    gameMode: varchar('game_mode', { enum: ['single', 'multi'] }).notNull().default('single'),
 })
 
 export const RuletaLocaPlayerStatsTable = pgTable('ruleta_loca_player_stats', {
@@ -703,6 +712,10 @@ export const RuletaLocaPlayerStatsTable = pgTable('ruleta_loca_player_stats', {
 export const ruletaLocaGameSessionsRelations = relations(RuletaLocaGameSessionsTable, ({ one }) => ({
     user: one(UsersTable, {
         fields: [RuletaLocaGameSessionsTable.userId],
+        references: [UsersTable.id],
+    }),
+    owner: one(UsersTable, {
+        fields: [RuletaLocaGameSessionsTable.ownerId],
         references: [UsersTable.id],
     }),
     phrase: one(RuletaLocaPhrasesTable, {

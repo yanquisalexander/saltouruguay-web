@@ -51,3 +51,18 @@ pnpm db:migrate       # tsx ./src/db/migrator.ts
 - **Tailwind v4** — uses `@tailwindcss/vite` (no PostCSS config). Theme vars in `global.css` under `@theme`.
 - **Drizzle** schema-first: update `src/db/schema.ts`, run `pnpm db:generate`, then `pnpm db:migrate`.
 - **Fonts**: `font-anton`, `font-rubik`, `font-teko`, `font-atomic`, `font-squids`, `font-press-start-2p` available globally.
+
+## Ruleta Loca Multiplayer — Status
+
+### Done
+- DB schema: added `roomCode`, `ownerId`, `playerIds[]`, `scores` (jsonb), `currentTurnIdx`, `turnOrder[]`, `maxPlayers`, `gameMode` to `ruleta_loca_game_sessions`
+- Migration generated (`0002_sour_silver_fox.sql`) and applied
+- Pusher constants: `PUSHER_CHANNELS_RULETA` + `PUSHER_EVENTS_RULETA` in `src/consts/pusher.ts`
+- Pusher service helper: `src/services/ruleta-loca-pusher.ts` — `RuletaLocaPusher` with methods for all room/game events
+- Multiplayer utils: `createMultiplayerRoom`, `getRoomByCode`, `joinRoomByCode`, `leaveRoomByCode`, `startMultiplayerGame`, `advanceTurn`, `getCurrentRoomSession`, `completeMultiplayerGame` in `src/utils/games/ruleta-loca.ts`
+- Server actions: `createRoom`, `joinRoom`, `leaveRoom`, `startMultiplayerGame`, `getRoomState`, `spinWheelMulti`, `guessLetterMulti`, `solvePuzzleMulti`, `forfeitMulti` in `src/actions/games/ruleta-loca.ts`
+
+### Done
+- `src/pages/pusher/auth.ts` — validates room membership for `presence-ruleta-*` channels
+- `src/components/games/RuletaLoca.tsx` — lobby UI (create/join room, player list, start button, copy room code), Pusher subscription via `usePusherChannel`, turn-based blocking with turn indicator, multiplayer spin/guess/solve actions, scoreboard with current-turn highlighting, game-over with final scores
+- `src/pages/comunidad/juegos/ruleta-loca.astro` — passes `userId` prop to component
