@@ -8,6 +8,7 @@ import { FeaturedNews } from "@/components/FeaturedNews";
 import Advantages from "@/sections/Advantages.astro";
 import Required2FA from "@/components/admin/Required2FA.astro";
 import { LucideChevronsDown } from "lucide-preact";
+import PencaCallToAction from "@/components/PencaCallToAction.astro";
 
 import { CHRISTMAS_MODE } from "@/config";
 
@@ -156,7 +157,7 @@ const titleShadow = CHRISTMAS_MODE
       <div id="stream-section" class="scroll-mt-32">
         <LiveStream server:defer />
       </div>
-
+      <PencaCallToAction />
       <FeaturedNews client:only />
       <Advantages />
       <NewsOnPage />
