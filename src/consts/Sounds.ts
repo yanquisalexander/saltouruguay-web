@@ -46,6 +46,7 @@ export const STREAMER_WARS_SOUNDS = {
     RULETA_LOCA_ERROR_LETRA: 'juegos/ruleta-error',
     RULETA_LOCA_ERROR_LETRA_VOCERA: 'juegos/ruleta-error-letra-vocera',
     RULETA_LOCA_ERROR_FRASE_VOCERA: 'juegos/ruleta-error-frase-vocera',
+    RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES: 'juegos/ruleta-multi-sin-puntos-para-vocales',
     PET_EAT: 'pet-eat',
     PET_SHOWER: 'pet-shower',
     PET_SLEEP: 'pet-sleep',

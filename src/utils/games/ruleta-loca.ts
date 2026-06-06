@@ -649,10 +649,10 @@ export async function advanceTurn(sessionId: number) {
         .where(eq(RuletaLocaGameSessionsTable.id, sessionId))
         .execute();
 
-    if (!session || session.gameMode !== "multi") return session;
+    if (!session || session.gameMode !== "multi") return { session, stalemate: false };
 
     const turnOrder = session.turnOrder || [];
-    if (turnOrder.length === 0) return session;
+    if (turnOrder.length === 0) return { session, stalemate: false };
 
     const nextIdx = (session.currentTurnIdx + 1) % turnOrder.length;
     const currentPlayerId = turnOrder[session.currentTurnIdx];
@@ -672,7 +672,19 @@ export async function advanceTurn(sessionId: number) {
         .returning()
         .execute();
 
-    return updated;
+    // Check for stalemate after advancing turn
+    const [phrase] = await client
+        .select()
+        .from(RuletaLocaPhrasesTable)
+        .where(eq(RuletaLocaPhrasesTable.id, updated.phraseId))
+        .execute();
+
+    if (phrase && checkStalemate(phrase.phrase, updated.guessedLetters || [], makeScoresObj(updated.scores), updated.currentScore)) {
+        const ended = await stalemateEndGame(sessionId);
+        return { session: ended.session, stalemate: true, scores: ended.scores };
+    }
+
+    return { session: updated, stalemate: false };
 }
 
 export async function getCurrentRoomSession(userId: number) {
@@ -791,4 +803,85 @@ export async function completeMultiplayerGame(sessionId: number, winnerId: numbe
     }
 
     return { session: updated, coinsEarned, winnerId, scores };
+}
+
+export function checkStalemate(phrase: string, guessedLetters: string[], scores: Record<number, number>, currentScore: number): boolean {
+    const normalizedPhrase = normalizeLetter(phrase);
+    const guessedSet = new Set(guessedLetters.map(l => normalizeLetter(l)));
+    const consonantsInPhrase = new Set<string>();
+
+    for (let i = 0; i < normalizedPhrase.length; i++) {
+        const char = normalizedPhrase[i];
+        if (/[A-ZÑ]/.test(char) && !['A', 'E', 'I', 'O', 'U'].includes(char)) {
+            consonantsInPhrase.add(char);
+        }
+    }
+
+    const allConsonantsGuessed = [...consonantsInPhrase].every(c => guessedSet.has(c));
+    if (!allConsonantsGuessed) return false;
+
+    const canAnyoneAffordVowel = Object.values(scores).some(s => s >= VOWEL_COST) || currentScore >= VOWEL_COST;
+    if (canAnyoneAffordVowel) return false;
+
+    return true;
+}
+
+export async function stalemateEndGame(sessionId: number) {
+    const [session] = await client
+        .select()
+        .from(RuletaLocaGameSessionsTable)
+        .where(eq(RuletaLocaGameSessionsTable.id, sessionId))
+        .execute();
+
+    if (!session || session.status !== "playing") throw new Error("Sesión inválida");
+
+    const scores = makeScoresObj(session.scores);
+    scores[session.currentTurnIdx >= 0 ? (session.turnOrder || [])[session.currentTurnIdx] || 0 : 0] = session.currentScore;
+
+    const [updated] = await client
+        .update(RuletaLocaGameSessionsTable)
+        .set({
+            status: "won",
+            scores: sql`${JSON.stringify(scores)}::jsonb`,
+            completedAt: new Date(),
+            updatedAt: new Date(),
+        })
+        .where(eq(RuletaLocaGameSessionsTable.id, sessionId))
+        .returning()
+        .execute();
+
+    for (const pid of (session.playerIds || [])) {
+        const [stats] = await client
+            .select()
+            .from(RuletaLocaPlayerStatsTable)
+            .where(eq(RuletaLocaPlayerStatsTable.userId, pid))
+            .execute();
+
+        const playerScore = scores[pid] || 0;
+
+        if (stats) {
+            await client
+                .update(RuletaLocaPlayerStatsTable)
+                .set({
+                    gamesPlayed: stats.gamesPlayed + 1,
+                    totalScore: stats.totalScore + playerScore,
+                    highestScore: Math.max(stats.highestScore, playerScore),
+                    updatedAt: new Date(),
+                })
+                .where(eq(RuletaLocaPlayerStatsTable.id, stats.id))
+                .execute();
+        } else {
+            await client
+                .insert(RuletaLocaPlayerStatsTable)
+                .values({
+                    userId: pid,
+                    gamesPlayed: 1,
+                    totalScore: playerScore,
+                    highestScore: playerScore,
+                })
+                .execute();
+        }
+    }
+
+    return { session: updated, scores };
 }

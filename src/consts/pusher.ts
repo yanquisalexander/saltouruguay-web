@@ -155,6 +155,7 @@ export const PUSHER_EVENTS_RULETA = {
   GAME_VOWEL_BOUGHT: 'game:vowel-bought',
   ROOM_CHAT_MESSAGE: 'room:chat-message',
   ROOM_GAME_ENDED: 'room:game-ended',
+  GAME_STALEMATE: 'game:stalemate',
 } as const;
 
 export const CACHE_KEYS = {

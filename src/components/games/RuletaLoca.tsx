@@ -51,6 +51,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
     const [showReward, setShowReward] = useState(false);
     const [rewardAmount, setRewardAmount] = useState(0);
     const [showSolveInput, setShowSolveInput] = useState(false);
+    const [isStalemate, setIsStalemate] = useState(false);
     const [showVowelDialog, setShowVowelDialog] = useState(false);
     const [showLetterDialog, setShowLetterDialog] = useState(false);
     const [showWheelDialog, setShowWheelDialog] = useState(false);
@@ -74,6 +75,22 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
 
     const VOWEL_COST = 100;
     const isMultiplayer = session?.gameMode === 'multi';
+    const allConsonantsGuessed = (() => {
+        if (!phrase || !session?.guessedLetters) return false;
+        const guessed = session.guessedLetters.map((l: string) =>
+            l.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+        );
+        const guessedSet = new Set(guessed);
+        const phraseNormalized = phrase.phrase
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+        const consonantsInPhrase = new Set<string>();
+        for (const ch of phraseNormalized) {
+            if (/[A-ZÑ]/.test(ch) && !['A','E','I','O','U'].includes(ch)) {
+                consonantsInPhrase.add(ch);
+            }
+        }
+        return consonantsInPhrase.size > 0 && [...consonantsInPhrase].every(c => guessedSet.has(c));
+    })();
     const currentTurnUserId = isMultiplayer && session?.turnOrder?.length
         ? session.turnOrder[session.currentTurnIdx]
         : null;
@@ -148,6 +165,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                 setPlayers(prev => prev.filter(p => p.id !== data.userId));
             },
             [PUSHER_EVENTS_RULETA.ROOM_GAME_STARTING]: (data: any) => {
+                setIsStalemate(false);
                 setSession((prev: any) => ({
                     ...prev,
                     status: "playing",
@@ -235,6 +253,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                     const name = p?.username || `Jugador ${data.userId}`;
                     toast.success(`¡${name} resolvió el panel!`);
                 }
+                setIsStalemate(false);
                 setSession((prev: any) => ({
                     ...prev,
                     guessedLetters: data.guessedLetters || prev?.guessedLetters || [],
@@ -274,6 +293,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                 }
             },
             [PUSHER_EVENTS_RULETA.ROOM_GAME_ENDED]: (data: any) => {
+                setIsStalemate(false);
                 if (data.winnerId !== userId) {
                     setRewardAmount(0);
                     setShowReward(true);
@@ -287,6 +307,32 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
             [PUSHER_EVENTS_RULETA.GAME_PLAYER_FORFEIT]: (data: any) => {
                 setPlayers(prev => prev.filter(p => p.id !== data.userId));
                 toast.info("Un jugador abandonó la partida");
+            },
+            [PUSHER_EVENTS_RULETA.GAME_STALEMATE]: (data: any) => {
+                playSound({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
+                const phraseText = data.phrase || "";
+                const allLetters = [...new Set(
+                    phraseText
+                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+                        .split("")
+                        .filter(ch => /[A-ZÑ]/.test(ch))
+                )];
+                setSession((prev: any) => ({
+                    ...prev,
+                    guessedLetters: allLetters,
+                    status: "won",
+                    scores: data.finalScores || prev?.scores || {},
+                }));
+                setPhrase((prev: any) => prev ? { ...prev, phrase: phraseText } : { phrase: phraseText, category: "" });
+                setRewardAmount(0);
+                setShowReward(false);
+                setGameState("won");
+                setIsStalemate(true);
+                setShowLetterDialog(false);
+                setShowWheelDialog(false);
+                setShowSolveInput(false);
+                setShowVowelDialog(false);
+                toast.info("¡Empate! No hay más movidas posibles");
             },
         },
     });
@@ -321,6 +367,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
     // ─── Multiplayer actions ───
     const handleCreateRoom = async () => {
         setError(null);
+        setIsStalemate(false);
         try {
             const res = await actions.games.ruletaLoca.createRoom();
             if (res.data) {
@@ -340,6 +387,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
         const code = joinCodeInput.trim().toUpperCase();
         if (!code) return;
         setError(null);
+        setIsStalemate(false);
         try {
             const res = await actions.games.ruletaLoca.joinRoom({ roomCode: code });
             if (res.data) {
@@ -373,6 +421,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
     };
 
     const handleStartMultiplayerGame = async () => {
+        setIsStalemate(false);
         try {
             setGameState("loading");
             const res = await actions.games.ruletaLoca.startMultiplayerGame();
@@ -389,6 +438,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
     };
 
     const startNewGame = async () => {
+        setIsStalemate(false);
         try {
             setGameState("loading");
             const result = await actions.games.ruletaLoca.startGame();
@@ -451,7 +501,28 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
 
                 setIsSpinning(false);
 
-                if (segment.type === "bankrupt") {
+                if (result.data.stalemate) {
+                    playSound({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
+                    const phraseText = phrase?.phrase || "";
+                    const allLetters = [...new Set(
+                        phraseText
+                            .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+                            .split("")
+                            .filter(ch => /[A-ZÑ]/.test(ch))
+                    )];
+                    setShowWheelDialog(false);
+                    setSession((prev: any) => ({
+                        ...prev,
+                        guessedLetters: allLetters,
+                        status: "won",
+                        scores: result.data.session?.scores || prev?.scores || {},
+                    }));
+                    setRewardAmount(0);
+                    setShowReward(false);
+                    setGameState("won");
+                    setIsStalemate(true);
+                    toast.info("¡Empate! No hay más movidas posibles");
+                } else if (segment.type === "bankrupt") {
                     toast.error("¡Bancarrota!");
                     playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR, volume: 0.6, reverbAmount: 0.2 });
                     await sleep(2000);
@@ -510,9 +581,32 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                     setSession(result.data.session);
                     setRewardAmount(result.data.coinsEarned);
                     setShowReward(true);
+                    setIsStalemate(false);
                     setShowSolveInput(false);
                     playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_GANAR, volume: 0.8, reverbAmount: 0.4 });
                     setTimeout(() => setGameState("won"), 3000);
+                } else if (result.data.stalemate) {
+                    playSound({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
+                    const phraseText = phrase?.phrase || "";
+                    const allLetters = [...new Set(
+                        phraseText
+                            .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+                            .split("")
+                            .filter(ch => /[A-ZÑ]/.test(ch))
+                    )];
+                    setShowSolveInput(false);
+                    setSolveGuess("");
+                    setSession((prev: any) => ({
+                        ...prev,
+                        guessedLetters: allLetters,
+                        status: "won",
+                        scores: result.data.session?.scores || prev?.scores || {},
+                    }));
+                    setRewardAmount(0);
+                    setShowReward(false);
+                    setGameState("won");
+                    setIsStalemate(true);
+                    toast.info("¡Empate! No hay más movidas posibles");
                 } else {
                     isAnimatingRef.current = true;
                     toast.error("¡Incorrecto!");
@@ -550,11 +644,21 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
             const result = await action;
 
             if (result.data) {
-                setSession(result.data.session);
-                setShowVowelDialog(false);
-                toast.success(`Compraste la vocal "${letter}"!`);
-                playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT, volume: 0.6, reverbAmount: 0.1 });
-                setGameState("idle");
+                if (result.data.puzzleSolved) {
+                    setSession(result.data.session);
+                    setRewardAmount(result.data.coinsEarned);
+                    setShowReward(true);
+                    setIsStalemate(false);
+                    setShowVowelDialog(false);
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_GANAR, volume: 0.8, reverbAmount: 0.4 });
+                    setTimeout(() => setGameState("won"), 3000);
+                } else {
+                    setSession(result.data.session);
+                    setShowVowelDialog(false);
+                    toast.success(`Compraste la vocal "${letter}"!`);
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT, volume: 0.6, reverbAmount: 0.1 });
+                    setGameState("idle");
+                }
             }
         } catch (error: any) {
             console.error("Error buying vowel:", error);
@@ -591,6 +695,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                     setSession(result.data.session);
                     setRewardAmount(result.data.coinsEarned);
                     setShowReward(true);
+                    setIsStalemate(false);
                     playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_GANAR, volume: 0.8, reverbAmount: 0.4 });
                     setTimeout(() => setGameState("won"), 3000);
                 } else if (result.data.found) {
@@ -598,6 +703,26 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                     toast.success(`¡Letra "${letter}" encontrada!`);
                     playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT, volume: 0.6, reverbAmount: 0.1 });
                     setGameState("idle");
+                } else if (result.data.stalemate) {
+                    playSound({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
+                    const phraseText = phrase?.phrase || "";
+                    const allLetters = [...new Set(
+                        phraseText
+                            .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+                            .split("")
+                            .filter(ch => /[A-ZÑ]/.test(ch))
+                    )];
+                    setSession((prev: any) => ({
+                        ...prev,
+                        guessedLetters: allLetters,
+                        status: "won",
+                        scores: result.data.session?.scores || prev?.scores || {},
+                    }));
+                    setRewardAmount(0);
+                    setShowReward(false);
+                    setGameState("won");
+                    setIsStalemate(true);
+                    toast.info("¡Empate! No hay más movidas posibles");
                 } else {
                     isAnimatingRef.current = true;
                     toast.error(`La letra "${letter}" no está.`);
@@ -927,11 +1052,11 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                         </div>
                     ) : gameState === "won" ? (
                         <div class="flex flex-col items-center justify-center flex-1 animate-in zoom-in-95 duration-300">
-                            <div class="rounded-2xl border border-green-500/30 bg-linear-to-b from-green-900/20 to-black p-10 text-center max-w-lg w-full shadow-lg">
-                                <div class="p-4 bg-green-500 text-black rounded-full w-fit mx-auto mb-4 shadow-lg shadow-green-500/20">
-                                    <LucideTrophy size={36} />
+                            <div class={`rounded-2xl border ${isStalemate ? 'border-yellow-500/30 bg-linear-to-b from-yellow-900/20 to-black' : 'border-green-500/30 bg-linear-to-b from-green-900/20 to-black'} p-10 text-center max-w-lg w-full shadow-lg`}>
+                                <div class={`p-4 ${isStalemate ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-green-500 text-black'} rounded-full w-fit mx-auto mb-4 shadow-lg`}>
+                                    {isStalemate ? <LucideX size={36} /> : <LucideTrophy size={36} />}
                                 </div>
-                                <h2 class="font-teko text-4xl text-yellow-400 uppercase tracking-wide mb-2">¡Victoria!</h2>
+                                <h2 class="font-teko text-4xl text-yellow-400 uppercase tracking-wide mb-2">{isStalemate ? "Empate" : "¡Victoria!"}</h2>
 
                                 {isMultiplayer && players.length > 0 ? (
                                     <div class="w-full mb-4">
@@ -964,7 +1089,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                                 </div>
                                 {isMultiplayer ? (
                                     <button
-                                        onClick={() => { setSession(null); setPhrase(null); setRoomCode(null); setPlayers([]); setGameState("idle"); }}
+                                        onClick={() => { setSession(null); setPhrase(null); setRoomCode(null); setPlayers([]); setGameState("idle"); setIsStalemate(false); }}
                                         class="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-teko text-lg font-bold uppercase tracking-wide transition-all shadow-lg"
                                     >
                                         <LucideRotateCcw size={18} />
@@ -1203,6 +1328,47 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                                     );
                                 })}
                             </div>
+                            {isMultiplayer && allConsonantsGuessed && (
+                                <div class="mt-5 flex flex-col items-center gap-2">
+                                    <p class="text-sm font-rubik text-white/40">No quedan consonantes por adivinar en la frase</p>
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                const res = await actions.games.ruletaLoca.passTurnMulti();
+                                                if (res.data?.stalemate) {
+                                                    playSound({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
+                                                    const phraseText = phrase?.phrase || "";
+                                                    const allLetters = [...new Set(
+                                                        phraseText
+                                                            .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+                                                            .split("")
+                                                            .filter(ch => /[A-ZÑ]/.test(ch))
+                                                    )];
+                                                    setSession((prev: any) => ({
+                                                        ...prev,
+                                                        guessedLetters: allLetters,
+                                                        status: "won",
+                                                        scores: res.data.session?.scores || prev?.scores || {},
+                                                    }));
+                                                    setRewardAmount(0);
+                                                    setShowReward(false);
+                                                    setGameState("won");
+                                                    setIsStalemate(true);
+                                                    setShowLetterDialog(false);
+                                                    toast.info("¡Empate! No hay más movidas posibles");
+                                                } else {
+                                                    setShowLetterDialog(false);
+                                                }
+                                            } catch (e: any) {
+                                                toast.error(e.message || "Error al pasar turno");
+                                            }
+                                        }}
+                                        class="px-6 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white/60 font-teko text-base uppercase tracking-wide transition-all"
+                                    >
+                                        Pasar turno
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

@@ -343,9 +343,14 @@ export const ruletaLoca = {
 
             if (segment.type === "lose_turn" || segment.type === "bankrupt") {
                 const advanced = await advanceTurn(room.session.id);
-                const nextPlayer = (advanced?.turnOrder || [])[advanced?.currentTurnIdx || 0];
+                if (advanced.stalemate) {
+                    const phrase = room.phrase;
+                    await RuletaLocaPusher.stalemate(room.session.roomCode, phrase?.phrase || "", advanced.scores || {});
+                    return { segment, session: advanced.session, stalemate: true };
+                }
+                const nextPlayer = (advanced.session?.turnOrder || [])[advanced.session?.currentTurnIdx || 0];
                 await RuletaLocaPusher.turnChanged(room.session.roomCode, nextPlayer);
-                return { segment, session: advanced, turnChanged: true };
+                return { segment, session: advanced.session, turnChanged: true };
             }
 
             return { segment, session: updatedSession, turnChanged: false };
@@ -394,10 +399,15 @@ export const ruletaLoca = {
 
             if (!result.found) {
                 const advanced = await advanceTurn(room.session.id);
-                const nextPlayer = (advanced?.turnOrder || [])[advanced?.currentTurnIdx || 0];
+                if (advanced.stalemate) {
+                    const phrase = room.phrase;
+                    await RuletaLocaPusher.stalemate(room.session.roomCode, phrase?.phrase || "", advanced.scores || {});
+                    return { ...result, puzzleSolved: false, stalemate: true, session: advanced.session };
+                }
+                const nextPlayer = (advanced.session?.turnOrder || [])[advanced.session?.currentTurnIdx || 0];
                 await RuletaLocaPusher.turnChanged(room.session.roomCode, nextPlayer);
 
-                return { ...result, puzzleSolved: false, turnChanged: true, session: advanced };
+                return { ...result, puzzleSolved: false, turnChanged: true, session: advanced.session };
             }
 
             return { ...result, puzzleSolved: false, turnChanged: false };
@@ -435,10 +445,42 @@ export const ruletaLoca = {
             }
 
             const advanced = await advanceTurn(room.session.id);
-            const nextPlayer = (advanced?.turnOrder || [])[advanced?.currentTurnIdx || 0];
+            if (advanced.stalemate) {
+                const phrase = room.phrase;
+                await RuletaLocaPusher.stalemate(room.session.roomCode, phrase?.phrase || "", advanced.scores || {});
+                return { success: false, session: advanced.session, stalemate: true };
+            }
+            const nextPlayer = (advanced.session?.turnOrder || [])[advanced.session?.currentTurnIdx || 0];
             await RuletaLocaPusher.turnChanged(room.session.roomCode, nextPlayer);
 
-            return { success: false, session: advanced, turnChanged: true };
+            return { success: false, session: advanced.session, turnChanged: true };
+        },
+    }),
+
+    passTurnMulti: defineAction({
+        handler: async (_, { request }) => {
+            const s = await getSession(request);
+            if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
+
+            const userId = parseInt(s.user.id);
+            const room = await getCurrentRoomSession(userId);
+            if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
+            if (room.session.status !== "playing") throw new ActionError({ code: "BAD_REQUEST", message: "El juego no está activo" });
+
+            const turnOrder = room.session.turnOrder || [];
+            const currentPlayer = turnOrder[room.session.currentTurnIdx];
+            if (currentPlayer !== userId) throw new ActionError({ code: "BAD_REQUEST", message: "No es tu turno" });
+
+            const advanced = await advanceTurn(room.session.id);
+            if (advanced.stalemate) {
+                const phrase = room.phrase;
+                await RuletaLocaPusher.stalemate(room.session.roomCode, phrase?.phrase || "", advanced.scores || {});
+                return { session: advanced.session, stalemate: true };
+            }
+            const nextPlayer = (advanced.session?.turnOrder || [])[advanced.session?.currentTurnIdx || 0];
+            await RuletaLocaPusher.turnChanged(room.session.roomCode, nextPlayer);
+
+            return { session: advanced.session, turnChanged: true };
         },
     }),
 
@@ -474,6 +516,11 @@ export const ruletaLoca = {
             const userId = parseInt(s.user.id);
             const room = await getCurrentRoomSession(userId);
             if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
+            if (room.session.status !== "playing") throw new ActionError({ code: "BAD_REQUEST", message: "El juego no está activo" });
+
+            const turnOrder = room.session.turnOrder || [];
+            const currentPlayer = turnOrder[room.session.currentTurnIdx];
+            if (currentPlayer !== userId) throw new ActionError({ code: "BAD_REQUEST", message: "No es tu turno" });
 
             const result = await buyVowel(room.session.id, letter, userId);
             if (!result.found) {
@@ -489,7 +536,16 @@ export const ruletaLoca = {
                 result.session.currentScore,
             );
 
-            return result;
+            // Check if the vowel completed the puzzle
+            const phrase = room.phrase;
+            if (phrase && isPuzzleSolved(phrase.phrase, result.session.guessedLetters || [])) {
+                const completed = await completeMultiplayerGame(room.session.id, userId);
+                await RuletaLocaPusher.puzzleSolved(room.session.roomCode, userId, completed.coinsEarned, result.session.guessedLetters || []);
+                await RuletaLocaPusher.gameEnded(room.session.roomCode, userId, completed.scores);
+                return { ...result, puzzleSolved: true, coinsEarned: completed.coinsEarned, session: completed.session };
+            }
+
+            return { ...result, puzzleSolved: false };
         },
     }),
 };

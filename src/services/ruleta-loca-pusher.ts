@@ -76,4 +76,11 @@ export const RuletaLocaPusher = {
             finalScores,
         });
     },
+
+    stalemate(roomCode: string, phrase: string, finalScores: Record<number, number>) {
+        return trigger(roomCode, PUSHER_EVENTS_RULETA.GAME_STALEMATE, {
+            phrase,
+            finalScores,
+        });
+    },
 };
