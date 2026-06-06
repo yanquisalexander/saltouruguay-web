@@ -1,6 +1,5 @@
 ---
 // PencaCallToAction.astro
-// Banner clickeable — imagen + borde animado + hover glow
 ---
 
 <a
@@ -13,14 +12,16 @@
   {/* Borde animado */}
   <div class="penca-border" aria-hidden="true"></div>
 
-  {/* Imagen */}
-  <img
-    src="/images/penca-banner.webp"
-    alt="La Penca del Mundial – SaltoUruguayServer"
-    class="penca-img"
-    draggable="false"
-    loading="lazy"
-  />
+  {/* Wrapper con overflow hidden para contener el zoom */}
+  <div class="penca-img-wrapper">
+    <img
+      src="/images/penca-banner.png"
+      alt="La Penca del Mundial – SaltoUruguayServer"
+      class="penca-img"
+      draggable="false"
+      loading="lazy"
+    />
+  </div>
 
   {/* Overlay hover */}
   <div class="penca-overlay" aria-hidden="true">
@@ -46,7 +47,7 @@
   }
 
   .penca-cta:hover {
-    transform: translateY(-4px) scale(1.005);
+    transform: translateY(-4px);
   }
 
   /* Borde giratorio */
@@ -88,19 +89,28 @@
     to { --angle: 360deg; }
   }
 
-  /* Imagen */
+  /* Wrapper que recorta el zoom */
+  .penca-img-wrapper {
+    position: relative;
+    z-index: 2;
+    border-radius: 14px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  /* Imagen con zoom-out continuo (Ken Burns) */
   .penca-img {
     display: block;
     width: 100%;
     height: auto;
     border-radius: 14px;
-    position: relative;
-    z-index: 2;
-    transition: filter 0.3s ease;
+    transform-origin: center center;
+    animation: kenBurns 12s ease-in-out infinite alternate;
   }
 
-  .penca-cta:hover .penca-img {
-    filter: brightness(0.75);
+  @keyframes kenBurns {
+    0%   { transform: scale(1.08); }
+    100% { transform: scale(1.0); }
   }
 
   /* Overlay con botón */
