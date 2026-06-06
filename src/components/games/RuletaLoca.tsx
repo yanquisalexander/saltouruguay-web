@@ -85,7 +85,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
             .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
         const consonantsInPhrase = new Set<string>();
         for (const ch of phraseNormalized) {
-            if (/[A-ZÑ]/.test(ch) && !['A','E','I','O','U'].includes(ch)) {
+            if (/[A-ZÑ]/.test(ch) && !['A', 'E', 'I', 'O', 'U'].includes(ch)) {
                 consonantsInPhrase.add(ch);
             }
         }
@@ -309,7 +309,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                 toast.info("Un jugador abandonó la partida");
             },
             [PUSHER_EVENTS_RULETA.GAME_STALEMATE]: (data: any) => {
-                playSound({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
+                playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
                 const phraseText = data.phrase || "";
                 const allLetters = [...new Set(
                     phraseText
@@ -502,7 +502,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                 setIsSpinning(false);
 
                 if (result.data.stalemate) {
-                    playSound({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
                     const phraseText = phrase?.phrase || "";
                     const allLetters = [...new Set(
                         phraseText
@@ -569,11 +569,11 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
             const action = isMultiplayer
                 ? actions.games.ruletaLoca.solvePuzzleMulti({
                     guess: solveGuess,
-                  })
+                })
                 : actions.games.ruletaLoca.solvePuzzle({
                     sessionId: session.id,
                     guess: solveGuess,
-                  });
+                });
             const result = await action;
 
             if (result.data) {
@@ -586,7 +586,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                     playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_GANAR, volume: 0.8, reverbAmount: 0.4 });
                     setTimeout(() => setGameState("won"), 3000);
                 } else if (result.data.stalemate) {
-                    playSound({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
                     const phraseText = phrase?.phrase || "";
                     const allLetters = [...new Set(
                         phraseText
@@ -679,12 +679,12 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                 ? actions.games.ruletaLoca.guessLetterMulti({
                     letter,
                     wheelValue: currentWheelValue,
-                  })
+                })
                 : actions.games.ruletaLoca.guessLetter({
                     sessionId: session.id,
                     letter,
                     wheelValue: currentWheelValue,
-                  });
+                });
 
             const result = await action;
 
@@ -704,7 +704,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                     playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT, volume: 0.6, reverbAmount: 0.1 });
                     setGameState("idle");
                 } else if (result.data.stalemate) {
-                    playSound({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
                     const phraseText = phrase?.phrase || "";
                     const allLetters = [...new Set(
                         phraseText
@@ -1336,7 +1336,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                                             try {
                                                 const res = await actions.games.ruletaLoca.passTurnMulti();
                                                 if (res.data?.stalemate) {
-                                                    playSound({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
+                                                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_MULTI_SIN_PUNTOS_PARA_VOCALES, volume: 0.6 });
                                                     const phraseText = phrase?.phrase || "";
                                                     const allLetters = [...new Set(
                                                         phraseText
