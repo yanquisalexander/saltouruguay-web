@@ -82,6 +82,7 @@ export async function getCurrentGameSession(userId: number) {
         .where(
             and(
                 eq(RuletaLocaGameSessionsTable.userId, userId),
+                eq(RuletaLocaGameSessionsTable.gameMode, "single"),
                 eq(RuletaLocaGameSessionsTable.status, "playing")
             )
         )
