@@ -11,6 +11,7 @@ import {
     getPlayerStats,
     resetSessionScore,
     solvePuzzle,
+    buyVowel,
     createMultiplayerRoom,
     joinRoomByCode,
     leaveRoomByCode,
@@ -351,8 +352,8 @@ export const ruletaLoca = {
     }),
 
     guessLetterMulti: defineAction({
-        input: z.object({ sessionId: z.number(), letter: z.string().length(1), wheelValue: z.number() }),
-        handler: async ({ sessionId, letter, wheelValue }, { request }) => {
+        input: z.object({ letter: z.string().length(1), wheelValue: z.number() }),
+        handler: async ({ letter, wheelValue }, { request }) => {
             const s = await getSession(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
@@ -365,14 +366,14 @@ export const ruletaLoca = {
             const currentPlayer = turnOrder[room.session.currentTurnIdx];
             if (currentPlayer !== userId) throw new ActionError({ code: "BAD_REQUEST", message: "No es tu turno" });
 
-            const result = await guessLetter(sessionId, letter, wheelValue);
+            const result = await guessLetter(room.session.id, letter, wheelValue);
             if (!result.success) throw new ActionError({ code: "BAD_REQUEST", message: result.error || "Error" });
 
             const phrase = room.phrase;
             const solved = phrase ? isPuzzleSolved(phrase.phrase, result.session.guessedLetters || []) : false;
 
             if (solved) {
-                const completed = await completeMultiplayerGame(sessionId, userId);
+                const completed = await completeMultiplayerGame(room.session.id, userId);
                 await RuletaLocaPusher.puzzleSolved(room.session.roomCode, userId, completed.coinsEarned, result.session.guessedLetters || []);
                 await RuletaLocaPusher.gameEnded(room.session.roomCode, userId, completed.scores);
 
@@ -391,7 +392,7 @@ export const ruletaLoca = {
             );
 
             if (!result.found) {
-                const advanced = await advanceTurn(sessionId);
+                const advanced = await advanceTurn(room.session.id);
                 const nextPlayer = (advanced?.turnOrder || [])[advanced?.currentTurnIdx || 0];
                 await RuletaLocaPusher.turnChanged(room.session.roomCode, nextPlayer);
 
@@ -403,8 +404,8 @@ export const ruletaLoca = {
     }),
 
     solvePuzzleMulti: defineAction({
-        input: z.object({ sessionId: z.number(), guess: z.string() }),
-        handler: async ({ sessionId, guess }, { request }) => {
+        input: z.object({ guess: z.string() }),
+        handler: async ({ guess }, { request }) => {
             const s = await getSession(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
@@ -412,9 +413,9 @@ export const ruletaLoca = {
             const room = await getCurrentRoomSession(userId);
             if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
 
-            const result = await solvePuzzle(sessionId, guess);
+            const result = await solvePuzzle(room.session.id, guess);
             if (result.success) {
-                const completed = await completeMultiplayerGame(sessionId, userId);
+                const completed = await completeMultiplayerGame(room.session.id, userId);
 
                 await RuletaLocaPusher.puzzleSolved(room.session.roomCode, userId, completed.coinsEarned, []);
                 await RuletaLocaPusher.gameEnded(room.session.roomCode, userId, completed.scores);
@@ -422,7 +423,7 @@ export const ruletaLoca = {
                 return { ...result, session: completed.session, coinsEarned: completed.coinsEarned };
             }
 
-            const advanced = await advanceTurn(sessionId);
+            const advanced = await advanceTurn(room.session.id);
             const nextPlayer = (advanced?.turnOrder || [])[advanced?.currentTurnIdx || 0];
             await RuletaLocaPusher.turnChanged(room.session.roomCode, nextPlayer);
 
@@ -442,6 +443,42 @@ export const ruletaLoca = {
             await RuletaLocaPusher.playerForfeit(room.session.roomCode, userId);
 
             return await leaveRoomByCode(room.session.roomCode, userId);
+        },
+    }),
+
+    buyVowel: defineAction({
+        input: z.object({ sessionId: z.number(), letter: z.string().length(1) }),
+        handler: async ({ sessionId, letter }) => {
+            const result = await buyVowel(sessionId, letter, 0);
+            return result;
+        },
+    }),
+
+    buyVowelMulti: defineAction({
+        input: z.object({ letter: z.string().length(1) }),
+        handler: async ({ letter }, { request }) => {
+            const s = await getSession(request);
+            if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
+
+            const userId = parseInt(s.user.id);
+            const room = await getCurrentRoomSession(userId);
+            if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
+
+            const result = await buyVowel(room.session.id, letter, userId);
+            if (!result.found) {
+                throw new ActionError({ code: "BAD_REQUEST", message: "Esa vocal no está en la frase" });
+            }
+
+            await RuletaLocaPusher.vowelBought(
+                room.session.roomCode,
+                userId,
+                letter,
+                result.positions,
+                result.session.guessedLetters || [],
+                result.session.currentScore,
+            );
+
+            return result;
         },
     }),
 };

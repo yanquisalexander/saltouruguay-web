@@ -152,6 +152,7 @@ export const PUSHER_EVENTS_RULETA = {
   GAME_PUZZLE_SOLVED: 'game:puzzle-solved',
   GAME_TURN_CHANGED: 'game:turn-changed',
   GAME_PLAYER_FORFEIT: 'game:player-forfeit',
+  GAME_VOWEL_BOUGHT: 'game:vowel-bought',
   ROOM_CHAT_MESSAGE: 'room:chat-message',
   ROOM_GAME_ENDED: 'room:game-ended',
 } as const;

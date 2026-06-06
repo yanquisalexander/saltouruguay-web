@@ -56,6 +56,12 @@ export const RuletaLocaPusher = {
         });
     },
 
+    vowelBought(roomCode: string, userId: number, letter: string, positions: number[], guessedLetters: string[], currentScore: number) {
+        return trigger(roomCode, PUSHER_EVENTS_RULETA.GAME_VOWEL_BOUGHT, {
+            userId, letter, positions, guessedLetters, currentScore,
+        });
+    },
+
     turnChanged(roomCode: string, currentTurnUserId: number) {
         return trigger(roomCode, PUSHER_EVENTS_RULETA.GAME_TURN_CHANGED, { currentTurnUserId });
     },

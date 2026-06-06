@@ -51,14 +51,17 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
     const [showReward, setShowReward] = useState(false);
     const [rewardAmount, setRewardAmount] = useState(0);
     const [showSolveInput, setShowSolveInput] = useState(false);
+    const [showVowelDialog, setShowVowelDialog] = useState(false);
     const [showLetterDialog, setShowLetterDialog] = useState(false);
     const [showWheelDialog, setShowWheelDialog] = useState(false);
+    const [remoteSpinnerId, setRemoteSpinnerId] = useState<number | null>(null);
     const [solveGuess, setSolveGuess] = useState("");
     const [isFullscreen, setIsFullscreen] = useState(false);
     const wheelRotation = useMotionValue(0);
     const lastTickCountRef = useRef(Math.floor(0 / 45));
     const gameContainerRef = useRef<HTMLDivElement | null>(null);
     const isAnimatingRef = useRef(false);
+    const pendingTurnRef = useRef<any>(null);
     const [userId] = useState(propUserId);
 
     // ─── Multiplayer state ───
@@ -69,13 +72,39 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
     const [showJoinModal, setShowJoinModal] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const VOWEL_COST = 100;
     const isMultiplayer = session?.gameMode === 'multi';
     const currentTurnUserId = isMultiplayer && session?.turnOrder?.length
         ? session.turnOrder[session.currentTurnIdx]
         : null;
     const isMyTurn = isMultiplayer ? currentTurnUserId === userId : true;
+    const playerTotalScore = isMultiplayer
+        ? (session?.scores?.[String(userId)] || 0) + (session?.currentScore || 0)
+        : session?.currentScore || 0;
 
     const isInitialized = !!session;
+
+    function processPendingTurn() {
+        isAnimatingRef.current = false;
+        const data = pendingTurnRef.current;
+        if (!data) return;
+        pendingTurnRef.current = null;
+        setSession((prev: any) => {
+            const idx = (prev?.turnOrder || []).indexOf(data.currentTurnUserId);
+            return { ...prev, currentTurnIdx: idx >= 0 ? idx : 0, currentScore: 0 };
+        });
+        setGameState("idle");
+        setShowWheelDialog(false);
+        setShowLetterDialog(false);
+        setShowVowelDialog(false);
+        if (data.currentTurnUserId === userId) {
+            toast("¡Es tu turno!");
+        } else {
+            const p = players.find((p: { id: number }) => p.id === data.currentTurnUserId);
+            const name = p?.username || `Jugador ${data.currentTurnUserId}`;
+            toast.info(`Turno de ${name}`);
+        }
+    }
 
     useEffect(() => {
         if (!isInitialized) {
@@ -133,18 +162,56 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
             },
             [PUSHER_EVENTS_RULETA.GAME_WHEEL_SPUN]: (data: any) => {
                 if (data.userId !== userId) {
-                    const p = players.find(p => p.id === data.userId);
-                    const name = p?.username || `Jugador ${data.userId}`;
+                    isAnimatingRef.current = true;
+                    setShowWheelDialog(true);
+                    setRemoteSpinnerId(data.userId);
+                    setCurrentSegment(data.segment);
+                    setIsSpinning(true);
+
                     const seg = data.segment;
-                    if (seg.type === "bankrupt") {
-                        toast.info(`${name} sacó ¡Bancarrota!`);
-                    } else if (seg.type === "lose_turn") {
-                        toast.info(`${name} pierde el turno`);
-                    } else {
-                        toast.info(`${name} giró ${seg.label} puntos`);
-                    }
+                    const segmentIndex = WHEEL_SEGMENTS.findIndex(s => s.label === seg.label);
+                    const segmentAngle = (segmentIndex * 45) + 22.5;
+                    const targetVisualAngle = (360 - segmentAngle + 360) % 360;
+                    const currentRotation = wheelRotation.get();
+                    const currentFullRotations = Math.floor(currentRotation / 360);
+                    let targetRotation = (currentFullRotations * 360) + targetVisualAngle;
+                    if (targetRotation <= currentRotation) targetRotation += 360;
+                    const randomSpins = 5 + Math.floor(Math.random() * 4);
+                    const finalRotation = targetRotation + (randomSpins * 360);
+
+                    lastTickCountRef.current = Math.floor(wheelRotation.get() / 45);
+                    playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_GIRAR, volume: 0.5, reverbAmount: 0.3 });
+
+                    const p = players.find((p: { id: number }) => p.id === data.userId);
+                    const name = p?.username || `Jugador ${data.userId}`;
+
+                    animate(wheelRotation, finalRotation, {
+                        duration: 4,
+                        ease: [0.25, 0.1, 0.25, 1],
+                        onComplete: () => {
+                            setIsSpinning(false);
+
+                            if (seg.type === "bankrupt") {
+                                toast.error(`${name} sacó ¡Bancarrota!`);
+                                playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR, volume: 0.6, reverbAmount: 0.2 });
+                            } else if (seg.type === "lose_turn") {
+                                toast.warning(`${name} pierde el turno`);
+                                playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.EQUIPO_ELIMINADO, volume: 0.5, reverbAmount: 0.3 });
+                            } else {
+                                toast.success(`${name} giró ${seg.label} puntos!`);
+                                playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_ELIJE_CONSONANTE, volume: 0.7, reverbAmount: 0.1 });
+                            }
+
+                            setTimeout(() => {
+                                setShowWheelDialog(false);
+                                setRemoteSpinnerId(null);
+                                processPendingTurn();
+                            }, 2000);
+                        }
+                    });
+                } else {
+                    setCurrentSegment(data.segment);
                 }
-                setCurrentSegment(data.segment);
             },
             [PUSHER_EVENTS_RULETA.GAME_LETTER_GUESSED]: (data: any) => {
                 if (data.userId !== userId) {
@@ -174,8 +241,23 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                     status: "won",
                 }));
             },
+            [PUSHER_EVENTS_RULETA.GAME_VOWEL_BOUGHT]: (data: any) => {
+                if (data.userId !== userId) {
+                    const p = players.find((p: { id: number }) => p.id === data.userId);
+                    const name = p?.username || `Jugador ${data.userId}`;
+                    toast.info(`${name} compró la vocal "${data.letter}"`);
+                }
+                setSession((prev: any) => ({
+                    ...prev,
+                    guessedLetters: data.guessedLetters || prev?.guessedLetters || [],
+                    currentScore: data.currentScore,
+                }));
+            },
             [PUSHER_EVENTS_RULETA.GAME_TURN_CHANGED]: (data: any) => {
-                if (isAnimatingRef.current) return;
+                if (isAnimatingRef.current) {
+                    pendingTurnRef.current = data;
+                    return;
+                }
                 setSession((prev: any) => {
                     const idx = (prev?.turnOrder || []).indexOf(data.currentTurnUserId);
                     return { ...prev, currentTurnIdx: idx >= 0 ? idx : 0, currentScore: 0 };
@@ -375,7 +457,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                     await sleep(2000);
                     setShowWheelDialog(false);
                     if (result.data.session) setSession(result.data.session);
-                    isAnimatingRef.current = false;
+                    processPendingTurn();
                     setGameState("idle");
                 } else if (segment.type === "lose_turn") {
                     toast.warning("¡Pierdes el turno!");
@@ -383,10 +465,10 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                     await sleep(2000);
                     setShowWheelDialog(false);
                     if (result.data.session) setSession(result.data.session);
-                    isAnimatingRef.current = false;
+                    processPendingTurn();
                     setGameState("idle");
                 } else {
-                    isAnimatingRef.current = false;
+                    processPendingTurn();
                     toast.success(`¡Giraste ${segment.label} puntos!`);
                     playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_ELIJE_CONSONANTE, volume: 0.7, reverbAmount: 0.1 });
                     setGameState("guessing");
@@ -401,7 +483,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
             toast.error("Error al girar la ruleta");
             setIsSpinning(false);
             setGameState("idle");
-            isAnimatingRef.current = false;
+            processPendingTurn();
         }
     };
 
@@ -415,7 +497,6 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
         try {
             const action = isMultiplayer
                 ? actions.games.ruletaLoca.solvePuzzleMulti({
-                    sessionId: session.id,
                     guess: solveGuess,
                   })
                 : actions.games.ruletaLoca.solvePuzzle({
@@ -439,7 +520,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                     await sleep(1500);
                     playSound({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_ERROR_FRASE_VOCERA, volume: 0.5 });
                     if (result.data.session) setSession(result.data.session);
-                    isAnimatingRef.current = false;
+                    processPendingTurn();
                     setShowSolveInput(false);
                     setSolveGuess("");
                 }
@@ -447,6 +528,37 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
         } catch (error: any) {
             console.error("Error solving puzzle:", error);
             toast.error("Error al resolver el panel");
+        }
+    };
+
+    const handleBuyVowel = async (letter: string) => {
+        if (!session || gameState !== "idle") return;
+        if (isMultiplayer && !isMyTurn) {
+            toast.error("No es tu turno");
+            return;
+        }
+        if (playerTotalScore < VOWEL_COST) {
+            toast.error(`Necesitas ${VOWEL_COST} puntos para comprar una vocal`);
+            return;
+        }
+
+        try {
+            const action = isMultiplayer
+                ? actions.games.ruletaLoca.buyVowelMulti({ letter })
+                : actions.games.ruletaLoca.buyVowel({ sessionId: session.id, letter });
+
+            const result = await action;
+
+            if (result.data) {
+                setSession(result.data.session);
+                setShowVowelDialog(false);
+                toast.success(`Compraste la vocal "${letter}"!`);
+                playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT, volume: 0.6, reverbAmount: 0.1 });
+                setGameState("idle");
+            }
+        } catch (error: any) {
+            console.error("Error buying vowel:", error);
+            toast.error(error.message || "Error al comprar vocal");
         }
     };
 
@@ -461,7 +573,6 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
         try {
             const action = isMultiplayer
                 ? actions.games.ruletaLoca.guessLetterMulti({
-                    sessionId: session.id,
                     letter,
                     wheelValue: currentWheelValue,
                   })
@@ -494,7 +605,7 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                     await sleep(1200);
                     playSoundWithReverb({ sound: STREAMER_WARS_SOUNDS.RULETA_LOCA_ERROR_LETRA_VOCERA, volume: 0.5, reverbAmount: 0.1 });
                     if (result.data.session) setSession(result.data.session);
-                    isAnimatingRef.current = false;
+                    processPendingTurn();
                     setGameState("idle");
                 }
             }
@@ -953,6 +1064,13 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
 
                                 <div class="flex gap-3 w-full">
                                     <button
+                                        onClick={() => setShowVowelDialog(true)}
+                                        disabled={gameState !== "idle" || (isMultiplayer && !isMyTurn) || playerTotalScore < VOWEL_COST}
+                                        class="flex-1 py-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 disabled:bg-white/[0.02] disabled:text-white/20 text-purple-400 font-teko text-base font-bold uppercase tracking-wide border border-purple-500/20 hover:border-purple-500/40 disabled:border-white/[0.04] transition-all"
+                                    >
+                                        Vocal ({VOWEL_COST}pts)
+                                    </button>
+                                    <button
                                         onClick={() => setShowSolveInput(true)}
                                         disabled={isSpinning || gameState !== "idle" || (isMultiplayer && !isMyTurn)}
                                         class="flex-1 py-3 rounded-xl bg-green-500/10 hover:bg-green-500/20 disabled:bg-white/[0.02] disabled:text-white/20 text-green-400 font-teko text-base font-bold uppercase tracking-wide border border-green-500/20 hover:border-green-500/40 disabled:border-white/[0.04] transition-all"
@@ -1008,7 +1126,13 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                 {showWheelDialog && (
                     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
                         <div class="flex flex-col items-center gap-6">
-                            <h2 class="font-teko text-3xl text-yellow-400 uppercase tracking-wide">¡Girá la ruleta!</h2>
+                            {remoteSpinnerId ? (
+                                <h2 class="font-teko text-3xl text-white/60 uppercase tracking-wide">
+                                    {players.find(p => p.id === remoteSpinnerId)?.username || `Jugador ${remoteSpinnerId}`} está girando...
+                                </h2>
+                            ) : (
+                                <h2 class="font-teko text-3xl text-yellow-400 uppercase tracking-wide">¡Girá la ruleta!</h2>
+                            )}
 
                             <div class="relative">
                                 <motion.div
@@ -1024,19 +1148,21 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                                 <p class="font-teko text-2xl text-white/80">{currentSegment.label} puntos</p>
                             )}
 
-                            <button
-                                onClick={handleSpinWheel}
-                                disabled={isSpinning}
-                                class={`
-                                    px-10 py-4 rounded-xl font-teko text-xl font-bold uppercase tracking-wide transition-all
-                                    ${isSpinning
-                                        ? "bg-white/[0.03] text-white/20 cursor-not-allowed"
-                                        : "bg-red-500 hover:bg-red-400 active:scale-[0.98] text-white shadow-lg shadow-red-500/20"
-                                    }
-                                `}
-                            >
-                                {isSpinning ? "Girando..." : "¡Girar!"}
-                            </button>
+                            {!remoteSpinnerId && (
+                                <button
+                                    onClick={handleSpinWheel}
+                                    disabled={isSpinning}
+                                    class={`
+                                        px-10 py-4 rounded-xl font-teko text-xl font-bold uppercase tracking-wide transition-all
+                                        ${isSpinning
+                                            ? "bg-white/[0.03] text-white/20 cursor-not-allowed"
+                                            : "bg-red-500 hover:bg-red-400 active:scale-[0.98] text-white shadow-lg shadow-red-500/20"
+                                        }
+                                    `}
+                                >
+                                    {isSpinning ? "Girando..." : "¡Girar!"}
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
@@ -1077,6 +1203,52 @@ export const RuletaLoca = ({ initialSession, initialPhrase, initialRoom, userId:
                                     );
                                 })}
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Vowel Dialog */}
+                {showVowelDialog && (
+                    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+                        <div class="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-md p-6 md:p-8 max-w-sm w-full shadow-xl">
+                            <div class="flex items-center justify-between mb-6">
+                                <h2 class="font-teko text-2xl text-purple-400 uppercase tracking-wide">Comprar vocal</h2>
+                                <span class="text-sm font-rubik text-white/30">-{VOWEL_COST} pts</span>
+                            </div>
+                            <p class="font-rubik text-sm text-white/40 mb-5 text-center">Tenés {playerTotalScore} pts disponibles</p>
+                            <div class="grid grid-cols-5 gap-3 justify-items-center">
+                                {["A", "E", "I", "O", "U"].map((letter) => {
+                                    const guessed = session?.guessedLetters || [];
+                                    const normalizedLetter = letter.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+                                    const isGuessed = guessed.some((l: string) =>
+                                        l.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase() === normalizedLetter
+                                    );
+                                    return (
+                                        <button
+                                            key={letter}
+                                            onClick={() => handleBuyVowel(letter)}
+                                            disabled={isGuessed}
+                                            class={`
+                                                w-14 h-14 flex items-center justify-center
+                                                text-2xl font-bold font-rubik
+                                                rounded-xl border transition-all duration-150
+                                                ${isGuessed
+                                                    ? "bg-white/[0.02] border-white/[0.04] text-white/15 cursor-not-allowed"
+                                                    : "bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/50 hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
+                                                }
+                                            `}
+                                        >
+                                            {letter}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <button
+                                onClick={() => setShowVowelDialog(false)}
+                                class="w-full mt-5 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-white/50 font-teko text-sm uppercase tracking-wide transition-all"
+                            >
+                                Cancelar
+                            </button>
                         </div>
                     </div>
                 )}

@@ -199,6 +199,83 @@ export async function guessLetter(sessionId: number, letter: string, wheelValue:
 }
 
 /**
+ * Cost to buy a vowel
+ */
+export const VOWEL_COST = 100;
+
+/**
+ * Buy a vowel: deduct points and reveal all occurrences
+ */
+export async function buyVowel(sessionId: number, letter: string, userId: number) {
+    const [session] = await client
+        .select()
+        .from(RuletaLocaGameSessionsTable)
+        .where(eq(RuletaLocaGameSessionsTable.id, sessionId))
+        .execute();
+
+    if (!session || session.status !== "playing") {
+        throw new Error("Sesión de juego inválida");
+    }
+
+    const normalizedLetter = normalizeLetter(letter);
+    const vowels = new Set(["A", "E", "I", "O", "U"]);
+    if (!vowels.has(normalizedLetter)) {
+        throw new Error("Solo se pueden comprar vocales");
+    }
+
+    if (session.guessedLetters?.includes(normalizedLetter)) {
+        throw new Error("Esta vocal ya fue revelada");
+    }
+
+    const scores = makeScoresObj(session.scores);
+    const totalScore = (scores[userId] || 0) + session.currentScore;
+
+    if (totalScore < VOWEL_COST) {
+        throw new Error(`Necesitas al menos ${VOWEL_COST} puntos para comprar una vocal`);
+    }
+
+    // Deduct: first from currentScore, then from scores[userId]
+    let remainingDeduction = VOWEL_COST;
+    let newCurrentScore = session.currentScore;
+    let newScores = { ...scores };
+
+    if (newCurrentScore >= remainingDeduction) {
+        newCurrentScore -= remainingDeduction;
+        remainingDeduction = 0;
+    } else {
+        remainingDeduction -= newCurrentScore;
+        newCurrentScore = 0;
+        newScores[userId] = (newScores[userId] || 0) - remainingDeduction;
+        remainingDeduction = 0;
+    }
+
+    const newGuessedLetters = [...(session.guessedLetters || []), normalizedLetter];
+
+    const [updatedSession] = await client
+        .update(RuletaLocaGameSessionsTable)
+        .set({
+            guessedLetters: newGuessedLetters,
+            currentScore: newCurrentScore,
+            scores: sql`${JSON.stringify(newScores)}::jsonb`,
+            updatedAt: new Date(),
+        })
+        .where(eq(RuletaLocaGameSessionsTable.id, sessionId))
+        .returning()
+        .execute();
+
+    const { positions } = checkLetter(
+        (await client.select().from(RuletaLocaPhrasesTable).where(eq(RuletaLocaPhrasesTable.id, session.phraseId)).execute())[0]?.phrase || "",
+        letter
+    );
+
+    return {
+        session: updatedSession,
+        positions,
+        found: positions.length > 0,
+    };
+}
+
+/**
  * Check if the puzzle is solved
  * Note: guessedLetters are already normalized when stored
  */
