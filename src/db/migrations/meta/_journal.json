@@ -505,6 +505,13 @@
       "when": 1780508019274,
       "tag": "0071_broken_captain_flint",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1780710548654,
+      "tag": "0072_fantastic_green_goblin",
+      "breakpoints": true
     }
   ]
 }

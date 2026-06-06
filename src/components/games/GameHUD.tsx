@@ -1,14 +1,11 @@
 import { h } from 'preact';
-import { LucideCoins, LucideTrophy, LucideZap } from 'lucide-preact';
+import { LucideCoins, LucideTrophy } from 'lucide-preact';
 
 interface GameHUDProps {
     score: number;
     coins?: number;
-    energy?: number;
-    maxEnergy?: number;
     showScore?: boolean;
     showCoins?: boolean;
-    showEnergy?: boolean;
     additionalInfo?: {
         label: string;
         value: string | number;
@@ -19,103 +16,44 @@ interface GameHUDProps {
 export function GameHUD({
     score,
     coins,
-    energy,
-    maxEnergy = 100,
     showScore = true,
     showCoins = true,
-    showEnergy = false,
     additionalInfo,
 }: GameHUDProps) {
     return (
-        <div className="pixel-panel p-4 flex flex-wrap gap-4 items-center justify-between">
-            {/* Score Display */}
+        <div class="flex flex-wrap gap-3 items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-md p-4">
             {showScore && (
-                <div className="pixel-coin-display">
-                    <LucideTrophy size={24} className="text-yellow-400" />
-                    <div className="flex flex-col">
-                        <span className="text-xs text-white/60 uppercase font-rubik">Puntos</span>
-                        <span className="text-lg font-bold pixel-text-secondary font-rubik">
-                            {score.toLocaleString()}
-                        </span>
+                <div class="flex items-center gap-3">
+                    <div class="p-2 rounded-lg bg-yellow-500/10 text-yellow-400">
+                        <LucideTrophy size={20} />
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-rubik text-white/40 uppercase tracking-wider">Puntos</span>
+                        <p class="font-teko text-xl text-white font-bold tabular-nums leading-none">{score.toLocaleString()}</p>
                     </div>
                 </div>
             )}
 
-            {/* Coins Display */}
             {showCoins && coins !== undefined && (
-                <div className="pixel-coin-display">
-                    <LucideCoins size={24} className="text-yellow-400 pixel-coin-icon" />
-                    <div className="flex flex-col">
-                        <span className="text-xs text-white/60 uppercase font-rubik">SaltoCoins</span>
-                        <span className="text-lg font-bold pixel-text-secondary font-rubik">
-                            {coins.toLocaleString()}
-                        </span>
+                <div class="flex items-center gap-3">
+                    <div class="p-2 rounded-lg bg-yellow-500/10 text-yellow-400">
+                        <LucideCoins size={20} />
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-rubik text-white/40 uppercase tracking-wider">SaltoCoins</span>
+                        <p class="font-teko text-xl text-white font-bold tabular-nums leading-none">{coins.toLocaleString()}</p>
                     </div>
                 </div>
             )}
 
-            {/* Energy Display */}
-            {showEnergy && energy !== undefined && (
-                <div className="pixel-coin-display flex-col items-start min-w-[150px]">
-                    <div className="flex items-center gap-2 w-full mb-1">
-                        <LucideZap size={20} className="text-blue-400" />
-                        <span className="text-xs text-white/60 uppercase font-rubik">Energía</span>
-                        <span className="text-sm font-bold pixel-text ml-auto font-rubik">
-                            {energy}/{maxEnergy}
-                        </span>
-                    </div>
-                    <div className="pixel-progress w-full">
-                        <div 
-                            className="pixel-progress-bar"
-                            style={{ width: `${(energy / maxEnergy) * 100}%` }}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* Additional Info */}
             {additionalInfo && (
-                <div className="pixel-coin-display">
-                    {additionalInfo.icon && <additionalInfo.icon size={24} className="text-electric-violet-400" />}
-                    <div className="flex flex-col">
-                        <span className="text-xs text-white/60 uppercase font-rubik">{additionalInfo.label}</span>
-                        <span className="text-lg font-bold pixel-text font-rubik">
-                            {additionalInfo.value}
-                        </span>
+                <div class="flex items-center gap-3">
+                    {additionalInfo.icon && <additionalInfo.icon size={20} class="text-electric-violet-400" />}
+                    <div>
+                        <span class="text-[10px] font-rubik text-white/40 uppercase tracking-wider">{additionalInfo.label}</span>
+                        <p class="font-teko text-xl text-white font-bold tabular-nums leading-none">{additionalInfo.value}</p>
                     </div>
                 </div>
-            )}
-        </div>
-    );
-}
-
-interface GameFeedbackProps {
-    type: 'success' | 'error' | 'warning' | 'info';
-    message: string;
-    visible: boolean;
-    onDismiss?: () => void;
-}
-
-export function GameFeedback({ type, message, visible, onDismiss }: GameFeedbackProps) {
-    if (!visible) return null;
-
-    const typeClasses = {
-        success: 'pixel-btn-success pixel-glow',
-        error: 'pixel-btn-danger pixel-shake',
-        warning: 'pixel-btn-secondary',
-        info: 'pixel-btn-primary',
-    };
-
-    return (
-        <div className={`pixel-modal fixed top-4 left-1/2 transform -translate-x-1/2 z-50 ${typeClasses[type]} animate-fade-in-up`}>
-            <p className="pixel-text font-bold">{message}</p>
-            {onDismiss && (
-                <button
-                    onClick={onDismiss}
-                    className="ml-4 text-white/70 hover:text-white"
-                >
-                    ✕
-                </button>
             )}
         </div>
     );
@@ -131,23 +69,22 @@ export function GameReward({ coins, visible, onComplete }: GameRewardProps) {
     if (!visible) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 animate-blurred-fade-in">
-            <div className="pixel-modal p-8 animate-fade-in-up pixel-glow">
-                <div className="text-center">
-                    <LucideCoins size={64} className="text-yellow-400 mx-auto mb-4 pixel-coin-icon" />
-                    <h2 className="pixel-heading text-2xl pixel-text-secondary mb-2">
-                        ¡Recompensa!
-                    </h2>
-                    <p className="pixel-text text-3xl font-bold text-white mb-4">
-                        +{coins.toLocaleString()}
-                    </p>
-                    <p className="pixel-text text-sm text-white/70 mb-6">
-                        SaltoCoins añadidos a tu Banco Saltano
-                    </p>
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+            <div class="relative rounded-2xl border border-yellow-500/30 bg-linear-to-b from-yellow-900/20 to-black p-8 shadow-2xl animate-in zoom-in-95 duration-300 text-center max-w-sm w-full mx-4">
+                <div class="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none rounded-2xl" />
+                <div class="absolute top-0 right-0 w-48 h-48 bg-yellow-500/10 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3 pointer-events-none" />
+
+                <div class="relative z-10">
+                    <div class="p-4 bg-yellow-500 text-black rounded-full w-fit mx-auto mb-4 shadow-lg shadow-yellow-500/20">
+                        <LucideCoins size={40} />
+                    </div>
+                    <h2 class="font-teko text-3xl text-white uppercase tracking-wide mb-1">¡Recompensa!</h2>
+                    <p class="font-teko text-5xl text-yellow-400 font-bold mb-2">+{coins.toLocaleString()}</p>
+                    <p class="font-rubik text-sm text-white/50 mb-6">SaltoCoins añadidos a tu Banco Saltano</p>
                     {onComplete && (
                         <button
                             onClick={onComplete}
-                            className="pixel-btn-success w-full"
+                            class="w-full py-3 rounded-xl bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] text-black font-teko text-lg font-bold uppercase tracking-wide transition-all shadow-lg"
                         >
                             Continuar
                         </button>

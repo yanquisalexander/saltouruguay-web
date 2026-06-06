@@ -2,14 +2,25 @@
 import CommunityLayout from "@/layouts/CommunityLayout.astro";
 import { getSession } from "auth-astro/server";
 import { RuletaLoca } from "@/components/games/RuletaLoca";
+import { getCurrentGameSession, getCurrentRoomSession } from "@/utils/games/ruleta-loca";
 
-const session = await getSession(Astro.request);
+const authSession = await getSession(Astro.request);
 
-if (!session) {
+if (!authSession) {
   return Astro.redirect("/signin?redirect=/comunidad/juegos/ruleta-loca");
 }
+
+const userId = parseInt(authSession.user.id);
+const currentGame = await getCurrentGameSession(userId);
+const currentRoom = await getCurrentRoomSession(userId);
 ---
 
-<CommunityLayout title="Ruleta Loca">
-  <RuletaLoca client:only="preact" />
+<CommunityLayout title="Ruleta Loca" hideSidebar>
+  <RuletaLoca
+    initialSession={currentGame?.session || null}
+    initialPhrase={currentGame?.phrase || null}
+    initialRoom={currentRoom || null}
+    userId={userId}
+    client:only
+  />
 </CommunityLayout>

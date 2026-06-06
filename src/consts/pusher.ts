@@ -138,6 +138,24 @@ export const PUSHER_EVENTS_ANDI = {
   GAME_RESET: 'andi:game-reset',
 } as const;
 
+export const PUSHER_CHANNELS_RULETA = {
+  ROOM: (roomCode: string) => `presence-ruleta-${roomCode}`,
+} as const;
+
+export const PUSHER_EVENTS_RULETA = {
+  ROOM_PLAYER_JOINED: 'room:player-joined',
+  ROOM_PLAYER_LEFT: 'room:player-left',
+  ROOM_GAME_STARTING: 'room:game-starting',
+  GAME_STATE_UPDATE: 'game:state-update',
+  GAME_WHEEL_SPUN: 'game:wheel-spun',
+  GAME_LETTER_GUESSED: 'game:letter-guessed',
+  GAME_PUZZLE_SOLVED: 'game:puzzle-solved',
+  GAME_TURN_CHANGED: 'game:turn-changed',
+  GAME_PLAYER_FORFEIT: 'game:player-forfeit',
+  ROOM_CHAT_MESSAGE: 'room:chat-message',
+  ROOM_GAME_ENDED: 'room:game-ended',
+} as const;
+
 export const CACHE_KEYS = {
   GAME_STATE: 'streamer-wars-gamestate',
   TIMER: 'streamer-wars-timer',

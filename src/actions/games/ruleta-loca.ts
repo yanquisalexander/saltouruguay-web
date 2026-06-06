@@ -11,7 +11,15 @@ import {
     getPlayerStats,
     resetSessionScore,
     solvePuzzle,
+    createMultiplayerRoom,
+    joinRoomByCode,
+    leaveRoomByCode,
+    getCurrentRoomSession,
+    startMultiplayerGame,
+    advanceTurn,
+    completeMultiplayerGame,
 } from "@/utils/games/ruleta-loca";
+import { RuletaLocaPusher } from "@/services/ruleta-loca-pusher";
 
 export const ruletaLoca = {
     /**
@@ -234,6 +242,206 @@ export const ruletaLoca = {
             const stats = await getPlayerStats(session.user.id);
 
             return { stats };
+        },
+    }),
+
+    // ─── MULTIPLAYER ROOM ACTIONS ───
+
+    createRoom: defineAction({
+        handler: async (_, { request }) => {
+            const s = await getSession(request);
+            if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
+
+            const result = await createMultiplayerRoom(parseInt(s.user.id));
+            return result;
+        },
+    }),
+
+    joinRoom: defineAction({
+        input: z.object({ roomCode: z.string() }),
+        handler: async ({ roomCode }, { request }) => {
+            const s = await getSession(request);
+            if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
+
+            const result = await joinRoomByCode(roomCode, parseInt(s.user.id));
+
+            await RuletaLocaPusher.playerJoined(
+                roomCode,
+                parseInt(s.user.id),
+                s.user.name || "Anónimo",
+                s.user.image || null
+            );
+
+            return result;
+        },
+    }),
+
+    leaveRoom: defineAction({
+        handler: async (_, { request }) => {
+            const s = await getSession(request);
+            if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
+
+            const room = await getCurrentRoomSession(parseInt(s.user.id));
+            if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en ninguna sala" });
+
+            await RuletaLocaPusher.playerLeft(room.session.roomCode, parseInt(s.user.id));
+
+            return await leaveRoomByCode(room.session.roomCode, parseInt(s.user.id));
+        },
+    }),
+
+    startMultiplayerGame: defineAction({
+        handler: async (_, { request }) => {
+            const s = await getSession(request);
+            if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
+
+            const room = await getCurrentRoomSession(parseInt(s.user.id));
+            if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en ninguna sala" });
+
+            const result = await startMultiplayerGame(room.session.roomCode, parseInt(s.user.id));
+
+            await RuletaLocaPusher.gameStarting(room.session.roomCode, result.phrase, result.session.turnOrder || []);
+            await RuletaLocaPusher.turnChanged(room.session.roomCode, (result.session.turnOrder || [])[0]);
+
+            return result;
+        },
+    }),
+
+    getRoomState: defineAction({
+        handler: async (_, { request }) => {
+            const s = await getSession(request);
+            if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
+
+            return await getCurrentRoomSession(parseInt(s.user.id));
+        },
+    }),
+
+    spinWheelMulti: defineAction({
+        handler: async (_, { request }) => {
+            const s = await getSession(request);
+            if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
+
+            const userId = parseInt(s.user.id);
+            const room = await getCurrentRoomSession(userId);
+            if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
+            if (room.session.status !== "playing") throw new ActionError({ code: "BAD_REQUEST", message: "El juego no está activo" });
+
+            const turnOrder = room.session.turnOrder || [];
+            const currentPlayer = turnOrder[room.session.currentTurnIdx];
+            if (currentPlayer !== userId) throw new ActionError({ code: "BAD_REQUEST", message: "No es tu turno" });
+
+            const segment = spinWheel();
+            let updatedSession = room.session;
+
+            if (segment.type === "bankrupt") {
+                updatedSession = await resetSessionScore(room.session.id);
+            }
+
+            await RuletaLocaPusher.wheelSpun(room.session.roomCode, userId, segment);
+
+            if (segment.type === "lose_turn" || segment.type === "bankrupt") {
+                const advanced = await advanceTurn(room.session.id);
+                const nextPlayer = (advanced?.turnOrder || [])[advanced?.currentTurnIdx || 0];
+                await RuletaLocaPusher.turnChanged(room.session.roomCode, nextPlayer);
+                return { segment, session: advanced, turnChanged: true };
+            }
+
+            return { segment, session: updatedSession, turnChanged: false };
+        },
+    }),
+
+    guessLetterMulti: defineAction({
+        input: z.object({ sessionId: z.number(), letter: z.string().length(1), wheelValue: z.number() }),
+        handler: async ({ sessionId, letter, wheelValue }, { request }) => {
+            const s = await getSession(request);
+            if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
+
+            const userId = parseInt(s.user.id);
+            const room = await getCurrentRoomSession(userId);
+            if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
+            if (room.session.status !== "playing") throw new ActionError({ code: "BAD_REQUEST", message: "El juego no está activo" });
+
+            const turnOrder = room.session.turnOrder || [];
+            const currentPlayer = turnOrder[room.session.currentTurnIdx];
+            if (currentPlayer !== userId) throw new ActionError({ code: "BAD_REQUEST", message: "No es tu turno" });
+
+            const result = await guessLetter(sessionId, letter, wheelValue);
+            if (!result.success) throw new ActionError({ code: "BAD_REQUEST", message: result.error || "Error" });
+
+            const phrase = room.phrase;
+            const solved = phrase ? isPuzzleSolved(phrase.phrase, result.session.guessedLetters || []) : false;
+
+            if (solved) {
+                const completed = await completeMultiplayerGame(sessionId, userId);
+                await RuletaLocaPusher.puzzleSolved(room.session.roomCode, userId, completed.coinsEarned, result.session.guessedLetters || []);
+                await RuletaLocaPusher.gameEnded(room.session.roomCode, userId, completed.scores);
+
+                return {
+                    ...result,
+                    puzzleSolved: true,
+                    coinsEarned: completed.coinsEarned,
+                    session: completed.session,
+                };
+            }
+
+            await RuletaLocaPusher.letterGuessed(
+                room.session.roomCode, userId, letter,
+                result.found, result.positions,
+                result.session.currentScore, result.session.guessedLetters || []
+            );
+
+            if (!result.found) {
+                const advanced = await advanceTurn(sessionId);
+                const nextPlayer = (advanced?.turnOrder || [])[advanced?.currentTurnIdx || 0];
+                await RuletaLocaPusher.turnChanged(room.session.roomCode, nextPlayer);
+
+                return { ...result, puzzleSolved: false, turnChanged: true, session: advanced };
+            }
+
+            return { ...result, puzzleSolved: false, turnChanged: false };
+        },
+    }),
+
+    solvePuzzleMulti: defineAction({
+        input: z.object({ sessionId: z.number(), guess: z.string() }),
+        handler: async ({ sessionId, guess }, { request }) => {
+            const s = await getSession(request);
+            if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
+
+            const userId = parseInt(s.user.id);
+            const room = await getCurrentRoomSession(userId);
+            if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
+
+            const result = await solvePuzzle(sessionId, guess);
+            if (result.success) {
+                const completed = await completeMultiplayerGame(sessionId, userId);
+
+                await RuletaLocaPusher.puzzleSolved(room.session.roomCode, userId, completed.coinsEarned, []);
+                await RuletaLocaPusher.gameEnded(room.session.roomCode, userId, completed.scores);
+
+                return { ...result, session: completed.session, coinsEarned: completed.coinsEarned };
+            }
+
+            const advanced = await advanceTurn(sessionId);
+            const nextPlayer = (advanced?.turnOrder || [])[advanced?.currentTurnIdx || 0];
+            await RuletaLocaPusher.turnChanged(room.session.roomCode, nextPlayer);
+
+            return { success: false, session: advanced, turnChanged: true };
+        },
+    }),
+
+    forfeitMulti: defineAction({
+        handler: async (_, { request }) => {
+            const s = await getSession(request);
+            if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
+
+            const userId = parseInt(s.user.id);
+            const room = await getCurrentRoomSession(userId);
+            if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
+
+            await RuletaLocaPusher.playerForfeit(room.session.roomCode, userId);
+
+            return await leaveRoomByCode(room.session.roomCode, userId);
         },
     }),
 };

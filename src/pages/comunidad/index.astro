@@ -180,7 +180,9 @@ let totalOfMemberCards: number | null = await cache.get("total-of-member-cards")
 
 if (!totalOfMemberCards) {
   totalOfMemberCards = await getTotalOfMemberCards();
-  await cache.set("total-of-member-cards", totalOfMemberCards);
+  if(import.meta.env.PROD) {
+    await cache.set("total-of-member-cards", totalOfMemberCards);
+  }
 }
 
 // --- HELPER ---

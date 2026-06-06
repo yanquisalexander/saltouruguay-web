@@ -5,7 +5,6 @@ import {
     LucidePiggyBank,
     LucideTrophy,
     LucidePawPrint,
-    LucideGamepad2
 } from 'lucide-preact';
 
 interface SidebarProps {
@@ -13,11 +12,11 @@ interface SidebarProps {
 }
 
 const MENU_ITEMS = [
-    { label: "Inicio", href: "/", icon: LucideHome, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-line" },
-    { label: "Comunidad", href: "/comunidad", icon: LucideUsers, color: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/20" },
-    { label: "Banco", href: "/comunidad/banco", icon: LucidePiggyBank, color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
-    { label: "Mascota", href: "/comunidad/mascota", icon: LucidePawPrint, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20" },
-    { label: "Logros", href: "/comunidad/logros", icon: LucideTrophy, color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20" },
+    { label: "Inicio", href: "/", icon: LucideHome, accent: "text-blue-400", bg: "bg-blue-500/10" },
+    { label: "Comunidad", href: "/comunidad", icon: LucideUsers, accent: "text-violet-400", bg: "bg-violet-500/10" },
+    { label: "Banco", href: "/comunidad/banco", icon: LucidePiggyBank, accent: "text-yellow-400", bg: "bg-yellow-500/10" },
+    { label: "Mascota", href: "/comunidad/mascota", icon: LucidePawPrint, accent: "text-pink-400", bg: "bg-pink-500/10" },
+    { label: "Logros", href: "/comunidad/logros", icon: LucideTrophy, accent: "text-green-400", bg: "bg-green-500/10" },
 ];
 
 export default function CommunitySidebar({ mobile }: SidebarProps) {
@@ -27,66 +26,84 @@ export default function CommunitySidebar({ mobile }: SidebarProps) {
         setCurrentPath(window.location.pathname);
     }, []);
 
-    const containerClass = mobile
-        ? "flex flex-row justify-around w-full p-2"
-        : "flex flex-col gap-4 w-20 h-full p-3 border-r border-white/5 bg-[#0a0a0a]";
-
-    return (
-        <nav className={containerClass}>
-            {/* Logo o Espaciador Superior (Solo Desktop) */}
-            {!mobile && (
-                <div className="flex justify-center mb-4 py-2 border-b border-white/5">
-                    <img src="/favicon.svg" alt="Logo" className="w-8 h-8 opacity-80" />
-                </div>
-            )}
-
-            <ul className={`flex ${mobile ? "flex-row w-full justify-around" : "flex-col gap-3"}`}>
+    if (mobile) {
+        return (
+            <nav class="flex justify-around w-full px-2 py-1.5 bg-black/60 backdrop-blur-xl border-t border-white/[0.06]">
                 {MENU_ITEMS.map((item) => {
                     const isActive = item.href === "/"
                         ? currentPath === "/"
                         : currentPath.startsWith(item.href);
 
                     return (
-                        <li key={item.href} className="relative group">
-                            <a
-                                href={item.href}
-                                className={`
-                                    flex items-center justify-center rounded-xl transition-all duration-300 relative overflow-hidden
-                                    ${mobile ? "p-3" : "w-12 h-12 mx-auto"}
-                                    ${isActive
-                                        ? `${item.bg} ${item.color} ${item.border} border shadow-[0_0_15px_rgba(0,0,0,0.3)]`
-                                        : "text-white/40 hover:text-white hover:bg-white/5 border border-transparent"
-                                    }
-                                `}
-                                title={item.label}
-                            >
-                                <item.icon
-                                    size={mobile ? 24 : 22}
-                                    className={`transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`}
-                                    strokeWidth={isActive ? 2.5 : 2}
-                                />
-
-                                {/* Glow Effect on Hover */}
-                                <div className={`absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-current ${item.color}`}></div>
-                            </a>
-
-                            {/* Tooltip (Solo Desktop) */}
-                            {!mobile && (
-                                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-2 py-1 bg-black/90 text-white text-xs font-bold rounded-sm border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 backdrop-blur-md">
-                                    {item.label}
-                                    {/* Flechita del tooltip */}
-                                    <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-black/90"></div>
-                                </div>
-                            )}
-
-                            {/* Active Indicator Bar (Desktop) */}
-                            {!mobile && isActive && (
-                                <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full ${item.color.replace('text-', 'bg-')}`}></div>
-                            )}
-                        </li>
+                        <a
+                            key={item.href}
+                            href={item.href}
+                            class={`
+                                flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-200
+                                ${isActive
+                                    ? `${item.bg} ${item.accent}`
+                                    : 'text-white/30 hover:text-white/60'}
+                            `}
+                        >
+                            <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                            <span class={`text-[9px] font-rubik font-semibold uppercase tracking-wider ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+                                {item.label}
+                            </span>
+                        </a>
                     );
                 })}
-            </ul>
+            </nav>
+        );
+    }
+
+    return (
+        <nav class="flex flex-col w-52 h-full bg-black/40 backdrop-blur-xl border-r border-white/[0.06] relative">
+            {/* Logo */}
+            <div class="flex items-center gap-2.5 px-5 py-5 border-b border-white/[0.06]">
+                <div class="size-8 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
+                    <img src="/favicon.svg" alt="Logo" class="w-5 h-5" />
+                </div>
+                <span class="font-teko text-lg text-white/80 uppercase tracking-wider">Comunidad</span>
+            </div>
+
+            {/* Menu */}
+            <div class="flex-1 flex flex-col gap-1 p-3">
+                {MENU_ITEMS.map((item) => {
+                    const isActive = item.href === "/"
+                        ? currentPath === "/"
+                        : currentPath.startsWith(item.href);
+
+                    return (
+                        <a
+                            key={item.href}
+                            href={item.href}
+                            class={`
+                                relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
+                                ${isActive
+                                    ? `${item.bg} ${item.accent} shadow-sm`
+                                    : 'text-white/40 hover:bg-white/[0.03] hover:text-white/70'}
+                            `}
+                        >
+                            <div class={`flex items-center justify-center size-9 rounded-lg transition-all duration-200 ${isActive ? `${item.bg}` : 'bg-white/[0.04] group-hover:bg-white/[0.06]'}`}>
+                                <item.icon
+                                    size={18}
+                                    strokeWidth={isActive ? 2.5 : 2}
+                                />
+                            </div>
+                            <span class="font-teko text-base tracking-wide">{item.label}</span>
+
+                            {isActive && (
+                                <div class={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full ${item.accent.replace('text-', 'bg-')}`} />
+                            )}
+                        </a>
+                    );
+                })}
+            </div>
+
+            {/* Bottom hint */}
+            <div class="px-5 py-4 border-t border-white/[0.06]">
+                <p class="text-[10px] font-rubik text-white/20 uppercase tracking-wider text-center">Salto Uruguay • 2026</p>
+            </div>
         </nav>
     );
 }
