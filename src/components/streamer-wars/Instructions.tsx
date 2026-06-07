@@ -93,7 +93,7 @@ export const Instructions = ({
                     document.dispatchEvent(new CustomEvent("instructions-ended"));
                     return 0;
                 }
-                playSound({ sound: STREAMER_WARS_SOUNDS.TICK, volume: 1 });
+                playSound({ sound: STREAMER_WARS_SOUNDS.TICK, volume: 0.6 });
                 return prev - 1;
             });
         }, 1000);
