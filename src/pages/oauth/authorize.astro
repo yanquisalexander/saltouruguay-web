@@ -4,6 +4,8 @@ import {
   getApprovedClient,
   getClientRedirectUris,
   validateRedirectUri,
+  hasExistingAuthorization,
+  generateAuthCode,
 } from "@/lib/oauth";
 import { AVAILABLE_SCOPES, SCOPE_META } from "@/lib/oauth/scopes";
 import OAuthLayout from "@/layouts/OAuthLayout.astro";
@@ -57,6 +59,27 @@ if (codeChallenge && codeChallengeMethod !== "S256") {
     "/oauth/error?error=invalid_request&message=Only+S256+supported",
     302,
   );
+}
+
+const alreadyAuthorized = await hasExistingAuthorization({
+  clientId,
+  userId: session.user.id,
+  scopes,
+});
+
+if (alreadyAuthorized) {
+  const code = await generateAuthCode({
+    clientId,
+    userId: session.user.id,
+    scopes,
+    redirectUri,
+    codeChallenge: codeChallenge || undefined,
+    codeChallengeMethod: codeChallengeMethod || undefined,
+  });
+  const url = new URL(redirectUri);
+  url.searchParams.set("code", code);
+  if (state) url.searchParams.set("state", state);
+  return Astro.redirect(url.toString(), 302);
 }
 
 const getScopeMeta = (scope: string) => {

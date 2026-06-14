@@ -417,6 +417,30 @@ export async function revokeToken(token: string): Promise<void> {
         );
 }
 
+// ── User Authorization (consent) ──
+
+export async function hasExistingAuthorization(params: {
+    clientId: string;
+    userId: number;
+    scopes: string[];
+}): Promise<boolean> {
+    const now = new Date();
+    const tokens = await db.query.SUSOAuthTokensTable.findMany({
+        where: and(
+            eq(SUSOAuthTokensTable.clientId, params.clientId),
+            eq(SUSOAuthTokensTable.userId, params.userId),
+            eq(SUSOAuthTokensTable.revoked, false),
+        ),
+        columns: { scopes: true, refreshTokenExpiresAt: true },
+    });
+
+    return tokens.some(token => {
+        if (token.refreshTokenExpiresAt && token.refreshTokenExpiresAt < now) return false;
+        const existingScopes = new Set(token.scopes);
+        return params.scopes.every(s => existingScopes.has(s));
+    });
+}
+
 // ── Cleanup expired codes ──
 
 export async function cleanupExpiredCodes(): Promise<void> {
