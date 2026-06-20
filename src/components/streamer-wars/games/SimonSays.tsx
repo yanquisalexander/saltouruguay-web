@@ -217,7 +217,7 @@ export const SimonSays = ({
 
     return (
         <>
-            <Instructions duration={15_000}
+            <Instructions duration={30_000}
                 controls={[
                     {
                         keys: ["LEFT_CLICK"],
