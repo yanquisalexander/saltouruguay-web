@@ -174,10 +174,10 @@ export const SimonSays = ({
     };
 
     useEffect(() => {
-        if (gameIsPlaying && gameState.pattern.length > 0) {
+        if (gameIsPlaying && gameState.pattern.length > 0 && !isCompleted) {
             showPattern(gameState.pattern);
         }
-    }, [gameState.pattern, gameIsPlaying, showPattern]);
+    }, [gameState.pattern.length, gameState.currentRound, gameIsPlaying, showPattern, isCompleted]);
 
     useEffect(() => {
         setRivalInputs({});
@@ -350,8 +350,9 @@ export const SimonSays = ({
                                     {isCompleted && (
                                         <div className="mt-6 bg-green-900/20 border border-green-900/50 rounded-lg p-3 text-center">
                                             <p className="font-teko text-lg tracking-wider text-green-400 uppercase">
-                                                Nivel Completado
+                                                Ronda completada
                                             </p>
+                                            <p className="text-sm font-teko tracking-wider text-green-300">¡Esperando a los demás jugadores!</p>
                                         </div>
                                     )}
                                 </div>
