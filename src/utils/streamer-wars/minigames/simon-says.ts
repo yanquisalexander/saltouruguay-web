@@ -34,8 +34,8 @@ for _, player in pairs(state.currentPlayers) do
 end
 
 if allCompleted then
-    local time = redis.call('TIME')
-    math.randomseed(tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000))
+    local seed = tonumber(ARGV[2])
+    if seed then math.randomseed(seed) end
     local colors = { 'red', 'blue', 'green', 'yellow' }
     state.currentRound = state.currentRound + 1
     state.pattern[#state.pattern + 1] = colors[math.random(#colors)]
@@ -75,15 +75,15 @@ end
 
 state.status = 'waiting'
 redis.call('SET', KEYS[1], cjson.encode(state))
-return cjson.encode(state)
+return cjson.encode({ state = state })
 `;
 
 const LUA_ADVANCE_ROUND = `
 local state = cjson.decode(redis.call('GET', KEYS[1]))
 if not state then return cjson.encode({ error = 'no_state' }) end
 
-local time = redis.call('TIME')
-math.randomseed(tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000))
+local seed = tonumber(ARGV[1])
+if seed then math.randomseed(seed) end
 local colors = { 'red', 'blue', 'green', 'yellow' }
 state.pattern[#state.pattern + 1] = colors[math.random(#colors)]
 state.currentRound = state.currentRound + 1
@@ -91,7 +91,7 @@ state.completedPlayers = {}
 state.status = 'playing'
 
 redis.call('SET', KEYS[1], cjson.encode(state))
-return cjson.encode(state)
+return cjson.encode({ state = state })
 `;
 
 export const getGameState = async (): Promise<SimonSaysGameState> => {
@@ -125,7 +125,7 @@ export const startGame = async (teams: Record<string, { players: number[] }>) =>
                 const chosenPlayer = data.players.length > 0 ? getRandomItem(data.players) : null;
                 return [team, chosenPlayer];
             })
-            .filter(([, chosenPlayer]) => chosenPlayer !== null)
+            .filter(([, chosenPlayer]) => chosenPlayer != null)
     );
 
     const patternFirstColor = getRandomItem(COLORS);
@@ -152,7 +152,7 @@ export const completePattern = async (playerNumber: number) => {
     const result = await cache.eval<{ error?: string; state?: SimonSaysGameState; allCompleted?: boolean }>(
         LUA_COMPLETE_PATTERN,
         [CACHE_KEY_SIMON_SAYS],
-        [playerNumber]
+        [playerNumber, Date.now()]
     );
 
     if (result.error) {
@@ -199,6 +199,8 @@ export const completePattern = async (playerNumber: number) => {
     } catch (error) {
         console.error("Error sending Discord webhook:", error);
     }
+
+    return newGameState;
 };
 
 export const patternFailed = async (playerNumber: number) => {
@@ -248,7 +250,7 @@ export const advanceToNextRoundForCurrentPlayers = async () => {
     const result = await cache.eval<{ error?: string; state?: SimonSaysGameState }>(
         LUA_ADVANCE_ROUND,
         [CACHE_KEY_SIMON_SAYS],
-        []
+        [Date.now()]
     );
 
     if (result.error) {
@@ -284,7 +286,7 @@ export const nextRoundWithOtherPlayers = async () => {
     const result = await cache.eval<{ error?: string; state?: SimonSaysGameState }>(
         LUA_NEXT_ROUND_WITH_OTHER_PLAYERS,
         [CACHE_KEY_SIMON_SAYS],
-        []
+        [Date.now()]
     );
 
     if (result.error) {
@@ -302,8 +304,8 @@ const LUA_NEXT_ROUND_WITH_OTHER_PLAYERS = `
 local state = cjson.decode(redis.call('GET', KEYS[1]))
 if not state then return cjson.encode({ error = 'no_state' }) end
 
-local time = redis.call('TIME')
-math.randomseed(tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000))
+local seed = tonumber(ARGV[1])
+if seed then math.randomseed(seed) end
 
 local colors = { 'red', 'blue', 'green', 'yellow' }
 

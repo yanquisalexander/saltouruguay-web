@@ -3,7 +3,6 @@ import type { SimonSaysGameState } from "@/utils/streamer-wars";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
 import { useState, useEffect, useCallback, useRef } from "preact/hooks";
-import type Pusher from "pusher-js";
 import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { SimonSaysButtons, colors } from "./SimonSaysButtons";
@@ -14,11 +13,9 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const SimonSays = ({
     session,
-    pusher,
     players
 }: {
     session: Session;
-    pusher: Pusher;
     players: { id: number; name: string; avatar: string; playerNumber: number }[];
 }) => {
 
@@ -78,7 +75,7 @@ export const SimonSays = ({
         };
     }, []);
 
-    const simonSaysChannel = pusher?.subscribe(PUSHER_CHANNELS.SIMON_SAYS);
+    const simonSaysChannel = pusherService.subscribe(PUSHER_CHANNELS.SIMON_SAYS);
 
     useEffect(() => {
         simonSaysChannel?.bind(PUSHER_EVENTS_SIMON.GAME_STATE, (newGameState: SimonSaysGameState) => {

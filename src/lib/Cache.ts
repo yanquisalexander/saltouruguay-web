@@ -88,7 +88,15 @@ class Cache {
      */
     async eval<T = unknown>(script: string, keys: string[], args: (string | number)[]): Promise<T> {
         try {
-            return await this.client.eval(script, keys.length, ...keys, ...args) as T;
+            const result = await this.client.eval(script, keys.length, ...keys, ...args);
+            if (typeof result === "string") {
+                try {
+                    return JSON.parse(result) as T;
+                } catch {
+                    return result as unknown as T;
+                }
+            }
+            return result as T;
         } catch (err) {
             console.error(`Redis EVAL error:`, err);
             throw err;

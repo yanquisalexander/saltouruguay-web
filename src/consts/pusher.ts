@@ -1,7 +1,7 @@
 export const PUSHER_CHANNELS = {
   GLOBAL: 'streamer-wars',
   PRESENCE: 'presence-streamer-wars',
-  SIMON_SAYS: 'streamer-wars.simon-says',
+  SIMON_SAYS: 'presence-streamer-wars-simon-says',
   CINEMATIC: 'streamer-wars-cinematic',
   AUTO_ELIMINATION: 'auto-elimination',
   DM: (a: number, b: number) => `private-saltogram-dm-${Math.min(a, b)}-${Math.max(a, b)}`,
