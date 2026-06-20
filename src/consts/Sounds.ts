@@ -54,6 +54,7 @@ export const STREAMER_WARS_SOUNDS = {
     PET_ITEM_PURCHASE: 'pet-shop',
     PET_MOUTH_OPEN: 'pet-mouth-open',
     JUGADOR_AISLADO: 'jugador_aislado',
+    SWOOSH: 'swoosh',
 }
 
 

@@ -2,7 +2,7 @@ import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import type { SimonSaysGameState } from "@/utils/streamer-wars";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
-import { useState, useEffect, useCallback } from "preact/hooks";
+import { useState, useEffect, useCallback, useRef } from "preact/hooks";
 import type Pusher from "pusher-js";
 import { toast } from "sonner";
 import { Instructions } from "../Instructions";
@@ -38,6 +38,16 @@ export const SimonSays = ({
     const [waitingNextRound, setWaitingNextRound] = useState(false);
     const [showingPattern, setShowingPattern] = useState(false);
     const [rivalInputs, setRivalInputs] = useState<{ [key: number]: string[] }>({});
+
+    const gameStateRef = useRef(gameState);
+    const waitingNextRoundRef = useRef(false);
+    const showingPatternRef = useRef(false);
+    const playerPatternRef = useRef<string[]>([]);
+
+    useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
+    useEffect(() => { waitingNextRoundRef.current = waitingNextRound; }, [waitingNextRound]);
+    useEffect(() => { showingPatternRef.current = showingPattern; }, [showingPattern]);
+    useEffect(() => { playerPatternRef.current = playerPattern; }, [playerPattern]);
 
     // Variables derivadas
     const playerNumber = session.user.streamerWarsPlayerNumber;
@@ -125,29 +135,35 @@ export const SimonSays = ({
     }, []);
 
     const handlePlayerInput = async (color: string) => {
-        if (waitingNextRound || showingPattern || isEliminated) return;
+        if (waitingNextRoundRef.current || showingPatternRef.current) return;
+
+        const currentGameState = gameStateRef.current;
+        const pn = session.user.streamerWarsPlayerNumber!;
+        if (currentGameState.eliminatedPlayers?.includes(pn)) return;
 
         playSound({ sound: STREAMER_WARS_SOUNDS.CLICK_SIMON_SAYS });
-        const updatedPattern = [...playerPattern, color];
+        const updatedPattern = [...playerPatternRef.current, color];
+        playerPatternRef.current = updatedPattern;
         setPlayerPattern(updatedPattern);
 
-        simonSaysChannel.trigger(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, {
-            playerNumber: session.user.streamerWarsPlayerNumber!,
+        simonSaysChannel?.trigger(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, {
+            playerNumber: pn,
             color
         });
 
-        if (color !== gameState.pattern[updatedPattern.length - 1]) {
+        if (color !== currentGameState.pattern[updatedPattern.length - 1]) {
             playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
             await actions.games.simonSays.patternFailed();
             return;
         }
 
-        if (updatedPattern.length === gameState.pattern.length) {
+        if (updatedPattern.length === currentGameState.pattern.length) {
             playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT });
             setWaitingNextRound(true);
             const randomDelay = Math.floor(Math.random() * 1500) + 500;
             await sleep(randomDelay);
             await actions.games.simonSays.completePattern();
+            playerPatternRef.current = [];
             setPlayerPattern([]);
         }
     };
@@ -201,7 +217,7 @@ export const SimonSays = ({
 
     return (
         <>
-            <Instructions duration={10000}
+            <Instructions duration={15_000}
                 controls={[
                     {
                         keys: ["LEFT_CLICK"],

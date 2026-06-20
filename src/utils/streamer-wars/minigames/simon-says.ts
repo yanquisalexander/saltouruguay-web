@@ -34,6 +34,8 @@ for _, player in pairs(state.currentPlayers) do
 end
 
 if allCompleted then
+    local time = redis.call('TIME')
+    math.randomseed(tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000))
     local colors = { 'red', 'blue', 'green', 'yellow' }
     state.currentRound = state.currentRound + 1
     state.pattern[#state.pattern + 1] = colors[math.random(#colors)]
@@ -80,6 +82,8 @@ const LUA_ADVANCE_ROUND = `
 local state = cjson.decode(redis.call('GET', KEYS[1]))
 if not state then return cjson.encode({ error = 'no_state' }) end
 
+local time = redis.call('TIME')
+math.randomseed(tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000))
 local colors = { 'red', 'blue', 'green', 'yellow' }
 state.pattern[#state.pattern + 1] = colors[math.random(#colors)]
 state.currentRound = state.currentRound + 1
@@ -163,11 +167,6 @@ export const completePattern = async (playerNumber: number) => {
     });
 
     await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.GAME_STATE, newGameState);
-
-    if (result.allCompleted) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.GAME_STATE, newGameState);
-    }
 
     try {
         await sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
@@ -281,36 +280,64 @@ export const advanceToNextRoundForCurrentPlayers = async () => {
 
 export const nextRoundWithOtherPlayers = async () => {
     const cache = createCache();
-    const gameState = await getGameState();
 
-    const newCurrentPlayers = Object.fromEntries(
-        Object.entries(gameState.teams)
-            .map(([team, data]) => {
-                const availablePlayers = data.players.filter(
-                    (player) =>
-                        !gameState.playerWhoAlreadyPlayed.includes(player) &&
-                        !gameState.eliminatedPlayers.includes(player)
-                );
-                return availablePlayers.length > 0 ? [team, getRandomItem(availablePlayers)] : null;
-            })
-            .filter((entry): entry is [string, number] => entry !== null)
-    ) as Record<string, number>;
+    const result = await cache.eval<{ error?: string; state?: SimonSaysGameState }>(
+        LUA_NEXT_ROUND_WITH_OTHER_PLAYERS,
+        [CACHE_KEY_SIMON_SAYS],
+        []
+    );
 
-    const newPattern = [getRandomItem(COLORS)];
+    if (result.error) {
+        console.error(`nextRoundWithOtherPlayers error: ${result.error}`);
+        return;
+    }
 
-    const newGameState: SimonSaysGameState = {
-        ...gameState,
-        currentRound: 1,
-        currentPlayers: newCurrentPlayers,
-        pattern: newPattern,
-        completedPlayers: [],
-        status: "playing",
-    };
+    const newGameState = result.state!;
 
-    await cache.set(CACHE_KEY_SIMON_SAYS, newGameState);
     await pusher.trigger(PUSHER_CHANNELS.SIMON_SAYS, PUSHER_EVENTS_SIMON.GAME_STATE, newGameState);
     return newGameState;
 };
+
+const LUA_NEXT_ROUND_WITH_OTHER_PLAYERS = `
+local state = cjson.decode(redis.call('GET', KEYS[1]))
+if not state then return cjson.encode({ error = 'no_state' }) end
+
+local time = redis.call('TIME')
+math.randomseed(tonumber(time[1]) * 1000 + math.floor(tonumber(time[2]) / 1000))
+
+local colors = { 'red', 'blue', 'green', 'yellow' }
+
+local newCurrentPlayers = {}
+for team, data in pairs(state.teams) do
+    local available = {}
+    for _, player in ipairs(data.players) do
+        local skip = false
+        for _, ap in ipairs(state.playerWhoAlreadyPlayed) do
+            if ap == player then skip = true; break end
+        end
+        if not skip then
+            for _, ep in ipairs(state.eliminatedPlayers) do
+                if ep == player then skip = true; break end
+            end
+        end
+        if not skip then
+            table.insert(available, player)
+        end
+    end
+    if #available > 0 then
+        newCurrentPlayers[team] = available[math.random(#available)]
+    end
+end
+
+state.currentRound = 1
+state.currentPlayers = newCurrentPlayers
+state.pattern = { colors[math.random(#colors)] }
+state.completedPlayers = {}
+state.status = 'playing'
+
+redis.call('SET', KEYS[1], cjson.encode(state))
+return cjson.encode({ state = state })
+`;
 
 const LUA_EXTERNAL_ELIMINATION = `
 local state = cjson.decode(redis.call('GET', KEYS[1]))

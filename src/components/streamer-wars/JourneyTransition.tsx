@@ -1,9 +1,11 @@
 import { CDN_PREFIX, playSound, playSoundWithReverb, stopAllSounds, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
-import { cloneElement, type JSX } from "preact";
+import { cloneElement, type JSX, type RefObject } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 import type { Players } from "../admin/streamer-wars/Players";
 import { actions } from "astro:actions";
+import gsap from "gsap/dist/gsap";
+import { LogoWithSponsorsReveal } from "./LogoWithSponsorsReveal";
 
 const CreditsRoll = ({ duration, players }: { duration: number, players?: Players[] }) => {
     const MODERATORS = ["TitoLeproso", "BradTerra", "xDiegoUY", "tapitabal", "Charly7"]
@@ -108,14 +110,21 @@ const CreditsRoll = ({ duration, players }: { duration: number, players?: Player
 }
 
 
+interface TextAndCompRefs {
+    textRef: RefObject<HTMLDivElement | null>;
+    componentRef: RefObject<HTMLDivElement | null>;
+}
+
 interface ScriptItem {
     text?: string;
     audioPath?: string;
     duration: number;
     component?: JSX.Element | ((props: any) => JSX.Element);
+    fullScreen?: boolean;
     omitReverb?: boolean;
     volume?: number;
     execute?: () => void;
+    timeline?: (tl: gsap.core.Timeline, refs: TextAndCompRefs) => void;
 }
 
 interface JourneyTransitionProps {
@@ -155,11 +164,11 @@ let TODAY_ELIMINATEDS: number[] = []
 
 // Ejemplos de definición (ajusta texto, audioPath y duration según necesites)
 export const JOURNEY_START_SCRIPT: ScriptItem[] = [
-    { duration: 3200, omitReverb: true },
-    { text: "Bienvenidos, jugadores finalistas.", audioPath: "day3-start-1", duration: 4000 },
+    /*{ duration: 3200, omitReverb: true },
+     { text: "Bienvenidos, jugadores finalistas.", audioPath: "day3-start-1", duration: 4000 },
     { text: "En el comienzo, ustedes eran 50 jugadores.", audioPath: "day3-start-2", duration: 4000 },
-    { text: "Streamers, llenos de deudas, con muchas horas frente a la pantalla, y con sueños de grandeza.", audioPath: "day3-start-3", duration: 7000 },
-    {
+    { text: "Streamers, llenos de deudas, con muchas horas frente a la pantalla, y con sueños de grandeza.", audioPath: "day3-start-3", duration: 7000 }, */
+    /* {
         text: "Hoy, solo quedan 16 de ustedes.", audioPath: "day3-start-4", duration: 4000,
         component: <ReverseCountUp target={16} initial={50} duration={3000} />
     },
@@ -167,14 +176,10 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
     { text: "Vosotros tenéis suerte de haber llegado hasta aquí.", audioPath: "day3-start-6", duration: 4000 },
     {
         text: "Pero solo uno de ustedes será el vencedor.", audioPath: "day3-start-7", duration: 3800,
-        /* 
-            List of players
-        */
+    
         component: ({ players }: { players: Players[] }) => {
             return (
-                /* 
-                    Gradient on laterals from transparent to black
-                */
+              
                 <ul class="flex w-full max-w-4xl mb-12 overflow-scroll gap-x-4 flex-wrap justify-center mt-4" style={
                     {
                         scrollbarWidth: "none",
@@ -198,9 +203,9 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
 
 
     { text: "Mucha suerte, jugadores, la necesitarán.", audioPath: "day3-start-8", duration: 4800 },
+ 
 
-
-    {
+    /* {
         text: "Atención, jugadores!. Sigan las instrucciones cuidadosamente. Estamos a punto de comenzar. ", audioPath: "day2-start-10", duration: 8000, execute: () => {
             setTimeout(() => {
                 playSound({ sound: STREAMER_WARS_SOUNDS.NOTIFICATION, volume: 0.5 });
@@ -215,6 +220,11 @@ export const JOURNEY_START_SCRIPT: ScriptItem[] = [
 
             }, 8200);
         }
+    }, */
+    {
+        component: <LogoWithSponsorsReveal />,
+        duration: 6000,
+        fullScreen: true
     }
 ];
 
@@ -303,117 +313,137 @@ const PRELOAD_SOUNDS = () => {
 }
 
 export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTransitionProps) => {
-    // Selecciona el script según la fase
     const script: ScriptItem[] = phase === "start" ? JOURNEY_START_SCRIPT : JOURNEY_FINISH_SCRIPT;
 
-    // Precarga los sonidos
     useEffect(() => {
         PRELOAD_SOUNDS();
     }, []);
 
-    // Estado para controlar la visibilidad global (para desmontar el componente)
     const [isVisible, setIsVisible] = useState(true);
-    // Estado para la clase de fade in/out
-    const [fadeClass, setFadeClass] = useState("animate-fade-in");
-    // Estado para llevar el índice del item actual (para mostrar el subtítulo)
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [remainingTime, setRemainingTime] = useState(0);
 
+    // Credits roll es para el último dia
+    const isCreditsRoll = false// = phase === "finish" && currentIndex === script.length - 1;
 
-    const totalDuration = script.reduce((acc, item) => acc + item.duration, 0);
-    const [remainingTime, setRemainingTime] = useState(totalDuration / 1000);
-
-    const isCreditsRoll = phase === "finish" && currentIndex === script.length - 1;
-
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            setRemainingTime((prev) => {
-                const next = prev - 1;
-                if (next <= 0) {
-                    // @ts-ignore
-                    clearInterval(intervalId);
-                    return 0;
-                }
-                return next;
-            });
-        }, 1000);
-
-        return () => {
-            // @ts-ignore
-            clearInterval(intervalId);
-        };
-    }, []);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const textRef = useRef<HTMLDivElement>(null);
+    const componentRef = useRef<HTMLDivElement>(null);
+    const tlRef = useRef<gsap.core.Timeline | null>(null);
 
     useEffect(() => {
         if (executeOnMount) {
             executeOnMount();
         }
 
-        let timeoutId: number | undefined;
+        if (tlRef.current) {
+            tlRef.current.kill();
+            tlRef.current = null;
+        }
 
-        const playItem = (index: number) => {
-            if (index >= script.length) {
-                // Cuando se terminan los ítems: inicia el fade out y despacha el evento
-                setFadeClass("animate-fade-out opacity-0");
-                timeoutId = window.setTimeout(() => {
-                    document.dispatchEvent(new CustomEvent("journey-transition-ended"));
-                    setIsVisible(false);
-                }, 500); // 500 ms para que se vea la animación de fade out
-                return;
+        const bgAudioFile = phase === "start" ? "day3-bg-start" : "day3-bg-finish";
+        // playSound({ sound: `scripts/${bgAudioFile}`, volume: 0.28 });
+
+        const firstDelay =
+            phase === "start" ? START_SCRIPT_FIRST_AUDIO_DELAY : FINISH_SCRIPT_FIRST_AUDIO_DELAY;
+
+        const tl = gsap.timeline({
+            paused: true,
+            onUpdate: () => {
+                setRemainingTime(Math.max(0, (tl.totalDuration() - tl.time()) * 1000));
+            },
+            onComplete: () => {
+                document.dispatchEvent(new CustomEvent("journey-transition-ended"));
+                setIsVisible(false);
+            },
+        });
+
+        tl.set(textRef.current, { opacity: 0, y: 20 });
+        tl.set(componentRef.current, { opacity: 0, scale: 0.95 });
+
+        if (firstDelay > 0) {
+            tl.to({}, { duration: firstDelay / 1000 });
+        }
+
+        script.forEach((item, i) => {
+            const isLastFinishItem = phase === "finish" && i === script.length - 1;
+
+            tl.call(() => setCurrentIndex(i));
+
+            if (isLastFinishItem) {
+                tl.set(componentRef.current, { opacity: 1, scale: 1 });
             }
 
-            // Si es el primer sonido, esperar el retraso definido antes de comenzar
-            if (index === 0) {
-                const bgAudioFile = phase === "start" ? "day3-bg-start" : "day3-bg-finish";
-                playSound({ sound: `scripts/${bgAudioFile}`, volume: 0.28 });
-                const firstDelay =
-                    phase === "start" ? START_SCRIPT_FIRST_AUDIO_DELAY : FINISH_SCRIPT_FIRST_AUDIO_DELAY;
-                timeoutId = window.setTimeout(() => {
-                    setCurrentIndex(index);
-                    const item = script[index];
-                    if (item.audioPath) {
-                        if (item.omitReverb) {
-                            playSound({ sound: `scripts/${item.audioPath}`, volume: item.volume || 1 });
-                        } else {
-                            playSoundWithReverb({ sound: `scripts/${item.audioPath}`, volume: item.volume || 1, reverbAmount: phase === "start" ? 0.2 : 0.5 });
-                        }
+            tl.call(() => {
+                if (item.audioPath) {
+                    if (item.omitReverb) {
+                        playSound({ sound: `scripts/${item.audioPath}`, volume: item.volume || 1 });
+                    } else {
+                        playSoundWithReverb({
+                            sound: `scripts/${item.audioPath}`,
+                            volume: item.volume || 1,
+                            reverbAmount: phase === "start" ? 0.2 : 0.5,
+                        });
                     }
-                    // Agregar la ejecución si existe
-                    if (item.execute) {
-                        item.execute();
-                    }
-                    timeoutId = window.setTimeout(() => {
-                        playItem(index + 1);
-                    }, item.duration);
-                }, firstDelay);
-                return;
-            }
-
-
-            // Para los siguientes ítems (índice > 0), se procede normalmente:
-            setCurrentIndex(index);
-            const item = script[index];
-            if (item.audioPath) {
-                if (item.omitReverb) {
-                    playSound({ sound: `scripts/${item.audioPath}`, volume: 1 });
-                } else {
-                    playSoundWithReverb({ sound: `scripts/${item.audioPath}`, volume: 1 });
                 }
+                if (item.execute) {
+                    item.execute();
+                }
+            });
+            tl.to({}, { duration: 0.05 });
+
+            if (item.timeline) {
+                item.timeline(tl, { textRef, componentRef });
+            } else if (item.text || (item.component && !isLastFinishItem)) {
+                if (item.text) {
+                    tl.to(textRef.current, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" });
+                }
+                if (item.component && !isLastFinishItem) {
+                    tl.to(componentRef.current, { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" }, item.text ? "<" : undefined);
+                }
+
+                const exitDuration = item.fullScreen ? 1.3 : 0.3;
+                const hold = Math.max(0.1, (item.duration - 350 - exitDuration * 1000) / 1000);
+                tl.to({}, { duration: hold });
+
+                if (item.text) {
+                    tl.to(textRef.current, { opacity: 0, y: -15, duration: 0.3, ease: "power2.in" });
+                }
+                if (item.component && !isLastFinishItem) {
+                    if (item.fullScreen) {
+                        tl.call(() => {
+                            const container = componentRef.current;
+                            if (!container) return;
+                            const sponsors = container.querySelector<HTMLElement>('.sponsors-row');
+                            const icons = container.querySelector<HTMLElement>('.icons-row');
+                            const exitTl = gsap.timeline({ paused: true });
+                            if (sponsors) exitTl.to(sponsors, { opacity: 0, y: 20, duration: 0.4, ease: "power2.in" });
+                            if (icons) exitTl.to(icons, { opacity: 0, scale: 0.7, duration: 0.5, ease: "power2.in" }, "+=0.15");
+                            exitTl.to(container, { opacity: 0, duration: 0.5, ease: "power2.in" }, "+=0.2");
+                            exitTl.play();
+                        });
+                        tl.to({}, { duration: 1.3 });
+                    } else {
+                        tl.to(componentRef.current, { opacity: 0, scale: 0.95, duration: 0.3, ease: "power2.in" }, item.text ? "<" : undefined);
+                    }
+                }
+            } else {
+                tl.to({}, { duration: (item.duration - 50) / 1000 });
             }
+        });
 
-            if (item.execute) {
-                item.execute();
-            }
+        tl.to(containerRef.current, { opacity: 0, duration: 0.5 });
 
-            timeoutId = window.setTimeout(() => {
-                playItem(index + 1);
-            }, item.duration);
-        };
-
-
-        playItem(0);
+        tlRef.current = tl;
+        setRemainingTime(tl.totalDuration() * 1000);
+        tl.play();
 
         return () => {
-            if (timeoutId) clearTimeout(timeoutId);
+            if (tlRef.current) {
+                stopAllSounds();
+                tlRef.current.kill();
+                tlRef.current = null;
+            }
         };
     }, [phase, script, executeOnMount]);
 
@@ -423,8 +453,12 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
             if (e.code === "Space") {
                 e.preventDefault();
                 stopAllSounds();
-                document.dispatchEvent(new CustomEvent("journey-transition-ended"));
-                setIsVisible(false);
+                if (tlRef.current) {
+                    tlRef.current.progress(1);
+                } else {
+                    document.dispatchEvent(new CustomEvent("journey-transition-ended"));
+                    setIsVisible(false);
+                }
             }
         };
         addEventListener("keydown", handler);
@@ -433,15 +467,15 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
 
     if (!isVisible) return null;
 
-    const minutes = Math.floor(remainingTime / 60);
-    const seconds = Math.floor(remainingTime % 60);
-
-
+    const minutes = Math.floor(remainingTime / 60000);
+    const seconds = Math.floor((remainingTime % 60000) / 1000);
 
     return (
         <div
-            className={`fixed inset-0 bg-black ${isCreditsRoll ? "" : "flex"} min-h-screen h-full flex-col justify-center items-center z-9000 transition-opacity duration-500 ${fadeClass}`}
-        >             <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300 z-10001">
+            ref={containerRef}
+            className={`fixed inset-0 bg-black animate-fade-in ${isCreditsRoll ? "" : "flex"} min-h-screen h-full flex-col justify-center items-center z-9000`}
+        >
+            <div className="fixed font-mono top-0 right-8 mt-6 text-lg text-gray-300 z-10001">
                 {minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}
             </div>
             {import.meta.env.DEV && (
@@ -449,48 +483,56 @@ export const JourneyTransition = ({ phase, executeOnMount, players }: JourneyTra
                     Presiona espacio para omitir
                 </div>
             )}
-            <div className="p-8 backdrop-blur-xs text-white text-center">
-                <header>
-                    <h1 className="text-3xl font-mono font-bold bg-linear-to-r from-white to-gray-300 text-transparent bg-clip-text">
-                        {phase === "start" ? `Día #0${CURRENT_DAY}` : `Día #0${CURRENT_DAY} finalizado`}
-                    </h1>
-                </header>
-                {script[currentIndex]?.component && (() => {
-                    return (
-                        <div className={`mt-8 ${isCreditsRoll ? "fixed inset-0 z-9999 h-screen w-full" : ""}`}>
-                            {/* 
-                            Pass props to the component here
-                            */}
-                            {typeof script[currentIndex].component === "function"
+            {script[currentIndex]?.fullScreen ? (
+                <div
+                    ref={componentRef}
+                    className="fixed inset-0 z-10020 h-screen w-full"
+                >
+                    {script[currentIndex]?.component && (() => {
+                        return typeof script[currentIndex].component === "function"
+                            ? cloneElement(script[currentIndex].component({ players }), { key: currentIndex })
+                            : cloneElement(script[currentIndex].component as JSX.Element, { key: currentIndex });
+                    })()}
+                </div>
+            ) : (
+                <div className="p-8 backdrop-blur-xs text-white text-center">
+                    <header>
+                        <h1 className="text-3xl font-mono font-bold bg-linear-to-r from-white to-gray-300 text-transparent bg-clip-text">
+                            {phase === "start" ? `Día #0${CURRENT_DAY}` : `Día #0${CURRENT_DAY} finalizado`}
+                        </h1>
+                    </header>
+                    <div
+                        ref={componentRef}
+                        className={`mt-8 ${isCreditsRoll ? "fixed inset-0 z-9999 h-screen w-full" : ""}`}
+                    >
+                        {script[currentIndex]?.component && (() => {
+                            return typeof script[currentIndex].component === "function"
                                 ? cloneElement(script[currentIndex].component({ players }), { key: currentIndex })
-                                : cloneElement(script[currentIndex].component as JSX.Element, { key: currentIndex })}
-                        </div>
-                    );
-                })()}
-            </div>
-            {
-                script[currentIndex]?.text && (
-                    <div className="absolute bottom-56 w-max max-w-full md:max-w-[60ch] px-4 font-mono text-center bg-neutral-900 text-white text-lg">
-                        {script[currentIndex]?.text}
+                                : cloneElement(script[currentIndex].component as JSX.Element, { key: currentIndex });
+                        })()}
                     </div>
-                )
-            }
+                </div>
+            )}
+            {!script[currentIndex]?.fullScreen && (
+                <>
+                    <div ref={textRef} className="absolute bottom-56 w-max max-w-full md:max-w-[60ch] px-4 font-mono text-center bg-neutral-900 text-white text-lg">
+                        {script[currentIndex]?.text || ''}
+                    </div>
 
-            {
-                !isCreditsRoll && (
-                    <h2 className="z-[9998!important] text-2xl fixed bottom-16 inset-x-0 font-atomic text-center mx-auto text-neutral-500 select-none -skew-y-6">
-                        <span className="tracking-wider">Guerra de Streamers</span>
-                    </h2>
-                )
-            }
+                    {!isCreditsRoll && (
+                        <h2 className="z-[9998!important] text-2xl fixed bottom-16 inset-x-0 font-atomic text-center mx-auto text-neutral-500 select-none -skew-y-6">
+                            <span className="tracking-wider">Guerra de Streamers</span>
+                        </h2>
+                    )}
 
-
-            <span className="fixed bottom-32 text-5xl opacity-30 rotate-32 select-none right-16 font-atomic-extras">
-                &#x0055;
-            </span>
-            <span className="fixed bottom-48 text-5xl opacity-30 rotate-[-16deg] select-none left-16 font-atomic-extras">
-                &#x0050;
-            </span>
+                    <span className="fixed bottom-32 text-5xl opacity-30 rotate-32 select-none right-16 font-atomic-extras">
+                        &#x0055;
+                    </span>
+                    <span className="fixed bottom-48 text-5xl opacity-30 rotate-[-16deg] select-none left-16 font-atomic-extras">
+                        &#x0050;
+                    </span>
+                </>
+            )}
         </div>
     );
 };
