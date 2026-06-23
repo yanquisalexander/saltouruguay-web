@@ -6,11 +6,10 @@
 
   /* ── Config ─────────────────────────────────────────────── */
 
-  var script = document.currentScript ||
-    (function () {
-      var scripts = document.querySelectorAll('script[data-client-id]');
-      return scripts[scripts.length - 1] || null;
-    })();
+  var script = (function () {
+    var scripts = document.querySelectorAll('script[data-client-id]');
+    return scripts[scripts.length - 1] || document.currentScript || null;
+  })();
 
   if (!script) {
     console.error('[SUS OneTap] No se encontró el script con data-client-id');
@@ -28,9 +27,11 @@
     callback: script.getAttribute('data-callback') || null,
   };
 
-  if (!cfg.clientId || !cfg.redirectUri) {
-    console.error('[SUS OneTap] data-client-id y data-redirect-uri son obligatorios');
-    return;
+  if (!cfg.customAuth) {
+    if (!cfg.clientId || !cfg.redirectUri) {
+      console.error('[SUS OneTap] data-client-id y data-redirect-uri son obligatorios');
+      return;
+    }
   }
 
   var SDK_ORIGIN = new URL(script.src).origin;
