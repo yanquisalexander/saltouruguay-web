@@ -55,6 +55,22 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const { request, redirect, url } = context;
     const pathname = url.pathname;
 
+    // CORS para AuthJS session (soporta preflight)
+    if (pathname === "/api/auth/session") {
+        if (request.method === "OPTIONS") {
+            const headers = new Headers();
+            headers.set("Access-Control-Allow-Origin", "*");
+            headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+            headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+            return new Response(null, { status: 204, headers });
+        }
+        const response = await next();
+        response.headers.set("Access-Control-Allow-Origin", "*");
+        response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+        response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        return response;
+    }
+
     // 2. FILTRO RÁPIDO DE ARCHIVOS PÚBLICOS
     if (PUBLIC_FILE_EXTS.test(pathname)) {
         return next();
