@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUS OneTap</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: transparent; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <script>
+    (function () {
+      var SUS_ORIGIN = location.origin;
+      var ALLOWED_PARENT = SUS_ORIGIN;
+
+      function sendToParent(data) {
+        if (window.parent) {
+          window.parent.postMessage(Object.assign({ __sus_tap: true }, data), ALLOWED_PARENT);
+        }
+      }
+
+      async function checkSession() {
+        try {
+          var res = await fetch('/api/auth/session', {
+            credentials: 'include',
+            headers: { 'Accept': 'application/json' }
+          });
+          if (!res.ok) return sendToParent({ user: null });
+          var data = await res.json();
+          if (data && data.user) {
+            sendToParent({
+              user: {
+                name: data.user.name || null,
+                image: data.user.image || null
+              }
+            });
+          } else {
+            sendToParent({ user: null });
+          }
+        } catch {
+          sendToParent({ user: null });
+        }
+      }
+
+      // Check session on load
+      checkSession();
+
+      // Listen for re-check requests from parent
+      window.addEventListener('message', function (e) {
+        if (e.origin !== ALLOWED_PARENT) return;
+        if (e.data && e.data.__sus_tap_cmd === 'recheck') {
+          checkSession();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

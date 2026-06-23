@@ -71,6 +71,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
         return response;
     }
 
+    // CORS para SDK files (/sdk/*.js, /sdk/*.html)
+    if (pathname.startsWith("/sdk/")) {
+        if (request.method === "OPTIONS") {
+            const headers = new Headers();
+            headers.set("Access-Control-Allow-Origin", "*");
+            headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+            headers.set("Access-Control-Allow-Headers", "Content-Type");
+            return new Response(null, { status: 204, headers });
+        }
+        const response = await next();
+        response.headers.set("Access-Control-Allow-Origin", "*");
+        response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+        return response;
+    }
+
     // 2. FILTRO RÁPIDO DE ARCHIVOS PÚBLICOS
     if (PUBLIC_FILE_EXTS.test(pathname)) {
         return next();
