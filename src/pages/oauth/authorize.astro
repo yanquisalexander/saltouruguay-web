@@ -24,6 +24,7 @@ const scope = Astro.url.searchParams.get("scope");
 const state = Astro.url.searchParams.get("state");
 const codeChallenge = Astro.url.searchParams.get("code_challenge");
 const codeChallengeMethod = Astro.url.searchParams.get("code_challenge_method");
+const forceVerify = Astro.url.searchParams.get("force_verify") === "true";
 
 if (!clientId || !redirectUri || !responseType || !scope) {
   return Astro.redirect("/oauth/error?error=invalid_request", 302);
@@ -67,7 +68,7 @@ const alreadyAuthorized = await hasExistingAuthorization({
   scopes,
 });
 
-if (alreadyAuthorized) {
+if (alreadyAuthorized && !forceVerify) {
   const code = await generateAuthCode({
     clientId,
     userId: session.user.id,
