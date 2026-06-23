@@ -28,6 +28,16 @@ export default defineConfig({
             },
         }),
     ],
+    cookies: {
+        sessionToken: {
+            options: {
+                httpOnly: true,
+                sameSite: import.meta.env.PROD ? "none" : "lax",
+                path: "/",
+                secure: import.meta.env.PROD,
+            },
+        },
+    },
     callbacks: {
         signIn: async ({ account, profile }) => {
             if (account?.provider === "twitch" && !profile?.email) {
