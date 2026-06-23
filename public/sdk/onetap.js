@@ -116,7 +116,7 @@
           user: user ? { name: user.name, image: user.image } : null,
           authorizeUrl: url.toString(),
         });
-      } catch (_) {}
+      } catch (_) { }
     }
 
     window.location.href = url.toString();
@@ -230,7 +230,7 @@
       textOverflow: 'ellipsis', lineHeight: '1.3',
     });
     var subtitle = el('div', { fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '1px' });
-    subtitle.textContent = 'Sesión activa detectada';
+    subtitle.textContent = 'Sesión activa';
     nameWrap.appendChild(els.name);
     nameWrap.appendChild(subtitle);
     header.appendChild(els.avatar);
