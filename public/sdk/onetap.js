@@ -79,9 +79,8 @@
   function createFrame() {
     frameEl = document.createElement('iframe');
     frameEl.src = FRAME_URL;
-    // FIXED: allow-same-origin + allow-scripts juntos permite escapar el sandbox.
-    // El frame solo necesita allow-scripts para postMessage.
-    frameEl.sandbox = 'allow-scripts';
+    // FIXED: allow-same-origin + allow-scripts 
+    frameEl.sandbox = 'allow-scripts allow-same-origin';
     frameEl.style.cssText = 'position:absolute;width:0;height:0;border:0;opacity:0;pointer-events:none;overflow:hidden;';
     document.documentElement.appendChild(frameEl);
   }
