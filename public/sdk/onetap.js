@@ -22,6 +22,7 @@
     redirectUri: script.getAttribute('data-redirect-uri'),
     scope: script.getAttribute('data-scope') || 'openid profile',
     usePkce: script.getAttribute('data-use-pkce') !== 'false',
+    customAuth: script.getAttribute('data-custom-auth') === 'true',
     auto: script.getAttribute('data-auto') === 'true',
     position: script.getAttribute('data-position') || 'bottom-right',
     callback: script.getAttribute('data-callback') || null,
@@ -34,6 +35,17 @@
 
   var SDK_ORIGIN = new URL(script.src).origin;
   var FRAME_URL = SDK_ORIGIN + '/sdk/onetap-frame.html';
+
+  /* ── Assets ──────────────────────────────────────────────── */
+
+  var ARROW_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+  var SPINNER_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation: sus-spin .8s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>';
+
+  function addSpinnerStyle() {
+    var s = document.createElement('style');
+    s.textContent = '@keyframes sus-spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(s);
+  }
 
   /* ── Device detection ───────────────────────────────────── */
 
@@ -48,6 +60,16 @@
   var frameEl = null;
   var ready = false;
   var els = {};
+
+  /* ── Popup management (PKCE mode) ──────────────────────── */
+
+  var currentPopup = null;
+  var popupPollId = null;
+  var currentVerifier = null;
+  var popupInProgress = false;
+  var POLL_MIN = 2000;
+  var POLL_MAX = 10000;
+  var AUTH_EVENT_TIMEOUT = 8000;
 
   /* ── Iframe session check ───────────────────────────────── */
 
@@ -69,6 +91,44 @@
     if (e.origin !== SDK_ORIGIN) return;
     if (!e.data || e.data.__sus_tap !== true) return;
 
+    // Popup message: popup is ready for verifier
+    if (e.data.__sus_tap_popup_ready && currentPopup) {
+      currentPopup.postMessage({
+        __sus_tap_verifier: currentVerifier || ''
+      }, SDK_ORIGIN);
+      return;
+    }
+
+    // Popup message: token received
+    if (e.data.__sus_tap_token) {
+      cleanupPopup();
+      if (cfg.callback && typeof window[cfg.callback] === 'function') {
+        try {
+          window[cfg.callback]({
+            user: user ? { name: user.name, image: user.image } : null,
+            accessToken: e.data.__sus_tap_token
+          });
+        } catch (_) {}
+      }
+      return;
+    }
+
+    // Popup message: error from popup
+    if (e.data.__sus_tap_popup_error) {
+      cleanupPopup();
+      if (cfg.callback && typeof window[cfg.callback] === 'function') {
+        try {
+          window[cfg.callback]({
+            user: null,
+            error: e.data.__sus_tap_popup_error,
+            error_description: e.data.error_description || ''
+          });
+        } catch (_) {}
+      }
+      return;
+    }
+
+    // Session check message from iframe
     var prev = user;
     user = e.data.user || null;
 
@@ -97,9 +157,24 @@
     return b64url(arr).slice(0, len);
   }
 
-  /* ── OAuth redirect (server-side, sin PKCE) ─────────────── */
+  async function sha256Challenge(verifier) {
+    var data = new TextEncoder().encode(verifier);
+    var hash = await crypto.subtle.digest('SHA-256', data);
+    return b64url(hash);
+  }
+
+  /* ── OAuth flow ───────────────────────────────────────── */
 
   function redirectToAuth() {
+    if (cfg.usePkce) {
+      return redirectPkcePopup();
+    }
+    redirectServerSide();
+  }
+
+  /* ── Server-side redirect (modo 1) ────────────────────── */
+
+  function redirectServerSide() {
     var url = new URL(SDK_ORIGIN + '/oauth/authorize');
     url.searchParams.set('client_id', cfg.clientId);
     url.searchParams.set('redirect_uri', cfg.redirectUri);
@@ -122,7 +197,155 @@
     window.location.href = url.toString();
   }
 
-  /* ── Widget sync ────────────────────────────────────────── */
+  /* ── PKCE popup (modo 2) ───────────────────────────────── */
+
+  function redirectPkcePopup() {
+    if (popupInProgress) return; // Prevent rapid double-clicks
+    popupInProgress = true;
+
+    // Cancel any existing popup
+    cleanupPopup();
+
+    // Generate PKCE pair
+    var verifier = randomString(43);
+    currentVerifier = verifier;
+
+    sha256Challenge(verifier).then(function (challenge) {
+      popupInProgress = false;
+
+      var popupUrl = new URL(SDK_ORIGIN + '/sdk/pkce-callback.html');
+      popupUrl.searchParams.set('mode', 'pkce');
+      popupUrl.searchParams.set('client_id', cfg.clientId);
+      popupUrl.searchParams.set('challenge', challenge);
+      popupUrl.searchParams.set('scope', cfg.scope);
+
+      // Notify callback before opening popup
+      if (cfg.callback && typeof window[cfg.callback] === 'function') {
+        try {
+          window[cfg.callback]({
+            user: user ? { name: user.name, image: user.image } : null,
+            authorizeUrl: popupUrl.toString(),
+          });
+        } catch (_) {}
+      }
+
+      // Open popup
+      currentPopup = window.open(
+        popupUrl.toString(),
+        'sus_pkce_popup',
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      );
+
+      // Detect if popup was blocked
+      if (!currentPopup || currentPopup.closed || typeof currentPopup.closed === 'undefined') {
+        cleanupPopup();
+        // Fallback to redirect (modo 1)
+        redirectServerSide();
+        return;
+      }
+
+      // Start polling for popup closure (Firebase pattern)
+      pollPopupClosed();
+    }).catch(function () {
+      popupInProgress = false;
+      cleanupPopup();
+    });
+  }
+
+  /* ── Popup lifecycle (Firebase pattern) ────────────────── */
+
+  function pollPopupClosed() {
+    if (!currentPopup) return;
+
+    if (currentPopup.closed) {
+      // Grace period: popup might be in redirect, wait before
+      // declaring it closed by user
+      popupPollId = setTimeout(function () {
+        if (!currentPopup || currentPopup.closed) {
+          cleanupPopup();
+          if (cfg.callback && typeof window[cfg.callback] === 'function') {
+            try {
+              window[cfg.callback]({
+                user: null,
+                error: 'popup_closed_by_user'
+              });
+            } catch (_) {}
+          }
+        }
+      }, AUTH_EVENT_TIMEOUT);
+      return;
+    }
+
+    var delay = Math.min(POLL_MAX, Math.max(POLL_MIN, 2000));
+    popupPollId = setTimeout(pollPopupClosed, delay);
+  }
+
+  function cleanupPopup() {
+    popupInProgress = false;
+    if (popupPollId) {
+      clearTimeout(popupPollId);
+      popupPollId = null;
+    }
+    if (currentPopup && !currentPopup.closed) {
+      try { currentPopup.close(); } catch (_) {}
+    }
+    currentPopup = null;
+    currentVerifier = null;
+  }
+
+  /* ── Custom auth helper ────────────────────────────────── */
+
+  function setCtaLoading(loading) {
+    var btns = [];
+    if (els.ctaBtn) btns.push({ btn: els.ctaBtn, text: els.btnText });
+    if (els.sheetCtaBtn) btns.push({ btn: els.sheetCtaBtn, text: els.sheetBtnText });
+
+    for (var i = 0; i < btns.length; i++) {
+      var b = btns[i];
+      if (loading) {
+        b.btn.disabled = true;
+        b.btn.style.cursor = 'wait';
+        b.btn.style.opacity = '0.7';
+        if (b.text) b.text.textContent = 'Cargando...';
+        // Replace last child (arrow SVG) with spinner
+        var last = b.btn.lastElementChild;
+        if (last && last.tagName === 'svg') {
+          last.outerHTML = SPINNER_SVG;
+        }
+      } else {
+        b.btn.disabled = false;
+        b.btn.style.cursor = 'pointer';
+        b.btn.style.opacity = '1';
+        var name = (user && user.name) || 'Usuario';
+        if (b.text) b.text.textContent = 'Continuar como ' + name;
+        // Replace spinner with arrow
+        var last = b.btn.lastElementChild;
+        if (last && last.tagName === 'svg') {
+          last.outerHTML = ARROW_SVG;
+        }
+      }
+    }
+  }
+
+  function handleCtaClick() {
+    if (cfg.customAuth && cfg.callback && typeof window[cfg.callback] === 'function') {
+      setCtaLoading(true);
+      try {
+        var result = window[cfg.callback]({
+          user: user ? { name: user.name, image: user.image } : null,
+        });
+        if (result && typeof result.then === 'function') {
+          result.then(function () { setCtaLoading(false); }).catch(function () { setCtaLoading(false); });
+        } else {
+          setTimeout(function () { setCtaLoading(false); }, 2000);
+        }
+      } catch (_) {
+        setCtaLoading(false);
+      }
+      return;
+    }
+    redirectToAuth();
+  }
 
   function syncWidget() {
     if (!ready) return;
@@ -250,7 +473,7 @@
     });
     els.btnText = el('span');
     ctaBtn.appendChild(els.btnText);
-    ctaBtn.insertAdjacentHTML('beforeend', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>');
+    ctaBtn.insertAdjacentHTML('beforeend', ARROW_SVG);
     ctaBtn.onmouseenter = function () {
       ctaBtn.style.background = 'linear-gradient(135deg, #a566ff 0%, #9146FF 100%)';
       ctaBtn.style.boxShadow = '0 4px 20px rgba(145,70,255,0.5)';
@@ -259,7 +482,8 @@
       ctaBtn.style.background = 'linear-gradient(135deg, #9146FF 0%, #772ce8 100%)';
       ctaBtn.style.boxShadow = '0 2px 12px rgba(145,70,255,0.3)';
     };
-    ctaBtn.onclick = function (e) { e.stopPropagation(); redirectToAuth(); };
+    ctaBtn.onclick = function (e) { e.stopPropagation(); handleCtaClick(); };
+    els.ctaBtn = ctaBtn;
 
     var footer = el('div', {
       textAlign: 'center', marginTop: '12px',
@@ -379,8 +603,9 @@
     });
     els.sheetBtnText = el('span');
     ctaBtn.appendChild(els.sheetBtnText);
-    ctaBtn.insertAdjacentHTML('beforeend', '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>');
-    ctaBtn.onclick = function () { redirectToAuth(); };
+    ctaBtn.insertAdjacentHTML('beforeend', ARROW_SVG);
+    ctaBtn.onclick = function () { handleCtaClick(); };
+    els.sheetCtaBtn = ctaBtn;
     ctaWrap.appendChild(ctaBtn);
 
     var policy = el('div', {
@@ -419,6 +644,7 @@
   /* ── Init ───────────────────────────────────────────────── */
 
   function init() {
+    addSpinnerStyle();
     if (isMobile()) {
       buildMobile();
     } else {

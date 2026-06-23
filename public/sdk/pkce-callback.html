@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUS OneTap — PKCE</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0c0c0e;
+      color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(145,70,255,0.2);
+      border-top-color: #9146FF;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .text { font-size: 14px; color: rgba(255,255,255,.5); }
+    .error { color: #ff4444; font-size: 13px; display: none; margin-top: 8px; text-align: center; max-width: 80vw; }
+  </style>
+</head>
+<body>
+  <div class="loader">
+    <div class="spinner"></div>
+    <div class="text" id="status">Iniciando sesión...</div>
+    <div class="error" id="error"></div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var SDK_ORIGIN = location.origin;
+      var VERIFIER_TIMEOUT = 10000;
+      var AUTO_CLOSE_DELAY = 500;
+
+      var params = new URLSearchParams(location.search);
+      var mode = params.get('mode');
+
+      /* ── Crypto helpers ─────────────────────────────────── */
+
+      function b64url(buf) {
+        var bytes = new Uint8Array(buf);
+        var bin = '';
+        for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      }
+
+      function randomString(len) {
+        var arr = new Uint8Array(Math.ceil(len * 3 / 4) + 4);
+        crypto.getRandomValues(arr);
+        return b64url(arr).slice(0, len);
+      }
+
+      /* ── Mode 1: initial PKCE setup (before auth redirect) ─ */
+
+      if (mode === 'pkce') {
+        return initPkce();
+      }
+
+      /* ── Mode 2: callback (after auth redirect) ──────────── */
+
+      if (mode === 'callback') {
+        return handleCallback();
+      }
+
+      showError('Modo inválido: ' + mode);
+
+      /* ── PKCE init ───────────────────────────────────────── */
+
+      function initPkce() {
+        var clientId = params.get('client_id');
+        var challenge = params.get('challenge');
+        var scope = params.get('scope') || 'openid profile';
+
+        if (!clientId || !challenge) {
+          sendToParent({ __sus_tap_popup_error: 'missing_params' });
+          showError('Faltan parámetros de configuración');
+          return;
+        }
+
+        // Store client_id for callback phase
+        sessionStorage.setItem('__sus_pkce_cid', clientId);
+
+        // Generate CSRF state
+        var state = randomString(32);
+        sessionStorage.setItem('__sus_pkce_s', state);
+
+        // Request verifier from parent
+        requestVerifier(function (verifier) {
+          // Store verifier in sessionStorage (survives redirect)
+          sessionStorage.setItem('__sus_pkce_v', verifier);
+
+          // Build auth URL
+          var authUrl = new URL(SDK_ORIGIN + '/oauth/authorize');
+          authUrl.searchParams.set('client_id', clientId);
+          authUrl.searchParams.set('redirect_uri', SDK_ORIGIN + '/sdk/pkce-callback.html?mode=callback');
+          authUrl.searchParams.set('response_type', 'code');
+          authUrl.searchParams.set('scope', scope);
+          authUrl.searchParams.set('code_challenge', challenge);
+          authUrl.searchParams.set('code_challenge_method', 'S256');
+          authUrl.searchParams.set('state', state);
+
+          // Redirect to auth server
+          setStatus('Redirigiendo...');
+          window.location.href = authUrl.toString();
+        });
+      }
+
+      function requestVerifier(callback) {
+        var timedOut = false;
+        var timeout = setTimeout(function () {
+          timedOut = true;
+          sendToParent({ __sus_tap_popup_error: 'verifier_timeout' });
+          showError('Tiempo de espera agotado');
+        }, VERIFIER_TIMEOUT);
+
+        function onMessage(e) {
+          if (timedOut) return;
+          // Accept verifier from any origin — the parent may be on
+          // a different domain. The verifier is a one-time random
+          // value, so accepting it from any origin is safe.
+          if (e.data && e.data.__sus_tap_verifier) {
+            clearTimeout(timeout);
+            window.removeEventListener('message', onMessage);
+            callback(e.data.__sus_tap_verifier);
+          }
+        }
+
+        window.addEventListener('message', onMessage);
+
+        // Tell parent we're ready and need the verifier
+        sendToParent({ __sus_tap_popup_ready: true });
+      }
+
+      /* ── Callback handler ─────────────────────────────────── */
+
+      function handleCallback() {
+        var code = params.get('code');
+        var returnedState = params.get('state');
+        var authError = params.get('error');
+        var authErrorDesc = params.get('error_description');
+
+        if (authError) {
+          sendToParent({ __sus_tap_popup_error: authError, error_description: authErrorDesc || '' });
+          showError((authErrorDesc || authError));
+          return;
+        }
+
+        if (!code) {
+          sendToParent({ __sus_tap_popup_error: 'no_code' });
+          showError('No se recibió código de autorización');
+          return;
+        }
+
+        // Validate CSRF state
+        var savedState = sessionStorage.getItem('__sus_pkce_s');
+        if (savedState && returnedState !== savedState) {
+          sendToParent({ __sus_tap_popup_error: 'invalid_state' });
+          showError('Error de seguridad: estado inválido');
+          return;
+        }
+
+        // Retrieve verifier
+        var verifier = sessionStorage.getItem('__sus_pkce_v');
+        if (!verifier) {
+          sendToParent({ __sus_tap_popup_error: 'missing_verifier' });
+          showError('Verifier no encontrado');
+          return;
+        }
+
+        // Retrieve client_id
+        var clientId = sessionStorage.getItem('__sus_pkce_cid');
+        if (!clientId) {
+          sendToParent({ __sus_tap_popup_error: 'missing_client_id' });
+          showError('Client ID no encontrado');
+          return;
+        }
+
+        // Cleanup sessionStorage
+        sessionStorage.removeItem('__sus_pkce_v');
+        sessionStorage.removeItem('__sus_pkce_s');
+        sessionStorage.removeItem('__sus_pkce_cid');
+
+        // Exchange code for token
+        setStatus('Obteniendo token...');
+        exchangeCode(code, clientId, verifier);
+      }
+
+      function exchangeCode(code, clientId, verifier) {
+        var body = new URLSearchParams();
+        body.set('grant_type', 'authorization_code');
+        body.set('code', code);
+        body.set('redirect_uri', SDK_ORIGIN + '/sdk/pkce-callback.html?mode=callback');
+        body.set('client_id', clientId);
+        body.set('code_verifier', verifier);
+
+        fetch(SDK_ORIGIN + '/oauth/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString()
+        })
+        .then(function (res) {
+          if (!res.ok) {
+            return res.json().then(function (data) {
+              throw new Error(data.error_description || data.error || 'HTTP ' + res.status);
+            });
+          }
+          return res.json();
+        })
+        .then(function (data) {
+          // Send token to parent
+          sendToParent({
+            __sus_tap_token: {
+              access_token: data.access_token,
+              token_type: data.token_type,
+              expires_in: data.expires_in,
+              refresh_token: data.refresh_token || null,
+              scope: data.scope
+            }
+          });
+
+          // Close popup after brief delay
+          setTimeout(function () { window.close(); }, AUTO_CLOSE_DELAY);
+        })
+        .catch(function (err) {
+          sendToParent({ __sus_tap_popup_error: 'token_exchange_failed', error_description: err.message });
+          showError('Error al obtener token: ' + err.message);
+        });
+      }
+
+      /* ── Helpers ──────────────────────────────────────────── */
+
+      function sendToParent(data) {
+        if (window.opener) {
+          window.opener.postMessage(Object.assign({ __sus_tap: true }, data), '*');
+        }
+      }
+
+      function setStatus(msg) {
+        var el = document.getElementById('status');
+        if (el) el.textContent = msg;
+      }
+
+      function showError(msg) {
+        var el = document.getElementById('error');
+        if (el) {
+          el.textContent = msg;
+          el.style.display = 'block';
+        }
+        var spinner = document.querySelector('.spinner');
+        if (spinner) spinner.style.display = 'none';
+      }
+
+    })();
+  </script>
+</body>
+</html>
