@@ -61,18 +61,23 @@ export const POST: APIRoute = async ({ request }) => {
                 return json({ error: "invalid_request" }, 400);
             }
 
-            // Validate redirect URI
-            const allowedUris = await getClientRedirectUris(client.id);
-            log("allowed redirect URIs", allowedUris);
-            if (!validateRedirectUri(redirectUri, allowedUris)) {
-                log("redirect URI not allowed");
-                return json({ error: "invalid_grant", error_description: "Invalid redirect URI" }, 400);
+            // Look up auth code to check if PKCE was used
+            const authCodeRecord = await getAuthCodeRecord(code, clientId);
+            log("authCodeRecord", { found: !!authCodeRecord, hasChallenge: !!authCodeRecord?.codeChallenge });
+
+            // PKCE: redirect URI is validated by matching the auth code, no pre-registration needed
+            // Non-PKCE: must match a registered redirect URI
+            if (!authCodeRecord?.codeChallenge) {
+                const allowedUris = await getClientRedirectUris(client.id);
+                log("allowed redirect URIs", allowedUris);
+                if (!validateRedirectUri(redirectUri, allowedUris)) {
+                    log("redirect URI not allowed");
+                    return json({ error: "invalid_grant", error_description: "Invalid redirect URI" }, 400);
+                }
             }
 
             // PKCE: if code challenge was used, no client_secret required
             // Otherwise, validate client_secret
-            const authCodeRecord = await getAuthCodeRecord(code, clientId);
-            log("authCodeRecord", { found: !!authCodeRecord, hasChallenge: !!authCodeRecord?.codeChallenge });
             if (authCodeRecord?.codeChallenge) {
                 // Public client: no secret needed, PKCE handles it
             } else {
