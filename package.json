@@ -35,6 +35,7 @@
     "@fontsource/anton": "^5.1.0",
     "@fontsource/press-start-2p": "^5.2.7",
     "@midudev/tailwind-animations": "^0.1.0",
+    "@neondatabase/serverless": "^1.1.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@tailwindcss/typography": "^0.5.15",
     "@tailwindcss/vite": "^4.3.0",

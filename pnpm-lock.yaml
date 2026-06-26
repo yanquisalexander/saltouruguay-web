@@ -77,6 +77,9 @@ importers:
       '@midudev/tailwind-animations':
         specifier: ^0.1.0
         version: 0.1.0(tailwindcss@4.3.0)
+      '@neondatabase/serverless':
+        specifier: ^1.1.0
+        version: 1.1.0
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(react@19.1.0)
@@ -157,7 +160,7 @@ importers:
         version: 16.4.7
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.2(@opentelemetry/api@1.9.0)(@types/pg@8.11.11)(pg@8.14.1)
+        version: 0.45.2(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.11)(pg@8.14.1)
       editorjs-html:
         specifier: ^4.0.5
         version: 4.0.5
@@ -2102,6 +2105,10 @@ packages:
     resolution: {integrity: sha512-Xedqc4uNo56x8snhM5dDHvIc+hahQ2jQhciBg9PF+sET1mJJFCvzglu9vzX/KkgN1qepG4vsUcYPnxf3H7ndyw==}
     peerDependencies:
       tailwindcss: ^3.0.0
+
+  '@neondatabase/serverless@1.1.0':
+    resolution: {integrity: sha512-r3ZZhRjEcfEdKIZnoB1RusNgvHuaBRqfCzV4Gi+5A9yUX0S4HTws/ASWqt13wL4y4I+0rqsWGdA2w7EQXHi3+Q==}
+    engines: {node: '>=19.0.0'}
 
   '@open-wc/dedupe-mixin@1.4.0':
     resolution: {integrity: sha512-Sj7gKl1TLcDbF7B6KUhtvr+1UCxdhMbNY5KxdU5IfMFWqL8oy1ZeAcCANjoB1TL0AJTcPmcCFsCbHf8X2jGDUA==}
@@ -7854,6 +7861,8 @@ snapshots:
     dependencies:
       tailwindcss: 4.3.0
 
+  '@neondatabase/serverless@1.1.0': {}
+
   '@open-wc/dedupe-mixin@1.4.0': {}
 
   '@opentelemetry/api@1.9.0': {}
@@ -9573,8 +9582,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.45.2(@opentelemetry/api@1.9.0)(@types/pg@8.11.11)(pg@8.14.1):
+  drizzle-orm@0.45.2(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.11)(pg@8.14.1):
     optionalDependencies:
+      '@neondatabase/serverless': 1.1.0
       '@opentelemetry/api': 1.9.0
       '@types/pg': 8.11.11
       pg: 8.14.1
