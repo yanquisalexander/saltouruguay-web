@@ -45,6 +45,7 @@ const MIN_FISH_TIMER = 5;
 const MIN_KEY_CHANGE_INTERVAL = 1500;
 const ROUND_TRANSITION_DELAY = 2000;
 const WRONG_KEY_PENALTY = 5; // Castigo de 5% por pulsar tecla incorrecta
+const OVERTIME_DURATION = 3; // Segundos extra cuando el pez llega al 100%
 
 // ============= HELPER FUNCTIONS =============
 
@@ -94,11 +95,13 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
     const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set()); // Solo para visuales
     const [difficulty, setDifficulty] = useState<DifficultyConfig>(INITIAL_DIFFICULTY);
     const [showWarning, setShowWarning] = useState(false);
+    const [overtimeRemaining, setOvertimeRemaining] = useState(0);
 
     const gameLoopRef = useRef<number | null>(null);
     const keyChangeTimeoutRef = useRef<number | null>(null);
     const lastFrameTimeRef = useRef<number>(0);
     const isPlayingRef = useRef(false);
+    const overtimeStartRef = useRef<number | null>(null);
 
     // ============= KEY HANDLING (SPAM LOGIC) =============
 
@@ -181,6 +184,8 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
         setActiveKeys(getRandomKeys(roundDifficulty.numberOfKeys));
         setPressedKeys(new Set());
         setShowWarning(false);
+        setOvertimeRemaining(0);
+        overtimeStartRef.current = null;
         setGameStatus('playing');
         isPlayingRef.current = true;
         lastFrameTimeRef.current = performance.now();
@@ -240,6 +245,20 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
                 return Math.min(100, prev + increment);
             });
 
+            // 3. Overtime countdown
+            if (overtimeStartRef.current !== null) {
+                const elapsed = (currentTime - overtimeStartRef.current) / 1000;
+                const remaining = Math.max(0, OVERTIME_DURATION - elapsed);
+                setOvertimeRemaining(remaining);
+
+                if (remaining <= 0) {
+                    // Overtime expired — eliminate
+                    overtimeStartRef.current = null;
+                    handleElimination();
+                    return;
+                }
+            }
+
             gameLoopRef.current = requestAnimationFrame(gameLoop);
         };
 
@@ -250,7 +269,7 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
                 cancelAnimationFrame(gameLoopRef.current);
             }
         };
-    }, [gameStatus, difficulty]);
+    }, [gameStatus, difficulty, handleElimination]);
 
     // Check win/lose conditions
     useEffect(() => {
@@ -261,17 +280,13 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
             return;
         }
 
-        // Si la barra llega a 0, ¿pierdes inmediatamente o solo pierdes si se acaba el tiempo?
-        // En este estilo de juego, llegar a 0 suele ser solo un revés, la derrota es el tiempo.
-        // Pero si quieres que perder la barra sea eliminación, descomenta esto:
-        /*
-        if (playerProgress <= 0) {
-             // Opcional: Game Over por perder la caña
-        }
-        */
-
         if (fishProgress >= 100 && playerProgress < 100) {
-            handleElimination();
+            // Start overtime if not already started
+            if (overtimeStartRef.current === null) {
+                overtimeStartRef.current = performance.now();
+                playSound({ sound: STREAMER_WARS_SOUNDS.FISHING_WARNING, volume: 0.6 });
+                toast.warning("¡El pez llegó! Tenés 3 segundos para ganar.", { position: "bottom-center", duration: 3000 });
+            }
             return;
         }
 
@@ -279,7 +294,7 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
             setShowWarning(true);
             playSound({ sound: STREAMER_WARS_SOUNDS.FISHING_WARNING, volume: 0.5 });
         }
-    }, [playerProgress, fishProgress, gameStatus, showWarning, handleRoundComplete, handleElimination]);
+    }, [playerProgress, fishProgress, gameStatus, showWarning, handleRoundComplete]);
 
     // Start next round logic
     useEffect(() => {
@@ -405,21 +420,36 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
                 {/* --- Fish Timer (Opponent) --- */}
                 <div className="w-full max-w-2xl mb-8 z-10">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-mono text-orange-300">🐟 El pez está llegando...</span>
+                        {overtimeRemaining > 0 ? (
+                            <span className="text-sm font-mono text-red-400">🐟 ¡El pez llegó! Ganalo rápido</span>
+                        ) : (
+                            <span className="text-sm font-mono text-orange-300">🐟 El pez está llegando...</span>
+                        )}
 
-                        <span className="text-sm font-mono text-orange-300">{Math.ceil((100 - fishProgress) / (100 / difficulty.fishTimerDuration))}s</span>
+                        {overtimeRemaining > 0 ? (
+                            <span className="text-sm font-mono text-red-400 font-bold">{overtimeRemaining.toFixed(1)}s</span>
+                        ) : (
+                            <span className="text-sm font-mono text-orange-300">{Math.ceil((100 - fishProgress) / (100 / difficulty.fishTimerDuration))}s</span>
+                        )}
 
                     </div>
-                    <div className={`h-6 bg-gray-800 rounded-full overflow-hidden border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${showWarning ? 'animate-pulse' : ''}`}>
+                    <div className={`h-6 bg-gray-800 rounded-full overflow-hidden border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${(showWarning || overtimeRemaining > 0) ? 'animate-pulse' : ''}`}>
                         <div
-                            className={`h-full transition-all duration-100 ${fishProgress >= 80 ? 'bg-red-600' : 'bg-orange-500'}`}
+                            className={`h-full transition-all duration-100 ${overtimeRemaining > 0 ? 'bg-red-700' : fishProgress >= 80 ? 'bg-red-600' : 'bg-orange-500'}`}
                             style={{ width: `${fishProgress}%` }}
                         />
                     </div>
                 </div>
 
                 {/* --- Game Status Visuals --- */}
-                {gameStatus === 'playing' && (
+                {gameStatus === 'playing' && overtimeRemaining > 0 && (
+                    <div className="text-center mb-4 z-10 animate-pulse">
+                        <p className="text-red-400 font-press-start-2p text-sm">
+                            ¡OVERTIME! {overtimeRemaining.toFixed(1)}s
+                        </p>
+                    </div>
+                )}
+                {gameStatus === 'playing' && overtimeRemaining <= 0 && (
                     <div className="text-center mb-4 z-10 animate-pulse">
                         <p className="text-yellow-300 font-press-start-2p text-sm">
                             ¡PULSA RÁPIDO!

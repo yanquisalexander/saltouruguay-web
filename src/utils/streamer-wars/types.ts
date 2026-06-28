@@ -91,6 +91,7 @@ export interface FishingGameState {
     status: 'waiting' | 'active' | 'ended';
     eliminatedPlayers: number[]; // Player numbers that have been eliminated
     startedAt?: number;
+    maxEliminations?: number; // When reached, game auto-ends and remaining players are saved
 }
 
 // And I Challenge Game Types

@@ -1,6 +1,7 @@
 import { games } from "@/utils/streamer-wars";
 import { ActionError, defineAction } from "astro:actions";
 import { getSession } from "auth-astro/server";
+import { z } from "astro:schema";
 
 export const fishingGame = {
     getGameState: defineAction({
@@ -11,6 +12,9 @@ export const fishingGame = {
     }),
 
     startGame: defineAction({
+        input: z.object({
+            maxEliminations: z.number().int().positive().optional(),
+        }),
         async handler(_, { request }) {
             const session = await getSession(request);
 
@@ -21,7 +25,7 @@ export const fishingGame = {
                 });
             }
 
-            const gameState = await games.fishing.startGame();
+            const gameState = await games.fishing.startGame(_.maxEliminations);
             return { gameState };
         },
     }),

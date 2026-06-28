@@ -1245,13 +1245,14 @@ export const games = {
         /**
          * Start the fishing game
          */
-        startGame: async (): Promise<FishingGameState> => {
+        startGame: async (maxEliminations?: number): Promise<FishingGameState> => {
             const cache = createCache();
 
             const newGameState: FishingGameState = {
                 status: 'active',
                 eliminatedPlayers: [],
                 startedAt: Date.now(),
+                ...(maxEliminations && maxEliminations > 0 ? { maxEliminations } : {}),
             };
 
             await cache.set(CACHE_KEY_FISHING, newGameState);
@@ -1265,7 +1266,7 @@ export const games = {
         /**
          * Record a player elimination (called when a player fails)
          */
-        recordElimination: async (playerNumber: number): Promise<{ success: boolean; error?: string }> => {
+        recordElimination: async (playerNumber: number): Promise<{ success: boolean; error?: string; autoEnded?: boolean }> => {
             const cache = createCache();
             const gameState = await games.fishing.getGameState();
 
@@ -1296,6 +1297,12 @@ export const games = {
             await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_FISHING.PLAYER_ELIMINATED, {
                 playerNumber,
             });
+
+            // Auto-end game if maxEliminations reached
+            if (gameState.maxEliminations && eliminatedPlayers.length >= gameState.maxEliminations) {
+                await games.fishing.endGame();
+                return { success: true, autoEnded: true };
+            }
 
             return { success: true };
         },
@@ -2971,8 +2978,13 @@ export const executeAdminCommand = async (command: string, args: string[]): Prom
             case '/fishing':
                 const fishingAction = args[0];
                 if (fishingAction === 'start') {
-                    const gameState = await games.fishing.startGame();
-                    return { success: true, feedback: `Minijuego Fishing iniciado` };
+                    const maxElim = args[1] ? parseInt(args[1], 10) : undefined;
+                    if (args[1] && (isNaN(maxElim!) || maxElim! <= 0)) {
+                        return { success: false, feedback: 'El argumento maxEliminations debe ser un número positivo' };
+                    }
+                    const gameState = await games.fishing.startGame(maxElim);
+                    const limitMsg = maxElim ? ` (máx. ${maxElim} eliminaciones)` : '';
+                    return { success: true, feedback: `Minijuego Fishing iniciado${limitMsg}` };
                 } else if (fishingAction === 'end') {
                     const result = await games.fishing.endGame();
                     if (result.success) {

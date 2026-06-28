@@ -1,25 +1,29 @@
 import "dotenv/config";
 
+import { drizzle as drizzleNeon } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
-
+import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
+import pg from "pg";
 import * as schema from "./schema";
 
-const {
-    DB_HOST,
-    DB_PORT = "5432",
-    DB_USER,
-    DB_PASSWORD = "",
-    DB_NAME,
-    DB_SSL,
-} = process.env;
+const { Pool } = pg;
+const isNeon = !!process.env.DATABASE_URL;
 
-const sslMode = DB_SSL === "true" ? "require" : "disable";
+const sql = isNeon
+    ? neon(process.env.DATABASE_URL!)
+    : undefined;
 
-const DATABASE_URL =
-    process.env.DATABASE_URL ??
-    `postgresql://${encodeURIComponent(process.env.DB_USER!)}:${encodeURIComponent(process.env.DB_PASSWORD ?? "")}@${process.env.DB_HOST}:${process.env.DB_PORT ?? "5432"}/${process.env.DB_NAME}?sslmode=${process.env.DB_SSL === "true" ? "require" : "disable"}`;
+const pool = !isNeon
+    ? new Pool({
+        host: process.env.DB_HOST || "localhost",
+        port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
+        user: process.env.DB_USER || "postgres",
+        password: process.env.DB_PASSWORD || "postgres",
+        database: process.env.DB_NAME || "postgres",
+        ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
+    })
+    : undefined;
 
-const sql = neon(DATABASE_URL);
-
-export const client = drizzle(sql, { schema });
+export const client = isNeon
+    ? drizzleNeon(sql!, { schema })
+    : drizzlePg(pool!, { schema });
