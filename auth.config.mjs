@@ -1,6 +1,7 @@
 import TwitchProvider from "@auth/core/providers/twitch";
 import { defineConfig } from "auth-astro";
 import { eq } from "drizzle-orm";
+import { waitUntil } from "@vercel/functions";
 
 // Imports internos
 import { client } from "@/db/client";
@@ -52,10 +53,18 @@ export default defineConfig({
                 const email = profile?.email || null;
                 const username = user?.name?.toLowerCase();
                 const twitchId = profile?.sub ?? "";
+                // Capturamos el IP antes de reasignar token.user, ya que
+                // token.user.ip no existía aún en el punto donde se usaba antes.
+                const userIp = token.ip ?? "Unknown";
 
                 try {
-                    // 1. Obtener Tier de suscripción (API externa)
-                    const twitchTier = await getUserSubscription(twitchId, account.access_token);
+                    // 1. Obtener Tier de suscripción (API externa), con timeout
+                    // para no dejar el login colgado si Twitch tarda.
+                    const twitchTier = await getUserSubscription(
+                        twitchId,
+                        account.access_token,
+                        { signal: AbortSignal.timeout(5000) }
+                    );
 
                     const userValues = {
                         twitchId,
@@ -92,19 +101,27 @@ export default defineConfig({
                         id: upsertedUser.id
                     };
 
+                    // Cacheamos datos livianos en el propio JWT para evitar
+                    // golpear la DB en cada callback de session.
+                    token.lastSync = Date.now();
+
                     // Generar ID de sesión
                     const sessionId = crypto.randomUUID();
                     token.sessionId = sessionId;
 
-                    // 3. Tareas en segundo plano (No bloqueantes)
-                    // Guardamos la sesión y registramos el webhook en paralelo
-                    await Promise.allSettled([
-                        saveSession(
-                            upsertedUser.id,
-                            sessionId,
-                            token.userAgent ?? "Unknown",
-                            token.user.ip ?? "Unknown"
-                        ),
+                    // 3. Guardado de sesión: esto sí debe completarse antes de
+                    // responder (si falla, el usuario podría quedar sin sesión válida).
+                    await saveSession(
+                        upsertedUser.id,
+                        sessionId,
+                        token.userAgent ?? "Unknown",
+                        userIp
+                    );
+
+                    // 4. Tarea en segundo plano: registrar el EventSub no debe
+                    // bloquear la respuesta del login. waitUntil asegura que
+                    // Vercel mantenga viva la función hasta que termine.
+                    waitUntil(
                         (async () => {
                             try {
                                 const eventSub = createTwitchEventsInstance();
@@ -114,7 +131,7 @@ export default defineConfig({
                                 console.error("Error registering event sub:", e);
                             }
                         })()
-                    ]);
+                    );
 
                 } catch (error) {
                     console.error("Error during user login processing:", error);
@@ -129,7 +146,7 @@ export default defineConfig({
                 // Si no hay sessionId en el token, retornamos la sesión tal cual (probablemente inválida)
                 if (!token.sessionId) return session;
 
-                // 4. Validación rápida de sesión
+                // Validación rápida de sesión
                 const existingSession = await getSessionById(token.sessionId);
 
                 if (!existingSession) {
@@ -138,33 +155,33 @@ export default defineConfig({
                     return session;
                 }
 
-                // 5. OPTIMIZACIÓN: Carga de datos + Actualización de actividad en PARALELO
-                const [userRecord] = await Promise.all([
-                    // A: Buscar datos completos del usuario
-                    client.query.UsersTable.findFirst({
-                        where: eq(UsersTable.twitchId, token.user.sub),
-                        columns: {
-                            id: true,
-                            admin: true,
-                            twitchId: true,
-                            twitchTier: true,
-                            discordId: true,
-                            coins: true,
-                            username: true,
-                            twoFactorEnabled: true,
+                // Actualizar "last_active" en segundo plano: no es crítico
+                // para construir la sesión y no debe bloquear la respuesta.
+                waitUntil(updateSessionActivity(token.sessionId));
+
+                // Carga de datos completos del usuario, incluyendo cuentas
+                // vinculadas en la misma consulta (evita un round-trip extra).
+                const userRecord = await client.query.UsersTable.findFirst({
+                    where: eq(UsersTable.twitchId, token.user.sub),
+                    columns: {
+                        id: true,
+                        admin: true,
+                        twitchId: true,
+                        twitchTier: true,
+                        discordId: true,
+                        coins: true,
+                        username: true,
+                        twoFactorEnabled: true,
+                    },
+                    with: {
+                        streamerWarsPlayer: {
+                            columns: { playerNumber: true }
                         },
-                        with: {
-                            streamerWarsPlayer: {
-                                columns: { playerNumber: true }
-                            },
-                            suspensions: {
-                                columns: { startDate: true, endDate: true, status: true },
-                            }
+                        suspensions: {
+                            columns: { startDate: true, endDate: true, status: true },
                         }
-                    }),
-                    // B: Actualizar "last_active" (sin esperar respuesta)
-                    updateSessionActivity(token.sessionId)
-                ]);
+                    }
+                });
 
                 if (userRecord) {
                     const now = new Date();
@@ -204,9 +221,11 @@ export default defineConfig({
     events: {
         signOut: async ({ token }) => {
             if (token.sessionId) {
-                // Destruir sesión sin detener el proceso de logout del cliente
-                destroySession(token.sessionId).catch(error =>
-                    console.error("Error destroying session:", error)
+                // Destruir sesión en segundo plano sin bloquear el logout del cliente
+                waitUntil(
+                    destroySession(token.sessionId).catch(error =>
+                        console.error("Error destroying session:", error)
+                    )
                 );
             }
         }
