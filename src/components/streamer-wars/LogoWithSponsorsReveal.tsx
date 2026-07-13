@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "preact/hooks";
-import gsap from "gsap/dist/gsap";
+import gsap from "gsap";
 import { LucideSwords } from "lucide-preact";
 import { Fragment } from "preact/jsx-runtime";
 import { playSoundWithReverb, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";

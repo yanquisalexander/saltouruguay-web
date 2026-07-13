@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "sonner";
 import type { Players } from "../admin/streamer-wars/Players";
 import { actions } from "astro:actions";
-import gsap from "gsap/dist/gsap";
+import gsap from "gsap";
 import { LogoWithSponsorsReveal } from "./LogoWithSponsorsReveal";
 
 const CreditsRoll = ({ duration, players }: { duration: number, players?: Players[] }) => {
