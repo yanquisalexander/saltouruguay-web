@@ -85,6 +85,7 @@ preload?.push({
 const url = Astro.url.pathname;
 
 const shouldShowAds =
+  !import.meta.env.DEV &&
   !session?.user?.tier &&
   !session?.user?.isAdmin &&
   !url.startsWith("/admin") &&
