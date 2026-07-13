@@ -82,8 +82,13 @@ preload?.push({
   crossorigin: "anonymous",
 });
 
-const shouldShowAds = !session?.user?.tier;
+const url = Astro.url.pathname;
 
+const shouldShowAds =
+  !session?.user?.tier &&
+  !session?.user?.isAdmin &&
+  !url.startsWith("/admin") &&
+  !url.startsWith("/guerra-streamers");
 ---
 
 <!doctype html>
