@@ -81,6 +81,9 @@ preload?.push({
   type: "font/woff2",
   crossorigin: "anonymous",
 });
+
+const shouldShowAds = !session?.user?.tier;
+
 ---
 
 <!doctype html>
@@ -198,5 +201,24 @@ preload?.push({
       referrerpolicy="unsafe-url"
       width="0"
     />
+
+    {shouldShowAds && (
+    <script is:inline data-astro-rerun>
+    function loadAds() {
+      // Evita cargarlo dos veces
+      if (document.querySelector('script[data-zone="11280903"]')) return;
+
+      const script = document.createElement('script');
+      script.dataset.zone = '11280903';
+      script.src = 'https://al5sm.com/tag.min.js';
+
+      (document.body ?? document.documentElement).appendChild(script);
+    }
+
+    loadAds();
+
+    document.addEventListener('astro:page-load', loadAds);
+  </script>
+)}
   </body>
 </html>
