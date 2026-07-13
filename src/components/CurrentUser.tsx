@@ -228,7 +228,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                                     {isNominated && (
                                         <div className="flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30">
                                             <LucideTrophy size={10} className="text-amber-400" />
-                                            <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Nominado</span>
+                                            <span className="w-max text-[10px] font-bold text-amber-400 uppercase tracking-wider">Nominado</span>
                                         </div>
                                     )}
                                 </div>
