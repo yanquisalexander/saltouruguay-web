@@ -269,7 +269,7 @@ const getBadgeStyles = (label: string, colorClassName?: string) => {
                 <CurrentUser
                   user={session?.user || null}
                   isPrerenderedPath={isPrerenderedPath}
-                  client:load
+                  client:only
                   transition:persist
                   transition:name="current-user"
                 />

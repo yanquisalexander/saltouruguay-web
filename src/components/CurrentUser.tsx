@@ -1,4 +1,5 @@
 import { $ } from "@/lib/dom-selector";
+import { getPreloadedSession } from "@/lib/preloaded-data";
 import type { Session } from "@auth/core/types";
 import { signOut } from "auth-astro/client";
 import { NOMINEES } from "@/awards/Nominees";
@@ -20,6 +21,7 @@ import { usePusher } from "@/hooks/usePusher";
 import { navigate } from "astro:transitions/client";
 import type { JSX } from 'preact';
 import { CHRISTMAS_MODE } from "@/config"; // 🎄 Importamos el modo navidad
+import { Suspense } from "preact/compat";
 
 // Icono de Twitch SVG Inline
 const TwitchBrandIcon = (props: JSX.IntrinsicElements['svg']) => (
@@ -29,11 +31,16 @@ const TwitchBrandIcon = (props: JSX.IntrinsicElements['svg']) => (
 );
 
 export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Session['user'] | null, isPrerenderedPath: boolean }) => {
+    // Lazy initializer para el estado del usuario (Prioridad: Prop -> DOM)
+    const [user, setUser] = useState<Session['user'] | null>(() => {
+        if (initialUser) return initialUser;
+        return getPreloadedSession();
+    });
+
     const [loading, setLoading] = useState(false);
-    const [fetchingUser, setFetchingUser] = useState(isPrerenderedPath && !initialUser);
+    const [fetchingUser, setFetchingUser] = useState(isPrerenderedPath && !user);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const [user, setUser] = useState<Session['user'] | null>(initialUser);
 
     const isNominated = user && NOMINEES[user.username as keyof typeof NOMINEES];
 
@@ -101,7 +108,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
         if (!user && isPrerenderedPath) {
             fetchUserFromServer();
         }
-    }, [user, isPrerenderedPath]);
+    }, [isPrerenderedPath]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -277,6 +284,7 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                             <button
                                 onClick={(e) => {
                                     e.preventDefault();
+                                    // @ts-ignore
                                     signOut({ callbackUrl: '/' });
                                 }}
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-rubik text-red-400/80 hover:text-red-400 hover:bg-red-500/10 transition-colors w-full text-left group"
@@ -288,11 +296,12 @@ export const CurrentUser = ({ user: initialUser, isPrerenderedPath }: { user: Se
                     </div>
                 )}
 
-                {pusher && (
-                    <>
+                {/* Renderizado diferido: solo si tenemos usuario y pusher */}
+                {pusher && user && (
+                    <Suspense fallback={null}>
                         <AchievementsNotifier userId={user.id} />
                         <CinematicPlayer userId={user.id} />
-                    </>
+                    </Suspense>
                 )}
             </div>
         );

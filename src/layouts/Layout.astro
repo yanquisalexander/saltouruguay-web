@@ -108,10 +108,8 @@ const shouldShowAds =
       async
       src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7631620665837459"
       crossorigin="anonymous"></script> -->
-    <!-- <meta
-      id="current-user-data"
-      data-user={JSON.stringify({ user: session?.user || null })}
-    /> -->
+    <script is:inline type="application/json" id="preloaded-session" data-preload-session={JSON.stringify(session?.user || null)} />
+     
   </head>
   <body
     {...customId ? { id: customId } : {}}
