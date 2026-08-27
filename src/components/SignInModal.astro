@@ -124,6 +124,9 @@ import TwitchIcon from "@/icons/Twitch.astro";
       mutations.forEach((mutation) => {
         if (mutation.attributeName === "open") {
           toggleBackdrop($loginModal.open);
+          if (!$loginModal.open) {
+            sessionStorage.removeItem("oauth_redirect");
+          }
         }
       });
     });
@@ -137,8 +140,13 @@ import TwitchIcon from "@/icons/Twitch.astro";
       await signIn("twitch");
     });
 
+    const clearOAuthRedirect = () => {
+      sessionStorage.removeItem("oauth_redirect");
+    };
+
     $closeButton?.addEventListener("click", (e) => {
       e.preventDefault();
+      clearOAuthRedirect();
       $loginModal.close();
     });
 
@@ -150,6 +158,7 @@ import TwitchIcon from "@/icons/Twitch.astro";
         rect.left <= e.clientX &&
         e.clientX <= rect.left + rect.width;
       if (!isInDialog) {
+        clearOAuthRedirect();
         $loginModal.close();
       }
     });

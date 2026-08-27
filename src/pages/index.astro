@@ -14,6 +14,11 @@ import { CHRISTMAS_MODE } from "@/config";
 const IS_PROD = import.meta.env.PROD;
 export const prerender = true;
 
+// Detectar login=true + redirect para flujo OAuth seamless
+const url = new URL(Astro.request.url);
+const loginParam = url.searchParams.get("login");
+const redirectParam = url.searchParams.get("redirect");
+
 // Lógica de estilos condicionales
 const subtitleGradient = CHRISTMAS_MODE
   ? "from-red-500 via-green-500 to-red-500 bg-size-[200%_auto] animate-shine"
@@ -494,3 +499,36 @@ const titleShadow = CHRISTMAS_MODE
     }
   }
 </style>
+
+<script is:inline>
+  // Flujo OAuth seamless: guardar redirect y redirigir post-login
+  (function () {
+    const params = new URLSearchParams(window.location.search);
+    const login = params.get("login");
+    const redirect = params.get("redirect");
+
+    // Si viene con login=true y redirect, guardarlo en sessionStorage
+    if (login === "true" && redirect) {
+      sessionStorage.setItem("oauth_redirect", redirect);
+    }
+
+    // Si NO hay login=true pero SÍ hay redirect guardado, verificar sesión y redirigir
+    if (!login && sessionStorage.getItem("oauth_redirect")) {
+      fetch("/api/auth/session")
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.user) {
+            const target = sessionStorage.getItem("oauth_redirect");
+            sessionStorage.removeItem("oauth_redirect");
+            if (target) {
+              window.location.href = target;
+            }
+          }
+          // Si no hay sesión, el redirect queda guardado para después
+        })
+        .catch(() => {
+          // Error fetchando sesión, ignorar
+        });
+    }
+  })();
+</script>
