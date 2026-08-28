@@ -37,8 +37,7 @@ export const GET: APIRoute = async ({ request }) => {
                 avatar: true,
                 email: true,
                 admin: true,
-                discordId: true,
-                discordUsername: true
+                discordId: true
             },
         });
 
@@ -58,7 +57,6 @@ export const GET: APIRoute = async ({ request }) => {
             response.displayName = user.displayName;
             response.avatar = user.avatar;
             response.discordId = user.discordId;
-            response.discordUsername = user.discordUsername;
 
             if (user.discordId) {
                 const discordUser = await getDiscordUser(user.discordId);
