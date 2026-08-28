@@ -2429,7 +2429,7 @@ export const removePlayer = async (playerNumber: number) => {
 export const addPlayer = async ({ playerNumber, twitchUsername }: { playerNumber: number; twitchUsername: string }) => {
     try {
         const user = await client.query.UsersTable.findFirst({
-            where: eq(UsersTable.username, twitchUsername)
+            where: ilike(UsersTable.username, twitchUsername.toLowerCase())
         }).execute().then(res => res?.id);
 
         if (!user) {

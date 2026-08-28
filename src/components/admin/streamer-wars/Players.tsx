@@ -265,7 +265,12 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
               key={player.id}
             >
               <div class="relative size-14 rounded-full ring-2 ring-neutral-700 group-hover:ring-[#b4cd02]/50 transition-all">
-                <img src={player.avatar} alt={player.displayName} class="w-full h-full rounded-full" />
+                <img 
+                  src={player.avatar || "/images/zona.webp"} 
+                  alt={player.displayName} 
+                  class="w-full h-full rounded-full" 
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/images/zona.webp"; }}
+                />
                 {player.online && <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#b4cd02] rounded-full ring-2 ring-[#0a0a0a] shadow-[0_0_8px_rgba(180,205,2,0.5)]" />}
               </div>
               <p class="text-lg text-[#b4cd02] mt-2 font-atomic">#{player.playerNumber?.toString().padStart(3, "0")}</p>
