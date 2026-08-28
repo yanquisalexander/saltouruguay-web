@@ -2450,31 +2450,32 @@ export const addPlayer = async ({ playerNumber, twitchUsername }: { playerNumber
             };
         }
 
-        try {
             await client.insert(StreamerWarsPlayersTable).values({
                 playerNumber,
                 userId: user
-            }).execute()
-            await sendDiscordEmbed(SALTO_DISCORD_GUILD_ID, {
-                title: "Nuevo jugador",
-                description: `Se ha agregado un nuevo jugador a Guerra de Streamers.`,
-                fields: [
-                    {
-                        name: "Número",
-                        value: playerNumber.toString().padStart(3, '0'),
-                        inline: true
-                    },
-                    {
-                        name: "Usuario",
-                        value: twitchUsername,
-                        inline: true
-                    }
-                ],
-                color: 2685440
-            })
-        } catch (error) {
+            }).execute();
 
-        }
+            try {
+                await sendDiscordEmbed(SALTO_DISCORD_GUILD_ID, {
+                    title: "Nuevo jugador",
+                    description: `Se ha agregado un nuevo jugador a Guerra de Streamers.`,
+                    fields: [
+                        {
+                            name: "Número",
+                            value: playerNumber.toString().padStart(3, '0'),
+                            inline: true
+                        },
+                        {
+                            name: "Usuario",
+                            value: twitchUsername,
+                            inline: true
+                        }
+                    ],
+                    color: 2685440
+                });
+            } catch (error) {
+                console.error("Error al enviar Discord (ignorado):", error);
+            }
 
 
         return {
