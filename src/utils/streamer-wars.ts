@@ -1,7 +1,7 @@
 import { client } from "@/db/client";
 import { NegativeVotesStreamersTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable, UsersTable } from "@/db/schema";
 import cacheService from "@/services/cache";
-import { and, asc, count, eq, inArray, min, not, desc } from "drizzle-orm";
+import { and, asc, count, eq, ilike, inArray, min, not, desc } from "drizzle-orm";
 import { pusher } from "./pusher";
 import { tts } from "@/services/tts";
 import { addRoleToUser, DISCORD_ROLES, getDiscordUser, getGuildMember, LOGS_CHANNEL_WEBHOOK_ID, removeRoleFromUser, ROLE_GUERRA_STREAMERS, sendDiscordEmbed, sendWebhookMessage } from "@/services/discord";
@@ -2485,7 +2485,7 @@ export const addPlayer = async ({ playerNumber, twitchUsername }: { playerNumber
         console.error("Error en addPlayer:", error);
         return {
             success: false,
-            error: "Ocurrió un error al agregar al jugador",
+            error: error instanceof Error ? error.message : "Ocurrió un error al agregar al jugador",
         };
     }
 }
