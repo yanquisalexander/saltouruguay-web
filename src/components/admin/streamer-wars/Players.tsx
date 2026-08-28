@@ -328,7 +328,12 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
             class="w-full bg-[#050508] text-white text-sm font-mono p-4 outline-hidden border border-neutral-800 focus:border-[#b4cd02]/40 transition-colors placeholder:text-neutral-700 rounded-sm"
             placeholder="Nombre de usuario de Twitch"
             value={addNewPlayer.username}
-            onInput={(e) => setAddNewPlayer((prev) => ({ ...prev, username: (e.target as HTMLInputElement).value }))}
+            onInput={(e) => {
+              let val = (e.target as HTMLInputElement).value;
+              const match = val.match(/twitch\.tv\/([a-zA-Z0-9_]+)/i);
+              if (match) val = match[1];
+              setAddNewPlayer((prev) => ({ ...prev, username: val }));
+            }}
           />
         </div>
         <div class="flex justify-between mt-8 pt-4 border-t border-neutral-800">
