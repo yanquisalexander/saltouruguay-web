@@ -3,6 +3,7 @@ import { validateAccessToken } from "@/lib/oauth";
 import { client as db } from "@/db/client";
 import { UsersTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { getDiscordUser } from "@/services/discord";
 
 export const GET: APIRoute = async ({ request }) => {
     const authHeader = request.headers.get("Authorization");
@@ -36,6 +37,8 @@ export const GET: APIRoute = async ({ request }) => {
                 avatar: true,
                 email: true,
                 admin: true,
+                discordId: true,
+                discordUsername: true
             },
         });
 
@@ -54,6 +57,15 @@ export const GET: APIRoute = async ({ request }) => {
             response.username = user.username;
             response.displayName = user.displayName;
             response.avatar = user.avatar;
+            response.discordId = user.discordId;
+            response.discordUsername = user.discordUsername;
+
+            if (user.discordId) {
+                const discordUser = await getDiscordUser(user.discordId);
+                if (discordUser) {
+                    response.discordUsername = discordUser.username;
+                }
+            }
         }
 
         if (scopes.includes("email")) {
