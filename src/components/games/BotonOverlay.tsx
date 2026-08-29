@@ -2,6 +2,7 @@ import { useState, useEffect } from "preact/hooks";
 import { pusherService } from "@/services/pusher.client";
 import { PUSHER_CHANNELS_BOTON, PUSHER_EVENTS_BOTON } from "@/consts/pusher";
 import { actions } from "astro:actions";
+import confetti from "canvas-confetti";
 
 interface BotonState {
   userId: string;
@@ -22,6 +23,7 @@ export default function BotonOverlay() {
 
     const onPressed = (state: BotonState) => {
       setPressedBy(state);
+      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
     };
 
     const onCleaned = () => {

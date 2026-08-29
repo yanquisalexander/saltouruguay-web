@@ -2,6 +2,7 @@ import { useState, useEffect } from "preact/hooks";
 import { pusherService } from "@/services/pusher.client";
 import { PUSHER_CHANNELS_BOTON, PUSHER_EVENTS_BOTON } from "@/consts/pusher";
 import { actions } from "astro:actions";
+import confetti from "canvas-confetti";
 
 interface BotonState {
   userId: string;
@@ -33,6 +34,9 @@ export default function BotonGame({ user }: Props) {
 
     const onPressed = (state: BotonState) => {
       setPressedBy(state);
+      if (state.userId === user.id) {
+        confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
+      }
     };
 
     const onCleaned = () => {
@@ -56,6 +60,9 @@ export default function BotonGame({ user }: Props) {
     setLoading(false);
     if (actionError) {
       setError(actionError.message);
+    } else if (data?.state) {
+      setPressedBy(data.state);
+      confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
     }
   }
 
