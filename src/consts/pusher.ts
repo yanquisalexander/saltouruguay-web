@@ -158,6 +158,15 @@ export const PUSHER_EVENTS_RULETA = {
   GAME_STALEMATE: 'game:stalemate',
 } as const;
 
+export const PUSHER_CHANNELS_BOTON = {
+  GAME: 'boton-game',
+} as const;
+
+export const PUSHER_EVENTS_BOTON = {
+  BUTTON_PRESSED: 'boton:button-pressed',
+  BUTTON_CLEANED: 'boton:button-cleaned',
+} as const;
+
 export const CACHE_KEYS = {
   GAME_STATE: 'streamer-wars-gamestate',
   TIMER: 'streamer-wars-timer',
@@ -175,4 +184,5 @@ export const CACHE_KEYS = {
   FISHING: 'streamer-wars.fishing:game-state',
   FISHING_ELIMINATED: 'fishing:eliminated-players',
   ANDI_CHALLENGE: 'streamer-wars.andi-challenge',
+  BOTON: 'boton:current-state',
 } as const;

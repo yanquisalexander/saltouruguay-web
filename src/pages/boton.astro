@@ -1,0 +1,22 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+import BotonGame from "@/components/games/BotonGame";
+
+const authSession = await getSession(Astro.request);
+
+if (!authSession) {
+  return Astro.redirect("/signin?redirect=/boton");
+}
+
+const user = {
+  id: authSession.user.id,
+  name: authSession.user.name || authSession.user.username || "Anónimo",
+  image: authSession.user.image || null,
+  isAdmin: authSession.user.isAdmin ?? false,
+};
+---
+
+<Layout title="Botón — Salto Uruguay" hideHeader hideFooter>
+  <BotonGame user={user} client:only />
+</Layout>

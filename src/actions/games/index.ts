@@ -3,6 +3,7 @@ import { tugOfWar } from "./tug-of-war";
 import { fishingGame } from "./fishing";
 import { ruletaLoca } from "./ruleta-loca";
 import { andIChallenge } from "./and-i-challenge";
+import { boton } from "./boton";
 
 export const games = {
     simonSays,
@@ -10,4 +11,5 @@ export const games = {
     fishing: fishingGame,
     ruletaLoca,
     andiChallenge: andIChallenge,
+    boton,
 }
