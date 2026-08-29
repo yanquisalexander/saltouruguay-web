@@ -1,5 +1,4 @@
-import { useSignal } from "@preact/signals";
-import { useEffect } from "preact/hooks";
+import { useState, useEffect } from "preact/hooks";
 import { pusherService } from "@/services/pusher.client";
 import { PUSHER_CHANNELS_BOTON, PUSHER_EVENTS_BOTON } from "@/consts/pusher";
 import { actions } from "astro:actions";
@@ -12,21 +11,21 @@ interface BotonState {
 }
 
 export default function BotonOverlay() {
-  const pressedBy = useSignal<BotonState | null>(null);
+  const [pressedBy, setPressedBy] = useState<BotonState | null>(null);
 
   useEffect(() => {
     actions.games.boton.getState().then(({ data }) => {
-      if (data?.state) pressedBy.value = data.state;
+      if (data?.state) setPressedBy(data.state);
     });
 
     pusherService.subscribe(PUSHER_CHANNELS_BOTON.GAME);
 
     const onPressed = (state: BotonState) => {
-      pressedBy.value = state;
+      setPressedBy(state);
     };
 
     const onCleaned = () => {
-      pressedBy.value = null;
+      setPressedBy(null);
     };
 
     pusherService.bind(PUSHER_CHANNELS_BOTON.GAME, PUSHER_EVENTS_BOTON.BUTTON_PRESSED, onPressed);
@@ -39,7 +38,7 @@ export default function BotonOverlay() {
     };
   }, []);
 
-  if (!pressedBy.value) {
+  if (!pressedBy) {
     return (
       <div class="w-dvw h-dvh flex items-center justify-center">
         <div class="text-center">
@@ -54,28 +53,26 @@ export default function BotonOverlay() {
     );
   }
 
-  const state = pressedBy.value;
-
   return (
     <div class="w-dvw h-dvh flex items-center justify-center">
       <div class="text-center animate-in fade-in zoom-in duration-300">
         <div class="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-amber-400 shadow-2xl shadow-amber-500/50 mb-4">
-          {state.image ? (
+          {pressedBy.image ? (
             <img
-              src={state.image}
-              alt={state.username}
+              src={pressedBy.image}
+              alt={pressedBy.username}
               class="w-full h-full object-cover"
             />
           ) : (
             <div class="w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
               <span class="font-anton text-5xl text-stone-900">
-                {state.username.charAt(0).toUpperCase()}
+                {pressedBy.username.charAt(0).toUpperCase()}
               </span>
             </div>
           )}
         </div>
         <p class="font-anton text-4xl text-white tracking-wide drop-shadow-lg">
-          {state.username}
+          {pressedBy.username}
         </p>
         <p class="font-rubik text-sm text-white/50 mt-1">
           apretó el botón primero
