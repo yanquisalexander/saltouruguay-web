@@ -1,4 +1,4 @@
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useRef } from "preact/hooks";
 import { pusherService } from "@/services/pusher.client";
 import { PUSHER_CHANNELS_BOTON, PUSHER_EVENTS_BOTON } from "@/consts/pusher";
 import { actions } from "astro:actions";
@@ -13,8 +13,14 @@ interface BotonState {
 
 export default function BotonOverlay() {
   const [pressedBy, setPressedBy] = useState<BotonState | null>(null);
+  const winnerSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    // Precargar el audio una sola vez
+    winnerSoundRef.current = new Audio("/sounds/winner.mp3");
+    winnerSoundRef.current.volume = 0.8;
+    winnerSoundRef.current.load();
+
     actions.games.boton.getState().then(({ data }) => {
       if (data?.state) setPressedBy(data.state);
     });
@@ -24,6 +30,13 @@ export default function BotonOverlay() {
     const onPressed = (state: BotonState) => {
       setPressedBy(state);
       confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+
+      if (winnerSoundRef.current) {
+        winnerSoundRef.current.currentTime = 0;
+        winnerSoundRef.current.play().catch((err) => {
+          console.warn("No se pudo reproducir el sonido:", err);
+        });
+      }
     };
 
     const onCleaned = () => {
