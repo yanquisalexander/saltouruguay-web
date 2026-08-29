@@ -73,7 +73,7 @@ export default function BotonGame({ user }: Props) {
   const isMe = pressedBy?.userId === user.id;
 
   return (
-    <div class="min-h-dvh flex flex-col items-center justify-center bg-neutral-950 p-4">
+    <div class="min-h-dvh flex flex-col items-center justify-center p-4">
       <div class="text-center mb-8">
         <h1 class="font-anton text-5xl sm:text-7xl text-white tracking-wide">
           ¿QUIÉN APRETÓ?
