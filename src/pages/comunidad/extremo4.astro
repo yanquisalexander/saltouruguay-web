@@ -1,0 +1,104 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import {
+  LucideCalendar,
+  LucideSparkles,
+  LucideTrophy,
+} from "lucide-preact";
+
+// --- DATOS DEL DESAFÍO (edítalos manualmente acá) ---
+
+const DESAFIO = {
+  nombre: "SaltoCraft EXTREMO 4",
+  imagen: "/images/SaltoCraft 4.webp",
+  descripcion:
+    "Llega la cuarta edición del desafío en Minecraft más grande de Latinoamérica. Prepárate para superar pruebas, sobrevivir en condiciones extremas y demostrar quién es el mejor sobreviviente de la comunidad Saltana.",
+  fecha: "15 de Septiembre, 2026",
+  estado: "Próximamente", // Ej: "Próximamente" | "En curso" | "Finalizado"
+};
+
+// Mapeo de color según estado (ajustá según tus estados reales)
+const ESTADO_STYLES: Record<string, string> = {
+  "Próximamente": "bg-yellow-400/10 text-yellow-300 border-yellow-400/30",
+  "En curso": "bg-green-400/10 text-green-300 border-green-400/30",
+  "Finalizado": "bg-gray-400/10 text-gray-300 border-gray-400/30",
+};
+
+const estadoClass =
+  ESTADO_STYLES[DESAFIO.estado] ??
+  "bg-white/10 text-white/80 border-white/20";
+---
+
+<Layout title={DESAFIO.nombre}>
+  <div class="flex flex-col max-w-4xl mx-auto min-h-screen mt-20 px-4 mb-20">
+
+    {/* HEADER SECTION */}
+    <header class="relative flex flex-col items-center justify-center mb-10 text-center">
+      <div class="flex items-center justify-center gap-x-4 mb-4">
+        <div class="relative animate-fade-in-up" style="--floating-duration: 5000ms">
+          <img
+            src="/images/logo_salto.webp"
+            alt="Salto Logo"
+            class="size-16 md:size-20 object-contain animate-sink animate-iteration-count-infinite animate-duration-(--floating-duration)"
+          />
+        </div>
+        <h1 class="text-4xl md:text-5xl font-teko uppercase font-bold text-white tracking-wide">
+          Detalle del{" "}
+          <span class="text-transparent bg-clip-text bg-linear-to-r from-yellow-400 to-orange-500">
+            Desafío
+          </span>
+        </h1>
+      </div>
+    </header>
+
+    {/* CARD PRINCIPAL */}
+    <div class="group relative overflow-hidden rounded-2xl border border-white/10 bg-gray-900/40 backdrop-blur-xs animate-fade-in-up animate-delay-150">
+
+      {/* Imagen de fondo */}
+      <div class="relative h-72 md:h-96 w-full">
+        <img
+          src={DESAFIO.imagen}
+          alt={DESAFIO.nombre}
+          class="h-full w-full object-cover opacity-50"
+        />
+        <div class="absolute inset-0 bg-linear-to-t from-gray-950 via-gray-900/70 to-transparent" />
+
+        {/* Estado */}
+        <div class="absolute top-4 right-4">
+          <span class={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider backdrop-blur-md ${estadoClass}`}>
+            <LucideSparkles size={14} />
+            {DESAFIO.estado}
+          </span>
+        </div>
+
+        {/* Título sobre la imagen */}
+        <div class="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+          <div class="flex items-center gap-2 mb-2 text-yellow-400">
+            <LucideTrophy size={20} />
+            <span class="font-rubik text-sm uppercase tracking-wide text-white/70">
+              Desafío Minecraft
+            </span>
+          </div>
+          <h2 class="font-teko text-4xl md:text-5xl font-bold uppercase text-white">
+            {DESAFIO.nombre}
+          </h2>
+        </div>
+      </div>
+
+      {/* Contenido */}
+      <div class="p-6 md:p-8 space-y-6">
+
+        {/* Fecha */}
+        <div class="flex items-center gap-2 text-white/70 font-rubik text-sm">
+          <LucideCalendar size={18} class="text-yellow-400" />
+          <span>{DESAFIO.fecha}</span>
+        </div>
+
+        {/* Descripción */}
+        <p class="font-rubik text-base md:text-lg text-gray-300 leading-relaxed">
+          {DESAFIO.descripcion}
+        </p>
+      </div>
+    </div>
+  </div>
+</Layout>
