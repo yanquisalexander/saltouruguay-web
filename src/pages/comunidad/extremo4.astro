@@ -21,6 +21,10 @@ const DESAFIO = {
   linkInscripcion: "https://inscripciones.saltouruguayserver.com/eventos/3",
 };
 
+// IMPORTANTE: esta ruta debe coincidir EXACTAMENTE con el archivo real
+// dentro de public/sounds/ (mayúsculas y extensión incluidas)
+const AUDIO_SRC = "/sounds/extremo4.ogg";
+
 // Mapeo de color según estado (ajustá según tus estados reales)
 const ESTADO_STYLES: Record<string, string> = {
   "Próximamente": "bg-yellow-400/10 text-yellow-300 border-yellow-400/30",
@@ -32,52 +36,6 @@ const estadoClass =
   ESTADO_STYLES[DESAFIO.estado] ??
   "bg-white/10 text-white/80 border-white/20";
 ---
-
-<script>
-  const audio = document.getElementById("bg-audio") as HTMLAudioElement | null;
-  const toggleBtn = document.getElementById("audio-toggle");
-  const iconOn = document.getElementById("icon-on");
-  const iconOff = document.getElementById("icon-off");
-
-  function updateIcon(isPlaying: boolean) {
-    iconOn?.classList.toggle("hidden", !isPlaying);
-    iconOff?.classList.toggle("hidden", isPlaying);
-  }
-
-  function tryAutoplay() {
-    if (!audio) return;
-    audio.volume = 0.5; // Ajustá el volumen inicial (0 a 1)
-    audio
-      .play()
-      .then(() => updateIcon(true))
-      .catch(() => {
-        // El navegador bloqueó el autoplay: se activará con el primer click del usuario
-        updateIcon(false);
-      });
-  }
-
-  toggleBtn?.addEventListener("click", () => {
-    if (!audio) return;
-    if (audio.paused) {
-      audio.play();
-      updateIcon(true);
-    } else {
-      audio.pause();
-      updateIcon(false);
-    }
-  });
-
-  // Si el autoplay fue bloqueado, arrancamos con el primer click en cualquier parte de la página
-  function unlockOnFirstInteraction() {
-    if (audio && audio.paused) {
-      audio.play().then(() => updateIcon(true)).catch(() => {});
-    }
-    document.removeEventListener("click", unlockOnFirstInteraction);
-  }
-
-  tryAutoplay();
-  document.addEventListener("click", unlockOnFirstInteraction);
-</script>
 
 <Layout title={DESAFIO.nombre}>
   <div class="flex flex-col max-w-4xl mx-auto min-h-screen mt-20 px-4 mb-20">
@@ -166,7 +124,7 @@ const estadoClass =
   </div>
 
   {/* AUDIO EN LOOP */}
-  <audio id="bg-audio" src="/sounds/extremo4.ogg" loop preload="auto"></audio>
+  <audio id="bg-audio" src={AUDIO_SRC} loop preload="auto"></audio>
 
   {/* Control flotante de sonido */}
   <button
@@ -178,4 +136,65 @@ const estadoClass =
     <LucideVolume2 id="icon-on" size={22} />
     <LucideVolumeX id="icon-off" size={22} class="hidden" />
   </button>
+
+  <script>
+    const audio = document.getElementById("bg-audio") as HTMLAudioElement | null;
+    const toggleBtn = document.getElementById("audio-toggle");
+    const iconOn = document.getElementById("icon-on");
+    const iconOff = document.getElementById("icon-off");
+
+    console.log("[audio-debug] elementos encontrados:", {
+      audio: !!audio,
+      toggleBtn: !!toggleBtn,
+    });
+
+    function updateIcon(isMuted: boolean) {
+      iconOn?.classList.toggle("hidden", isMuted);
+      iconOff?.classList.toggle("hidden", !isMuted);
+    }
+
+    if (audio) {
+      audio.addEventListener("error", () => {
+        console.error("[audio-debug] Error cargando el audio. Revisá el src:", audio.currentSrc);
+      });
+
+      audio.addEventListener("canplaythrough", () => {
+        console.log("[audio-debug] Audio listo para reproducir.");
+      });
+
+      // Truco: arrancamos MUTEADO (esto sí lo permiten todos los navegadores),
+      // y lo desmuteamos apenas el usuario interactúa por primera vez.
+      audio.volume = 0.5; // Ajustá el volumen (0 a 1)
+      audio.muted = true;
+
+      audio
+        .play()
+        .then(() => {
+          console.log("[audio-debug] Reproduciendo (muteado hasta el primer click).");
+          updateIcon(true);
+        })
+        .catch((err) => {
+          console.error("[audio-debug] No se pudo iniciar el audio ni muteado:", err);
+        });
+    }
+
+    function unmuteOnFirstInteraction() {
+      if (audio && audio.muted) {
+        audio.muted = false;
+        console.log("[audio-debug] Audio desmuteado tras interacción del usuario.");
+        updateIcon(false);
+      }
+      document.removeEventListener("click", unmuteOnFirstInteraction);
+    }
+
+    document.addEventListener("click", unmuteOnFirstInteraction);
+
+    toggleBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!audio) return;
+      audio.muted = !audio.muted;
+      if (!audio.muted && audio.paused) audio.play();
+      updateIcon(audio.muted);
+    });
+  </script>
 </Layout>
