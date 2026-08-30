@@ -4,6 +4,7 @@ import {
   LucideCalendar,
   LucideSparkles,
   LucideTrophy,
+  LucideExternalLink,
 } from "lucide-preact";
 
 // --- DATOS DEL DESAFÍO (edítalos manualmente acá) ---
@@ -13,8 +14,9 @@ const DESAFIO = {
   imagen: "/images/SaltoCraft 4.webp",
   descripcion:
     "Llega la cuarta edición del desafío en Minecraft más grande de Latinoamérica. Prepárate para superar pruebas, sobrevivir en condiciones extremas y demostrar quién es el mejor sobreviviente de la comunidad Saltana.",
-  fecha: "15 de Septiembre, 2026",
+  fecha: "21 de Septiembre, 2026",
   estado: "Próximamente", // Ej: "Próximamente" | "En curso" | "Finalizado"
+  linkInscripcion: "https://inscripciones.saltouruguayserver.com/eventos/3",
 };
 
 // Mapeo de color según estado (ajustá según tus estados reales)
@@ -98,6 +100,19 @@ const estadoClass =
         <p class="font-rubik text-base md:text-lg text-gray-300 leading-relaxed">
           {DESAFIO.descripcion}
         </p>
+
+        {/* Botón de inscripción */}
+        <div class="pt-2">
+          <a
+            href={DESAFIO.linkInscripcion}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group/btn inline-flex w-full md:w-auto items-center justify-center gap-2 rounded-xl bg-linear-to-r from-yellow-400 to-orange-500 px-8 py-4 font-teko text-2xl font-bold uppercase tracking-wide text-gray-950 shadow-lg shadow-yellow-400/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-yellow-400/30"
+          >
+            Inscribirme Aquí
+            <LucideExternalLink size={20} class="transition-transform duration-300 group-hover/btn:translate-x-1" />
+          </a>
+        </div>
       </div>
     </div>
   </div>
