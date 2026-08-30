@@ -5,6 +5,8 @@ import {
   LucideSparkles,
   LucideTrophy,
   LucideExternalLink,
+  LucideVolume2,
+  LucideVolumeX,
 } from "lucide-preact";
 
 // --- DATOS DEL DESAFÍO (edítalos manualmente acá) ---
@@ -30,6 +32,52 @@ const estadoClass =
   ESTADO_STYLES[DESAFIO.estado] ??
   "bg-white/10 text-white/80 border-white/20";
 ---
+
+<script>
+  const audio = document.getElementById("bg-audio") as HTMLAudioElement | null;
+  const toggleBtn = document.getElementById("audio-toggle");
+  const iconOn = document.getElementById("icon-on");
+  const iconOff = document.getElementById("icon-off");
+
+  function updateIcon(isPlaying: boolean) {
+    iconOn?.classList.toggle("hidden", !isPlaying);
+    iconOff?.classList.toggle("hidden", isPlaying);
+  }
+
+  function tryAutoplay() {
+    if (!audio) return;
+    audio.volume = 0.5; // Ajustá el volumen inicial (0 a 1)
+    audio
+      .play()
+      .then(() => updateIcon(true))
+      .catch(() => {
+        // El navegador bloqueó el autoplay: se activará con el primer click del usuario
+        updateIcon(false);
+      });
+  }
+
+  toggleBtn?.addEventListener("click", () => {
+    if (!audio) return;
+    if (audio.paused) {
+      audio.play();
+      updateIcon(true);
+    } else {
+      audio.pause();
+      updateIcon(false);
+    }
+  });
+
+  // Si el autoplay fue bloqueado, arrancamos con el primer click en cualquier parte de la página
+  function unlockOnFirstInteraction() {
+    if (audio && audio.paused) {
+      audio.play().then(() => updateIcon(true)).catch(() => {});
+    }
+    document.removeEventListener("click", unlockOnFirstInteraction);
+  }
+
+  tryAutoplay();
+  document.addEventListener("click", unlockOnFirstInteraction);
+</script>
 
 <Layout title={DESAFIO.nombre}>
   <div class="flex flex-col max-w-4xl mx-auto min-h-screen mt-20 px-4 mb-20">
@@ -116,4 +164,18 @@ const estadoClass =
       </div>
     </div>
   </div>
+
+  {/* AUDIO EN LOOP */}
+  <audio id="bg-audio" src="/sounds/extremo4.ogg" loop preload="auto"></audio>
+
+  {/* Control flotante de sonido */}
+  <button
+    id="audio-toggle"
+    type="button"
+    aria-label="Silenciar o activar audio"
+    class="fixed bottom-6 right-6 z-50 flex items-center justify-center rounded-full border border-white/10 bg-gray-900/80 backdrop-blur-md p-3 text-yellow-400 shadow-lg transition-all duration-300 hover:border-yellow-400/50 hover:-translate-y-0.5"
+  >
+    <LucideVolume2 id="icon-on" size={22} />
+    <LucideVolumeX id="icon-off" size={22} class="hidden" />
+  </button>
 </Layout>
