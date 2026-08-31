@@ -21,7 +21,7 @@ interface BirthdayMessage {
 }
 
 interface BirthdayWallProps {
-    user: User;
+    user: User | null;
 }
 
 export default function BirthdayWall({ user }: BirthdayWallProps) {
@@ -33,7 +33,7 @@ export default function BirthdayWall({ user }: BirthdayWallProps) {
 
     useEffect(() => {
         loadMessages();
-        if (user.isAdmin) loadPendingCount();
+        if (user?.isAdmin) loadPendingCount();
     }, []);
 
     async function loadMessages() {
@@ -112,59 +112,71 @@ export default function BirthdayWall({ user }: BirthdayWallProps) {
             </div>
 
             {/* Form */}
-            <div className="bg-[#1a1b2e] rounded-[28px] border border-[#2a2d4a] p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                    <img
-                        src={getAvatarUrl(user.image, user.name)}
-                        alt={user.name}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-[#2a2d4a]"
-                    />
-                    <div className="flex-1">
-                        <p className="text-white/80 text-sm font-medium">{user.name}</p>
-                        <p className="text-white/30 text-xs">Escribe tu mensaje de cumpleaños</p>
+            {user ? (
+                <div className="bg-[#1a1b2e] rounded-[28px] border border-[#2a2d4a] p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <img
+                            src={getAvatarUrl(user.image, user.name)}
+                            alt={user.name}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-[#2a2d4a]"
+                        />
+                        <div className="flex-1">
+                            <p className="text-white/80 text-sm font-medium">{user.name}</p>
+                            <p className="text-white/30 text-xs">Escribe tu mensaje de cumpleaños</p>
+                        </div>
                     </div>
+
+                    <form onSubmit={handleSubmit} class="space-y-3">
+                        <textarea
+                            value={text}
+                            onInput={(e) => setText((e.target as HTMLTextAreaElement).value)}
+                            placeholder="¡Feliz cumpleaños SaltoUruguayServer! 🎂..."
+                            maxLength={500}
+                            rows={3}
+                            className="w-full bg-[#12131f] border border-[#2a2d4a] rounded-2xl px-4 py-3 text-white text-sm placeholder:text-white/20 resize-none focus:outline-none focus:border-pink-500/50 transition-colors"
+                        />
+                        <div className="flex items-center justify-between">
+                            <span className="text-white/20 text-xs">{text.length}/500</span>
+                            <button
+                                type="submit"
+                                disabled={sending || !text.trim()}
+                                className="flex items-center gap-2 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-purple-900/20"
+                            >
+                                {sending ? (
+                                    <>
+                                        <LucideLoader2 className="animate-spin" size={16} />
+                                        Enviando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <LucideSend size={16} />
+                                        Enviar mensaje
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+
+                    {user.isAdmin && pendingCount > 0 && (
+                        <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-2">
+                            <LucideShield className="text-yellow-400" size={14} />
+                            <span className="text-yellow-300 text-xs">
+                                {pendingCount} mensaje{pendingCount !== 1 ? "s" : ""} pendiente{pendingCount !== 1 ? "s" : ""} de aprobación
+                            </span>
+                        </div>
+                    )}
                 </div>
-
-                <form onSubmit={handleSubmit} class="space-y-3">
-                    <textarea
-                        value={text}
-                        onInput={(e) => setText((e.target as HTMLTextAreaElement).value)}
-                        placeholder="¡Feliz cumpleaños SaltoUruguayServer! 🎂..."
-                        maxLength={500}
-                        rows={3}
-                        className="w-full bg-[#12131f] border border-[#2a2d4a] rounded-2xl px-4 py-3 text-white text-sm placeholder:text-white/20 resize-none focus:outline-none focus:border-pink-500/50 transition-colors"
-                    />
-                    <div className="flex items-center justify-between">
-                        <span className="text-white/20 text-xs">{text.length}/500</span>
-                        <button
-                            type="submit"
-                            disabled={sending || !text.trim()}
-                            className="flex items-center gap-2 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-purple-900/20"
-                        >
-                            {sending ? (
-                                <>
-                                    <LucideLoader2 className="animate-spin" size={16} />
-                                    Enviando...
-                                </>
-                            ) : (
-                                <>
-                                    <LucideSend size={16} />
-                                    Enviar mensaje
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </form>
-
-                {user.isAdmin && pendingCount > 0 && (
-                    <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-2">
-                        <LucideShield className="text-yellow-400" size={14} />
-                        <span className="text-yellow-300 text-xs">
-                            {pendingCount} mensaje{pendingCount !== 1 ? "s" : ""} pendiente{pendingCount !== 1 ? "s" : ""} de aprobación
-                        </span>
-                    </div>
-                )}
-            </div>
+            ) : (
+                <div className="bg-[#1a1b2e] rounded-[28px] border border-[#2a2d4a] p-6 text-center">
+                    <p className="text-white/50 text-sm mb-3">Inicia sesión para dejar tu mensaje de cumpleaños</p>
+                    <a
+                        href="/signin"
+                        className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-medium text-sm px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-purple-900/20"
+                    >
+                        Iniciar sesión
+                    </a>
+                </div>
+            )}
 
             {/* Messages Wall */}
             <div className="space-y-4">
