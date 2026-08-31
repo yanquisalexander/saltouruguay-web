@@ -455,6 +455,15 @@ export const DebateAnonymousMessagesTable = pgTable('debate_anonymous_messages',
     updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
 })
 
+export const BirthdayMessagesTable = pgTable('birthday_messages', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => UsersTable.id),
+    message: text('message').notNull(),
+    approvedAt: timestamp('approved_at'),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+})
+
 export const SaltoCraftExtremo3InscriptionsTable = pgTable('salto_craft_extremo3_inscriptions', {
     id: serial('id').primaryKey(),
     userId: integer('user_id').references(() => UsersTable.id),

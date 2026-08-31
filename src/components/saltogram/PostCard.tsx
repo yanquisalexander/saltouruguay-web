@@ -4,7 +4,8 @@ import ReactionButton from "./ReactionButton";
 import CommentSection from "./CommentSection";
 import {
     MessageCircle, Flag, Pin, Sparkles, MoreHorizontal,
-    Trash2, Star, Share2, BadgeCheck, Crown, LucideCalendar, LucideLink2
+    Trash2, Star, Share2, BadgeCheck, Crown, LucideCalendar, LucideLink2,
+    LucideCake
 } from "lucide-preact";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -87,7 +88,8 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
             // Hashtags → link to tag filter
             if (word.startsWith("#") && word.length > 1) {
                 const tag = word.substring(1);
-                return <a key={i} href={`/saltogram?tag=${tag}`} className="text-[#b3c8ff] hover:text-[#c5d5ff] font-medium hover:underline">{word}</a>;
+                const isBirthdayTag = tag === "UnCumpleSaltano";
+                return <a key={i} href={`/saltogram?tag=${tag}`} className={isBirthdayTag ? "text-pink-400 hover:text-pink-300 font-medium hover:underline" : "text-[#b3c8ff] hover:text-[#c5d5ff] font-medium hover:underline"}>{word}</a>;
             }
             // Legacy @-mentions → link to user profile (retrocompatible)
             if (word.startsWith("@") && word.length > 1) {
@@ -103,21 +105,32 @@ export default function PostCard({ post, currentUserId, isAdmin }: PostCardProps
 
     if (isDeleted) return null;
 
+    const isBirthdayPost = post.text?.includes("#UnCumpleSaltano") ?? false;
+
     return (
         <article className={`
             relative
-            bg-[#1a1b2e]
             rounded-[28px]
-            border transition-all duration-300 overflow-hidden
-            ${isFeatured
-                ? "border-[#f9c96a]/25 shadow-[0_0_0_1px_rgba(249,201,106,0.08)]"
-                : "border-[#2a2d4a]"
+            transition-all duration-300 overflow-hidden
+            ${isBirthdayPost
+                ? "bg-[#1e1530] border border-pink-500/30 shadow-[0_0_20px_rgba(236,72,153,0.08),0_0_0_1px_rgba(236,72,153,0.06)]"
+                : isFeatured
+                    ? "bg-[#1a1b2e] border border-[#f9c96a]/25 shadow-[0_0_0_1px_rgba(249,201,106,0.08)]"
+                    : "bg-[#1a1b2e] border border-[#2a2d4a]"
             }
         `}>
 
-            {/* ── BADGES fijado / destacado ── */}
-            {(isPinned || isFeatured) && (
+            {/* ── BADGES fijado / destacado / cumpleaños ── */}
+            {(isPinned || isFeatured || isBirthdayPost) && (
                 <div className="absolute top-4 right-14 flex gap-1.5 z-10">
+                    {isBirthdayPost && (
+                        <span
+                            className="bg-pink-500/15 text-pink-400 p-1.5 rounded-full border border-pink-500/25"
+                            title="#UnCumpleSaltano"
+                        >
+                            <LucideCake size={13} />
+                        </span>
+                    )}
                     {isPinned && (
                         <span
                             className="bg-[#f9c96a]/10 text-[#f9c96a] p-1.5 rounded-full border border-[#f9c96a]/20"

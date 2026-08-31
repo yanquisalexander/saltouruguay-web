@@ -1,0 +1,22 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+import BirthdayWall from "@/components/BirthdayWall";
+
+const authSession = await getSession(Astro.request);
+
+if (!authSession) {
+  return Astro.redirect("/signin?redirect=/cumple");
+}
+
+const user = {
+  id: authSession.user.id,
+  name: authSession.user.name || authSession.user.username || "Anónimo",
+  image: authSession.user.image || null,
+  isAdmin: authSession.user.isAdmin ?? false,
+};
+---
+
+<Layout title="Feliz Cumpleaños — Salto Uruguay" description="Deja tu mensaje de cumpleaños para SaltoUruguayServer" mainClassname="px-6 sm:px-10 pt-24 pb-20">
+  <BirthdayWall user={user} client:only="preact" />
+</Layout>

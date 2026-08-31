@@ -1,0 +1,14 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { checkAdmin } from "@/lib/checkAdmin";
+import { getSession } from "auth-astro/server";
+import BirthdayAdmin from "@/components/admin/BirthdayAdmin";
+
+const session = await getSession(Astro.request);
+const checkResult = await checkAdmin(session);
+if (checkResult) return checkResult;
+---
+
+<AdminLayout title="Admin — Mensajes de Cumpleaños">
+    <BirthdayAdmin client:only="preact" />
+</AdminLayout>

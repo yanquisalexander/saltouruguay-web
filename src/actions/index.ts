@@ -39,12 +39,14 @@ import { voice } from "./voice";
 import { notifications } from "./notifications";
 import { tournaments } from "./tournaments";
 import { acreconre } from "./acreconre";
+import { cumple } from "./cumple";
 
 
 
 export const server = {
     oauth: userOauth,
     acreconre,
+    cumple,
     tournaments,
     notifications,
     saltogram,
