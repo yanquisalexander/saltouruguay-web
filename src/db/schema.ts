@@ -10,7 +10,6 @@ export const UsersTable = pgTable("users", {
     username: varchar("username").notNull(),
     avatar: varchar("avatar"),
     twitchTier: integer("twitch_tier"),
-    discordId: varchar("discord_id").unique(),
     admin: boolean("admin").notNull().default(false),
     playedSystemCinematics: text("played_system_cinematics").array().default([]),
     coins: integer("coins").notNull().default(0),

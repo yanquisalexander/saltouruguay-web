@@ -15,7 +15,6 @@ declare module "@auth/core/types" {
             tier?: 1 | 2 | 3;
             isAdmin?: boolean;
             twitchId?: string;
-            discordId?: string;
             coins?: number;
             streamerWarsPlayerNumber?: number;
             isSuspended?: boolean;

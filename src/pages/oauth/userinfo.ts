@@ -1,8 +1,8 @@
 import type { APIRoute } from "astro";
 import { validateAccessToken } from "@/lib/oauth";
 import { client as db } from "@/db/client";
-import { UsersTable } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { UsersTable, LinkedAccountsTable } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
 import { getDiscordUser } from "@/services/discord";
 
 export const GET: APIRoute = async ({ request }) => {
@@ -37,7 +37,6 @@ export const GET: APIRoute = async ({ request }) => {
                 avatar: true,
                 email: true,
                 admin: true,
-                discordId: true
             },
         });
 
@@ -48,6 +47,17 @@ export const GET: APIRoute = async ({ request }) => {
             });
         }
 
+        const linkedDiscord = await db.query.LinkedAccountsTable.findFirst({
+            where: and(
+                eq(LinkedAccountsTable.userId, user.id),
+                eq(LinkedAccountsTable.provider, "discord"),
+            ),
+            columns: {
+                providerUserId: true,
+            },
+        });
+        const effectiveDiscordId = linkedDiscord?.providerUserId ?? null;
+
         const response: Record<string, unknown> = {
             sub: user.id.toString(),
         };
@@ -56,10 +66,10 @@ export const GET: APIRoute = async ({ request }) => {
             response.username = user.username;
             response.displayName = user.displayName;
             response.avatar = user.avatar;
-            response.discordId = user.discordId;
+            response.discordId = effectiveDiscordId;
 
-            if (user.discordId) {
-                const discordUser = await getDiscordUser(user.discordId);
+            if (effectiveDiscordId) {
+                const discordUser = await getDiscordUser(effectiveDiscordId);
                 if (discordUser) {
                     response.discordUsername = discordUser.username;
                 }

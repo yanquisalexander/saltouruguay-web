@@ -1,5 +1,5 @@
 import { client } from "@/db/client";
-import { NegativeVotesStreamersTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable, UsersTable } from "@/db/schema";
+import { NegativeVotesStreamersTable, StreamerWarsInscriptionsTable, StreamerWarsPlayersTable, StreamerWarsTeamPlayersTable, StreamerWarsTeamsTable, UsersTable, LinkedAccountsTable } from "@/db/schema";
 import cacheService from "@/services/cache";
 import { and, asc, count, eq, ilike, inArray, min, not, desc } from "drizzle-orm";
 import { pusher } from "./pusher";
@@ -13,6 +13,7 @@ import { CINEMATICS } from "@/consts/cinematics";
 import { uploadAudio } from "@/services/audio-storage";
 import { DalgonaShape, type DalgonaShapeData, createDalgonaShapeData, generateDalgonaImage } from "@/services/dalgona-image-generator";
 import { PUSHER_CHANNELS, PUSHER_EVENTS, PUSHER_EVENTS_DALGONA, PUSHER_EVENTS_BOMB, PUSHER_EVENTS_TUG_OF_WAR, PUSHER_EVENTS_FISHING, PUSHER_EVENTS_AUTO_ELIM, PUSHER_EVENTS_CINEMATIC, PUSHER_EVENTS_ANDI, CACHE_KEYS } from "@/consts/pusher";
+import { getLinkedAccount } from "@/lib/linked-accounts";
 
 // Import from modular structure
 import { generatePlayerChallenges } from "./streamer-wars/minigames/bomb-challenges";
@@ -1813,18 +1814,38 @@ export const revivePlayer = async (playerNumber: number) => {
 }
 
 export const getPlayers = async () => {
-    return await client.query.StreamerWarsPlayersTable.findMany({
+    const players = await client.query.StreamerWarsPlayersTable.findMany({
         orderBy: [asc(StreamerWarsPlayersTable.playerNumber)],
         with: {
             user: {
                 columns: {
+                    id: true,
                     displayName: true,
                     avatar: true,
-                    discordId: true
                 }
             }
         }
-    })
+    });
+
+    const userIds = players.map(p => p.user?.id).filter((id): id is number => id != null);
+    const linkedAccounts = userIds.length > 0
+        ? await client
+            .select({
+                userId: LinkedAccountsTable.userId,
+                providerUserId: LinkedAccountsTable.providerUserId,
+            })
+            .from(LinkedAccountsTable)
+            .where(and(
+                inArray(LinkedAccountsTable.userId, userIds),
+                eq(LinkedAccountsTable.provider, "discord"),
+            ))
+        : [];
+    const discordIdMap = new Map(linkedAccounts.map(la => [la.userId, la.providerUserId]));
+
+    return players.map(p => ({
+        ...p,
+        user: p.user ? { ...p.user, discordId: discordIdMap.get(p.user.id!) ?? null } : null,
+    }));
 }
 
 
@@ -1863,7 +1884,6 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
         const user = await client
             .select({
                 id: UsersTable.id,
-                discordId: UsersTable.discordId,
                 avatar: UsersTable.avatar,
                 displayName: UsersTable.displayName,
 
@@ -1879,7 +1899,10 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
 
         console.log({ user });
 
-        if (import.meta.env.PROD && (!user || !user.discordId)) {
+        const linkedDiscord = user ? await getLinkedAccount(user.id, "discord") : null;
+        const userDiscordId = linkedDiscord?.providerUserId ?? null;
+
+        if (import.meta.env.PROD && (!user || !userDiscordId)) {
             return {
                 success: false,
                 error: "Parece que tu usuario no está asociado a Discord. Por favor, contacta a un moderador",
@@ -1949,7 +1972,7 @@ export const joinTeam = async (playerNumber: number, teamToJoin: string) => {
         if (roleId) {
             // Agregar rol al usuario en Discord
             try {
-                await addRoleToUser(SALTO_DISCORD_GUILD_ID, user.discordId, roleId);
+                await addRoleToUser(SALTO_DISCORD_GUILD_ID, userDiscordId, roleId);
 
             } catch (error) {
 
@@ -1997,7 +2020,7 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
         // Obtener el discordId del jugador desde una relación con playerNumber
         const user = await client
             .select({
-                discordId: UsersTable.discordId,
+                id: UsersTable.id,
             })
             .from(UsersTable)
             .innerJoin(
@@ -2008,7 +2031,10 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
             .execute()
             .then((res) => res[0]);
 
-        if (import.meta.env.PROD && (!user || !user.discordId)) {
+        const linkedDiscord = user ? await getLinkedAccount(user.id, "discord") : null;
+        const userDiscordId = linkedDiscord?.providerUserId ?? null;
+
+        if (import.meta.env.PROD && (!user || !userDiscordId)) {
             return {
                 success: false,
                 error: "Parece que el usuario no está asociado a Discord. No se pudo remover el rol",
@@ -2019,13 +2045,13 @@ export const removePlayerFromTeam = async (playerNumber: number) => {
 
 
         try {
-            const guildMember = await getGuildMember(SALTO_DISCORD_GUILD_ID, user.discordId);
+            const guildMember = await getGuildMember(SALTO_DISCORD_GUILD_ID, userDiscordId);
 
             const { roles } = guildMember as { roles: string[] };
 
             for (const roleId of roles) {
                 if (roleId === DISCORD_ROLES.EQUIPO_AZUL || roleId === DISCORD_ROLES.EQUIPO_ROJO || roleId === DISCORD_ROLES.EQUIPO_AMARILLO || roleId === DISCORD_ROLES.EQUIPO_MORADO || roleId === DISCORD_ROLES.EQUIPO_BLANCO) {
-                    await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, user.discordId!, roleId);
+                    await removeRoleFromUser(SALTO_DISCORD_GUILD_ID, userDiscordId!, roleId);
                 }
             }
 
@@ -2077,7 +2103,6 @@ export const assignPlayerToTeam = async (playerNumber: number, teamColor: string
         const user = await client
             .select({
                 id: UsersTable.id,
-                discordId: UsersTable.discordId,
                 avatar: UsersTable.avatar,
                 displayName: UsersTable.displayName,
             })
@@ -2090,7 +2115,10 @@ export const assignPlayerToTeam = async (playerNumber: number, teamColor: string
             .execute()
             .then((res) => res[0]);
 
-        if (import.meta.env.PROD && (!user || !user.discordId)) {
+        const linkedDiscord = user ? await getLinkedAccount(user.id, "discord") : null;
+        const userDiscordId = linkedDiscord?.providerUserId ?? null;
+
+        if (import.meta.env.PROD && (!user || !userDiscordId)) {
             return {
                 success: false,
                 error: "El usuario no está asociado a Discord",
@@ -2111,9 +2139,9 @@ export const assignPlayerToTeam = async (playerNumber: number, teamColor: string
         };
 
         const roleId = roleMap[teamColor];
-        if (roleId && user?.discordId) {
+        if (roleId && userDiscordId) {
             try {
-                await addRoleToUser(SALTO_DISCORD_GUILD_ID, user.discordId, roleId);
+                await addRoleToUser(SALTO_DISCORD_GUILD_ID, userDiscordId, roleId);
             } catch (_) {}
         }
 
@@ -2188,18 +2216,37 @@ export const getUserIdsOfPlayers = async (): Promise<number[]> => {
 }
 
 export const getCurrentInscriptions = async () => {
-    return await client.query.StreamerWarsInscriptionsTable.findMany({
+    const inscriptions = await client.query.StreamerWarsInscriptionsTable.findMany({
         with: {
             user: {
                 columns: {
                     id: true,
                     displayName: true,
                     avatar: true,
-                    discordId: true
                 }
             }
         }
     }).execute();
+
+    const userIds = inscriptions.map(i => i.user?.id).filter((id): id is number => id != null);
+    const linkedAccounts = userIds.length > 0
+        ? await client
+            .select({
+                userId: LinkedAccountsTable.userId,
+                providerUserId: LinkedAccountsTable.providerUserId,
+            })
+            .from(LinkedAccountsTable)
+            .where(and(
+                inArray(LinkedAccountsTable.userId, userIds),
+                eq(LinkedAccountsTable.provider, "discord"),
+            ))
+        : [];
+    const discordIdMap = new Map(linkedAccounts.map(la => [la.userId, la.providerUserId]));
+
+    return inscriptions.map(i => ({
+        ...i,
+        user: i.user ? { ...i.user, discordId: discordIdMap.get(i.user.id!) ?? null } : null,
+    }));
 }
 
 export const isPlayerEliminated = async (playerNumber: number) => {

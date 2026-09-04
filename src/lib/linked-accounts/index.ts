@@ -1,7 +1,7 @@
 import type { AccountProvider } from "./provider";
 import { discordProvider } from "./providers/discord";
 
-export { getLinkedAccounts, getLinkedAccount, getLinkedAccountsSummary, getLinkedAccountByProviderId, createLinkedAccount, updateLinkedAccount, deleteLinkedAccount, encrypt, decrypt } from "./db";
+export { getLinkedAccounts, getLinkedAccount, getDiscordIdForUser, getLinkedAccountsSummary, getLinkedAccountByProviderId, createLinkedAccount, updateLinkedAccount, deleteLinkedAccount, encrypt, decrypt } from "./db";
 export { discordProvider } from "./providers/discord";
 export type { AccountProvider, ProviderUserData, LinkedAccountRecord } from "./provider";
 

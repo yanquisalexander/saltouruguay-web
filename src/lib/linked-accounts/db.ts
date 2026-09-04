@@ -80,6 +80,11 @@ export type LinkedAccountsSummary = Record<string, {
     avatar: string | null;
 }>;
 
+export const getDiscordIdForUser = async (userId: number): Promise<string | null> => {
+    const account = await getLinkedAccount(userId, "discord");
+    return account?.providerUserId ?? null;
+};
+
 export const getLinkedAccountsSummary = async (userId: number): Promise<LinkedAccountsSummary> => {
     const accounts = await getLinkedAccounts(userId);
     const summary: LinkedAccountsSummary = {};

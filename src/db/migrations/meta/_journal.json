@@ -519,6 +519,13 @@
       "when": 1788218452681,
       "tag": "0073_hard_adam_warlock",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1788482161533,
+      "tag": "0074_friendly_harpoon",
+      "breakpoints": true
     }
   ]
 }
