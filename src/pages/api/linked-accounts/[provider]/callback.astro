@@ -120,9 +120,12 @@ const isDiscord = providerName === "discord";
             Has conectado tu {providerLabel} correctamente. Redirigiendo...
           </p>
           <LucideLoader2 size={24} class="animate-spin mx-auto text-white/30" />
-          <script is:inline set:html={`
-            setTimeout(() => window.location.href = "${returnTo}?${providerName}Linked=true", 2000);
-          `} />
+          <script is:inline data-return-to={returnTo} data-provider={providerName}>
+            setTimeout(() => {
+              const s = document.currentScript;
+              window.location.href = s.dataset.returnTo + "?" + s.dataset.provider + "Linked=true";
+            }, 2000);
+          </script>
         </div>
       )
     }
