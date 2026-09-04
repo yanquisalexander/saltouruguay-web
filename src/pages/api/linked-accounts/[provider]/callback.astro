@@ -87,6 +87,8 @@ async function linkAccount(request: Request) {
   }
 }
 
+const returnTo = Astro.cookies.get("linked_account_return_to")?.value || "/";
+Astro.cookies.delete("linked_account_return_to", { path: "/" });
 const result = provider ? await linkAccount(Astro.request) : { error: true, code: LINK_ERRORS.GENERIC, message: "Proveedor no soportado" };
 const providerLabel = provider?.label ?? providerName ?? "Desconocido";
 const discordUrl = SOCIAL_NETWORKS.find((n) => n.name === "Discord")?.url;
@@ -118,9 +120,9 @@ const isDiscord = providerName === "discord";
             Has conectado tu {providerLabel} correctamente. Redirigiendo...
           </p>
           <LucideLoader2 size={24} class="animate-spin mx-auto text-white/30" />
-          <script is:inline>
-            setTimeout(() => window.location.href = "/?{providerName}Linked=true", 2000);
-          </script>
+          <script is:inline set:html={`
+            setTimeout(() => window.location.href = "${returnTo}?${providerName}Linked=true", 2000);
+          `} />
         </div>
       )
     }
@@ -141,7 +143,7 @@ const isDiscord = providerName === "discord";
             class="block w-full py-3 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20">
             Unirse al Servidor
           </a>
-          <a href="/" class="block mt-4 text-xs text-white/30 hover:text-white transition-colors">
+          <a href={returnTo} class="block mt-4 text-xs text-white/30 hover:text-white transition-colors">
             Cancelar y volver
           </a>
         </div>
@@ -160,9 +162,9 @@ const isDiscord = providerName === "discord";
           <p class="text-white/60 font-rubik text-sm mb-6">
             Esta cuenta de {providerLabel} ya está vinculada a otro perfil de Salto Uruguay.
           </p>
-          <a href="/usuario"
+          <a href={returnTo}
             class="block w-full py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-colors">
-            Volver a mi Perfil
+            Volver
           </a>
         </div>
       )
@@ -180,9 +182,9 @@ const isDiscord = providerName === "discord";
           <p class="text-white/60 font-rubik text-sm mb-6">
             {result.message || "Ocurrió un error inesperado al intentar vincular."}
           </p>
-          <a href="/"
+          <a href={returnTo}
             class="block w-full py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-colors">
-            Volver al Inicio
+            Volver
           </a>
         </div>
       )

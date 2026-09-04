@@ -31,6 +31,15 @@ export const GET: APIRoute = async ({ params, request, cookies, redirect }) => {
         secure: import.meta.env.PROD,
     });
 
+    const referer = request.headers.get("Referer") || request.headers.get("Origin") || "/";
+    cookies.set("linked_account_return_to", referer, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 60 * 10,
+        secure: import.meta.env.PROD,
+    });
+
     const authUrl = provider.getAuthorizationUrl(state, callbackUrl);
     return redirect(authUrl.toString());
 };
