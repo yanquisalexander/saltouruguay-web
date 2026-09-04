@@ -1,7 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { getSession } from "auth-astro/server";
-import { getProvider, getLinkedAccountByProviderId, createLinkedAccount } from "@/lib/linked-accounts";
+import { getProvider, getLinkedAccountByProviderId, createLinkedAccount, updateLinkedAccount } from "@/lib/linked-accounts";
 import { SOCIAL_NETWORKS } from "@/consts/SocialNetworks";
 import {
   LucideLoader2,
@@ -45,21 +45,33 @@ async function linkAccount(request: Request) {
     const userData = await provider.handleCallback(code, callbackUrl);
 
     const existingAccount = await getLinkedAccountByProviderId(providerName, userData.providerUserId);
+
     if (existingAccount && existingAccount.userId !== session.user.id) {
       return { error: true, code: LINK_ERRORS.ACCOUNT_ALREADY_LINKED };
     }
 
-    await createLinkedAccount({
-      userId: session.user.id,
-      provider: providerName,
-      providerUserId: userData.providerUserId,
-      username: userData.username,
-      avatar: userData.avatar,
-      accessToken: userData.accessToken,
-      refreshToken: userData.refreshToken,
-      tokenExpiresAt: userData.expiresAt,
-      scopes: userData.scopes,
-    });
+    if (existingAccount && existingAccount.userId === session.user.id) {
+      await updateLinkedAccount(existingAccount.id, {
+        username: userData.username,
+        avatar: userData.avatar,
+        accessToken: userData.accessToken,
+        refreshToken: userData.refreshToken,
+        tokenExpiresAt: userData.expiresAt,
+        scopes: userData.scopes,
+      });
+    } else {
+      await createLinkedAccount({
+        userId: session.user.id,
+        provider: providerName,
+        providerUserId: userData.providerUserId,
+        username: userData.username,
+        avatar: userData.avatar,
+        accessToken: userData.accessToken,
+        refreshToken: userData.refreshToken,
+        tokenExpiresAt: userData.expiresAt,
+        scopes: userData.scopes,
+      });
+    }
 
     return { success: true };
   } catch (e) {
