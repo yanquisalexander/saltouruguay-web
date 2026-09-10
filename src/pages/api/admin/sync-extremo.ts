@@ -14,7 +14,7 @@ export async function GET({ request }: { request: Request }) {
         }
 
         const res = await fetch(
-            `${INSCRIPTIONS_API_URL}/api/inscriptions/export?eventId=3&dryRun=true`,
+            `${INSCRIPTIONS_API_URL}/api/inscriptions/export?eventId=3`,
             { headers: { "X-API-Key": INSCRIPTIONS_API_KEY } }
         );
 
@@ -23,7 +23,31 @@ export async function GET({ request }: { request: Request }) {
         }
 
         const data = await res.json();
-        return new Response(JSON.stringify(data), {
+
+        if (!data.success || !data.inscriptions) {
+            throw new Error("Invalid response from admin API");
+        }
+
+        // Map to preview format
+        const preview = data.inscriptions.map((insc: any) => {
+            const custom = insc.customData || {};
+            return {
+                adminId: insc.id,
+                userId: insc.susId,
+                displayName: insc.displayName,
+                email: insc.email,
+                discordUsername: insc.discordUsername,
+                minecraft_username: custom.minecraft_username || null,
+                participated_sc: custom.participated_sc || null,
+                createdAt: insc.createdAt,
+            };
+        });
+
+        return new Response(JSON.stringify({
+            success: true,
+            total: preview.length,
+            inscriptions: preview,
+        }), {
             status: 200,
             headers: { "Content-Type": "application/json" },
         });
