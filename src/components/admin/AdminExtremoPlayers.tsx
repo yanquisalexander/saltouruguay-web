@@ -1,11 +1,6 @@
 import { useState, useEffect } from "preact/compat";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
-import { Pie, Bar } from 'react-chartjs-2';
-
-// Registrar componentes de Chart.js
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 interface Player {
     id: number;
@@ -33,7 +28,6 @@ export default function AdminExtremoPlayers() {
         try {
             const response = await fetch("/api/extremo-players");
             const data = await response.json();
-            // Ordenar: primero confirmados (true), luego por vidas descendente
             const sorted = [...(data.players || [])].sort((a, b) => {
                 if (a.isConfirmedPlayer !== b.isConfirmedPlayer) {
                     return Number(b.isConfirmedPlayer) - Number(a.isConfirmedPlayer);
@@ -48,282 +42,255 @@ export default function AdminExtremoPlayers() {
         }
     };
 
-
-
     const updatePlayer = async (playerId: number, field: string, value: any) => {
-        try {
-            const updateData: any = { playerId };
+        const updateData: any = { playerId };
+        if (field === 'isConfirmedPlayer') updateData.isConfirmedPlayer = value;
+        else if (field === 'isRepechaje') updateData.isRepechaje = value;
+        else if (field === 'livesCount') updateData.livesCount = value;
+        else if (field === 'minecraft_username') updateData.minecraft_username = value;
 
-            if (field === 'isConfirmedPlayer') {
-                updateData.isConfirmedPlayer = value;
-            } else if (field === 'isRepechaje') {
-                updateData.isRepechaje = value;
-            } else if (field === 'livesCount') {
-                updateData.livesCount = value;
-            } else if (field === 'minecraft_username') {
-                updateData.minecraft_username = value;
-            }
-
-            toast.promise(
-                actions.admin.updateExtremoPlayer(updateData),
-                {
-                    loading: "Actualizando jugador...",
-                    success: () => {
-                        fetchPlayers();
-                        return "Jugador actualizado";
-                    },
-                    error: "Error al actualizar jugador",
-                }
-            );
-        } catch (error) {
-            console.error("Error updating player:", error);
-        }
+        toast.promise(actions.admin.updateExtremoPlayer(updateData), {
+            loading: "Actualizando...",
+            success: () => { fetchPlayers(); return "Jugador actualizado"; },
+            error: "Error al actualizar",
+        });
     };
 
     const seedPlayers = async () => {
-        try {
-            const seedPromise = fetch("/api/seed-extremo-players", {
-                method: "POST",
-            })
-                .then((r) => r.json())
-                .then((data) => {
-                    if (!data.success) throw new Error(data.error || "Error al inicializar");
-                    return data;
-                });
-
-            await toast.promise(seedPromise, {
-                loading: "Inicializando jugadores...",
-                success: "Jugadores inicializados",
-                error: "Error al inicializar jugadores",
-            });
-
-            await fetchPlayers(); // Refresh the list
-        } catch (error) {
-            console.error("Error seeding players:", error);
-        }
+        toast.promise(
+            fetch("/api/seed-extremo-players", { method: "POST" })
+                .then(r => r.json())
+                .then(d => { if (!d.success) throw new Error(d.error); return d; }),
+            { loading: "Inicializando...", success: "Jugadores creados", error: "Error al inicializar" }
+        ).then(() => fetchPlayers());
     };
 
-    if (loading) return <div className="text-white font-rubik">Cargando...</div>;
-
-    if (players.length === 0) {
+    if (loading) {
         return (
-            <div className="space-y-6">
-                <h2 className="text-2xl font-bold font-anton text-white">Gestión de Jugadores - SaltoCraft Extremo 3</h2>
-                <div className="bg-zinc-900/50 backdrop-blur-xs p-6 rounded-lg border border-neutral-800 shadow-lg text-center">
-                    <p className="text-gray-300 mb-4 font-rubik">No hay jugadores registrados aún.</p>
-                    <button
-                        onClick={seedPlayers}
-                        className="px-4 py-2 bg-electric-violet-500 text-white rounded-sm font-rubik hover:bg-electric-violet-600 transition-colors"
-                    >
-                        Inicializar Jugadores desde Inscripciones
-                    </button>
-                </div>
+            <div class="flex items-center justify-center py-12 text-gray-400 font-rubik">
+                <div class="w-6 h-6 border-2 border-electric-violet-500 border-t-transparent rounded-full animate-spin mr-3"></div>
+                Cargando jugadores...
             </div>
         );
     }
 
-    // Filtrar confirmados y aplicar búsqueda
-    const confirmedPlayers = players.filter((p) => p.isConfirmedPlayer);
-    const filteredConfirmed = confirmedPlayers.filter((p) => {
+    const confirmedPlayers = players.filter(p => p.isConfirmedPlayer);
+    const unconfirmedPlayers = players.filter(p => !p.isConfirmedPlayer);
+
+    const filteredConfirmed = confirmedPlayers.filter(p => {
         const q = search.trim().toLowerCase();
         if (!q) return true;
         return (
-            p.inscription.minecraft_username.toLowerCase().includes(q) ||
-            p.inscription.discordUsername.toLowerCase().includes(q)
+            p.inscription.minecraft_username?.toLowerCase().includes(q) ||
+            p.inscription.discordUsername?.toLowerCase().includes(q)
         );
     });
 
     return (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold font-anton text-white">Gestión de Jugadores - SaltoCraft Extremo 3</h2>
-
-            {/* Botón para añadir jugadores faltantes desde las inscripciones */}
-            <div className="flex items-center gap-4">
+        <div class="space-y-6">
+            {/* Header */}
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold font-anton text-white">Gestión de Jugadores</h2>
+                    <p class="text-gray-400 text-sm font-rubik mt-1">
+                        {confirmedPlayers.length} confirmados · {unconfirmedPlayers.length} sin confirmar
+                    </p>
+                </div>
                 <button
                     onClick={seedPlayers}
-                    className="px-4 py-2 bg-electric-violet-500 text-white rounded-sm font-rubik hover:bg-electric-violet-600 transition-colors"
+                    class="px-4 py-2 bg-electric-violet-500 hover:bg-electric-violet-600 text-white rounded-lg font-bold flex items-center gap-2 transition-colors text-sm"
                 >
-                    Añadir jugadores faltantes (Desde inscripción)
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Añadir Jugadores
                 </button>
             </div>
 
-            {/* Barra de búsqueda para confirmados */}
+            {/* Search */}
             {confirmedPlayers.length > 0 && (
-                <div className="my-2">
+                <div class="relative">
                     <input
                         type="text"
                         value={search}
                         onInput={e => setSearch((e.target as HTMLInputElement).value)}
-                        placeholder="Buscar jugador confirmado..."
-                        className="w-full md:w-96 px-3 py-2 rounded-sm border border-neutral-700 bg-zinc-900/70 text-white font-rubik focus:outline-hidden focus:border-electric-violet-500 transition"
+                        placeholder="Buscar por nombre o Discord..."
+                        class="w-full md:w-96 px-4 py-3 pl-10 rounded-lg border border-white/10 bg-[#0a0a0a] text-white font-rubik focus:outline-none focus:border-electric-violet-500 transition-colors"
                     />
+                    <svg class="w-5 h-5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
                 </div>
             )}
 
-            {/* Lista de confirmados filtrados */}
-            <div className="grid gap-4">
-                {filteredConfirmed.map((player) => (
-                    <div key={player.id} className="bg-zinc-900/50 backdrop-blur-xs p-4 rounded-lg border border-neutral-800 shadow-lg hover:bg-zinc-800/50 transition-colors">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                {/* Username editable */}
-                                {editingId === player.id ? (
-                                    <input
-                                        type="text"
-                                        value={editingValue}
-                                        autoFocus
-                                        onInput={e => setEditingValue((e.target as HTMLInputElement).value)}
-                                        onBlur={() => {
-                                            setEditingId(null);
-                                            if (editingValue.trim() && editingValue !== player.inscription.minecraft_username) {
-                                                updatePlayer(player.id, 'minecraft_username', editingValue.trim());
-                                            }
-                                        }}
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter') {
-                                                setEditingId(null);
-                                                if (editingValue.trim() && editingValue !== player.inscription.minecraft_username) {
-                                                    updatePlayer(player.id, 'minecraft_username', editingValue.trim());
-                                                }
-                                            } else if (e.key === 'Escape') {
-                                                setEditingId(null);
-                                            }
-                                        }}
-                                        className="font-semibold text-white font-minecraftia bg-zinc-800 px-2 py-1 rounded-sm border border-electric-violet-500 focus:outline-hidden w-48"
-                                    />
-                                ) : (
-                                    <h3
-                                        className={`font-semibold text-white font-minecraftia cursor-pointer ${player.livesCount === 0 ? 'text-red-500 line-through' : ''}`}
-                                        title="Editar username"
-                                        onClick={() => {
-                                            setEditingId(player.id);
-                                            setEditingValue(player.inscription.minecraft_username);
-                                        }}
-                                    >
-                                        {player.inscription.minecraft_username}
-                                    </h3>
-                                )}
-                                <p className="text-sm text-gray-300 font-rubik">{player.inscription.discordUsername}</p>
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2">
-                                    <label className="text-sm text-gray-300 font-rubik">Confirmado:</label>
-                                    <input
-                                        type="checkbox"
-                                        checked={player.isConfirmedPlayer}
-                                        onChange={(e: any) => updatePlayer(player.id, 'isConfirmedPlayer', e.currentTarget?.checked)}
-                                        className="rounded-sm bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
-                                    />
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <label className="text-sm text-gray-300 font-rubik">Repechaje:</label>
-                                    <input
-                                        type="checkbox"
-                                        checked={player.isRepechaje}
-                                        onChange={(e: any) => updatePlayer(player.id, 'isRepechaje', e.currentTarget?.checked)}
-                                        className="rounded-sm bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
-                                    />
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <label className="text-sm text-gray-300 font-rubik">Vidas:</label>
-                                    <button
-                                        onClick={() => updatePlayer(player.id, 'livesCount', Math.max(0, player.livesCount - 1))}
-                                        className="px-2 py-1 bg-red-600 text-white rounded-sm font-rubik hover:bg-red-700 transition-colors"
-                                    >
-                                        -
-                                    </button>
-                                    <div className="flex items-center gap-1 px-2">
-                                        {Array.from({ length: 3 }, (_, i) => (
-                                            <img
-                                                key={i}
-                                                src={i < player.livesCount ? "/images/vida.webp" : "/images/calavera.webp"}
-                                                alt={i < player.livesCount ? "Vida" : "Sin vida"}
-                                                className="w-5 h-5"
-                                            />
-                                        ))}
-                                    </div>
-                                    <button
-                                        onClick={() => updatePlayer(player.id, 'livesCount', Math.min(3, player.livesCount + 1))}
-                                        className="px-2 py-1 bg-green-600 text-white rounded-sm font-rubik hover:bg-green-700 transition-colors"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+            {/* Confirmed Players */}
+            {filteredConfirmed.length > 0 && (
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold text-green-400 uppercase tracking-wider font-rubik flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                        Confirmados ({filteredConfirmed.length})
+                    </h3>
+                    <div class="grid gap-3">
+                        {filteredConfirmed.map(player => (
+                            <PlayerCard
+                                key={player.id}
+                                player={player}
+                                editingId={editingId}
+                                editingValue={editingValue}
+                                setEditingId={setEditingId}
+                                setEditingValue={setEditingValue}
+                                updatePlayer={updatePlayer}
+                                confirmed
+                            />
+                        ))}
                     </div>
-                ))}
-            </div>
+                </div>
+            )}
 
-            {/* El resto de jugadores no confirmados */}
-            <div className="grid gap-4 mt-8">
-                {players.filter((p) => !p.isConfirmedPlayer).map((player) => (
-                    <div key={player.id} className="bg-zinc-900/30 p-4 rounded-lg border border-neutral-800 shadow-sm hover:bg-zinc-800/30 transition-colors opacity-80">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className={`font-semibold text-white font-minecraftia ${player.livesCount === 0
-                                    ? 'text-red-500 line-through'
-                                    : ''
-                                    }`}>
-                                    {player.inscription.minecraft_username}
-                                </h3>
-                                <p className="text-sm text-gray-300 font-rubik">{player.inscription.discordUsername}</p>
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2">
-                                    <label className="text-sm text-gray-300 font-rubik">Confirmado:</label>
-                                    <input
-                                        type="checkbox"
-                                        checked={player.isConfirmedPlayer}
-                                        onChange={(e: any) => updatePlayer(player.id, 'isConfirmedPlayer', e.currentTarget?.checked)}
-                                        className="rounded-sm bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
-                                    />
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <label className="text-sm text-gray-300 font-rubik">Repechaje:</label>
-                                    <input
-                                        type="checkbox"
-                                        checked={player.isRepechaje}
-                                        onChange={(e: any) => updatePlayer(player.id, 'isRepechaje', e.currentTarget?.checked)}
-                                        className="rounded-sm bg-zinc-800 border border-neutral-600 text-electric-violet-500 focus:border-electric-violet-500"
-                                    />
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <label className="text-sm text-gray-300 font-rubik">Vidas:</label>
-                                    <button
-                                        onClick={() => updatePlayer(player.id, 'livesCount', Math.max(0, player.livesCount - 1))}
-                                        className="px-2 py-1 bg-red-600 text-white rounded-sm font-rubik hover:bg-red-700 transition-colors"
-                                    >
-                                        -
-                                    </button>
-                                    <div className="flex items-center gap-1 px-2">
-                                        {Array.from({ length: 3 }, (_, i) => (
-                                            <img
-                                                key={i}
-                                                src={i < player.livesCount ? "/images/vida.webp" : "/images/calavera.webp"}
-                                                alt={i < player.livesCount ? "Vida" : "Sin vida"}
-                                                className="w-5 h-5"
-                                            />
-                                        ))}
-                                    </div>
-                                    <button
-                                        onClick={() => updatePlayer(player.id, 'livesCount', Math.min(3, player.livesCount + 1))}
-                                        className="px-2 py-1 bg-green-600 text-white rounded-sm font-rubik hover:bg-green-700 transition-colors"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+            {/* Unconfirmed Players */}
+            {unconfirmedPlayers.length > 0 && (
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider font-rubik flex items-center gap-2">
+                        <span class="w-2 h-2 bg-gray-500 rounded-full"></span>
+                        Sin Confirmar ({unconfirmedPlayers.length})
+                    </h3>
+                    <div class="grid gap-3 opacity-60">
+                        {unconfirmedPlayers.map(player => (
+                            <PlayerCard
+                                key={player.id}
+                                player={player}
+                                editingId={editingId}
+                                editingValue={editingValue}
+                                setEditingId={setEditingId}
+                                setEditingValue={setEditingValue}
+                                updatePlayer={updatePlayer}
+                                confirmed={false}
+                            />
+                        ))}
                     </div>
-                ))}
+                </div>
+            )}
+
+            {/* Empty State */}
+            {players.length === 0 && (
+                <div class="bg-[#0a0a0a] border border-white/5 rounded-2xl p-12 text-center">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <p class="text-gray-400 font-rubik mb-4">No hay jugadores registrados</p>
+                    <button
+                        onClick={seedPlayers}
+                        class="px-6 py-3 bg-electric-violet-500 hover:bg-electric-violet-600 text-white rounded-lg font-bold transition-colors"
+                    >
+                        Crear desde Inscripciones
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function PlayerCard({ player, editingId, editingValue, setEditingId, setEditingValue, updatePlayer, confirmed }: {
+    player: Player;
+    editingId: number | null;
+    editingValue: string;
+    setEditingId: (id: number | null) => void;
+    setEditingValue: (val: string) => void;
+    updatePlayer: (id: number, field: string, value: any) => void;
+    confirmed: boolean;
+}) {
+    const isEditing = editingId === player.id;
+    const isDead = player.livesCount === 0;
+
+    return (
+        <div class={`bg-[#0a0a0a] border border-white/5 rounded-xl p-4 hover:bg-white/[0.02] transition-colors ${!confirmed ? 'opacity-60' : ''}`}>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                {/* Left: Username + Discord */}
+                <div class="flex-1 min-w-0">
+                    {isEditing ? (
+                        <input
+                            type="text"
+                            value={editingValue}
+                            autoFocus
+                            onInput={e => setEditingValue((e.target as HTMLInputElement).value)}
+                            onBlur={() => {
+                                setEditingId(null);
+                                if (editingValue.trim() && editingValue !== player.inscription.minecraft_username) {
+                                    updatePlayer(player.id, 'minecraft_username', editingValue.trim());
+                                }
+                            }}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                    setEditingId(null);
+                                    if (editingValue.trim() && editingValue !== player.inscription.minecraft_username) {
+                                        updatePlayer(player.id, 'minecraft_username', editingValue.trim());
+                                    }
+                                } else if (e.key === 'Escape') {
+                                    setEditingId(null);
+                                }
+                            }}
+                            class="font-bold text-white font-minecraftia bg-white/5 px-3 py-1.5 rounded-lg border border-electric-violet-500 focus:outline-none w-full sm:w-64"
+                        />
+                    ) : (
+                        <h4
+                            class={`font-bold text-white font-minecraftia cursor-pointer hover:text-electric-violet-400 transition-colors ${isDead ? 'text-red-500 line-through' : ''}`}
+                            title="Editar nombre"
+                            onClick={() => {
+                                setEditingId(player.id);
+                                setEditingValue(player.inscription.minecraft_username);
+                            }}
+                        >
+                            {player.inscription.minecraft_username || "Sin nombre"}
+                        </h4>
+                    )}
+                    <p class="text-sm text-gray-500 font-rubik truncate">{player.inscription.discordUsername || "Sin Discord"}</p>
+                </div>
+
+                {/* Right: Controls */}
+                <div class="flex items-center gap-4 flex-wrap">
+                    {/* Confirmed toggle */}
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <div class={`w-10 h-5 rounded-full relative transition-colors ${player.isConfirmedPlayer ? 'bg-green-500' : 'bg-white/10'}`}>
+                            <div class={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${player.isConfirmedPlayer ? 'translate-x-5' : 'translate-x-0.5'}`}></div>
+                        </div>
+                        <span class="text-xs text-gray-400 font-rubik">Confirmado</span>
+                    </label>
+
+                    {/* Repechaje toggle */}
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <div class={`w-10 h-5 rounded-full relative transition-colors ${player.isRepechaje ? 'bg-yellow-500' : 'bg-white/10'}`}>
+                            <div class={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${player.isRepechaje ? 'translate-x-5' : 'translate-x-0.5'}`}></div>
+                        </div>
+                        <span class="text-xs text-gray-400 font-rubik">Repechaje</span>
+                    </label>
+
+                    {/* Lives */}
+                    <div class="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-1.5">
+                        <button
+                            onClick={() => updatePlayer(player.id, 'livesCount', Math.max(0, player.livesCount - 1))}
+                            class="w-6 h-6 flex items-center justify-center rounded bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-colors text-sm font-bold"
+                        >
+                            −
+                        </button>
+                        <div class="flex items-center gap-1 px-2">
+                            {Array.from({ length: 3 }, (_, i) => (
+                                <img
+                                    key={i}
+                                    src={i < player.livesCount ? "/images/vida.webp" : "/images/calavera.webp"}
+                                    alt={i < player.livesCount ? "Vida" : "Muerto"}
+                                    class="w-5 h-5"
+                                />
+                            ))}
+                        </div>
+                        <button
+                            onClick={() => updatePlayer(player.id, 'livesCount', Math.min(3, player.livesCount + 1))}
+                            class="w-6 h-6 flex items-center justify-center rounded bg-green-500/20 hover:bg-green-500/30 text-green-400 transition-colors text-sm font-bold"
+                        >
+                            +
+                        </button>
+                    </div>
+                </div>
             </div>
-
-
         </div>
     );
 }

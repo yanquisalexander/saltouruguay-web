@@ -4,7 +4,7 @@ import AdminExtremoPlayers from "@/components/admin/AdminExtremoPlayers.tsx";
 import { client } from "@/db/client";
 import { SaltoCraftExtremo3InscriptionsTable } from "@/db/schema";
 import { getSession } from "auth-astro/server";
-import { desc, count, sql } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import {
   LucideUsers,
   LucideUserCheck,
@@ -45,7 +45,7 @@ const cardBase =
   "relative overflow-hidden bg-[#0a0a0a] border border-white/5 rounded-2xl p-6 shadow-xl backdrop-blur-xs";
 ---
 
-<AdminLayout title="Inscripciones Extremo 3" session={session}>
+<AdminLayout title="Extremo 3 - Gestión" session={session}>
   <div class="flex flex-col max-w-6xl mx-auto min-h-screen mt-16 p-6">
     {/* Header */}
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -55,7 +55,7 @@ const cardBase =
           SaltoCraft Extremo 3
         </h1>
         <p class="text-gray-400 font-rubik mt-1">
-          Inscripciones sincronizadas desde el panel de administración
+          Gestión de jugadores inscriptos
         </p>
       </div>
       <div class="flex gap-3">
@@ -64,7 +64,7 @@ const cardBase =
           class="px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-lg font-bold flex items-center gap-2 transition-colors text-sm border border-white/10"
         >
           <LucideEye className="w-4 h-4" />
-          Preview (Dry Run)
+          Preview
         </button>
         <button
           id="sync-btn"
@@ -84,7 +84,7 @@ const cardBase =
     </div>
 
     {/* KPI Cards */}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <div class={cardBase}>
         <div class="flex items-center gap-3 mb-3">
           <div class="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
@@ -92,7 +92,7 @@ const cardBase =
           </div>
         </div>
         <p class="text-white/50 text-xs font-bold uppercase tracking-widest font-rubik">
-          Total Inscripciones
+          Total
         </p>
         <p class="text-3xl font-anton text-white mt-1">{totalInsc}</p>
       </div>
@@ -104,7 +104,7 @@ const cardBase =
           </div>
         </div>
         <p class="text-white/50 text-xs font-bold uppercase tracking-widest font-rubik">
-          Con Minecraft
+          Con MC
         </p>
         <p class="text-3xl font-anton text-green-400 mt-1">{conMinecraft}</p>
       </div>
@@ -116,7 +116,7 @@ const cardBase =
           </div>
         </div>
         <p class="text-white/50 text-xs font-bold uppercase tracking-widest font-rubik">
-          Sin Minecraft
+          Sin MC
         </p>
         <p class="text-3xl font-anton text-yellow-400 mt-1">{sinMinecraft}</p>
       </div>
@@ -128,7 +128,7 @@ const cardBase =
           </div>
         </div>
         <p class="text-white/50 text-xs font-bold uppercase tracking-widest font-rubik">
-          Participó Anteriormente
+          Repetidos
         </p>
         <p class="text-3xl font-anton text-purple-400 mt-1">{participaron}</p>
       </div>
@@ -137,113 +137,16 @@ const cardBase =
     {/* Status message */}
     <div id="sync-status" class="hidden mb-6 p-4 rounded-lg border text-sm font-rubik"></div>
 
-    {/* Inscriptions Table */}
-    <div class="bg-[#1a1b1e] border border-white/10 rounded-xl overflow-hidden mb-12">
-      <div class="px-5 py-3 border-b border-white/10 bg-white/5">
-        <h2 class="font-anton text-sm tracking-[0.25em] text-gray-400 uppercase">
-          Lista de Inscripciones
-        </h2>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-white/5 border-b border-white/10 text-gray-400 text-xs uppercase tracking-wider">
-              <th class="px-5 py-3 font-medium">#</th>
-              <th class="px-5 py-3 font-medium">Jugador</th>
-              <th class="px-5 py-3 font-medium">Discord</th>
-              <th class="px-5 py-3 font-medium">Minecraft</th>
-              <th class="px-5 py-3 font-medium">Fecha</th>
-              <th class="px-5 py-3 font-medium">Participó</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-white/5">
-            {
-              inscriptos.map((insc) => (
-                <tr class="hover:bg-white/5 transition-colors">
-                  <td class="px-5 py-3 text-gray-500 text-sm font-mono">
-                    #{insc.id.toString().padStart(3, "0")}
-                  </td>
-                  <td class="px-5 py-3">
-                    <div class="flex items-center gap-3">
-                      <img
-                        src={insc.user?.avatar}
-                        alt={insc.user?.displayName}
-                        class="w-8 h-8 rounded-full border border-white/10"
-                      />
-                      <div>
-                        <div class="font-bold text-white text-sm">
-                          {insc.user?.displayName}
-                        </div>
-                        <div class="text-xs text-gray-500">
-                          {insc.user?.email}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-5 py-3 text-gray-300 text-sm">
-                    {insc.discordUsername || (
-                      <span class="text-gray-600">—</span>
-                    )}
-                  </td>
-                  <td class="px-5 py-3">
-                    {insc.minecraft_username ? (
-                      <span class="font-minecraftia text-sm text-white">
-                        {insc.minecraft_username}
-                      </span>
-                    ) : (
-                      <span class="text-gray-600 text-sm">—</span>
-                    )}
-                  </td>
-                  <td class="px-5 py-3 text-gray-400 text-xs font-mono">
-                    {new Date(insc.createdAt).toLocaleDateString("es-UY", {
-                      timeZone: "America/Montevideo",
-                    })}
-                  </td>
-                  <td class="px-5 py-3">
-                    <span
-                      class={`px-2 py-1 rounded text-xs font-bold uppercase ${
-                        insc.participated_sc === "si"
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-gray-500/20 text-gray-400"
-                      }`}
-                    >
-                      {insc.participated_sc?.toUpperCase() || "—"}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            }
-            {
-              inscriptos.length === 0 && (
-                <tr>
-                  <td
-                    colspan="6"
-                    class="px-5 py-12 text-center text-gray-500"
-                  >
-                    <LucideUsers className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-                    <p class="font-rubik">
-                      No hay inscripciones. Usá "Sincronizar" para importar
-                      desde el panel de administración.
-                    </p>
-                  </td>
-                </tr>
-              )
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
     {/* Player Management */}
     <AdminExtremoPlayers client:idle />
   </div>
 
   {/* Dry Run Modal */}
-  <dialog id="dry-run-modal" class="backdrop:bg-black/80 backdrop:backdrop-blur-xs bg-transparent">
-    <div class="bg-linear-to-br from-gray-900 via-gray-900 to-black border border-white/10 rounded-2xl overflow-hidden shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col">
+  <dialog id="dry-run-modal" class="backdrop:bg-black/80 backdrop:backdrop-blur-xs bg-transparent p-4">
+    <div class="bg-linear-to-br from-gray-900 via-gray-900 to-black border border-white/10 rounded-2xl overflow-hidden shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col m-auto">
       <div class="px-6 py-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
         <h3 class="font-anton text-lg text-white">Preview de Sincronización</h3>
-        <button id="close-modal-btn" class="text-gray-400 hover:text-white transition-colors">
+        <button id="close-modal-btn" class="text-gray-400 hover:text-white transition-colors p-1">
           ✕
         </button>
       </div>
@@ -382,5 +285,8 @@ const cardBase =
     closeModalBtn?.addEventListener("click", () => modal?.close());
     modalCancelBtn?.addEventListener("click", () => modal?.close());
     modalSyncBtn?.addEventListener("click", () => doSync(false));
+    modal?.addEventListener("click", (e) => {
+      if (e.target === modal) modal?.close();
+    });
   </script>
 </AdminLayout>
