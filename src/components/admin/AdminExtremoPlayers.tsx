@@ -252,20 +252,28 @@ function PlayerCard({ player, editingId, editingValue, setEditingId, setEditingV
                 {/* Right: Controls */}
                 <div class="flex items-center gap-4 flex-wrap">
                     {/* Confirmed toggle */}
-                    <label class="flex items-center gap-2 cursor-pointer">
+                    <button
+                        type="button"
+                        onClick={() => updatePlayer(player.id, 'isConfirmedPlayer', !player.isConfirmedPlayer)}
+                        class="flex items-center gap-2 cursor-pointer bg-transparent border-0 p-0"
+                    >
                         <div class={`w-10 h-5 rounded-full relative transition-colors ${player.isConfirmedPlayer ? 'bg-green-500' : 'bg-white/10'}`}>
                             <div class={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${player.isConfirmedPlayer ? 'translate-x-5' : 'translate-x-0.5'}`}></div>
                         </div>
                         <span class="text-xs text-gray-400 font-rubik">Confirmado</span>
-                    </label>
+                    </button>
 
                     {/* Repechaje toggle */}
-                    <label class="flex items-center gap-2 cursor-pointer">
+                    <button
+                        type="button"
+                        onClick={() => updatePlayer(player.id, 'isRepechaje', !player.isRepechaje)}
+                        class="flex items-center gap-2 cursor-pointer bg-transparent border-0 p-0"
+                    >
                         <div class={`w-10 h-5 rounded-full relative transition-colors ${player.isRepechaje ? 'bg-yellow-500' : 'bg-white/10'}`}>
                             <div class={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${player.isRepechaje ? 'translate-x-5' : 'translate-x-0.5'}`}></div>
                         </div>
                         <span class="text-xs text-gray-400 font-rubik">Repechaje</span>
-                    </label>
+                    </button>
 
                     {/* Lives */}
                     <div class="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-1.5">
