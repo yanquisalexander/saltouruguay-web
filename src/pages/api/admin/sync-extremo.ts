@@ -1,4 +1,4 @@
-import { syncExtremoInscriptions } from "@/utils/sync-extremo-inscriptions";
+import { syncExtremoInscriptions, clearExtremoInscriptions } from "@/utils/sync-extremo-inscriptions";
 import { getSession } from "auth-astro/server";
 
 export async function POST({ request }: { request: Request }) {
@@ -12,11 +12,20 @@ export async function POST({ request }: { request: Request }) {
             });
         }
 
+        const body = await request.json().catch(() => ({}));
+        const clear = body.clear === true;
+
+        if (clear) {
+            await clearExtremoInscriptions();
+        }
+
         const result = await syncExtremoInscriptions();
 
         return new Response(JSON.stringify({
             success: true,
-            message: `Sincronizadas ${result.synced} inscripciones`,
+            message: clear
+                ? `Limpiadas y sincronizadas ${result.synced} inscripciones`
+                : `Sincronizadas ${result.synced} inscripciones`,
             synced: result.synced,
             errors: result.errors,
         }), {

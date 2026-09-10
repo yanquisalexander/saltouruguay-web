@@ -1,6 +1,6 @@
 import { client } from '@/db/client';
 import { SaltoCraftExtremo3InscriptionsTable, UsersTable } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { INSCRIPTIONS_API_KEY, INSCRIPTIONS_API_URL } from 'astro:env/server';
 
 interface AdminInscription {
@@ -16,10 +16,20 @@ interface AdminInscription {
   susId: number; // admin's susId = main's UsersTable.id
 }
 
-export async function syncExtremoInscriptions(): Promise<{
+export async function clearExtremoInscriptions(): Promise<{ deleted: number }> {
+  const result = await client
+    .delete(SaltoCraftExtremo3InscriptionsTable)
+    .execute();
+  return { deleted: result.rowCount ?? 0 };
+}
+
+export async function syncExtremoInscriptions(options?: { clear?: boolean }): Promise<{
   synced: number;
   errors: string[];
 }> {
+  if (options?.clear) {
+    await clearExtremoInscriptions();
+  }
   const errors: string[] = [];
   let synced = 0;
 
