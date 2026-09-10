@@ -35,10 +35,10 @@ export async function GET({ request }: { request: Request }) {
                 adminId: insc.id,
                 userId: insc.susId,
                 displayName: insc.displayName,
-                email: insc.email,
                 discordUsername: insc.discordUsername,
-                minecraft_username: custom.minecraft_username || null,
-                participated_sc: custom.participated_sc || null,
+                minecraft_username: custom.u || null,
+                participated_sc: custom.participaste_de_alguna_edici_n_anterior_de_saltocraft_extremo === "Si" ? "si" : "no",
+                instagram: custom.instagram || null,
                 createdAt: insc.createdAt,
             };
         });

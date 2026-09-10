@@ -79,13 +79,13 @@ export async function syncExtremoInscriptions(options?: { clear?: boolean }): Pr
         .insert(SaltoCraftExtremo3InscriptionsTable)
         .values({
           userId,
-          discordUsername: insc.discordUsername || custom.discordUsername || null,
-          acceptedTerms: custom.acceptedTerms ?? true,
+          discordUsername: insc.discordUsername || null,
+          acceptedTerms: true,
           instagram: custom.instagram || null,
-          participated_sc: custom.participated_sc || null,
-          minecraft_username: custom.minecraft_username || null,
-          team_status: custom.team_status || null,
-          content_channel: custom.content_channel || null,
+          participated_sc: custom.participaste_de_alguna_edici_n_anterior_de_saltocraft_extremo === "Si" ? "si" : "no",
+          minecraft_username: custom.u || null,
+          team_status: null,
+          content_channel: custom.canal_de_contenido_opcional || null,
           createdAt: new Date(insc.createdAt),
         })
         .onConflictDoNothing()
