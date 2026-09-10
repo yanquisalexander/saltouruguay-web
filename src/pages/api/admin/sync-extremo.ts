@@ -1,4 +1,5 @@
 import { syncExtremoInscriptions, clearExtremoInscriptions } from "@/utils/sync-extremo-inscriptions";
+import { seedExtremoPlayers } from "@/utils/seedExtremoPlayers";
 import { getSession } from "auth-astro/server";
 import { INSCRIPTIONS_API_KEY, INSCRIPTIONS_API_URL } from "astro:env/server";
 
@@ -79,6 +80,9 @@ export async function POST({ request }: { request: Request }) {
         }
 
         const result = await syncExtremoInscriptions();
+
+        // Auto-seed players from new inscriptions
+        await seedExtremoPlayers();
 
         return new Response(JSON.stringify({
             success: true,

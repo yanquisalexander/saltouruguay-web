@@ -57,12 +57,15 @@ export default function AdminExtremoPlayers() {
     };
 
     const seedPlayers = async () => {
-        toast.promise(
-            fetch("/api/seed-extremo-players", { method: "POST" })
-                .then(r => r.json())
-                .then(d => { if (!d.success) throw new Error(d.error); return d; }),
-            { loading: "Inicializando...", success: "Jugadores creados", error: "Error al inicializar" }
-        ).then(() => fetchPlayers());
+        try {
+            const res = await fetch("/api/seed-extremo-players", { method: "POST" });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error);
+            toast.success("Jugadores creados");
+            await fetchPlayers();
+        } catch {
+            toast.error("Error al inicializar jugadores");
+        }
     };
 
     if (loading) {
