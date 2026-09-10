@@ -30,7 +30,7 @@ const players = await client
   .execute();
 ---
 
-<Layout title="SaltoCraft Extremo 3 - Jugadores">
+<Layout title="SaltoCraft Extremo - Jugadores">
   <!-- SVG filter for wavy parchment effect -->
   <svg width="0" height="0" style="position: absolute;">
     <defs>
@@ -45,99 +45,95 @@ const players = await client
       </filter>
     </defs>
   </svg>
-  <div class="max-w-7xl w-full mx-auto py-8">
-    <h1 class="text-3xl font-bold mb-8 text-center font-anton text-white">
-      Jugadores de SaltoCraft Extremo 3
+  
+  <div class="max-w-7xl w-full mx-auto py-10 px-4 sm:px-6">
+    <h1 class="text-4xl md:text-5xl font-bold mb-12 text-center font-anton text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-500 to-orange-400 drop-shadow-sm">
+      Jugadores de SaltoCraft Extremo
     </h1>
 
-    <!-- Desktop: parchment background with an absolute centered grid so players "fit" inside the scroll area -->
-    <div class="hidden md:block">
-      <div class="relative w-full max-w-6xl mx-auto">
-        <div class="parchment w-full h-fit relative">
-          <img
-            src="/images/logo-scextremo.webp"
-            style="filter: url(#wavy2) grayscale(0.2)"
-            class="h-24 mx-auto"
-          />
-
-          <h3
-            class="font-semibold text-lg text-center font-playwrite text-black"
-          >
-            Lista de participantes
-          </h3>
-          <div
-            class="grid grid-cols-3 lg:grid-cols-7 gap-2 gap-y-4 place-items-center py-8 px-5"
-          >
-            {
-              players.map((player) => (
-                <div class="flex flex-col items-center justify-center text-center">
-                  <h3
-                    class={`font-semibold text-base font-playwrite player-label ${
-                      player.livesCount === 0
-                        ? "text-red-500 line-through"
-                        : "text-black"
-                    }`}
-                  >
-                    {player.minecraft_username}
-                  </h3>
-                  <div class="flex items-center gap-1 mt-1">
-                    {Array.from({ length: 3 }, (_, i) => (
-                      <img
-                        src={
-                          i < player.livesCount
-                            ? "/images/vida.webp"
-                            : "/images/calavera.webp"
-                        }
-                        alt={i < player.livesCount ? "Vida" : "Sin vida"}
-                        class="w-4 h-4 object-contain"
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mobile: stacked list below the parchment for small screens -->
-    <div class="md:hidden grid gap-3 mt-6">
-      {
-        players.map((player) => (
-          <div class="flex items-center justify-between px-4 py-2 bg-[rgba(0,0,0,0.35)] rounded-md">
-            <h3
-              class={`font-playwrite text-sm player-label ${player.livesCount === 0 ? "text-red-500 line-through" : "text-white"}`}
-            >
-              {player.minecraft_username}
-            </h3>
-            <div class="flex items-center gap-1">
-              {Array.from({ length: 3 }, (_, i) => (
+    {players.length > 0 ? (
+      <>
+        <!-- Desktop: parchment background -->
+        <div class="hidden md:block">
+          <div class="relative w-full max-w-5xl mx-auto shadow-2xl rounded-lg">
+            <div class="parchment w-full h-fit relative z-10 p-8 sm:p-12">
+              <div class="flex flex-col items-center mb-10">
                 <img
-                  src={
-                    i < player.livesCount
-                      ? "/images/vida.webp"
-                      : "/images/calavera.webp"
-                  }
-                  alt={i < player.livesCount ? "Vida" : "Sin vida"}
-                  class="w-4 h-4 object-contain"
+                  src="/images/logo-scextremo.webp"
+                  style="filter: url(#wavy2) drop-shadow(0px 4px 6px rgba(0,0,0,0.3))"
+                  class="h-28 object-contain mb-6"
+                  alt="Logo SaltoCraft Extremo"
                 />
-              ))}
+                <h3 class="font-bold text-xl text-center font-playwrite text-stone-800 border-b-2 border-stone-800/20 pb-2 inline-block px-6">
+                  Lista de Participantes
+                </h3>
+              </div>
+              
+              <div class="grid grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6 gap-y-8 place-items-center">
+                {players.map((player) => (
+                  <div class={`flex flex-col items-center justify-center text-center transition-all duration-300 ${player.livesCount > 0 ? 'hover:scale-110' : 'opacity-60 grayscale'}`}>
+                    <h3
+                      class={`font-semibold text-base font-playwrite player-label mb-2 ${
+                        player.livesCount === 0
+                          ? "text-red-800 line-through"
+                          : "text-stone-900"
+                      }`}
+                    >
+                      {player.minecraft_username}
+                    </h3>
+                    <div class="flex items-center gap-1.5 bg-stone-900/10 px-3 py-1.5 rounded-full shadow-inner">
+                      {Array.from({ length: 3 }, (_, i) => (
+                        <img
+                          src={
+                            i < player.livesCount
+                              ? "/images/vida.webp"
+                              : "/images/calavera.webp"
+                          }
+                          alt={i < player.livesCount ? "Vida" : "Calavera"}
+                          class="w-5 h-5 object-contain drop-shadow-md"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        ))
-      }
-    </div>
-
-    {
-      players.length === 0 && (
-        <div class="text-center py-12">
-          <p class="text-gray-400 font-rubik">
-            No hay jugadores confirmados aún.
-          </p>
         </div>
-      )
-    }
+
+        <!-- Mobile: Tarjetas sólidas -->
+        <div class="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+          {players.map((player) => (
+            <div class={`flex items-center justify-between px-5 py-4 border rounded-xl shadow-md transition-colors ${player.livesCount === 0 ? 'opacity-80 grayscale bg-red-950 border-red-900' : 'bg-zinc-900 border-zinc-800'}`}>
+              <h3
+                class={`font-playwrite text-sm font-medium tracking-wide ${player.livesCount === 0 ? "text-red-400 line-through" : "text-white"}`}
+              >
+                {player.minecraft_username}
+              </h3>
+              <div class="flex items-center gap-1.5 bg-black/50 px-2.5 py-1.5 rounded-full shadow-inner">
+                {Array.from({ length: 3 }, (_, i) => (
+                  <img
+                    src={
+                      i < player.livesCount
+                        ? "/images/vida.webp"
+                        : "/images/calavera.webp"
+                    }
+                    alt={i < player.livesCount ? "Vida" : "Calavera"}
+                    class="w-4 h-4 object-contain"
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </>
+    ) : (
+      <div class="text-center py-20 bg-zinc-900 rounded-2xl border border-zinc-800 max-w-2xl mx-auto mt-8 shadow-md">
+        <p class="text-zinc-300 font-rubik text-lg">
+          No hay jugadores confirmados aún.
+        </p>
+      </div>
+    )}
   </div>
 </Layout>
 
@@ -149,7 +145,6 @@ const players = await client
 
   .parchment {
     background: tan;
-    padding: 12px;
     border: solid calc(0.8vw + 4px) #f9e2c3;
     border-image: url("https://res.cloudinary.com/ez-nettools/image/upload/v1635183100/parchment-hand-painted_zfdfpt.avif");
     border-image-slice: 32 fill;
@@ -180,11 +175,12 @@ const players = await client
       #fff0 78% 97%,
       #9632
     );
+    pointer-events: none;
   }
 
   .player-label {
     text-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.6),
-      0 6px 12px rgba(0, 0, 0, 0.45);
+      0 1px 0 rgba(255, 255, 255, 0.7),
+      0 4px 8px rgba(0, 0, 0, 0.25);
   }
 </style>
