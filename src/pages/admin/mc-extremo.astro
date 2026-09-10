@@ -12,6 +12,7 @@ import {
   LucideRefreshCw,
   LucideTrash2,
   LucideGamepad2,
+  LucideEye,
 } from "lucide-preact";
 
 const session = await getSession(Astro.request);
@@ -58,6 +59,13 @@ const cardBase =
         </p>
       </div>
       <div class="flex gap-3">
+        <button
+          id="preview-btn"
+          class="px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-lg font-bold flex items-center gap-2 transition-colors text-sm border border-white/10"
+        >
+          <LucideEye className="w-4 h-4" />
+          Preview (Dry Run)
+        </button>
         <button
           id="sync-btn"
           class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center gap-2 transition-colors text-sm"
@@ -230,10 +238,68 @@ const cardBase =
     <AdminExtremoPlayers client:idle />
   </div>
 
+  {/* Dry Run Modal */}
+  <dialog id="dry-run-modal" class="backdrop:bg-black/80 backdrop:backdrop-blur-xs bg-transparent">
+    <div class="bg-linear-to-br from-gray-900 via-gray-900 to-black border border-white/10 rounded-2xl overflow-hidden shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col">
+      <div class="px-6 py-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
+        <h3 class="font-anton text-lg text-white">Preview de Sincronización</h3>
+        <button id="close-modal-btn" class="text-gray-400 hover:text-white transition-colors">
+          ✕
+        </button>
+      </div>
+      <div class="p-6 overflow-auto flex-1">
+        <div id="dry-run-loading" class="hidden text-center py-8 text-gray-400">
+          <LucideRefreshCw className="w-8 h-8 mx-auto mb-3 animate-spin" />
+          <p class="font-rubik">Cargando preview...</p>
+        </div>
+        <div id="dry-run-content" class="hidden">
+          <div class="mb-4 flex items-center gap-4 text-sm font-rubik">
+            <span class="text-gray-400">Total a sincronizar:</span>
+            <span id="dry-run-count" class="text-2xl font-anton text-white">0</span>
+          </div>
+          <div class="bg-[#1a1b1e] border border-white/10 rounded-xl overflow-hidden">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="bg-white/5 border-b border-white/10 text-gray-400 text-xs uppercase tracking-wider">
+                  <th class="px-4 py-2 font-medium">UserId</th>
+                  <th class="px-4 py-2 font-medium">Nombre</th>
+                  <th class="px-4 py-2 font-medium">Discord</th>
+                  <th class="px-4 py-2 font-medium">Minecraft</th>
+                  <th class="px-4 py-2 font-medium">Fecha</th>
+                </tr>
+              </thead>
+              <tbody id="dry-run-table" class="divide-y divide-white/5"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="dry-run-error" class="hidden text-center py-8 text-red-400 font-rubik"></div>
+      </div>
+      <div class="px-6 py-4 border-t border-white/10 bg-white/5 flex justify-end gap-3">
+        <button id="modal-cancel-btn" class="px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-lg font-bold transition-colors text-sm">
+          Cerrar
+        </button>
+        <button id="modal-sync-btn" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center gap-2 transition-colors text-sm">
+          <LucideRefreshCw className="w-4 h-4" />
+          Sincronizar Ahora
+        </button>
+      </div>
+    </div>
+  </dialog>
+
   <script>
     const syncBtn = document.getElementById("sync-btn");
     const clearSyncBtn = document.getElementById("clear-sync-btn");
+    const previewBtn = document.getElementById("preview-btn");
     const statusDiv = document.getElementById("sync-status");
+    const modal = document.getElementById("dry-run-modal") as HTMLDialogElement;
+    const closeModalBtn = document.getElementById("close-modal-btn");
+    const modalCancelBtn = document.getElementById("modal-cancel-btn");
+    const modalSyncBtn = document.getElementById("modal-sync-btn");
+    const dryRunLoading = document.getElementById("dry-run-loading");
+    const dryRunContent = document.getElementById("dry-run-content");
+    const dryRunError = document.getElementById("dry-run-error");
+    const dryRunCount = document.getElementById("dry-run-count");
+    const dryRunTable = document.getElementById("dry-run-table");
 
     function showStatus(type: "loading" | "success" | "error", message: string) {
       if (!statusDiv) return;
@@ -250,6 +316,7 @@ const cardBase =
 
     async function doSync(clear: boolean) {
       showStatus("loading", clear ? "Limpiando y sincronizando..." : "Sincronizando...");
+      modal?.close();
       try {
         const res = await fetch("/api/admin/sync-extremo", {
           method: "POST",
@@ -268,11 +335,52 @@ const cardBase =
       }
     }
 
+    async function showDryRun() {
+      modal?.showModal();
+      dryRunLoading?.classList.remove("hidden");
+      dryRunContent?.classList.add("hidden");
+      dryRunError?.classList.add("hidden");
+
+      try {
+        const res = await fetch("/api/admin/sync-extremo");
+        const data = await res.json();
+
+        dryRunLoading?.classList.add("hidden");
+
+        if (!data.success) {
+          dryRunError?.classList.remove("hidden");
+          dryRunError!.textContent = data.error || "Error al obtener preview";
+          return;
+        }
+
+        dryRunContent?.classList.remove("hidden");
+        dryRunCount!.textContent = data.total;
+
+        dryRunTable!.innerHTML = data.inscriptions.map((insc: any) => `
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="px-4 py-2 text-gray-500 font-mono">${insc.userId}</td>
+            <td class="px-4 py-2 text-white font-rubik">${insc.displayName}</td>
+            <td class="px-4 py-2 text-gray-300 font-rubik">${insc.discordUsername || '—'}</td>
+            <td class="px-4 py-2 text-white font-minecraftia">${insc.minecraft_username || '—'}</td>
+            <td class="px-4 py-2 text-gray-400 font-mono text-xs">${new Date(insc.createdAt).toLocaleDateString('es-UY')}</td>
+          </tr>
+        `).join("");
+      } catch {
+        dryRunLoading?.classList.add("hidden");
+        dryRunError?.classList.remove("hidden");
+        dryRunError!.textContent = "Error de conexión al obtener preview";
+      }
+    }
+
     syncBtn?.addEventListener("click", () => doSync(false));
     clearSyncBtn?.addEventListener("click", () => {
       if (confirm("¿Eliminar todas las inscripciones locales y sincronizar desde cero?")) {
         doSync(true);
       }
     });
+    previewBtn?.addEventListener("click", showDryRun);
+    closeModalBtn?.addEventListener("click", () => modal?.close());
+    modalCancelBtn?.addEventListener("click", () => modal?.close());
+    modalSyncBtn?.addEventListener("click", () => doSync(false));
   </script>
 </AdminLayout>
