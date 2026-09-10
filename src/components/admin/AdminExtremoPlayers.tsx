@@ -289,7 +289,7 @@ function PlayerCard({ player, editingId, editingValue, setEditingId, setEditingV
                                     key={i}
                                     src={i < player.livesCount ? "/images/vida.webp" : "/images/calavera.webp"}
                                     alt={i < player.livesCount ? "Vida" : "Muerto"}
-                                    class="w-5 h-5"
+                                    class="w-5 h-5 object-scale-down"
                                 />
                             ))}
                         </div>
