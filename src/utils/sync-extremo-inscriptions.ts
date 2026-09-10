@@ -1,5 +1,5 @@
 import { client } from '@/db/client';
-import { SaltoCraftExtremo3InscriptionsTable, UsersTable } from '@/db/schema';
+import { SaltoCraftExtremo3InscriptionsTable, Extremo3PlayersTable, UsersTable } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { INSCRIPTIONS_API_KEY, INSCRIPTIONS_API_URL } from 'astro:env/server';
 
@@ -17,6 +17,9 @@ interface AdminInscription {
 }
 
 export async function clearExtremoInscriptions(): Promise<{ deleted: number }> {
+  // First delete related records in extremo3_players (FK constraint)
+  await client.delete(Extremo3PlayersTable).execute();
+  // Now delete inscriptions
   const result = await client
     .delete(SaltoCraftExtremo3InscriptionsTable)
     .execute();
