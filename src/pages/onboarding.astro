@@ -1,0 +1,31 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getSession } from "auth-astro/server";
+import OnboardingWizard from "@/components/onboarding/OnboardingWizard.tsx";
+
+const session = await getSession(Astro.request);
+
+if (!session) {
+  return Astro.redirect("/");
+}
+---
+
+<Layout
+  title="Onboarding - SaltoUruguayServer"
+  hideFooter
+  hideHeader
+  mainClassname="m-0 p-0 min-h-dvh"
+>
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div
+      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"
+    >
+    </div>
+    <div
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-electric-violet-500/10 blur-[120px] rounded-full pointer-events-none"
+    >
+    </div>
+  </div>
+
+  <OnboardingWizard client:load />
+</Layout>

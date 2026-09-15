@@ -20,6 +20,7 @@ declare module "@auth/core/types" {
             isSuspended?: boolean;
             sessionId?: string;
             twoFactorEnabled?: boolean;
+            onboardingComplete?: boolean;
             linkedAccounts?: LinkedAccountsSummary;
         } & DefaultSession["user"];
     }

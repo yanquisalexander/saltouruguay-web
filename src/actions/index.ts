@@ -40,6 +40,7 @@ import { notifications } from "./notifications";
 import { tournaments } from "./tournaments";
 import { acreconre } from "./acreconre";
 import { cumple } from "./cumple";
+import { onboarding } from "./users/onboarding";
 
 
 
@@ -47,6 +48,7 @@ export const server = {
     oauth: userOauth,
     acreconre,
     cumple,
+    onboarding,
     tournaments,
     notifications,
     saltogram,

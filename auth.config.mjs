@@ -172,6 +172,7 @@ export default defineConfig({
                         coins: true,
                         username: true,
                         twoFactorEnabled: true,
+                        onboardingComplete: true,
                     },
                     with: {
                         streamerWarsPlayer: {
@@ -203,6 +204,7 @@ export default defineConfig({
                         streamerWarsPlayerNumber: userRecord.streamerWarsPlayer?.playerNumber,
                         isSuspended,
                         twoFactorEnabled: userRecord.twoFactorEnabled,
+                        onboardingComplete: userRecord.onboardingComplete,
                         sessionId: token.sessionId,
                         linkedAccounts: linkedAccountsSummary,
                     };

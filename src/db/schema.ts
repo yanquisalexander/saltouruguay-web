@@ -16,6 +16,7 @@ export const UsersTable = pgTable("users", {
     twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
     twoFactorSecret: varchar("two_factor_secret"),
     twoFactorRecoveryCodes: text("two_factor_recovery_codes").array(),
+    onboardingComplete: boolean("onboarding_complete").notNull().default(false),
     createdAt: timestamp("created_at")
         .notNull()
         .default(sql`current_timestamp`),

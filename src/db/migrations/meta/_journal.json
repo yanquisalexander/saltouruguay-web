@@ -526,6 +526,13 @@
       "when": 1788482161533,
       "tag": "0074_friendly_harpoon",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1789439860116,
+      "tag": "0075_rare_khan",
+      "breakpoints": true
     }
   ]
 }
