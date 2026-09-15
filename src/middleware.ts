@@ -16,6 +16,15 @@ const IGNORED_PATHS = [
     "/favicon.ico"
 ];
 
+// Rutas de API que usan tokens OAuth (no deben ser afectadas por mantenimiento ni verificaciones)
+const API_OAUTH_PATHS = [
+    "/api/users/",
+    "/api/discord/",
+    "/api/saltogram/",
+    "/oauth/",
+    "/gamecenter/oauth/"
+];
+
 const MAINT_BYPASS_COOKIE = "sus_maint_bypass";
 const MAINT_BYPASS_DURATION = 3600; // 1 hora
 
@@ -113,7 +122,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
 
     // 4. MODO MANTENIMIENTO
-    if (ENABLE_MAINTENANCE && pathname !== "/500" && !context.isPrerendered) {
+    // Las peticiones API con tokens OAuth no se ven afectadas por el mantenimiento
+    const hasBearerToken = request.headers.get('authorization')?.startsWith('Bearer ');
+    const isApiRequest = pathname.startsWith('/api/') || 
+        hasBearerToken ||
+        API_OAUTH_PATHS.some(path => pathname.startsWith(path));
+
+    if (ENABLE_MAINTENANCE && pathname !== "/500" && !context.isPrerendered && !isApiRequest) {
         // Check bypass cookie first
         const existingBypass = getBypassCookie(request);
         const bypassValid = existingBypass && verifyBypassToken(existingBypass);
@@ -146,6 +161,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     // 5. VERIFICACIÓN DE COOKIE (Pre-Auth)
     // Si no hay cookie de sesión, no intentes cargar la sesión (ahorra tiempo y DB)
+    // Las peticiones API con tokens OAuth se saltan estas verificaciones
+    if (isApiRequest) return next();
+
     const hasAuthCookie = request.headers.get('cookie')?.includes('authjs.session-token') ||
         request.headers.get('cookie')?.includes('__Secure-authjs.session-token');
 
@@ -187,6 +205,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (user.twoFactorEnabled && pathname === "/two-factor") {
         const serverSession = await getSessionById(user.sessionId!);
         if (serverSession?.twoFactorVerified) return redirect("/", 302);
+    }
+
+    // 9. LÓGICA DE ONBOARDING (Skipeable)
+    // Redirige a /onboarding si no lo ha completado
+    if (!user.onboardingComplete && pathname !== "/onboarding") {
+        return redirect("/onboarding", 302);
     }
 
     return next();

@@ -1,7 +1,8 @@
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useCallback } from "preact/hooks";
 import { getSessionClient } from "@/lib/auth-client";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
+import confetti from "canvas-confetti";
 import {
     LucideLoader2,
     LucideCheckCircle2,
@@ -14,6 +15,8 @@ import {
 type Step = "welcome" | "discord" | "complete";
 
 const STEPS: Step[] = ["welcome", "discord", "complete"];
+
+const CONFETTI_COLORS = ["#9146FF", "#b085ff", "#ffffff", "#5865F2"];
 
 function getStepFromURL(): number {
     const params = new URLSearchParams(window.location.search);
@@ -42,12 +45,14 @@ export default function OnboardingWizard() {
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
     const [completing, setCompleting] = useState(false);
+    const [animating, setAnimating] = useState(false);
+    const [slideClass, setSlideClass] = useState("onb-slide-enter");
+    const [hasConfettiFired, setHasConfettiFired] = useState(false);
 
     const currentStep = STEPS[stepIdx];
     const isLast = stepIdx === STEPS.length - 1;
     const discordLinked = !!session?.user?.linkedAccounts?.discord;
 
-    // Sync step from URL on client
     useEffect(() => {
         setStepIdx(getStepFromURL());
     }, []);
@@ -63,19 +68,78 @@ export default function OnboardingWizard() {
             });
     }, []);
 
-    // Listen for Discord linked event from popup
     useEffect(() => {
-        const handleDiscordLinked = () => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("discordLinked") === "true") {
             getSessionClient().then(setSession);
-        };
-        window.addEventListener("DiscordLinked", handleDiscordLinked);
-        return () => window.removeEventListener("DiscordLinked", handleDiscordLinked);
+            const url = new URL(window.location.href);
+            url.searchParams.delete("discordLinked");
+            history.replaceState(null, "", url.toString());
+        }
     }, []);
+
+    const fireConfetti = useCallback(() => {
+        if (hasConfettiFired) return;
+        setHasConfettiFired(true);
+
+        const end = Date.now() + 800;
+        const frame = () => {
+            confetti({
+                particleCount: 3,
+                angle: 60,
+                spread: 60,
+                origin: { x: 0, y: 0.7 },
+                colors: CONFETTI_COLORS,
+            });
+            confetti({
+                particleCount: 3,
+                angle: 120,
+                spread: 60,
+                origin: { x: 1, y: 0.7 },
+                colors: CONFETTI_COLORS,
+            });
+            if (Date.now() < end) requestAnimationFrame(frame);
+        };
+        frame();
+
+        setTimeout(() => {
+            confetti({
+                particleCount: 80,
+                spread: 100,
+                origin: { x: 0.5, y: 0.5 },
+                colors: CONFETTI_COLORS,
+                startVelocity: 30,
+                gravity: 0.8,
+            });
+        }, 200);
+    }, [hasConfettiFired]);
+
+    useEffect(() => {
+        if (currentStep === "complete") {
+            const t = setTimeout(fireConfetti, 300);
+            return () => clearTimeout(t);
+        }
+    }, [currentStep, fireConfetti]);
 
     const goToStep = (idx: number) => {
         const clamped = Math.max(0, Math.min(idx, STEPS.length - 1));
-        setStepIdx(clamped);
-        setStepURL(STEPS[clamped]);
+        if (clamped === stepIdx || animating) return;
+
+        setAnimating(true);
+        setSlideClass(clamped > stepIdx ? "onb-slide-exit-left" : "onb-slide-exit-right");
+
+        setTimeout(() => {
+            setStepIdx(clamped);
+            setStepURL(STEPS[clamped]);
+            setSlideClass(clamped > stepIdx ? "onb-slide-enter-right" : "onb-slide-enter-left");
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    setSlideClass("onb-slide-enter");
+                    setTimeout(() => setAnimating(false), 400);
+                });
+            });
+        }, 280);
     };
 
     const next = () => {
@@ -105,191 +169,206 @@ export default function OnboardingWizard() {
     };
 
     const linkDiscord = () => {
-        const width = 600;
-        const height = 700;
-        const left = window.innerWidth / 2 - width / 2;
-        const top = window.innerHeight / 2 - height / 2;
-
-        window.open(
-            "/auth/discord",
-            "Discord Link",
-            `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
-        );
+        window.location.href = "/api/linked-accounts/discord/link";
     };
 
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-dvh">
-                <LucideLoader2 className="animate-spin text-white/30" size={32} />
+                <LucideLoader2 className="text-white/30 animate-spin-clockwise animate-iteration-count-infinite" size={32} />
             </div>
         );
     }
 
     return (
         <div className="relative flex min-h-dvh w-full flex-col items-center justify-center px-6">
-            {/* Background glow */}
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(145,70,255,0.06)_0%,transparent_60%)]" />
 
-            {/* Card */}
             <div className="relative z-10 w-full max-w-lg">
                 {/* Step indicator */}
                 <div className="flex items-center justify-center gap-2 mb-8">
                     {STEPS.map((_, i) => (
                         <div
                             key={i}
-                            className={`h-1.5 rounded-full transition-all duration-300 ${
-                                i === stepIdx
-                                    ? "w-8 bg-electric-violet-500"
-                                    : i < stepIdx
-                                    ? "w-4 bg-electric-violet-500/50"
-                                    : "w-4 bg-white/10"
-                            }`}
+                            className="h-1.5 rounded-full transition-all duration-300 ease-in-out"
+                            style={{
+                                width: i === stepIdx ? "32px" : "16px",
+                                backgroundColor:
+                                    i === stepIdx
+                                        ? "rgb(145, 70, 255)"
+                                        : i < stepIdx
+                                            ? "rgba(145, 70, 255, 0.5)"
+                                            : "rgba(255, 255, 255, 0.1)",
+                            }}
                         />
                     ))}
                 </div>
 
-                {/* Step content */}
-                <div className="rounded-2xl border border-white/10 bg-[#0a0a0a]/80 backdrop-blur-xl p-8 shadow-2xl shadow-black/40">
-                    {currentStep === "welcome" && (
-                        <div className="flex flex-col items-center text-center gap-6 animate-in fade-in duration-300">
-                            <div className="relative">
-                                <div className="absolute -inset-4 rounded-full bg-electric-violet-500/10 blur-2xl" />
-                                <img
-                                    src="/favicon.svg"
-                                    alt="SaltoUruguayServer"
-                                    className="relative h-20 w-auto"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <h1 className="font-anton text-4xl text-white uppercase tracking-wide">
-                                    Bienvenido
-                                </h1>
-                                <p className="font-rubik text-white/50 text-sm leading-relaxed">
-                                    Te damos la bienvenida a la comunidad de{" "}
-                                    <span className="text-electric-violet-400 font-medium">
-                                        SaltoUruguayServer
-                                    </span>
-                                    . Configuremos tu cuenta en unos simples pasos.
-                                </p>
-                            </div>
-
-                            <button
-                                onClick={next}
-                                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-electric-violet-500 hover:bg-electric-violet-600 text-white font-teko text-lg uppercase tracking-wide transition-all duration-200 hover:shadow-[0_0_20px_rgba(145,70,255,0.4)] active:scale-95"
-                            >
-                                Comenzar
-                                <LucideArrowRight size={18} />
-                            </button>
-                        </div>
-                    )}
-
-                    {currentStep === "discord" && (
-                        <div className="flex flex-col items-center text-center gap-6 animate-in fade-in duration-300">
-                            <div className="p-4 rounded-full bg-[#5865F2]/10 border border-[#5865F2]/20">
-                                <DiscordIcon className="size-10 text-[#5865F2]" />
-                            </div>
-
-                            <div className="space-y-2">
-                                <h1 className="font-anton text-3xl text-white uppercase tracking-wide">
-                                    Conecta tu Discord
-                                </h1>
-                                <p className="font-rubik text-white/50 text-sm leading-relaxed">
-                                    Vincula tu cuenta de Discord para acceder a roles exclusivos, eventos y más dentro de la comunidad.
-                                </p>
-                            </div>
-
-                            {discordLinked ? (
-                                <div className="flex flex-col items-center gap-3">
-                                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/20">
-                                        <LucideCheckCircle2 size={18} className="text-green-400" />
-                                        <span className="font-rubik text-sm text-green-300">
-                                            Discord vinculado como{" "}
-                                            <span className="font-medium text-green-200">
-                                                {session?.user?.linkedAccounts?.discord?.username}
-                                            </span>
-                                        </span>
-                                    </div>
+                {/* Card */}
+                <div className="relative rounded-2xl border border-white/10 bg-[#0a0a0a]/80 backdrop-blur-xl p-8 shadow-2xl shadow-black/40 overflow-hidden min-h-[380px]">
+                    <div className={`flex flex-col items-center text-center gap-6 ${slideClass}`}>
+                        {currentStep === "welcome" && (
+                            <>
+                                <div className="relative onb-stagger" style={{ "--i": 0 } as any}>
+                                    <div className="absolute -inset-4 rounded-full bg-electric-violet-500/10 blur-2xl onb-pulse-glow" />
+                                    <img
+                                        src="/favicon.svg"
+                                        alt="SaltoUruguayServer"
+                                        className="relative h-20 w-auto onb-breathe"
+                                    />
                                 </div>
-                            ) : (
-                                <button
-                                    onClick={linkDiscord}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-teko text-lg uppercase tracking-wide transition-all duration-200 hover:shadow-[0_0_20px_rgba(88,101,242,0.4)] active:scale-95"
-                                >
-                                    <DiscordIcon className="size-5" />
-                                    Vincular Discord
-                                </button>
-                            )}
 
-                            <div className="flex items-center gap-3 mt-2">
-                                <button
-                                    onClick={prev}
-                                    className="flex items-center gap-1 px-4 py-2 rounded-xl text-white/40 hover:text-white/70 font-rubik text-sm transition-colors"
-                                >
-                                    <LucideArrowLeft size={14} />
-                                    Atrás
-                                </button>
+                                {session?.user?.image && (
+                                    <div className="relative onb-stagger" style={{ "--i": 1 } as any}>
+                                        <div className="absolute -inset-1.5 rounded-full bg-electric-violet-500/15 blur-lg onb-pulse-glow" />
+                                        <img
+                                            src={session.user.image}
+                                            alt={session.user.name ?? ""}
+                                            className="relative h-12 w-12 rounded-full border-2 border-electric-violet-500/40 object-cover"
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="space-y-2 onb-stagger" style={{ "--i": 2 } as any}>
+                                    <h1 className="font-anton text-4xl text-white uppercase tracking-wide">
+                                        Bienvenido
+                                    </h1>
+                                    {session?.user?.name && (
+                                        <p className="font-anton text-xl text-electric-violet-400 uppercase tracking-wide -mt-1">
+                                            {session.user.name}
+                                        </p>
+                                    )}
+                                    <p className="font-rubik text-white/50 text-sm leading-relaxed">
+                                        Te damos la bienvenida a la comunidad de{" "}
+                                        <span className="text-electric-violet-400 font-medium">
+                                            SaltoUruguayServer
+                                        </span>
+                                        . Configuremos tu cuenta en unos simples pasos.
+                                    </p>
+                                </div>
 
                                 <button
                                     onClick={next}
-                                    className="flex items-center gap-1 px-4 py-2 rounded-xl text-white/40 hover:text-white/70 font-rubik text-sm transition-colors"
+                                    className="onb-stagger flex items-center gap-2 px-6 py-3 rounded-xl bg-electric-violet-500 hover:bg-electric-violet-600 text-white font-teko text-lg uppercase tracking-wide transition-all duration-200 hover:shadow-[0_0_20px_rgba(145,70,255,0.4)] hover:scale-[1.04] active:scale-[0.96]"
+                                    style={{ "--i": 3 } as any}
                                 >
-                                    {discordLinked ? "Continuar" : "Omitir por ahora"}
-                                    <LucideArrowRight size={14} />
+                                    Comenzar
+                                    <LucideArrowRight size={18} />
                                 </button>
-                            </div>
-                        </div>
-                    )}
+                            </>
+                        )}
 
-                    {currentStep === "complete" && (
-                        <div className="flex flex-col items-center text-center gap-6 animate-in fade-in duration-300">
-                            <div className="p-4 rounded-full bg-electric-violet-500/10 border border-electric-violet-500/20">
-                                <LucidePartyPopper size={32} className="text-electric-violet-400" />
-                            </div>
+                        {currentStep === "discord" && (
+                            <>
+                                <div className="p-4 rounded-full bg-[#5865F2]/10 border border-[#5865F2]/20 onb-stagger" style={{ "--i": 0 } as any}>
+                                    <DiscordIcon className="size-10 text-[#5865F2]" />
+                                </div>
 
-                            <div className="space-y-2">
-                                <h1 className="font-anton text-3xl text-white uppercase tracking-wide">
-                                    ¡Todo listo!
-                                </h1>
-                                <p className="font-rubik text-white/50 text-sm leading-relaxed">
-                                    Tu cuenta está configurada. Explora la comunidad, participa en eventos y conecta con otros miembros.
-                                </p>
-                            </div>
+                                <div className="space-y-2 onb-stagger" style={{ "--i": 1 } as any}>
+                                    <h1 className="font-anton text-3xl text-white uppercase tracking-wide">
+                                        Conecta tu Discord
+                                    </h1>
+                                    <p className="font-rubik text-white/50 text-sm leading-relaxed">
+                                        Vincula tu cuenta de Discord para acceder a roles exclusivos,
+                                        eventos y más dentro de la comunidad.
+                                    </p>
+                                </div>
 
-                            <div className="flex items-center gap-3 mt-2">
-                                <button
-                                    onClick={prev}
-                                    className="flex items-center gap-1 px-4 py-2 rounded-xl text-white/40 hover:text-white/70 font-rubik text-sm transition-colors"
-                                >
-                                    <LucideArrowLeft size={14} />
-                                    Atrás
-                                </button>
-
-                                <button
-                                    onClick={complete}
-                                    disabled={completing}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-electric-violet-500 hover:bg-electric-violet-600 text-white font-teko text-lg uppercase tracking-wide transition-all duration-200 hover:shadow-[0_0_20px_rgba(145,70,255,0.4)] active:scale-95 disabled:opacity-50"
-                                >
-                                    {completing ? (
-                                        <LucideLoader2 size={18} className="animate-spin" />
+                                <div className="onb-stagger" style={{ "--i": 2 } as any}>
+                                    {discordLinked ? (
+                                        <div className="onb-pop-in flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/20">
+                                            <LucideCheckCircle2 size={18} className="text-green-400" />
+                                            <span className="font-rubik text-sm text-green-300">
+                                                Discord vinculado como{" "}
+                                                <span className="font-medium text-green-200">
+                                                    {session?.user?.linkedAccounts?.discord?.username}
+                                                </span>
+                                            </span>
+                                        </div>
                                     ) : (
-                                        <>
-                                            Entrar
-                                            <LucideArrowRight size={18} />
-                                        </>
+                                        <button
+                                            onClick={linkDiscord}
+                                            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-teko text-lg uppercase tracking-wide transition-all duration-200 hover:shadow-[0_0_20px_rgba(88,101,242,0.4)] hover:scale-[1.04] active:scale-[0.96]"
+                                        >
+                                            <DiscordIcon className="size-5" />
+                                            Vincular Discord
+                                        </button>
                                     )}
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                                </div>
+
+                                <div className="flex items-center gap-3 mt-2 onb-stagger" style={{ "--i": 3 } as any}>
+                                    <button
+                                        onClick={prev}
+                                        className="flex items-center gap-1 px-4 py-2 rounded-xl text-white/40 hover:text-white/70 font-rubik text-sm transition-all hover:-translate-x-0.5"
+                                    >
+                                        <LucideArrowLeft size={14} />
+                                        Atrás
+                                    </button>
+
+                                    <button
+                                        onClick={next}
+                                        className="flex items-center gap-1 px-4 py-2 rounded-xl text-white/40 hover:text-white/70 font-rubik text-sm transition-all hover:translate-x-0.5"
+                                    >
+                                        {discordLinked ? "Continuar" : "Omitir por ahora"}
+                                        <LucideArrowRight size={14} />
+                                    </button>
+                                </div>
+                            </>
+                        )}
+
+                        {currentStep === "complete" && (
+                            <>
+                                <div className="p-4 rounded-full bg-electric-violet-500/10 border border-electric-violet-500/20 onb-pop-in">
+                                    <div className="onb-wiggle">
+                                        <LucidePartyPopper size={32} className="text-electric-violet-400" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 onb-stagger" style={{ "--i": 1 } as any}>
+                                    <h1 className="font-anton text-3xl text-white uppercase tracking-wide">
+                                        ¡Todo listo!
+                                    </h1>
+                                    <p className="font-rubik text-white/50 text-sm leading-relaxed">
+                                        Tu cuenta está configurada. Explora la comunidad, participa en
+                                        eventos y conecta con otros miembros.
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center gap-3 mt-2 onb-stagger" style={{ "--i": 2 } as any}>
+                                    <button
+                                        onClick={prev}
+                                        className="flex items-center gap-1 px-4 py-2 rounded-xl text-white/40 hover:text-white/70 font-rubik text-sm transition-all hover:-translate-x-0.5"
+                                    >
+                                        <LucideArrowLeft size={14} />
+                                        Atrás
+                                    </button>
+
+                                    <button
+                                        onClick={complete}
+                                        disabled={completing}
+                                        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-electric-violet-500 hover:bg-electric-violet-600 text-white font-teko text-lg uppercase tracking-wide transition-all duration-200 hover:shadow-[0_0_20px_rgba(145,70,255,0.4)] hover:scale-[1.04] active:scale-[0.96] disabled:opacity-50"
+                                    >
+                                        {completing ? (
+                                            <LucideLoader2 size={18} className="animate-spin-clockwise animate-iteration-count-infinite" />
+                                        ) : (
+                                            <>
+                                                Entrar
+                                                <LucideArrowRight size={18} />
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
 
-                {/* Skip button (always visible, except on last step) */}
+                {/* Skip button */}
                 {!isLast && (
-                    <div className="flex justify-center mt-4">
+                    <div className="flex justify-center mt-4 onb-fade-in" style={{ animationDelay: "0.5s" } as any}>
                         <button
                             onClick={skip}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-white/20 hover:text-white/50 font-rubik text-xs transition-colors"
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-white/20 hover:text-white/50 font-rubik text-xs transition-all hover:scale-105 active:scale-95"
                         >
                             <LucideSkipForward size={12} />
                             Saltar onboarding

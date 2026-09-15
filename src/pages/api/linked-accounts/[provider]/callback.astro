@@ -121,9 +121,10 @@ const isDiscord = providerName === "discord";
           </p>
           <LucideLoader2 size={24} class="animate-spin mx-auto text-white/30" />
           <script is:inline data-return-to={returnTo} data-provider={providerName}>
+            const __rt = document.currentScript.dataset.returnTo;
+            const __pv = document.currentScript.dataset.provider;
             setTimeout(() => {
-              const s = document.currentScript;
-              window.location.href = s.dataset.returnTo + "?" + s.dataset.provider + "Linked=true";
+              window.location.href = __rt + "?" + __pv + "Linked=true";
             }, 2000);
           </script>
         </div>

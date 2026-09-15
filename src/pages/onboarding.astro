@@ -8,6 +8,18 @@ const session = await getSession(Astro.request);
 if (!session) {
   return Astro.redirect("/");
 }
+
+const particles = Array.from({ length: 18 }, (_, i) => ({
+  id: i,
+  left: `${Math.round(5 + (i * 37 + 13) % 90)}%`,
+  top: `${Math.round(5 + (i * 53 + 7) % 85)}%`,
+  size: 2 + (i % 3),
+  opacity: 0.08 + (i % 5) * 0.035,
+  duration: 7 + (i % 6) * 2,
+  delay: (i % 4) * -2.5,
+  floatRange: -(15 + (i % 5) * 8),
+  floatDrift: -4 + (i % 3) * 5,
+}));
 ---
 
 <Layout
@@ -16,15 +28,35 @@ if (!session) {
   hideHeader
   mainClassname="m-0 p-0 min-h-dvh"
 >
-  <div class="fixed inset-0 -z-10 bg-[#050505]">
+  <div class="fixed inset-0 -z-10 bg-[#050505] overflow-hidden">
     <div
       class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"
     >
     </div>
+
+    <!-- Animated glow -->
     <div
-      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-electric-violet-500/10 blur-[120px] rounded-full pointer-events-none"
+      class="absolute top-1/2 left-1/2 w-[500px] h-[500px] bg-electric-violet-500/10 blur-[120px] rounded-full pointer-events-none"
+      style="animation: pulse-glow 4s ease-in-out infinite;"
     >
     </div>
+
+    <!-- Floating particles -->
+    {particles.map((p) => (
+      <div
+        class="absolute rounded-full bg-electric-violet-400 pointer-events-none will-change-transform"
+        style={`
+          left: ${p.left};
+          top: ${p.top};
+          width: ${p.size}px;
+          height: ${p.size}px;
+          --particle-opacity: ${p.opacity};
+          --float-range: ${p.floatRange}px;
+          --float-drift: ${p.floatDrift}px;
+          animation: float-particle ${p.duration}s ease-in-out ${p.delay}s infinite;
+        `}
+      />
+    ))}
   </div>
 
   <OnboardingWizard client:load />
