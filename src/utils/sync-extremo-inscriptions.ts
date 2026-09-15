@@ -101,7 +101,7 @@ export async function syncExtremoInscriptions(options?: { clear?: boolean }): Pr
 
       // Upsert inscription - actualiza metadatos sin tocar campos administrativos
       // Discord username viene de linked_accounts (siempre sincronizado)
-      const discordUsername = discordMap.get(userId) || null;
+      const discordUsername = discordMap.get(userId) || insc.discordUsername || null;
 
       await client
         .insert(SaltoCraftExtremo3InscriptionsTable)
