@@ -1,6 +1,6 @@
 import { client } from '@/db/client';
-import { SaltoCraftExtremo3InscriptionsTable, Extremo3PlayersTable, UsersTable } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { SaltoCraftExtremo3InscriptionsTable, Extremo3PlayersTable, UsersTable, LinkedAccountsTable } from '@/db/schema';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { INSCRIPTIONS_API_KEY, INSCRIPTIONS_API_URL } from 'astro:env/server';
 
 interface AdminInscription {
@@ -57,6 +57,28 @@ export async function syncExtremoInscriptions(options?: { clear?: boolean }): Pr
 
   const inscriptions: AdminInscription[] = data.inscriptions;
 
+  // Batch fetch de Discord accounts desde linked_accounts para todos los userIds
+  const userIds = inscriptions.map(insc => insc.susId);
+  const linkedDiscordAccounts = await client
+    .select({
+      userId: LinkedAccountsTable.userId,
+      username: LinkedAccountsTable.username,
+    })
+    .from(LinkedAccountsTable)
+    .where(
+      and(
+        inArray(LinkedAccountsTable.userId, userIds),
+        eq(LinkedAccountsTable.provider, "discord")
+      )
+    )
+    .execute();
+
+  // Mapa userId → discordUsername desde linked_accounts
+  const discordMap = new Map<number, string | null>();
+  for (const account of linkedDiscordAccounts) {
+    discordMap.set(account.userId, account.username || null);
+  }
+
   for (const insc of inscriptions) {
     try {
       const custom = insc.customData || {};
@@ -77,12 +99,15 @@ export async function syncExtremoInscriptions(options?: { clear?: boolean }): Pr
         continue;
       }
 
-      // Upsert inscription
+      // Upsert inscription - actualiza metadatos sin tocar campos administrativos
+      // Discord username viene de linked_accounts (siempre sincronizado)
+      const discordUsername = discordMap.get(userId) || null;
+
       await client
         .insert(SaltoCraftExtremo3InscriptionsTable)
         .values({
           userId,
-          discordUsername: insc.discordUsername || null,
+          discordUsername,
           acceptedTerms: true,
           instagram: custom.instagram || null,
           participated_sc: custom.participaste_de_alguna_edici_n_anterior_de_saltocraft_extremo === "Si" ? "si" : "no",
@@ -91,7 +116,17 @@ export async function syncExtremoInscriptions(options?: { clear?: boolean }): Pr
           content_channel: custom.canal_de_contenido_opcional || null,
           createdAt: new Date(insc.createdAt),
         })
-        .onConflictDoNothing()
+        .onConflictDoUpdate({
+          target: SaltoCraftExtremo3InscriptionsTable.userId,
+          set: {
+            discordUsername,
+            instagram: custom.instagram || null,
+            participated_sc: custom.participaste_de_alguna_edici_n_anterior_de_saltocraft_extremo === "Si" ? "si" : "no",
+            minecraft_username: custom.u || null,
+            content_channel: custom.canal_de_contenido_opcional || null,
+            updatedAt: new Date(),
+          },
+        })
         .execute();
 
       synced++;
