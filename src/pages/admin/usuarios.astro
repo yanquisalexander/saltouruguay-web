@@ -1,6 +1,5 @@
 ---
 import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
-import TwitchProcessedEvents from "@/components/admin/TwitchProcessedEvents";
 import UsersManager from "@/components/admin/UsersManager";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { getSession } from "auth-astro/server";
@@ -15,8 +14,12 @@ if (!session?.user.isAdmin) {
 ---
 
 <AdminLayout title="Usuarios" session={session}>
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
-    <AdminPageHeader title="Usuarios" pathname="/admin/usuarios" />
+  <div class="flex flex-col w-full max-w-6xl mx-auto space-y-6">
+    <AdminPageHeader
+      title="Gestión de Usuarios"
+      description="Administra los permisos, roles e información de los miembros registrados."
+      pathname="/admin/usuarios"
+    />
     <UsersManager client:idle />
   </div>
 </AdminLayout>

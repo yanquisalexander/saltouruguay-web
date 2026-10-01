@@ -3,11 +3,11 @@ import {
     LucideGamepad2, LucideMedal, LucideTrophy, LucideUsers,
     LucideCode, LucideSettings, LucideLayoutDashboard, LucidePaintbrush,
     LucideCalendar, LucideSwords, LucidePanelLeftClose, LucidePanelLeftOpen,
-    LucideLogOut, LucideMenu, LucideX
+    LucideLogOut, LucideMenu, LucideX, LucideExternalLink, LucideShieldCheck
 } from "lucide-preact";
 import type { Session } from "@auth/core/types";
 
-// --- CONFIGURACIÓN ---
+// --- CONFIGURACIÓN DE ICONOS & CATEGORÍAS ---
 const iconMap = {
     home: LucideLayoutDashboard,
     users: LucideUsers,
@@ -79,9 +79,7 @@ export default function AdminSidebar({ session, initialPathname }: { session: Se
         return () => document.removeEventListener('astro:page-load', updatePath);
     }, []);
 
-    // Clases dinámicas de ancho
-    // Móvil: w-72 (Fijo cuando está abierto)
-    // Desktop: w-72 (Expandido) vs w-20 (Colapsado)
+    // Ancho dinámico para desktop
     const sidebarWidth = collapsed ? "md:w-20" : "md:w-72";
 
     return (
@@ -89,31 +87,38 @@ export default function AdminSidebar({ session, initialPathname }: { session: Se
             {/* ==============================================
                 1. MOBILE HEADER BAR (Solo visible en < md)
                ============================================== */}
-            <div className="md:hidden fixed top-0 left-0 z-40 w-full h-16 flex items-center justify-between px-4 bg-[#09090b]/95 backdrop-blur-md border-b border-white/5">
-                <div className="flex items-center gap-4">
+            <div className="md:hidden fixed top-0 left-0 z-40 w-full h-16 flex items-center justify-between px-4 bg-[#08080a]/95 backdrop-blur-md border-b border-white/10">
+                <div className="flex items-center gap-3">
                     <button
                         onClick={() => setIsMobileOpen(true)}
-                        className="p-2 -ml-2 text-white/70 hover:text-white active:bg-white/10 rounded-lg transition-colors"
+                        className="p-2 -ml-2 text-white/70 hover:text-white active:bg-white/10 rounded-xl transition-colors"
+                        aria-label="Abrir menú"
                     >
-                        <LucideMenu size={24} />
+                        <LucideMenu size={22} />
                     </button>
-                    <div className="flex items-center gap-2">
-                        <div className="size-6 rounded-sm bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                            <span className="font-anton text-white text-xs">S</span>
+                    <div className="flex items-center gap-2.5">
+                        <div className="size-8 rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-md shadow-purple-900/30 border border-purple-400/30">
+                            <span className="font-anton text-white text-sm">S</span>
                         </div>
-                        <span className="font-teko text-xl text-white tracking-wide pt-0.5">ADMIN</span>
+                        <span className="font-anton text-lg text-white tracking-wide uppercase">Salto Admin</span>
                     </div>
                 </div>
-                {/* Avatar Móvil */}
-                <img src={session?.user?.image || "/og.webp"} className="size-8 rounded-lg border border-white/10 bg-black" />
+
+                <div className="flex items-center gap-2">
+                    <img
+                        src={session?.user?.image || "/favicon.svg"}
+                        alt={session?.user?.name || "Admin"}
+                        className="size-8 rounded-lg border border-white/10 bg-black/50 object-cover"
+                    />
+                </div>
             </div>
 
             {/* ==============================================
-                2. MOBILE BACKDROP (Fondo oscuro)
+                2. MOBILE BACKDROP (Fondo oscuro con Blur)
                ============================================== */}
             {isMobileOpen && (
                 <div
-                    className="fixed inset-0 bg-black/80 z-45 md:hidden backdrop-blur-xs animate-in fade-in duration-200"
+                    className="fixed inset-0 bg-black/80 z-40 md:hidden backdrop-blur-xs transition-opacity duration-200"
                     onClick={() => setIsMobileOpen(false)}
                 />
             )}
@@ -124,66 +129,72 @@ export default function AdminSidebar({ session, initialPathname }: { session: Se
             <aside
                 className={`
                     fixed inset-y-0 left-0 z-50 h-full flex flex-col
-                    bg-[#09090b] border-r border-white/5 
+                    bg-[#08080a] border-r border-white/10
                     transition-[width,transform] duration-300 ease-[cubic-bezier(0.2,0,0,1)]
                     
                     /* Lógica Móvil (Off-canvas) */
-                    ${isMobileOpen ? "translate-x-0 w-72" : "-translate-x-full w-72"}
+                    ${isMobileOpen ? "translate-x-0 w-72 shadow-2xl" : "-translate-x-full w-72"}
                     
                     /* Lógica Desktop (Static & Collapsible) */
                     md:translate-x-0 md:static ${sidebarWidth}
                 `}
             >
-                {/* --- HEADER --- */}
+                {/* --- HEADER SIDEBAR --- */}
                 <div className={`
-                    h-16 flex items-center shrink-0 border-b border-white/5 relative
-                    ${collapsed ? "md:justify-center" : "justify-between px-5"}
-                    px-5 /* Default padding mobile */
+                    h-16 flex items-center shrink-0 border-b border-white/10 relative px-4
+                    ${collapsed ? "md:justify-center md:px-0" : "justify-between"}
                 `}>
-
-                    {/* LOGO + TÍTULO (Oculto si colapsado en desktop) */}
+                    {/* LOGO + BRANDING */}
                     <div className={`
                         flex items-center gap-3 overflow-hidden transition-all duration-300
                         ${collapsed ? "md:w-0 md:opacity-0 md:absolute" : "w-auto opacity-100"}
                     `}>
-
-                        <span className="font-teko text-2xl text-white tracking-wide pt-1 whitespace-nowrap">
-                            ADMIN PANEL
-                        </span>
+                        <div className="size-9 rounded-xl bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-900/30 border border-purple-400/30 shrink-0">
+                            <span className="font-anton text-white text-base">S</span>
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <span className="font-anton text-lg text-white tracking-wide leading-none truncate">
+                                SALTO ADMIN
+                            </span>
+                            <span className="text-[10px] font-mono text-purple-400 font-bold uppercase tracking-widest leading-none mt-1">
+                                Control Panel
+                            </span>
+                        </div>
                     </div>
 
                     {/* BOTÓN COLAPSAR (Desktop) / CERRAR (Mobile) */}
                     <button
                         onClick={() => window.innerWidth < 768 ? setIsMobileOpen(false) : toggleSidebar()}
                         className={`
-                            text-white/40 hover:text-white hover:bg-white/5 p-1.5 rounded-lg transition-colors
+                            text-white/50 hover:text-white hover:bg-white/5 p-2 rounded-xl transition-all
                             ${collapsed ? "md:hidden" : "block"}
                         `}
+                        title={collapsed ? "Expandir menú" : "Colapsar menú"}
                     >
                         <div className="md:hidden"><LucideX size={20} /></div>
-                        <div className="hidden md:block"><LucidePanelLeftClose size={20} /></div>
+                        <div className="hidden md:block"><LucidePanelLeftClose size={18} /></div>
                     </button>
 
-                    {/* LOGO SOLO ICONO (Visible solo si colapsado en Desktop) */}
+                    {/* ICONO SOLO PARA VISTA COLAPSADA (Desktop) */}
                     {collapsed && (
                         <button
                             onClick={toggleSidebar}
-                            className="hidden md:flex size-10 rounded-xl hover:bg-white/5 items-center justify-center transition-colors group"
-                            title="Expandir"
+                            className="hidden md:flex size-10 rounded-xl hover:bg-purple-600/20 hover:border-purple-400/40 border border-transparent items-center justify-center transition-all group"
+                            title="Expandir menú"
                         >
-                            <LucidePanelLeftOpen size={24} className="text-white/40 group-hover:text-white" />
+                            <LucidePanelLeftOpen size={20} className="text-white/60 group-hover:text-purple-300" />
                         </button>
                     )}
                 </div>
 
                 {/* --- NAVIGATION SCROLL AREA --- */}
-                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6 space-y-8 custom-scrollbar">
+                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-5 space-y-6 scrollbar-thin scrollbar-thumb-white/10">
                     {categories.map((category, idx) => (
                         <div key={idx} className="w-full">
 
-                            {/* TÍTULO DE SECCIÓN */}
+                            {/* TÍTULO DE CATEGORÍA */}
                             <div className={`
-                                px-5 mb-3 text-[10px] font-bold text-white/30 uppercase tracking-widest transition-all duration-300 whitespace-nowrap
+                                px-4 mb-2 text-[10px] font-bold text-white/30 uppercase tracking-widest transition-all duration-300 whitespace-nowrap
                                 ${collapsed ? "md:opacity-0 md:h-0 md:mb-0 md:px-0" : "opacity-100"}
                             `}>
                                 {category.title}
@@ -201,12 +212,12 @@ export default function AdminSidebar({ session, initialPathname }: { session: Se
                                                 href={link.url}
                                                 onClick={() => setIsMobileOpen(false)}
                                                 className={`
-                                                    group relative flex items-center rounded-xl transition-all duration-200 min-h-[44px]
+                                                    group relative flex items-center rounded-xl transition-all duration-200 min-h-[42px] border
                                                     ${active
-                                                        ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
-                                                        : "text-gray-400 hover:text-gray-100 hover:bg-white/5"
+                                                        ? "bg-gradient-to-r from-purple-600/90 to-indigo-600/90 text-white font-semibold shadow-lg shadow-purple-950/40 border-purple-400/40"
+                                                        : "text-white/60 hover:text-white hover:bg-white/5 border-transparent"
                                                     }
-                                                    /* LAYOUT: Centrado si colapsado, Inicio si expandido */
+                                                    /* LAYOUT: Centrado si colapsado en desktop */
                                                     ${collapsed ? "md:justify-center md:px-0" : "justify-start px-3 gap-3"}
                                                     justify-start px-3 gap-3 /* Mobile default */
                                                 `}
@@ -214,11 +225,11 @@ export default function AdminSidebar({ session, initialPathname }: { session: Se
                                             >
                                                 {/* ICONO */}
                                                 <Icon
-                                                    size={20}
-                                                    className={`shrink-0 transition-transform ${!active && "group-hover:scale-110"}`}
+                                                    size={18}
+                                                    className={`shrink-0 transition-transform ${active ? "text-white" : "text-white/50 group-hover:text-purple-300 group-hover:scale-110"}`}
                                                 />
 
-                                                {/* TEXTO (Oculto absolutamente si colapsado para evitar saltos) */}
+                                                {/* TEXTO */}
                                                 <span className={`
                                                     whitespace-nowrap font-medium text-sm pt-0.5 transition-all duration-300
                                                     ${collapsed ? "md:w-0 md:opacity-0 md:absolute" : "w-auto opacity-100"}
@@ -226,12 +237,10 @@ export default function AdminSidebar({ session, initialPathname }: { session: Se
                                                     {link.label}
                                                 </span>
 
-                                                {/* TOOLTIP FLOTANTE (Solo Desktop Hover cuando colapsado) */}
+                                                {/* TOOLTIP FLOTANTE PARA ESCRITORIO COLAPSADO */}
                                                 {collapsed && (
-                                                    <div className="hidden md:block absolute left-full ml-4 px-2.5 py-1.5 bg-white text-black text-xs font-bold rounded-sm shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
+                                                    <div className="hidden md:block absolute left-full ml-3 px-3 py-1.5 bg-[#18181b] border border-white/10 text-white text-xs font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
                                                         {link.label}
-                                                        {/* Flechita del tooltip */}
-                                                        <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-white rotate-45"></div>
                                                     </div>
                                                 )}
                                             </a>
@@ -243,29 +252,64 @@ export default function AdminSidebar({ session, initialPathname }: { session: Se
                     ))}
                 </nav>
 
-                {/* --- FOOTER --- */}
-                <div className="p-3 border-t border-white/5 bg-[#09090b]">
+                {/* --- FOOTER DEL SIDEBAR --- */}
+                <div className="p-3 border-t border-white/10 bg-[#08080a]">
                     {collapsed ? (
-                        // FOOTER COLAPSADO (Solo Avatar o Icono Salir)
+                        // FOOTER COLAPSADO
                         <div className="flex flex-col gap-2 items-center">
-                            <a href="/" className="size-10 flex items-center justify-center rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-colors" title="Salir">
-                                <LucideLogOut size={20} />
+                            <a
+                                href="/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="size-9 flex items-center justify-center rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+                                title="Ver sitio público"
+                            >
+                                <LucideExternalLink size={18} />
                             </a>
-                            <div className="size-8 rounded-lg bg-white/5 p-0.5 cursor-help" title={session?.user?.name}>
-                                <img src={session?.user?.image || "/og.webp"} className="w-full h-full rounded-md object-cover" />
-                            </div>
+                            <a
+                                href="/api/auth/signout"
+                                className="size-9 flex items-center justify-center rounded-xl text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                title="Cerrar sesión"
+                            >
+                                <LucideLogOut size={18} />
+                            </a>
                         </div>
                     ) : (
                         // FOOTER EXPANDIDO
-                        <div className="flex items-center gap-3 p-2 rounded-xl bg-white/5 border border-white/5">
-                            <img src={session?.user?.image || "/og.webp"} className="size-9 rounded-lg object-cover bg-black shrink-0" />
-                            <div className="flex flex-col overflow-hidden">
-                                <span className="text-sm font-bold text-white truncate max-w-[110px]">{session?.user?.name}</span>
-                                <span className="text-[10px] text-blue-400 font-mono uppercase tracking-wider">Admin</span>
+                        <div className="flex flex-col gap-2 p-2.5 rounded-xl bg-white/5 border border-white/5">
+                            <div className="flex items-center gap-3">
+                                <img
+                                    src={session?.user?.image || "/favicon.svg"}
+                                    alt={session?.user?.name || "Admin"}
+                                    className="size-9 rounded-lg object-cover bg-black/50 border border-white/10 shrink-0"
+                                />
+                                <div className="flex flex-col overflow-hidden">
+                                    <span className="text-xs font-bold text-white truncate max-w-[120px]">
+                                        {session?.user?.name || "Administrador"}
+                                    </span>
+                                    <span className="text-[9px] text-purple-400 font-mono font-bold uppercase tracking-wider flex items-center gap-1">
+                                        <LucideShieldCheck size={10} /> Admin
+                                    </span>
+                                </div>
                             </div>
-                            <a href="/" className="ml-auto p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Salir de la Admin">
-                                <LucideLogOut size={16} />
-                            </a>
+
+                            <div className="flex items-center gap-1 pt-1.5 border-t border-white/5">
+                                <a
+                                    href="/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-1 px-2 text-[10px] font-bold text-white/60 hover:text-white hover:bg-white/5 rounded-md transition-colors uppercase tracking-wider"
+                                >
+                                    <LucideExternalLink size={12} /> Sitio
+                                </a>
+                                <span className="w-px h-3 bg-white/10"></span>
+                                <a
+                                    href="/api/auth/signout"
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-1 px-2 text-[10px] font-bold text-red-400/70 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors uppercase tracking-wider"
+                                >
+                                    <LucideLogOut size={12} /> Salir
+                                </a>
+                            </div>
                         </div>
                     )}
                 </div>

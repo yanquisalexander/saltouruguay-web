@@ -1,15 +1,17 @@
 ---
-import PageBreadcrumb from "../PageBreadcrumb.astro";
+import { LucideChevronRight, LucideHome } from "lucide-preact";
 
 interface Props {
   pathname?: string;
   title?: string;
+  description?: string;
 }
 
-const { pathname = "/", title } = Astro.props;
+const { pathname = "/", title, description } = Astro.props;
 
 const pathSegments =
   pathname === "/" ? [] : pathname.split("/").filter(Boolean);
+
 const breadcrumbs = pathSegments.map((segment, index) => {
   const href = "/" + pathSegments.slice(0, index + 1).join("/");
   return {
@@ -24,11 +26,44 @@ const breadcrumbs = pathSegments.map((segment, index) => {
 });
 ---
 
-<h2 class="text-3xl font-bold mb-4">
-  <span
-    class="text-blue-400 text-ellipsis overflow-hidden w-[20ch] md:w-auto md:max-w-[32ch] whitespace-nowrap"
-  >
-    {title}
-  </span>
-</h2>
-<PageBreadcrumb breadcrumbs={breadcrumbs} pathname={pathname} />
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-white/10">
+  <div class="space-y-1.5 min-w-0">
+    {/* Migas de pan / Breadcrumbs */}
+    <nav aria-label="Breadcrumb" class="flex items-center gap-1.5 text-xs text-white/40 font-mono mb-2 overflow-x-auto py-0.5">
+      <a href="/admin" class="hover:text-purple-400 transition-colors flex items-center gap-1 shrink-0">
+        <LucideHome size={12} />
+        <span>Admin</span>
+      </a>
+      {
+        breadcrumbs.slice(1).map((b) => (
+          <div class="flex items-center gap-1.5 shrink-0">
+            <LucideChevronRight size={12} className="text-white/20" />
+            <a href={b.href} class="hover:text-white transition-colors capitalize">
+              {b.text}
+            </a>
+          </div>
+        ))
+      }
+    </nav>
+
+    {/* Título Principal de la Página */}
+    <h2 class="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-white flex items-center gap-3">
+      <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-purple-400 drop-shadow-xs truncate">
+        {title}
+      </span>
+    </h2>
+
+    {
+      description && (
+        <p class="text-xs sm:text-sm text-white/50 font-rubik max-w-2xl leading-relaxed">
+          {description}
+        </p>
+      )
+    }
+  </div>
+
+  {/* Contenedor de Acciones (para botones adicionales de cada página) */}
+  <div class="flex items-center gap-3 shrink-0">
+    <slot name="actions" />
+  </div>
+</div>

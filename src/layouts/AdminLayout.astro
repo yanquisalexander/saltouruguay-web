@@ -2,6 +2,7 @@
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import Layout from "@/layouts/Layout.astro";
 import type { Session } from "@auth/core/types";
+import { LucideExternalLink, LucideShield, LucideSparkles } from "lucide-preact";
 
 interface Props {
   session: Session | null;
@@ -17,11 +18,11 @@ const { session, title = "Dashboard", description } = Astro.props;
   description={description}
   hideFooter
   hideHeader
-  mainClassname="bg-[#09090b] text-white overflow-hidden"
+  mainClassname="bg-[#08080a] text-white overflow-hidden p-0"
 >
-  {/* Contenedor Flex: En desktop es Row, en móvil es Column */}
-  <div class="flex flex-col md:flex-row h-dvh w-full overflow-hidden">
-    {/* Sidebar (Maneja su propio estado responsive) */}
+  {/* Contenedor Principal: Flex Row en Desktop, Flex Col en Mobile */}
+  <div class="flex flex-col md:flex-row h-dvh w-full overflow-hidden bg-[#08080a]">
+    {/* Sidebar (Control de navegación principal) */}
     <AdminSidebar
       session={session}
       initialPathname={Astro.url.pathname}
@@ -29,52 +30,64 @@ const { session, title = "Dashboard", description } = Astro.props;
       transition:persist="admin-sidebar"
     />
 
-    {/* Área Principal */}
-    <div class="flex flex-1 flex-col min-w-0 overflow-hidden bg-[#0c0c0e]">
-      {
-        /* HEADER INTERNO: 
-         - En móvil agregamos padding-top (pt-16) o margin-top para compensar el header del sidebar que es fixed.
-         - O mejor, hacemos que este header sea sticky y visible.
-      */
-      }
+    {/* Área de Contenido Principal */}
+    <div class="flex flex-1 flex-col min-w-0 overflow-hidden bg-[#0c0c10] relative">
+      {/* HEADER SUPERIOR (BARRA DE CONTROL STICKY) */}
       <header
-        class="h-16 mt-14 md:mt-0 shrink-0 border-b border-white/5 bg-[#09090b]/50 backdrop-blur-xs flex items-center px-6 justify-between z-20"
+        class="h-16 shrink-0 border-b border-white/10 bg-[#08080a]/80 backdrop-blur-md flex items-center px-4 md:px-6 justify-between z-30 sticky top-0"
       >
         <div class="flex items-center gap-3 overflow-hidden">
-          <h1
-            class="font-anton text-xl md:text-2xl uppercase tracking-wide text-white truncate"
-          >
-            {title}
-          </h1>
+          <div class="flex items-center gap-2">
+            <span class="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h1
+              class="font-anton text-lg md:text-xl uppercase tracking-wide text-white truncate"
+            >
+              {title}
+            </h1>
+          </div>
           {
             description && (
-              <span class="hidden md:block w-px h-4 bg-white/10 mx-2" />
+              <span class="hidden lg:block w-px h-4 bg-white/10 mx-1" />
             )
           }
           {
             description && (
-              <p class="hidden md:block text-sm text-white/40 font-rubik truncate max-w-md">
+              <p class="hidden lg:block text-xs text-white/40 font-rubik truncate max-w-md">
                 {description}
               </p>
             )
           }
         </div>
 
-        <div class="flex items-center gap-2">
-          <span
-            class="text-xs font-mono text-white/30 bg-white/5 px-2 py-1 rounded-sm"
-            >BETA v2.0</span
+        {/* Acciones e Indicadores a la derecha */}
+        <div class="flex items-center gap-3">
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white text-xs font-semibold uppercase tracking-wider transition-all"
+            title="Abrir sitio web en nueva pestaña"
           >
+            <LucideExternalLink size={13} />
+            <span>Ver Sitio</span>
+          </a>
+
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono font-bold shadow-sm">
+            <LucideShield size={13} className="text-purple-400" />
+            <span>V2.0 PROD</span>
+          </div>
         </div>
       </header>
 
-      {/* Contenido Scrollable */}
-      <main class="flex-1 overflow-y-auto p-4 md:p-8 relative scroll-smooth">
+      {/* ÁREA SCROLLABLE DE CONTENIDO */}
+      <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative scroll-smooth">
+        {/* Fondo de patrón cuadrícula sutil */}
         <div
           class="fixed inset-0 pointer-events-none opacity-[0.02] bg-[url('/images/pattern-grid.svg')] z-0"
         >
         </div>
-        <div class="relative z-10 max-w-7xl mx-auto">
+
+        <div class="relative z-10 max-w-7xl mx-auto space-y-6">
           <slot />
         </div>
       </main>
