@@ -1,7 +1,6 @@
 ---
 import type { Preload } from "@/types/Preload";
 import SEO from "@/components/SEO.astro";
-//import "@/assets/styles/sonner-style.css";
 import LoadingIndicator from "astro-loading-indicator/component";
 import { getSession } from "auth-astro/server";
 import { Toaster } from "sonner";
@@ -113,11 +112,18 @@ const shouldShowAds = false;
   </head>
   <body
     {...customId ? { id: customId } : {}}
-    class="bg-repeat text-white overflow-x-hidden font-sans bg-[url(/bg.svg)] bg-cover"
+    class="text-white overflow-x-clip font-sans antialiased bg-[url(/bg.svg)] bg-cover selection:bg-violet-500/40 selection:text-white"
   >
+    <a
+      href="#contenido"
+      class="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:rounded-xl focus:bg-violet-600 focus:text-white focus:text-xs focus:font-bold focus:uppercase focus:tracking-wider"
+    >
+      Saltar al contenido
+    </a>
+
     {!hideHeader && <SiteHeader session={session} />}
 
-    <main class={mainClassname}>
+    <main id="contenido" class={mainClassname}>
       <StingerGsap client:only="preact" transition:persist="stinger-su" />
 
       <slot />

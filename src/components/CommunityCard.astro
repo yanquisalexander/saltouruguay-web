@@ -1,0 +1,190 @@
+---
+import { LucideArrowRight, LucideArrowUpRight, LucideSparkles } from "lucide-preact";
+
+export type CommunityItem = {
+  id: string;
+  path?: string;
+  url?: string;
+  requiresLogin: boolean;
+  title: string;
+  description: string;
+  image: string;
+  icon: any;
+  soon: boolean;
+  soonCustomText?: string;
+  featured?: boolean;
+};
+
+interface Props {
+  item: CommunityItem;
+  loggedIn: boolean;
+  accent?: "amber" | "emerald" | "violet";
+  layout?: "card" | "row";
+  eager?: boolean;
+}
+
+const { item, loggedIn, accent = "amber", layout = "card", eager = false } = Astro.props;
+
+const isDisabled = (item.requiresLogin && !loggedIn) || item.soon;
+const needsLogin = !item.soon && item.requiresLogin && !loggedIn;
+const isExternal = !!item.url && !isDisabled;
+const href = isDisabled ? "#" : item.url || item.path || "#";
+const Icon = item.icon;
+
+const accents = {
+  amber: {
+    hoverBorder: "hover:border-amber-300/40",
+    glow: "hover:shadow-[0_20px_60px_-20px_rgba(251,191,36,0.35)]",
+    icon: "text-amber-300",
+    chip: "bg-amber-400/10 border-amber-300/25",
+    title: "group-hover:text-amber-200",
+  },
+  emerald: {
+    hoverBorder: "hover:border-emerald-300/40",
+    glow: "hover:shadow-[0_20px_60px_-20px_rgba(52,211,153,0.35)]",
+    icon: "text-emerald-300",
+    chip: "bg-emerald-400/10 border-emerald-300/25",
+    title: "group-hover:text-emerald-200",
+  },
+  violet: {
+    hoverBorder: "hover:border-violet-300/40",
+    glow: "hover:shadow-[0_20px_60px_-20px_rgba(167,139,250,0.4)]",
+    icon: "text-violet-300",
+    chip: "bg-violet-400/10 border-violet-300/25",
+    title: "group-hover:text-violet-200",
+  },
+}[accent];
+
+const statusLabel = item.soon
+  ? item.soonCustomText || "Pronto"
+  : needsLogin
+    ? "Loguéate"
+    : isExternal
+      ? "Externo"
+      : null;
+
+const baseCard = `group relative overflow-hidden rounded-3xl border bg-zinc-950/70 backdrop-blur-xl transition-all duration-300 ${
+  isDisabled
+    ? "border-white/10 cursor-not-allowed"
+    : `border-white/10 ${accents.hoverBorder} ${accents.glow} hover:-translate-y-1`
+}`;
+---
+
+{
+  isDisabled ? (
+    <div
+      class={`${baseCard} ${layout === "row" ? "flex flex-row min-h-[132px]" : `flex flex-col justify-end min-h-[250px] p-5 ${item.featured ? "md:col-span-2" : ""}`} ${item.soon ? "grayscale-[0.35]" : ""}`}
+      {...(needsLogin ? { "data-click-to-login": true } : {})}
+      aria-disabled="true"
+    >
+      {layout === "row" ? (
+        <>
+          <div class="relative w-28 sm:w-44 shrink-0 overflow-hidden">
+            <img src={item.image} alt="" aria-hidden="true" loading="lazy" class="absolute inset-0 h-full w-full object-cover opacity-50" />
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent to-zinc-950/90" />
+          </div>
+          <div class="relative flex-1 min-w-0 p-4 sm:p-5 flex flex-col justify-center">
+            <div class="flex items-center gap-2 mb-2">
+              <span class={`size-8 rounded-lg border flex items-center justify-center shrink-0 ${accents.chip}`}>
+                <Icon size={16} class={accents.icon} />
+              </span>
+              {statusLabel && (
+                <span class="rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/80 backdrop-blur-md border border-white/10">
+                  {statusLabel}
+                </span>
+              )}
+            </div>
+            <h3 class="font-anton text-xl text-white uppercase leading-tight">{item.title}</h3>
+            <p class="font-rubik text-[13px] text-white/50 line-clamp-2 mt-1">{item.description}</p>
+          </div>
+        </>
+      ) : (
+        <>
+          <div class="absolute inset-0 z-0">
+            <img src={item.image} alt="" aria-hidden="true" loading={eager ? "eager" : "lazy"} class="h-full w-full object-cover opacity-40 transition-transform duration-700" />
+            <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/55 to-zinc-950/10" />
+          </div>
+          <div class="relative z-10">
+            <div class="flex items-start justify-between gap-2 mb-3">
+              <span class={`size-10 rounded-xl border backdrop-blur-md flex items-center justify-center shrink-0 ${accents.chip}`}>
+                <Icon size={19} class={accents.icon} />
+              </span>
+              {statusLabel && (
+                <span class="rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/80 backdrop-blur-md border border-white/10 shrink-0">
+                  {statusLabel}
+                </span>
+              )}
+            </div>
+            <h3 class={`font-anton uppercase text-white leading-[0.95] transition-colors ${item.featured ? "text-2xl sm:text-3xl" : "text-xl"}`}>
+              {item.title}
+            </h3>
+            <p class="font-rubik text-[13px] text-white/55 line-clamp-2 mt-1.5 leading-relaxed">{item.description}</p>
+          </div>
+        </>
+      )}
+    </div>
+  ) : (
+    <a
+      href={href}
+      {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      class={`${baseCard} ${layout === "row" ? "flex flex-row min-h-[132px]" : `flex flex-col justify-end min-h-[250px] p-5 ${item.featured ? "md:col-span-2" : ""}`}`}
+    >
+      {layout === "row" ? (
+        <>
+          <div class="relative w-28 sm:w-44 shrink-0 overflow-hidden">
+            <img src={item.image} alt={item.title} loading="lazy" class="absolute inset-0 h-full w-full object-cover opacity-70 transition-transform duration-700 group-hover:scale-105" />
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent to-zinc-950/90" />
+          </div>
+          <div class="relative flex-1 min-w-0 p-4 sm:p-5 flex flex-col justify-center">
+            <div class="flex items-center gap-2 mb-2">
+              <span class={`size-8 rounded-lg border flex items-center justify-center shrink-0 ${accents.chip}`}>
+                <Icon size={16} class={accents.icon} />
+              </span>
+              {item.featured && (
+                <span class="inline-flex items-center gap-1 rounded-full bg-amber-300/10 border border-amber-300/30 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-200">
+                  <LucideSparkles size={11} /> Destacado
+                </span>
+              )}
+            </div>
+            <h3 class="font-anton text-xl text-white uppercase leading-tight flex items-center gap-2">
+              <span class="truncate">{item.title}</span>
+              {isExternal
+                ? <LucideArrowUpRight size={17} class="text-white/30 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
+                : <LucideArrowRight size={17} class="text-white/30 group-hover:text-white group-hover:translate-x-1 transition-all shrink-0" />}
+            </h3>
+            <p class="font-rubik text-[13px] text-white/50 line-clamp-2 mt-1">{item.description}</p>
+          </div>
+        </>
+      ) : (
+        <>
+          <div class="absolute inset-0 z-0">
+            <img src={item.image} alt={item.title} loading={eager ? "eager" : "lazy"} class="h-full w-full object-cover opacity-40 group-hover:opacity-55 group-hover:scale-[1.06] transition-all duration-700" />
+            <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/55 to-zinc-950/10" />
+            <div class="absolute inset-0 bg-gradient-to-r from-violet-950/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          </div>
+          <div class="relative z-10">
+            <div class="flex items-start justify-between gap-2 mb-3">
+              <span class={`size-10 rounded-xl border backdrop-blur-md flex items-center justify-center shrink-0 ${accents.chip}`}>
+                <Icon size={19} class={accents.icon} />
+              </span>
+              <span class="flex items-center gap-1.5">
+                {item.featured && (
+                  <span class="inline-flex items-center gap-1 rounded-full bg-amber-300/10 border border-amber-300/30 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-200">
+                    <LucideSparkles size={11} /> Destacado
+                  </span>
+                )}
+                <span class="size-9 rounded-full bg-white/5 border border-white/10 hidden group-hover:flex items-center justify-center text-white transition-all">
+                  {isExternal ? <LucideArrowUpRight size={16} /> : <LucideArrowRight size={16} />}
+                </span>
+              </span>
+            </div>
+            <h3 class={`font-anton uppercase text-white leading-[0.95] transition-colors ${accents.title} ${item.featured ? "text-2xl sm:text-3xl" : "text-xl"}`}>
+              {item.title}
+            </h3>
+            <p class="font-rubik text-[13px] text-white/55 line-clamp-2 mt-1.5 leading-relaxed">{item.description}</p>
+          </div>
+        </>
+      )}
+    </a>
+  )
+}

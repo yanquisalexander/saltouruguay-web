@@ -1,5 +1,6 @@
 ---
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import PageBackdrop from "@/components/PageBackdrop.astro";
 import Layout from "@/layouts/Layout.astro";
 import type { Session } from "@auth/core/types";
 import { LucideExternalLink, LucideShieldCheck } from "lucide-preact";
@@ -83,12 +84,7 @@ const { session, title = "Dashboard", description } = Astro.props;
 
       {/* ÁREA SCROLLABLE DE CONTENIDO */}
       <main class="flex-1 overflow-y-auto overflow-x-clip p-4 sm:p-6 lg:p-8 relative scroll-smooth">
-        {/* Fondo ambiental */}
-        <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <div class="absolute -top-24 right-[-5%] w-[480px] h-[480px] bg-violet-600/10 blur-[140px] rounded-full"></div>
-          <div class="absolute top-1/2 left-[-10%] w-[420px] h-[420px] bg-blue-700/[0.07] blur-[140px] rounded-full"></div>
-          <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.025] [mask-image:radial-gradient(ellipse_70%_50%_at_50%_0%,black,transparent)]"></div>
-        </div>
+        <PageBackdrop tone="violet" fixed={false} />
 
         <div class="relative z-10 max-w-7xl mx-auto space-y-6">
           <slot />

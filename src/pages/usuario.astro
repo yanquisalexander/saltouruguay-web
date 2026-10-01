@@ -1,4 +1,5 @@
 ---
+import PageBackdrop from "@/components/PageBackdrop.astro";
 import PageBreadcrumb from "@/components/PageBreadcrumb.astro";
 import { UserAccountLayout } from "@/components/UsersPage/UserAccountLayout";
 import Layout from "@/layouts/Layout.astro";
@@ -47,22 +48,7 @@ const avatarRing = isNominated
 ---
 
 <Layout title="Mi cuenta" mainClassname="p-0">
-  {/* Fondo Ambiental */}
-  <div class="fixed inset-0 -z-10 bg-[#060608]">
-    <div
-      class={`absolute -top-32 right-[-10%] w-[600px] h-[600px] blur-[160px] rounded-full pointer-events-none opacity-60 ${
-        HALLOWEEN_MODE
-          ? "bg-orange-600/20"
-          : CHRISTMAS_MODE
-            ? "bg-red-600/15"
-            : "bg-violet-600/20"
-      }`}
-    >
-    </div>
-    <div class="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-700/10 blur-[160px] rounded-full pointer-events-none">
-    </div>
-    <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.035] pointer-events-none [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,black,transparent)]"></div>
-  </div>
+  <PageBackdrop tone={HALLOWEEN_MODE ? "ember" : CHRISTMAS_MODE ? "festive" : "violet"} />
 
   <div class="max-w-6xl mx-auto px-4 py-6 md:py-10 mt-14 sm:mt-20">
     <div class="flex items-center justify-between mb-5">
