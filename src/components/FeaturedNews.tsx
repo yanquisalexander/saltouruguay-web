@@ -1,28 +1,20 @@
-import { useEffect, useRef, useState, useCallback } from "preact/compat";
+import { useEffect, useRef, useState } from "preact/compat";
 import { motion, AnimatePresence } from "motion/react";
 import { navigate } from "astro:transitions/client";
-import { LucideArrowRight, LucideExternalLink, LucideSparkles, LucideChevronLeft, LucideChevronRight, LucidePlay } from "lucide-preact";
-
-// --- PARTICLE INTERFACE ---
-interface Particle {
-    id: number;
-    x: number;
-    y: number;
-    size: number;
-    speedX: number;
-    speedY: number;
-    opacity: number;
-    life: number;
-    maxLife: number;
-    color: string;
-}
+import {
+    LucideArrowRight,
+    LucideArrowUpRight,
+    LucideChevronLeft,
+    LucideChevronRight,
+    LucidePause,
+    LucidePlay,
+    LucideSparkles,
+} from "lucide-preact";
 
 const NEWS = [
     {
         title: "#SaltoAwards 2025",
-        description: `
-        Se realizaron las votaciones para elegir a los mejores miembros de la comunidad del año.
-    `,
+        description: `Se realizaron las votaciones para elegir a los mejores miembros de la comunidad del año.`,
         tags: ["Awards"],
         background: { img: "/images/ads/awards.webp" },
         navImage: "/images/ads/awards.webp",
@@ -30,10 +22,7 @@ const NEWS = [
     },
     {
         title: "Nueva Web Oficial",
-        description: `
-        ¡SaltoUruguayServer tiene una nueva web! 🎉
-        Entérate de todas las novedades, eventos y torneos en un solo lugar.
-    `,
+        description: `¡SaltoUruguayServer tiene una nueva web! 🎉 Entérate de todas las novedades, eventos y torneos en un solo lugar.`,
         tags: ["Web"],
         background: { img: "/og.webp" },
         navImage: "/og.webp",
@@ -45,271 +34,49 @@ const NEWS = [
     id: index,
 }));
 
-// --- VARIANTS ---
-const slideVariants = {
-    enter: (direction: number) => ({
-        x: direction > 0 ? "100%" : "-100%",
-        opacity: 0,
-        scale: 1.1,
-        zIndex: 10
-    }),
-    center: {
-        zIndex: 10,
-        x: "0%",
-        opacity: 1,
-        scale: 1,
-        transition: {
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.8 },
-            scale: { duration: 1.2, ease: "easeOut" }
-        }
-    },
-    exit: (direction: number) => ({
-        zIndex: 0,
-        x: direction < 0 ? "100%" : "-100%",
-        opacity: 0,
-        scale: 0.9,
-        transition: {
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.5 }
-        }
-    })
-};
+type NewsItem = (typeof NEWS)[number];
 
-const contentContainerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.15,
-            delayChildren: 0.3
-        }
-    }
-};
-
-const contentItemVariants = {
-    hidden: { y: 60, opacity: 0, filter: "blur(10px)" },
-    visible: {
-        y: 0,
-        opacity: 1,
-        filter: "blur(0px)",
-        transition: {
-            duration: 0.8,
-            ease: [0.16, 1, 0.3, 1] // Cinematic easing
-        }
-    }
-};
-
-const progressBarVariants = {
-    hidden: { width: "0%" },
-    visible: (duration: number) => ({
-        width: "100%",
-        transition: { duration: duration / 1000, ease: "linear" }
-    })
-};
-
-// --- PARTICLE SYSTEM COMPONENT ---
-const ParticleSystem = ({ isActive }: { isActive: boolean }) => {
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const particlesRef = useRef<Particle[]>([]);
-    const animationFrameRef = useRef<number | null>(null);
-    const mouseRef = useRef({ x: 0, y: 0 });
-
-    const createParticle = useCallback((): Particle => {
-        const colors = [
-            "rgba(145, 70, 255, ", // Purple
-            "rgba(168, 85, 247, ", // Light purple
-            "rgba(192, 132, 252, ", // Soft purple
-            "rgba(255, 255, 255, ", // White
-        ];
-
-        return {
-            id: Math.random(),
-            x: Math.random() * 100,
-            y: Math.random() * 100,
-            size: Math.random() * 3 + 1,
-            speedX: (Math.random() - 0.5) * 0.3,
-            speedY: Math.random() * -0.5 - 0.2,
-            opacity: Math.random() * 0.5 + 0.2,
-            life: 0,
-            maxLife: Math.random() * 200 + 100,
-            color: colors[Math.floor(Math.random() * colors.length)]
-        };
-    }, []);
-
-    useEffect(() => {
-        if (!isActive || !canvasRef.current) return;
-
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        const updateCanvasSize = () => {
-            const parent = canvas.parentElement;
-            if (!parent) return;
-            canvas.width = parent.offsetWidth;
-            canvas.height = parent.offsetHeight;
-        };
-
-        updateCanvasSize();
-        window.addEventListener("resize", updateCanvasSize);
-
-        // Initialize particles
-        particlesRef.current = Array.from({ length: 50 }, () => createParticle());
-
-        const handleMouseMove = (e: MouseEvent) => {
-            const rect = canvas.getBoundingClientRect();
-            mouseRef.current = {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
-        };
-
-        canvas.addEventListener("mousemove", handleMouseMove);
-
-        const animate = () => {
-            if (!ctx || !canvas) return;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Update and draw particles
-            particlesRef.current = particlesRef.current.filter(particle => {
-                particle.life++;
-
-                // Update position
-                particle.x += particle.speedX;
-                particle.y += particle.speedY;
-
-                // Mouse interaction (repel)
-                const dx = particle.x * canvas.width / 100 - mouseRef.current.x;
-                const dy = particle.y * canvas.height / 100 - mouseRef.current.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
-                if (distance < 100) {
-                    const force = (100 - distance) / 100;
-                    particle.x += (dx / distance) * force * 2;
-                    particle.y += (dy / distance) * force * 2;
-                }
-
-                // Calculate opacity based on life
-                const lifeRatio = particle.life / particle.maxLife;
-                const currentOpacity = lifeRatio < 0.1
-                    ? particle.opacity * (lifeRatio / 0.1)
-                    : lifeRatio > 0.9
-                        ? particle.opacity * ((1 - lifeRatio) / 0.1)
-                        : particle.opacity;
-
-                // Draw particle
-                const gradient = ctx.createRadialGradient(
-                    particle.x * canvas.width / 100,
-                    particle.y * canvas.height / 100,
-                    0,
-                    particle.x * canvas.width / 100,
-                    particle.y * canvas.height / 100,
-                    particle.size * 2
-                );
-                gradient.addColorStop(0, particle.color + currentOpacity + ")");
-                gradient.addColorStop(1, particle.color + "0)");
-
-                ctx.beginPath();
-                ctx.arc(
-                    particle.x * canvas.width / 100,
-                    particle.y * canvas.height / 100,
-                    particle.size,
-                    0,
-                    Math.PI * 2
-                );
-                ctx.fillStyle = gradient;
-                ctx.fill();
-
-                // Remove dead particles
-                return particle.life < particle.maxLife;
-            });
-
-            // Create new particles
-            if (particlesRef.current.length < 50 && Math.random() < 0.1) {
-                particlesRef.current.push(createParticle());
-            }
-
-            animationFrameRef.current = requestAnimationFrame(animate);
-        };
-
-        animate();
-
-        return () => {
-            window.removeEventListener("resize", updateCanvasSize);
-            canvas.removeEventListener("mousemove", handleMouseMove);
-            if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current);
-            }
-        };
-    }, [isActive, createParticle]);
-
-    return (
-        <canvas
-            ref={canvasRef}
-            className="absolute inset-0 z-5 w-full h-full pointer-events-none"
-            style={{ mixBlendMode: "screen" }}
-        />
-    );
-};
+const pad = (n: number) => String(n).padStart(2, "0");
 
 export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?: typeof NEWS, duration?: number }) => {
-    const [selectedIndex, setSelectedIndex] = useState<number>(0);
-    const [direction, setDirection] = useState<number>(0);
-    const [isPaused, setIsPaused] = useState<boolean>(false);
-    const [isAutoPlaying, setIsAutoPlaying] = useState<boolean>(true);
-    const autoPlayTimerRef = useRef<number | null>(null);
-    const scrollContainerRef = useRef<HTMLOListElement | null>(null);
+    const [selectedIndex, setSelectedIndex] = useState(0);
+    const [direction, setDirection] = useState(1);
+    const [isPaused, setIsPaused] = useState(false);
+    const timerRef = useRef<number | null>(null);
 
-    // --- SCROLL SEGURO ---
+    const total = newsItems.length;
+    const current: NewsItem = newsItems[selectedIndex] ?? newsItems[0];
+    const single = total <= 1;
+
+    // --- Autoplay (único mecanismo: timeout) ---
     useEffect(() => {
-        if (scrollContainerRef.current) {
-            const container = scrollContainerRef.current;
-            const thumb = container.children[selectedIndex] as HTMLElement;
+        if (single || isPaused) return;
+        timerRef.current = window.setTimeout(() => {
+            setDirection(1);
+            setSelectedIndex((prev) => (prev + 1) % total);
+        }, duration);
+        return () => {
+            if (timerRef.current) window.clearTimeout(timerRef.current);
+        };
+    }, [selectedIndex, isPaused, duration, total, single]);
 
-            if (thumb) {
-                const scrollLeft = thumb.offsetLeft - (container.offsetWidth / 2) + (thumb.offsetWidth / 2);
-                container.scrollTo({
-                    left: scrollLeft,
-                    behavior: "smooth"
-                });
-            }
-        }
+    // --- Mantener visible el item activo en la lista (solo desktop: en móvil haría saltar la página) ---
+    useEffect(() => {
+        if (window.innerWidth < 1024) return;
+        document
+            .getElementById(`featured-item-${selectedIndex}`)
+            ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }, [selectedIndex]);
 
-    // --- AUTO-PLAY ---
-    useEffect(() => {
-        if (isAutoPlaying && !isPaused && newsItems.length > 1) {
-            autoPlayTimerRef.current = window.setTimeout(() => {
-                setDirection(1);
-                setSelectedIndex((prev) => (prev + 1) % newsItems.length);
-            }, duration);
-        }
-
-        return () => {
-            if (autoPlayTimerRef.current) {
-                clearTimeout(autoPlayTimerRef.current);
-            }
-        };
-    }, [selectedIndex, isAutoPlaying, isPaused, duration, newsItems.length]);
-
-    const handleNextSlide = () => {
-        setDirection(1);
-        setSelectedIndex((prev) => (prev + 1) % newsItems.length);
+    const goTo = (index: number) => {
+        if (index === selectedIndex) return;
+        setDirection(index > selectedIndex ? 1 : -1);
+        setSelectedIndex((index + total) % total);
     };
+    const next = () => goTo(selectedIndex + 1);
+    const prev = () => goTo(selectedIndex - 1);
 
-    const handlePrevSlide = () => {
-        setDirection(-1);
-        setSelectedIndex((prev) => (prev - 1 + newsItems.length) % newsItems.length);
-    };
-
-    const handleIndexChange = (newIndex: number) => {
-        setDirection(newIndex > selectedIndex ? 1 : -1);
-        setSelectedIndex(newIndex);
-    };
-
-    const handleNavigation = (event: MouseEvent, ctaLink: typeof NEWS[0]["ctaLink"]) => {
+    const handleCta = (event: MouseEvent, ctaLink: NewsItem["ctaLink"]) => {
         if (!ctaLink.newTab) {
             event.preventDefault();
             navigate(ctaLink.url);
@@ -319,233 +86,194 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
     return (
         <section
             id="featured-news"
-            className="w-full relative overflow-hidden"
+            aria-roledescription="carousel"
+            aria-label="Noticias destacadas"
+            className="w-full max-w-7xl mx-auto overflow-x-clip"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
+            onFocusIn={() => setIsPaused(true)}
+            onFocusOut={() => setIsPaused(false)}
         >
-            {/* --- HERO CONTAINER --- */}
-            <div className="relative w-full max-w-7xl mx-auto overflow-hidden">
+            <style>{`@keyframes featured-progress { from { width: 0% } to { width: 100% } }`}</style>
 
-                {/* --- PARTICLE CANVAS (Background) --- */}
-                <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                    <ParticleSystem isActive={true} />
+            {/* Header de sección */}
+            <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3 mb-4 px-1">
+                <div>
+                    <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-violet-300/80 mb-1">
+                        <LucideSparkles size={12} /> Destacados
+                    </p>
+                    <h2 className="font-anton text-2xl sm:text-3xl text-white uppercase leading-none">
+                        Lo último de la comunidad
+                    </h2>
                 </div>
 
-                {/* --- MAIN HERO SLIDER --- */}
-                <div className="relative w-full aspect-4/5 sm:aspect-video lg:aspect-21/9 rounded-3xl overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-[0_0_80px_rgba(145,70,255,0.15)] group z-10">
-
-                    {/* SLIDES */}
-                    <div className="absolute inset-0 w-full h-full">
-                        <AnimatePresence mode="wait" custom={direction} initial={false}>
-                            <motion.div
-                                key={selectedIndex}
-                                custom={direction}
-                                variants={slideVariants}
-                                initial="enter"
-                                animate="center"
-                                exit="exit"
-                                className="absolute inset-0 w-full h-full"
-                            >
-                                {/* Background Image with Cinematic Zoom */}
-                                <div className="absolute inset-0 z-0 overflow-hidden">
-                                    <motion.div
-                                        className="absolute inset-0 w-full h-full"
-                                        initial={{ scale: 1.2 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{ duration: 8, ease: "easeOut" }}
-                                    >
-                                        <img
-                                            className="w-full h-full object-cover"
-                                            src={newsItems[selectedIndex].background.img}
-                                            alt={newsItems[selectedIndex].title}
-                                            loading={selectedIndex === 0 ? "eager" : "lazy"}
-                                            decoding="async"
-                                        />
-                                    </motion.div>
-
-                                    {/* Multi-layer Gradient Overlay */}
-                                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent opacity-95" />
-                                    <div className="absolute inset-0 bg-linear-to-r from-purple-900/30 via-transparent to-transparent" />
-                                    <div className="absolute inset-0 bg-linear-to-br from-black/40 via-transparent to-purple-900/20" />
-
-                                    {/* Ambient Glow */}
-                                    <motion.div
-                                        className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600/30 rounded-full blur-[120px]"
-                                        animate={{
-                                            opacity: [0.3, 0.5, 0.3],
-                                            scale: [1, 1.1, 1]
-                                        }}
-                                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                                    />
-                                </div>
-
-                                {/* CONTENT OVERLAY */}
-                                <div className="absolute inset-0 z-10 flex flex-col justify-end p-6 sm:p-8 lg:p-16">
-                                    <motion.div
-                                        variants={contentContainerVariants}
-                                        initial="hidden"
-                                        animate="visible"
-                                        className="max-w-3xl"
-                                    >
-                                        {/* Tags */}
-                                        <motion.div variants={contentItemVariants} className="flex flex-wrap gap-2 mb-6">
-                                            {newsItems[selectedIndex].tags.map((tag) => (
-                                                <motion.span
-                                                    key={tag}
-                                                    className="px-4 py-1.5 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-300 text-xs font-bold uppercase tracking-widest backdrop-blur-md flex items-center gap-2 shadow-[0_0_20px_rgba(145,70,255,0.3)]"
-                                                    whileHover={{ scale: 1.05, backgroundColor: "rgba(145,70,255,0.3)" }}
-                                                >
-                                                    <LucideSparkles size={12} className="text-purple-400" />
-                                                    {tag}
-                                                </motion.span>
-                                            ))}
-                                        </motion.div>
-
-                                        {/* Title */}
-                                        <motion.h2
-                                            variants={contentItemVariants}
-                                            className="text-5xl sm:text-6xl lg:text-7xl font-anton text-white uppercase leading-[0.9] mb-6 drop-shadow-2xl text-balance"
-                                        >
-                                            {newsItems[selectedIndex].title}
-                                        </motion.h2>
-
-                                        {/* Description */}
-                                        <motion.p
-                                            variants={contentItemVariants}
-                                            className="text-white/85 font-rubik text-base sm:text-lg lg:text-xl mb-8 max-w-2xl leading-relaxed text-pretty drop-shadow-lg"
-                                        >
-                                            {newsItems[selectedIndex].description}
-                                        </motion.p>
-
-                                        {/* CTA Button */}
-                                        <motion.div variants={contentItemVariants}>
-                                            <a
-                                                {...(newsItems[selectedIndex].ctaLink.newTab && { target: "_blank", rel: "noopener noreferrer" })}
-                                                href={newsItems[selectedIndex].ctaLink.url}
-                                                onClick={(event) => handleNavigation(event as unknown as MouseEvent, newsItems[selectedIndex].ctaLink)}
-                                                className="group/btn inline-flex items-center gap-4 px-10 py-4 bg-linear-to-r from-purple-600 to-purple-500 text-white hover:from-purple-500 hover:to-purple-400 border border-purple-400/50 rounded-2xl font-teko text-2xl font-bold uppercase tracking-wide transition-all duration-300 shadow-[0_10px40px_rgba(145,70,255,0.4)] hover:shadow-[0_15px60px_rgba(145,70,255,0.6)] hover:scale-105 hover:-translate-y-1"
-                                            >
-                                                <LucidePlay size={20} className="fill-white/20" />
-                                                <span>{newsItems[selectedIndex].ctaLink.text}</span>
-                                                {newsItems[selectedIndex].ctaLink.newTab ?
-                                                    <LucideExternalLink size={20} className="ml-2 opacity-80" /> :
-                                                    <LucideArrowRight size={20} className="ml-2 transition-transform group-hover/btn:translate-x-2" />
-                                                }
-                                            </a>
-                                        </motion.div>
-                                    </motion.div>
-                                </div>
-                            </motion.div>
-                        </AnimatePresence>
-                    </div>
-
-                    {/* --- NAVIGATION ARROWS --- */}
-                    {newsItems.length > 1 && (
-                        <>
-                            <button
-                                onClick={handlePrevSlide}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-purple-600/60 hover:border-purple-400/50 transition-all duration-300 opacity-0 group-hover:opacity-100"
-                                aria-label="Noticia anterior"
-                            >
-                                <LucideChevronLeft size={24} />
-                            </button>
-                            <button
-                                onClick={handleNextSlide}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-purple-600/60 hover:border-purple-400/50 transition-all duration-300 opacity-0 group-hover:opacity-100"
-                                aria-label="Siguiente noticia"
-                            >
-                                <LucideChevronRight size={24} />
-                            </button>
-                        </>
-                    )}
-
-                    {/* --- AUTO-PLAY INDICATOR --- */}
-                    <div className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
-                        <motion.div
-                            className={`w-2 h-2 rounded-full ${isAutoPlaying && !isPaused ? 'bg-purple-400' : 'bg-white/40'}`}
-                            animate={isAutoPlaying && !isPaused ? { scale: [1, 1.5, 1], opacity: [1, 0.5, 1] } : {}}
-                            transition={{ duration: 2, repeat: Infinity }}
-                        />
-                        <span className="text-white/60 text-xs font-rubik">
-                            {isPaused ? 'PAUSADO' : 'AUTO'}
+                {!single && (
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                        <span className="hidden min-[420px]:block text-xs font-mono text-white/40 tabular-nums" aria-live="polite">
+                            {pad(selectedIndex + 1)} / {pad(total)}
                         </span>
+                        <button
+                            onClick={prev}
+                            aria-label="Noticia anterior"
+                            className="size-8 sm:size-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 hover:border-white/25 transition-all cursor-pointer"
+                        >
+                            <LucideChevronLeft size={17} />
+                        </button>
+                        <button
+                            onClick={next}
+                            aria-label="Siguiente noticia"
+                            className="size-8 sm:size-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 hover:border-white/25 transition-all cursor-pointer"
+                        >
+                            <LucideChevronRight size={17} />
+                        </button>
+                        <button
+                            onClick={() => setIsPaused((p) => !p)}
+                            aria-label={isPaused ? "Reanudar autoplay" : "Pausar autoplay"}
+                            aria-pressed={isPaused}
+                            className="size-8 sm:size-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 hover:border-white/25 transition-all cursor-pointer"
+                        >
+                            {isPaused ? <LucidePlay size={15} /> : <LucidePause size={15} />}
+                        </button>
                     </div>
+                )}
+            </div>
 
-                    {/* --- PROGRESS BAR --- */}
-                    {isAutoPlaying && newsItems.length > 1 && (
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-20">
-                            <motion.div
+            <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+                {/* ── HERO PRINCIPAL ── */}
+                <div className="relative min-w-0 h-[440px] sm:h-auto sm:aspect-[16/8] sm:min-h-[380px] rounded-3xl overflow-hidden border border-white/10 bg-zinc-950 shadow-[0_0_60px_-15px_rgba(145,70,255,0.35)]">
+                    <AnimatePresence custom={direction} initial={false}>
+                        <motion.article
+                            key={current.id}
+                            custom={direction}
+                            initial={{ x: direction >= 0 ? "60px" : "-60px", opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: direction >= 0 ? "-60px" : "60px", opacity: 0 }}
+                            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                            className="absolute inset-0"
+                            aria-roledescription="slide"
+                            aria-label={`${selectedIndex + 1} de ${total}: ${current.title}`}
+                        >
+                            <img
+                                src={current.background.img}
+                                alt=""
+                                aria-hidden="true"
+                                loading={selectedIndex === 0 ? "eager" : "lazy"}
+                                decoding="async"
+                                className="absolute inset-0 w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-violet-950/40 via-transparent to-transparent" />
+
+                            <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-8">
+                                <motion.div
+                                    key={`content-${current.id}`}
+                                    initial="hidden"
+                                    animate="visible"
+                                    variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } } }}
+                                >
+                                    <motion.div
+                                        variants={{ hidden: { y: 24, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } } }}
+                                        className="flex flex-wrap gap-1.5 mb-3"
+                                    >
+                                        {current.tags.map((tag) => (
+                                            <span
+                                                key={tag}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/20 border border-violet-300/30 text-violet-200 text-[11px] font-bold uppercase tracking-widest backdrop-blur-md"
+                                            >
+                                                <LucideSparkles size={11} /> {tag}
+                                            </span>
+                                        ))}
+                                    </motion.div>
+
+                                    <motion.h3
+                                        variants={{ hidden: { y: 28, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { duration: 0.55, ease: "easeOut" } } }}
+                                        className="font-anton text-[26px] sm:text-5xl text-white uppercase leading-[0.95] mb-2 text-balance max-w-2xl"
+                                    >
+                                        {current.title}
+                                    </motion.h3>
+
+                                    <motion.p
+                                        variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } } }}
+                                        className="text-white/70 text-[13px] sm:text-base leading-relaxed max-w-xl line-clamp-2 mb-4 sm:mb-5"
+                                    >
+                                        {current.description}
+                                    </motion.p>
+
+                                    <motion.div
+                                        variants={{ hidden: { y: 16, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { duration: 0.45, ease: "easeOut" } } }}
+                                    >
+                                        <a
+                                            {...(current.ctaLink.newTab && { target: "_blank", rel: "noopener noreferrer" })}
+                                            href={current.ctaLink.url}
+                                            onClick={(e) => handleCta(e as unknown as MouseEvent, current.ctaLink)}
+                                            className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white text-black rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-violet-200 transition-all shadow-xl"
+                                        >
+                                            {current.ctaLink.text}
+                                            {current.ctaLink.newTab
+                                                ? <LucideArrowUpRight size={15} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                                : <LucideArrowRight size={15} className="transition-transform group-hover:translate-x-1" />}
+                                        </a>
+                                    </motion.div>
+                                </motion.div>
+                            </div>
+                        </motion.article>
+                    </AnimatePresence>
+
+                    {/* Barra de progreso (solo CSS, pausable, sin doble-avance) */}
+                    {!single && (
+                        <div className="absolute bottom-0 inset-x-0 h-[3px] bg-white/10 z-10">
+                            <div
                                 key={selectedIndex}
-                                className="h-full bg-linear-to-r from-purple-600 to-purple-400"
-                                variants={progressBarVariants}
-                                initial="hidden"
-                                animate="visible"
-                                custom={duration}
-                                onAnimationComplete={() => {
-                                    if (!isPaused) handleNextSlide();
+                                className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-400"
+                                style={{
+                                    animation: `featured-progress ${duration}ms linear forwards`,
+                                    animationPlayState: isPaused ? "paused" : "running",
                                 }}
                             />
                         </div>
                     )}
                 </div>
 
-                {/* --- THUMBNAIL NAVIGATION --- */}
-                {newsItems.length > 1 && (
-                    <nav className="relative w-full mt-6">
-                        <ol
-                            ref={scrollContainerRef}
-                            className="flex gap-4 overflow-x-auto py-3 px-2 scrollbar-hide snap-x snap-mandatory"
-                        >
+                {/* ── LISTA LATERAL (escala a N noticias) ── */}
+                {!single && (
+                    <nav aria-label="Elegir noticia destacada" className="min-w-0 min-h-0">
+                        <ol className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto lg:max-h-[430px] snap-x lg:snap-none pb-1 lg:pb-0 lg:pr-1 scrollbar-hide">
                             {newsItems.map((news, index) => {
-                                const isActive = selectedIndex === index;
+                                const isActive = index === selectedIndex;
                                 return (
-                                    <li key={news.id} className="shrink-0 snap-center">
+                                    <li key={news.id} id={`featured-item-${index}`} className="snap-start shrink-0 w-[220px] sm:w-[240px] lg:w-auto">
                                         <button
-                                            onClick={() => handleIndexChange(index)}
-                                            aria-label={`Ver noticia: ${news.title}`}
-                                            aria-current={isActive ? "true" : "false"}
+                                            onClick={() => goTo(index)}
+                                            aria-current={isActive}
+                                            aria-label={`Ver: ${news.title}`}
                                             className={`
-                                                relative group overflow-hidden rounded-2xl border transition-all duration-500 
+                                                group relative w-full flex items-center gap-3 p-2.5 rounded-2xl border text-left transition-all duration-300 cursor-pointer overflow-hidden
                                                 ${isActive
-                                                    ? 'w-72 border-purple-400/60 shadow-[0_0_30px_rgba(145,70,255,0.3)]'
-                                                    : 'w-64 border-white/5 hover:border-white/20 hover:w-72'
+                                                    ? "bg-violet-500/10 border-violet-300/30 shadow-[0_0_24px_-8px_rgba(145,70,255,0.5)]"
+                                                    : "bg-white/[0.03] border-white/[0.07] hover:border-white/20 hover:bg-white/[0.06]"
                                                 }
                                             `}
                                         >
-                                            {/* Thumbnail Image */}
-                                            <div className="relative aspect-video overflow-hidden">
+                                            <span
+                                                className={`absolute left-0 top-2 bottom-2 w-[3px] rounded-full transition-all ${isActive ? "bg-violet-400" : "bg-transparent group-hover:bg-white/15"}`}
+                                            />
+                                            <span className="relative size-16 sm:size-[68px] rounded-xl overflow-hidden shrink-0 bg-zinc-900">
                                                 <img
-                                                    className={`w-full h-full object-cover transition-all duration-700 ${isActive ? 'scale-110' : 'scale-100 group-hover:scale-105'}`}
                                                     src={news.navImage || news.background.img}
-                                                    alt={news.title}
+                                                    alt=""
+                                                    aria-hidden="true"
                                                     loading="lazy"
+                                                    className={`w-full h-full object-cover transition-all duration-500 ${isActive ? "scale-105" : "opacity-70 group-hover:opacity-100 group-hover:scale-105"}`}
                                                 />
-                                                <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent" />
-
-                                                {/* Active Indicator */}
-                                                {isActive && (
-                                                    <motion.div
-                                                        className="absolute inset-0 border-2 border-purple-400/50 rounded-2xl"
-                                                        layoutId="activeThumbnail"
-                                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                    />
-                                                )}
-                                            </div>
-
-                                            {/* Content */}
-                                            <div className="absolute bottom-0 left-0 right-0 p-4">
-                                                <span className={`text-[10px] font-bold uppercase tracking-widest mb-1 block ${isActive ? 'text-purple-400' : 'text-white/50'}`}>
-                                                    {news.tags[0]}
+                                            </span>
+                                            <span className="flex-1 min-w-0 py-0.5">
+                                                <span className={`block text-[10px] font-bold uppercase tracking-widest mb-0.5 ${isActive ? "text-violet-300" : "text-white/35"}`}>
+                                                    {news.tags[0]} · {pad(index + 1)}
                                                 </span>
-                                                <span className={`font-teko text-lg uppercase leading-tight truncate block ${isActive ? 'text-white' : 'text-white/70 group-hover:text-white'}`}>
+                                                <span className={`block font-bold text-[13px] leading-snug line-clamp-2 ${isActive ? "text-white" : "text-white/65 group-hover:text-white"}`}>
                                                     {news.title}
                                                 </span>
-                                            </div>
-
-                                            {/* Hover Overlay */}
-                                            {!isActive && (
-                                                <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/10 transition-all duration-300" />
-                                            )}
+                                            </span>
                                         </button>
                                     </li>
                                 );

@@ -82,6 +82,13 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
+
+  /* Evita el scroll horizontal fantasma en móvil (iOS Safari ignora
+     el overflow-x-hidden del body si solo está en el body) */
+  html,
+  body {
+    overflow-x: clip;
+  }
 }
 
 @utility animate-spin {
