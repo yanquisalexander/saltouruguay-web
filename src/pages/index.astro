@@ -9,7 +9,7 @@ import Advantages from "@/sections/Advantages.astro";
 import Required2FA from "@/components/admin/Required2FA.astro";
 import { LucideChevronsDown } from "lucide-preact";
 
-import { CHRISTMAS_MODE } from "@/config";
+import { CHRISTMAS_MODE, HALLOWEEN_MODE } from "@/config";
 
 const IS_PROD = import.meta.env.PROD;
 export const prerender = true;
@@ -20,18 +20,28 @@ const loginParam = url.searchParams.get("login");
 const redirectParam = url.searchParams.get("redirect");
 
 // Lógica de estilos condicionales
-const subtitleGradient = CHRISTMAS_MODE
+const subtitleGradient = HALLOWEEN_MODE
+  ? "from-orange-400 via-amber-300 to-purple-400 bg-size-[200%_auto] animate-shine"
+  : CHRISTMAS_MODE
   ? "from-red-500 via-green-500 to-red-500 bg-size-[200%_auto] animate-shine"
   : "from-blue-400 to-purple-500";
 
-const titleShadow = CHRISTMAS_MODE
+const titleShadow = HALLOWEEN_MODE
+  ? "drop-shadow-[0_0_30px_rgba(249,115,22,0.5)]"
+  : CHRISTMAS_MODE
   ? "drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]"
   : "drop-shadow-lg";
+
+const heroGlow = HALLOWEEN_MODE
+  ? "bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.18)_0%,rgba(168,85,247,0.12)_45%,transparent_70%)]"
+  : CHRISTMAS_MODE
+  ? "bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.15)_0%,transparent_60%)]"
+  : "bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.04)_0%,transparent_60%)]";
 ---
 
 <Layout
   title="Comunidad SaltoUruguayServer"
-  description="Te damos la bienvenida a la comunidad del canal de SaltoUruguayServer en Twitch. ¡Los #SaltoAwards2025 será un evento inolvidable!"
+  description="Te damos la bienvenida a la comunidad del canal de SaltoUruguayServer en Twitch. ¡Viví los mejores eventos y streams!"
 >
   <main class="relative w-full text-white">
     {/* ❄️ EFECTO DE NIEVE */}
@@ -48,13 +58,59 @@ const titleShadow = CHRISTMAS_MODE
       )
     }
 
+    {/* 🎃 EFECTOS AMBIENTALES DE HALLOWEEN (DETRÁS DEL CONTENIDO) */}
+    {
+      HALLOWEEN_MODE && (
+        <>
+          {/* Murciélagos volando en el fondo */}
+          <div
+            class="pointer-events-none fixed inset-0 z-20 overflow-hidden"
+            aria-hidden="true"
+          >
+            <div class="bat bat-1">🦇</div>
+            <div class="bat bat-2">🦇</div>
+            <div class="bat bat-3">🦇</div>
+            <div class="bat bat-4">🦇</div>
+          </div>
+
+          {/* Niebla espeluznante en el fondo (z-index negativo para no tapar nada) */}
+          <div
+            class="pointer-events-none absolute inset-0 -z-10 overflow-hidden opacity-40"
+            aria-hidden="true"
+          >
+            <div class="spooky-fog-container">
+              <div class="spooky-fog" />
+              <div class="spooky-fog fog-2" />
+            </div>
+          </div>
+        </>
+      )
+    }
+
     <section
       id="hero"
-      class="relative -mt-24 flex min-h-dvh w-full flex-col items-center justify-center overflow-hidden"
+      class="relative -mt-24 flex min-h-dvh w-full flex-col items-center justify-center overflow-hidden pt-20 pb-12"
     >
-      {/* Efecto de iluminación atmosférica de fondo (Glow sutil) */}
+      {/* Telarañas en esquinas superiores si Halloween está activo */}
+      {
+        HALLOWEEN_MODE && (
+          <div
+            class="pointer-events-none absolute top-20 left-0 right-0 z-0 flex justify-between px-4 opacity-30 select-none"
+            aria-hidden="true"
+          >
+            <svg class="w-28 h-28 text-orange-500/50" viewBox="0 0 100 100" fill="none">
+              <path d="M0 0 L100 0 L0 100 Z M10 10 Q 50 20, 90 0 M10 10 Q 20 50, 0 90 M25 25 Q 55 35, 75 0 M25 25 Q 35 55, 0 75" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            <svg class="w-28 h-28 text-purple-500/50 transform scale-x-[-1]" viewBox="0 0 100 100" fill="none">
+              <path d="M0 0 L100 0 L0 100 Z M10 10 Q 50 20, 90 0 M10 10 Q 20 50, 0 90 M25 25 Q 55 35, 75 0 M25 25 Q 35 55, 0 75" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+          </div>
+        )
+      }
+
+      {/* Efecto de iluminación atmosférica de fondo (-z-10 para no tapar nada) */}
       <div
-        class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.04)_0%,transparent_60%)]"
+        class={`pointer-events-none absolute inset-0 -z-10 transition-all duration-1000 ${heroGlow}`}
       >
       </div>
 
@@ -63,21 +119,21 @@ const titleShadow = CHRISTMAS_MODE
         class="pointer-events-none absolute inset-0 z-0 overflow-hidden"
         aria-hidden="true"
       >
-        <div class="particle particle-1"></div>
-        <div class="particle particle-2"></div>
-        <div class="particle particle-3"></div>
-        <div class="particle particle-4"></div>
-        <div class="particle particle-5"></div>
-        <div class="particle particle-6"></div>
-        <div class="particle particle-7"></div>
-        <div class="particle particle-8"></div>
-        <div class="particle particle-9"></div>
-        <div class="particle particle-10"></div>
-        <div class="particle particle-11"></div>
-        <div class="particle particle-12"></div>
-        <div class="particle particle-13"></div>
-        <div class="particle particle-14"></div>
-        <div class="particle particle-15"></div>
+        <div class={`particle particle-1 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-2 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-3 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-4 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-5 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-6 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-7 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-8 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-9 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-10 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-11 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-12 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-13 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-14 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
+        <div class={`particle particle-15 ${HALLOWEEN_MODE ? "halloween-particle" : ""}`}></div>
       </div>
 
       {/* Formas geométricas flotantes */}
@@ -91,7 +147,7 @@ const titleShadow = CHRISTMAS_MODE
       </div>
 
       <div
-        class="relative z-10 mx-auto flex max-w-6xl flex-col items-center gap-10 px-6 text-center"
+        class="relative z-10 mx-auto flex max-w-5xl flex-col items-center gap-8 px-6 text-center"
       >
         {/* Alertas - Con un toque de glassmorphism */}
         <div
@@ -100,17 +156,43 @@ const titleShadow = CHRISTMAS_MODE
           <Required2FA server:defer />
         </div>
 
+        {/* 🎃 Halloween Special Badge con texto interactivo y aleatorio */}
+        {
+          HALLOWEEN_MODE && (
+            <div
+              id="spooky-badge"
+              class="animate-bounce-subtle flex items-center gap-2.5 px-5 py-2 rounded-full bg-linear-to-r from-orange-500/20 via-purple-500/30 to-orange-500/20 border border-orange-500/40 backdrop-blur-md shadow-[0_0_20px_rgba(249,115,22,0.35)] cursor-pointer select-none transition-all hover:scale-105"
+              title="¡Haz clic para cambiar la frase!"
+            >
+              <span class="text-lg">🎃</span>
+              <span
+                id="spooky-text"
+                class="text-xs md:text-sm font-bold uppercase tracking-widest text-transparent bg-clip-text bg-linear-to-r from-orange-400 via-amber-300 to-purple-300 transition-opacity duration-300"
+              >
+                Especial Noche de Brujas
+              </span>
+              <span class="text-lg">👻</span>
+            </div>
+          )
+        }
+
         <header
           class="flex flex-col items-center justify-center gap-8 md:flex-row md:gap-14"
         >
-          {/* Logo - Con un halo de luz sutil al pasar el mouse */}
+          {/* Logo - Con un halo de luz sutil o toque Halloween al pasar el mouse */}
           <div
             class={`group relative animate-fade-in ${
-              CHRISTMAS_MODE ? "christmas-logo" : ""
+              HALLOWEEN_MODE
+                ? "halloween-logo"
+                : CHRISTMAS_MODE
+                ? "christmas-logo"
+                : ""
             }`}
           >
             <div
-              class="absolute -inset-4 rounded-full bg-white/5 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+              class={`absolute -inset-4 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100 ${
+                HALLOWEEN_MODE ? "bg-orange-500/30" : "bg-white/10"
+              }`}
             >
             </div>
             <img
@@ -119,26 +201,26 @@ const titleShadow = CHRISTMAS_MODE
               draggable="false"
               fetchpriority="high"
               loading="eager"
-              class="relative h-28 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.05)] transition-all duration-500 ease-out group-hover:scale-105 group-hover:drop-shadow-[0_0_25px_rgba(255,255,255,0.15)] md:h-40"
+              class={`relative h-28 w-auto object-contain transition-all duration-500 ease-out group-hover:scale-105 md:h-40 ${
+                HALLOWEEN_MODE
+                  ? "drop-shadow-[0_0_25px_rgba(249,115,22,0.4)] group-hover:drop-shadow-[0_0_35px_rgba(249,115,22,0.7)]"
+                  : "drop-shadow-[0_0_15px_rgba(255,255,255,0.05)] group-hover:drop-shadow-[0_0_25px_rgba(255,255,255,0.15)]"
+              }`}
             />
           </div>
 
           {/* Títulos */}
           <div class="animate-fade-in-up space-y-3 text-center md:text-left">
-            {
-              /* Título Principal - Recupera fuerza, pero con sombras controladas */
-            }
+            {/* Título Principal */}
             <h1
-              class="font-anton text-5xl tracking-wide text-white transition-all duration-500 sm:text-6xl md:text-7xl drop-shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+              class={`font-anton text-5xl tracking-wide text-white transition-all duration-500 sm:text-6xl md:text-7xl ${titleShadow}`}
             >
               SALTO URUGUAY
             </h1>
 
-            {
-              /* Subtítulo - Gradiente metálico/sutil en lugar de colores planos */
-            }
+            {/* Subtítulo con Gradiente Dinámico */}
             <h2
-              class="bg-linear-to-r from-white via-white/80 to-white/40 bg-clip-text font-sans text-lg font-medium tracking-[0.2em] text-transparent md:text-xl"
+              class={`bg-linear-to-r ${subtitleGradient} bg-clip-text font-sans text-lg font-semibold tracking-[0.25em] text-transparent md:text-xl`}
             >
               SERVER COMMUNITY
             </h2>
@@ -147,14 +229,16 @@ const titleShadow = CHRISTMAS_MODE
       </div>
 
       {/* Scroll indicator - Estilo más técnico/gaming */}
-      <div
-        class="absolute bottom-8 text-white/30 transition-all hover:-translate-y-1 hover:text-white/80 animate-bounce cursor-pointer"
+      <a
+        href="#stream-section"
+        class="absolute bottom-6 text-white/30 transition-all hover:-translate-y-1 hover:text-white/80 animate-bounce cursor-pointer"
+        aria-label="Ir al contenido"
       >
         <LucideChevronsDown size={28} stroke-width="2" />
-      </div>
+      </a>
     </section>
 
-    {/* CONTENIDO */}
+    {/* CONTENIDO PRINCIPAL */}
     <div
       class="relative z-10 mx-auto flex max-w-7xl flex-col gap-24 px-4 pb-20"
     >
@@ -184,9 +268,18 @@ const titleShadow = CHRISTMAS_MODE
     animation: fadeInUp 1s ease-out 0.3s forwards;
   }
 
-  /* Animación para el gradiente navideño */
+  .animate-bounce-subtle {
+    animation: bounceSubtle 3s ease-in-out infinite;
+  }
+
+  @keyframes bounceSubtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  /* Animación para el gradiente festivo */
   .animate-shine {
-    animation: backgroundShine 3s linear infinite;
+    animation: backgroundShine 4s linear infinite;
   }
 
   @keyframes backgroundShine {
@@ -229,9 +322,145 @@ const titleShadow = CHRISTMAS_MODE
     }
   }
 
-  /* 🎅 ESTILOS DE NAVIDAD */
+  /* 🎃 ESTILOS DE HALLOWEEN */
+  .halloween-logo::before {
+    content: "🎃";
+    position: absolute;
+    top: -28px;
+    left: -18px;
+    font-size: 3.5rem;
+    z-index: 20;
+    transform: rotate(-12deg);
+    animation: pumpkinWobble 3s infinite ease-in-out;
+    filter: drop-shadow(0 0 12px rgba(249, 115, 22, 0.7));
+  }
 
-  /* Gorrito sobre el logo */
+  @keyframes pumpkinWobble {
+    0%, 100% {
+      transform: rotate(-12deg) translateY(0) scale(1);
+    }
+    50% {
+      transform: rotate(-5deg) translateY(-8px) scale(1.08);
+    }
+  }
+
+  /* Murciélagos volando en el fondo */
+  .bat {
+    position: absolute;
+    font-size: 1.8rem;
+    opacity: 0;
+    z-index: 10;
+    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.5));
+    animation: flyBat 14s linear infinite;
+  }
+
+  .bat-1 {
+    top: 15%;
+    left: -5%;
+    animation-duration: 16s;
+    animation-delay: 0s;
+  }
+  .bat-2 {
+    top: 35%;
+    left: -5%;
+    animation-duration: 12s;
+    animation-delay: 4s;
+    font-size: 1.4rem;
+  }
+  .bat-3 {
+    top: 25%;
+    left: -5%;
+    animation-duration: 18s;
+    animation-delay: 8s;
+    font-size: 2.2rem;
+  }
+  .bat-4 {
+    top: 45%;
+    left: -5%;
+    animation-duration: 15s;
+    animation-delay: 2s;
+    font-size: 1.6rem;
+  }
+
+  @keyframes flyBat {
+    0% {
+      transform: translateX(0vw) translateY(0px) rotate(5deg);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.7;
+    }
+    30% {
+      transform: translateX(30vw) translateY(-40px) rotate(-10deg);
+    }
+    50% {
+      transform: translateX(55vw) translateY(20px) rotate(8deg);
+    }
+    80% {
+      transform: translateX(85vw) translateY(-30px) rotate(-5deg);
+      opacity: 0.7;
+    }
+    100% {
+      transform: translateX(105vw) translateY(10px) rotate(5deg);
+      opacity: 0;
+    }
+  }
+
+  /* Contenedor de Niebla (Posicionada detrás con -z-10) */
+  .spooky-fog-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 220px;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .spooky-fog {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 200%;
+    height: 100%;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(249, 115, 22, 0.12) 0%,
+      rgba(168, 85, 247, 0.08) 40%,
+      transparent 75%
+    );
+    animation: creepFog 25s linear infinite;
+  }
+
+  .spooky-fog.fog-2 {
+    animation: creepFog 18s linear infinite reverse;
+    opacity: 0.7;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(168, 85, 247, 0.15) 0%,
+      rgba(249, 115, 22, 0.08) 50%,
+      transparent 80%
+    );
+  }
+
+  @keyframes creepFog {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .particle.halloween-particle {
+    background: radial-gradient(
+      circle,
+      rgba(249, 115, 22, 0.8) 0%,
+      rgba(168, 85, 247, 0) 70%
+    );
+  }
+
+  /* 🎅 ESTILOS DE NAVIDAD */
   .christmas-logo::before {
     content: "🎅";
     position: absolute;
@@ -245,8 +474,7 @@ const titleShadow = CHRISTMAS_MODE
   }
 
   @keyframes bounceHat {
-    0%,
-    100% {
+    0%, 100% {
       transform: rotate(-15deg) translateY(0);
     }
     50% {
@@ -321,111 +549,21 @@ const titleShadow = CHRISTMAS_MODE
     opacity: 0;
   }
 
-  .particle-1 {
-    width: 4px;
-    height: 4px;
-    left: 10%;
-    animation-duration: 20s;
-    animation-delay: 0s;
-  }
-  .particle-2 {
-    width: 6px;
-    height: 6px;
-    left: 20%;
-    animation-duration: 25s;
-    animation-delay: 2s;
-  }
-  .particle-3 {
-    width: 3px;
-    height: 3px;
-    left: 35%;
-    animation-duration: 18s;
-    animation-delay: 4s;
-  }
-  .particle-4 {
-    width: 5px;
-    height: 5px;
-    left: 50%;
-    animation-duration: 22s;
-    animation-delay: 1s;
-  }
-  .particle-5 {
-    width: 4px;
-    height: 4px;
-    left: 65%;
-    animation-duration: 28s;
-    animation-delay: 3s;
-  }
-  .particle-6 {
-    width: 7px;
-    height: 7px;
-    left: 75%;
-    animation-duration: 19s;
-    animation-delay: 5s;
-  }
-  .particle-7 {
-    width: 3px;
-    height: 3px;
-    left: 85%;
-    animation-duration: 24s;
-    animation-delay: 2s;
-  }
-  .particle-8 {
-    width: 5px;
-    height: 5px;
-    left: 90%;
-    animation-duration: 21s;
-    animation-delay: 6s;
-  }
-  .particle-9 {
-    width: 4px;
-    height: 4px;
-    left: 5%;
-    animation-duration: 26s;
-    animation-delay: 7s;
-  }
-  .particle-10 {
-    width: 6px;
-    height: 6px;
-    left: 45%;
-    animation-duration: 23s;
-    animation-delay: 8s;
-  }
-  .particle-11 {
-    width: 3px;
-    height: 3px;
-    left: 55%;
-    animation-duration: 27s;
-    animation-delay: 1s;
-  }
-  .particle-12 {
-    width: 5px;
-    height: 5px;
-    left: 30%;
-    animation-duration: 20s;
-    animation-delay: 4s;
-  }
-  .particle-13 {
-    width: 4px;
-    height: 4px;
-    left: 70%;
-    animation-duration: 22s;
-    animation-delay: 9s;
-  }
-  .particle-14 {
-    width: 6px;
-    height: 6px;
-    left: 15%;
-    animation-duration: 25s;
-    animation-delay: 3s;
-  }
-  .particle-15 {
-    width: 3px;
-    height: 3px;
-    left: 60%;
-    animation-duration: 19s;
-    animation-delay: 6s;
-  }
+  .particle-1 { width: 4px; height: 4px; left: 10%; animation-duration: 20s; animation-delay: 0s; }
+  .particle-2 { width: 6px; height: 6px; left: 20%; animation-duration: 25s; animation-delay: 2s; }
+  .particle-3 { width: 3px; height: 3px; left: 35%; animation-duration: 18s; animation-delay: 4s; }
+  .particle-4 { width: 5px; height: 5px; left: 50%; animation-duration: 22s; animation-delay: 1s; }
+  .particle-5 { width: 4px; height: 4px; left: 65%; animation-duration: 28s; animation-delay: 3s; }
+  .particle-6 { width: 7px; height: 7px; left: 75%; animation-duration: 19s; animation-delay: 5s; }
+  .particle-7 { width: 3px; height: 3px; left: 85%; animation-duration: 24s; animation-delay: 2s; }
+  .particle-8 { width: 5px; height: 5px; left: 90%; animation-duration: 21s; animation-delay: 6s; }
+  .particle-9 { width: 4px; height: 4px; left: 5%; animation-duration: 26s; animation-delay: 7s; }
+  .particle-10 { width: 6px; height: 6px; left: 45%; animation-duration: 23s; animation-delay: 8s; }
+  .particle-11 { width: 3px; height: 3px; left: 55%; animation-duration: 27s; animation-delay: 1s; }
+  .particle-12 { width: 5px; height: 5px; left: 30%; animation-duration: 20s; animation-delay: 4s; }
+  .particle-13 { width: 4px; height: 4px; left: 70%; animation-duration: 22s; animation-delay: 9s; }
+  .particle-14 { width: 6px; height: 6px; left: 15%; animation-duration: 25s; animation-delay: 3s; }
+  .particle-15 { width: 3px; height: 3px; left: 60%; animation-duration: 19s; animation-delay: 6s; }
 
   @keyframes floatParticle {
     0% {
@@ -484,8 +622,7 @@ const titleShadow = CHRISTMAS_MODE
   }
 
   @keyframes floatShape {
-    0%,
-    100% {
+    0%, 100% {
       transform: translateY(0) rotate(0deg);
     }
     25% {
@@ -501,18 +638,61 @@ const titleShadow = CHRISTMAS_MODE
 </style>
 
 <script is:inline>
-  // Flujo OAuth seamless: guardar redirect y redirigir post-login
+  // Script 1: Cambio dinámico de frase en el Badge de Halloween
+  (function () {
+    const spookyMessages = [
+      "¿Dulce o truco en Salto Uruguay? 🎃",
+      "Cuidado con las brujas en el chat 🧹",
+      "Noche de Terror en el Server 🦇",
+      "No mires debajo de tu cama... 👁️",
+      "Los espíritus están transmitiendo 🔮",
+      "¿Caramelos para el streamer? 🍬",
+      "La medianoche se acerca... 💀",
+      "Zombis sueltos en Ruleta Loca 🧟",
+      "Habitación 666 conectada 👻",
+      "Sonidos extraños en Discord... 🕸️",
+      "¡Feliz Noche de Brujas! 🎃"
+    ];
+
+    function initSpookyBadge() {
+      const $badge = document.getElementById("spooky-badge");
+      const $text = document.getElementById("spooky-text");
+      if (!$text) return;
+
+      let currentIdx = Math.floor(Math.random() * spookyMessages.length);
+      $text.textContent = spookyMessages[currentIdx];
+
+      const changeText = () => {
+        $text.style.opacity = "0";
+        setTimeout(() => {
+          currentIdx = (currentIdx + 1 + Math.floor(Math.random() * (spookyMessages.length - 1))) % spookyMessages.length;
+          $text.textContent = spookyMessages[currentIdx];
+          $text.style.opacity = "1";
+        }, 300);
+      };
+
+      if ($badge) {
+        $badge.onclick = changeText;
+      }
+
+      if (window.__spookyInterval) clearInterval(window.__spookyInterval);
+      window.__spookyInterval = setInterval(changeText, 5000);
+    }
+
+    document.addEventListener("astro:page-load", initSpookyBadge);
+    initSpookyBadge();
+  })();
+
+  // Script 2: Flujo OAuth seamless: guardar redirect y redirigir post-login
   (function () {
     const params = new URLSearchParams(window.location.search);
     const login = params.get("login");
     const redirect = params.get("redirect");
 
-    // Si viene con login=true y redirect, guardarlo en sessionStorage
     if (login === "true" && redirect) {
       sessionStorage.setItem("oauth_redirect", redirect);
     }
 
-    // Si NO hay login=true pero SÍ hay redirect guardado, verificar sesión y redirigir
     if (!login && sessionStorage.getItem("oauth_redirect")) {
       fetch("/api/auth/session")
         .then((r) => r.json())
@@ -524,11 +704,8 @@ const titleShadow = CHRISTMAS_MODE
               window.location.href = target;
             }
           }
-          // Si no hay sesión, el redirect queda guardado para después
         })
-        .catch(() => {
-          // Error fetchando sesión, ignorar
-        });
+        .catch(() => {});
     }
   })();
 </script>

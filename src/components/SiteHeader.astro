@@ -5,7 +5,7 @@ import { CurrentUser } from "./CurrentUser";
 import DiscordPresenceCount from "./DiscordPresenceCount";
 import { Notifications } from "./Notifications";
 import { LucideLock } from "lucide-preact";
-import { CHRISTMAS_MODE } from "@/config";
+import { CHRISTMAS_MODE, HALLOWEEN_MODE } from "@/config";
 
 interface Props {
   session?: Session | null;
@@ -65,17 +65,25 @@ const navLinkBase =
 const textStyle =
   "font-teko text-xl uppercase tracking-wide transition-all duration-200 relative z-10";
 
-const activeText = CHRISTMAS_MODE
+const activeText = HALLOWEEN_MODE
+  ? "text-orange-400 tracking-wider"
+  : CHRISTMAS_MODE
   ? "text-red-400 tracking-wider"
   : "text-yellow-400 tracking-wider";
 
 const inactiveText = "text-white/60 group-hover:text-white/90";
 
-const underlineActiveColor = CHRISTMAS_MODE
+const underlineActiveColor = HALLOWEEN_MODE
+  ? "from-orange-500 via-purple-400 to-orange-500"
+  : CHRISTMAS_MODE
   ? "from-green-500 via-red-400 to-green-500"
   : "from-yellow-600 via-yellow-300 to-yellow-600";
 
-const logoGlowColor = CHRISTMAS_MODE ? "bg-red-500/20" : "bg-yellow-500/15";
+const logoGlowColor = HALLOWEEN_MODE
+  ? "bg-orange-500/25"
+  : CHRISTMAS_MODE
+  ? "bg-red-500/20"
+  : "bg-yellow-500/15";
 
 const getBadgeStyles = (label: string, colorClassName?: string) => {
   const base =
