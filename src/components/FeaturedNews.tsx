@@ -48,14 +48,14 @@ const NEWS = [
 // --- VARIANTS ---
 const slideVariants = {
     enter: (direction: number) => ({
-        x: direction > 0 ? 1000 : -1000,
+        x: direction > 0 ? "100%" : "-100%",
         opacity: 0,
-        scale: 1.2,
+        scale: 1.1,
         zIndex: 10
     }),
     center: {
         zIndex: 10,
-        x: 0,
+        x: "0%",
         opacity: 1,
         scale: 1,
         transition: {
@@ -66,9 +66,9 @@ const slideVariants = {
     },
     exit: (direction: number) => ({
         zIndex: 0,
-        x: direction < 0 ? 1000 : -1000,
+        x: direction < 0 ? "100%" : "-100%",
         opacity: 0,
-        scale: 0.8,
+        scale: 0.9,
         transition: {
             x: { type: "spring", stiffness: 300, damping: 30 },
             opacity: { duration: 0.5 }
@@ -319,15 +319,15 @@ export const FeaturedNews = ({ newsItems = NEWS, duration = 8000 }: { newsItems?
     return (
         <section
             id="featured-news"
-            className="w-full relative"
+            className="w-full relative overflow-hidden"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
         >
             {/* --- HERO CONTAINER --- */}
-            <div className="relative w-full max-w-7xl mx-auto">
+            <div className="relative w-full max-w-7xl mx-auto overflow-hidden">
 
                 {/* --- PARTICLE CANVAS (Background) --- */}
-                <div className="absolute -top-20 -left-20 -right-20 -bottom-20 z-0 pointer-events-none">
+                <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                     <ParticleSystem isActive={true} />
                 </div>
 
