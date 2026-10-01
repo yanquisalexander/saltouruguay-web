@@ -13,6 +13,8 @@ import {
   LucideTrash2,
   LucideGamepad2,
   LucideEye,
+  LucideSwords,
+  LucideHistory,
 } from "lucide-preact";
 
 const session = await getSession(Astro.request);
@@ -41,149 +43,130 @@ const conMinecraft = inscriptos.filter((i) => i.minecraft_username).length;
 const sinMinecraft = totalInsc - conMinecraft;
 const participaron = inscriptos.filter((i) => i.participated_sc === "si").length;
 
-const cardBase =
-  "relative overflow-hidden bg-[#0a0a0a] border border-white/5 rounded-2xl p-6 shadow-xl backdrop-blur-xs";
+const kpis = [
+  { label: "Total inscriptos", value: totalInsc, icon: LucideUsers, iconClass: "text-sky-300", chipClass: "bg-sky-500/15 border-sky-400/25" },
+  { label: "Con Minecraft", value: conMinecraft, icon: LucideUserCheck, iconClass: "text-emerald-300", chipClass: "bg-emerald-500/15 border-emerald-400/25" },
+  { label: "Sin Minecraft", value: sinMinecraft, icon: LucideUserX, iconClass: "text-amber-300", chipClass: "bg-amber-500/15 border-amber-400/25" },
+  { label: "Jugaron SC previo", value: participaron, icon: LucideHistory, iconClass: "text-violet-300", chipClass: "bg-violet-500/15 border-violet-400/25" },
+];
 ---
 
-<AdminLayout title="Extremo 3 - Gestión" session={session}>
-  <div class="flex flex-col max-w-6xl mx-auto min-h-screen mt-16 p-6">
-    {/* Header */}
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-      <div>
-        <h1 class="text-3xl font-bold text-white font-anton flex items-center gap-3">
-          <LucideGamepad2 className="w-8 h-8 text-electric-violet-400" />
-          SaltoCraft Extremo 3
-        </h1>
-        <p class="text-gray-400 font-rubik mt-1">
-          Gestión de jugadores inscriptos
+<AdminLayout title="MC Extremo" description="Gestión de inscriptos de SaltoCraft Extremo 3" session={session}>
+  <div class="space-y-6">
+    {/* Header de página */}
+    <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
+      <div class="min-w-0">
+        <p class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-violet-300/80 bg-violet-500/10 border border-violet-400/25 rounded-full px-3 py-1 mb-3">
+          <LucideSwords size={12} /> SaltoCraft · Extremo 3
+        </p>
+        <h2 class="font-anton text-3xl sm:text-4xl text-white uppercase leading-none flex items-center gap-3">
+          <span class="size-11 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-950/50 border border-violet-300/30 shrink-0">
+            <LucideGamepad2 size={22} className="text-white" />
+          </span>
+          Gestión de jugadores
+        </h2>
+        <p class="text-sm text-white/40 mt-2">
+          Sincronizá inscripciones, confirmá participantes y administrá vidas.
         </p>
       </div>
-      <div class="flex gap-3">
+
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
         <button
           id="preview-btn"
-          class="px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-lg font-bold flex items-center gap-2 transition-colors text-sm border border-white/10"
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
         >
-          <LucideEye className="w-4 h-4" />
+          <LucideEye size={15} />
           Preview
         </button>
         <button
           id="sync-btn"
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center gap-2 transition-colors text-sm"
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:brightness-110 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-violet-950/50 border border-violet-300/25 cursor-pointer"
         >
-          <LucideRefreshCw className="w-4 h-4" />
+          <LucideRefreshCw size={15} />
           Sincronizar
         </button>
         <button
           id="clear-sync-btn"
-          class="px-4 py-2 bg-red-600/80 hover:bg-red-500 text-white rounded-lg font-bold flex items-center gap-2 transition-colors text-sm"
+          title="Eliminar inscripciones locales y sincronizar desde cero"
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 border border-red-500/25 hover:border-red-500 text-red-300 hover:text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
         >
-          <LucideTrash2 className="w-4 h-4" />
-          Limpiar y Sincronizar
+          <LucideTrash2 size={15} />
+          Limpiar y sincronizar
         </button>
       </div>
     </div>
 
-    {/* KPI Cards */}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <div class={cardBase}>
-        <div class="flex items-center gap-3 mb-3">
-          <div class="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
-            <LucideUsers className="w-5 h-5 text-blue-400" />
+    {/* KPI strip */}
+    <dl class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+      {kpis.map((kpi) => (
+        <div class="rounded-2xl bg-white/[0.04] border border-white/[0.07] hover:border-white/15 transition-colors px-4 py-3.5 flex items-center gap-3">
+          <span class={`size-10 rounded-xl border flex items-center justify-center shrink-0 ${kpi.chipClass}`}>
+            <kpi.icon size={18} class={kpi.iconClass} />
+          </span>
+          <div class="min-w-0">
+            <dt class="text-[10px] font-bold uppercase tracking-widest text-white/40 truncate">{kpi.label}</dt>
+            <dd class="text-2xl font-anton text-white leading-none mt-0.5 tabular-nums">{kpi.value}</dd>
           </div>
         </div>
-        <p class="text-white/50 text-xs font-bold uppercase tracking-widest font-rubik">
-          Total
-        </p>
-        <p class="text-3xl font-anton text-white mt-1">{totalInsc}</p>
-      </div>
-
-      <div class={cardBase}>
-        <div class="flex items-center gap-3 mb-3">
-          <div class="p-2 rounded-xl bg-green-500/10 border border-green-500/20">
-            <LucideUserCheck className="w-5 h-5 text-green-400" />
-          </div>
-        </div>
-        <p class="text-white/50 text-xs font-bold uppercase tracking-widest font-rubik">
-          Con MC
-        </p>
-        <p class="text-3xl font-anton text-green-400 mt-1">{conMinecraft}</p>
-      </div>
-
-      <div class={cardBase}>
-        <div class="flex items-center gap-3 mb-3">
-          <div class="p-2 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
-            <LucideUserX className="w-5 h-5 text-yellow-400" />
-          </div>
-        </div>
-        <p class="text-white/50 text-xs font-bold uppercase tracking-widest font-rubik">
-          Sin MC
-        </p>
-        <p class="text-3xl font-anton text-yellow-400 mt-1">{sinMinecraft}</p>
-      </div>
-
-      <div class={cardBase}>
-        <div class="flex items-center gap-3 mb-3">
-          <div class="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
-            <LucideUsers className="w-5 h-5 text-purple-400" />
-          </div>
-        </div>
-        <p class="text-white/50 text-xs font-bold uppercase tracking-widest font-rubik">
-          Repetidos
-        </p>
-        <p class="text-3xl font-anton text-purple-400 mt-1">{participaron}</p>
-      </div>
-    </div>
+      ))}
+    </dl>
 
     {/* Status message */}
-    <div id="sync-status" class="hidden mb-6 p-4 rounded-lg border text-sm font-rubik"></div>
+    <div id="sync-status" class="hidden rounded-2xl border text-sm font-rubik px-4 py-3.5"></div>
 
     {/* Player Management */}
-    <AdminExtremoPlayers client:idle />
+    <section class="relative rounded-3xl border border-white/10 bg-zinc-950/60 backdrop-blur-xl shadow-xl overflow-hidden">
+      <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-400/30 to-transparent pointer-events-none"></div>
+      <AdminExtremoPlayers client:idle />
+    </section>
   </div>
 
   {/* Dry Run Modal */}
-  <dialog id="dry-run-modal" class="backdrop:bg-black/80 backdrop:backdrop-blur-xs bg-transparent p-4">
-    <div class="bg-linear-to-br from-gray-900 via-gray-900 to-black border border-white/10 rounded-2xl overflow-hidden shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col m-auto">
-      <div class="px-6 py-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
-        <h3 class="font-anton text-lg text-white">Preview de Sincronización</h3>
-        <button id="close-modal-btn" class="text-gray-400 hover:text-white transition-colors p-1">
+  <dialog id="dry-run-modal" class="backdrop:bg-black/80 backdrop:backdrop-blur-sm bg-transparent p-4 m-auto w-full max-w-4xl">
+    <div class="bg-[#131318] border border-white/10 rounded-3xl overflow-hidden shadow-2xl w-full max-h-[80vh] flex flex-col">
+      <div class="px-6 py-4 border-b border-white/10 bg-white/[0.03] flex justify-between items-center shrink-0">
+        <div>
+          <h3 class="font-anton text-lg text-white uppercase tracking-wide leading-none">Preview de sincronización</h3>
+          <p class="text-xs text-white/40 mt-1">Inscripciones que se importarán al sincronizar</p>
+        </div>
+        <button id="close-modal-btn" aria-label="Cerrar" class="size-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white transition-all flex items-center justify-center cursor-pointer">
           ✕
         </button>
       </div>
       <div class="p-6 overflow-auto flex-1">
-        <div id="dry-run-loading" class="hidden text-center py-8 text-gray-400">
+        <div id="dry-run-loading" class="hidden text-center py-8 text-white/40">
           <LucideRefreshCw className="w-8 h-8 mx-auto mb-3 animate-spin" />
-          <p class="font-rubik">Cargando preview...</p>
+          <p class="font-rubik text-sm">Cargando preview...</p>
         </div>
         <div id="dry-run-content" class="hidden">
-          <div class="mb-4 flex items-center gap-4 text-sm font-rubik">
-            <span class="text-gray-400">Total a sincronizar:</span>
-            <span id="dry-run-count" class="text-2xl font-anton text-white">0</span>
+          <div class="mb-4 flex items-center gap-3 text-sm font-rubik">
+            <span class="text-[11px] font-bold uppercase tracking-widest text-white/40">Total a sincronizar</span>
+            <span id="dry-run-count" class="text-2xl font-anton text-white tabular-nums">0</span>
           </div>
-          <div class="bg-[#1a1b1e] border border-white/10 rounded-xl overflow-hidden">
-            <table class="w-full text-left border-collapse text-sm">
+          <div class="bg-black/40 border border-white/10 rounded-2xl overflow-hidden overflow-x-auto">
+            <table class="w-full min-w-[640px] text-left border-collapse text-sm">
               <thead>
-                <tr class="bg-white/5 border-b border-white/10 text-gray-400 text-xs uppercase tracking-wider">
-                  <th class="px-4 py-2 font-medium">UserId</th>
-                  <th class="px-4 py-2 font-medium">Nombre</th>
-                  <th class="px-4 py-2 font-medium">Discord</th>
-                  <th class="px-4 py-2 font-medium">Minecraft</th>
-                  <th class="px-4 py-2 font-medium">Fecha</th>
+                <tr class="bg-white/5 border-b border-white/10 text-white/40 text-[11px] uppercase tracking-widest">
+                  <th class="px-4 py-2.5 font-bold">UserId</th>
+                  <th class="px-4 py-2.5 font-bold">Nombre</th>
+                  <th class="px-4 py-2.5 font-bold">Discord</th>
+                  <th class="px-4 py-2.5 font-bold">Minecraft</th>
+                  <th class="px-4 py-2.5 font-bold">Fecha</th>
                 </tr>
               </thead>
               <tbody id="dry-run-table" class="divide-y divide-white/5"></tbody>
             </table>
           </div>
         </div>
-        <div id="dry-run-error" class="hidden text-center py-8 text-red-400 font-rubik"></div>
+        <div id="dry-run-error" class="hidden text-center py-8 text-red-400 font-rubik text-sm"></div>
       </div>
-      <div class="px-6 py-4 border-t border-white/10 bg-white/5 flex justify-end gap-3">
-        <button id="modal-cancel-btn" class="px-4 py-2 bg-white/10 hover:bg-white/15 text-white rounded-lg font-bold transition-colors text-sm">
+      <div class="px-6 py-4 border-t border-white/10 bg-white/[0.02] flex justify-end gap-2 shrink-0">
+        <button id="modal-cancel-btn" class="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white rounded-xl font-bold transition-all text-xs uppercase tracking-wider cursor-pointer">
           Cerrar
         </button>
-        <button id="modal-sync-btn" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold flex items-center gap-2 transition-colors text-sm">
+        <button id="modal-sync-btn" class="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:brightness-110 text-white rounded-xl font-bold flex items-center gap-2 transition-all text-xs uppercase tracking-wider shadow-lg shadow-violet-950/50 border border-violet-300/25 cursor-pointer">
           <LucideRefreshCw className="w-4 h-4" />
-          Sincronizar Ahora
+          Sincronizar ahora
         </button>
       </div>
     </div>
@@ -207,12 +190,12 @@ const cardBase =
     function showStatus(type: "loading" | "success" | "error", message: string) {
       if (!statusDiv) return;
       statusDiv.classList.remove("hidden");
-      statusDiv.className = `mb-6 p-4 rounded-lg border text-sm font-rubik ${
+      statusDiv.className = `rounded-2xl border text-sm font-rubik px-4 py-3.5 flex items-center gap-2.5 ${
         type === "loading"
-          ? "bg-blue-500/10 border-blue-500/20 text-blue-400"
+          ? "bg-violet-500/10 border-violet-400/25 text-violet-200"
           : type === "success"
-            ? "bg-green-500/10 border-green-500/20 text-green-400"
-            : "bg-red-500/10 border-red-500/20 text-red-400"
+            ? "bg-emerald-500/10 border-emerald-400/25 text-emerald-200"
+            : "bg-red-500/10 border-red-500/25 text-red-200"
       }`;
       statusDiv.textContent = message;
     }
@@ -261,11 +244,11 @@ const cardBase =
 
         dryRunTable!.innerHTML = data.inscriptions.map((insc: any) => `
           <tr class="hover:bg-white/5 transition-colors">
-            <td class="px-4 py-2 text-gray-500 font-mono">${insc.userId}</td>
-            <td class="px-4 py-2 text-white font-rubik">${insc.displayName}</td>
-            <td class="px-4 py-2 text-gray-300 font-rubik">${insc.discordUsername || '—'}</td>
-            <td class="px-4 py-2 text-white font-minecraftia">${insc.minecraft_username || '—'}</td>
-            <td class="px-4 py-2 text-gray-400 font-mono text-xs">${new Date(insc.createdAt).toLocaleDateString('es-UY')}</td>
+            <td class="px-4 py-2.5 text-white/30 font-mono text-xs">${insc.userId}</td>
+            <td class="px-4 py-2.5 text-white font-rubik">${insc.displayName}</td>
+            <td class="px-4 py-2.5 text-white/60 font-rubik">${insc.discordUsername || '—'}</td>
+            <td class="px-4 py-2.5 text-white font-minecraftia">${insc.minecraft_username || '—'}</td>
+            <td class="px-4 py-2.5 text-white/40 font-mono text-xs">${new Date(insc.createdAt).toLocaleDateString('es-UY')}</td>
           </tr>
         `).join("");
       } catch {

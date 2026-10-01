@@ -2,7 +2,7 @@
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import Layout from "@/layouts/Layout.astro";
 import type { Session } from "@auth/core/types";
-import { LucideExternalLink, LucideShield, LucideSparkles } from "lucide-preact";
+import { LucideExternalLink, LucideShieldCheck } from "lucide-preact";
 
 interface Props {
   session: Session | null;
@@ -31,60 +31,63 @@ const { session, title = "Dashboard", description } = Astro.props;
     />
 
     {/* Área de Contenido Principal */}
-    <div class="flex flex-1 flex-col min-w-0 overflow-hidden bg-[#0c0c10] relative">
+    <div class="flex flex-1 flex-col min-w-0 overflow-hidden bg-[#0c0c10] relative pt-16 md:pt-0">
       {/* HEADER SUPERIOR (BARRA DE CONTROL STICKY) */}
       <header
-        class="h-16 shrink-0 border-b border-white/10 bg-[#08080a]/80 backdrop-blur-md flex items-center px-4 md:px-6 justify-between z-30 sticky top-0"
+        class="relative h-16 shrink-0 border-b border-white/10 bg-[#08080a]/80 backdrop-blur-md flex items-center px-4 md:px-6 justify-between z-30 sticky top-0"
       >
-        <div class="flex items-center gap-3 overflow-hidden">
-          <div class="flex items-center gap-2">
-            <span class="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <h1
-              class="font-anton text-lg md:text-xl uppercase tracking-wide text-white truncate"
-            >
-              {title}
-            </h1>
-          </div>
+        {/* Línea de acento superior */}
+        <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-400/40 to-transparent pointer-events-none"></div>
+
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="relative flex size-2 shrink-0" aria-hidden="true">
+            <span class="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping"></span>
+            <span class="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
+          </span>
+          <h1
+            class="font-anton text-lg md:text-xl uppercase tracking-wide text-white truncate leading-none"
+          >
+            {title}
+          </h1>
           {
             description && (
-              <span class="hidden lg:block w-px h-4 bg-white/10 mx-1" />
-            )
-          }
-          {
-            description && (
-              <p class="hidden lg:block text-xs text-white/40 font-rubik truncate max-w-md">
-                {description}
-              </p>
+              <>
+                <span class="hidden lg:block w-px h-4 bg-white/10 mx-1 shrink-0" />
+                <p class="hidden lg:block text-xs text-white/40 font-rubik truncate max-w-md">
+                  {description}
+                </p>
+              </>
             )
           }
         </div>
 
         {/* Acciones e Indicadores a la derecha */}
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 shrink-0">
           <a
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white text-xs font-semibold uppercase tracking-wider transition-all"
+            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white text-[11px] font-bold uppercase tracking-wider transition-all"
             title="Abrir sitio web en nueva pestaña"
           >
             <LucideExternalLink size={13} />
             <span>Ver Sitio</span>
           </a>
 
-          <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono font-bold shadow-sm">
-            <LucideShield size={13} className="text-purple-400" />
-            <span>V2.0 PROD</span>
-          </div>
+          <span class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-500/10 border border-violet-400/25 text-violet-200 text-[11px] font-bold uppercase tracking-wider">
+            <LucideShieldCheck size={13} className="text-violet-300" />
+            <span>V2.0 Prod</span>
+          </span>
         </div>
       </header>
 
       {/* ÁREA SCROLLABLE DE CONTENIDO */}
-      <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative scroll-smooth">
-        {/* Fondo de patrón cuadrícula sutil */}
-        <div
-          class="fixed inset-0 pointer-events-none opacity-[0.02] bg-[url('/images/pattern-grid.svg')] z-0"
-        >
+      <main class="flex-1 overflow-y-auto overflow-x-clip p-4 sm:p-6 lg:p-8 relative scroll-smooth">
+        {/* Fondo ambiental */}
+        <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div class="absolute -top-24 right-[-5%] w-[480px] h-[480px] bg-violet-600/10 blur-[140px] rounded-full"></div>
+          <div class="absolute top-1/2 left-[-10%] w-[420px] h-[420px] bg-blue-700/[0.07] blur-[140px] rounded-full"></div>
+          <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.025] [mask-image:radial-gradient(ellipse_70%_50%_at_50%_0%,black,transparent)]"></div>
         </div>
 
         <div class="relative z-10 max-w-7xl mx-auto space-y-6">
