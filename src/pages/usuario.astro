@@ -8,10 +8,13 @@ import {
   LucideExternalLink,
   LucideLogOut,
   LucideShieldCheck,
-  LucideUser,
-  LucideCrown,
+  LucideBadgeCheck,
   LucideIdCard,
+  LucideCrown,
   LucideSparkles,
+  LucideLink2,
+  LucideSettings2,
+  LucideChevronRight,
 } from "lucide-preact";
 import { CHRISTMAS_MODE, HALLOWEEN_MODE } from "@/config";
 import { NOMINEES } from "@/awards/Nominees";
@@ -28,203 +31,229 @@ const discordUser = discordAccount
   : null;
 
 const isNominated = session.user && NOMINEES[session.user.username as keyof typeof NOMINEES];
+const hasTier = Boolean(session.user.tier);
+const isAdmin = Boolean(session.user.isAdmin);
+const connectedCount = 1 + (discordUser ? 1 : 0);
 
-// Estilos Glass Panel
-const glassPanel =
-  "relative overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0d]/80 backdrop-blur-2xl shadow-2xl transition-all duration-300 hover:border-white/20";
+const bannerGradient = HALLOWEEN_MODE
+  ? "from-orange-600 via-fuchsia-700 to-violet-950"
+  : CHRISTMAS_MODE
+    ? "from-red-700 via-emerald-800 to-zinc-950"
+    : "from-violet-700 via-indigo-700 to-cyan-600";
+
+const avatarRing = isNominated
+  ? "ring-amber-300 shadow-[0_0_40px_-5px_rgba(251,191,36,0.6)]"
+  : "ring-white/20 shadow-[0_0_40px_-10px_rgba(139,92,246,0.6)]";
 ---
 
 <Layout title="Mi cuenta">
-  {/* Fondo Ambiental Dinámico */}
+  {/* Fondo Ambiental */}
   <div class="fixed inset-0 -z-10 bg-[#060608]">
     <div
-      class={`absolute top-0 right-0 w-[550px] h-[550px] blur-[140px] rounded-full pointer-events-none ${
+      class={`absolute -top-32 right-[-10%] w-[600px] h-[600px] blur-[160px] rounded-full pointer-events-none opacity-60 ${
         HALLOWEEN_MODE
-          ? "bg-orange-600/15"
+          ? "bg-orange-600/20"
           : CHRISTMAS_MODE
-          ? "bg-red-600/15"
-          : "bg-purple-600/15"
+            ? "bg-red-600/15"
+            : "bg-violet-600/20"
       }`}
     >
     </div>
-    <div
-      class="absolute bottom-0 left-0 w-[550px] h-[550px] bg-blue-600/10 blur-[140px] rounded-full pointer-events-none"
-    >
+    <div class="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-700/10 blur-[160px] rounded-full pointer-events-none">
     </div>
-    <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.02] pointer-events-none"></div>
+    <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.035] pointer-events-none [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,black,transparent)]"></div>
   </div>
 
-  <div class="max-w-6xl mx-auto px-4 py-8 md:py-12 mt-14 sm:mt-20 space-y-6">
-    <PageBreadcrumb
-      pathname="/usuario"
-      breadcrumbs={[{ text: "Mi cuenta", href: "/usuario" }]}
-    />
+  <div class="max-w-6xl mx-auto px-4 py-6 md:py-10 mt-14 sm:mt-20">
+    <div class="flex items-center justify-between mb-5">
+      <PageBreadcrumb
+        pathname="/usuario"
+        breadcrumbs={[{ text: "Mi cuenta", href: "/usuario" }]}
+      />
+      <span class="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-white/40 bg-white/5 border border-white/10 rounded-full px-3 py-1.5">
+        <span class="size-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        Sesión activa
+      </span>
+    </div>
 
-    <div class="grid gap-8 lg:grid-cols-[320px_1fr]">
-      {/* SIDEBAR DE PERFIL & ESTADO */}
-      <aside class="flex flex-col gap-6">
-        {/* Tarjeta de Identidad */}
-        <section
-          class={`${glassPanel} p-6 flex flex-col items-center text-center group`}
-        >
-          <div class="relative mb-5">
-            <div
-              class={`absolute inset-0 rounded-full blur-md opacity-50 group-hover:opacity-80 transition-opacity ${
-                HALLOWEEN_MODE
-                  ? "bg-gradient-to-tr from-orange-500 to-purple-500"
-                  : CHRISTMAS_MODE
-                  ? "bg-gradient-to-tr from-red-500 to-green-500"
-                  : "bg-gradient-to-tr from-purple-500 to-blue-500"
-              }`}
-            >
-            </div>
+    {/* ── HERO DE PERFIL ─────────────────────────────── */}
+    <header class="relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/80 backdrop-blur-2xl shadow-2xl">
+      {/* Banner */}
+      <div class={`relative h-32 sm:h-44 bg-gradient-to-r ${bannerGradient}`}>
+        <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-20"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent"></div>
+        {HALLOWEEN_MODE && (
+          <span class="absolute top-4 right-6 text-3xl select-none animate-bounce" aria-hidden="true">🎃</span>
+        )}
+        {CHRISTMAS_MODE && (
+          <span class="absolute top-4 right-6 text-3xl select-none" aria-hidden="true">🎄</span>
+        )}
+        {isNominated && (
+          <div class="absolute top-4 left-4 inline-flex items-center gap-1.5 bg-black/50 backdrop-blur-md border border-amber-300/40 text-amber-200 text-[11px] font-bold uppercase tracking-widest rounded-full px-3 py-1.5">
+            <LucideSparkles size={13} /> Nominado a los Salto Awards
+          </div>
+        )}
+      </div>
 
-            {/* Accesorio de Temporada */}
-            {HALLOWEEN_MODE ? (
-              <span class="absolute -top-4 -left-2 text-3xl z-20 pointer-events-none rotate-[-12deg] filter drop-shadow-md select-none animate-pulse">
-                🎃
-              </span>
-            ) : CHRISTMAS_MODE ? (
-              <span class="absolute -top-4 -left-3 text-3xl z-20 pointer-events-none rotate-[-15deg] filter drop-shadow-md select-none">
-                🎅
-              </span>
-            ) : null}
-
+      {/* Identidad */}
+      <div class="relative px-5 sm:px-8 pb-6">
+        <div class="flex flex-col sm:flex-row sm:items-end gap-5 -mt-10 sm:-mt-12">
+          <div class="relative shrink-0">
             <img
               src={session.user.image}
               alt={session.user.name}
-              class={`relative size-24 rounded-full border-4 border-[#0a0a0d] shadow-2xl object-cover ${
-                isNominated ? "border-amber-400" : ""
-              }`}
+              class={`size-20 sm:size-24 rounded-2xl object-cover ring-4 ${avatarRing} bg-zinc-900`}
             />
-
-            {/* Status Indicator */}
-            <div
-              class={`absolute bottom-0 right-0 size-6 border-4 border-[#0a0a0d] rounded-full ${
-                isNominated
-                  ? "bg-amber-400 shadow-[0_0_10px_#f59e0b]"
-                  : "bg-emerald-500 shadow-[0_0_10px_#10b981]"
-              }`}
-              title="Cuenta Activa"
-            >
-            </div>
+            <span
+              class="absolute -bottom-1 -right-1 size-6 rounded-full border-4 border-zinc-950 bg-emerald-500 shadow-[0_0_12px_#10b981]"
+              title="Cuenta activa"
+            ></span>
           </div>
 
-          <h2 class="text-2xl font-anton text-white uppercase tracking-wide leading-tight flex items-center justify-center gap-2">
-            {session.user.name}
-          </h2>
-          <p class="text-white/50 font-rubik text-xs mb-6 truncate max-w-[240px]">
-            {session.user.email}
-          </p>
-
-          {/* Grid de Información rápida */}
-          <div class="w-full grid grid-cols-2 gap-2.5 mb-6">
-            <div class="bg-white/5 border border-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
-              <span class="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">
-                Rol
-              </span>
-              <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1">
-                {session.user.isAdmin ? (
-                  <>
-                    <LucideShieldCheck size={14} className="text-purple-400" />
-                    <span class="text-purple-300">Admin</span>
-                  </>
-                ) : (
-                  "Miembro"
-                )}
-              </span>
+          <div class="flex-1 min-w-0 sm:pb-1">
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              {isAdmin && (
+                <span class="inline-flex items-center gap-1 bg-violet-500/15 text-violet-200 border border-violet-400/30 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">
+                  <LucideShieldCheck size={12} /> Admin
+                </span>
+              )}
+              {hasTier && (
+                <span class="inline-flex items-center gap-1 bg-amber-400/15 text-amber-200 border border-amber-300/30 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">
+                  <LucideCrown size={12} /> Tier {session.user.tier}
+                </span>
+              )}
+              {discordUser && (
+                <span class="inline-flex items-center gap-1 bg-[#5865F2]/15 text-indigo-200 border border-indigo-400/30 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">
+                  <LucideBadgeCheck size={12} /> Discord vinculado
+                </span>
+              )}
             </div>
-
-            <div class="bg-white/5 border border-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
-              <span class="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">
-                ID
-              </span>
-              <span class="text-xs font-mono font-bold text-white truncate max-w-full">
-                #{session.user.id}
-              </span>
-            </div>
+            <h1 class="text-2xl sm:text-4xl font-anton text-white uppercase tracking-wide leading-none truncate">
+              {session.user.name}
+            </h1>
+            <p class="text-white/50 font-rubik text-sm mt-1 truncate">{session.user.email}</p>
           </div>
 
-          {/* Botones de Acción */}
-          <div class="w-full space-y-2">
+          <div class="flex sm:flex-col lg:flex-row gap-2 shrink-0">
             <a
               href="/comunidad/member-card"
-              class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs uppercase tracking-wider transition-all border border-white/10 hover:border-white/20"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-black font-bold text-xs uppercase tracking-wider hover:bg-zinc-200 transition-all shadow-lg"
             >
-              <LucideIdCard size={15} className="text-yellow-400" /> Mi Member Card
+              <LucideIdCard size={15} /> Member Card
             </a>
-
             <button
               id="account-logout"
-              class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-all font-bold text-xs uppercase tracking-wider border border-red-500/20 hover:border-red-500 shadow-md"
+              class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-red-500 text-white/70 hover:text-white font-bold text-xs uppercase tracking-wider transition-all border border-white/10 hover:border-red-500 cursor-pointer"
             >
-              <LucideLogOut size={15} /> Cerrar Sesión
+              <LucideLogOut size={15} /> Salir
             </button>
           </div>
-        </section>
+        </div>
 
-        {/* Tarjeta de Membresía Twitch */}
-        <section
-          class={`${glassPanel} p-6 relative border-purple-500/30 bg-gradient-to-br from-purple-950/40 via-indigo-950/20 to-black/60`}
-        >
-          <div class="absolute top-0 right-0 p-4 opacity-10 text-purple-400 pointer-events-none">
-            <LucideCrown size={80} />
+        {/* Stats strip */}
+        <dl class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-6">
+          <div class="rounded-2xl bg-white/[0.04] border border-white/[0.07] px-4 py-3">
+            <dt class="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-0.5">Rol</dt>
+            <dd class="text-sm font-bold text-white flex items-center gap-1.5">
+              {isAdmin ? <><LucideShieldCheck size={14} className="text-violet-300" /> Administrador</> : "Miembro"}
+            </dd>
           </div>
-
-          <h3
-            class="font-anton text-lg text-white uppercase tracking-wide mb-4 relative z-10 flex items-center gap-2"
-          >
-            <LucideCrown size={18} class="text-amber-400" /> Membresía Twitch
-          </h3>
-
-          <div class="relative z-10">
-            <div class="flex items-center gap-3.5 mb-4">
-              <div
-                class="size-11 bg-[#9146FF] rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-purple-900/30"
-              >
-                <img src="/twitch-icon.png" alt="Twitch" class="size-6" />
-              </div>
-              <div class="flex flex-col">
-                <span
-                  class={`block text-base font-bold uppercase tracking-wide ${
-                    session.user.tier ? "text-amber-400" : "text-white/60"
-                  }`}
-                >
-                  {
-                    session.user.tier
-                      ? `Suscriptor Tier ${session.user.tier}`
-                      : "Sin suscripción activa"
-                  }
-                </span>
-                <span class="text-xs text-white/40">Twitch Subscriber</span>
-              </div>
-            </div>
-
-            {
-              !session.user.tier && (
-                <a
-                  href="https://twitch.tv/subs/SaltoUruguayServer"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="block w-full text-center py-2.5 rounded-xl bg-gradient-to-r from-[#9146FF] to-[#7c2cf5] hover:from-[#7c2cf5] hover:to-[#6820d8] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-purple-900/40 border border-purple-400/30"
-                >
-                  Suscribirse Ahora{" "}
-                  <LucideExternalLink size={14} class="inline ml-1" />
-                </a>
-              )
-            }
+          <div class="rounded-2xl bg-white/[0.04] border border-white/[0.07] px-4 py-3">
+            <dt class="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-0.5">Member ID</dt>
+            <dd class="text-sm font-mono font-bold text-white truncate">#{session.user.id}</dd>
           </div>
-        </section>
-      </aside>
+          <div class="rounded-2xl bg-white/[0.04] border border-white/[0.07] px-4 py-3">
+            <dt class="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-0.5">Conexiones</dt>
+            <dd class="text-sm font-bold text-white flex items-center gap-1.5">
+              <LucideLink2 size={14} className="text-cyan-300" /> {connectedCount} de 2
+            </dd>
+          </div>
+          <div class="rounded-2xl bg-white/[0.04] border border-white/[0.07] px-4 py-3">
+            <dt class="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-0.5">Suscripción</dt>
+            <dd class={`text-sm font-bold flex items-center gap-1.5 ${hasTier ? "text-amber-300" : "text-white/50"}`}>
+              <LucideCrown size={14} /> {hasTier ? `Tier ${session.user.tier}` : "Sin sub"}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </header>
 
-      {/* PANEL PRINCIPAL SCROLLABLE */}
-      <main class="min-w-0">
+    {/* ── CONTENIDO ──────────────────────────────────── */}
+    <div class="grid gap-6 lg:grid-cols-[1fr_330px] mt-6 items-start">
+      {/* Panel principal con tabs */}
+      <main class="min-w-0 order-2 lg:order-1">
         <UserAccountLayout
           session={session}
           discordUser={discordUser}
           client:idle
         />
       </main>
+
+      {/* Sidebar */}
+      <aside class="flex flex-col gap-5 order-1 lg:order-2 lg:sticky lg:top-24">
+        {/* Membresía Twitch */}
+        <section class="relative overflow-hidden rounded-3xl border border-violet-400/20 bg-gradient-to-b from-violet-950/60 via-[#0d0a1a] to-black p-5 shadow-xl">
+          <LucideCrown size={90} class="absolute -right-3 -top-3 text-violet-500/10 rotate-12 pointer-events-none" />
+          <h3 class="font-anton text-base text-white uppercase tracking-wide mb-1 flex items-center gap-2">
+            <span class="size-7 rounded-lg bg-[#9146FF] flex items-center justify-center shrink-0">
+              <img src="/twitch-icon.png" alt="Twitch" class="size-4" />
+            </span>
+            Membresía Twitch
+          </h3>
+          <p class={`text-sm font-bold mt-2 ${hasTier ? "text-amber-300" : "text-white/60"}`}>
+            {hasTier ? `Suscriptor Tier ${session.user.tier}` : "Sin suscripción activa"}
+          </p>
+          <p class="text-xs text-white/40 mt-0.5 mb-4 leading-relaxed">
+            {hasTier
+              ? "Gracias por apoyar al canal. Tus perks están activos."
+              : "Suscribite para desbloquear perks, emotes y sorteos."}
+          </p>
+          {!hasTier && (
+            <a
+              href="https://twitch.tv/subs/SaltoUruguayServer"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-gradient-to-r from-[#9146FF] to-[#6d28d9] hover:brightness-110 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-violet-950/50 border border-violet-300/20"
+            >
+              Suscribirse <LucideExternalLink size={13} />
+            </a>
+          )}
+          {hasTier && (
+            <div class="w-full py-2.5 rounded-xl bg-amber-300/10 border border-amber-300/25 text-amber-200 text-center font-bold text-xs uppercase tracking-wider">
+              Beneficios activos ✓
+            </div>
+          )}
+        </section>
+
+        {/* Accesos rápidos */}
+        <nav class="rounded-3xl border border-white/10 bg-zinc-950/70 backdrop-blur-xl p-2.5 shadow-xl">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-white/35 px-3 pt-2 pb-1 flex items-center gap-1.5">
+            <LucideSettings2 size={12} /> Accesos rápidos
+          </p>
+          {[
+            { href: "/comunidad/member-card", icon: LucideIdCard, label: "Mi Member Card", desc: "Tu tarjeta de la comunidad", accent: "text-yellow-300" },
+            { href: "/comunidad/juegos", icon: LucideSparkles, label: "Juegos", desc: "Ruleta, bingo y más", accent: "text-fuchsia-300" },
+          ].map((l) => (
+            <a
+              href={l.href}
+              class="group flex items-center gap-3 rounded-2xl px-3 py-2.5 hover:bg-white/5 transition-colors"
+            >
+              <span class="size-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:border-white/20 transition-colors">
+                <l.icon size={16} class={l.accent} />
+              </span>
+              <span class="flex-1 min-w-0">
+                <span class="block text-sm font-bold text-white leading-tight">{l.label}</span>
+                <span class="block text-xs text-white/40 truncate">{l.desc}</span>
+              </span>
+              <LucideChevronRight size={15} class="text-white/25 group-hover:text-white/70 group-hover:translate-x-0.5 transition-all" />
+            </a>
+          ))}
+        </nav>
+
+        <p class="text-[11px] text-white/30 text-center leading-relaxed px-4">
+          ¿Problemas con tu cuenta? Escribinos en el <a href="/comunidad/discord" class="text-indigo-300 hover:underline font-bold">Discord</a> de la comunidad.
+        </p>
+      </aside>
     </div>
   </div>
 </Layout>

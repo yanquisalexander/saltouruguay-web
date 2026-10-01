@@ -1,7 +1,7 @@
 import type { Session } from "@auth/core/types";
 import { useState } from "preact/hooks";
 import { toast } from "sonner";
-import { LucideCheck, LucideUnlink, LucideLink, LucideMail, LucideUser } from "lucide-preact";
+import { LucideCheck, LucideUnlink, LucideLink, LucideMail, LucideUser, LucideCopy, LucideAtSign } from "lucide-preact";
 import type { APIUser } from "discord-api-types/v10";
 import { IcBaselineDiscord } from "../preactIcons/Discord";
 
@@ -26,138 +26,189 @@ export const GeneralInfo = ({ session, discordUser }: { session: Session, discor
         }
     };
 
+    const copyEmail = () => {
+        if (session.user.email) {
+            navigator.clipboard.writeText(session.user.email);
+            toast.success("Email copiado");
+        }
+    };
+
+    const discordLabel = discordUser
+        ? `@${discordUser.username}`
+        : null;
+
     const connections = [
         {
             id: "twitch",
             name: "Twitch",
+            desc: "Login principal de tu cuenta",
             color: "#9146FF",
-            icon: <img src="/twitch-icon.png" alt="Twitch" className="size-6" />,
-            isConnected: !!session,
-            username: session ? session.user.name : null,
-            status: "Conectado (Principal)",
+            glow: "shadow-[0_0_24px_-6px_rgba(145,70,255,0.5)]",
+            icon: <img src="/twitch-icon.png" alt="Twitch" className="size-5" />,
+            isConnected: true,
+            username: session.user.name,
+            status: "Principal",
             canUnlink: false,
             action: () => toast.info("Cuenta principal no desconectable")
         },
         {
             id: "discord",
             name: "Discord",
+            desc: "Para roles, sorteos y avisos",
             color: "#5865F2",
-            icon: <IcBaselineDiscord className="size-6" />,
+            glow: "shadow-[0_0_24px_-6px_rgba(88,101,242,0.5)]",
+            icon: <IcBaselineDiscord className="size-5" />,
             isConnected: !!discordUser,
-            username: discordUser ? `${discordUser.username}#${discordUser.discriminator}` : null,
-            status: discordUser ? "Conectado" : "No conectado",
+            username: discordLabel,
+            status: discordUser ? "Vinculado" : "Sin vincular",
             canUnlink: true,
             action: discordUser ? handleDiscordUnlink : () => location.href = "/api/linked-accounts/discord/link"
         },
     ];
 
+    const linkedCount = connections.filter(c => c.isConnected).length;
+
     return (
-        <div className="p-6 md:p-8 space-y-10 animate-fade-in">
+        <div className="p-5 sm:p-7 space-y-8 animate-fade-in">
 
-            {/* SECCIÓN 1: DATOS PERSONALES */}
-            <div>
-                <h3 className="text-xl font-anton text-white uppercase tracking-wide mb-6 flex items-center gap-2">
-                    <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
-                    Datos Personales
-                </h3>
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <h3 className="text-lg font-anton text-white uppercase tracking-wide leading-none">
+                        Datos personales
+                    </h3>
+                    <p className="text-xs text-white/40 mt-1.5">
+                        Tu identidad en Salto Uruguay — sincronizada con Twitch.
+                    </p>
+                </div>
+                <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-400/20 px-2.5 py-1 rounded-full">
+                    <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Verificado
+                </span>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Username Field */}
-                    <div className="group bg-white/5 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-colors">
-                        <label className="text-xs font-rubik text-white/40 uppercase tracking-widest font-bold mb-2 block flex items-center gap-2">
-                            <LucideUser size={12} /> Nombre de usuario
-                        </label>
-                        <div className="flex items-center justify-between">
-                            <span className="text-white font-medium text-lg">{session.user.name}</span>
-                            <span className="text-xs bg-white/10 text-white/60 px-2 py-1 rounded-sm">Solo lectura</span>
-                        </div>
+            {/* Datos */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="group rounded-2xl bg-white/[0.04] border border-white/[0.07] hover:border-white/15 transition-colors p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-1.5 mb-2">
+                        <LucideAtSign size={12} /> Nombre de usuario
+                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                        <span className="text-white font-bold text-[15px] truncate">{session.user.name}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-white/35 bg-white/5 border border-white/10 px-2 py-1 rounded-lg shrink-0">
+                            Twitch ID
+                        </span>
                     </div>
+                </div>
 
-                    {/* Email Field */}
-                    <div className="group bg-white/5 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-colors">
-                        <label className="text-xs font-rubik text-white/40 uppercase tracking-widest font-bold mb-2 block flex items-center gap-2">
-                            <LucideMail size={12} /> Correo Electrónico
-                        </label>
-                        <div className="flex items-center justify-between">
-                            <span className="text-white font-medium text-lg truncate max-w-[200px] opacity-80">{session.user.email}</span>
-                            <div className="flex items-center gap-1 text-green-400 bg-green-500/10 px-2 py-1 rounded-sm text-xs font-bold">
-                                <LucideCheck size={12} /> Verificado
-                            </div>
-                        </div>
+                <div className="group rounded-2xl bg-white/[0.04] border border-white/[0.07] hover:border-white/15 transition-colors p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-1.5 mb-2">
+                        <LucideMail size={12} /> Correo electrónico
+                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                        <span className="text-white/85 font-medium text-[15px] truncate">{session.user.email}</span>
+                        <button
+                            onClick={copyEmail}
+                            title="Copiar email"
+                            className="size-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all shrink-0 cursor-pointer"
+                        >
+                            <LucideCopy size={14} />
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* SECCIÓN 2: CONEXIONES */}
+            {/* Conexiones */}
             <div>
-                <h3 className="text-xl font-anton text-white uppercase tracking-wide mb-6 flex items-center gap-2">
-                    <div className="w-1 h-6 bg-purple-500 rounded-full"></div>
-                    Conexiones Activas
-                </h3>
+                <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-lg font-anton text-white uppercase tracking-wide leading-none">
+                        Conexiones
+                    </h3>
+                    <span className="text-xs font-mono text-white/40">{linkedCount}/2 vinculadas</span>
+                </div>
+                <p className="text-xs text-white/40 mb-4">
+                    Vinculá Discord para acceder a roles exclusivos y participar en sorteos.
+                </p>
 
-                <div className="grid grid-cols-1 gap-4">
+                {/* Progress */}
+                <div className="h-1 rounded-full bg-white/5 overflow-hidden mb-4">
+                    <div
+                        className="h-full rounded-full bg-gradient-to-r from-violet-500 via-indigo-500 to-cyan-400 transition-all duration-500"
+                        style={{ width: `${(linkedCount / connections.length) * 100}%` }}
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
                     {connections.map((conn) => (
                         <div
                             key={conn.id}
                             className={`
-                                relative overflow-hidden rounded-xl border p-5 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all
+                                relative overflow-hidden rounded-2xl border p-4 flex items-center gap-4 transition-all
                                 ${conn.isConnected
-                                    ? 'bg-white/5 border-white/10 hover:border-white/20'
-                                    : 'bg-black/40 border-white/5 opacity-80 hover:opacity-100'
+                                    ? 'bg-white/[0.04] border-white/10 hover:border-white/20'
+                                    : 'bg-black/30 border-dashed border-white/10 hover:border-white/20'
                                 }
                             `}
                         >
-                            {/* Color Bar */}
-                            <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: conn.color }}></div>
+                            <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ backgroundColor: conn.color }} />
 
-                            <div className="flex items-center gap-4 w-full sm:w-auto">
-                                <div
-                                    className="size-12 rounded-lg flex items-center justify-center text-white shrink-0 shadow-lg"
-                                    style={{ backgroundColor: conn.isConnected ? conn.color : '#1a1a1a' }}
-                                >
-                                    {conn.icon}
-                                </div>
-                                <div>
-                                    <h4 className="text-lg font-bold text-white leading-none mb-1">{conn.name}</h4>
-                                    <p className="text-sm text-white/50 font-rubik">
-                                        {conn.username || "Sin vincular"}
-                                    </p>
-                                </div>
+                            <div
+                                className={`size-11 rounded-xl flex items-center justify-center text-white shrink-0 ${conn.isConnected ? conn.glow : "grayscale opacity-50"}`}
+                                style={{ backgroundColor: conn.isConnected ? conn.color : '#1c1c22' }}
+                            >
+                                {conn.icon}
                             </div>
 
-                            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-                                {conn.isConnected && (
-                                    <span className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-green-400 bg-green-500/10 px-3 py-1.5 rounded-full border border-green-500/20">
-                                        <div className="size-2 bg-green-500 rounded-full animate-pulse"></div>
-                                        Activo
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <h4 className="text-[15px] font-bold text-white leading-none">{conn.name}</h4>
+                                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${conn.isConnected ? "text-emerald-300 bg-emerald-500/10 border-emerald-400/20" : "text-white/35 bg-white/5 border-white/10"}`}>
+                                        <span className={`size-1 rounded-full ${conn.isConnected ? "bg-emerald-400 animate-pulse" : "bg-white/30"}`} />
+                                        {conn.status}
                                     </span>
-                                )}
+                                </div>
+                                <p className="text-xs text-white/45 truncate mt-1">
+                                    {conn.username ?? conn.desc}
+                                </p>
+                            </div>
 
+                            <div className="shrink-0">
                                 {conn.canUnlink ? (
                                     <button
                                         onClick={conn.action}
                                         disabled={conn.id === 'discord' && unlinkingDiscord}
                                         className={`
-                                            flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all w-full sm:w-auto
+                                            inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50
                                             ${conn.isConnected
-                                                ? 'bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20'
-                                                : 'bg-white text-black hover:bg-gray-200'
+                                                ? 'bg-red-500/10 text-red-300 hover:bg-red-500 hover:text-white border border-red-500/25'
+                                                : 'bg-white text-black hover:bg-zinc-200 shadow-lg'
                                             }
                                         `}
                                     >
                                         {conn.id === 'discord' && unlinkingDiscord ? (
-                                            "Procesando..."
+                                            "Procesando…"
                                         ) : (
-                                            conn.isConnected ? <><LucideUnlink size={16} /> Desconectar</> : <><LucideLink size={16} /> Conectar</>
+                                            conn.isConnected ? <><LucideUnlink size={14} /><span className="hidden sm:inline">Desconectar</span></> : <><LucideLink size={14} /> Conectar</>
                                         )}
                                     </button>
                                 ) : (
-                                    <span className="text-xs text-white/30 italic px-2">No desconectable</span>
+                                    <span className="text-[11px] text-white/30 italic hidden sm:block">No desconectable</span>
                                 )}
                             </div>
                         </div>
                     ))}
                 </div>
+            </div>
+
+            {/* Nota Twitch */}
+            <div className="flex items-start gap-3 rounded-2xl bg-violet-500/[0.07] border border-violet-400/20 p-4">
+                <span className="size-8 rounded-lg bg-violet-500/20 flex items-center justify-center shrink-0">
+                    <LucideUser size={15} className="text-violet-200" />
+                </span>
+                <p className="text-xs text-white/55 leading-relaxed">
+                    <strong className="text-white/85">¿Cambiaste tu nombre en Twitch?</strong><br />
+                    Cerrá sesión y volvé a entrar para sincronizar tu nuevo nombre y avatar automáticamente.
+                </p>
             </div>
         </div>
     );
