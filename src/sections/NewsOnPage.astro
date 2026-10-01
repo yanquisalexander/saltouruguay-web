@@ -47,13 +47,13 @@ import {
     </div>
 
     {/* DEMO 3D - Primero en móvil, a la derecha en desktop */}
-    <div class="order-first lg:order-0 mb-10 lg:mb-0">
+    <div class="order-first lg:order-0 mb-10 lg:mb-0 w-full max-w-full overflow-hidden sm:overflow-visible">
       <div
-        class="relative w-full max-w-sm mx-auto aspect-[1.95/1] md:aspect-auto md:h-[400px] lg:h-[450px] perspective-1000"
+        class="relative w-full max-w-[92vw] sm:max-w-md md:max-w-xl mx-auto aspect-[1.95/1]"
       >
         {/* Glow detrás */}
         <div
-          class="absolute inset-0 bg-linear-to-b from-yellow-500/10 to-transparent rounded-full blur-3xl transform scale-75"
+          class="absolute inset-0 bg-linear-to-b from-yellow-500/10 to-transparent rounded-full blur-3xl transform scale-75 pointer-events-none"
         >
         </div>
 
@@ -79,7 +79,7 @@ import {
 
         {/* Nota flotante - reposicionada */}
         <div
-          class="absolute -bottom-6 md:-bottom-8 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md border border-white/10 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[9px] md:text-[10px] text-white/50 uppercase tracking-widest whitespace-nowrap"
+          class="absolute -bottom-6 md:-bottom-8 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md border border-white/10 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[9px] md:text-[10px] text-white/50 uppercase tracking-widest whitespace-nowrap pointer-events-none"
         >
           Interactúa con la tarjeta
         </div>
