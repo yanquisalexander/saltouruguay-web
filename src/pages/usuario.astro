@@ -7,10 +7,14 @@ import { getSession } from "auth-astro/server";
 import {
   LucideExternalLink,
   LucideLogOut,
-  LucideShield,
+  LucideShieldCheck,
   LucideUser,
   LucideCrown,
+  LucideIdCard,
+  LucideSparkles,
 } from "lucide-preact";
+import { CHRISTMAS_MODE, HALLOWEEN_MODE } from "@/config";
+import { NOMINEES } from "@/awards/Nominees";
 
 const session = await getSession(Astro.request);
 
@@ -23,120 +27,173 @@ const discordUser = discordAccount
   ? await getDiscordUser(discordAccount.providerUserId)
   : null;
 
-// Estilos Glass
+const isNominated = session.user && NOMINEES[session.user.username as keyof typeof NOMINEES];
+
+// Estilos Glass Panel
 const glassPanel =
-  "relative overflow-hidden rounded-2xl border border-white/5 bg-[#0a0a0a]/60 backdrop-blur-xl shadow-xl";
+  "relative overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0d]/80 backdrop-blur-2xl shadow-2xl transition-all duration-300 hover:border-white/20";
 ---
 
 <Layout title="Mi cuenta">
-  {/* Fondo Ambiental */}
-  <div class="fixed inset-0 -z-10 bg-[#050505]">
+  {/* Fondo Ambiental Dinámico */}
+  <div class="fixed inset-0 -z-10 bg-[#060608]">
     <div
-      class="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-900/10 blur-[120px] rounded-full pointer-events-none"
+      class={`absolute top-0 right-0 w-[550px] h-[550px] blur-[140px] rounded-full pointer-events-none ${
+        HALLOWEEN_MODE
+          ? "bg-orange-600/15"
+          : CHRISTMAS_MODE
+          ? "bg-red-600/15"
+          : "bg-purple-600/15"
+      }`}
     >
     </div>
     <div
-      class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[120px] rounded-full pointer-events-none"
+      class="absolute bottom-0 left-0 w-[550px] h-[550px] bg-blue-600/10 blur-[140px] rounded-full pointer-events-none"
     >
     </div>
+    <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.02] pointer-events-none"></div>
   </div>
 
-  <div class="max-w-6xl mx-auto px-4 py-8 md:py-12 mt-20">
+  <div class="max-w-6xl mx-auto px-4 py-8 md:py-12 mt-14 sm:mt-20 space-y-6">
     <PageBreadcrumb
       pathname="/usuario"
       breadcrumbs={[{ text: "Mi cuenta", href: "/usuario" }]}
     />
 
-    <div class="grid gap-8 lg:grid-cols-[320px_1fr] mt-8">
-      {/* SIDEBAR: PERFIL CARD */}
+    <div class="grid gap-8 lg:grid-cols-[320px_1fr]">
+      {/* SIDEBAR DE PERFIL & ESTADO */}
       <aside class="flex flex-col gap-6">
         {/* Tarjeta de Identidad */}
         <section
           class={`${glassPanel} p-6 flex flex-col items-center text-center group`}
         >
-          <div class="relative mb-4">
+          <div class="relative mb-5">
             <div
-              class="absolute inset-0 bg-linear-to-tr from-purple-500 to-blue-500 rounded-full blur-sm opacity-40 group-hover:opacity-60 transition-opacity"
+              class={`absolute inset-0 rounded-full blur-md opacity-50 group-hover:opacity-80 transition-opacity ${
+                HALLOWEEN_MODE
+                  ? "bg-gradient-to-tr from-orange-500 to-purple-500"
+                  : CHRISTMAS_MODE
+                  ? "bg-gradient-to-tr from-red-500 to-green-500"
+                  : "bg-gradient-to-tr from-purple-500 to-blue-500"
+              }`}
             >
             </div>
+
+            {/* Accesorio de Temporada */}
+            {HALLOWEEN_MODE ? (
+              <span class="absolute -top-4 -left-2 text-3xl z-20 pointer-events-none rotate-[-12deg] filter drop-shadow-md select-none animate-pulse">
+                🎃
+              </span>
+            ) : CHRISTMAS_MODE ? (
+              <span class="absolute -top-4 -left-3 text-3xl z-20 pointer-events-none rotate-[-15deg] filter drop-shadow-md select-none">
+                🎅
+              </span>
+            ) : null}
+
             <img
               src={session.user.image}
               alt={session.user.name}
-              class="relative size-24 rounded-full border-4 border-[#0a0a0a] shadow-2xl object-cover"
+              class={`relative size-24 rounded-full border-4 border-[#0a0a0d] shadow-2xl object-cover ${
+                isNominated ? "border-amber-400" : ""
+              }`}
             />
-            {/* Status Badge */}
+
+            {/* Status Indicator */}
             <div
-              class="absolute bottom-0 right-0 size-6 bg-green-500 border-4 border-[#0a0a0a] rounded-full"
+              class={`absolute bottom-0 right-0 size-6 border-4 border-[#0a0a0d] rounded-full ${
+                isNominated
+                  ? "bg-amber-400 shadow-[0_0_10px_#f59e0b]"
+                  : "bg-emerald-500 shadow-[0_0_10px_#10b981]"
+              }`}
+              title="Cuenta Activa"
             >
             </div>
           </div>
 
-          <h2 class="text-2xl font-anton text-white uppercase tracking-wide">
+          <h2 class="text-2xl font-anton text-white uppercase tracking-wide leading-tight flex items-center justify-center gap-2">
             {session.user.name}
           </h2>
-          <p class="text-white/40 font-rubik text-sm mb-6">
+          <p class="text-white/50 font-rubik text-xs mb-6 truncate max-w-[240px]">
             {session.user.email}
           </p>
 
-          <div class="w-full grid grid-cols-2 gap-2 mb-6">
-            <div class="bg-white/5 rounded-xl p-3 flex flex-col items-center">
-              <span
-                class="text-xs text-white/40 uppercase tracking-widest font-bold"
-                >Rol</span
-              >
-              <span class="text-sm font-bold text-white"
-                >{session.user.isAdmin ? "Admin" : "Usuario"}</span
-              >
+          {/* Grid de Información rápida */}
+          <div class="w-full grid grid-cols-2 gap-2.5 mb-6">
+            <div class="bg-white/5 border border-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
+              <span class="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">
+                Rol
+              </span>
+              <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1">
+                {session.user.isAdmin ? (
+                  <>
+                    <LucideShieldCheck size={14} className="text-purple-400" />
+                    <span class="text-purple-300">Admin</span>
+                  </>
+                ) : (
+                  "Miembro"
+                )}
+              </span>
             </div>
-            <div class="bg-white/5 rounded-xl p-3 flex flex-col items-center">
-              <span
-                class="text-xs text-white/40 uppercase tracking-widest font-bold"
-                >ID</span
-              >
-              <span
-                class="text-sm font-bold text-white font-mono truncate w-full text-center"
-                >#{session.user.id}</span
-              >
+
+            <div class="bg-white/5 border border-white/5 rounded-xl p-3 flex flex-col items-center justify-center">
+              <span class="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">
+                ID
+              </span>
+              <span class="text-xs font-mono font-bold text-white truncate max-w-full">
+                #{session.user.id}
+              </span>
             </div>
           </div>
 
-          <button
-            id="account-logout"
-            class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all font-bold text-sm uppercase tracking-wide border border-red-500/20 hover:border-red-500"
-          >
-            <LucideLogOut size={16} /> Cerrar Sesión
-          </button>
+          {/* Botones de Acción */}
+          <div class="w-full space-y-2">
+            <a
+              href="/comunidad/member-card"
+              class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs uppercase tracking-wider transition-all border border-white/10 hover:border-white/20"
+            >
+              <LucideIdCard size={15} className="text-yellow-400" /> Mi Member Card
+            </a>
+
+            <button
+              id="account-logout"
+              class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-all font-bold text-xs uppercase tracking-wider border border-red-500/20 hover:border-red-500 shadow-md"
+            >
+              <LucideLogOut size={15} /> Cerrar Sesión
+            </button>
+          </div>
         </section>
 
-        {/* Tarjeta de Suscripción */}
+        {/* Tarjeta de Membresía Twitch */}
         <section
-          class={`${glassPanel} p-6 relative overflow-hidden border-yellow-500/20`}
+          class={`${glassPanel} p-6 relative border-purple-500/30 bg-gradient-to-br from-purple-950/40 via-indigo-950/20 to-black/60`}
         >
-          <div class="absolute top-0 right-0 p-4 opacity-10 text-yellow-500">
+          <div class="absolute top-0 right-0 p-4 opacity-10 text-purple-400 pointer-events-none">
             <LucideCrown size={80} />
           </div>
 
           <h3
-            class="font-anton text-xl text-white uppercase mb-4 relative z-10 flex items-center gap-2"
+            class="font-anton text-lg text-white uppercase tracking-wide mb-4 relative z-10 flex items-center gap-2"
           >
-            <LucideCrown size={20} class="text-yellow-500" /> Membresía
+            <LucideCrown size={18} class="text-amber-400" /> Membresía Twitch
           </h3>
 
           <div class="relative z-10">
-            <div class="flex items-center gap-4 mb-4">
+            <div class="flex items-center gap-3.5 mb-4">
               <div
-                class="size-12 bg-[#9146FF] rounded-xl overflow-hidden flex items-center justify-center text-white shrink-0 shadow-lg shadow-purple-900/20"
+                class="size-11 bg-[#9146FF] rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-purple-900/30"
               >
-                <img src="/twitch-icon.png" />
+                <img src="/twitch-icon.png" alt="Twitch" class="size-6" />
               </div>
-              <div>
+              <div class="flex flex-col">
                 <span
-                  class={`block text-lg font-bold ${session.user.tier ? "text-yellow-400" : "text-white/60"}`}
+                  class={`block text-base font-bold uppercase tracking-wide ${
+                    session.user.tier ? "text-amber-400" : "text-white/60"
+                  }`}
                 >
                   {
                     session.user.tier
-                      ? `Tier ${session.user.tier}`
-                      : "Sin suscripción"
+                      ? `Suscriptor Tier ${session.user.tier}`
+                      : "Sin suscripción activa"
                   }
                 </span>
                 <span class="text-xs text-white/40">Twitch Subscriber</span>
@@ -148,7 +205,8 @@ const glassPanel =
                 <a
                   href="https://twitch.tv/subs/SaltoUruguayServer"
                   target="_blank"
-                  class="block w-full text-center py-2 rounded-lg bg-[#9146FF] hover:bg-[#7c2cf5] text-white font-bold text-sm transition-colors shadow-lg shadow-purple-900/30"
+                  rel="noopener noreferrer"
+                  class="block w-full text-center py-2.5 rounded-xl bg-gradient-to-r from-[#9146FF] to-[#7c2cf5] hover:from-[#7c2cf5] hover:to-[#6820d8] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-purple-900/40 border border-purple-400/30"
                 >
                   Suscribirse Ahora{" "}
                   <LucideExternalLink size={14} class="inline ml-1" />
@@ -159,7 +217,7 @@ const glassPanel =
         </section>
       </aside>
 
-      {/* PANEL PRINCIPAL */}
+      {/* PANEL PRINCIPAL SCROLLABLE */}
       <main class="min-w-0">
         <UserAccountLayout
           session={session}
