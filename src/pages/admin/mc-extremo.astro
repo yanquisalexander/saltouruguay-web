@@ -15,6 +15,8 @@ import {
   LucideEye,
   LucideSwords,
   LucideHistory,
+  LucideServer,
+  LucideSave,
 } from "lucide-preact";
 
 const session = await getSession(Astro.request);
@@ -113,6 +115,75 @@ const kpis = [
 
     {/* Status message */}
     <div id="sync-status" class="hidden rounded-2xl border text-sm font-rubik px-4 py-3.5"></div>
+
+    {/* DNS SRV — Cloudflare */}
+    <section class="relative rounded-3xl border border-white/10 bg-zinc-950/60 backdrop-blur-xl shadow-xl overflow-hidden">
+      <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent pointer-events-none"></div>
+      <div class="px-5 sm:px-6 py-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="size-10 rounded-xl bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center shrink-0">
+              <LucideServer size={18} class="text-emerald-300" />
+            </span>
+            <div class="min-w-0">
+              <h3 class="font-anton text-lg text-white uppercase tracking-wide leading-none">DNS SRV · Extremo</h3>
+              <p class="text-xs text-white/40 mt-1 font-mono truncate">_minecraft._tcp.extremo.play.saltouruguayserver.com · TTL 60s</p>
+            </div>
+          </div>
+          <button
+            id="srv-refresh-btn"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0"
+          >
+            <LucideRefreshCw size={14} />
+            Actualizar
+          </button>
+        </div>
+
+        <div id="srv-status" class="hidden rounded-2xl border text-sm font-rubik px-4 py-3 mb-4"></div>
+
+        <div class="rounded-2xl bg-black/40 border border-white/10 px-4 py-3.5 mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
+          <span class="text-[11px] font-bold uppercase tracking-widest text-white/40 shrink-0">Actual</span>
+          <span id="srv-current" class="font-mono text-emerald-200 truncate">Cargando…</span>
+          <span id="srv-meta" class="text-xs text-white/40 font-rubik sm:ml-auto shrink-0"></span>
+        </div>
+
+        <form id="srv-form" class="grid grid-cols-1 sm:grid-cols-[1fr_160px_auto] gap-2.5">
+          <label class="block">
+            <span class="text-[11px] font-bold uppercase tracking-widest text-white/40">Target</span>
+            <input
+              id="srv-target"
+              type="text"
+              placeholder="ej: br pools.host.com"
+              autocomplete="off"
+              spellcheck={false}
+              class="mt-1.5 w-full rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400/50 focus:bg-white/[0.07] outline-none px-3.5 py-2.5 text-sm font-mono text-white placeholder:text-white/25 transition-colors"
+            />
+          </label>
+          <label class="block">
+            <span class="text-[11px] font-bold uppercase tracking-widest text-white/40">Puerto</span>
+            <input
+              id="srv-port"
+              type="number"
+              min="1"
+              max="65535"
+              placeholder="25565"
+              class="mt-1.5 w-full rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400/50 focus:bg-white/[0.07] outline-none px-3.5 py-2.5 text-sm font-mono text-white placeholder:text-white/25 transition-colors"
+            />
+          </label>
+          <div class="flex items-end">
+            <button
+              type="submit"
+              id="srv-save-btn"
+              class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-emerald-950/50 border border-emerald-300/25 cursor-pointer"
+            >
+              <LucideSave size={15} />
+              Guardar
+            </button>
+          </div>
+        </form>
+        <p class="text-[11px] text-white/30 font-rubik mt-3">Priority y weight se conservan. TTL fijo en 60s para propagación rápida. El cambio redirige a los jugadores al próximo ping del server.</p>
+      </div>
+    </section>
 
     {/* Player Management */}
     <section class="relative rounded-3xl border border-white/10 bg-zinc-950/60 backdrop-blur-xl shadow-xl overflow-hidden">
@@ -271,5 +342,94 @@ const kpis = [
     modal?.addEventListener("click", (e) => {
       if (e.target === modal) modal?.close();
     });
+
+    // --- DNS SRV (Cloudflare) ---
+    const srvForm = document.getElementById("srv-form");
+    const srvRefreshBtn = document.getElementById("srv-refresh-btn");
+    const srvSaveBtn = document.getElementById("srv-save-btn") as HTMLButtonElement | null;
+    const srvStatus = document.getElementById("srv-status");
+    const srvCurrent = document.getElementById("srv-current");
+    const srvMeta = document.getElementById("srv-meta");
+    const srvTargetInput = document.getElementById("srv-target") as HTMLInputElement | null;
+    const srvPortInput = document.getElementById("srv-port") as HTMLInputElement | null;
+
+    function showSrvStatus(type: "loading" | "success" | "error", message: string) {
+      if (!srvStatus) return;
+      srvStatus.classList.remove("hidden");
+      srvStatus.className = `rounded-2xl border text-sm font-rubik px-4 py-3 mb-4 ${
+        type === "loading"
+          ? "bg-emerald-500/10 border-emerald-400/25 text-emerald-200"
+          : type === "success"
+            ? "bg-emerald-500/10 border-emerald-400/25 text-emerald-200"
+            : "bg-red-500/10 border-red-500/25 text-red-200"
+      }`;
+      srvStatus.textContent = message;
+    }
+
+    function renderSrv(record: any) {
+      if (srvCurrent) srvCurrent.textContent = `${record.target}:${record.port}`;
+      if (srvMeta) srvMeta.textContent = `prio ${record.priority} · peso ${record.weight} · TTL ${record.ttl}s`;
+      if (srvTargetInput) srvTargetInput.value = record.target ?? "";
+      if (srvPortInput) srvPortInput.value = String(record.port ?? "");
+    }
+
+    async function loadSrv() {
+      showSrvStatus("loading", "Obteniendo registro SRV…");
+      try {
+        const res = await fetch("/api/admin/mc-srv");
+        const data = await res.json();
+        if (!data.success) {
+          if (srvCurrent) srvCurrent.textContent = "—";
+          showSrvStatus("error", data.error || "Error al obtener el SRV");
+          return;
+        }
+        renderSrv(data.record);
+        srvStatus?.classList.add("hidden");
+      } catch {
+        if (srvCurrent) srvCurrent.textContent = "—";
+        showSrvStatus("error", "Error de conexión con Cloudflare");
+      }
+    }
+
+    srvRefreshBtn?.addEventListener("click", loadSrv);
+
+    srvForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const target = srvTargetInput?.value.trim() ?? "";
+      const port = Number(srvPortInput?.value);
+      if (!target || !Number.isInteger(port) || port < 1 || port > 65535) {
+        showSrvStatus("error", "Target y puerto válido (1–65535) requeridos");
+        return;
+      }
+      if (!confirm(`¿Apuntar el SRV a ${target}:${port}? Los jugadores se redirigen al próximo ping.`)) return;
+      if (srvSaveBtn) {
+        srvSaveBtn.disabled = true;
+        srvSaveBtn.classList.add("opacity-50", "pointer-events-none");
+      }
+      showSrvStatus("loading", `Actualizando SRV a ${target}:${port}…`);
+      try {
+        const res = await fetch("/api/admin/mc-srv", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target, port }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          renderSrv(data.record);
+          showSrvStatus("success", `SRV actualizado: ${data.record.target}:${data.record.port} (TTL ${data.record.ttl}s)`);
+        } else {
+          showSrvStatus("error", data.error || "Error al actualizar");
+        }
+      } catch {
+        showSrvStatus("error", "Error de conexión");
+      } finally {
+        if (srvSaveBtn) {
+          srvSaveBtn.disabled = false;
+          srvSaveBtn.classList.remove("opacity-50", "pointer-events-none");
+        }
+      }
+    });
+
+    loadSrv();
   </script>
 </AdminLayout>
