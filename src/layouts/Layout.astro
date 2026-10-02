@@ -83,7 +83,7 @@ preload?.push({
 
 const url = Astro.url.pathname;
 
-const shouldShowAds = false;
+const shouldShowAds = true;
   /* !import.meta.env.DEV &&
   !session?.user?.tier &&
   !session?.user?.isAdmin &&
@@ -213,14 +213,18 @@ const shouldShowAds = false;
     />
 
     {shouldShowAds && (
-    <script is:inline data-astro-rerun>
+    <script is:inline data-astro-rerun define:vars={{
+      testMode: import.meta.env.DEV ? "true" : "false",
+    }}>
     function loadAds() {
       // Evita cargarlo dos veces
-      if (document.querySelector('script[data-zone="11280903"]')) return;
+      if (document.querySelector('script[data-site-id="6abfb7eafb2e2f24e68c8410"]')) return;
 
       const script = document.createElement('script');
-      script.dataset.zone = '11281677';
-      script.src = 'https://n6wxm.com/vignette.min.js';
+      script.dataset.siteId = '6abfb7eafb2e2f24e68c8410';
+      script.dataset.testMode = testMode ?? "false";
+      script.async = true;
+      script.src = 'https://cdn.apitiny.net/scripts/v2.0/main.js';
 
       (document.body ?? document.documentElement).appendChild(script);
     }
@@ -231,6 +235,5 @@ const shouldShowAds = false;
   </script>
 )}
 
-<script src="https://cdn.apitiny.net/scripts/v2.0/main.js" data-site-id="6abfb7eafb2e2f24e68c8410" data-test-mode="false" async></script>
   </body>
 </html>
