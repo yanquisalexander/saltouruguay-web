@@ -8,7 +8,7 @@ import {
   LucideDatabase,
 } from "lucide-preact";
 
-const LATEST_UPDATE_DATE = new Date("2024-11-19").toLocaleDateString("es-UY", {
+const LATEST_UPDATE_DATE = new Date("2026-09-01").toLocaleDateString("es-UY", {
   year: "numeric",
   month: "long",
   day: "numeric",
@@ -183,12 +183,56 @@ export const prerender = true;
         </p>
       </section>
 
-      {/* Sección 4: Derechos */}
+      {/* Sección 4: Cookies y publicidad */}
       <section class="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8">
         <h2
           class="text-2xl font-anton text-white uppercase mb-4 flex items-center gap-3"
         >
-          <span class="text-blue-500">04.</span> Tus Derechos y Control
+          <span class="text-blue-500">04.</span> Cookies y publicidad
+        </h2>
+        <div class="space-y-4 text-white/60 text-sm font-rubik leading-relaxed">
+          <p>
+            Utilizamos cookies propias de sesión (inicio de sesión, preferencias
+            y seguridad) y un píxel de conteo anónimo de visitas
+            (LibreCounter) que no identifica usuarios. No vendemos tus datos.
+          </p>
+          <p>
+            En el futuro podremos mostrar anuncios mediante Google AdSense.
+            Google puede usar cookies para personalizar los anuncios según tus
+            visitas a este y otros sitios. Puedes informarte sobre cómo usa
+            Google tus datos en{" "}
+            <a
+              href="https://policies.google.com/technologies/partner-sites"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-blue-400 hover:text-blue-300 underline"
+            >
+              Cómo usa Google la información de sitios que utilizan sus servicios
+            </a>{" "}
+            y gestionar tus preferencias en{" "}
+            <a
+              href="https://adssettings.google.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-blue-400 hover:text-blue-300 underline"
+            >
+              Configuración de anuncios de Google
+            </a>
+            . Consulta también nuestra{" "}
+            <a href="/politica-cookies" class="text-blue-400 hover:text-blue-300 underline">
+              Política de Cookies
+            </a>
+            .
+          </p>
+        </div>
+      </section>
+
+      {/* Sección 5: Derechos */}
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8">
+        <h2
+          class="text-2xl font-anton text-white uppercase mb-4 flex items-center gap-3"
+        >
+          <span class="text-blue-500">05.</span> Tus Derechos y Control
         </h2>
         <p class="text-white/60 mb-4 font-rubik">
           Eres el dueño de tus datos. En cualquier momento puedes:
@@ -206,8 +250,11 @@ export const prerender = true;
           </span>
         </div>
         <p class="mt-6 text-sm text-white/40">
-          Para ejercer estos derechos, contáctanos a través de nuestro Discord
-          oficial o formulario de contacto.
+          Para ejercer estos derechos, escribinos a través de nuestra página de{" "}
+          <a href="/contacto" class="text-blue-400 hover:text-blue-300 underline">
+            contacto
+          </a>{" "}
+          o nuestro Discord oficial.
         </p>
       </section>
     </div>

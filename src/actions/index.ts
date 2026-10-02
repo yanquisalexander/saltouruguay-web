@@ -41,6 +41,7 @@ import { tournaments } from "./tournaments";
 import { acreconre } from "./acreconre";
 import { cumple } from "./cumple";
 import { onboarding } from "./users/onboarding";
+import { album } from "./album";
 
 
 
@@ -49,6 +50,7 @@ export const server = {
     acreconre,
     cumple,
     onboarding,
+    album,
     tournaments,
     notifications,
     saltogram,

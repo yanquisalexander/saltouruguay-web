@@ -8,7 +8,7 @@ import {
   LucideCopyright,
 } from "lucide-preact";
 
-const LATEST_UPDATE_DATE = new Date().toLocaleDateString("es-UY", {
+const LATEST_UPDATE_DATE = new Date("2026-09-01").toLocaleDateString("es-UY", {
   year: "numeric",
   month: "long",
   day: "numeric",
@@ -169,7 +169,33 @@ export const prerender = true;
         class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8 hover:border-purple-500/30 transition-colors"
       >
         <h2 class="text-xl font-anton text-white uppercase mb-4">
-          5. Limitación de Responsabilidad
+          5. Publicidad y enlaces externos
+        </h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            El sitio puede mostrar anuncios de Google AdSense u otros
+            patrocinadores, así como enlaces a plataformas externas (Twitch,
+            Discord). No controlamos el contenido ni las prácticas de esos
+            terceros; te recomendamos revisar sus propias políticas. Consulta
+            nuestra{" "}
+            <a href="/politica-cookies" class="text-purple-400 hover:text-purple-300 underline">
+              Política de Cookies
+            </a>{" "}
+            y la{" "}
+            <a href="/privacidad" class="text-purple-400 hover:text-purple-300 underline">
+              Política de Privacidad
+            </a>
+            .
+          </p>
+        </div>
+      </section>
+
+      {/* 6. Limitación de Responsabilidad */}
+      <section
+        class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8 hover:border-purple-500/30 transition-colors"
+      >
+        <h2 class="text-xl font-anton text-white uppercase mb-4">
+          6. Limitación de Responsabilidad
         </h2>
         <div class="prose prose-invert prose-sm max-w-none text-white/70">
           <p>
@@ -186,7 +212,7 @@ export const prerender = true;
       <div class="border-t border-white/10 pt-8 mt-12 text-center">
         <p class="text-white/40 text-sm font-rubik">
           ¿Tienes dudas sobre estos términos? <a
-            href="#"
+            href="/contacto"
             class="text-purple-400 hover:text-purple-300 underline"
             >Contáctanos</a
           >.

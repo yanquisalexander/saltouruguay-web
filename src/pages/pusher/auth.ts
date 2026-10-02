@@ -8,6 +8,7 @@ import type { APIContext } from "astro";
 import { getSession } from "auth-astro/server";
 
 const RULETA_PREFIX = "presence-ruleta-";
+const ALBUM_PREFIX = "private-album-";
 
 export const POST = async ({ params, request }: APIContext) => {
     const session = await getSession(request) as Session;
@@ -38,6 +39,16 @@ export const POST = async ({ params, request }: APIContext) => {
 
         if (!existing) {
             return new Response("Forbidden: not a room member", {
+                status: 403,
+            });
+        }
+    }
+
+    // Validate private-album-* channel ownership (only the owner can subscribe)
+    if (channelName.startsWith(ALBUM_PREFIX)) {
+        const ownerId = channelName.slice(ALBUM_PREFIX.length);
+        if (ownerId !== String(session.user.id)) {
+            return new Response("Forbidden: not your album channel", {
                 status: 403,
             });
         }

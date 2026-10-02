@@ -25,6 +25,19 @@ export const IS_VOTES_OPEN = () => nowInUruguay() > VOTES_OPEN_TIMESTAMP && nowI
 export const SITEMAP_EXCLUDED_PATHS = [
     '/admin',
     '/community/member-card',
+    '/api',
+    '/auth',
+    '/oauth',
+    '/pusher',
+    '/gamecenter',
+    '/overlay',
+    '/debate-overlay',
+    '/boton/overlay',
+    '/guerra-streamers/overlay',
+    '/onboarding',
+    '/two-factor',
+    '/suspended',
+    '/usuario',
 ]
 
 export const CHRISTMAS_MODE = false;

@@ -9,9 +9,10 @@ interface Props {
   title?: string;
   description?: string;
   hideSidebar?: boolean;
+  noindex?: boolean;
 }
 
-const { title, description, hideSidebar = false } = Astro.props;
+const { title, description, hideSidebar = false, noindex = true } = Astro.props;
 const session = await getSession(Astro.request);
 ---
 
@@ -21,6 +22,7 @@ const session = await getSession(Astro.request);
   mainClassname=""
   hideHeader
   hideFooter
+  noindex={noindex}
 >
   {/* Fondo Global */}
   <div class="fixed inset-0 -z-10 bg-[#050505]">

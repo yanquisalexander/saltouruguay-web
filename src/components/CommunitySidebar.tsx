@@ -5,6 +5,7 @@ import {
     LucidePiggyBank,
     LucideTrophy,
     LucidePawPrint,
+    LucideAlbum,
 } from 'lucide-preact';
 
 interface SidebarProps {
@@ -17,6 +18,7 @@ const MENU_ITEMS = [
     { label: "Banco", href: "/comunidad/banco", icon: LucidePiggyBank, accent: "text-yellow-400", bg: "bg-yellow-500/10" },
     { label: "Mascota", href: "/comunidad/mascota", icon: LucidePawPrint, accent: "text-pink-400", bg: "bg-pink-500/10" },
     { label: "Logros", href: "/comunidad/logros", icon: LucideTrophy, accent: "text-green-400", bg: "bg-green-500/10" },
+    { label: "Álbum", href: "/comunidad/album", icon: LucideAlbum, accent: "text-amber-400", bg: "bg-amber-500/10" },
 ];
 
 export default function CommunitySidebar({ mobile }: SidebarProps) {

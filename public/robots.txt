@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /oauth/
+Disallow: /pusher/
+Disallow: /admin/
+Disallow: /gamecenter/
+Disallow: /overlay
+Disallow: /debate-overlay
+Disallow: /boton/overlay
+Disallow: /guerra-streamers/overlay
+Disallow: /onboarding
+Disallow: /two-factor
+Disallow: /suspended
+Disallow: /usuario
+
+Sitemap: https://saltouruguayserver.com/sitemap-index.xml

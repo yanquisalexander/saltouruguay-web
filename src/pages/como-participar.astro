@@ -1,0 +1,104 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { LucideListChecks } from "lucide-preact";
+
+export const prerender = true;
+---
+
+<Layout
+  title="Cómo participar"
+  description="Guía paso a paso para unirte a la comunidad SaltoUruguayServer: ver streams, crear tu cuenta, inscribirte en torneos y eventos, y usar Member Cards, Saltogram y más."
+>
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"></div>
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-emerald-900/10 blur-[120px] rounded-full pointer-events-none"></div>
+  </div>
+
+  <main class="max-w-4xl mx-auto px-4 py-16">
+    <header class="text-center mb-12 space-y-4">
+      <div class="inline-flex items-center justify-center p-4 bg-emerald-500/10 rounded-2xl text-emerald-400 mb-2 border border-emerald-500/20">
+        <LucideListChecks size={32} />
+      </div>
+      <h1 class="text-4xl md:text-5xl font-anton text-white uppercase tracking-wide">
+        Cómo participar
+      </h1>
+      <p class="text-white/50 font-rubik max-w-xl mx-auto">
+        Todo lo que necesitás para pasar de espectador a protagonista: ver,
+        registrarte, inscribirte y jugar.
+      </p>
+    </header>
+
+    <div class="space-y-8">
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">1. Mirá los streams (sin cuenta)</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            La puerta de entrada es el canal de Twitch{" "}
+            <a href="https://twitch.tv/saltouruguayserver" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:text-emerald-300 underline">saltouruguayserver</a>.
+            Ver es gratis y no necesitás registrarte. En la portada de este
+            sitio verás si hay directo en vivo. La mayoría de los anuncios de
+            torneos y eventos se hacen primero en el stream y en Discord.
+          </p>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">2. Creá tu cuenta en el sitio</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>Para inscribirte en torneos, votar o usar las funciones de comunidad necesitás iniciar sesión. Usamos cuentas existentes, no inventamos otra contraseña:</p>
+          <ol>
+            <li>Hacé clic en “Iniciar sesión” en el encabezado del sitio.</li>
+            <li>Elegí entrar con <strong>Twitch</strong> o con <strong>Discord</strong>.</li>
+            <li>Autorizá el acceso básico (nombre público y avatar).</li>
+            <li>Completá el onboarding: elegí tu nombre visible y aceptá el reglamento.</li>
+          </ol>
+          <p>
+            Solo guardamos tu ID público, nombre y avatar. Detalles en la{" "}
+            <a href="/privacidad" class="text-emerald-400 hover:text-emerald-300 underline">Política de Privacidad</a>.
+          </p>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">3. Inscribite en torneos y eventos</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <ul>
+            <li><strong>Torneos:</strong> entrá a <a href="/torneos" class="text-emerald-400 hover:text-emerald-300 underline">/torneos</a>, elegí la competencia abierta y tocá inscribirte. Revisá juego, plataforma, fechas y cupos en la ficha de cada torneo.</li>
+            <li><strong>Eventos:</strong> la <a href="/eventos" class="text-emerald-400 hover:text-emerald-300 underline">cartelera</a> muestra qué viene: watch parties, bingos, Guerra de Streamers, SaltoAwards. Algunos requieren inscripción previa, otros son abiertos.</li>
+            <li><strong>Liga Fortnite:</strong> tiene divisionales (Clasificatoria, Semi Profesional y Profesional) y reglamento propio en <a href="/liga-fortnite" class="text-emerald-400 hover:text-emerald-300 underline">/liga-fortnite</a>.</li>
+            <li><strong>SaltoCraft Extremo:</strong> el evento de Minecraft tiene su página en <a href="/comunidad/extremo4" class="text-emerald-400 hover:text-emerald-300 underline">SaltoCraft Extremo 4</a> con requisitos e IP del servidor.</li>
+          </ul>
+          <p>Revisá siempre el <a href="/reglamento" class="text-emerald-400 hover:text-emerald-300 underline">reglamento</a> antes de inscribirte: formatos, sanciones y criterios de desempate están ahí.</p>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">4. Activá tu vida en la comunidad</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <ul>
+            <li><strong>Member Card:</strong> tu identidad visual en la comunidad, personalizable y coleccionable.</li>
+            <li><strong>Saltogram:</strong> publicá momentos, memes y clips, y seguí a otros miembros.</li>
+            <li><strong>Logros y SaltoCoins:</strong> participando desbloqueás medallas y moneda interna para el Banco Saltano.</li>
+            <li><strong>Ruleta Loca y Arcade:</strong> minijuegos para pasar el rato entre torneos.</li>
+          </ul>
+          <p>Todo está reunido en el <a href="/comunidad" class="text-emerald-400 hover:text-emerald-300 underline">hub de comunidad</a>.</p>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">Dudas comunes</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            ¿Tiene costo? No: ver y registrarse es gratis. Algunos torneos
+            pueden pedir requisitos de juego (tener el juego, cuenta, etc.) que
+            se indican en cada ficha. ¿Hay límite de edad? Los streams siguen
+            las normas de Twitch; los torneos pueden fijar edades mínimas según
+            el juego. Más respuestas en las{" "}
+            <a href="/preguntas-frecuentes" class="text-emerald-400 hover:text-emerald-300 underline">preguntas frecuentes</a>{" "}
+            o escribinos por <a href="/contacto" class="text-emerald-400 hover:text-emerald-300 underline">contacto</a>.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+</Layout>

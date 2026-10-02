@@ -1428,3 +1428,54 @@ export const susOAuthTokensRelations = relations(SUSOAuthTokensTable, ({ one }) 
         references: [UsersTable.id],
     }),
 }));
+
+/*
+    Álbum de Figuritas Coleccionables (Temporada 1)
+    El catálogo vive en código (src/consts/Figuritas.ts).
+    - user_sticker_inventory: el álbum (quantity > 1 = repetidas, base para futuro intercambio)
+    - sticker_packs: sobres sin abrir / historial (abrir es idempotente)
+    - sticker_drop_windows: idempotencia del cron cada 15 min
+*/
+
+export const UserStickerInventoryTable = pgTable('user_sticker_inventory', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => UsersTable.id, { onDelete: 'cascade' }),
+    stickerId: integer('sticker_id').notNull(),
+    quantity: integer('quantity').notNull().default(1),
+    firstObtainedAt: timestamp('first_obtained_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+}, (t) => ({
+    uniqueUserSticker: unique().on(t.userId, t.stickerId),
+}));
+
+export const StickerPacksTable = pgTable('sticker_packs', {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').notNull().references(() => UsersTable.id, { onDelete: 'cascade' }),
+    tier: varchar('tier', { enum: ['comun', 'raro', 'epico', 'legendario'] }).notNull().default('comun'),
+    source: varchar('source', { enum: ['stream_drop', 'purchase'] }).notNull().default('stream_drop'),
+    opened: boolean('opened').notNull().default(false),
+    cards: jsonb('cards').$type<number[]>(),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    openedAt: timestamp('opened_at'),
+});
+
+export const StickerDropWindowsTable = pgTable('sticker_drop_windows', {
+    windowKey: text('window_key').primaryKey(),
+    streamId: text('stream_id'),
+    packsGranted: integer('packs_granted').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+});
+
+export const userStickerInventoryRelations = relations(UserStickerInventoryTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [UserStickerInventoryTable.userId],
+        references: [UsersTable.id],
+    }),
+}));
+
+export const stickerPacksRelations = relations(StickerPacksTable, ({ one }) => ({
+    user: one(UsersTable, {
+        fields: [StickerPacksTable.userId],
+        references: [UsersTable.id],
+    }),
+}));

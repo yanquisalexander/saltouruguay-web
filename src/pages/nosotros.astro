@@ -1,0 +1,133 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { LucideUsers, LucideTrophy, LucideGamepad2, LucideHeart } from "lucide-preact";
+
+export const prerender = true;
+---
+
+<Layout
+  title="Nosotros"
+  description="Conocé a la comunidad SaltoUruguayServer: gaming uruguayo desde Salto, streams en Twitch, torneos de Minecraft, Fortnite y Rocket League, y eventos como la Guerra de Streamers."
+>
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"></div>
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-violet-900/10 blur-[120px] rounded-full pointer-events-none"></div>
+  </div>
+
+  <main class="max-w-4xl mx-auto px-4 py-16">
+    <header class="text-center mb-12 space-y-4">
+      <div class="inline-flex items-center justify-center p-4 bg-violet-500/10 rounded-2xl text-violet-400 mb-2 border border-violet-500/20">
+        <LucideUsers size={32} />
+      </div>
+      <h1 class="text-4xl md:text-5xl font-anton text-white uppercase tracking-wide">
+        Nosotros
+      </h1>
+      <p class="text-white/50 font-rubik max-w-xl mx-auto">
+        La comunidad de gaming nacida en Salto, Uruguay, que reúne a cientos de
+        jugadores alrededor de streams, torneos y eventos en vivo.
+      </p>
+    </header>
+
+    <div class="space-y-8">
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">Quiénes somos</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            <strong>SaltoUruguayServer</strong> es una comunidad de gaming
+            uruguaya nacida en la ciudad de Salto alrededor del canal de Twitch{" "}
+            <a href="https://twitch.tv/saltouruguayserver" target="_blank" rel="noopener noreferrer" class="text-violet-400 hover:text-violet-300 underline">saltouruguayserver</a>.
+            Lo que empezó como un grupo de amigos jugando Minecraft creció hasta
+            convertirse en una de las comunidades de stream más activas de la
+            región, con servidor de Discord, torneos propios y eventos en vivo
+            que reúnen a jugadores de todo Uruguay y países vecinos.
+          </p>
+          <p>
+            Nuestra casa es el stream: allí nos juntamos a jugar, charlar y
+            organizar cada evento. Fuera del directo, la actividad sigue en
+            Discord y en esta web, donde gestionamos inscripciones, tablas de
+            posiciones, votaciones y perfiles de miembros.
+          </p>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-6 flex items-center gap-3">
+          <LucideGamepad2 className="text-violet-500" size={24} /> Qué hacemos
+        </h2>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+            <h3 class="text-white font-bold mb-2 flex items-center gap-2"><LucideTrophy size={16} class="text-amber-400" /> Torneos</h3>
+            <p class="text-white/60 text-sm">
+              Liga Fortnite junto a ACRECONRE con tres divisionales, torneos de
+              Rocket League, SaltoCraft Extremo en Minecraft —el desafío más
+              grande de la comunidad— y copas extraordinarias a lo largo del año.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+            <h3 class="text-white font-bold mb-2">Eventos en vivo</h3>
+            <p class="text-white/60 text-sm">
+              Guerra de Streamers, SaltoAwards con votación de la comunidad,
+              bingos en stream, watch parties y reuniones presenciales. La{" "}
+              <a href="/eventos" class="text-violet-400 hover:text-violet-300 underline">cartelera de eventos</a>{" "}
+              se actualiza durante todo el año.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+            <h3 class="text-white font-bold mb-2">Comunidad diaria</h3>
+            <p class="text-white/60 text-sm">
+              Saltogram, nuestra red social interna; Member Cards
+              personalizables; mascotas virtuales; SaltoCoins y Banco Saltano;
+              salón de logros y minijuegos como la Ruleta Loca.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+            <h3 class="text-white font-bold mb-2 flex items-center gap-2"><LucideHeart size={16} class="text-red-400" /> Valores</h3>
+            <p class="text-white/60 text-sm">
+              Juego limpio, respeto y cero tolerancia al acoso. Competimos en
+              serio pero el objetivo es divertirnos y que nadie se quede afuera.
+              Las reglas están en el <a href="/reglamento" class="text-violet-400 hover:text-violet-300 underline">reglamento</a>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">Cómo participar</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            Mirar los streams es gratis y sin cuenta. Para jugar torneos,
+            votar o usar las funciones de comunidad solo necesitás una cuenta de
+            Twitch o Discord para iniciar sesión. Tenemos una guía paso a paso
+            en <a href="/como-participar" class="text-violet-400 hover:text-violet-300 underline">cómo participar</a> y
+            respuestas a dudas comunes en las{" "}
+            <a href="/preguntas-frecuentes" class="text-violet-400 hover:text-violet-300 underline">preguntas frecuentes</a>.
+          </p>
+          <p>
+            Si tenés consultas, escribinos por la página de{" "}
+            <a href="/contacto" class="text-violet-400 hover:text-violet-300 underline">contacto</a>{" "}
+            o sumate a nuestro{" "}
+            <a href="https://discord.gg/XwHSRRwnzS" target="_blank" rel="noopener noreferrer" class="text-violet-400 hover:text-violet-300 underline">Discord oficial</a>.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="application/ld+json" is:inline>
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "SaltoUruguayServer",
+      "url": "https://saltouruguayserver.com/",
+      "logo": "https://saltouruguayserver.com/favicon.svg",
+      "description": "Comunidad de gaming uruguaya de Salto: streams en Twitch, torneos de Minecraft, Fortnite y Rocket League, y eventos en vivo.",
+      "sameAs": [
+        "https://twitch.tv/saltouruguayserver",
+        "https://discord.gg/XwHSRRwnzS",
+        "https://instagram.com/saltouruguayserver",
+        "https://x.com/SaltoUruguayS",
+        "https://www.youtube.com/channel/UCjDZNkQjIAHghGx-2cH6f0g"
+      ]
+    }
+  </script>
+</Layout>

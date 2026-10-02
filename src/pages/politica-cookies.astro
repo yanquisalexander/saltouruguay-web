@@ -1,0 +1,130 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { LucideCookie } from "lucide-preact";
+
+export const prerender = true;
+
+const LATEST_UPDATE_DATE = new Date("2026-09-01").toLocaleDateString("es-UY", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+---
+
+<Layout
+  title="Política de Cookies"
+  description="Qué cookies usa SaltoUruguayServer, para qué sirven y cómo gestionarlas, incluyendo la futura publicidad de Google AdSense."
+>
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"></div>
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-amber-900/10 blur-[120px] rounded-full pointer-events-none"></div>
+  </div>
+
+  <main class="max-w-4xl mx-auto px-4 py-16">
+    <header class="text-center mb-12 space-y-4">
+      <div class="inline-flex items-center justify-center p-4 bg-amber-500/10 rounded-2xl text-amber-400 mb-2 border border-amber-500/20">
+        <LucideCookie size={32} />
+      </div>
+      <h1 class="text-4xl md:text-5xl font-anton text-white uppercase tracking-wide">
+        Política de <span class="text-transparent bg-clip-text bg-linear-to-r from-amber-400 to-orange-400">Cookies</span>
+      </h1>
+      <p class="text-white/50 font-rubik max-w-xl mx-auto">
+        Explicamos con lenguaje claro qué cookies y tecnologías similares usa
+        este sitio, para qué sirven y cómo puedes controlarlas.
+      </p>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/40 text-xs font-mono">
+        <span>ÚLTIMA ACTUALIZACIÓN:</span>
+        <span class="text-white">{LATEST_UPDATE_DATE}</span>
+      </div>
+    </header>
+
+    <div class="space-y-8">
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">1. ¿Qué son las cookies?</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            Las cookies son pequeños archivos que un sitio guarda en tu
+            dispositivo para recordar tus preferencias, mantener tu sesión
+            iniciada o entender cómo se usa el sitio. También existen
+            tecnologías similares como el almacenamiento local del navegador o
+            píxeles de conteo.
+          </p>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">2. Qué usamos en este sitio</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <ul>
+            <li>
+              <strong>Cookies propias de sesión y seguridad:</strong> mantienen
+              tu inicio de sesión (Twitch/Discord), recuerdan preferencias como
+              el tema oscuro y protegen contra abusos. Sin ellas el sitio no
+              puede funcionar.
+            </li>
+            <li>
+              <strong>Infraestructura:</strong> nuestros proveedores de hosting
+              y base de datos (Vercel, Neon, Upstash) y el servicio de tiempo
+              real (Pusher) pueden usar cookies técnicas para operar y proteger
+              el servicio.
+            </li>
+            <li>
+              <strong>Conteo anónimo de visitas:</strong> usamos un píxel de
+              LibreCounter para estadísticas agregadas de visitas. No identifica
+              usuarios ni se usa con fines publicitarios.
+            </li>
+            <li>
+              <strong>Publicidad (futura):</strong> si activamos Google AdSense,
+              Google podrá usar cookies para mostrar anuncios y medir su
+              rendimiento. Puedes ver cómo usa Google estos datos en{" "}
+              <a
+                href="https://policies.google.com/technologies/partner-sites"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-amber-400 hover:text-amber-300 underline"
+              >
+                Cómo usa Google la información de sitios que utilizan sus servicios
+              </a>
+              .
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">3. Cómo gestionarlas</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            Puedes bloquear o eliminar cookies desde la configuración de tu
+            navegador. Ten en cuenta que bloquear las cookies de sesión impedirá
+            iniciar sesión y participar en torneos o votaciones.
+          </p>
+          <p>
+            Para la publicidad de Google, puedes gestionar tus preferencias en{" "}
+            <a
+              href="https://adssettings.google.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-amber-400 hover:text-amber-300 underline"
+            >
+              Configuración de anuncios de Google
+            </a>
+            .
+          </p>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">4. Contacto</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            Si tienes dudas sobre esta política, escríbenos desde la página de{" "}
+            <a href="/contacto" class="text-amber-400 hover:text-amber-300 underline">contacto</a>.
+            También puedes leer nuestra{" "}
+            <a href="/privacidad" class="text-amber-400 hover:text-amber-300 underline">Política de Privacidad</a>.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+</Layout>

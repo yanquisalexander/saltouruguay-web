@@ -158,6 +158,15 @@ export const PUSHER_EVENTS_RULETA = {
   GAME_STALEMATE: 'game:stalemate',
 } as const;
 
+export const PUSHER_CHANNELS_ALBUM = {
+  USER: (userId: number) => `private-album-${userId}`,
+} as const;
+
+export const PUSHER_EVENTS_ALBUM = {
+  PACK_RECEIVED: 'album:pack-received',
+  PACK_OPENED: 'album:pack-opened',
+} as const;
+
 export const PUSHER_CHANNELS_BOTON = {
   GAME: 'boton-game',
 } as const;

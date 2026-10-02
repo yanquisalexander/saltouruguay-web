@@ -13,6 +13,6 @@ const user = authSession ? {
 } : null;
 ---
 
-<Layout title="Feliz Cumpleaños — Salto Uruguay" description="Deja tu mensaje de cumpleaños para SaltoUruguayServer" mainClassname="px-6 sm:px-10 pt-24 pb-20">
+<Layout title="Feliz Cumpleaños — Salto Uruguay" description="Deja tu mensaje de cumpleaños para SaltoUruguayServer" mainClassname="px-6 sm:px-10 pt-24 pb-20" noindex>
   <BirthdayWall user={user} client:only="preact" />
 </Layout>

@@ -1,0 +1,40 @@
+---
+import CommunityLayout from "@/layouts/CommunityLayout.astro";
+import { getSession } from "auth-astro/server";
+import { AlbumApp } from "@/components/album/AlbumApp";
+import { getAlbum, getUnopenedPacks } from "@/utils/album";
+import { BancoSaltanoService } from "@/services/banco-saltano";
+
+const authSession = await getSession(Astro.request);
+
+if (!authSession) {
+  return Astro.redirect("/signin?redirect=/comunidad/album");
+}
+
+const userId = parseInt(authSession.user.id);
+const [albumData, packs] = await Promise.all([
+  getAlbum(userId),
+  getUnopenedPacks(userId),
+]);
+
+let balance = 0;
+try {
+  const summary = await BancoSaltanoService.getAccountSummary(userId);
+  balance = summary.balance;
+} catch {
+  balance = 0;
+}
+---
+
+<CommunityLayout title="Álbum de Figuritas" hideSidebar>
+  <AlbumApp
+    initialEntries={albumData.entries}
+    initialCollected={albumData.collected}
+    initialTotal={albumData.total}
+    initialDuplicates={albumData.duplicates}
+    initialPacks={packs}
+    initialBalance={balance}
+    userId={userId}
+    client:only
+  />
+</CommunityLayout>

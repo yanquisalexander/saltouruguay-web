@@ -1,0 +1,121 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { LucideShieldAlert } from "lucide-preact";
+
+export const prerender = true;
+
+const LATEST_UPDATE_DATE = new Date("2026-09-01").toLocaleDateString("es-UY", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+---
+
+<Layout
+  title="Reglamento"
+  description="Reglamento de la comunidad SaltoUruguayServer: conducta, juego limpio, torneos, sanciones y apelaciones."
+>
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"></div>
+    <div class="absolute bottom-0 right-1/2 translate-x-1/2 w-[600px] h-[400px] bg-red-900/10 blur-[120px] rounded-full pointer-events-none"></div>
+  </div>
+
+  <main class="max-w-4xl mx-auto px-4 py-16">
+    <header class="text-center mb-12 space-y-4">
+      <div class="inline-flex items-center justify-center p-4 bg-red-500/10 rounded-2xl text-red-400 mb-2 border border-red-500/20">
+        <LucideShieldAlert size={32} />
+      </div>
+      <h1 class="text-4xl md:text-5xl font-anton text-white uppercase tracking-wide">
+        Reglamento
+      </h1>
+      <p class="text-white/50 font-rubik max-w-xl mx-auto">
+        Las reglas que mantienen la competencia justa y la comunidad sana.
+        Si participás, se aplica.
+      </p>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/40 text-xs font-mono">
+        <span>VIGENCIA DESDE:</span>
+        <span class="text-white">{LATEST_UPDATE_DATE}</span>
+      </div>
+    </header>
+
+    <div class="space-y-8">
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">1. Conducta general</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>En el sitio, el Discord, el chat de Twitch y los servidores de juego está prohibido:</p>
+          <ul>
+            <li>Acoso, insultos, discriminación o amenazas hacia cualquier persona.</li>
+            <li>Spam, publicidad no autorizada o flood en chats y foros.</li>
+            <li>Suplantar al staff o a otros miembros.</li>
+            <li>Publicar contenido sexual, gore o no apto para el público del stream.</li>
+            <li>Compartir datos privados de terceros (doxing).</li>
+            <li>Evadir sanciones con cuentas alternativas.</li>
+          </ul>
+          <p>El staff puede moderar mensajes, silenciar o expulsar temporalmente para cortar una situación en curso.</p>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">2. Juego limpio en torneos</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <ul>
+            <li>Prohibidos cheats, hacks, macros, exploits y cualquier software o bug que dé ventaja.</li>
+            <li>Prohibido el smurfing (jugar con cuenta de menor nivel para falsear divisionales) y el boosting (que otro juegue tu cuenta).</li>
+            <li>Respetá formatos, horarios y métodos de reporte de resultados de cada torneo. La ficha de cada torneo en <a href="/torneos" class="text-red-400 hover:text-red-300 underline">/torneos</a> detalla reglas específicas que complementan este reglamento.</li>
+            <li>Las decisiones arbitrales durante un partido son finales; los reclamos se presentan después por los canales oficiales.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">3. Inscripciones y elegibilidad</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <ul>
+            <li>Cada torneo publica sus requisitos: juego, plataforma, edad mínima, cupos y fechas. Inscribirse implica aceptarlos.</li>
+            <li>Los datos de inscripción deben ser veraces (nick, cuenta, equipo). Datos falsos pueden anular tu participación.</li>
+            <li>Si no te presentás sin avisar, el staff puede dar walkover al rival y limitar tus próximas inscripciones.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">4. Sanciones</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>Según la gravedad y la reincidencia, aplicamos:</p>
+          <ol>
+            <li>Apercibimiento privado.</li>
+            <li>Quita de puntos, derrota administrativa o descalificación del torneo.</li>
+            <li>Suspensión temporal de la cuenta del sitio y/o Discord.</li>
+            <li>Expulsión permanente y veto de futuros eventos.</li>
+          </ol>
+          <p>Las trampas comprobadas y el doxing implican como mínimo descalificación y suspensión.</p>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">5. Apelaciones</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            Podés apelar una sanción escribiendo desde la página de{" "}
+            <a href="/contacto" class="text-red-400 hover:text-red-300 underline">contacto</a>{" "}
+            dentro de los 7 días, indicando fecha, torneo o mensaje involucrado y
+            tu versión con pruebas (clips, capturas). El staff revisa y responde;
+            la segunda revisión es definitiva.
+          </p>
+        </div>
+      </section>
+
+      <section class="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 md:p-8">
+        <h2 class="text-xl font-anton text-white uppercase mb-4">6. Relación con los Términos</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-white/70">
+          <p>
+            Este reglamento complementa los{" "}
+            <a href="/terminos" class="text-red-400 hover:text-red-300 underline">Términos y Condiciones</a>.
+            Ante contradicción sobre cuentas, privacidad o responsabilidad
+            legal, prevalecen los Términos.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+</Layout>

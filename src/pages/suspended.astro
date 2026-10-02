@@ -20,7 +20,7 @@ if (!session.user.isSuspended) {
 const suspension = await getUserSuspension(session.user.id);
 ---
 
-<Layout hideHeader title="Tu cuenta ha sido suspendida">
+<Layout hideHeader title="Tu cuenta ha sido suspendida" noindex>
   <div
     class="bg-black/20 rounded-2xl mt-32 p-8 flex flex-col items-center border border-white/20 ring-4 ring-black/20 border-dotted mx-auto max-w-md"
   >

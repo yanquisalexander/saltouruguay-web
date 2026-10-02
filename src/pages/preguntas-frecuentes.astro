@@ -1,0 +1,108 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { LucideCircleHelp } from "lucide-preact";
+
+export const prerender = true;
+
+const FAQS = [
+  {
+    q: "¿Qué es SaltoUruguayServer?",
+    a: "Es una comunidad de gaming nacida en Salto, Uruguay, organizada alrededor del canal de Twitch saltouruguayserver. Organizamos streams, torneos (Minecraft, Fortnite, Rocket League), eventos como la Guerra de Streamers y los SaltoAwards, y mantenemos espacios propios como Discord, Saltogram y esta web.",
+  },
+  {
+    q: "¿Ver los streams y registrarse tiene costo?",
+    a: "No. Ver los streams es gratis y crear tu cuenta en el sitio con Twitch o Discord también. Solo necesitás tener los juegos o cuentas que pida cada torneo (por ejemplo, el juego correspondiente y su cuenta online).",
+  },
+  {
+    q: "¿Cómo creo mi cuenta?",
+    a: "Tocá 'Iniciar sesión' en el encabezado y elegí entrar con Twitch o Discord. Solo guardamos tu ID público, nombre visible y avatar. Tenés la guía completa en /como-participar y los detalles de datos en /privacidad.",
+  },
+  {
+    q: "¿Cómo me inscribo en un torneo?",
+    a: "Entrá a /torneos, abrí la ficha del torneo abierto y tocá inscribirte estando logueado. Cada ficha indica juego, plataforma, fechas, cupos y formato. Para la Liga Fortnite mirá también /liga-fortnite y para Minecraft la página de SaltoCraft Extremo 4.",
+  },
+  {
+    q: "¿Qué pasa si no puedo asistir a mi partido?",
+    a: "Avisá lo antes posible por Discord. Si no te presentás sin aviso, el rival puede ganar por walkover y el staff puede limitar tus próximas inscripciones, según el reglamento.",
+  },
+  {
+    q: "¿Hay reglas de conducta?",
+    a: "Sí. Están el reglamento (/reglamento) y los términos (/terminos): nada de acoso, trampas, spam, suplantación ni contenido no apto. Las trampas comprobadas implican descalificación como mínimo.",
+  },
+  {
+    q: "¿Cómo apelo una sanción?",
+    a: "Escribinos desde /contacto dentro de los 7 días con fecha, torneo involucrado y pruebas (clips, capturas). Revisamos el caso y la segunda revisión es definitiva.",
+  },
+  {
+    q: "¿Qué son las SaltoCoins, la Member Card y Saltogram?",
+    a: "Son funciones de comunidad: la Member Card es tu identidad visual, Saltogram es nuestra red social interna, y las SaltoCoins con el Banco Saltano más los logros premian tu participación. Todo se gestiona desde el hub en /comunidad.",
+  },
+  {
+    q: "¿Cómo cuidan mis datos?",
+    a: "Solo pedimos datos públicos de tu perfil (ID, nombre, avatar), no guardamos contraseñas y no vendemos datos. Podés pedir acceso o eliminación total desde /contacto. Detalles en /privacidad y /politica-cookies.",
+  },
+  {
+    q: "¿El sitio va a mostrar anuncios?",
+    a: "Estamos trabajando para cumplir las políticas de Google AdSense. Si activamos anuncios, estarán etiquetados y podrás gestionar tus preferencias en la Configuración de anuncios de Google. Más info en /politica-cookies.",
+  },
+  {
+    q: "¿Cómo los contacto?",
+    a: "Discord es lo más rápido para el día a día; para temas formales (apelaciones, privacidad, prensa) escribinos por /contacto indicando tu usuario, fecha y pruebas. Respondemos habitualmente en 72 horas.",
+  },
+  {
+    q: "¿Dónde veo próximos eventos?",
+    a: "En la cartelera de /eventos y en los anuncios del stream y Discord. Cada evento tiene su ficha con modalidad (online/presencial), programa y cómo asistir.",
+  },
+];
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQS.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+};
+---
+
+<Layout
+  title="Preguntas frecuentes"
+  description="Respuestas sobre la comunidad SaltoUruguayServer: cuentas, torneos, eventos, reglas, datos personales y contacto."
+>
+  <div class="fixed inset-0 -z-10 bg-[#050505]">
+    <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"></div>
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-indigo-900/10 blur-[120px] rounded-full pointer-events-none"></div>
+  </div>
+
+  <main class="max-w-4xl mx-auto px-4 py-16">
+    <header class="text-center mb-12 space-y-4">
+      <div class="inline-flex items-center justify-center p-4 bg-indigo-500/10 rounded-2xl text-indigo-400 mb-2 border border-indigo-500/20">
+        <LucideCircleHelp size={32} />
+      </div>
+      <h1 class="text-4xl md:text-5xl font-anton text-white uppercase tracking-wide">
+        Preguntas frecuentes
+      </h1>
+      <p class="text-white/50 font-rubik max-w-xl mx-auto">
+        Lo esencial sobre cuentas, torneos, eventos, reglas y datos. Si falta
+        tu duda, escribinos por <a href="/contacto" class="text-indigo-400 hover:text-indigo-300 underline">contacto</a>.
+      </p>
+    </header>
+
+    <div class="space-y-4">
+      {
+        FAQS.map((f) => (
+          <details class="group bg-[#0a0a0a] border border-white/10 rounded-2xl open:border-indigo-500/30 transition-colors">
+            <summary class="cursor-pointer list-none p-5 md:p-6 flex items-center justify-between gap-4 text-white font-bold text-sm md:text-base">
+              <span>{f.q}</span>
+              <span class="shrink-0 size-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-indigo-400 group-open:rotate-45 transition-transform text-xl leading-none">+</span>
+            </summary>
+            <p class="px-5 md:px-6 pb-5 md:pb-6 text-white/60 text-sm font-rubik leading-relaxed">{f.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </main>
+
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(faqJsonLd)} />
+</Layout>

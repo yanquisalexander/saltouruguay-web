@@ -4,6 +4,7 @@ import tabla from "@/data/tabla-posiciones.json";
 import { getSession } from "auth-astro/server";
 
 const session = await getSession(Astro.request);
+const isInternalIframe = Astro.url.searchParams.get("isInternalIframe") === "true";
 const isAdmin =
   (session?.user as any)?.admin === true ||
   (session?.user as any)?.isAdmin === true;
@@ -89,7 +90,7 @@ const gruposFinales = ["A", "B", "C", "D"].map((g) => ({
 }));
 ---
 
-<Layout hideHeader title="Tabla de Posiciones" mainClassname="px-6 sm:px-10 pt-24 pb-32">
+<Layout hideHeader title="Tabla de Posiciones" mainClassname="px-6 sm:px-10 pt-24 pb-32" noindex={isInternalIframe}>
   <section class="max-w-7xl mx-auto">
     <div class="text-center mb-12">
       <p class="uppercase tracking-widest text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg">

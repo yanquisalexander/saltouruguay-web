@@ -40,6 +40,7 @@ const state = errorMessage ? "error" : session ? "success" : "loading";
 <Layout
   hideHeader
   hideFooter
+  noindex
   title={state === "success" ? "¡Éxito!" : "Autenticando..."}
   description="Procesando inicio de sesión"
   mainClassname="flex flex-col items-center justify-center min-h-dvh w-full relative overflow-hidden"

@@ -7,6 +7,7 @@ interface Props {
   preload?: Array<Preload>;
   canonical?: string;
   image?: string;
+  noindex?: boolean;
 }
 
 const {
@@ -15,6 +16,7 @@ const {
   preload,
   canonical,
   image = "/og.webp",
+  noindex = false,
 } = Astro.props as Props;
 
 const determineCanonicalURL = () => {
@@ -59,10 +61,9 @@ const titleToRender = computedTitle(title);
 <meta property="og:site_name" content="Comunidad SaltoUruguayServer" />
 <meta property="og:locale" content="es_UY" />
 
-<meta name="robots" content="index, follow" />
-<meta name="googlebot" content="index, follow" />
+<meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
+<meta name="googlebot" content={noindex ? "noindex, nofollow" : "index, follow"} />
 <meta name="theme-color" content="#060109" />
-<meta name="monetag" content="a12bd431358ee993005ba215876d2728" />
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="apple-touch-icon" href="/img/icons/apple-touch-icon.png" />
