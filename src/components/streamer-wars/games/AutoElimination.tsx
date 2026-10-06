@@ -1,12 +1,14 @@
 import { useEffect, useState, useRef } from "preact/hooks";
 import Pusher, { type Channel } from "pusher-js";
 import type { Session } from "@auth/core/types";
-import { toast } from "sonner";
-import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { actions } from "astro:actions";
 import { Instructions } from "../Instructions";
 import { pusherService } from "@/services/pusher.client";
 import { PUSHER_CHANNELS, PUSHER_EVENTS_AUTO_ELIM } from "@/consts/pusher";
+import { SWGameShell } from "./_sw/SWGameShell";
+import { SWHud } from "./_sw/SWHud";
+import { swToast } from "../swToast";
+import { swSound } from "./_sw/SWSounds";
 
 interface AutoEliminationProps {
     pusher: Pusher;
@@ -29,10 +31,10 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
                 return prev;
             });
             if (data.playerNumber === session?.user?.streamerWarsPlayerNumber) {
-                playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION });
-                toast.info("¡Te has autoeliminado!");
+                swSound.warning();
+                swToast.info("¡Te has autoeliminado!");
             } else {
-                toast.info(
+                swToast.info(
                     `El jugador #${data.playerNumber.toString().padStart(3, "0")} se ha autoeliminado`
                 );
             }
@@ -56,12 +58,12 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
 
     // Función que se ejecuta al hacer click en el botón
     const handleClick = async () => {
-        playSound({ sound: STREAMER_WARS_SOUNDS.BUTTON_CLICK });
+        swSound.click();
 
         const { error } = await actions.streamerWars.selfEliminate();
         if (error) {
             console.error(error);
-            toast.error(error.message);
+            swToast.error(error.message);
             return;
         }
     };
@@ -75,7 +77,7 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
 
     useEffect(() => {
         if (autoEliminatedPlayers.length === 3) {
-            playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION });
+            swSound.countdown();
             const formattedPlayers = new Intl.ListFormat(undefined, {
                 style: "long",
                 type: "conjunction",
@@ -84,16 +86,21 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
                     `#${playerNumber.toString().padStart(3, "0")}`
                 )
             );
-            toast.info(
-                `¡Los jugadores ${formattedPlayers} han aceptado la oferta de autoeliminación!`,
-                { richColors: true }
+            swToast.info(
+                `¡Los jugadores ${formattedPlayers} han aceptado la oferta de autoeliminación!`
             );
         }
     }, [autoEliminatedPlayers]);
 
     return (
-        <>
-            <Instructions duration={10000}>
+        <SWGameShell accent="lime" title="Desafío de la Tentación">
+            <SWHud
+                leftLabel="Ofertas aceptadas"
+                leftValue={`${autoEliminatedPlayers.length}/3`}
+                title="Desafío de la Tentación"
+                progress={autoEliminatedPlayers.length / 3}
+            />
+            <Instructions duration={15000}>
                 <p className="font-mono max-w-2xl text-left">
                     Durante el juego recibirás ofertas económicas. <br />
                     Recuerda que, al aceptarlas, quedarás eliminado del juego.
@@ -129,9 +136,12 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
                     <span class="text-red-500">Ya no puedes aceptar</span>
                 )}
 
-                <aside class="flex flex-col gap-y-2 mt-8">
-                    <header class="text-lg font-bold">Jugadores autoeliminados</header>
-                    <ul class="flex flex-col gap-y-2">
+                <aside class="flex flex-col gap-y-2 mt-8 w-full max-w-md">
+                    <header class="text-lg font-bold text-white font-anton tracking-wider uppercase">Jugadores autoeliminados</header>
+                    {autoEliminatedPlayers.length === 0 ? (
+                        <p class="font-mono text-xs text-white/30 text-center py-4" role="status">Nadie aceptó la oferta todavía</p>
+                    ) : (
+                    <ul class="flex flex-col gap-y-2" aria-live="polite">
                         {autoEliminatedPlayers.map((playerNumber) => (
                             <li
                                 key={playerNumber}
@@ -147,8 +157,9 @@ export const AutoElimination = ({ pusher, session }: AutoEliminationProps) => {
                             </li>
                         ))}
                     </ul>
+                    )}
                 </aside>
             </div>
-        </>
+        </SWGameShell>
     );
 };

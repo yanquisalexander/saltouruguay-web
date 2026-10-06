@@ -13,13 +13,21 @@ export type AuthResult = {
 };
 
 export type ServiceAuthResult = {
+    user?: never;
     type: "service";
     scopes: string[];
     clientId: string;
     tokenId: string;
 };
 
-export async function getAuthenticatedUser(request: Request): Promise<(AuthResult | ServiceAuthResult) | null> {
+export type AnyAuthResult = AuthResult | ServiceAuthResult;
+
+/** Type guard: narrows to user-backed auth (session or oauth), excluding service tokens. */
+export function isUserAuth(auth: AnyAuthResult | null | undefined): auth is AuthResult {
+    return auth != null && auth.type !== "service" && "user" in auth && auth.user != null;
+}
+
+export async function getAuthenticatedUser(request: Request): Promise<AnyAuthResult | null> {
     // 1. Try OAuth Bearer token
     const authHeader = request.headers.get("Authorization");
     if (authHeader?.startsWith("Bearer ")) {
@@ -70,4 +78,27 @@ export async function getAuthenticatedUser(request: Request): Promise<(AuthResul
     }
 
     return null;
+}
+
+/**
+ * Same as getAuthenticatedUser but only resolves user-backed auth
+ * (session cookie or user OAuth token). Service tokens resolve to null.
+ * Use this in Astro actions / pages that need a DB user — the result
+ * narrows to AuthResult so `auth.user.id` is type-safe after a null check.
+ */
+export async function getAuthenticatedDbUser(request: Request): Promise<AuthResult | null> {
+    const auth = await getAuthenticatedUser(request);
+    return isUserAuth(auth) ? auth : null;
+}
+
+/**
+ * Like getAuthenticatedDbUser but throws when there is no user.
+ * Useful for API routes that require a logged-in user (not a service token).
+ */
+export async function requireUserAuth(request: Request): Promise<AuthResult> {
+    const auth = await getAuthenticatedDbUser(request);
+    if (!auth) {
+        throw new Error("Unauthorized");
+    }
+    return auth;
 }

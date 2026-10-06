@@ -1,5 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import type { ComponentChildren } from "preact";
+import { createPortal } from "preact/compat";
 import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { cn } from "@/lib/utils";
 
@@ -126,7 +127,10 @@ export const Instructions = ({
         customClockClasses ?? "top-0 right-8 mt-6"
     );
 
-    return (
+    // Portal al body: los juegos viven dentro de la pantalla tablet y varios
+    // ancestros usan filter/backdrop-blur/scale, lo que atraparía el `fixed`.
+    // Así las instrucciones siempre ocupan todo el viewport.
+    return createPortal(
         <div
             className={`fixed inset-0 bg-black z-8000 transition-opacity duration-500 flex flex-col ${fadeClass}`}
         >
@@ -226,6 +230,7 @@ export const Instructions = ({
                     </span>
                 </div>
             )}
-        </div>
+        </div>,
+        document.body
     );
 };

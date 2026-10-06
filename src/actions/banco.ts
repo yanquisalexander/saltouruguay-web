@@ -1,16 +1,16 @@
 import { ActionError, defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 import { BancoSaltanoService } from '@/services/banco-saltano';
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedDbUser } from "@/lib/auth";
 
 export const banco = {
     /**
      * Get account summary
      */
     getAccountSummary: defineAction({
-        handler: async (_, context) => {
-            const session = await getSession(context.request);
-            if (!session?.user?.id) {
+        handler: async (_, { request }) => {
+            const auth = await getAuthenticatedDbUser(request);
+            if (!auth) {
                 throw new ActionError({
                     code: 'UNAUTHORIZED',
                     message: 'Debes iniciar sesión para acceder al Banco Saltano',
@@ -18,7 +18,7 @@ export const banco = {
             }
 
             try {
-                const summary = await BancoSaltanoService.getAccountSummary(session.user.id);
+                const summary = await BancoSaltanoService.getAccountSummary(auth.user.id);
                 return summary;
             } catch (error: any) {
                 throw new ActionError({
@@ -38,9 +38,9 @@ export const banco = {
             limit: z.number().min(1).max(100).default(50).optional(),
             offset: z.number().min(0).default(0).optional(),
         }),
-        handler: async (input, context) => {
-            const session = await getSession(context.request);
-            if (!session?.user?.id) {
+        handler: async (input, { request }) => {
+            const auth = await getAuthenticatedDbUser(request);
+            if (!auth) {
                 throw new ActionError({
                     code: 'UNAUTHORIZED',
                     message: 'Debes iniciar sesión para acceder al historial',
@@ -49,7 +49,7 @@ export const banco = {
 
             try {
                 const transactions = await BancoSaltanoService.getTransactionHistory(
-                    session.user.id,
+                    auth.user.id,
                     input
                 );
                 return transactions;
@@ -66,9 +66,9 @@ export const banco = {
      * Claim daily bonus
      */
     claimDailyBonus: defineAction({
-        handler: async (_, context) => {
-            const session = await getSession(context.request);
-            if (!session?.user?.id) {
+        handler: async (_, { request }) => {
+            const auth = await getAuthenticatedDbUser(request);
+            if (!auth) {
                 throw new ActionError({
                     code: 'UNAUTHORIZED',
                     message: 'Debes iniciar sesión para reclamar el bonus',
@@ -76,7 +76,7 @@ export const banco = {
             }
 
             try {
-                const result = await BancoSaltanoService.claimDailyBonus(session.user.id);
+                const result = await BancoSaltanoService.claimDailyBonus(auth.user.id);
                 return {
                     success: true,
                     amount: result.amount,
@@ -102,9 +102,9 @@ export const banco = {
      * Check if can claim daily bonus
      */
     checkDailyBonus: defineAction({
-        handler: async (_, context) => {
-            const session = await getSession(context.request);
-            if (!session?.user?.id) {
+        handler: async (_, { request }) => {
+            const auth = await getAuthenticatedDbUser(request);
+            if (!auth) {
                 throw new ActionError({
                     code: 'UNAUTHORIZED',
                     message: 'Debes iniciar sesión',
@@ -112,7 +112,7 @@ export const banco = {
             }
 
             try {
-                const result = await BancoSaltanoService.canClaimDailyBonus(session.user.id);
+                const result = await BancoSaltanoService.canClaimDailyBonus(auth.user.id);
                 return result;
             } catch (error: any) {
                 throw new ActionError({

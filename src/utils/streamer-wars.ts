@@ -69,7 +69,7 @@ const MAX_ERRORS = 3;
 // Dalgona game constants
 const DALGONA_MIN_COMPLETION_TIME_MS = 10000; // 10 seconds minimum
 const DALGONA_MAX_COMPLETION_TIME_MS = 300000; // 5 minutes maximum
-const DALGONA_MIN_COMPLETION_PERCENTAGE = 95; // Minimum 95% removal required
+const DALGONA_MIN_COMPLETION_PERCENTAGE = 97; // Minimum 97% removal required
 
 // Team to shape mapping for Dalgona game
 const TEAM_SHAPE_MAP: Record<number, DalgonaShape> = {
@@ -146,7 +146,7 @@ export const games = {
                     teamId: player.teamId,
                     shape,
                     imageUrl,
-                    lives: 3, // Changed from attemptsLeft: 2 to lives: 3
+                    lives: 2,
                     status: 'playing',
                 };
             }
@@ -172,7 +172,7 @@ export const games = {
                     await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_DALGONA.START, {
                         userId: player.userId,
                         imageUrl: playerState.imageUrl,
-                        lives: 3, // Changed from attemptsLeft: 2 to lives: 3
+                        lives: 2,
                         shape: TEAM_SHAPE_MAP[player.teamId] || DalgonaShape.Circle,
                     });
                 }
@@ -1761,14 +1761,18 @@ export const massEliminatePlayers = async (playerNumbers: number[]) => {
             audioUrl,
         });
 
-        // Envía el log al webhook de Discord.
-        await sendWebhookMessage(SALTO_DISCORD_GUILD_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
-            title: "Jugadores eliminados",
-            description: `Los jugadores ${new Intl.ListFormat("es-ES").format(
-                playerNumbers.map((n) => `#${n.toString().padStart(3, "0")}`)
-            )} han sido eliminados de Streamer Wars.`,
-            color: 16739693,
-        }).catch(() => { }); // Ignorar error si falla el webhook
+        // Envía el log al webhook de Discord (PROD siempre; en DEV solo con flag explícito).
+        // Se mantiene el if(PROD) de DB de arriba intacto por requerimiento.
+        const enableDiscordInDev = (process.env.ENABLE_DISCORD_IN_DEV ?? import.meta.env?.ENABLE_DISCORD_IN_DEV) === "true";
+        if (import.meta.env.PROD || (import.meta.env.DEV && enableDiscordInDev)) {
+            await sendWebhookMessage(SALTO_DISCORD_GUILD_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                title: "Jugadores eliminados",
+                description: `Los jugadores ${new Intl.ListFormat("es-ES").format(
+                    playerNumbers.map((n) => `#${n.toString().padStart(3, "0")}`)
+                )} han sido eliminados de Streamer Wars.`,
+                color: 16739693,
+            }).catch(() => { }); // Ignorar error si falla el webhook
+        }
 
         try {
             /* 
@@ -2672,7 +2676,16 @@ export const beforeLaunchGame = async () => {
     */
 
     const cache = createCache();
-    await cache.delete(CACHE_KEY);
+    // Limpiar estado fantasma de TODOS los minijuegos entre lanzamientos.
+    await Promise.all([
+        cache.delete(CACHE_KEY),
+        cache.delete(DALGONA_CACHE_KEY),
+        cache.delete(TUG_OF_WAR_CACHE_KEY),
+        cache.delete(BOMB_CACHE_KEY),
+        cache.delete(CACHE_KEY_FISHING),
+        cache.delete(CACHE_KEY_FISHING_ELIMINATED),
+        cache.delete(CACHE_KEYS.ANDI_CHALLENGE),
+    ].map((p) => p.catch(() => {})));
 
 
     const players = await client.query.StreamerWarsPlayersTable.findMany({

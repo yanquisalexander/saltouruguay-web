@@ -75,6 +75,7 @@ export const GAMES = [
 export const GameSelector = () => {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [config, setConfig] = useState<Record<string, number>>({});
+  const [launching, setLaunching] = useState(false);
 
   useEffect(() => {
     if (selectedGame) {
@@ -93,13 +94,21 @@ export const GameSelector = () => {
   }, [selectedGame]);
 
   const launchGame = async () => {
-    if (!selectedGame) return;
-    const { error, data } = await actions.streamerWars.launchGame({
-      game: selectedGame,
-      props: config,
-    });
-    if (error) toast.warning(error.message);
-    if (data) toast.success("Juego lanzado correctamente");
+    if (!selectedGame || launching) return;
+    // Allowlist cliente (el servidor re-valida). Evita gameId typos que crashean clientes.
+    if (!GAMES.some((g) => g.id === selectedGame)) { toast.warning("Juego no permitido"); return; }
+    if (!confirm(`¿Lanzar ${selectedGame}? Todos los jugadores verán el cambio.`)) return;
+    setLaunching(true);
+    try {
+      const { error, data } = await actions.streamerWars.launchGame({
+        game: selectedGame,
+        props: config,
+      });
+      if (error) toast.warning(error.message);
+      if (data) toast.success("Juego lanzado correctamente");
+    } finally {
+      setLaunching(false);
+    }
   };
 
   const selected = GAMES.find((g) => g.id === selectedGame);
@@ -150,12 +159,11 @@ export const GameSelector = () => {
                     min={propConfig.min}
                     max={propConfig.max}
                     value={config[propName] ?? propConfig.default}
-                    onInput={(e) =>
-                      setConfig({
-                        ...config,
-                        [propName]: parseInt((e.target as HTMLInputElement).value),
-                      })
-                    }
+                    onInput={(e) => {
+                      const raw = parseInt((e.target as HTMLInputElement).value, 10);
+                      const v = Number.isFinite(raw) ? Math.min(propConfig.max, Math.max(propConfig.min, raw)) : propConfig.default;
+                      setConfig({ ...config, [propName]: v });
+                    }}
                     class="w-16 bg-[#050508] text-white text-sm font-mono text-center p-2 outline-hidden border border-neutral-800 focus:border-[#b4cd02]/40 rounded-sm"
                   />
                   <span class="font-teko text-[10px] text-neutral-700">
@@ -178,10 +186,11 @@ export const GameSelector = () => {
             </div>
             <button
               onClick={launchGame}
-              class="flex items-center gap-2 bg-[#b4cd02] hover:bg-[#b4cd02]/90 text-black font-anton text-xs tracking-[0.2em] uppercase py-2.5 px-6 rounded-sm transition-all shadow-[0_0_15px_rgba(180,205,2,0.15)] hover:shadow-[0_0_25px_rgba(180,205,2,0.3)]"
+              disabled={launching}
+              class="flex items-center gap-2 bg-[#b4cd02] hover:bg-[#b4cd02]/90 disabled:opacity-50 disabled:cursor-wait text-black font-anton text-xs tracking-[0.2em] uppercase py-2.5 px-6 rounded-sm transition-all shadow-[0_0_15px_rgba(180,205,2,0.15)] hover:shadow-[0_0_25px_rgba(180,205,2,0.3)]"
             >
               <LucideRocket size={14} />
-              Lanzar {selected.name}
+              {launching ? "Lanzando…" : `Lanzar ${selected.name}`}
             </button>
           </div>
         )}

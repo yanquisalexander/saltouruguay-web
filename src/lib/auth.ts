@@ -1,2 +1,2 @@
-export { getAuthenticatedUser } from "./auth/session";
-export type { AuthResult, ServiceAuthResult } from "./auth/session";
+export { getAuthenticatedUser, getAuthenticatedDbUser, requireUserAuth, isUserAuth } from "./auth/session";
+export type { AuthResult, ServiceAuthResult, AnyAuthResult } from "./auth/session";

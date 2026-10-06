@@ -6,6 +6,11 @@ import { actions } from "astro:actions";
 import { PUSHER_CHANNELS, PUSHER_EVENTS_ANDI } from "@/consts/pusher";
 import type { Players } from "@/components/admin/streamer-wars/Players";
 import { Instructions } from "../Instructions";
+import { SWGameShell } from "./_sw/SWGameShell";
+import { SWHud } from "./_sw/SWHud";
+import { useSWChannel } from "./_sw/swChannel";
+import { swSound } from "./_sw/SWSounds";
+import { swToast } from "../swToast";
 
 const TARGET_TIME = 5.388;
 const AUDIO_SRC = "https://cdn.saltouruguayserver.com/sounds/cutted-song-click-challenge.mp3?t=aaaa";
@@ -166,15 +171,16 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
         setPhase('result');
         setResults(prev => [...prev.filter(r => r.playerNumber !== playerNumber), localResult]);
         setSpectatorTapPos(null);
+        if (local.rating === 'PERFECT' || local.rating === 'GOOD') swSound.correct();
+        else swSound.error();
 
         try {
-            const gc = pusher?.subscribe(PUSHER_CHANNELS.GLOBAL) as any;
-            gc?.trigger(PUSHER_EVENTS_ANDI.CLIENT_TAP, {
+            (channel as any)?.trigger(PUSHER_EVENTS_ANDI.CLIENT_TAP, {
                 playerNumber,
                 audioCurrentTime: tapTime,
             });
         } catch (e) {
-            // Client event may fail silently
+            swToast.error("No se pudo enviar el tap (red)");
         }
 
         try {
@@ -184,13 +190,11 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
         }
     }, [playerNumber, pusher]);
 
-    // Pusher events
-    useEffect(() => {
-        if (!session.user?.id || !pusher) return;
-
-        const gc = pusher.subscribe(PUSHER_CHANNELS.GLOBAL);
-
-        gc.bind(PUSHER_EVENTS_ANDI.GAME_STARTED, (data: any) => {
+    // Pusher vía hook único (usa channel por props, sin subscribe extra que leakeaba)
+    const audioDurationRef = useRef(audioDuration);
+    audioDurationRef.current = audioDuration;
+    useSWChannel(channel, {
+        [PUSHER_EVENTS_ANDI.GAME_STARTED]: (data: any) => {
             setGameStatus('playing');
             setPlayerQueue(data.players || []);
             setCurrentPlayer(data.currentPlayer);
@@ -200,53 +204,51 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
             setSpectatorTapPos(null);
             setAudioStartedAt(null);
             setPhase('idle');
-        });
-
-        gc.bind(PUSHER_EVENTS_ANDI.NEXT_PLAYER, (data: any) => {
+            swSound.countdown();
+        },
+        [PUSHER_EVENTS_ANDI.NEXT_PLAYER]: (data: any) => {
             setCurrentPlayer(data.playerNumber);
             setCurrentIndex(data.currentIndex);
             setLastResult(null);
             setSpectatorTapPos(null);
             setAudioStartedAt(null);
             setPhase('idle');
-        });
-
-        gc.bind(PUSHER_EVENTS_ANDI.AUDIO_START, (data: any) => {
+        },
+        [PUSHER_EVENTS_ANDI.AUDIO_START]: (data: any) => {
             setAudioStartedAt(data.startedAt);
-        });
-
-        gc.bind(PUSHER_EVENTS_ANDI.CLIENT_TAP, (data: any) => {
+        },
+        [PUSHER_EVENTS_ANDI.CLIENT_TAP]: (data: any) => {
             if (data.playerNumber !== playerNumber) {
-                const dur = audioDuration || 25;
+                const dur = audioDurationRef.current || 25;
                 const pct = (data.audioCurrentTime / dur) * 100;
                 setSpectatorTapPos(pct);
             }
-        });
-
-        gc.bind(PUSHER_EVENTS_ANDI.RESULT, (data: PlayerResult) => {
+        },
+        [PUSHER_EVENTS_ANDI.RESULT]: (data: PlayerResult) => {
             setLastResult(data);
             setResults(prev => [...prev.filter(r => r.playerNumber !== data.playerNumber), data]);
             setSpectatorTapPos(null);
             setPhase('result');
             if (timerRef.current) clearTimeout(timerRef.current);
-        });
-
-        gc.bind(PUSHER_EVENTS_ANDI.GAME_ENDED, (data: any) => {
+            if (data.rating === 'PERFECT' || data.rating === 'GOOD') swSound.correct();
+            else swSound.error();
+        },
+        [PUSHER_EVENTS_ANDI.GAME_ENDED]: (data: any) => {
             setGameStatus('ended');
             setResults(data.results || []);
             setPhase('idle');
             setCurrentPlayer(null);
             setSpectatorTapPos(null);
             setAudioStartedAt(null);
+            swSound.win();
             if (timerRef.current) clearTimeout(timerRef.current);
             if (progressRaf.current) cancelAnimationFrame(progressRaf.current);
             if (audioRef.current) {
                 audioRef.current.pause();
                 audioRef.current.currentTime = 0;
             }
-        });
-
-        gc.bind(PUSHER_EVENTS_ANDI.GAME_RESET, () => {
+        },
+        [PUSHER_EVENTS_ANDI.GAME_RESET]: () => {
             setGameStatus('waiting');
             setCurrentPlayer(null);
             setCurrentIndex(-1);
@@ -262,19 +264,10 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
                 audioRef.current.pause();
                 audioRef.current.currentTime = 0;
             }
-        });
+        },
+    });
 
-        return () => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-            gc.unbind(PUSHER_EVENTS_ANDI.GAME_STARTED);
-            gc.unbind(PUSHER_EVENTS_ANDI.NEXT_PLAYER);
-            gc.unbind(PUSHER_EVENTS_ANDI.AUDIO_START);
-            gc.unbind(PUSHER_EVENTS_ANDI.CLIENT_TAP);
-            gc.unbind(PUSHER_EVENTS_ANDI.RESULT);
-            gc.unbind(PUSHER_EVENTS_ANDI.GAME_ENDED);
-            gc.unbind(PUSHER_EVENTS_ANDI.GAME_RESET);
-        };
-    }, [session.user?.id, pusher, playerNumber, audioDuration]);
+    useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
     useEffect(() => {
         return () => {
@@ -295,8 +288,16 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
     const sortedResults = [...results].sort((a, b) => a.ms - b.ms);
 
     return (
-        <>
-            <Instructions duration={10000}
+        <SWGameShell accent="purple" title="El desafío de Whitney">
+            <SWHud
+                leftLabel="Turno"
+                leftValue={currentPlayer ? `#${String(currentPlayer).padStart(3, "0")}` : "—"}
+                title="El desafío de Whitney"
+                rightLabel="Jugadores"
+                rightValue={`${results.length}/${playerQueue.length || "—"}`}
+                progress={playerQueue.length ? results.length / Math.max(1, playerQueue.length) : undefined}
+            />
+            <Instructions duration={15000}
                 customTitle="El desafío de Whitney"
                 controls={[
                     {
@@ -325,27 +326,8 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
                     ¡Pon atención al ritmo y demuestra tu precisión!
                 </p>
             </Instructions>
-            <div
-                class="w-full h-full relative overflow-hidden flex flex-col"
-                style={{
-                    background: 'radial-gradient(circle at center, rgba(147,51,234,0.4) 0%, #0a0a0f 70%)',
-                    border: '4px solid rgba(147,51,234,0.3)',
-                    boxShadow: 'inset 0 0 60px rgba(147,51,234,0.15)',
-                }}
-            >
+            <div class="w-full relative overflow-hidden flex flex-col">
                 <style>{`
-                @keyframes shake {
-                    0%, 100% { transform: translateX(0); }
-                    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-                    20%, 40%, 60%, 80% { transform: translateX(4px); }
-                }
-                .animate-shake-purple {
-                    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-                }
-                .bg-stripes-purple {
-                    background-image: linear-gradient(135deg, #2a004f 25%, #000 25%, #000 50%, #2a004f 50%, #2a004f 75%, #000 75%, #000 100%);
-                    background-size: 28.28px 28.28px;
-                }
                 @keyframes equalizer {
                     0%, 100% { height: 4px; }
                     25% { height: 16px; }
@@ -359,10 +341,6 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
                 .bar-5 { animation: equalizer 0.5s ease-in-out infinite 0.25s; }
             `}</style>
 
-                {/* Stripes */}
-                <div class="absolute top-0 left-0 w-full h-3 bg-stripes-purple opacity-40 z-0 pointer-events-none" />
-                <div class="absolute bottom-0 left-0 w-full h-3 bg-stripes-purple opacity-40 z-0 pointer-events-none" />
-
                 <audio
                     ref={audioRef}
                     src={AUDIO_SRC}
@@ -375,7 +353,7 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
 
                 {/* Countdown overlay */}
                 {countdownNum !== null && (
-                    <div class="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: '#000000cc' }}>
+                    <div class="fixed inset-0 z-60 flex items-center justify-center" style={{ background: '#000000cc' }}>
                         <span class="text-8xl font-bold font-squids" style={{
                             color: '#c084fc',
                             textShadow: '0 0 40px rgba(192,132,252,0.8), 0 0 80px rgba(192,132,252,0.4)',
@@ -591,6 +569,6 @@ export const AndIChallenge = ({ session, pusher, channel, players }: AndIChallen
                     )}
                 </div>
             </div>
-        </>
+        </SWGameShell>
     );
 };

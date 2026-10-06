@@ -32,7 +32,6 @@ const OverlayRenderer = ({
     // Seleccionamos el componente basado en la propiedad "component" de gameState
     // @ts-ignore
     const Component = components.current[gameState.component];
-    console.log("Component", Component);
     if (!Component) return null;
 
     // Pasamos players directamente desde el prop, sin mezclarlo con gameState.props
@@ -64,19 +63,23 @@ export const GlobalOverlay = () => {
             setPlayers(
                 data?.players.map((player: any) => ({ ...player, online: false })) || []
             );
-
-            globalChannel.current?.bind(PUSHER_EVENTS.RELOAD_OVERLAY, () => {
-                location.reload();
-            });
-
-            console.log("Players loaded", data?.players);
         });
     }, []);
+
+    // Recarga remota del overlay (fuera del fetch para no perder el bind)
+    useEffect(() => {
+        const ch = globalChannel.current;
+        if (!ch) return;
+        const handler = () => location.reload();
+        ch.bind(PUSHER_EVENTS.RELOAD_OVERLAY, handler);
+        return () => {
+            ch.unbind(PUSHER_EVENTS.RELOAD_OVERLAY, handler);
+        };
+    }, [pusher]);
 
     // Restaurar el estado del juego sin incluir players en gameState.props
     const restoreGameStateFromCache = useCallback(async () => {
         const { data, error } = await actions.streamerWars.getGameState();
-        console.log({ data, error });
 
         if (error) return;
 

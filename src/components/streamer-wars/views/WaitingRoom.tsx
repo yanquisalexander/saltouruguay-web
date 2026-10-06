@@ -7,6 +7,7 @@ import {
     LucideGamepad2
 } from "lucide-preact";
 import { ChatRoom } from "./ChatRoom";
+import { TabletFrame } from "../TabletFrame";
 
 const HINTS = [
     {
@@ -32,9 +33,11 @@ const HINTS = [
 interface WaitingRoomProps {
     session: Session;
     channel: Channel;
-    bgVolume: number;
-    setBgVolume: (volume: number) => void;
-    bgAudio: HTMLAudioElement | null;
+    bgVolume?: number;
+    setBgVolume?: (volume: number) => void;
+    bgAudio?: HTMLAudioElement | null;
+    players?: any[];
+    expectedPlayers?: number;
 }
 
 const SquidLoader = () => (
@@ -78,46 +81,25 @@ const GlitchLines = () => (
     </div>
 );
 
-export const WaitingRoom = ({ session, channel }: WaitingRoomProps) => {
+export const WaitingRoom = ({ session, channel, players = [], expectedPlayers = 0 }: WaitingRoomProps) => {
     return (
-        <div class="h-full w-full flex items-center justify-center p-2 md:p-4 bg-[#050505] text-neutral-300">
-
-            {/* TABLET DEVICE FRAME */}
-            <div class="relative w-full h-full max-h-[calc(100vh-8rem)] min-h-[450px] bg-linear-to-br from-[#1c1c1e] to-[#26262a] rounded-2xl p-[6px] shadow-[0_0_60px_rgba(0,0,0,0.95),inset_0_0_0_1px_rgba(255,255,255,0.06)]">
-
-                {/* Camera notch */}
-                <div class="absolute top-[-2px] left-1/2 -translate-x-1/2 z-20">
-                    <div class="w-1 h-2 bg-[#0d0d0f] rounded-full shadow-[0_0_2px_rgba(0,0,0,0.6)]" />
-                </div>
-
-                {/* SCREEN */}
-                <div class="relative w-full h-full bg-[#0a0a0a] rounded-xl overflow-hidden shadow-[inset_0_0_30px_rgba(0,0,0,0.6),inset_0_0_1px_rgba(180,205,2,0.03)]">
-
-                    {/* Geometric background decorations */}
-                    <GeometricBg />
-
-                    {/* Scanline overlay */}
-                    <div class="absolute inset-0 pointer-events-none opacity-[0.02] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-size-[100%_4px] z-20" />
-
-                    {/* Glitch lines */}
-                    <GlitchLines />
-
-                    {/* Inner screen glow border */}
-                    <div class="absolute inset-0 rounded-xl pointer-events-none shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)] z-10" />
-
-                    {/* CONTENT: Chat + Lobby */}
-                    <div class="relative flex h-full w-full z-5">
+        <TabletFrame
+            statusTitle="Lobby // Sala de espera"
+            decor={<><GeometricBg /><GlitchLines /></>}
+        >
+            {/* CONTENT: Chat + Lobby (ajuste exacto, sin scroll) */}
+            <div class="relative flex h-full w-full min-h-0">
 
                         {/* LEFT: CHAT PANEL */}
-                        <div class="w-[34%] min-w-0 flex-shrink-0 border-r border-[#18181a]">
+                        <div class="w-[34%] min-w-0 flex-shrink-0 self-stretch border-r border-[#18181a] min-h-0">
                             <ChatRoom session={session} channel={channel} />
                         </div>
 
                         {/* RIGHT: LOBBY PANEL */}
-                        <div class="flex-1 min-w-0 flex flex-col items-center justify-center p-6 md:p-8 relative">
+                        <div class="flex-1 min-w-0 min-h-0 flex flex-col items-center justify-center gap-4 p-4 md:p-6 relative">
 
                             {/* Watermark */}
-                            <span class="absolute bottom-4 right-6 font-atomic text-3xl md:text-4xl opacity-[0.04] select-none pointer-events-none text-[#b4cd02]">
+                            <span class="absolute bottom-3 right-5 font-atomic text-2xl opacity-[0.04] select-none pointer-events-none text-[#b4cd02]">
                                 GUERRA DE STREAMERS
                             </span>
 
@@ -125,16 +107,12 @@ export const WaitingRoom = ({ session, channel }: WaitingRoomProps) => {
                             <div class="absolute top-0 left-[15%] right-[15%] h-[2px] bg-linear-to-r from-transparent via-[#b4cd02]/40 to-transparent" />
 
                             {/* Central content */}
-                            <div class="flex flex-col items-center justify-center gap-y-6 w-full max-w-md">
-
-                                {/* Icon */}
-                                <div class="mb-1">
-                                    <LucideGamepad2 size={42} strokeWidth={1} class="text-[#b4cd02]/40 animate-pulse" />
-                                </div>
+                            <div class="flex flex-col items-center justify-center gap-y-3 w-full max-w-md min-h-0">
+                                <LucideGamepad2 size={30} strokeWidth={1} class="text-[#b4cd02]/40 animate-pulse" />
 
                                 {/* Title */}
-                                <div class="text-center space-y-2">
-                                    <h2 class="text-4xl md:text-5xl font-atomic tracking-wider text-white uppercase leading-tight">
+                                <div class="text-center space-y-1">
+                                    <h2 class="text-3xl md:text-4xl font-atomic tracking-wider text-white uppercase leading-tight">
                                         Preparando la <span class="text-[#b4cd02] drop-shadow-[0_0_8px_rgba(180,205,2,0.3)]">Batalla</span>
                                     </h2>
                                     <p class="font-anton tracking-[0.3em] text-[10px] text-neutral-600 uppercase">
@@ -142,40 +120,43 @@ export const WaitingRoom = ({ session, channel }: WaitingRoomProps) => {
                                     </p>
                                 </div>
 
-                                {/* Loading status */}
-                                <div class="flex flex-col items-center gap-y-4 pt-3">
+                                {/* Loading status + conteo vivo */}
+                                <div class="flex flex-col items-center gap-y-2">
                                     <SquidLoader />
-                                    <div class="flex items-center gap-x-3 px-5 py-2 bg-[#0d0d0f] border border-[#1c1c1e] rounded-full">
+                                    <div class="flex items-center gap-x-3 px-5 py-1.5 bg-[#0d0d0f] border border-[#1c1c1e] rounded-full">
                                         <span class="w-1.5 h-1.5 rounded-full bg-[#b4cd02] animate-pulse shadow-[0_0_6px_#b4cd02]" />
-                                        <span class="font-anton text-[10px] tracking-[0.2em] text-neutral-600 uppercase">
-                                            Sincronizando activos
+                                        <span class="font-anton text-[10px] tracking-[0.2em] text-neutral-400 uppercase" aria-live="polite">
+                                            {expectedPlayers > 0 ? `${players.length}/${expectedPlayers} en sala` : "Sincronizando activos"}
                                         </span>
                                     </div>
+                                    {expectedPlayers > 0 && (
+                                        <div class="h-1.5 w-56 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={players.length} aria-valuemin={0} aria-valuemax={expectedPlayers}>
+                                            <div class="h-full rounded-full bg-[#b4cd02] transition-all duration-500" style={{ width: `${Math.min(100, (players.length / Math.max(1, expectedPlayers)) * 100)}%` }} />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
                             {/* FOOTER: Hints */}
-                            <footer class="w-full grid grid-cols-1 md:grid-cols-3 gap-3 mt-auto pt-5 border-t border-[#18181a]">
+                            <footer class="w-full grid grid-cols-3 gap-2 pt-3 border-t border-[#18181a]">
                                 {HINTS.map(({ title, icon: Icon, description, color }, idx) => (
-                                    <div key={idx} class="flex flex-col gap-y-2 p-3.5 bg-[#0d0d0f] border border-[#1c1c1e] hover:border-[#b4cd02]/25 transition-all duration-500 group">
-                                        <div class="flex items-center gap-x-2.5">
-                                            <div class={`p-1 border border-[#28282a] ${color} group-hover:text-[#b4cd02] transition-colors`}>
-                                                <Icon size={14} strokeWidth={2} />
+                                    <div key={idx} class="flex flex-col gap-y-1 p-2 bg-[#0d0d0f] border border-[#1c1c1e] hover:border-[#b4cd02]/25 transition-all duration-500 group min-w-0">
+                                        <div class="flex items-center gap-x-2">
+                                            <div class={`p-1 border border-[#28282a] ${color} group-hover:text-[#b4cd02] transition-colors shrink-0`}>
+                                                <Icon size={12} strokeWidth={2} />
                                             </div>
-                                            <span class={`font-atomic text-sm tracking-wider ${color}`}>
+                                            <span class={`font-atomic text-xs tracking-wider truncate ${color}`}>
                                                 {title}
                                             </span>
                                         </div>
-                                        <p class="text-[11px] leading-relaxed text-neutral-600">
+                                        <p class="text-[10px] leading-snug text-neutral-600 line-clamp-2">
                                             {description}
                                         </p>
                                     </div>
                                 ))}
                             </footer>
                         </div>
-                    </div>
-                </div>
             </div>
-        </div>
+        </TabletFrame>
     );
 };

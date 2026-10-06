@@ -5,54 +5,57 @@ import { TEAMS } from "@/consts/Teams";
 import { useVoiceChatStore } from "@/stores/voiceChat";
 
 export const VoiceControls = ({ isAdmin }: VoiceControlsProps) => {
-    const [loading, setLoading] = useState(false);
+    const [loadingTeam, setLoadingTeam] = useState<string | null>(null);
+    const loading = loadingTeam !== null;
     const { voiceEnabledTeams, setVoiceEnabled, spectatingTeams, spectatingUsers, setSpectatingTeam } = useVoiceChatStore();
     const [isOpen, setIsOpen] = useState(false);
 
     if (!isAdmin) return null;
 
     const handleEnableVoice = async (teamId: string) => {
-        // Optimistic update
+        // Optimistic update por equipo (no bloquea los demás)
+        const prev = voiceEnabledTeams[teamId] ?? false;
         setVoiceEnabled(teamId, true);
-        setLoading(true);
+        setLoadingTeam(teamId);
         try {
             const { error } = await actions.voice.enable({ teamId });
             if (error) {
-                setVoiceEnabled(teamId, false);
+                setVoiceEnabled(teamId, prev);
                 toast.error(`Error: ${error.message}`);
             } else {
-                toast.success(`Voice habilitado para equipo ${teamId}`);
+                toast.success(`Voice habilitado para equipo ${teamId} — avisá que mantengan V o el botón`);
             }
         } catch {
-            setVoiceEnabled(teamId, false);
+            setVoiceEnabled(teamId, prev);
             toast.error("Error al habilitar voice chat");
         } finally {
-            setLoading(false);
+            setLoadingTeam(null);
         }
     };
 
     const handleDisableVoice = async (teamId: string) => {
-        // Optimistic update
+        const prev = voiceEnabledTeams[teamId] ?? false;
+        if (!confirm(`¿Deshabilitar voz del equipo ${teamId}? Se cortan los peers activos.`)) return;
         setVoiceEnabled(teamId, false);
-        setLoading(true);
+        setLoadingTeam(teamId);
         try {
             const { error } = await actions.voice.disable({ teamId });
             if (error) {
-                setVoiceEnabled(teamId, true);
+                setVoiceEnabled(teamId, prev);
                 toast.error(`Error: ${error.message}`);
             } else {
                 toast.success(`Voice deshabilitado para equipo ${teamId}`);
             }
         } catch {
-            setVoiceEnabled(teamId, true);
+            setVoiceEnabled(teamId, prev);
             toast.error("Error al deshabilitar voice chat");
         } finally {
-            setLoading(false);
+            setLoadingTeam(null);
         }
     };
 
     const handleSpectate = async (teamId: string, enable: boolean) => {
-        setLoading(true);
+        setLoadingTeam(teamId);
         try {
             if (enable) {
                 // Only 1 team at a time — disable any other spectated team first
@@ -74,7 +77,7 @@ export const VoiceControls = ({ isAdmin }: VoiceControlsProps) => {
         } catch {
             toast.error("Error al spectear");
         } finally {
-            setLoading(false);
+            setLoadingTeam(null);
         }
     };
 

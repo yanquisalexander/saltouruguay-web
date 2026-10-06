@@ -21,37 +21,84 @@ interface DalgonaImageOptions {
 }
 
 /**
+ * Paleta calibrada contra SHAPE_BRIGHTNESS_THRESHOLD (cliente, 160):
+ * - Todo lo "galleta" promedia >= 165 (tallable, cuenta progreso)
+ * - Todo lo "figura" promedia <= 110 (mortal al tocar)
+ * No usar filtros SVG: renderizan inconsistente en drawImage a canvas.
+ */
+const COOKIE_LIGHT = "#f3d9a8";
+const COOKIE_MID = "#eec184";
+const COOKIE_EDGE = "#e0ac63";
+const COOKIE_RIM = "#a86a24";
+const SUGAR_DOT = "#f7e3bd";
+const GROOVE = "#f2d49b";
+const SHAPE_FILL = "#4a2408";
+const SHAPE_STROKE = "#2e1503";
+const SHAPE_ENGRAVE = "#7a3f12";
+
+/** Motas de azúcar deterministas (anillo dorado, sin random para consistencia) */
+function sugarDots(cx: number, cy: number): string {
+    let dots = "";
+    for (let i = 0; i < 110; i++) {
+        const angle = i * 2.39996; // golden angle
+        const r = 46 + ((i * 53) % 128);
+        const x = (cx + r * Math.cos(angle)).toFixed(1);
+        const y = (cy + r * Math.sin(angle)).toFixed(1);
+        const rad = (1.4 + ((i * 29) % 20) / 10).toFixed(1);
+        const op = (0.5 + ((i * 17) % 40) / 100).toFixed(2);
+        dots += `<circle cx="${x}" cy="${y}" r="${rad}" fill="${SUGAR_DOT}" opacity="${op}"/>`;
+    }
+    return dots;
+}
+
+/**
  * Generates an SVG representation of a Dalgona cookie with the specified shape
  */
 export function generateDalgonaSVG(options: DalgonaImageOptions): string {
     const { shape, size = 400 } = options;
-
-    // Cookie background - light caramel (bright enough to stay above threshold even with texture)
-    const cookieColor = `hsl(30, 75%, 70%)`;
-
-    // Dark fill for the shape impression (deep pressed area, well below threshold)
-    const shapeFill = `hsl(25, 55%, 22%)`;
-    const shapeStroke = `hsl(25, 60%, 16%)`;
+    const c = size / 2;
+    const cookieR = size / 2 - 10;
 
     // Generate shape path based on type
     const shapePath = getShapePath(shape, size);
 
-    // Clean cookie shape: bright caramel circle with dark filled shape
-    // No SVG filters — they render inconsistently when drawn to canvas via drawImage
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-    <!-- Cookie background circle -->
-    <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 10}" 
-            fill="${cookieColor}" 
-            stroke="${shapeStroke}" 
-            stroke-width="2"/>
-    
-    <!-- Shape impression (dark filled area) -->
-    <g transform="translate(${size / 2}, ${size / 2})">
-        <path d="${shapePath}" 
-              fill="${shapeFill}" 
-              stroke="${shapeStroke}" 
-              stroke-width="3" 
+    <defs>
+        <radialGradient id="cookieGrad" cx="42%" cy="38%" r="75%">
+            <stop offset="0%" stop-color="${COOKIE_LIGHT}"/>
+            <stop offset="55%" stop-color="${COOKIE_MID}"/>
+            <stop offset="100%" stop-color="${COOKIE_EDGE}"/>
+        </radialGradient>
+    </defs>
+    <!-- Cookie tostada con borde -->
+    <circle cx="${c}" cy="${c}" r="${cookieR}"
+            fill="url(#cookieGrad)"
+            stroke="${COOKIE_RIM}"
+            stroke-width="4"/>
+    <!-- Motas de azúcar (quedan bajo la figura) -->
+    ${sugarDots(c, c)}
+
+    <!-- Figura: surco de azúcar + relleno oscuro + grabado interior -->
+    <g transform="translate(${c}, ${c})">
+        <path d="${shapePath}"
+              fill="none"
+              stroke="${GROOVE}"
+              stroke-width="11"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              opacity="0.9"/>
+        <path d="${shapePath}"
+              fill="${SHAPE_FILL}"
+              stroke="${SHAPE_STROKE}"
+              stroke-width="4"
+              stroke-linecap="round"
+              stroke-linejoin="round"/>
+        <path d="${shapePath}"
+              transform="scale(0.55)"
+              fill="none"
+              stroke="${SHAPE_ENGRAVE}"
+              stroke-width="5"
               stroke-linecap="round"
               stroke-linejoin="round"/>
     </g>

@@ -10,6 +10,12 @@ import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { getSession } from "auth-astro/server";
 import { and, eq } from "drizzle-orm";
+import { LOGS_CHANNEL_WEBHOOK_ID, sendWebhookMessage } from "@/services/discord";
+import { DISCORD_LOGS_WEBHOOK_TOKEN } from "astro:env/server";
+
+// Rate-limit simple anti doble-click/spam para lanzar juegos (por admin).
+const lastLaunchAt = new Map<string, number>();
+const LAUNCH_COOLDOWN_MS = 5000;
 
 export const streamerWars = {
     eliminatePlayer: defineAction({
@@ -405,8 +411,8 @@ export const streamerWars = {
     }),
     launchGame: defineAction({
         input: z.object({
-            game: z.string(),
-            props: z.record(z.any()),
+            game: z.enum(["TeamSelector", "SimonSays", "CaptainBribery", "AutoElimination", "Dalgona", "TugOfWar", "Bomb", "Fishing", "AndIChallenge"]),
+            props: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).default({}),
         }),
         handler: async ({ game, props }, { request }) => {
             const session = await getSession(request);
@@ -418,16 +424,32 @@ export const streamerWars = {
                 })
             }
 
+            // Rate-limit: mismo admin no puede lanzar 2 juegos en 5s (doble-click).
+            const now = Date.now();
+            const last = lastLaunchAt.get(session.user.id) ?? 0;
+            if (now - last < LAUNCH_COOLDOWN_MS) {
+                throw new ActionError({ code: "TOO_MANY_REQUESTS", message: "Esperá unos segundos antes de lanzar otro juego" });
+            }
+            lastLaunchAt.set(session.user.id, now);
+
             try {
                 await beforeLaunchGame();
 
             } catch (error) {
                 console.error(`Error executing pre-launch game actions: ${error}`);
+                throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Falló la limpieza pre-juego, no se lanzó" });
             }
             const cache = cacheService.create({ ttl: 60 * 60 * 24 });
             await cache.set("streamer-wars-gamestate", { game, props });
 
             await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.LAUNCH_GAME, { game, props });
+
+            // Audit-log: quién lanzó qué (canal de logs de Discord, sin romper si falla).
+            sendWebhookMessage(LOGS_CHANNEL_WEBHOOK_ID, DISCORD_LOGS_WEBHOOK_TOKEN, {
+                title: "Juego lanzado",
+                description: `${session.user.name ?? session.user.id} lanzó **${game}** ${Object.keys(props).length ? `(${Object.entries(props).map(([k, v]) => `${k}: ${v}`).join(", ")})` : "(sin config)"}`,
+                color: 11632639, // lima #b4cd02
+            }).catch(() => {});
             return { success: true }
         }
     }),
@@ -442,9 +464,10 @@ export const streamerWars = {
                 })
             }
 
-            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.CLEAR_CHAT, null);
-
+            // DB primero: si falla, los clientes no limpian en falso.
             await client.delete(StreamerWarsChatMessagesTable).execute();
+
+            await pusher.trigger(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.CLEAR_CHAT, null);
             return { success: true }
         }
     }),

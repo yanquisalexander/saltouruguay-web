@@ -1,14 +1,9 @@
 import * as THREE from "three";
-import gsap from "gsap/dist/gsap";
+import { gsap } from "gsap";
 import { playSound, playSoundWithReverb } from "@/consts/Sounds";
 import type { Cinematic3DDefinition } from "./types";
 
-function makePoint(scene: THREE.Scene, x: number, y: number, z: number, color: number, intensity: number, dist: number) {
-  const l = new THREE.PointLight(color, intensity, dist, 2);
-  l.position.set(x, y, z);
-  scene.add(l);
-  return l;
-}
+import { makePoint } from "./primitives";
 
 export const wakingUp: Cinematic3DDefinition = {
   id: "waking-up",

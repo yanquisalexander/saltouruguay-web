@@ -5,7 +5,8 @@ import { LucideCrown, LucideX, LucideStar, LucideUsers, LucidePlus, LucideUserPl
 import { useEffect, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
 import { toast } from "sonner";
-import { PUSHER_EVENTS } from "@/consts/pusher";
+import { PUSHER_CHANNELS, PUSHER_EVENTS } from "@/consts/pusher";
+import { pusherService } from "@/services/pusher.client";
 
 interface AllPlayer {
   playerNumber: number;
@@ -13,7 +14,7 @@ interface AllPlayer {
   avatar: string;
 }
 
-export const Teams = ({ channel }: { channel: Channel }) => {
+export const Teams = ({ channel }: { channel?: Channel | null }) => {
   const [playersTeams, setPlayersTeams] = useState<{ [team: string]: { playerNumber: number; avatar: string; displayName: string; isCaptain: boolean }[] }>({});
   const [allPlayers, setAllPlayers] = useState<AllPlayer[]>([]);
   const [addToTeam, setAddToTeam] = useState<string | null>(null);
@@ -58,14 +59,18 @@ export const Teams = ({ channel }: { channel: Channel }) => {
   };
 
   useEffect(() => {
+    void channel;
     fetchAll();
-    channel?.bind(PUSHER_EVENTS.PLAYER_JOINED, fetchAll);
-    channel?.bind(PUSHER_EVENTS.PLAYER_REMOVED, fetchAll);
-    channel?.bind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, fetchAll);
+    // Singleton pusherService (AGENTS.md); unbind simétrico incl. PLAYER_REMOVED (leak previo).
+    pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_JOINED, fetchAll);
+    pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_REMOVED, fetchAll);
+    pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.CAPTAIN_ASSIGNED, fetchAll);
     return () => {
-      channel?.unbind(PUSHER_EVENTS.PLAYER_JOINED, fetchAll);
-      channel?.unbind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, fetchAll);
+      pusherService.unbind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_JOINED, fetchAll);
+      pusherService.unbind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.PLAYER_REMOVED, fetchAll);
+      pusherService.unbind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS.CAPTAIN_ASSIGNED, fetchAll);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const TEAM_COLORS: Record<string, string> = {
@@ -113,7 +118,7 @@ export const Teams = ({ channel }: { channel: Channel }) => {
                   <p class="text-center text-neutral-700 font-mono text-xs py-4">Sin miembros</p>
                 )}
                 {members.map(({ playerNumber, avatar, displayName, isCaptain }) => (
-                  <div key={displayName} class="flex items-center gap-3 p-2 rounded-sm bg-neutral-900/50 border border-neutral-800/50 transition-all hover:bg-neutral-900 hover:border-neutral-700">
+                  <div key={playerNumber} class="flex items-center gap-3 p-2 rounded-sm bg-neutral-900/50 border border-neutral-800/50 transition-all hover:bg-neutral-900 hover:border-neutral-700">
                     <img src={avatar || "/placeholder.svg"} alt={displayName} class="w-7 h-7 rounded-full ring-1 ring-white/10" />
                     <span class="text-sm text-neutral-200 font-mono truncate flex-1 min-w-0">{displayName}</span>
                     <span class="font-atomic text-sm text-[#b4cd02] shrink-0">#{playerNumber.toString().padStart(3, "0")}</span>

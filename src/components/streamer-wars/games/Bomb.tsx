@@ -2,11 +2,16 @@ import type { Session } from "@auth/core/types";
 import { useState, useEffect, useRef, useCallback } from "preact/hooks";
 import type Pusher from "pusher-js";
 import type { Channel } from "pusher-js";
-import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { Button } from "@/components/ui/8bit/button";
 import type { JSX } from "preact/jsx-runtime";
 import { PUSHER_EVENTS_BOMB } from "@/consts/pusher";
+import { SWGameShell } from "./_sw/SWGameShell";
+import { SWStatusScreen } from "./_sw/SWStatusScreen";
+import { SWHud } from "./_sw/SWHud";
+import { useSWChannel } from "./_sw/swChannel";
+import { swSound } from "./_sw/SWSounds";
+import { swToast } from "../swToast";
 
 interface BombProps {
     session: Session;
@@ -22,97 +27,8 @@ interface BombChallenge {
 }
 
 // ---------------------------------------------------------------------------
-// Estilos CSS inyectados (una sola vez, fuera del componente)
+// UI migrada al Design System _sw (Fase 1). Se conserva ChallengeCard/InputArea.
 // ---------------------------------------------------------------------------
-
-const customStyles = `
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
-    20%, 40%, 60%, 80% { transform: translateX(8px); }
-}
-.animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-.bg-stripes-red-black {
-    background-image: linear-gradient(135deg, #450a0a 25%, #000 25%, #000 50%, #450a0a 50%, #450a0a 75%, #000 75%, #000 100%);
-    background-size: 28.28px 28.28px;
-}
-.bomb-container-shaking {
-    box-shadow: inset 0 0 60px rgba(239,68,68,.8), 0 0 30px rgba(239,68,68,.5) !important;
-    border-color: rgb(239,68,68) !important;
-}`;
-
-// ---------------------------------------------------------------------------
-// Componentes de UI (fuera de Bomb para evitar remounts)
-// ---------------------------------------------------------------------------
-
-const BaseContainer = ({ isShaking, children }: { isShaking: boolean; children: preact.ComponentChildren }) => (
-    <div className={`w-full h-full text-white overflow-hidden relative flex flex-col
-        bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-red-900/50 via-neutral-950 to-neutral-950
-        border-4 border-red-900/60 shadow-[inset_0_0_30px_rgba(220,38,38,0.3)]
-        transition-all duration-200
-        ${isShaking ? 'animate-shake bomb-container-shaking' : ''}`}>
-        <style>{customStyles}</style>
-        <div className="absolute top-0 left-0 w-full h-3 bg-stripes-red-black opacity-40 z-0 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-full h-3 bg-stripes-red-black opacity-40 z-0 pointer-events-none" />
-        {children}
-    </div>
-);
-
-const StatusScreen = ({ status }: { status: 'waiting' | 'completed' | 'failed' }) => {
-    if (status === 'waiting') return (
-        <div className="flex flex-col items-center justify-center h-full w-full p-4 text-center z-20 relative">
-            <h2 className="text-xl md:text-2xl font-bold mb-3 font-squids animate-pulse text-red-500 drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]">ESPERANDO...</h2>
-            <div className="text-5xl md:text-6xl mb-6 drop-shadow-lg">💣</div>
-            <p className="text-gray-300 font-mono">El juego comenzará pronto</p>
-        </div>
-    );
-    if (status === 'completed') return (
-        <div className="flex flex-col items-center justify-center h-full w-full p-4 text-center bg-green-900/30 z-20 relative backdrop-blur-xs">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-green-400 font-squids drop-shadow-[0_0_15px_rgba(74,222,128,0.8)]">¡DESACTIVADA!</h2>
-            <div className="text-6xl md:text-7xl mb-4 drop-shadow-lg">✅</div>
-        </div>
-    );
-    return (
-        <div className="flex flex-col items-center justify-center h-full w-full p-4 text-center bg-red-950/50 z-20 relative backdrop-blur-xs">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-red-500 font-squids drop-shadow-[0_0_20px_rgba(239,68,68,1)]">¡BOOM!</h2>
-            <div className="text-6xl md:text-7xl mb-4 drop-shadow-lg">💥</div>
-            <p className="text-lg font-mono text-red-300">Has sido eliminado</p>
-        </div>
-    );
-};
-
-const BombHeader = ({ challengesCompleted, errorsCount, hasChallenge }: {
-    challengesCompleted: number;
-    errorsCount: number;
-    hasChallenge: boolean;
-}) => (
-    <div className="flex-none px-3 py-2 w-full bg-neutral-900/80 border-b-2 border-red-900/50 z-10 flex justify-between items-center backdrop-blur-md shadow-lg relative">
-        <div className="text-center">
-            <p className="text-[10px] md:text-xs text-red-400/80 font-mono uppercase tracking-widest">Progreso</p>
-            <p className="text-base md:text-lg font-bold text-green-400 font-squids drop-shadow-[0_0_5px_rgba(74,222,128,0.5)]">{challengesCompleted}/5</p>
-        </div>
-        <h2 className={`text-lg md:text-2xl font-bold font-squids tracking-[0.2em] hidden md:block drop-shadow-[0_0_10px_rgba(220,38,38,0.8)] animate-pulse ${hasChallenge ? 'text-red-500' : 'text-green-400'}`}>
-            {hasChallenge ? "DESACTIVA LA BOMBA" : "BOMBA DESARMADA"}
-        </h2>
-        <div className="md:hidden text-2xl animate-pulse drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]">💣</div>
-        <div className="text-center">
-            <p className="text-[10px] md:text-xs text-red-400/80 font-mono uppercase tracking-widest">Errores</p>
-            <p className={`text-base md:text-lg font-bold font-squids ${errorsCount > 0 ? 'text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'text-red-700'}`}>
-                {errorsCount}/3
-            </p>
-        </div>
-    </div>
-);
-
-const ProgressBar = ({ value }: { value: number }) => (
-    <div className="w-full bg-neutral-950 h-2 flex-none border-b border-red-900/30 relative overflow-hidden">
-        <div className="absolute inset-0 bg-stripes-red-black opacity-10" />
-        <div
-            className="bg-linear-to-r from-green-600 to-green-400 h-full transition-all duration-500 ease-out shadow-[0_0_15px_rgba(74,222,128,0.6)] relative z-10"
-            style={{ width: `${(value / 5) * 100}%` }}
-        />
-    </div>
-);
 
 const ChallengeCard = ({ challenge, isSubmitting, onAnswer }: {
     challenge: BombChallenge;
@@ -175,12 +91,15 @@ const BombInputArea = ({ inputRef, formRef, hasAnswer, isSubmitting, onInput, on
     <div className="flex-none p-3 md:p-4 w-full bg-neutral-900/90 border-t-2 border-red-900/50 z-20 backdrop-blur-md shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
         <form ref={formRef} onSubmit={onSubmit} className="w-full max-w-3xl mx-auto flex flex-col md:flex-row gap-3 items-stretch">
             <div className="relative flex-1">
+                <label htmlFor="bomb-answer" className="sr-only">Respuesta para desactivar la bomba</label>
                 <input
                     ref={inputRef}
+                    id="bomb-answer"
                     type="text"
                     value={value}
                     onInput={onInput}
                     placeholder="Escribe tu respuesta..."
+                    aria-label="Respuesta para desactivar la bomba"
                     className="w-full h-full px-3 py-3 bg-neutral-800/80 border-2 border-gray-600 rounded-lg text-white text-base md:text-lg focus:border-red-500 focus:ring-2 focus:ring-red-500/30 focus:outline-hidden font-mono uppercase placeholder:normal-case transition-all text-center md:text-left"
                     autoComplete="off"
                 />
@@ -264,13 +183,13 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
         if (session.user?.id && playerNumber) fetchInitialState();
     }, [session.user?.id, playerNumber]);
 
-    // Pusher events
-    useEffect(() => {
-        if (!session.user?.id || !pusher || !playerNumber) return;
+    const gameStatusRef = useRef(gameStatus);
+    gameStatusRef.current = gameStatus;
+    const triggerShake = useCallback(() => { setIsShaking(true); setTimeout(() => setIsShaking(false), 500); }, []);
 
-        const triggerShake = () => { setIsShaking(true); setTimeout(() => setIsShaking(false), 500); };
-
-        channel.bind(PUSHER_EVENTS_BOMB.START, (data: any) => {
+    // Pusher vía hook único (bind/unbind simétrico, sin dep gameStatus que resuscribía)
+    useSWChannel(channel, {
+        [PUSHER_EVENTS_BOMB.START]: (data: any) => {
             if (data.playerNumber !== playerNumber) return;
             setCurrentChallenge(data.challenge);
             setChallengesCompleted(data.challengesCompleted);
@@ -278,69 +197,58 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
             setGameStatus('playing');
             resetAnswerField();
             setShowInstructions(false);
-            toast.info('¡ACTIVADA! 💣', { position: 'bottom-center' });
-        });
-
-        channel.bind(PUSHER_EVENTS_BOMB.GAME_STARTED, () => {
-            if (gameStatus !== 'waiting') return;
+            swSound.warning();
+            swToast.info('¡Bomba activada! Desactivala', { duration: 4000 });
+        },
+        [PUSHER_EVENTS_BOMB.GAME_STARTED]: () => {
+            if (gameStatusRef.current !== 'waiting') return;
             setCurrentChallenge(null);
             setChallengesCompleted(0);
             setErrorsCount(0);
             setGameStatus('waiting');
             resetAnswerField();
             setIsSubmitting(false);
-        });
-
-        channel.bind(PUSHER_EVENTS_BOMB.NEXT_CHALLENGE, (data: any) => {
+        },
+        [PUSHER_EVENTS_BOMB.NEXT_CHALLENGE]: (data: any) => {
             if (data.playerNumber !== playerNumber) return;
             setCurrentChallenge(data.challenge);
             setChallengesCompleted(data.challengesCompleted);
             setErrorsCount(data.errorsCount);
             resetAnswerField();
             setIsSubmitting(false);
-        });
-
-        channel.bind(PUSHER_EVENTS_BOMB.ERROR, (data: any) => {
+            swSound.correct();
+        },
+        [PUSHER_EVENTS_BOMB.ERROR]: (data: any) => {
             if (data.playerNumber !== playerNumber) return;
             triggerShake();
             setErrorsCount(data.errorsCount);
             setIsSubmitting(false);
             resetAnswerField();
+            swSound.error();
             inputRef.current?.focus();
-        });
-
-        channel.bind(PUSHER_EVENTS_BOMB.SUCCESS, (data: any) => {
+        },
+        [PUSHER_EVENTS_BOMB.SUCCESS]: (data: any) => {
             if (data.playerNumber === playerNumber) {
                 setGameStatus('completed');
                 setCurrentChallenge(null);
+                swSound.win();
                 return;
             }
-            toast.success(`Jugador #${data.playerNumber.toString().padStart(3, '0')}, pasa!`);
-        });
-
-        channel.bind(PUSHER_EVENTS_BOMB.FAILED, (data: any) => {
+            swToast.success(`Jugador #${data.playerNumber.toString().padStart(3, '0')} desactiva la bomba`);
+        },
+        [PUSHER_EVENTS_BOMB.FAILED]: (data: any) => {
             if (data.playerNumber !== playerNumber) return;
             triggerShake();
             setGameStatus('failed');
             setCurrentChallenge(null);
-        });
-
-        channel.bind(PUSHER_EVENTS_BOMB.GAME_ENDED, () => {
-            if (gameStatus !== 'playing') return;
+            swSound.lose();
+        },
+        [PUSHER_EVENTS_BOMB.GAME_ENDED]: () => {
+            if (gameStatusRef.current !== 'playing') return;
             setGameStatus('failed');
             setCurrentChallenge(null);
-        });
-
-        return () => {
-            channel.unbind(PUSHER_EVENTS_BOMB.START);
-            channel.unbind(PUSHER_EVENTS_BOMB.GAME_STARTED);
-            channel.unbind(PUSHER_EVENTS_BOMB.NEXT_CHALLENGE);
-            channel.unbind(PUSHER_EVENTS_BOMB.ERROR);
-            channel.unbind(PUSHER_EVENTS_BOMB.SUCCESS);
-            channel.unbind(PUSHER_EVENTS_BOMB.FAILED);
-            channel.unbind(PUSHER_EVENTS_BOMB.GAME_ENDED);
-        };
-    }, [session.user?.id, pusher, gameStatus, playerNumber, resetAnswerField]);
+        },
+    });
 
     const submitAnswer = useCallback(async () => {
         const trimmedAnswer = answerRef.current.trim();
@@ -377,29 +285,35 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
         submitAnswer();
     };
 
-    // ------ Render ------
+    // ------ Render (Design System _sw) ------
 
     if (gameStatus !== 'playing') {
         return (
-            <BaseContainer isShaking={isShaking}>
+            <SWGameShell accent="red" title="Desactiva la bomba" shaking={isShaking}>
                 {showInstructions && gameStatus === 'waiting' && (
-                    <Instructions duration={import.meta.env.DEV ? 5000 : 60000} customTitle="¡LA BOMBA!" controls={[{ keys: ["Enter"], label: "Enviar" }]}>
-                        <p className="font-mono">5 desafíos. 3 vidas. Buena suerte.</p>
+                    <Instructions duration={15000} customTitle="¡LA BOMBA!" controls={[{ keys: ["Enter"], label: "Enviar" }]}>
+                        <p className="font-mono">5 desafíos. 3 errores y explota. Buena suerte.</p>
                     </Instructions>
                 )}
-                <StatusScreen status={gameStatus} />
-            </BaseContainer>
+                <SWStatusScreen
+                    status={gameStatus === 'waiting' ? 'waiting' : gameStatus === 'completed' ? 'completed' : 'failed'}
+                    title={gameStatus === 'waiting' ? 'Esperando activación' : gameStatus === 'completed' ? '¡Desactivada!' : '¡Boom! Eliminado'}
+                    subtitle={gameStatus === 'waiting' ? 'El juego comenzará pronto' : undefined}
+                />
+            </SWGameShell>
         );
     }
 
     return (
-        <BaseContainer isShaking={isShaking}>
-            <BombHeader
-                challengesCompleted={challengesCompleted}
-                errorsCount={errorsCount}
-                hasChallenge={!!currentChallenge}
+        <SWGameShell accent="red" title={currentChallenge ? 'Desactiva la bomba' : 'Bomba desarmada'} shaking={isShaking}>
+            <SWHud
+                leftLabel="Progreso"
+                leftValue={`${challengesCompleted}/5`}
+                title="Desactiva la bomba"
+                rightLabel="Errores"
+                rightValue={`${errorsCount}/3`}
+                progress={challengesCompleted / 5}
             />
-            <ProgressBar value={challengesCompleted} />
             {currentChallenge && (
                 <ChallengeCard
                     challenge={currentChallenge}
@@ -416,6 +330,6 @@ export const Bomb = ({ session, pusher, channel }: BombProps) => {
                 onSubmit={handleSubmit}
                 value={inputValue}
             />
-        </BaseContainer>
+        </SWGameShell>
     );
 };

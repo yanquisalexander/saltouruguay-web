@@ -1,12 +1,16 @@
-import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
 import { useState, useEffect, useCallback, useRef } from "preact/hooks";
 import type Pusher from "pusher-js";
-import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { FISHING_VALID_KEYS } from "@/utils/streamer-wars/constants";
 import { PUSHER_CHANNELS, PUSHER_EVENTS_FISHING } from "@/consts/pusher";
+import { pusherService } from "@/services/pusher.client";
+import { SWGameShell } from "./_sw/SWGameShell";
+import { SWStatusScreen } from "./_sw/SWStatusScreen";
+import { SWHud } from "./_sw/SWHud";
+import { swToast } from "../swToast";
+import { swSound } from "./_sw/SWSounds";
 
 // ============= TYPES =============
 
@@ -199,8 +203,8 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
         if (keyChangeTimeoutRef.current) clearTimeout(keyChangeTimeoutRef.current);
         if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
 
-        playSound({ sound: STREAMER_WARS_SOUNDS.FISHING_ELIMINATED, volume: 0.8 });
-        toast.error("¡El pez te arrastró! Has sido eliminado.", { position: "bottom-center", duration: 5000 });
+        swSound.lose();
+        swToast.error("¡El pez te arrastró! Has sido eliminado.");
 
         try {
             await actions.games.fishing.recordElimination();
@@ -215,8 +219,8 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
 
         if (keyChangeTimeoutRef.current) clearTimeout(keyChangeTimeoutRef.current);
 
-        playSound({ sound: STREAMER_WARS_SOUNDS.FISHING_ROUND_COMPLETE, volume: 0.7 });
-        toast.success(`¡Pescado capturado! Ronda ${currentRound} completada.`, { position: "bottom-center" });
+        swSound.win();
+        swToast.success(`¡Pescado capturado! Ronda ${currentRound} completada.`);
 
         setTimeout(() => {
             setCurrentRound(prev => prev + 1);
@@ -284,15 +288,15 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
             // Start overtime if not already started
             if (overtimeStartRef.current === null) {
                 overtimeStartRef.current = performance.now();
-                playSound({ sound: STREAMER_WARS_SOUNDS.FISHING_WARNING, volume: 0.6 });
-                toast.warning("¡El pez llegó! Tenés 3 segundos para ganar.", { position: "bottom-center", duration: 3000 });
+                swSound.warning();
+                swToast.error("¡El pez llegó! Tenés 3 segundos para ganar.");
             }
             return;
         }
 
         if (fishProgress >= 80 && !showWarning) {
             setShowWarning(true);
-            playSound({ sound: STREAMER_WARS_SOUNDS.FISHING_WARNING, volume: 0.5 });
+            swSound.warning();
         }
     }, [playerProgress, fishProgress, gameStatus, showWarning, handleRoundComplete]);
 
@@ -305,24 +309,46 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
         }
     }, [currentRound, gameStatus, startRound]);
 
-    // ============= PUSHER EVENTS =============
-    // ... (El código de Pusher se mantiene igual, lo omito para brevedad, es idéntico al anterior) ...
+    // ============= PUSHER EVENTS (singleton, bind/unbind simétrico, sin leaks) =============
+    const startRoundRef = useRef(startRound);
+    startRoundRef.current = startRound;
+    // El juego NO arranca detrás de las instrucciones: se espera a 'instructions-ended'.
+    const instructionsDoneRef = useRef(false);
+    const pendingStartRef = useRef(false);
     useEffect(() => {
-        const channel = pusher?.subscribe(PUSHER_CHANNELS.GLOBAL);
-        channel?.bind(PUSHER_EVENTS_FISHING.GAME_STARTED, () => {
+        const onInstructionsEnded = () => {
+            instructionsDoneRef.current = true;
+            if (pendingStartRef.current) {
+                pendingStartRef.current = false;
+                startRoundRef.current();
+            }
+        };
+        document.addEventListener('instructions-ended', onInstructionsEnded);
+        return () => document.removeEventListener('instructions-ended', onInstructionsEnded);
+    }, []);
+    useEffect(() => {
+        const onStarted = () => {
             setGameStatus('waiting');
             setCurrentRound(1);
             setPlayerProgress(0);
             setFishProgress(0);
-            startRound();
-        });
-        channel?.bind(PUSHER_EVENTS_FISHING.GAME_ENDED, () => {
+            swSound.countdown();
+            // Si las instrucciones ya terminaron (o no se muestran), arrancar ya.
+            // Si no, esperar a que el jugador termine de leerlas.
+            if (instructionsDoneRef.current) {
+                startRoundRef.current();
+            } else {
+                pendingStartRef.current = true;
+            }
+        };
+        const onEnded = () => {
             isPlayingRef.current = false;
             setGameStatus('ended');
+            swSound.warning();
             if (keyChangeTimeoutRef.current) clearTimeout(keyChangeTimeoutRef.current);
             if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
-        });
-        channel?.bind(PUSHER_EVENTS_FISHING.GAME_RESET, () => {
+        };
+        const onReset = () => {
             isPlayingRef.current = false;
             setGameStatus('waiting');
             setCurrentRound(1);
@@ -330,13 +356,16 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
             setFishProgress(0);
             setPressedKeys(new Set());
             setActiveKeys([]);
-        });
-        return () => {
-            channel?.unbind(PUSHER_EVENTS_FISHING.GAME_STARTED);
-            channel?.unbind(PUSHER_EVENTS_FISHING.GAME_ENDED);
-            channel?.unbind(PUSHER_EVENTS_FISHING.GAME_RESET);
         };
-    }, [pusher, startRound]);
+        pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_FISHING.GAME_STARTED, onStarted);
+        pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_FISHING.GAME_ENDED, onEnded);
+        pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_FISHING.GAME_RESET, onReset);
+        return () => {
+            pusherService.unbind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_FISHING.GAME_STARTED, onStarted);
+            pusherService.unbind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_FISHING.GAME_ENDED, onEnded);
+            pusherService.unbind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_FISHING.GAME_RESET, onReset);
+        };
+    }, []);
 
 
     // ============= RENDER HELPERS =============
@@ -373,10 +402,30 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
         </div>
     );
 
+    if (gameStatus === 'waiting' || gameStatus === 'ended') {
+        return (
+            <SWGameShell accent="blue" title="Pesca">
+                <SWStatusScreen
+                    status={gameStatus === 'ended' ? 'ended' : 'waiting'}
+                    title={gameStatus === 'ended' ? 'Pesca finalizada' : 'Esperando inicio'}
+                    subtitle={gameStatus === 'ended' ? 'Revisa tu posición y espera la próxima ronda' : 'El juego comenzará pronto'}
+                />
+            </SWGameShell>
+        );
+    }
+
     return (
-        <>
+        <SWGameShell accent="blue" title="Pesca">
+            <SWHud
+                leftLabel="Ronda"
+                leftValue={`${currentRound}`}
+                title="Vamos a pescar"
+                rightLabel="Tu captura"
+                rightValue={`${Math.floor(playerProgress)}%`}
+                progress={Math.min(1, playerProgress / 100)}
+            />
             <Instructions
-                duration={10000}
+                duration={15000}
                 customTitle="¡A Pescar!"
                 controls={[
                     {
@@ -398,7 +447,7 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
                 </p>
             </Instructions>
 
-            <div className="flex flex-col items-center justify-center h-full w-full bg-linear-to-b from-blue-900 via-blue-800 to-cyan-900 text-white p-4 relative overflow-hidden">
+            <div className="flex flex-col items-center justify-center w-full text-white p-4 relative overflow-hidden" role="group" aria-label={`Pesca, ronda ${currentRound}, captura ${Math.floor(playerProgress)} por ciento`}>
 
                 {/* Visual Background Effects */}
                 <div className="absolute inset-0 opacity-20 pointer-events-none">
@@ -489,10 +538,10 @@ export const Fishing = ({ session, pusher, players }: FishingProps) => {
                     </div>
                 )}
 
-                {/* Game Over / Win Screens (Simplificado visualmente para no repetir código largo) */}
-                {gameStatus === 'eliminated' && <div className="z-10 text-red-500 font-bold text-2xl font-press-start-2p">ELIMINADO</div>}
+                {/* Game Over */}
+                {gameStatus === 'eliminated' && <SWStatusScreen status="eliminated" title="Eliminado" />}
 
             </div >
-        </>
+        </SWGameShell>
     );
 };

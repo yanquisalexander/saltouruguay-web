@@ -3,11 +3,14 @@ import type { SimonSaysGameState } from "@/utils/streamer-wars";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
 import { useState, useEffect, useCallback, useRef } from "preact/hooks";
-import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { SimonSaysButtons, colors } from "./SimonSaysButtons";
 import { pusherService } from "@/services/pusher.client";
 import { PUSHER_CHANNELS, PUSHER_EVENTS_SIMON } from "@/consts/pusher";
+import { SWGameShell } from "./_sw/SWGameShell";
+import { swToast } from "../swToast";
+
+const SWATCH_BG: Record<string, string> = { red: "bg-red-500", blue: "bg-blue-500", green: "bg-green-500", yellow: "bg-yellow-400" };
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -75,49 +78,45 @@ export const SimonSays = ({
         };
     }, []);
 
-    const simonSaysChannel = pusherService.subscribe(PUSHER_CHANNELS.SIMON_SAYS);
-
+    const simonChanRef = useRef<{ trigger: (e: string, d: any) => void } | null>(null);
+    // Suscribir dentro del efecto (no en render): evita resuscripciones y leaks.
     useEffect(() => {
-        simonSaysChannel?.bind(PUSHER_EVENTS_SIMON.GAME_STATE, (newGameState: SimonSaysGameState) => {
+        const ch = pusherService.subscribe(PUSHER_CHANNELS.SIMON_SAYS) as any;
+        simonChanRef.current = ch;
+        const onState = (newGameState: SimonSaysGameState) => {
             setGameState(newGameState);
             if (newGameState.status === "playing") {
                 setPlayerPattern([]);
                 setWaitingNextRound(false);
             }
-        });
-
-        simonSaysChannel?.bind(PUSHER_EVENTS_SIMON.PATTERN_FAILED, ({ playerNumber }: { playerNumber: number }) => {
-            toast.error(
-                `Jugador #${playerNumber.toString().padStart(3, "0")} eliminado`,
-                { position: "bottom-center" }
-            );
-        });
-
-        simonSaysChannel?.bind(PUSHER_EVENTS_SIMON.COMPLETED_PATTERN, ({ playerNumber }: { playerNumber: number }) => {
-            if (playerNumber === session.user.streamerWarsPlayerNumber!) return;
-            toast.success(
-                `Jugador #${playerNumber.toString().padStart(3, "0")} completó el patrón`,
-                { position: "bottom-center" }
-            );
-        });
-
-        simonSaysChannel?.bind(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, ({ playerNumber, color }: { playerNumber: number; color: string }) => {
+        };
+        const onFailed = ({ playerNumber: pn }: { playerNumber: number }) => {
+            swToast.error(`Jugador #${pn.toString().padStart(3, "0")} eliminado`);
+        };
+        const onCompleted = ({ playerNumber: pn }: { playerNumber: number }) => {
+            if (pn === session.user.streamerWarsPlayerNumber!) return;
+            swToast.success(`Jugador #${pn.toString().padStart(3, "0")} completó el patrón`);
+        };
+        const onInput = ({ playerNumber: pn, color }: { playerNumber: number; color: string }) => {
             setRivalInputs(prev => {
                 const newInputs = { ...prev };
-                if (!newInputs[playerNumber]) newInputs[playerNumber] = [];
-                newInputs[playerNumber].push(color);
+                if (!newInputs[pn]) newInputs[pn] = [];
+                newInputs[pn].push(color);
                 return newInputs;
             });
-        });
+        };
+        ch?.bind(PUSHER_EVENTS_SIMON.GAME_STATE, onState);
+        ch?.bind(PUSHER_EVENTS_SIMON.PATTERN_FAILED, onFailed);
+        ch?.bind(PUSHER_EVENTS_SIMON.COMPLETED_PATTERN, onCompleted);
+        ch?.bind(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, onInput);
 
         return () => {
-            simonSaysChannel?.unbind(PUSHER_EVENTS_SIMON.GAME_STATE);
-            simonSaysChannel?.unbind(PUSHER_EVENTS_SIMON.PATTERN_FAILED);
-            simonSaysChannel?.unbind(PUSHER_EVENTS_SIMON.COMPLETED_PATTERN);
-            simonSaysChannel?.unbind(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT);
-            pusherService.unsubscribe(PUSHER_CHANNELS.SIMON_SAYS);
+            ch?.unbind(PUSHER_EVENTS_SIMON.GAME_STATE, onState);
+            ch?.unbind(PUSHER_EVENTS_SIMON.PATTERN_FAILED, onFailed);
+            ch?.unbind(PUSHER_EVENTS_SIMON.COMPLETED_PATTERN, onCompleted);
+            ch?.unbind(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, onInput);
         };
-    }, [simonSaysChannel, session.user.streamerWarsPlayerNumber]);
+    }, [session.user.streamerWarsPlayerNumber]);
 
     const showPattern = useCallback(async (pattern: string[]) => {
         setShowingPattern(true);
@@ -143,10 +142,12 @@ export const SimonSays = ({
         playerPatternRef.current = updatedPattern;
         setPlayerPattern(updatedPattern);
 
-        simonSaysChannel?.trigger(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, {
-            playerNumber: pn,
-            color
-        });
+        try {
+            simonChanRef.current?.trigger(PUSHER_EVENTS_SIMON.CLIENT_PLAYER_INPUT, {
+                playerNumber: pn,
+                color,
+            });
+        } catch {}
 
         if (color !== currentGameState.pattern[updatedPattern.length - 1]) {
             playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
@@ -213,8 +214,8 @@ export const SimonSays = ({
     };
 
     return (
-        <>
-            <Instructions duration={30_000}
+        <SWGameShell accent="lime" title="Simón dice">
+            <Instructions duration={15_000}
                 controls={[
                     {
                         keys: ["LEFT_CLICK"],
@@ -247,20 +248,10 @@ export const SimonSays = ({
                 {!gameIsWaiting && (
                     <div className="absolute top-4 left-4 z-20 bg-neutral-900/60 backdrop-blur-md border border-neutral-800 rounded-lg p-3">
                         <p className="font-anton text-[10px] tracking-[0.2em] text-neutral-500 mb-1.5 uppercase">Tu Secuencia</p>
-                        <div className="flex gap-1.5 h-6 min-w-[100px] items-center">
-                            {playerPattern.map((color, index) => {
-                                const colDef = colors.find(c => c.name === color);
-                                const swatchClass = colDef?.gradient
-                                    ? colDef.gradient.split(' ')[0].replace('from-', 'bg-')
-                                    : 'bg-gray-500';
-
-                                return (
-                                    <div
-                                        key={index}
-                                        className={`w-3 h-3 rounded-sm ${swatchClass}`}
-                                    />
-                                );
-                            })}
+                        <div className="flex gap-1.5 h-6 min-w-[100px] items-center" aria-live="polite" aria-label={`Tu secuencia: ${playerPattern.length} colores`}>
+                            {playerPattern.map((color, index) => (
+                                <div key={index} aria-hidden="true" className={`w-3 h-3 rounded-sm ${SWATCH_BG[color] ?? "bg-gray-500"}`} />
+                            ))}
                             {playerPattern.length === 0 && <span className="text-neutral-600 text-xs font-teko tracking-wider">esperando entrada...</span>}
                         </div>
                     </div>
@@ -331,7 +322,7 @@ export const SimonSays = ({
                     {gameIsPlaying && (
                         <>
                             {isEliminated ? (
-                                <div className="flex flex-col items-center justify-center p-10 bg-neutral-900/60 border border-red-900/50 rounded-lg">
+                                <div className="flex flex-col items-center justify-center p-10 bg-neutral-900/60 border border-red-900/50 rounded-lg" role="status">
                                     <p className="text-5xl font-teko tracking-wider text-red-500 mb-2 uppercase">
                                         Eliminado
                                     </p>
@@ -348,7 +339,7 @@ export const SimonSays = ({
                                     </div>
 
                                     {isCompleted && (
-                                        <div className="mt-6 bg-green-900/20 border border-green-900/50 rounded-lg p-3 text-center">
+                                        <div className="mt-6 bg-green-900/20 border border-green-900/50 rounded-lg p-3 text-center" role="status">
                                             <p className="font-teko text-lg tracking-wider text-green-400 uppercase">
                                                 Ronda completada
                                             </p>
@@ -361,6 +352,6 @@ export const SimonSays = ({
                     )}
                 </div>
             </div>
-        </>
+        </SWGameShell>
     );
 };

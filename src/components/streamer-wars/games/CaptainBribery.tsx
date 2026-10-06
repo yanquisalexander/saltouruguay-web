@@ -6,10 +6,12 @@ import type Pusher from "pusher-js";
 import type { Channel } from "pusher-js";
 import { getTranslation } from "@/utils/translate";
 import { LucideCrown, LucideLoader } from "lucide-preact";
-import { toast } from "sonner";
 import confetti from "canvas-confetti";
-import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { PUSHER_EVENTS } from "@/consts/pusher";
+import { SWGameShell } from "./_sw/SWGameShell";
+import { SWStatusScreen } from "./_sw/SWStatusScreen";
+import { swToast } from "../swToast";
+import { swSound } from "./_sw/SWSounds";
 
 interface Props {
     session: Session;
@@ -37,7 +39,7 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
                 setPlayersTeams(data.playersTeams);
             } catch (err) {
                 console.error("Error fetching player teams:", err);
-                toast.error("Error al cargar los equipos");
+                swToast.error("Error al cargar los equipos");
             }
         };
         getPlayersTeams();
@@ -65,7 +67,7 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
             if (error) throw error;
         } catch (err) {
             console.error(err);
-            toast.error("Error al aceptar el soborno");
+            swToast.error("Error al aceptar el soborno");
         }
     };
 
@@ -78,18 +80,16 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
             const isMyTeamLost = team === currentTeamRef.current;
 
             setBriberyAccepted({ team });
-            playSound({ sound: STREAMER_WARS_SOUNDS.EQUIPO_ELIMINADO, volume: 0.7 });
+            swSound.lose();
 
 
             if (!isMyTeamLost) {
-                //playSound({ sound: STREAMER_WARS_SOUNDS.WIN_BRIBE, volume: 0.5 });
                 confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-                toast.success(`El capitán del equipo "${getTranslation(team)}" ha aceptado el soborno. ¡Tu equipo está a salvo!`);
+                swToast.success(`El capitán del equipo "${getTranslation(team)}" ha aceptado el soborno. ¡Tu equipo está a salvo!`);
                 return;
             }
 
-            //playSound({ sound: STREAMER_WARS_SOUNDS.LOSED_BRIBE, volume: 0.5 });
-            toast.warning("Tu capitán ha aceptado el soborno. Tu equipo ha sido eliminado del juego.");
+            swToast.error("Tu capitán ha aceptado el soborno. Tu equipo ha sido eliminado del juego.");
         };
 
         channel.bind(PUSHER_EVENTS.BRIBE_ACCEPTED, handler);
@@ -97,7 +97,7 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
     }, [channel]);
 
     return (
-        <>
+        <SWGameShell accent="lime" title="Soborno al capitán">
             <Instructions duration={15000}>
                 <p className="font-mono max-w-2xl text-left">
                     <strong>Capitán:</strong> Recibirás varias ofertas de soborno por parte de los auspiciantes.
@@ -109,13 +109,11 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
             </Instructions>
 
             {Object.keys(playersTeams).length === 0 ? (
-                <div className="text-center mx-auto max-w-[50ch]">
-                    <LucideLoader size={28} class="mx-auto my-6 animate-spin-clockwise animate-duration-2000 animate-iteration-count-infinite" />
-                    <p>Cargando equipos...</p>
-                    <p>
-                        ¿Mucho rato esperando? Verifica que antes los jugadores hayan sido <span class="font-bold text-lime-500">asignados a equipos</span>.
-                    </p>
-                </div>
+                <SWStatusScreen
+                    status="loading"
+                    title="Cargando equipos…"
+                    subtitle="¿Mucho rato esperando? Verifica que los jugadores hayan sido asignados a equipos."
+                />
             ) : (
                 <div class="flex flex-col items-center mt-16">
                     <h2 class="text-xl font-anton mb-4">Soborno al capitán</h2>
@@ -170,7 +168,7 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
                                             <div className="gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                                                 {playersTeams[team]?.map(({ playerNumber, avatar, displayName, isCaptain }) => (
                                                     <div
-                                                        key={displayName}
+                                                        key={playerNumber}
                                                         className="flex items-center gap-3 p-2 rounded-lg 
                       bg-gray-800/50 transition-all duration-300 hover:bg-gray-800/70"
                                                     >
@@ -201,6 +199,6 @@ export const CaptainBribery = ({ session, players, pusher, channel }: Props) => 
                     )}
                 </div>
             )}
-        </>
+        </SWGameShell>
     );
 };

@@ -2,14 +2,18 @@ import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import type { TugOfWarGameState } from "@/utils/streamer-wars";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useRef } from "preact/hooks";
 import type Pusher from "pusher-js";
-import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { Progress } from "@/components/ui/8bit/progress";
 import { Button } from "@/components/ui/8bit/button";
 import { IS_DEV } from "@/lib/utils";
 import { PUSHER_CHANNELS, PUSHER_EVENTS_TUG_OF_WAR } from "@/consts/pusher";
+import { pusherService } from "@/services/pusher.client";
+import { SWGameShell } from "./_sw/SWGameShell";
+import { SWHud } from "./_sw/SWHud";
+import { swToast } from "../swToast";
+import { swSound } from "./_sw/SWSounds";
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -59,74 +63,53 @@ export const TugOfWar = ({
     const isPlayerInGame = playerTeamId === gameState.teams.teamA.id ||
         playerTeamId === gameState.teams.teamB.id;
 
-    // Subscribe to Pusher events
+    // Pusher singleton sin resuscribir por gameState.teams (bug previo)
+    const teamsRef = useRef(gameState.teams);
+    teamsRef.current = gameState.teams;
     useEffect(() => {
-        const globalChannel = pusher?.subscribe(PUSHER_CHANNELS.GLOBAL);
-
-        globalChannel?.bind(PUSHER_EVENTS_TUG_OF_WAR.GAME_STARTED, (newGameState: TugOfWarGameState) => {
+        const timers: Array<ReturnType<typeof setTimeout>> = [];
+        const onStarted = (newGameState: TugOfWarGameState) => {
             setIsStarting(true);
             setCountdownText("Preparados");
-            playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION });
-            setTimeout(() => {
-                setCountdownText("Listos");
-                playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION });
-            }, 1000);
-            setTimeout(() => {
-                setCountdownText("¡YA!");
-                playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO_COMIENZO });
-            }, 2000);
-            setTimeout(() => {
+            swSound.countdown();
+            timers.push(setTimeout(() => { setCountdownText("Listos"); swSound.countdown(); }, 1000));
+            timers.push(setTimeout(() => { setCountdownText("¡YA!"); swSound.warning(); }, 2000));
+            timers.push(setTimeout(() => {
                 setCountdownText(null);
                 setIsStarting(false);
                 setGameState(newGameState);
-                toast.success("¡Ha comenzado Tug of War!", { position: "bottom-center" });
-            }, 3000);
-        });
-
-        globalChannel?.bind(PUSHER_EVENTS_TUG_OF_WAR.STATE_UPDATE, (data: { progress: number; status: string; winner?: string }) => {
-            setGameState(prev => ({
-                ...prev,
-                progress: data.progress,
-                status: data.status as any,
-                winner: data.winner as any,
-            }));
-
-            if (data.status === 'finished') {
-                playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT });
-                const winningTeam = data.winner === 'teamA' ? gameState.teams.teamA.name : gameState.teams.teamB.name;
-                toast.success(`¡${winningTeam} ha ganado!`, { position: "bottom-center", duration: 5000 });
-            }
-        });
-
-        globalChannel?.bind(PUSHER_EVENTS_TUG_OF_WAR.GAME_ENDED, (data: { winner: string; progress: number; winningTeam: string }) => {
-            setGameState(prev => ({
-                ...prev,
-                status: 'finished',
-                winner: data.winner as any,
-                progress: data.progress,
-            }));
-            toast.success(`¡El juego ha terminado! Ganador: ${data.winningTeam}`, { position: "bottom-center", duration: 5000 });
-        });
-
-        // Subscribe to game cleared event
-        globalChannel?.bind(PUSHER_EVENTS_TUG_OF_WAR.GAME_CLEARED, () => {
-            setGameState(prev => ({
-                ...prev,
-                status: 'waiting',
-                progress: 0,
-                winner: undefined,
-            }));
-            toast.success("¡El estado del juego de la cuerda ha sido limpiado!", { position: "bottom-center", duration: 5000 });
-        });
-
-        // Cleanup
-        return () => {
-            globalChannel?.unbind(PUSHER_EVENTS_TUG_OF_WAR.GAME_STARTED);
-            globalChannel?.unbind(PUSHER_EVENTS_TUG_OF_WAR.STATE_UPDATE);
-            globalChannel?.unbind(PUSHER_EVENTS_TUG_OF_WAR.GAME_ENDED);
-            globalChannel?.unbind(PUSHER_EVENTS_TUG_OF_WAR.GAME_CLEARED);
+                swToast.success("¡Ha comenzado Tug of War!");
+            }, 3000));
         };
-    }, [pusher, gameState.teams]);
+        const onUpdate = (data: { progress: number; status: string; winner?: string }) => {
+            setGameState(prev => ({ ...prev, progress: data.progress, status: data.status as any, winner: data.winner as any }));
+            if (data.status === 'finished') {
+                swSound.win();
+                const teams = teamsRef.current;
+                const winningTeam = data.winner === 'teamA' ? teams.teamA.name : teams.teamB.name;
+                swToast.success(`¡${winningTeam} ha ganado!`);
+            }
+        };
+        const onEnded = (data: { winner: string; progress: number; winningTeam: string }) => {
+            setGameState(prev => ({ ...prev, status: 'finished', winner: data.winner as any, progress: data.progress }));
+            swToast.success(`¡El juego ha terminado! Ganador: ${data.winningTeam}`);
+        };
+        const onCleared = () => {
+            setGameState(prev => ({ ...prev, status: 'waiting', progress: 0, winner: undefined }));
+            swToast.info("Estado de la cuerda limpiado");
+        };
+        pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_TUG_OF_WAR.GAME_STARTED, onStarted);
+        pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_TUG_OF_WAR.STATE_UPDATE, onUpdate);
+        pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_TUG_OF_WAR.GAME_ENDED, onEnded);
+        pusherService.bind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_TUG_OF_WAR.GAME_CLEARED, onCleared);
+        return () => {
+            timers.forEach(clearTimeout);
+            pusherService.unbind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_TUG_OF_WAR.GAME_STARTED, onStarted);
+            pusherService.unbind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_TUG_OF_WAR.STATE_UPDATE, onUpdate);
+            pusherService.unbind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_TUG_OF_WAR.GAME_ENDED, onEnded);
+            pusherService.unbind(PUSHER_CHANNELS.GLOBAL, PUSHER_EVENTS_TUG_OF_WAR.GAME_CLEARED, onCleared);
+        };
+    }, []);
 
     // Cooldown countdown
     useEffect(() => {
@@ -171,7 +154,7 @@ export const TugOfWar = ({
             const { error, data } = await actions.games.tugOfWar.handlePlayerClick();
 
             if (error) {
-                toast.error(error.message || "No puedes tirar de la cuerda ahora", { position: "bottom-center" });
+                swToast.error(error.message || "No puedes tirar de la cuerda ahora");
                 setIsOnCooldown(false);
                 return;
             }
@@ -183,36 +166,26 @@ export const TugOfWar = ({
         } catch (err) {
             console.error("Error al tirar de la cuerda:", err);
             setIsOnCooldown(false);
-            toast.error("Error al procesar tu acción", { position: "bottom-center" });
+            swToast.error("Error al procesar tu acción");
         }
     };
 
-    const getTeamAColor = () => {
-        const colorMap: Record<string, string> = {
-            'red': 'bg-red-500',
-            'blue': 'bg-blue-500',
-            'yellow': 'bg-yellow-500',
-            'purple': 'bg-purple-500',
-            'green': 'bg-green-500',
-        };
-        return colorMap[gameState.teams.teamA.color] || 'bg-blue-500';
+    // Mapa único de colores (antes A/B diferían: white solo existía en B)
+    const TEAM_COLOR_BG: Record<string, string> = {
+        red: 'bg-red-500',
+        blue: 'bg-blue-500',
+        yellow: 'bg-yellow-500',
+        purple: 'bg-purple-500',
+        green: 'bg-green-500',
+        white: 'bg-white text-black',
     };
-
-    const getTeamBColor = () => {
-        const colorMap: Record<string, string> = {
-            'red': 'bg-red-500',
-            'blue': 'bg-blue-500',
-            'yellow': 'bg-yellow-500',
-            'purple': 'bg-purple-500',
-            'white': 'bg-white text-black',
-        };
-        return colorMap[gameState.teams.teamB.color] || 'bg-red-500';
-    };
+    const getTeamAColor = () => TEAM_COLOR_BG[gameState.teams.teamA.color] || 'bg-blue-500';
+    const getTeamBColor = () => TEAM_COLOR_BG[gameState.teams.teamB.color] || 'bg-red-500';
 
     return (
         <>
             {isStarting && countdownText && (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-10000">
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-60" role="status" aria-live="assertive">
                     <div className="text-4xl font-bold text-white font-press-start-2p">
                         {countdownText}
                     </div>

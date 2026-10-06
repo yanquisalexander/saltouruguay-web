@@ -31,21 +31,26 @@ export const SimonSaysButtons = ({
     }, [activeButton]);
 
     return (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3" role="group" aria-label="Colores de Simón dice">
             {colors.map(({ name, gradient }) => (
-                <div
+                <button
                     key={name}
+                    type="button"
+                    aria-label={getTranslation(name)}
+                    aria-pressed={activeButton === name}
+                    disabled={showingPattern}
                     className={`
                         size-28 flex justify-center items-center text-sm font-teko tracking-wider uppercase font-medium
                         cursor-pointer transition-all duration-300 rounded-lg border border-white/10 bg-linear-to-b ${gradient}
-                        shadow-md shadow-black/20
+                        shadow-md shadow-black/20 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-[#b4cd02]
                         ${activeButton === name ? "scale-105 ring-2 ring-[#b4cd02]/60 border-[#b4cd02]/50 shadow-[0_0_20px_rgba(180,205,2,0.2)]" : ""}
-                        ${showingPattern ? "pointer-events-none" : "hover:brightness-110 active:brightness-75 active:scale-95"}
+                        ${showingPattern ? "" : "hover:brightness-110 active:brightness-75 active:scale-95"}
                     `}
                     onClick={() => onClick(name)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(name); } }}
                 >
                     {getTranslation(name)}
-                </div>
+                </button>
             ))}
         </div>
     );

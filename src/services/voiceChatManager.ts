@@ -5,11 +5,24 @@ import { actions } from "astro:actions";
 import { pusherService } from "@/services/pusher.client";
 import { PUSHER_EVENTS } from "@/consts/pusher";
 
-const ICE_SERVERS = {
-    iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-    ],
-};
+// STUN base + TURN opcional vía env pública (PUBLIC_TURN_URL/USERNAME/CREDENTIAL).
+// Sin TURN el P2P falla en NAT estrictas: se avisa en connectionError al adquirir mic.
+function buildIceServers(): RTCConfiguration {
+    const env = import.meta.env as any;
+    const servers: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
+    if (env.PUBLIC_TURN_URL) {
+        servers.push({
+            urls: env.PUBLIC_TURN_URL,
+            username: env.PUBLIC_TURN_USERNAME,
+            credential: env.PUBLIC_TURN_CREDENTIAL,
+        });
+    }
+    return { iceServers: servers };
+}
+const ICE_SERVERS: RTCConfiguration = buildIceServers();
+const HAS_TURN = ICE_SERVERS.iceServers!.length > 1;
+
+const PTT_MAX_HOLD_MS = 30000;
 
 const MAX_RETRY_DELAY = 30000;
 const INITIAL_RETRY_DELAY = 1000;
@@ -40,12 +53,28 @@ export class VoiceChatManager {
     private handleFocusOutFn: (e: FocusEvent) => void;
     private handleDeviceChangeFn: (e: Event) => void;
 
+    private pttWatchdog: number | null = null;
+    private handleBlurFn: () => void;
+    private handleVisibilityFn: () => void;
+
     private constructor() {
         this.handleKeyDownFn = this.onKeyDown.bind(this);
         this.handleKeyUpFn = this.onKeyUp.bind(this);
         this.handleFocusInFn = this.onFocusIn.bind(this);
         this.handleFocusOutFn = this.onFocusOut.bind(this);
         this.handleDeviceChangeFn = this.onDeviceChange.bind(this);
+        // Anti-stuck: soltar PTT si la ventana pierde foco o se oculta.
+        this.handleBlurFn = () => this.pttStop();
+        this.handleVisibilityFn = () => { if (document.hidden) this.pttStop(); };
+    }
+
+    private armPttWatchdog() {
+        if (this.pttWatchdog) clearTimeout(this.pttWatchdog);
+        this.pttWatchdog = window.setTimeout(() => this.pttStop(), PTT_MAX_HOLD_MS);
+    }
+
+    private clearPttWatchdog() {
+        if (this.pttWatchdog) { clearTimeout(this.pttWatchdog); this.pttWatchdog = null; }
     }
 
     public static getInstance() {
@@ -66,8 +95,11 @@ export class VoiceChatManager {
 
     public pttStart() {
         if (this.isPTTActive) return;
+        // Si está muteado por admin, no transmitir.
+        if (this.userId && useVoiceChatStore.getState().forcedMuteTargets.map(String).includes(String(this.userId))) return;
         this.isPTTActive = true;
         useVoiceChatStore.getState().setIsPTTActive(true);
+        this.armPttWatchdog();
         if (this.localStream && this.teamId) {
             if (this.debounceRef) clearTimeout(this.debounceRef);
             this.localStream.getAudioTracks().forEach(t => t.enabled = true);
@@ -82,6 +114,7 @@ export class VoiceChatManager {
     public pttStop() {
         if (!this.isPTTActive) return;
         this.isPTTActive = false;
+        this.clearPttWatchdog();
         useVoiceChatStore.getState().setIsPTTActive(false);
         if (this.debounceRef) {
             clearTimeout(this.debounceRef);
@@ -218,15 +251,19 @@ export class VoiceChatManager {
 
         window.removeEventListener('keydown', this.handleKeyDownFn);
         window.removeEventListener('keyup', this.handleKeyUpFn);
+        window.removeEventListener('blur', this.handleBlurFn);
+        document.removeEventListener('visibilitychange', this.handleVisibilityFn);
         document.removeEventListener('focusin', this.handleFocusInFn);
         document.removeEventListener('focusout', this.handleFocusOutFn);
-        navigator.mediaDevices.removeEventListener('devicechange', this.handleDeviceChangeFn);
+        try { navigator.mediaDevices.removeEventListener('devicechange', this.handleDeviceChangeFn); } catch {}
 
         window.addEventListener('keydown', this.handleKeyDownFn);
         window.addEventListener('keyup', this.handleKeyUpFn);
+        window.addEventListener('blur', this.handleBlurFn);
+        document.addEventListener('visibilitychange', this.handleVisibilityFn);
         document.addEventListener('focusin', this.handleFocusInFn);
         document.addEventListener('focusout', this.handleFocusOutFn);
-        navigator.mediaDevices.addEventListener('devicechange', this.handleDeviceChangeFn);
+        try { navigator.mediaDevices.addEventListener('devicechange', this.handleDeviceChangeFn); } catch {}
 
         // Always subscribe to channels first (even before voice is enabled)
         // so we don't miss voice:enabled events
@@ -240,15 +277,41 @@ export class VoiceChatManager {
 
     private async acquireMic() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const selected = useVoiceChatStore.getState().selectedMicId;
+            const constraints: MediaStreamConstraints = selected
+                ? { audio: { deviceId: { exact: selected } } }
+                : { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } };
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             stream.getAudioTracks().forEach(track => track.enabled = false);
             this.localStream = stream;
             useVoiceChatStore.getState().setConnectionError(null);
             await this.enumerateMics();
         } catch (e: any) {
-            if (e.name === "NotAllowedError") useVoiceChatStore.getState().setConnectionError("Permiso denegado");
-            else useVoiceChatStore.getState().setConnectionError("Micro no encontrado");
+            const name = e?.name || "";
+            if (name === "NotAllowedError" || name === "SecurityError")
+                useVoiceChatStore.getState().setConnectionError("Permiso de micrófono denegado — permitilo en el navegador y reintentá");
+            else if (name === "NotFoundError" || name === "OverconstrainedError")
+                useVoiceChatStore.getState().setConnectionError("No se encontró micrófono — conectá uno y elegilo abajo");
+            else if (name === "NotReadableError")
+                useVoiceChatStore.getState().setConnectionError("Micrófono en uso por otra app — cerrala y reintentá");
+            else useVoiceChatStore.getState().setConnectionError("No se pudo abrir el micrófono");
         }
+    }
+
+    /** Libera solo la voz del equipo actual sin desuscribir listeners globales. Seguro para React cleanup. */
+    public leaveTeam() {
+        this.pttStop();
+        this.clearPttWatchdog();
+        if (this.localStream) {
+            this.localStream.getTracks().forEach(t => { try { t.stop(); } catch {} });
+            this.localStream = null;
+        }
+        Object.keys(this.retryTimers).forEach(id => { clearTimeout(this.retryTimers[id]); delete this.retryTimers[id]; });
+        this.retryAttempts = {};
+        Object.keys(this.activeConnections).forEach((id) => this.disconnectPeer(id));
+        useVoiceChatStore.getState().setPeerCount(0);
+        useVoiceChatStore.getState().setIsPTTActive(false);
+        useVoiceChatStore.getState().setLocalMicEnabled(false);
     }
 
     private async sendSignal(targetTeamId: string, event: string, data: any) {
@@ -299,11 +362,17 @@ export class VoiceChatManager {
         pc.onconnectionstatechange = () => {
             useVoiceChatStore.getState().setPeerConnectionState(peerId, pc.connectionState);
             if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+                if (!HAS_TURN) {
+                    useVoiceChatStore.getState().setConnectionError(
+                        "Conexión de voz fallida (red estricta). Avisá a un admin: falta servidor TURN."
+                    );
+                }
                 this.disconnectPeer(peerId);
                 this.scheduleRetry(peerId, channelTeamId, isSpectating);
             } else if (pc.connectionState === 'connected') {
                 delete this.retryAttempts[peerId];
                 useVoiceChatStore.getState().setReconnecting(false);
+                useVoiceChatStore.getState().setConnectionError(null);
             }
         };
 

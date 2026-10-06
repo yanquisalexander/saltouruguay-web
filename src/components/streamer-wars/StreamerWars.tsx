@@ -39,6 +39,7 @@ import { Inmersive3dCinematic } from "./Inmersive3dCinematic";
 import { Models3DPreloader } from "@/components/Models3DPreloader";
 import { PUSHER_EVENTS } from "@/consts/pusher";
 import { swToast } from "./swToast";
+import { TabletFrame } from "./TabletFrame";
 
 
 
@@ -48,6 +49,7 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
     const [visible, setVisible] = useState(true);
 
     useEffect(() => {
+        const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
         const interval = setInterval(() => {
             setProgress((prev) => {
                 if (prev >= 100) {
@@ -56,7 +58,7 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
                 }
                 return prev + 1;
             });
-        }, 20);
+        }, reduced ? 5 : 20);
 
         const endTimer = setTimeout(() => {
             document.dispatchEvent(new CustomEvent('splash-screen-ended'));
@@ -64,8 +66,8 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
             setTimeout(() => {
                 setVisible(false);
                 onEnd();
-            }, 600);
-        }, 2800);
+            }, reduced ? 0 : 600);
+        }, reduced ? 600 : 2800);
 
         return () => {
             clearInterval(interval);
@@ -75,9 +77,18 @@ const SplashScreen = ({ onEnd }: { onEnd: () => void }) => {
 
     if (!visible) return null;
 
+    const skip = () => {
+        document.dispatchEvent(new CustomEvent('splash-screen-ended'));
+        setFadingOut(true);
+        setVisible(false);
+        onEnd();
+    };
+
     return (
         <div
-            className={`fixed inset-0 bg-[#050505] z-8000 flex items-center justify-center transition-all duration-700 ${fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            onClick={skip}
+            title="Click para saltar"
+            className={`fixed inset-0 bg-[#050505] z-80 flex items-center justify-center transition-all duration-700 cursor-pointer ${fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
                 }`}
         >
             {/* AMBIENTE: Sutil resplandor verde en el fondo */}
@@ -269,6 +280,19 @@ const useGameEventListeners = (
     }, [channel, session.user.id]); // Dependencias reducidas
 };
 
+// Nombre mostrable por juego para la status bar de la tablet
+const GAME_TITLES: Record<string, string> = {
+    TeamSelector: "Selector de equipos",
+    SimonSays: "Simón dice",
+    CaptainBribery: "Soborno al capitán",
+    AutoElimination: "Autoeliminación",
+    Dalgona: "Dalgona",
+    TugOfWar: "Tug of War",
+    Bomb: "Desactiva la bomba",
+    Fishing: "Pesca",
+    AndIChallenge: "El desafío de Whitney",
+};
+
 // --- COMPONENTE PRINCIPAL ---
 
 export const StreamerWars = ({ session }: { session: Session }) => {
@@ -340,22 +364,19 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                     });
                 });
 
-                setPlayers(prev => {
-                    const existingIds = new Set(prev.map(p => p.id));
-                    const newPlayers = apiPlayers
-                        .filter((p: any) => !existingIds.has(p.id))
-                        .map((p: any) => ({
-                            id: p.id,
-                            playerNumber: p.playerNumber,
-                            displayName: p.displayName || p.name || '',
-                            avatar: p.avatar || '',
-                            admin: p.admin || false,
-                            online: false,
-                            eliminated: p.eliminated || false,
-                            team: playerTeamMap.get(p.playerNumber)
-                        }));
-
-                    return [...prev, ...newPlayers];
+                // Replace (no merge-push): reconcilia eliminados/equipos y altas/bajas.
+                setPlayers((prev) => {
+                    const onlineById = new Set(prev.filter((p) => p.online).map((p) => p.id));
+                    return (apiPlayers as any[]).map((p: any) => ({
+                        id: p.id,
+                        playerNumber: p.playerNumber,
+                        displayName: p.displayName || p.name || '',
+                        avatar: p.avatar || '',
+                        admin: p.admin || false,
+                        online: onlineById.has(p.id),
+                        eliminated: p.eliminated || false,
+                        team: playerTeamMap.get(p.playerNumber)
+                    }));
                 });
             }
         } catch (error) {
@@ -414,9 +435,17 @@ export const StreamerWars = ({ session }: { session: Session }) => {
         };
     }, [presenceChannel.current]); // Dependencia en el ref.current es tricky en React puro, pero suele funcionar si el hook padre fuerza render
 
-    // 6. Render Logic Simplificada
+    // 6. Render Logic Simplificada (todo vive dentro de la tablet)
     const MainContent = useMemo(() => {
-        if (!dayAvailable) return <WaitForDayOpen session={session} players={players} />;
+        if (!dayAvailable) {
+            return (
+                <TabletFrame statusTitle="Jornadas // Servidor central">
+                    <div class="p-6 md:p-10 min-h-[50vh] flex items-center justify-center">
+                        <WaitForDayOpen session={session} players={players} />
+                    </div>
+                </TabletFrame>
+            );
+        }
 
         if (gameState && !uiState.showWaitingScreen && globalChannel.current) {
             // Inyección dinámica de props
@@ -430,8 +459,14 @@ export const StreamerWars = ({ session }: { session: Session }) => {
 
             const GameComponent = GAME_CONFIG[gameState.component as keyof typeof GAME_CONFIG];
 
-            if (!GameComponent) return <ErrorGameView />;
-            return <GameComponent {...finalProps} />;
+            if (!GameComponent) return <ErrorGameView gameId={gameState.component} />;
+            return (
+                <TabletFrame wide statusTitle={GAME_TITLES[gameState.component] ?? gameState.component}>
+                    <div class="p-3 md:p-6">
+                        <GameComponent {...finalProps} />
+                    </div>
+                </TabletFrame>
+            );
         }
 
         return (
@@ -441,6 +476,8 @@ export const StreamerWars = ({ session }: { session: Session }) => {
                 bgVolume={bgVolume}
                 setBgVolume={setBgVolume}
                 bgAudio={bgAudio.current}
+                players={players}
+                expectedPlayers={expectedPlayers}
             />
         );
     }, [dayAvailable, gameState, uiState.showWaitingScreen, players, bgVolume, globalChannel.current]);
@@ -495,9 +532,11 @@ export const StreamerWars = ({ session }: { session: Session }) => {
     );
 };
 
-const ErrorGameView = () => (
-    <div class="flex flex-col items-center h-full justify-center">
-        <h1 class="text-2xl font-bold mb-4 font-squids">Juego no encontrado</h1>
-        <p class="text-white text-center font-press-start-2p">El juego seleccionado no está disponible.</p>
+const ErrorGameView = ({ gameId }: { gameId?: string }) => (
+    <div class="flex flex-col items-center h-full justify-center gap-4 p-8 text-center">
+        <p class="font-anton text-[10px] tracking-[0.3em] uppercase text-red-400">Error de sincronía</p>
+        <h1 class="text-2xl font-bold font-squids text-white">Juego no encontrado{gameId ? ` (${gameId})` : ""}</h1>
+        <p class="text-white/60 font-rubik text-sm max-w-[50ch]">El juego seleccionado no está disponible. Seguís en sala de espera — el admin puede relanzar.</p>
+        <button onClick={() => location.reload()} class="font-anton text-xs tracking-[0.2em] uppercase bg-[#b4cd02] text-black px-6 py-2.5 rounded-sm">Recargar</button>
     </div>
 );

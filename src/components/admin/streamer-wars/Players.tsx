@@ -75,7 +75,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
     visible: boolean; x: number; y: number; playerNumber: number | null; showTeams: boolean;
   }>({ visible: false, x: 0, y: 0, playerNumber: null, showTeams: false });
 
-  const globalChannel = pusher.subscribe(PUSHER_CHANNELS.GLOBAL);
+  // NOTE: no suscribir en render (duplica handlers). Se usa pusherService en useEffect.
 
   const ContextualMenuActions = [
     { name: "Eliminar", execute: (playerNumber: number) => handleNormalElimination(playerNumber) },
@@ -117,6 +117,12 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
       toast.success(`Jugador #${playerNumber?.toString().padStart(3, "0")} eliminado`);
       playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.08 });
       setPlayers((prev) => prev.map((player) => player.playerNumber === playerNumber ? { ...player, eliminated: true } : player));
+    });
+    bindGlobal(PUSHER_EVENTS.PLAYERS_ELIMINATED, ({ playerNumbers }: { playerNumbers: number[] }) => {
+      const list = Array.isArray(playerNumbers) ? playerNumbers : [];
+      toast.success(`${list.length} jugador(es) eliminados`);
+      playSound({ sound: STREAMER_WARS_SOUNDS.DISPARO, volume: 0.08 });
+      setPlayers((prev) => prev.map((player) => list.includes(player.playerNumber) ? { ...player, eliminated: true } : player));
     });
     bindGlobal(PUSHER_EVENTS.PLAYER_AISLATED, ({ playerNumber }: { playerNumber: number }) => {
       toast.success(`Jugador #${playerNumber?.toString().padStart(3, "0")} aislado`);
@@ -164,30 +170,29 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
   useEffect(() => {
     setPlayers((prev) => prev.map((player) => ({
       ...player,
-      isLiveOnTwitch: playersLiveOnTwitch.includes(player.displayName.toLowerCase()),
+      isLiveOnTwitch: playersLiveOnTwitch.includes((player.displayName || "").toLowerCase()),
     })));
   }, [playersLiveOnTwitch]);
 
   const reloadPlayers = () => {
     actions.streamerWars.getPlayers().then(({ error, data }) => {
       if (error) { console.error(error); return; }
+      // Replace (no merge-push) para reconciliar eliminados/aislados y altas/bajas.
       setPlayers((prev) => {
-        const mergedPlayers = [...prev];
-        data.players.forEach((player: any) => {
-          if (!mergedPlayers.some((p) => p.id === player.id)) {
-            mergedPlayers.push({
-              ...player,
-              displayName: player.displayName || player.name || "",
-              avatar: player.avatar || "",
-              admin: player.admin || false,
-              online: false,
-              eliminated: player.eliminated || false,
-              aislated: player.aislated || false,
-              isLiveOnTwitch: playersLiveOnTwitch.includes(player.displayName.toLowerCase()),
-            });
-          }
+        const onlineById = new Set(prev.filter((p) => p.online).map((p) => p.id));
+        return (data.players ?? []).map((player: any) => {
+          const displayName = player.displayName || player.name || "";
+          return {
+            ...player,
+            displayName,
+            avatar: player.avatar || "",
+            admin: player.admin || false,
+            online: onlineById.has(player.id),
+            eliminated: player.eliminated || false,
+            aislated: player.aislated || false,
+            isLiveOnTwitch: playersLiveOnTwitch.includes((displayName || "").toLowerCase()),
+          };
         });
-        return mergedPlayers;
       });
     });
   };
@@ -251,7 +256,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         <div class="flex items-center gap-3 mb-6">
           <LucideUsers size={16} class="text-[#b4cd02]" />
           <span class="font-anton text-xs tracking-[0.25em] uppercase text-[#b4cd02]">Jugadores activos</span>
-          <span class="ml-auto font-teko text-[10px] tracking-widest text-neutral-700">{players.filter(p => !p.eliminated).length} conectados</span>
+          <span class="ml-auto font-teko text-[10px] tracking-widest text-neutral-700">{players.filter(p => !p.eliminated).length} activos · {players.filter((p) => p.online && !p.eliminated).length} en línea</span>
         </div>
         <div class="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {players.filter(p => !p.eliminated).map((player) => (
@@ -295,7 +300,7 @@ export const StreamerWarsPlayers = ({ pusher }: { pusher: Pusher }) => {
         <Morgue players={players.filter((p) => p.eliminated)} onClick={revivePlayer} />
       )}
 
-      <Teams channel={globalChannel} />
+      <Teams />
 
       {/* Action buttons */}
       <div class="flex flex-wrap gap-3 w-full pt-4 border-t border-neutral-800">

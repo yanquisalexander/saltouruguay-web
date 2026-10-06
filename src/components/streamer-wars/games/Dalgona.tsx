@@ -2,15 +2,23 @@ import type { Session } from "@auth/core/types";
 import { useState, useEffect, useRef, useCallback } from "preact/hooks";
 import type Pusher from "pusher-js";
 import type { Channel } from "pusher-js";
-import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { Button as RetroButton } from "@/components/ui/8bit/button";
-import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { PUSHER_EVENTS_DALGONA } from "@/consts/pusher";
+import { SWGameShell } from "./_sw/SWGameShell";
+import { SWStatusScreen } from "./_sw/SWStatusScreen";
+import { SWHud } from "./_sw/SWHud";
+import { useSWChannel } from "./_sw/swChannel";
+import { swSound } from "./_sw/SWSounds";
+import { swToast } from "../swToast";
 
-const DAMAGE_THROTTLE_MS = 500;
-const SHAPE_BRIGHTNESS_THRESHOLD = 170;
-const BRUSH_SIZE = 8;
+const DAMAGE_THROTTLE_MS = 300;
+const SHAPE_BRIGHTNESS_THRESHOLD = 160;
+const BRUSH_SIZE = 6;
+// La figura "quema" 2px más allá de su borde visible (zona de peligro)
+const SHAPE_HIT_SIZE = BRUSH_SIZE + 4;
+const MAX_LIVES = 2;
+const REQUIRED_PCT = 97;
 
 interface DalgonaProps {
     session: Session;
@@ -19,85 +27,8 @@ interface DalgonaProps {
 }
 
 // ---------------------------------------------------------------------------
-// Estilos CSS inyectados
+// UI migrada al Design System _sw. Canvas/crack logic intacta.
 // ---------------------------------------------------------------------------
-
-const customStyles = `
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
-    20%, 40%, 60%, 80% { transform: translateX(8px); }
-}
-.animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-.dalgona-container-shaking {
-    box-shadow: inset 0 0 60px rgba(217,119,6,.8), 0 0 30px rgba(217,119,6,.5) !important;
-    border-color: rgb(217,119,6) !important;
-}
-.bg-stripes-amber-black {
-    background-image: linear-gradient(135deg, #451a03 25%, #000 25%, #000 50%, #451a03 50%, #451a03 75%, #000 75%, #000 100%);
-    background-size: 28.28px 28.28px;
-}`;
-
-// ---------------------------------------------------------------------------
-// Subcomponentes (fuera de Dalgona para evitar remounts)
-// ---------------------------------------------------------------------------
-
-const BaseContainer = ({ isShaking, children }: { isShaking: boolean; children: preact.ComponentChildren }) => (
-    <div className={`w-full h-full text-white overflow-hidden relative flex flex-col
-        bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-amber-800/50 via-amber-950 to-neutral-950
-        border-4 border-amber-700/60 shadow-[inset_0_0_30px_rgba(180,83,9,0.3)]
-        transition-all duration-200
-        ${isShaking ? 'animate-shake dalgona-container-shaking' : ''}`}>
-        <style>{customStyles}</style>
-        <div className="absolute top-0 left-0 w-full h-3 bg-stripes-amber-black opacity-30 z-0 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-full h-3 bg-stripes-amber-black opacity-30 z-0 pointer-events-none" />
-        {children}
-    </div>
-);
-
-const StatusScreen = ({ status }: { status: 'waiting' | 'completed' | 'failed' }) => {
-    if (status === 'waiting') return (
-        <div className="flex flex-col items-center justify-center h-full w-full p-4 text-center z-20 relative">
-            <h2 className="text-xl md:text-2xl font-bold mb-3 font-squids animate-pulse text-amber-400 drop-shadow-[0_0_10px_rgba(217,119,6,0.8)]">ESPERANDO...</h2>
-            <div className="text-5xl md:text-6xl mb-6 drop-shadow-lg">🍪</div>
-            <p className="text-gray-300 font-mono">El juego comenzará pronto</p>
-        </div>
-    );
-    if (status === 'completed') return (
-        <div className="flex flex-col items-center justify-center h-full w-full p-4 text-center bg-green-900/30 z-20 relative backdrop-blur-xs">
-            <h2 className="text-2xl md:text-3xl font-bold mb-3 text-green-400 font-squids drop-shadow-[0_0_15px_rgba(74,222,128,0.8)]">¡EXITO!</h2>
-            <div className="text-6xl md:text-7xl mb-3 drop-shadow-lg">✅</div>
-            <p className="text-base md:text-lg font-mono text-green-200">Has superado el desafío Dalgona</p>
-        </div>
-    );
-    return (
-        <div className="flex flex-col items-center justify-center h-full w-full p-4 text-center bg-red-950/50 z-20 relative backdrop-blur-xs">
-            <h2 className="text-3xl md:text-4xl font-bold mb-3 text-red-500 font-squids drop-shadow-[0_0_20px_rgba(239,68,68,1)]">ELIMINADO</h2>
-            <div className="text-6xl md:text-7xl mb-3 drop-shadow-lg">💀</div>
-            <p className="text-base md:text-lg font-mono text-red-300">No completaste el desafío</p>
-        </div>
-    );
-};
-
-const DalgonaHeader = ({ lives, percentageRemoved }: { lives: number; percentageRemoved: number }) => (
-    <div className="flex-none px-3 py-2 w-full bg-neutral-900/80 border-b-2 border-amber-700/50 z-10 flex justify-between items-center backdrop-blur-md shadow-lg relative">
-        <div className="flex items-center gap-2">
-            <span className="text-[10px] md:text-xs text-amber-400/80 font-mono uppercase tracking-widest">Vidas</span>
-            <div className="flex gap-1">
-                {Array.from({ length: 3 }).map((_, i) => (
-                    <span key={i} className={`text-base md:text-lg ${i >= lives ? 'opacity-20 grayscale' : ''}`}>❤️</span>
-                ))}
-            </div>
-        </div>
-        <h2 className="text-lg md:text-2xl font-bold font-squids tracking-[0.2em] drop-shadow-[0_0_10px_rgba(217,119,6,0.8)] text-amber-400">
-            DALGONA
-        </h2>
-        <div className="text-right">
-            <p className="text-[10px] md:text-xs text-amber-400/80 font-mono uppercase tracking-widest">Progreso</p>
-            <p className="text-base md:text-lg font-bold font-squids text-amber-300">{percentageRemoved.toFixed(1)}%</p>
-        </div>
-    </div>
-);
 
 // ---------------------------------------------------------------------------
 // Componente principal
@@ -105,7 +36,7 @@ const DalgonaHeader = ({ lives, percentageRemoved }: { lives: number; percentage
 
 export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
-    const [lives, setLives] = useState(3);
+    const [lives, setLives] = useState(MAX_LIVES);
     const [gameStatus, setGameStatus] = useState<'waiting' | 'playing' | 'completed' | 'failed'>('waiting');
     const [showInstructions, setShowInstructions] = useState(true);
     const [pixelsRemoved, setPixelsRemoved] = useState(0);
@@ -147,11 +78,12 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         if (session.user?.id) fetchInitialState();
     }, [session.user?.id]);
 
-    // Subscribe to Pusher events
-    useEffect(() => {
-        if (!session.user?.id || !pusher) return;
+    const gameStatusRef = useRef(gameStatus);
+    gameStatusRef.current = gameStatus;
 
-        channel.bind(PUSHER_EVENTS_DALGONA.START, (data: { userId: number; imageUrl: string; lives: number }) => {
+    // Pusher vía hook único (sin dep gameStatus que resuscribía)
+    useSWChannel(channel, {
+        [PUSHER_EVENTS_DALGONA.START]: (data: { userId: number; imageUrl: string; lives: number }) => {
             if (data.userId === session.user.id) {
                 setImageUrl(data.imageUrl);
                 setLives(data.lives);
@@ -159,49 +91,40 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                 setPixelsRemoved(0);
                 setCracks([]);
                 setShowInstructions(false);
-                toast.info('¡Talla la galleta con cuidado!', { position: 'bottom-center' });
+                swToast.info('Talla la galleta con cuidado', { duration: 4000 });
             }
-        });
-
-        channel.bind(PUSHER_EVENTS_DALGONA.GAME_STARTED, () => {
-            if (gameStatus === 'waiting') {
+        },
+        [PUSHER_EVENTS_DALGONA.GAME_STARTED]: () => {
+            if (gameStatusRef.current === 'waiting') {
                 setImageUrl(null);
-                setLives(3);
+                setLives(MAX_LIVES);
                 setGameStatus('waiting');
                 setPixelsRemoved(0);
                 setCracks([]);
             }
-        });
-
-        channel.bind(PUSHER_EVENTS_DALGONA.SUCCESS, (data: { userId: number }) => {
+        },
+        [PUSHER_EVENTS_DALGONA.SUCCESS]: (data: { userId: number }) => {
             if (data.userId === session.user.id) {
                 setGameStatus('completed');
-                toast.success('¡Has completado el desafío Dalgona!', { position: 'bottom-center', duration: 5000 });
+                swSound.win();
+                swToast.success('¡Has completado el desafío Dalgona!');
             }
-        });
-
-        channel.bind(PUSHER_EVENTS_DALGONA.DAMAGE, (data: { userId: number; lives: number }) => {
+        },
+        [PUSHER_EVENTS_DALGONA.DAMAGE]: (data: { userId: number; lives: number }) => {
             if (data.userId === session.user.id) {
                 setLives(data.lives);
-                toast.error(`¡Cuidado! Vidas restantes: ${data.lives}`, { position: 'bottom-center' });
+                swSound.error();
+                swToast.error(`¡Cuidado! Vidas restantes: ${data.lives}`);
             }
-        });
-
-        channel.bind(PUSHER_EVENTS_DALGONA.GAME_ENDED, (data: { completedPlayers: number[], eliminatedPlayers: number[] }) => {
+        },
+        [PUSHER_EVENTS_DALGONA.GAME_ENDED]: (data: { completedPlayers: number[], eliminatedPlayers: number[] }) => {
             if (data.eliminatedPlayers.includes(session.user.streamerWarsPlayerNumber!)) {
                 setGameStatus('failed');
-                toast.error('Has sido eliminado del juego', { position: 'bottom-center', duration: 5000 });
+                swSound.lose();
+                swToast.error('Has sido eliminado del juego');
             }
-        });
-
-        return () => {
-            channel.unbind(PUSHER_EVENTS_DALGONA.START);
-            channel.unbind(PUSHER_EVENTS_DALGONA.GAME_STARTED);
-            channel.unbind(PUSHER_EVENTS_DALGONA.SUCCESS);
-            channel.unbind(PUSHER_EVENTS_DALGONA.DAMAGE);
-            channel.unbind(PUSHER_EVENTS_DALGONA.GAME_ENDED);
-        };
-    }, [session.user?.id, pusher, gameStatus]);
+        },
+    });
 
     // Listen for instructions ended event
     useEffect(() => {
@@ -281,7 +204,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         setCracks(prev => [...prev, { x, y, rotation: Math.random() * 360 }]);
         triggerShake();
 
-        playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR, volume: 0.5 }).catch(() => {});
+        swSound.error();
 
         try {
             const response = await fetch('/api/dalgona?action=damage', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
@@ -313,12 +236,13 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         const canvasY = (clientY - rect.top) * scaleY;
 
         const halfBrush = BRUSH_SIZE / 2;
+        const halfHit = SHAPE_HIT_SIZE / 2;
 
-        // Check if carving hits the shape
+        // Check if carving hits the shape (halo mortal: 2px más allá del borde)
         const shapeData = shapeCtx.getImageData(
-            Math.max(0, Math.floor(canvasX - halfBrush)),
-            Math.max(0, Math.floor(canvasY - halfBrush)),
-            BRUSH_SIZE, BRUSH_SIZE
+            Math.max(0, Math.floor(canvasX - halfHit)),
+            Math.max(0, Math.floor(canvasY - halfHit)),
+            SHAPE_HIT_SIZE, SHAPE_HIT_SIZE
         );
 
         let hitShape = false;
@@ -432,8 +356,8 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
     const submitCompletion = async () => {
         const percentageRemoved = totalRemovablePixels > 0 ? (pixelsRemoved / totalRemovablePixels) * 100 : 0;
-        if (percentageRemoved < 95) {
-            toast.error(`Necesitas remover al menos el 95% (actual: ${percentageRemoved.toFixed(1)}%)`, { position: 'bottom-center' });
+        if (percentageRemoved < REQUIRED_PCT) {
+            swToast.error(`Necesitas remover al menos el ${REQUIRED_PCT}% (actual: ${percentageRemoved.toFixed(1)}%)`);
             return;
         }
         try {
@@ -447,13 +371,14 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
             const result = await response.json();
             if (result.success) {
                 setGameStatus('completed');
-                playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_CORRECT });
+                swSound.win();
             } else if (result.eliminated) {
                 setGameStatus('failed');
+                swSound.lose();
             }
         } catch (error) {
             console.error('Error submitting completion:', error);
-            toast.error('Error al enviar la completación', { position: 'bottom-center' });
+            swToast.error('Error al enviar la completación');
         }
     };
 
@@ -463,29 +388,24 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
 
     if (showInstructions && gameStatus === 'waiting') {
         return (
-            <Instructions duration={import.meta.env.DEV ? 5000 : 12000}>
-                <p className="font-mono text-base font-bold">🍪 DALGONA - Tallado de Píxeles</p>
-                <p className="font-mono text-sm">Talla cuidadosamente la galleta removiendo todo el material alrededor de la figura central. Mantén presionado el mouse/dedo y arrastra para raspar píxel por píxel.</p>
-                <p className="font-mono text-sm">⚠️ <strong>¡CUIDADO!</strong> Si tocas la figura central (área oscura), perderás una vida. Tienes 3 vidas en total. Al perder todas, serás eliminado.</p>
-                <p className="font-mono text-sm">🎯 <strong>Objetivo:</strong> Remover al menos el 95% del material removible sin romper la figura.</p>
-                <p className="font-mono text-sm text-yellow-300">💡 Consejo: Trabaja desde los bordes hacia el centro. Muévete lentamente cerca de la figura.</p>
+            <Instructions duration={15000} customTitle="Dalgona">
+                <p className="font-mono text-base font-bold">Tallado de píxeles</p>
+                <p className="font-mono text-sm">Talla la galleta removiendo el material alrededor de la figura central. Mantén presionado el mouse y arrastra.</p>
+                <p className="font-mono text-sm">Si tocas la figura pierdes una vida. Tienes 2 vidas: la figura quema hasta 2px más allá de su borde.</p>
+                <p className="font-mono text-sm">Objetivo: remover al menos el 97% sin romper la figura.</p>
             </Instructions>
         );
     }
 
     if (gameStatus !== 'playing') {
         return (
-            <BaseContainer isShaking={isShaking}>
-                {showInstructions && gameStatus === 'waiting' && (
-                    <Instructions duration={import.meta.env.DEV ? 5000 : 12000}>
-                        <p className="font-mono text-base font-bold">🍪 DALGONA - Tallado de Píxeles</p>
-                        <p className="font-mono text-sm">Talla cuidadosamente la galleta removiendo todo el material alrededor de la figura central.</p>
-                        <p className="font-mono text-sm">⚠️ <strong>¡CUIDADO!</strong> Si tocas la figura central perderás una vida. Tienes 3 vidas.</p>
-                        <p className="font-mono text-sm">🎯 Remover al menos el 95% sin romper la figura.</p>
-                    </Instructions>
-                )}
-                <StatusScreen status={gameStatus} />
-            </BaseContainer>
+            <SWGameShell accent="amber" title="Dalgona" shaking={isShaking}>
+                <SWStatusScreen
+                    status={gameStatus === 'waiting' ? 'waiting' : gameStatus === 'completed' ? 'completed' : 'failed'}
+                    title={gameStatus === 'waiting' ? 'Esperando inicio' : gameStatus === 'completed' ? '¡Éxito! Desafío superado' : 'Eliminado'}
+                    subtitle={gameStatus === 'waiting' ? 'El juego comenzará pronto' : gameStatus === 'completed' ? 'Has superado el desafío Dalgona' : 'No completaste el desafío'}
+                />
+            </SWGameShell>
         );
     }
 
@@ -495,17 +415,28 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
         : 0;
 
     return (
-        <BaseContainer isShaking={isShaking}>
-            <DalgonaHeader lives={lives} percentageRemoved={percentageRemoved} />
+        <SWGameShell accent="amber" title="Dalgona" shaking={isShaking}>
+            <SWHud
+                leftLabel="Vidas"
+                leftValue={`${lives}/${MAX_LIVES}`}
+                title="Dalgona"
+                rightLabel="Progreso"
+                rightValue={`${percentageRemoved.toFixed(1)}%`}
+                progress={Math.min(1, percentageRemoved / 100)}
+            />
             <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden p-3 md:p-4 z-10">
+                {/* Plato metálico bajo la galleta */}
+                <div className="rounded-full p-5 md:p-7 bg-[radial-gradient(circle_at_35%_30%,#3a3f45_0%,#22262b_55%,#101215_100%)] shadow-[0_18px_50px_rgba(0,0,0,0.7),inset_0_2px_6px_rgba(255,255,255,0.12),inset_0_-8px_18px_rgba(0,0,0,0.6)] ring-1 ring-white/10">
                 {/* Canvas container */}
                 <div
                     ref={canvasContainerRef}
-                    className="relative bg-amber-900 border-4 border-amber-700/60 shadow-2xl"
+                    className="relative rounded-full overflow-hidden shadow-[0_0_0_6px_rgba(0,0,0,0.35),0_10px_30px_rgba(0,0,0,0.6)]"
                     style={{ imageRendering: 'pixelated' }}
                 >
                     <canvas
                         ref={canvasRef}
+                        role="img"
+                        aria-label={`Galleta Dalgona, ${percentageRemoved.toFixed(0)} por ciento removido, ${lives} vidas restantes`}
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
@@ -515,7 +446,7 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                         onTouchMove={handleTouchMove}
                         onTouchEnd={handleTouchEnd}
                         className="touch-none max-w-full h-auto block"
-                        style={{ touchAction: 'none', imageRendering: 'pixelated', cursor: 'none' }}
+                        style={{ touchAction: 'none', imageRendering: 'pixelated', cursor: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Cline x1='5' y1='21' x2='19' y2='7' stroke='%23e8e8e8' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='19' cy='7' r='2.4' fill='%23b4cd02'/%3E%3C/svg%3E") 5 21, crosshair` }}
                     />
                     <canvas ref={maskCanvasRef} style={{ display: 'none' }} />
                     <canvas ref={shapeCanvasRef} style={{ display: 'none' }} />
@@ -531,17 +462,19 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                                 height: cursorRadius * 2,
                             }}
                         >
-                            <div className="w-full h-full rounded-full border-2 border-amber-400/80 bg-amber-400/10" />
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-0.5 bg-amber-400 rounded-full" />
+                            <div className="w-full h-full rounded-full border-2 border-amber-300/90 bg-amber-300/10 shadow-[0_0_12px_rgba(252,211,77,0.35)]" />
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-0.5 bg-amber-300 rounded-full" />
                         </div>
                     )}
                 </div>
+                </div>
 
                 {/* Submit button */}
-                {percentageRemoved >= 95 && (
+                {percentageRemoved >= REQUIRED_PCT && (
                     <div className="mt-4 animate-pulse">
                         <RetroButton
                             onClick={submitCompletion}
+                            aria-label="Completar desafío Dalgona"
                             className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold text-sm border-4 border-green-400 font-press-start-2p"
                         >
                             ¡COMPLETAR!
@@ -549,6 +482,6 @@ export const Dalgona = ({ session, pusher, channel }: DalgonaProps) => {
                     </div>
                 )}
             </div>
-        </BaseContainer>
+        </SWGameShell>
     );
 };

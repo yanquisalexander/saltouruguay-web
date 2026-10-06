@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
+import { createPortal } from "preact/compat";
 import { CDN_PREFIX, playSound, playSoundWithReverb, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import pusherClient from "@/services/pusher.client";
 import { cloneElement, type JSX } from "preact";
@@ -135,7 +136,7 @@ export const InmersiveInstructions = ({ players }: InmersiveInstructionsProps) =
 
   return (
     <AnimatePresence onExitComplete={handleExitComplete}>
-      {isVisible && activeScript && currentItem && (
+      {isVisible && activeScript && currentItem && createPortal(
         <motion.div
           key="inmersive-overlay"
           initial={{ opacity: 0 }}
@@ -238,7 +239,8 @@ export const InmersiveInstructions = ({ players }: InmersiveInstructionsProps) =
               }
             `}</style>
           )}
-        </motion.div>
+        </motion.div>,
+        document.body
       )}
     </AnimatePresence>
   );

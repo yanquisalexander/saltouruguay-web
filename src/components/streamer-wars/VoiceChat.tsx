@@ -17,26 +17,35 @@ const VUMeter = ({ stream }: { stream: MediaStream | null }) => {
 
     useEffect(() => {
         if (!stream) return;
+        let ac: AudioContext | null = null;
+        let source: MediaStreamAudioSourceNode | null = null;
+        let last = 0;
         try {
-            const ac = new AudioContext();
-            const source = ac.createMediaStreamSource(stream);
+            ac = new AudioContext();
+            ac.resume().catch(() => {});
+            source = ac.createMediaStreamSource(stream);
             const analyser = ac.createAnalyser();
             analyser.fftSize = 128;
             source.connect(analyser);
             const data = new Uint8Array(analyser.frequencyBinCount);
 
-            const tick = () => {
-                analyser.getByteFrequencyData(data);
-                let sum = 0;
-                for (let i = 0; i < data.length; i++) sum += data[i];
-                setLevel(Math.min(sum / data.length / 2.5, 1));
+            const tick = (t: number) => {
+                // Throttle a ~15fps para no re-renderizar a 60fps.
+                if (t - last >= 66) {
+                    analyser.getByteFrequencyData(data);
+                    let sum = 0;
+                    for (let i = 0; i < data.length; i++) sum += data[i];
+                    setLevel(Math.min(sum / data.length / 2.5, 1));
+                    last = t;
+                }
                 rafRef.current = requestAnimationFrame(tick);
             };
-            tick();
+            rafRef.current = requestAnimationFrame(tick);
 
             return () => {
                 cancelAnimationFrame(rafRef.current);
-                ac.close();
+                try { source?.disconnect(); } catch {}
+                ac?.close().catch(() => {});
             };
         } catch { }
     }, [stream]);
@@ -190,10 +199,16 @@ export const VoiceChat = ({ userId, userName, teamId, isAdmin, players }: VoiceC
         if (!teamId) return;
         const manager = VoiceChatManager.getInstance();
         manager.init(userId, userName, teamId, isAdmin, voiceEnabledTeams, spectatingTeams);
+        return () => {
+            // Evita conexiones zombies al cambiar de equipo/desmontar.
+            // destroy() es seguro si el manager sigue en uso por otro equipo.
+            manager.leaveTeam();
+        };
     }, [userId, userName, teamId, isAdmin, voiceEnabledTeams, spectatingTeams]);
 
     const manager = VoiceChatManager.getInstance();
     const localStream = manager.localStream;
+    const selfId = String(userId);
 
     const extractTeamName = (id: string | null) => {
         if (!id) return 'NONE';
@@ -248,16 +263,17 @@ export const VoiceChat = ({ userId, userName, teamId, isAdmin, players }: VoiceC
                     {/* Team players */}
                     {displayTeamPlayers.map((player) => {
                         const sid = String(player.id);
-                        const isPlayerTalking = talkingUsers.includes(sid) || talkingUsers.includes(player.id as any);
-                        const isPlayerPTT = pttActiveUsers.includes(sid) || pttActiveUsers.includes(player.id as any);
-                        const isPlayerMuted = forcedMuteTargets.includes(sid);
-                        const peerState = peerConnectionStates[sid] || peerConnectionStates[player.id as any];
+                        const isPlayerTalking = talkingUsers.map(String).includes(sid);
+                        const isPlayerPTT = pttActiveUsers.map(String).includes(sid);
+                        const isPlayerMuted = forcedMuteTargets.map(String).includes(sid);
+                        const peerState = peerConnectionStates[sid];
+                        const isSelf = sid === selfId;
 
                         return (
                             <ParticipantAvatar
                                 key={player.id}
                                 player={player}
-                                isSelf={false}
+                                isSelf={isSelf}
                                 isTalking={isPlayerTalking}
                                 isPTTActive={isPlayerPTT}
                                 isSpectating={false}

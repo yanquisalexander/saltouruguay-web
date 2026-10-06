@@ -1,14 +1,17 @@
-import { playSound, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
 import { TEAMS } from "@/consts/Teams";
 import { getTranslation } from "@/utils/translate";
 import type { Session } from "@auth/core/types";
 import { actions } from "astro:actions";
-import { LucideCrown, LucideGamepad2, LucideUsers } from "lucide-preact";
+import { LucideCrown, LucideGamepad2, LucideUsers, LucideShieldCheck } from "lucide-preact";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import type { Channel } from "pusher-js";
-import { toast } from "sonner";
 import { Instructions } from "../Instructions";
 import { PUSHER_EVENTS } from "@/consts/pusher";
+import { SWGameShell } from "../games/_sw/SWGameShell";
+import { SWHud } from "../games/_sw/SWHud";
+import { useSWChannel } from "../games/_sw/swChannel";
+import { swToast } from "../swToast";
+import { swSound } from "../games/_sw/SWSounds";
 
 type Player = {
     playerNumber: number;
@@ -19,13 +22,13 @@ type Player = {
 
 const REFRESH_AFTER_EVENT_TIMEOUT = 2000;
 
-// Configuración visual por equipo (Estilo Retro)
-const TEAM_CONFIG: Record<string, { bg: string; border: string; text: string; shadow: string }> = {
-    [TEAMS.BLUE]: { bg: "bg-blue-600", border: "border-blue-400", text: "text-blue-300", shadow: "shadow-blue-900" },
-    [TEAMS.RED]: { bg: "bg-red-600", border: "border-red-400", text: "text-red-300", shadow: "shadow-red-900" },
-    [TEAMS.YELLOW]: { bg: "bg-yellow-500", border: "border-yellow-200", text: "text-yellow-200", shadow: "shadow-yellow-800" },
-    [TEAMS.PURPLE]: { bg: "bg-purple-600", border: "border-purple-400", text: "text-purple-300", shadow: "shadow-purple-900" },
-    [TEAMS.WHITE]: { bg: "bg-gray-200", border: "border-white", text: "text-gray-600", shadow: "shadow-gray-600" },
+// Configuración visual por equipo (unificada con el resto de la guerra)
+const TEAM_CONFIG: Record<string, { bg: string; soft: string; border: string; text: string; glow: string }> = {
+    [TEAMS.BLUE]: { bg: "bg-blue-600", soft: "bg-blue-500/15", border: "border-blue-500/50", text: "text-blue-300", glow: "shadow-[0_0_24px_rgba(59,130,246,0.25)]" },
+    [TEAMS.RED]: { bg: "bg-red-600", soft: "bg-red-500/15", border: "border-red-500/50", text: "text-red-300", glow: "shadow-[0_0_24px_rgba(239,68,68,0.25)]" },
+    [TEAMS.YELLOW]: { bg: "bg-yellow-500", soft: "bg-yellow-500/15", border: "border-yellow-500/50", text: "text-yellow-200", glow: "shadow-[0_0_24px_rgba(234,179,8,0.25)]" },
+    [TEAMS.PURPLE]: { bg: "bg-purple-600", soft: "bg-purple-500/15", border: "border-purple-500/50", text: "text-purple-300", glow: "shadow-[0_0_24px_rgba(168,85,247,0.25)]" },
+    [TEAMS.WHITE]: { bg: "bg-gray-200", soft: "bg-white/10", border: "border-white/30", text: "text-gray-300", glow: "shadow-[0_0_24px_rgba(255,255,255,0.15)]" },
 };
 
 export const TeamSelector = ({
@@ -73,15 +76,15 @@ export const TeamSelector = ({
         );
 
         if (isAlreadyInTeam) {
-            toast.error("ACCESS DENIED: Ya tienes equipo", { className: "font-press-start-2p text-xs" });
+            swToast.error("Ya tienes equipo, no podés cambiarte");
             setSelectedTeam(null);
             return;
         }
 
         const currentTeamCount = playersTeams[selectedTeam]?.length || 0;
         if (currentTeamCount >= playersPerTeam) {
-            playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
-            toast.error("TEAM FULL: Intenta otro equipo", { className: "font-press-start-2p text-xs" });
+            swSound.error();
+            swToast.error("Equipo lleno: probá con otro equipo");
             setSelectedTeam(null);
             return;
         }
@@ -105,8 +108,8 @@ export const TeamSelector = ({
 
             if (error) {
                 console.error(error);
-                playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
-                toast.warning(error.message, { className: "font-press-start-2p text-xs" });
+                swSound.error();
+                swToast.error(error.message);
 
                 // Revertir estado optimista
                 setPlayersTeams(prev => ({
@@ -117,19 +120,24 @@ export const TeamSelector = ({
                 }));
                 setSelectedTeam(null);
             } else {
-                playSound({ sound: STREAMER_WARS_SOUNDS.CUTE_NOTIFICATION });
-                toast.success("TEAM JOINED: ¡Buena suerte!", { className: "font-press-start-2p text-xs" });
+                swSound.win();
+                swToast.success("¡Te uniste al equipo! Buena suerte");
             }
         });
     }, [selectedTeam]);
 
-    // Suscripción a Eventos Pusher
+    // Suscripción a Eventos Pusher (hook único, bind/unbind simétrico)
+    const myNumberRef = useRef(session.user.streamerWarsPlayerNumber);
+    myNumberRef.current = session.user.streamerWarsPlayerNumber;
+
     useEffect(() => {
         refreshPlayersTeams();
+    }, [refreshPlayersTeams]);
 
-        const handlePlayerJoined = (player: Player & { team: string }) => {
+    useSWChannel(channel, {
+        [PUSHER_EVENTS.PLAYER_JOINED]: (player: Player & { team: string }) => {
             if (!isMounted.current) return;
-            playSound({ sound: STREAMER_WARS_SOUNDS.POP });
+            swSound.click();
             setPlayersTeams(prev => ({
                 ...prev,
                 [player.team]: [
@@ -138,9 +146,8 @@ export const TeamSelector = ({
                 ]
             }));
             scheduleRefresh();
-        };
-
-        const handlePlayerRemoved = ({ playerNumber }: { playerNumber: number }) => {
+        },
+        [PUSHER_EVENTS.PLAYER_REMOVED]: ({ playerNumber }: { playerNumber: number }) => {
             if (!isMounted.current) return;
             setPlayersTeams(prev => {
                 const newState: Record<string, Player[]> = {};
@@ -150,15 +157,14 @@ export const TeamSelector = ({
                 return newState;
             });
 
-            if (session.user.streamerWarsPlayerNumber === playerNumber) {
+            if (myNumberRef.current === playerNumber) {
                 setSelectedTeam(null);
-                playSound({ sound: STREAMER_WARS_SOUNDS.SIMON_SAYS_ERROR });
-                toast.info("Has sido expulsado del equipo", { className: "font-press-start-2p text-xs" });
+                swSound.error();
+                swToast.info("Has sido expulsado del equipo");
             }
             scheduleRefresh();
-        };
-
-        const handleCaptainAssigned = ({ team, playerNumber }: { team: string; playerNumber: number }) => {
+        },
+        [PUSHER_EVENTS.CAPTAIN_ASSIGNED]: ({ team, playerNumber }: { team: string; playerNumber: number }) => {
             if (!isMounted.current) return;
             setPlayersTeams(prev => ({
                 ...prev,
@@ -168,167 +174,175 @@ export const TeamSelector = ({
                 }))
             }));
 
-            if (session.user.streamerWarsPlayerNumber === playerNumber) {
-                playSound({ sound: STREAMER_WARS_SOUNDS.BUTTON_CLICK });
-                toast.success(`RANK UP: Eres el capitán`, { className: "font-press-start-2p text-xs" });
+            if (myNumberRef.current === playerNumber) {
+                swSound.win();
+                swToast.success("¡Eres el capitán del equipo!");
             }
             scheduleRefresh();
-        };
+        },
+    });
 
-        channel.bind(PUSHER_EVENTS.PLAYER_JOINED, handlePlayerJoined);
-        channel.bind(PUSHER_EVENTS.PLAYER_REMOVED, handlePlayerRemoved);
-        channel.bind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, handleCaptainAssigned);
-
-        return () => {
-            channel.unbind(PUSHER_EVENTS.PLAYER_JOINED, handlePlayerJoined);
-            channel.unbind(PUSHER_EVENTS.PLAYER_REMOVED, handlePlayerRemoved);
-            channel.unbind(PUSHER_EVENTS.CAPTAIN_ASSIGNED, handleCaptainAssigned);
-        };
-    }, [refreshPlayersTeams, scheduleRefresh]);
+    const myNumber = session.user.streamerWarsPlayerNumber;
+    const myTeam = Object.entries(playersTeams).find(([, members]) =>
+        members.some((p) => p.playerNumber === myNumber)
+    )?.[0] ?? null;
+    const totalSlots = teamsQuantity * playersPerTeam;
+    const totalTaken = Object.values(playersTeams).reduce((acc, m) => acc + m.length, 0);
 
     return (
-        <div className="flex flex-col items-center justify-start w-full min-h-screen p-4 space-y-8">
-            <Instructions duration={15000} controls={[{ keys: [""], label: "Este juego no posee controles especiales" }]}>
+        <SWGameShell accent="lime" title="Elige tu equipo">
+            <Instructions duration={15000} controls={[{ keys: ["LEFT_CLICK"], label: "Clic para unirte a un equipo" }]}>
                 <p class="font-mono max-w-2xl text-left">
-                    Para unirte a un equipo, debes seleccionar uno de los botones de abajo. Una vez que te unas, no podrás cambiar de equipo.
+                    Elegí uno de los equipos de abajo. Una vez adentro, no podrás cambiarte.
                 </p>
                 <p class="font-mono max-w-2xl text-left">
-                    Cada equipo tiene un máximo de {playersPerTeam} jugadores. Si un equipo ya está lleno, deberás unirte a otro.
+                    Cada equipo admite {playersPerTeam} jugadores. Si está lleno, elegí otro… rápido, que vuelan.
                 </p>
             </Instructions>
 
-            <header className="text-center space-y-4 mt-4">
-                <h1 className="text-2xl font-bold font-press-start-2p text-white drop-shadow-[4px_4px_0_rgba(0,0,0,1)] animate-pulse">
-                    ELIGE TU EQUIPO
-                </h1>
-                <div className="h-1 w-full bg-gray-700 rounded-none" />
-            </header>
+            <SWHud
+                leftLabel="Equipos"
+                leftValue={`${teamsQuantity}`}
+                title="Elige tu equipo"
+                rightLabel="Ocupación"
+                rightValue={`${totalTaken}/${totalSlots}`}
+                progress={totalSlots > 0 ? totalTaken / totalSlots : 0}
+            />
 
-            {/* Selector de Equipos (Botones Arcade) */}
-            <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 mt-4">
+            {myTeam && (
+                <p class="flex items-center justify-center gap-2 font-anton text-xs tracking-[0.25em] uppercase text-[#b4cd02] mb-2" role="status">
+                    <LucideShieldCheck size={14} />
+                    Ya estás en el equipo {getTranslation(myTeam)}
+                </p>
+            )}
+
+            {/* Selector de Equipos */}
+            <div class="flex flex-wrap items-stretch justify-center gap-4 md:gap-6">
                 {Object.keys(TEAMS).slice(0, teamsQuantity).map((teamKey) => {
                     const team = TEAMS[teamKey as keyof typeof TEAMS];
                     const config = TEAM_CONFIG[team] || TEAM_CONFIG[TEAMS.WHITE];
-                    const currentPlayers = playersTeams[team]?.length || 0;
-                    const isFull = currentPlayers >= playersPerTeam;
+                    const members = playersTeams[team] || [];
+                    const isFull = members.length >= playersPerTeam;
+                    const isMine = myTeam === team;
+                    const locked = isFull || (myTeam !== null && !isMine);
 
                     return (
-                        <div key={team} className="flex flex-col items-center group relative">
-                            {/* Badge de Full */}
-                            {isFull && (
-                                <div className="absolute -top-4 z-20 bg-red-500 text-white text-[10px] font-press-start-2p px-2 py-1 border-2 border-black transform rotate-6 shadow-[2px_2px_0_black]">
-                                    FULL
-                                </div>
+                        <div key={team} class="relative flex flex-col items-center">
+                            {(isFull || isMine) && (
+                                <span class={`absolute -top-3 z-20 font-anton text-[10px] tracking-[0.2em] uppercase px-3 py-1 rounded-full border backdrop-blur-md ${isMine ? "bg-[#b4cd02]/20 text-[#b4cd02] border-[#b4cd02]/40" : "bg-red-500/20 text-red-400 border-red-500/40"}`}>
+                                    {isMine ? "Tu equipo" : "Lleno"}
+                                </span>
                             )}
 
                             <button
-                                disabled={isFull}
+                                type="button"
+                                disabled={locked}
+                                aria-pressed={isMine}
+                                aria-label={`Unirse al equipo ${getTranslation(team)}, ${members.length} de ${playersPerTeam} lugares ocupados${isFull ? ", lleno" : ""}`}
                                 onClick={() => {
-                                    playSound({ sound: STREAMER_WARS_SOUNDS.BUTTON_CLICK });
+                                    swSound.click();
                                     setSelectedTeam(team);
                                 }}
-                                className={`
-                                    relative w-24 h-24 md:w-32 md:h-32 transition-all duration-100
-                                    border-4 border-black
-                                    ${config.bg}
-                                    shadow-[6px_6px_0_rgba(0,0,0,1)]
-                                    active:shadow-[0_0_0_rgba(0,0,0,1)]
-                                    active:translate-x-[6px] active:translate-y-[6px]
-                                    disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:shadow-[6px_6px_0_rgba(0,0,0,1)]
-                                    flex flex-col items-center justify-center gap-2
-                                `}
+                                class={`group relative w-28 h-28 md:w-36 md:h-36 rounded-2xl border-4 border-black transition-all duration-150 flex flex-col items-center justify-center gap-1.5
+                                    ${config.bg} ${config.glow}
+                                    ${locked ? "opacity-50 cursor-not-allowed saturate-50" : "hover:scale-105 hover:brightness-110 active:scale-95"}
+                                    ${isMine ? "ring-4 ring-[#b4cd02] ring-offset-2 ring-offset-black" : ""}
+                                    focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-[#b4cd02]`}
                             >
-                                <LucideGamepad2 className="w-8 h-8 md:w-10 md:h-10 text-white/80" strokeWidth={1.5} />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-white/10 transition-colors" />
-                            </button>
-
-                            <div className="mt-4 bg-black/80 text-white px-3 py-1 border border-white/20 shadow-[2px_2px_0_black]">
-                                <span className="text-[10px] md:text-xs font-press-start-2p tracking-widest uppercase">
+                                <LucideGamepad2 class="w-8 h-8 md:w-10 md:h-10 text-white/90" strokeWidth={1.5} />
+                                <span class="font-anton text-xs md:text-sm tracking-[0.2em] uppercase text-white drop-shadow-md">
                                     {getTranslation(team)}
                                 </span>
-                            </div>
+                                {/* Pips de lugares */}
+                                <span class="flex gap-1" aria-hidden="true">
+                                    {Array.from({ length: playersPerTeam }).map((_, i) => (
+                                        <span key={i} class={`size-2 rounded-full ${i < members.length ? "bg-white" : "bg-black/40"}`} />
+                                    ))}
+                                </span>
+                                <span class="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors" aria-hidden="true" />
+                            </button>
                         </div>
                     );
                 })}
             </div>
 
-            {/* Grid de Jugadores (Estilo Roster Retro) */}
-            <div className="w-full max-w-7xl pt-12">
-                <div className="flex items-center gap-4 mb-8">
-                    <LucideUsers className="w-6 h-6 text-yellow-400" />
-                    <h2 className="text-xl font-press-start-2p text-white">ROSTER STATUS</h2>
+            {/* Roster por equipo */}
+            <div class="w-full pt-8">
+                <div class="flex items-center gap-3 mb-4">
+                    <LucideUsers size={16} class="text-[#b4cd02]" />
+                    <h2 class="font-anton text-xs tracking-[0.25em] uppercase text-[#b4cd02]">Roster</h2>
+                    <span class="ml-auto font-teko text-[10px] tracking-widest text-neutral-500 uppercase" aria-live="polite">
+                        {totalTaken}/{totalSlots} dentro
+                    </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {Object.values(TEAMS).slice(0, teamsQuantity).map((team) => {
                         const config = TEAM_CONFIG[team] || TEAM_CONFIG[TEAMS.WHITE];
-                        const players = playersTeams[team] || [];
+                        const members = playersTeams[team] || [];
+                        const emptySlots = Math.max(0, playersPerTeam - members.length);
 
                         return (
                             <div
                                 key={team}
-                                className={`
-                                    bg-gray-900 border-2 border-gray-700 relative overflow-hidden
-                                    shadow-[4px_4px_0_black]
-                                `}
+                                class={`rounded-xl border ${config.border} ${config.soft} overflow-hidden ${config.glow}`}
                             >
-                                {/* Header del Equipo */}
-                                <div className={`
-                                    ${config.bg} border-b-2 border-black p-3 flex justify-between items-center
-                                `}>
-                                    <span className="font-press-start-2p text-xs text-white uppercase drop-shadow-md">
+                                <div class="px-4 py-2.5 flex items-center justify-between border-b border-white/10 bg-black/40">
+                                    <span class="font-squids text-base uppercase tracking-wide text-white">
                                         {getTranslation(team)}
                                     </span>
-                                    <span className="font-mono font-bold text-white bg-black/30 px-2 py-1 text-xs rounded-xs">
-                                        {players.length}/{playersPerTeam}
+                                    <span class="font-mono text-xs text-white/70 tabular-nums" aria-label={`${members.length} de ${playersPerTeam}`}>
+                                        {members.length}/{playersPerTeam}
                                     </span>
                                 </div>
-
-                                {/* Lista de Jugadores */}
-                                <div className="p-4 space-y-3 min-h-[150px]">
-                                    {players.length === 0 && (
-                                        <div className="h-full flex items-center justify-center opacity-30">
-                                            <span className="font-press-start-2p text-[10px] text-white">EMPTY SLOT</span>
-                                        </div>
-                                    )}
-
-                                    {players.map(({ playerNumber, avatar, displayName, isCaptain }) => (
-                                        <div
-                                            key={playerNumber}
-                                            className="flex items-center gap-3 p-2 bg-black/40 border border-gray-700 hover:border-gray-500 transition-colors group"
-                                        >
-                                            <div className="relative shrink-0">
-                                                <img
-                                                    src={avatar || "/placeholder.svg"}
-                                                    alt={displayName}
-                                                    className="w-8 h-8 bg-gray-800 [image-rendering:pixelated]"
-                                                />
-                                                {isCaptain && (
-                                                    <div className="absolute -top-2 -right-2 bg-yellow-400 text-black p-0.5 border border-black shadow-xs z-10">
-                                                        <LucideCrown size={10} fill="currentColor" />
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="flex flex-col min-w-0">
-                                                <span className={`text-xs font-bold truncate font-mono text-gray-200 group-hover:text-white`}>
-                                                    {displayName}
-                                                </span>
-                                                <span className={`text-[10px] font-mono ${config.text}`}>
-                                                    ID: {playerNumber.toString().padStart(3, "0")}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
+                                <div class="h-1 w-full bg-white/10" aria-hidden="true">
+                                    <div class={`h-full ${config.bg} transition-all duration-500`} style={{ width: `${(members.length / Math.max(1, playersPerTeam)) * 100}%` }} />
                                 </div>
 
-                                {/* Scanlines decorativos */}
-                                <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-0 bg-size-[100%_2px,3px_100%]" />
+                                <ul class="p-3 space-y-2" aria-label={`Jugadores del equipo ${getTranslation(team)}`}>
+                                    {members.map(({ playerNumber, avatar, displayName, isCaptain }) => (
+                                        <li
+                                            key={playerNumber}
+                                            class="flex items-center gap-3 p-2 rounded-lg bg-black/40 border border-white/10"
+                                        >
+                                            <span class="relative shrink-0">
+                                                <img
+                                                    src={avatar || "/placeholder.svg"}
+                                                    alt=""
+                                                    class="w-8 h-8 rounded-full object-cover ring-1 ring-white/20"
+                                                />
+                                                {isCaptain && (
+                                                    <span class="absolute -top-1.5 -right-1.5 bg-yellow-400 text-black p-0.5 rounded-full border border-black" title="Capitán">
+                                                        <LucideCrown size={10} fill="currentColor" />
+                                                    </span>
+                                                )}
+                                            </span>
+                                            <span class="flex flex-col min-w-0 flex-1">
+                                                <span class="text-xs font-semibold truncate font-rubik text-white/90">
+                                                    {displayName}
+                                                </span>
+                                                <span class={`text-[10px] font-mono ${config.text}`}>
+                                                    #{playerNumber.toString().padStart(3, "0")}{isCaptain ? " · Capitán" : ""}
+                                                </span>
+                                            </span>
+                                        </li>
+                                    ))}
+                                    {Array.from({ length: emptySlots }).map((_, i) => (
+                                        <li
+                                            key={`empty-${i}`}
+                                            aria-hidden="true"
+                                            class="flex items-center gap-3 p-2 rounded-lg border border-dashed border-white/10 text-white/20"
+                                        >
+                                            <span class="w-8 h-8 rounded-full border border-dashed border-white/15 shrink-0" />
+                                            <span class="font-mono text-[10px] tracking-[0.2em] uppercase">Lugar libre</span>
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
                         );
                     })}
                 </div>
             </div>
-        </div>
+        </SWGameShell>
     );
 };

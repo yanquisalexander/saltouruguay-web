@@ -1,18 +1,12 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
-import gsap from "gsap/dist/gsap";
+import { gsap } from "gsap";
 import { playSound, playSoundWithMegaphone, playSoundWithReverb } from "@/consts/Sounds";
 import type { Cinematic3DDefinition } from "./types";
 import { GLOBAL_CDN_PREFIX } from "@/config";
 
-function makeBox(w: number, h: number, d: number, mat: THREE.Material) {
-  return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-}
-
-function makeCyl(rt: number, rb: number, h: number, seg: number, mat: THREE.Material) {
-  return new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat);
-}
+import { makeBox, makeCyl } from "./primitives";
 
 function createGasSystem(parentScene: THREE.Scene, options: {
   count?: number;

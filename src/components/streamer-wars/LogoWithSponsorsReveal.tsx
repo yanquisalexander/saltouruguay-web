@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "preact/hooks";
-import gsap from "gsap/dist/gsap";
+import { gsap } from "gsap";
 import { LucideSwords } from "lucide-preact";
 import { Fragment } from "preact/jsx-runtime";
 import { playSoundWithReverb, STREAMER_WARS_SOUNDS } from "@/consts/Sounds";
@@ -35,6 +35,8 @@ export const LogoWithSponsorsReveal = () => {
   const tlRef = useRef<gsap.core.Timeline | null>(null);
 
   useEffect(() => {
+    // Guardia: si gsap no cargó bien, no romper el overlay (mostrar estático).
+    if (!gsap || typeof gsap.timeline !== "function") return;
     const icons = iconRefs.current.filter(Boolean);
     const sponsors = sponsorRefs.current.filter(Boolean);
 
@@ -80,7 +82,7 @@ export const LogoWithSponsorsReveal = () => {
     tlRef.current = tl;
 
     return () => {
-      tl.kill();
+      tlRef.current?.kill();
       tlRef.current = null;
     };
   }, []);

@@ -391,8 +391,15 @@ export const server = {
         oauth: adminOauth,
         launchCinematic: defineAction({
             input: z.object({
-                url: z.string().url(),
-                targetUsers: z.array(z.number()).default([]),
+                url: z.string().url().refine((u) => {
+                    try {
+                        const parsed = new URL(u);
+                        const hostOk = parsed.hostname.endsWith("saltouruguayserver.com") || parsed.hostname.endsWith("cdn.saltouruguayserver.com");
+                        const extOk = /\.(webm|mp4)(\?|$)/i.test(parsed.pathname);
+                        return hostOk && extOk;
+                    } catch { return false; }
+                }, { message: "URL no permitida: solo CDN saltouruguayserver .webm/.mp4" }),
+                targetUsers: z.array(z.number().int().positive()).max(200).default([]),
             }),
             handler: async ({ url, targetUsers }, { request }) => {
                 const session = await getSession(request);
