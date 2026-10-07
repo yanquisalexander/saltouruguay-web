@@ -1,7 +1,8 @@
 ---
 import { ACHIEVEMENTS, ACHIEVEMENTS_TEXTS, getAchievementCardUrl, getAchievementIconUrl } from "@/consts/Achievements";
-import CommunityLayout from "@/layouts/CommunityLayout.astro";
 import Layout from "@/layouts/Layout.astro";
+import PageBackdrop from "@/components/PageBackdrop.astro";
+import PageBreadcrumb from "@/components/PageBreadcrumb.astro";
 import { getUserAchievements } from "@/utils/user";
 import { getSession } from "auth-astro/server";
 import {
@@ -42,113 +43,86 @@ const formatDate = (dateString: Date) => {
   description="Descubre los logros que has desbloqueado."
   noindex
 >
-  <div class="flex flex-col max-w-6xl mx-auto min-h-screen mt-8 px-4 pb-20">
+  <PageBackdrop tone="amber" />
+
+  <div class="flex flex-col max-w-6xl mx-auto min-h-screen mt-14 sm:mt-20 px-4 mb-20">
+    <PageBreadcrumb
+      pathname="/comunidad/logros"
+      breadcrumbs={[{ text: "Comunidad", href: "/comunidad" }, { text: "Salón de Logros", href: "/comunidad/logros" }]}
+    />
+
     {/* --- HEADER --- */}
-    <header
-      class="relative overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-gray-900 via-gray-900 to-black p-8 shadow-2xl mb-8"
-    >
-      <div
-        class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-5 pointer-events-none"
-      >
-      </div>
-      <div
-        class="absolute top-0 right-0 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"
-      >
-      </div>
-
-      <div
-        class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6"
-      >
-        <div class="flex items-center gap-6">
-          <div class="relative">
-            <div class="absolute inset-0 bg-yellow-500 blur-xl opacity-20">
-            </div>
-            <LucideTrophy
-              size={64}
-              className="relative text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]"
-            />
-          </div>
-          <div>
-            <h1
-              class="font-teko text-4xl md:text-5xl font-bold text-white uppercase tracking-wide leading-none"
-            >
-              Salón de <span
-                class="text-transparent bg-clip-text bg-linear-to-r from-yellow-400 to-orange-500"
-                >Logros</span
-              >
-            </h1>
-            <p class="font-rubik text-white/50 text-sm mt-1 max-w-md">
-              Tu legado en la comunidad. Desbloquea hitos únicos participando en
-              distintas actividades de la comunidad y la web.
-            </p>
-          </div>
-        </div>
-
-        {/* Progress Circle / Stat */}
-        <div
-          class="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-xs"
-        >
-          <div class="text-right">
-            <span
-              class="block text-xs font-rubik text-white/40 uppercase tracking-widest"
-              >Progreso Total</span
-            >
-            <span class="block font-teko text-3xl font-bold text-white">
-              <span class="text-yellow-400">{unlockedCount}</span> / {
-                totalAchievements
-              }
+    <header class="relative flex flex-col items-center justify-center mb-8 mt-2 text-center">
+      <div class="flex items-center justify-center gap-3 sm:gap-4 mb-4">
+        <span class="size-14 sm:size-16 rounded-2xl bg-amber-400/10 border border-amber-300/25 flex items-center justify-center shrink-0 drop-shadow-[0_0_25px_rgba(251,191,36,0.3)]">
+          <LucideTrophy size={30} class="text-amber-300" />
+        </span>
+        <div class="text-left">
+          <p class="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-amber-200/80 bg-amber-400/10 border border-amber-300/25 rounded-full px-3 py-1 mb-2">
+            <LucideMedal size={12} /> Tu legado saltano
+          </p>
+          <h1 class="font-anton text-4xl sm:text-5xl text-white uppercase leading-[0.9]">
+            Salón de{" "}
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-500">
+              logros
             </span>
-          </div>
-          <div
-            class="relative size-16 flex items-center justify-center rounded-full border-4 border-white/10"
-          >
-            <svg
-              class="size-full -rotate-90 absolute inset-0"
-              viewBox="0 0 36 36"
-            >
-              <path
-                class="text-yellow-500 transition-all duration-1000 ease-out"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="3"
-                stroke-dasharray={`${progressPercentage}, 100`}></path>
-            </svg>
-            <span class="text-xs font-bold text-white"
-              >{progressPercentage}%</span
-            >
-          </div>
+          </h1>
         </div>
+      </div>
+
+      <p class="text-sm sm:text-base text-white/50 font-rubik max-w-xl mx-auto leading-relaxed">
+        Desbloquea hitos únicos participando en las actividades de la comunidad
+        y la web. Cada carta es un pedazo de historia saltana.
+      </p>
+
+      <div class="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-400/25 text-violet-100 text-[13px] font-medium">
+        <LucideSparkles size={15} class="text-amber-300 shrink-0" />
+        <span>
+          <span class="text-amber-300 font-bold tabular-nums">{unlockedCount}</span>{" "}
+          de {totalAchievements} logros · {progressPercentage}%
+        </span>
       </div>
     </header>
 
-    {/* --- PROGRESS BAR COMPACT --- */}
-    <div class="mb-10 relative group">
-      <div
-        class="absolute -inset-1 bg-linear-to-r from-yellow-500 to-orange-600 rounded-lg blur-sm opacity-10 group-hover:opacity-20 transition duration-1000 group-hover:duration-200"
-      >
+    {/* --- TU PROGRESO --- */}
+    <section aria-label="Tu progreso" class="mb-10">
+      <div class="flex items-center gap-2.5 mb-4 px-1">
+        <span class="size-8 rounded-lg bg-amber-400/10 border border-amber-300/25 flex items-center justify-center shrink-0">
+          <LucideTrophy size={16} class="text-amber-300" />
+        </span>
+        <h2 class="font-anton text-xl sm:text-2xl text-white uppercase tracking-wide">Tu progreso</h2>
+        <span class="text-[11px] font-mono text-white/30 tabular-nums">{unlockedCount}/{totalAchievements}</span>
+        <div class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent ml-1"></div>
       </div>
-      <div
-        class="relative h-4 w-full bg-gray-900 rounded-full border border-white/10 overflow-hidden"
-      >
-        <div
-          class="h-full bg-linear-to-r from-yellow-400 to-orange-500 shadow-[0_0_15px_rgba(234,179,8,0.5)] transition-all duration-1000 ease-out"
-          style={{ width: `${progressPercentage}%` }}
-        >
+
+      <div class="rounded-3xl border border-white/10 bg-zinc-950/70 backdrop-blur-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-[11px] font-rubik text-white/40 uppercase tracking-widest">Novato</span>
+          <span class="text-[11px] font-rubik text-amber-300 font-bold tracking-widest uppercase">Leyenda Saltana</span>
+        </div>
+        <div class="relative h-3.5 w-full bg-white/5 rounded-full border border-white/10 overflow-hidden">
           <div
-            class="w-full h-full bg-[url('/images/pattern-grid.svg')] opacity-20 bg-repeat-x animate-slide-bg"
+            class="h-full bg-gradient-to-r from-amber-300 to-orange-500 rounded-full transition-all duration-1000"
+            style={{ width: `${progressPercentage}%` }}
           >
           </div>
         </div>
+        <div class="mt-2 text-right text-[11px] font-mono text-white/35 tabular-nums">
+          {progressPercentage}% completado
+        </div>
       </div>
-      <div class="flex justify-between mt-2 px-1">
-        <span class="text-xs font-rubik text-white/40">Novato</span>
-        <span
-          class="text-xs font-rubik text-yellow-500 font-bold tracking-widest uppercase"
-          >Leyenda Saltana</span
-        >
+    </section>
+
+    {/* --- COLECCIÓN --- */}
+    <section aria-label="Colección de logros">
+      <div class="flex items-center gap-2.5 mb-4 px-1">
+        <span class="size-8 rounded-lg bg-violet-400/10 border border-violet-300/25 flex items-center justify-center shrink-0">
+          <LucideMedal size={16} class="text-violet-300" />
+        </span>
+        <h2 class="font-anton text-xl sm:text-2xl text-white uppercase tracking-wide">Colección</h2>
+        <span class="text-[11px] font-mono text-white/30 tabular-nums">{totalAchievements}</span>
+        <div class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent ml-1"></div>
       </div>
-    </div>
 
     {/* --- GRID DE CARTAS --- */}
     <ul class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-7">
@@ -296,6 +270,7 @@ const formatDate = (dateString: Date) => {
         })
       }
     </ul>
+    </section>
 
     {/* --- DIALOG MODAL: carta ampliada --- */}
     <dialog
@@ -358,19 +333,6 @@ const formatDate = (dateString: Date) => {
 </Layout>
 
 <style>
-  /* Opcional: animación suave para el fondo de la barra de progreso */
-  @keyframes slide-bg {
-    0% {
-      background-position: 0 0;
-    }
-    100% {
-      background-position: 50px 0;
-    }
-  }
-  .animate-slide-bg {
-    animation: slide-bg 3s linear infinite;
-  }
-
   /* Animación de entrada del dialog */
   dialog[open] {
     animation: dialog-show 0.3s ease-out forwards;
