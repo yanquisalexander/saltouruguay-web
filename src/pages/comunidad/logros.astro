@@ -1,5 +1,5 @@
 ---
-import { ACHIEVEMENTS, ACHIEVEMENTS_TEXTS, getAchievementIconUrl } from "@/consts/Achievements";
+import { ACHIEVEMENTS, ACHIEVEMENTS_TEXTS, getAchievementCardUrl, getAchievementIconUrl } from "@/consts/Achievements";
 import CommunityLayout from "@/layouts/CommunityLayout.astro";
 import Layout from "@/layouts/Layout.astro";
 import { getUserAchievements } from "@/utils/user";
@@ -150,10 +150,8 @@ const formatDate = (dateString: Date) => {
       </div>
     </div>
 
-    {/* --- GRID DE LOGROS --- */}
-    <ul
-      class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-    >
+    {/* --- GRID DE CARTAS --- */}
+    <ul class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-7">
       {
         Object.keys(ACHIEVEMENTS).map((key) => {
           // @ts-ignore
@@ -167,94 +165,130 @@ const formatDate = (dateString: Date) => {
           );
           const unlockedAt = userAchievement?.unlockedAt;
           const iconUrl = getAchievementIconUrl(achievementId);
+          const cardUrl = getAchievementCardUrl(achievementId);
+          const hasCardArt = !!achievementText?.card;
 
           // Estado visual
           const isUnlocked = !!unlockedAt;
 
           return (
             <li
-              class={`
-                group relative overflow-hidden rounded-2xl border transition-all duration-500 cursor-pointer
-                ${
-                  isUnlocked
-                    ? "bg-gray-900/40 border-yellow-500/30 hover:border-yellow-400/60 hover:shadow-[0_0_30px_rgba(234,179,8,0.1)] hover:-translate-y-1"
-                    : "bg-black/40 border-white/5 opacity-60 hover:opacity-80 grayscale hover:grayscale-0"
-                }
-              `}
+              class="group relative cursor-pointer transition-all duration-300 hover:-translate-y-2"
               data-achievement-card
               data-achievement-id={achievementId}
               data-achievement-title={achievementText?.title}
+              data-achievement-subtitle={achievementText?.subtitle ?? ""}
               data-achievement-description={achievementText?.description}
               data-achievement-icon={iconUrl}
+              data-achievement-card-art={cardUrl}
+              data-achievement-has-card={hasCardArt ? "true" : "false"}
               data-achievement-unlocked={isUnlocked ? "true" : "false"}
               data-achievement-date={unlockedAt ? formatDate(unlockedAt) : ""}
             >
-              {/* Glow Background for unlocked */}
-              {isUnlocked && (
-                <div class="absolute inset-0 bg-linear-to-b from-yellow-500/5 to-transparent pointer-events-none" />
-              )}
-
-              <div class="p-5 flex flex-col h-full relative z-10">
-                {/* Header: Icon & Badge */}
-                <div class="flex justify-between items-start mb-4">
-                  <div
-                    class={`
-                            relative size-16 p-2 rounded-xl border
-                            ${isUnlocked ? "bg-black/50 border-yellow-500/20 shadow-inner" : "bg-white/5 border-white/5"}
-                        `}
-                  >
-                    <img
-                      src={iconUrl}
-                      alt={achievementText?.title}
-                      class="w-full h-full object-contain"
-                      style="image-rendering: pixelated;"
-                    />
+              {/* Marco dorado / gris */}
+              <div
+                class={`
+                  rounded-2xl p-[5px] transition-all duration-300
+                  ${
+                    isUnlocked
+                      ? "bg-gradient-to-b from-yellow-200 via-amber-500 to-yellow-800 shadow-[0_0_25px_rgba(234,179,8,0.15)] group-hover:shadow-[0_0_45px_rgba(234,179,8,0.35)]"
+                      : "bg-gradient-to-b from-zinc-700/70 to-zinc-900/70"
+                  }
+                `}
+              >
+                <div class="relative overflow-hidden rounded-xl bg-[#150c08] aspect-[2/3] flex flex-col">
+                  {/* === ARTE en ventana (puede recortar; el modal la muestra completa) === */}
+                  <div class="absolute inset-x-0 top-0 bottom-[31%] overflow-hidden">
+                    {/* Fallback icono */}
+                    <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[radial-gradient(ellipse_at_center,#3b1d0e_0%,#150c08_70%)]">
+                      <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-10 pointer-events-none" />
+                      <img
+                        src={iconUrl}
+                        alt=""
+                        aria-hidden="true"
+                        class={`relative size-24 object-contain drop-shadow-[0_0_15px_rgba(234,179,8,0.3)] ${isUnlocked ? "" : "grayscale opacity-60"}`}
+                        style="image-rendering: pixelated;"
+                      />
+                    </div>
+                    {/* Arte webp sobre el icono */}
+                    {hasCardArt && (
+                      <img
+                        src={cardUrl}
+                        alt={achievementText?.title}
+                        loading="lazy"
+                        onError="this.style.display='none'"
+                        class={`absolute inset-0 h-full w-full object-cover object-top transition-all duration-300 group-hover:scale-105 ${isUnlocked ? "" : "grayscale"}`}
+                      />
+                    )}
+                    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#150c08] pointer-events-none" />
+                    <div class="absolute inset-0 shadow-[inset_0_0_30px_rgba(0,0,0,0.6)] pointer-events-none" />
                   </div>
 
-                  {isUnlocked ? (
-                    <div class="bg-yellow-500/20 border border-yellow-500/30 p-1.5 rounded-lg text-yellow-400 animate-pulse">
-                      <LucideMedal size={20} />
-                    </div>
-                  ) : (
-                    <div class="bg-white/5 border border-white/10 p-1.5 rounded-lg text-white/30">
-                      <LucideLock size={20} />
+                  {/* === Overlay bloqueado === */}
+                  {!isUnlocked && (
+                    <div class="absolute inset-x-0 top-0 bottom-[31%] bg-black/55 flex items-center justify-center z-10">
+                      <div class="bg-black/60 border border-white/15 p-3 rounded-full text-white/50 backdrop-blur-sm">
+                        <LucideLock size={28} />
+                      </div>
                     </div>
                   )}
-                </div>
 
-                {/* Content */}
-                <div class="mt-auto">
-                  <h2
-                    class={`
-                            font-teko text-2xl uppercase font-bold leading-none mb-2
-                            ${isUnlocked ? "text-white group-hover:text-yellow-400 transition-colors" : "text-white/50"}
-                        `}
-                  >
-                    {achievementText?.title}
-                  </h2>
-
-                  <p class="font-rubik text-sm text-white/50 leading-relaxed line-clamp-3 min-h-[3em]">
-                    {achievementText?.description}
-                  </p>
-
-                  {/* Footer: Date or Status */}
-                  <div class="mt-4 pt-4 border-t border-white/5 flex items-center gap-2">
+                  {/* === Badge superior === */}
+                  <div class="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between z-20">
+                    <span
+                      class={`
+                        font-minecraftia text-[9px] uppercase tracking-widest px-2 py-1 rounded border backdrop-blur-sm
+                        ${isUnlocked ? "bg-black/60 border-amber-400/50 text-amber-300" : "bg-black/60 border-white/10 text-white/40"}
+                      `}
+                    >
+                      {isUnlocked ? "Desbloqueado" : "Bloqueado"}
+                    </span>
                     {isUnlocked ? (
-                      <>
-                        <LucideCalendar size={14} class="text-green-400" />
-                        <span class="text-xs font-mono text-green-400/80">
-                          {formatDate(unlockedAt)}
-                        </span>
-                      </>
+                      <div class="bg-amber-400/90 text-black p-1.5 rounded-lg shadow-[0_0_12px_rgba(251,191,36,0.6)]">
+                        <LucideMedal size={16} />
+                      </div>
                     ) : (
-                      <>
-                        <LucideLock size={14} class="text-white/20" />
-                        <span class="text-xs font-mono text-white/30 uppercase">
-                          Bloqueado
-                        </span>
-                      </>
+                      <div class="bg-black/60 border border-white/10 p-1.5 rounded-lg text-white/30">
+                        <LucideLock size={16} />
+                      </div>
                     )}
                   </div>
+
+                  {/* === Remaches de esquina === */}
+                  <span class="absolute top-1.5 left-1.5 size-2.5 border-t-2 border-l-2 border-amber-200/70 rounded-tl-sm z-20 pointer-events-none" />
+                  <span class="absolute top-1.5 right-1.5 size-2.5 border-t-2 border-r-2 border-amber-200/70 rounded-tr-sm z-20 pointer-events-none" />
+                  <span class="absolute bottom-1.5 left-1.5 size-2.5 border-b-2 border-l-2 border-amber-200/70 rounded-bl-sm z-20 pointer-events-none" />
+                  <span class="absolute bottom-1.5 right-1.5 size-2.5 border-b-2 border-r-2 border-amber-200/70 rounded-br-sm z-20 pointer-events-none" />
+
+                  {/* === PLACA INFERIOR (siempre: webp o svg) === */}
+                  <div class="absolute inset-x-0 bottom-0 h-[31%] bg-[#0d0d0f] border-t-2 border-amber-500/60 flex flex-col items-center justify-center text-center px-3 py-2 z-10">
+                    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-300 to-transparent" />
+                    <h2 class="font-minecraft text-amber-300 text-sm md:text-base leading-tight [text-shadow:0_2px_0_#000,0_3px_6px_rgba(0,0,0,0.8)] line-clamp-2">
+                      {achievementText?.title.toUpperCase()}
+                    </h2>
+                    {achievementText?.subtitle && (
+                      <p class="font-minecraftia text-[8px] md:text-[9px] text-white/55 uppercase tracking-widest mt-1.5 line-clamp-2 leading-relaxed">
+                        {achievementText.subtitle}
+                      </p>
+                    )}
+                    <div class="mt-1.5 flex items-center gap-1.5">
+                      {isUnlocked ? (
+                        <>
+                          <LucideCalendar size={11} class="text-green-400" />
+                          <span class="text-[10px] font-mono text-green-400/90">
+                            {formatDate(unlockedAt)}
+                          </span>
+                        </>
+                      ) : (
+                        <span class="text-[10px] font-mono text-white/25 uppercase tracking-widest">
+                          ???
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* === Brillo hover === */}
+                  <div class="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none z-30" />
                 </div>
               </div>
             </li>
@@ -263,63 +297,60 @@ const formatDate = (dateString: Date) => {
       }
     </ul>
 
-    {/* --- DIALOG MODAL --- */}
+    {/* --- DIALOG MODAL: carta ampliada --- */}
     <dialog
       id="achievement-dialog"
-      class="backdrop:bg-black/80 backdrop:backdrop-blur-xs bg-transparent p-0 max-w-lg w-full rounded-2xl"
+      class="m-auto backdrop:bg-black/85 backdrop:backdrop-blur-xs bg-transparent p-0 max-w-2xl w-[calc(100vw-2rem)] rounded-2xl max-h-[92vh] overflow-y-auto"
     >
-      <div
-        class="bg-linear-to-br from-gray-900 via-gray-900 to-black border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
-      >
-        {/* Header con icono */}
-        <div
-          id="dialog-header"
-          class="relative p-8 flex flex-col items-center text-center border-b border-white/10"
-        >
-          <div
-            class="absolute inset-0 bg-linear-to-b from-yellow-500/10 to-transparent pointer-events-none"
-            id="dialog-glow"
-          >
-          </div>
-          <div
-            id="dialog-icon-container"
-            class="relative size-24 p-3 rounded-2xl border bg-black/50 border-yellow-500/20 shadow-inner mb-4"
-          >
+      <div class="rounded-2xl p-[5px] bg-gradient-to-b from-yellow-200 via-amber-500 to-yellow-800 shadow-2xl">
+        <div class="relative overflow-hidden rounded-xl bg-[#150c08] flex flex-col md:flex-row">
+          {/* Carta completa 2:3 sin recorte (altura fija: compacto en móvil) */}
+          <div class="relative shrink-0 self-center md:self-auto w-auto h-[42vh] md:h-[68vh] md:min-h-[380px] aspect-[2/3] overflow-hidden bg-[radial-gradient(ellipse_at_center,#3b1d0e_0%,#150c08_70%)]">
+            <div class="absolute inset-0 flex items-center justify-center">
+              <img
+                id="dialog-icon"
+                src=""
+                alt=""
+                class="relative size-28 object-contain"
+                style="image-rendering: pixelated;"
+              />
+            </div>
             <img
-              id="dialog-icon"
+              id="dialog-card-art"
               src=""
               alt=""
-              class="w-full h-full object-contain"
-              style="image-rendering: pixelated;"
+              class="absolute inset-0 h-full w-full object-cover"
+              onError="this.style.display='none'"
             />
           </div>
-          <h2
-            id="dialog-title"
-            class="font-teko text-3xl uppercase font-bold text-white leading-none"
-          >
-          </h2>
-          <div id="dialog-status" class="mt-3 flex items-center gap-2">
-            {/* Se llena dinámicamente */}
+
+          {/* Info lateral */}
+          <div class="flex-1 min-w-[240px] bg-[#0d0d0f] border-t-2 md:border-t-0 md:border-l-2 border-amber-500/60 px-5 py-5 flex flex-col items-center md:items-start justify-center text-center md:text-left gap-2">
+            <div id="dialog-status" class="flex items-center gap-2">
+              {/* Se llena dinámicamente */}
+            </div>
+            <h2
+              id="dialog-title"
+              class="font-minecraft text-amber-300 text-lg leading-tight [text-shadow:0_2px_0_#000]"
+            >
+            </h2>
+            <p
+              id="dialog-subtitle"
+              class="font-minecraftia text-[10px] text-white/55 uppercase tracking-widest"
+            >
+            </p>
+            <p
+              id="dialog-description"
+              class="font-rubik text-white/70 text-sm leading-relaxed"
+            >
+            </p>
+            <button
+              id="dialog-close"
+              class="mt-5 px-6 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white font-rubik text-sm transition-colors"
+            >
+              Cerrar
+            </button>
           </div>
-        </div>
-
-        {/* Contenido */}
-        <div class="p-6">
-          <p
-            id="dialog-description"
-            class="font-rubik text-white/70 text-center leading-relaxed"
-          >
-          </p>
-        </div>
-
-        {/* Footer */}
-        <div class="p-4 border-t border-white/10 flex justify-center">
-          <button
-            id="dialog-close"
-            class="px-6 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white font-rubik text-sm transition-colors"
-          >
-            Cerrar
-          </button>
         </div>
       </div>
     </dialog>
@@ -380,18 +411,22 @@ const formatDate = (dateString: Date) => {
 
     // Elementos del dialog
     const dialogIcon = $("#dialog-icon") as HTMLImageElement;
+    const dialogCardArt = $("#dialog-card-art") as HTMLImageElement;
     const dialogTitle = $("#dialog-title");
+    const dialogSubtitle = $("#dialog-subtitle");
     const dialogDescription = $("#dialog-description");
     const dialogStatus = $("#dialog-status");
-    const dialogGlow = $("#dialog-glow");
-    const dialogIconContainer = $("#dialog-icon-container");
 
     cards.forEach((card) => {
       card.addEventListener("click", () => {
         const title = card.getAttribute("data-achievement-title") || "";
+        const subtitle = card.getAttribute("data-achievement-subtitle") || "";
         const description =
           card.getAttribute("data-achievement-description") || "";
         const icon = card.getAttribute("data-achievement-icon") || "";
+        const cardArt = card.getAttribute("data-achievement-card-art") || icon;
+        const hasCard =
+          card.getAttribute("data-achievement-has-card") === "true";
         const isUnlocked =
           card.getAttribute("data-achievement-unlocked") === "true";
         const date = card.getAttribute("data-achievement-date") || "";
@@ -400,36 +435,41 @@ const formatDate = (dateString: Date) => {
         if (dialogIcon) {
           dialogIcon.src = icon;
           dialogIcon.alt = title;
+          dialogIcon.className = isUnlocked
+            ? "relative size-28 object-contain"
+            : "relative size-28 object-contain grayscale opacity-60";
         }
-        if (dialogTitle) dialogTitle.textContent = title;
+        if (dialogCardArt) {
+          if (hasCard) {
+            dialogCardArt.style.display = "";
+            dialogCardArt.src = cardArt;
+            dialogCardArt.alt = title;
+            dialogCardArt.className = isUnlocked
+              ? "absolute inset-0 h-full w-full object-cover"
+              : "absolute inset-0 h-full w-full object-cover grayscale";
+          } else {
+            dialogCardArt.style.display = "none";
+            dialogCardArt.removeAttribute("src");
+          }
+        }
+        if (dialogTitle) dialogTitle.textContent = title.toUpperCase();
+        if (dialogSubtitle) {
+          dialogSubtitle.textContent = subtitle;
+          (dialogSubtitle as HTMLElement).style.display = subtitle ? "" : "none";
+        }
         if (dialogDescription) dialogDescription.textContent = description;
-
-        // Actualizar estado visual
-        if (dialogGlow) {
-          dialogGlow.className = isUnlocked
-            ? "absolute inset-0 bg-linear-to-b from-yellow-500/10 to-transparent pointer-events-none"
-            : "absolute inset-0 bg-linear-to-b from-white/5 to-transparent pointer-events-none";
-        }
-
-        if (dialogIconContainer) {
-          dialogIconContainer.className = isUnlocked
-            ? "relative size-24 p-3 rounded-2xl border bg-black/50 border-yellow-500/20 shadow-inner mb-4"
-            : "relative size-24 p-3 rounded-2xl border bg-white/5 border-white/10 mb-4 grayscale";
-        }
 
         // Actualizar status
         if (dialogStatus) {
           if (isUnlocked) {
             dialogStatus.innerHTML = `
-              <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 text-sm font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                Desbloqueado el ${date}
+              <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 border border-amber-400/50 text-amber-300 text-xs font-medium backdrop-blur-sm">
+                ★ Desbloqueado el ${date}
               </span>
             `;
           } else {
             dialogStatus.innerHTML = `
-              <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-white/50 text-sm font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 border border-white/10 text-white/50 text-xs font-medium backdrop-blur-sm">
                 Aún no desbloqueado
               </span>
             `;
