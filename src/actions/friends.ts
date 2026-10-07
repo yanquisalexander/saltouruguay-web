@@ -1,6 +1,6 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
 import { FriendsTable, UsersTable } from "@/db/schema";
 import { eq, and, or } from "drizzle-orm";
@@ -9,12 +9,12 @@ export const friends = {
     sendRequest: defineAction({
         input: z.object({ friendId: z.number() }),
         handler: async ({ friendId }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth?.user?.id) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
             }
 
-            const userId = Number(session.user.id);
+            const userId = Number(auth.user.id);
             if (userId === friendId) {
                 throw new ActionError({ code: "BAD_REQUEST", message: "No puedes enviarte solicitud a ti mismo" });
             }
@@ -50,12 +50,12 @@ export const friends = {
     acceptRequest: defineAction({
         input: z.object({ requestId: z.number() }),
         handler: async ({ requestId }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth?.user?.id) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
             }
 
-            const userId = Number(session.user.id);
+            const userId = Number(auth.user.id);
 
             const friendRequest = await client.query.FriendsTable.findFirst({
                 where: eq(FriendsTable.id, requestId)
@@ -80,12 +80,12 @@ export const friends = {
     rejectRequest: defineAction({
         input: z.object({ requestId: z.number() }),
         handler: async ({ requestId }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth?.user?.id) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
             }
 
-            const userId = Number(session.user.id);
+            const userId = Number(auth.user.id);
 
             const friendRequest = await client.query.FriendsTable.findFirst({
                 where: eq(FriendsTable.id, requestId)
@@ -109,12 +109,12 @@ export const friends = {
     removeFriend: defineAction({
         input: z.object({ friendId: z.number() }),
         handler: async ({ friendId }, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth?.user?.id) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
             }
 
-            const userId = Number(session.user.id);
+            const userId = Number(auth.user.id);
 
             await client.delete(FriendsTable)
                 .where(or(
@@ -128,12 +128,12 @@ export const friends = {
 
     getRequests: defineAction({
         handler: async (_, { request }) => {
-            const session = await getSession(request);
-            if (!session?.user?.id) {
+            const auth = await getAuthenticatedUser(request);
+            if (!auth?.user?.id) {
                 return { requests: [] };
             }
 
-            const userId = Number(session.user.id);
+            const userId = Number(auth.user.id);
 
             const requests = await client
                 .select({
