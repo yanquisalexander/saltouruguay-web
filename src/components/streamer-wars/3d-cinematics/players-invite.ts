@@ -2,111 +2,142 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
 import { gsap } from "gsap";
-import { playSound, playSoundWithMegaphone, playSoundWithReverb } from "@/consts/Sounds";
+import { playSound, playSoundWithMegaphone } from "@/consts/Sounds";
 import type { Cinematic3DDefinition } from "./types";
-import { GLOBAL_CDN_PREFIX } from "@/config";
 
 import { makeBox, makeCyl } from "./primitives";
 
-function createGasSystem(parentScene: THREE.Scene, options: {
-  count?: number;
-  color?: THREE.Color;
-  opacity?: number;
-  spreadX?: number;
-  spreadZ?: number;
-  spreadY?: number;
-  spawnSide?: boolean;
-} = {}) {
-  const {
-    count = 60,
-    color = new THREE.Color(0.3, 0.7, 0.5),
-    opacity = 0.28,
-    spreadX = 8,
-    spreadZ = 12,
-    spreadY = 4,
-    spawnSide = true,
-  } = options;
+// ─── Texturas procedurales (0 requests extra, se generan en ~1ms) ───
+let _softTex: THREE.Texture | null = null;
+function getSoftTexture(): THREE.Texture {
+  if (_softTex) return _softTex;
+  const c = document.createElement("canvas");
+  c.width = 64; c.height = 64;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createRadialGradient(32, 32, 1, 32, 32, 32);
+  g.addColorStop(0, "rgba(255,255,255,1)");
+  g.addColorStop(0.35, "rgba(255,255,255,0.45)");
+  g.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  _softTex = new THREE.CanvasTexture(c);
+  return _softTex;
+}
 
-  const tex = new THREE.TextureLoader().load(`${GLOBAL_CDN_PREFIX}/guerra-streamers/assets/smoke.webp`);
+// ─── Sistema de partículas PUNTUAL: 1 draw call, 1 material ───────────
+// Reemplaza los N Sprites (N draw calls + N materiales). Todo reciclado,
+// sin allocs por frame: los Float32Array viven mientras dure la escena.
+function makePuffSystem(opts: {
+  count: number;
+  color: THREE.Color;
+  baseSize?: number;
+  sizeVar?: number;
+}) {
+  const { count, color, baseSize = 2.4, sizeVar = 2.2 } = opts;
+  const tex = getSoftTexture();
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(count * 3);
+  const aScale = new Float32Array(count);
+  const aAlpha = new Float32Array(count);
+  const vel = new Float32Array(count * 3);
+  const life = new Float32Array(count);
+  const maxLife = new Float32Array(count);
+  const maxOp = new Float32Array(count);
+  const grow = new Float32Array(count);
 
-  const group = new THREE.Group();
-  const particles: THREE.Sprite[] = [];
+  for (let i = 0; i < count; i++) {
+    life[i] = Math.random() * 200;
+    maxLife[i] = 180 + Math.random() * 150;
+    maxOp[i] = 0.5 + Math.random() * 0.5;
+    aScale[i] = baseSize + Math.random() * sizeVar;
+    grow[i] = 0.4 + Math.random() * 0.9;
+    pos[i * 3 + 1] = -10; // bajo el suelo hasta que spawnee
+  }
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute("aScale", new THREE.BufferAttribute(aScale, 1));
+  geo.setAttribute("aAlpha", new THREE.BufferAttribute(aAlpha, 1));
+
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uMap: { value: tex },
+      uColor: { value: new THREE.Vector3(color.r, color.g, color.b) },
+    },
+    vertexShader: /* glsl */ `
+      attribute float aScale;
+      attribute float aAlpha;
+      varying float vAlpha;
+      void main() {
+        vAlpha = aAlpha;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = aScale * (220.0 / max(0.1, -mv.z));
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform sampler2D uMap;
+      uniform vec3 uColor;
+      varying float vAlpha;
+      void main() {
+        float a = texture2D(uMap, gl_PointCoord).a * vAlpha;
+        if (a < 0.004) discard;
+        gl_FragColor = vec4(uColor * a, a);
+      }`,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+
+  const points = new THREE.Points(geo, mat);
+  points.frustumCulled = false;
   let intensity = 0;
+  let cursor = 0;
 
-  const spawn = (forced: boolean) => {
-    const mat = new THREE.SpriteMaterial({
-      map: tex,
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      color: color.clone(),
-    });
-    const sp = new THREE.Sprite(mat);
-    const scale = 1.5 + Math.random() * 3.5;
-    sp.scale.set(scale, scale, 1);
-
-    let px: number;
-    let pz: number;
-    if (spawnSide) {
-      const side = Math.random() > 0.5 ? 1 : -1;
-      px = side * (spreadX * 0.85 + Math.random() * spreadX * 0.15);
-      pz = (Math.random() - 0.5) * spreadZ * 2;
-    } else {
-      px = (Math.random() - 0.5) * spreadX * 2;
-      pz = (Math.random() - 0.5) * spreadZ * 2;
-    }
-    sp.position.set(px, Math.random() * spreadY, pz);
-
-    const side = px > 0 ? -1 : 1;
-    sp.userData = {
-      vx: side * (0.005 + Math.random() * 0.012),
-      vy: 0.002 + Math.random() * 0.006,
-      vz: (Math.random() - 0.5) * 0.006,
-      life: forced ? Math.random() * 120 : 0,
-      maxLife: 180 + Math.random() * 150,
-      maxOpacity: opacity * (0.6 + Math.random() * 0.4),
-    };
-    group.add(sp);
-    particles.push(sp);
+  const spawnOne = (px: number, py: number, pz: number, spread: number) => {
+    const i = cursor;
+    cursor = (cursor + 1) % count;
+    life[i] = 0;
+    maxLife[i] = 180 + Math.random() * 150;
+    maxOp[i] = 0.5 + Math.random() * 0.5;
+    aScale[i] = baseSize + Math.random() * sizeVar;
+    pos[i * 3] = px + (Math.random() - 0.5) * spread;
+    pos[i * 3 + 1] = py + Math.random() * 0.6;
+    pos[i * 3 + 2] = pz + (Math.random() - 0.5) * spread;
+    vel[i * 3] = (Math.random() - 0.5) * 0.006;
+    vel[i * 3 + 1] = 0.004 + Math.random() * 0.008;
+    vel[i * 3 + 2] = (Math.random() - 0.5) * 0.006;
   };
 
-  for (let i = 0; i < count * 0.6; i++) spawn(true);
-
-  const update = (dt: number) => {
-    if (intensity > 0 && Math.random() < intensity * 5 * dt) spawn(false);
-
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const sp = particles[i];
-      const d = sp.userData;
-      d.life += 60 * dt;
-      const t = d.life / d.maxLife;
-
-      sp.position.x += d.vx;
-      sp.position.y += d.vy * (1 - t * 0.5);
-      sp.position.z += d.vz;
-
-      let op = 0;
-      if (t < 0.12) op = t / 0.12;
-      else if (t < 0.72) op = 1;
-      else op = 1 - (t - 0.72) / 0.28;
-      (sp.material as THREE.SpriteMaterial).opacity = op * Math.min(intensity, 1) * d.maxOpacity;
-
-      if (d.life > d.maxLife) {
-        group.remove(sp);
-        (sp.material as THREE.SpriteMaterial).dispose();
-        particles.splice(i, 1);
-      }
-    }
-  };
-
-  parentScene.add(group);
   return {
-    group,
-    particles,
-    update,
+    points, geo, mat,
     setIntensity: (v: number) => { intensity = v; },
     getIntensity: () => intensity,
+    update(dt: number, emit: (spawn: (px: number, py: number, pz: number, spread: number) => void) => void, driftX = 0) {
+      if (intensity > 0) emit(spawnOne);
+      const step = 60 * dt;
+      const posAttr = geo.getAttribute("position") as THREE.BufferAttribute;
+      const scaleAttr = geo.getAttribute("aScale") as THREE.BufferAttribute;
+      const alphaAttr = geo.getAttribute("aAlpha") as THREE.BufferAttribute;
+      for (let i = 0; i < count; i++) {
+        if (life[i] > maxLife[i]) { aAlpha[i] = 0; continue; }
+        life[i] += step;
+        const t = life[i] / maxLife[i];
+        pos[i * 3] += (vel[i * 3] + driftX) * step;
+        pos[i * 3 + 1] += vel[i * 3 + 1] * (1 - t * 0.5) * step;
+        pos[i * 3 + 2] += vel[i * 3 + 2] * step;
+        let f = 0;
+        if (t < 0.12) f = t / 0.12;
+        else if (t < 0.72) f = 1;
+        else f = 1 - (t - 0.72) / 0.28;
+        aAlpha[i] = f * Math.min(intensity, 1.15) * maxOp[i] * 0.5;
+        aScale[i] += grow[i] * dt;
+      }
+      posAttr.needsUpdate = true;
+      scaleAttr.needsUpdate = true;
+      alphaAttr.needsUpdate = true;
+    },
+    dispose() {
+      geo.dispose();
+      mat.dispose();
+    },
   };
 }
 
@@ -126,8 +157,16 @@ export const playersInvite: Cinematic3DDefinition = {
         exrTex.mapping = THREE.EquirectangularReflectionMapping;
         const envMap = pmremGen.fromEquirectangular(exrTex).texture;
         scene.background = exrTex;
+        if ("backgroundIntensity" in scene) (scene as any).backgroundIntensity = 0.85;
         scene.environment = envMap;
-        scene.environmentIntensity = 1.2;
+        // 0.55 en vez de 1.2: noche creíble, no lava los negros, mismo costo.
+        scene.environmentIntensity = 0.55;
+        // Reflejos de charcos un poco más vivos que el resto
+        scene.traverse((o: any) => {
+          if (o?.isMesh && o.userData?.isPuddle && o.material) {
+            o.material.envMapIntensity = 1.8;
+          }
+        });
         pmremGen.dispose();
       },
       undefined,
@@ -139,10 +178,13 @@ export const playersInvite: Cinematic3DDefinition = {
     camera.updateProjectionMatrix();
 
     const disposables: { geo: THREE.BufferGeometry; mat: THREE.Material }[] = [];
-    const track = (m: THREE.Mesh) => disposables.push({ geo: m.geometry, mat: m.material });
+    const track = (m: THREE.Mesh) => disposables.push({ geo: m.geometry, mat: m.material as THREE.Material });
+    const softTex = getSoftTexture();
 
-    // ── Lighting ────────────────────────────────────────────
-    const ambient = new THREE.AmbientLight(0x4a5a7a, 10.0);
+    // ── Lighting: 6 luces en vez de 10 ─────────────────────
+    // Cada PointLight extra encarece TODOS los fragmentos en forward.
+    // Los rellenos cálidos/azules se fingen con sprites emissivos.
+    const ambient = new THREE.AmbientLight(0x4a5a7a, 4.5);
     scene.add(ambient);
 
     const makeP = (x: number, y: number, z: number, c: number, i: number, d: number) => {
@@ -153,10 +195,6 @@ export const playersInvite: Cinematic3DDefinition = {
     };
     const streetLamp1 = makeP(4, 7, -2, 0xff9030, 18.0, 50);
     const streetLamp2 = makeP(-5, 7, -18, 0xff8820, 14.0, 45);
-    makeP(-8, 5, -8, 0xffcc60, 8.0, 30);
-    makeP(9, 4, -14, 0xffaa40, 6.5, 28);
-    makeP(-10, 3, -10, 0x4060c0, 4.5, 30);
-    makeP(2, 0.5, 0, 0xff7010, 3.0, 20);
 
     const headlightL = new THREE.PointLight(0xc8e0ff, 0, 50, 1.2);
     headlightL.position.set(-0.8, 1.2, 2.8);
@@ -170,13 +208,34 @@ export const playersInvite: Cinematic3DDefinition = {
     gasLight.position.set(0, 1.2, 1.0);
 
     // ── Street ──────────────────────────────────────────────
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x0c0e12, roughness: 0.75, metalness: 0.2 });
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x0c0e12, roughness: 0.55, metalness: 0.45, envMapIntensity: 0.7 });
     const ground = makeBox(40, 0.1, 80, groundMat);
     ground.position.set(0, -0.05, -10);
     scene.add(ground);
     track(ground);
 
-    const markMat = new THREE.MeshStandardMaterial({ color: 0x1a1c18, roughness: 1.0 });
+    // Charcos: 4 planos que capturan el HDRI → asfalto mojado creíble, 4 draws estáticos
+    const puddleMat = new THREE.MeshStandardMaterial({
+      color: 0x0a0e14, roughness: 0.06, metalness: 0.9,
+      transparent: true, opacity: 0.85, envMapIntensity: 1.8,
+    });
+    const puddleGeos: THREE.BufferGeometry[] = [];
+    const addPuddle = (x: number, z: number, w: number, l: number, rot: number) => {
+      const g = new THREE.PlaneGeometry(w, l);
+      const m = new THREE.Mesh(g, puddleMat);
+      m.rotation.x = -Math.PI / 2;
+      m.rotation.z = rot;
+      m.position.set(x, 0.015, z);
+      m.userData.isPuddle = true;
+      scene.add(m);
+      puddleGeos.push(g);
+    };
+    addPuddle(-1.8, -6, 2.4, 3.6, 0.4);
+    addPuddle(1.6, -11, 1.8, 2.6, -0.3);
+    addPuddle(-0.6, 2.5, 3.0, 1.8, 0.15);
+    addPuddle(2.4, -20, 2.0, 3.0, 0.7);
+
+    const markMat = new THREE.MeshStandardMaterial({ color: 0x8a8a72, roughness: 0.8, emissive: 0x22221a, emissiveIntensity: 0.25 });
     for (let i = -3; i < 5; i++) {
       const mark = makeBox(0.15, 0.02, 2.5, markMat);
       mark.position.set(0, 0.02, i * 5);
@@ -200,7 +259,22 @@ export const playersInvite: Cinematic3DDefinition = {
     scene.add(curb);
     track(curb);
 
-    // ── Lampposts ──────────────────────────────────────────
+    // Cable catenario cruzando la calle (1 draw, mucha profundidad)
+    {
+      const curve = new THREE.QuadraticBezierCurve3(
+        new THREE.Vector3(-10, 7.6, -8),
+        new THREE.Vector3(-2, 6.3, -8),
+        new THREE.Vector3(6, 7.4, -8),
+      );
+      const tubeGeo = new THREE.TubeGeometry(curve, 20, 0.025, 5);
+      const tubeMat = new THREE.MeshBasicMaterial({ color: 0x05060a });
+      const tube = new THREE.Mesh(tubeGeo, tubeMat);
+      scene.add(tube);
+      disposables.push({ geo: tubeGeo, mat: tubeMat });
+    }
+
+    // ── Lampposts + conos volumétricos falsos + glow ───────
+    const glowSprites: THREE.Sprite[] = [];
     const addLampPost = (x: number, z: number) => {
       const mat = new THREE.MeshStandardMaterial({ color: 0x1a1e22, roughness: 0.5, metalness: 0.8 });
       const post = makeCyl(0.06, 0.08, 8, 6, mat);
@@ -221,6 +295,28 @@ export const playersInvite: Cinematic3DDefinition = {
       glow.position.set(x - 1.1, 7.6, z);
       scene.add(glow);
       disposables.push({ geo: glowGeo, mat: glowMat });
+
+      // Cono de luz falso (aditivo, 1 draw c/u) + halo sprite
+      const coneGeo = new THREE.ConeGeometry(2.4, 7.4, 18, 1, true);
+      const coneMat = new THREE.MeshBasicMaterial({
+        color: 0xff9a30, transparent: true, opacity: 0.05,
+        blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false, fog: false,
+      });
+      const cone = new THREE.Mesh(coneGeo, coneMat);
+      cone.position.set(x - 1.1, 7.6 - 3.7, z);
+      scene.add(cone);
+      disposables.push({ geo: coneGeo, mat: coneMat });
+
+      const haloMat = new THREE.SpriteMaterial({
+        map: softTex, color: 0xffa040, transparent: true, opacity: 0.55,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      });
+      const halo = new THREE.Sprite(haloMat);
+      halo.scale.set(2.6, 2.6, 1);
+      halo.position.set(x - 1.1, 7.6, z);
+      scene.add(halo);
+      glowSprites.push(halo);
+      disposables.push({ geo: halo.geometry as unknown as THREE.BufferGeometry, mat: haloMat });
     };
     addLampPost(5, -2);
     addLampPost(-6, -18);
@@ -248,50 +344,170 @@ export const playersInvite: Cinematic3DDefinition = {
     scene.add(bld5);
     track(bld5);
 
-    // Building windows
-    const winMats = [
-      new THREE.MeshStandardMaterial({ emissive: 0xffcc60, emissiveIntensity: 1.8, color: 0x100800 }),
-      new THREE.MeshStandardMaterial({ emissive: 0x6080ff, emissiveIntensity: 1.5, color: 0x000820 }),
-      new THREE.MeshStandardMaterial({ emissive: 0xffffff, emissiveIntensity: 0.5, color: 0x101010 }),
-    ];
-    const addWindows = (bldX: number, bldY: number, bldZ: number, cols: number, rows: number, spacing: number, side: number) => {
-      for (let c = 0; c < cols; c++) {
-        for (let r = 0; r < rows; r++) {
-          if (Math.random() < 0.35) continue;
-          const mat = winMats[Math.random() < 0.15 ? 1 : Math.random() < 0.1 ? 2 : 0].clone();
-          mat.emissiveIntensity *= 0.6 + Math.random() * 0.8;
-          const winGeo = new THREE.PlaneGeometry(0.55, 0.7);
-          const w = new THREE.Mesh(winGeo, mat);
-          w.position.set(bldX + (c - cols / 2 + 0.5) * spacing, bldY - 2 + r * spacing * 1.3, bldZ + side * 0.05);
-          w.rotation.y = side > 0 ? 0 : Math.PI;
-          scene.add(w);
-          disposables.push({ geo: winGeo, mat });
+    // Ventanas: 3 InstancedMesh (1 draw c/u) + 2 ventanas "TV" separadas que parpadean
+    const tvMats: THREE.MeshStandardMaterial[] = [];
+    {
+      const winGeo = new THREE.PlaneGeometry(0.55, 0.7);
+      const warm = new THREE.MeshStandardMaterial({ emissive: 0xffcc60, emissiveIntensity: 1.6, color: 0x100800 });
+      const cool = new THREE.MeshStandardMaterial({ emissive: 0x6080ff, emissiveIntensity: 1.4, color: 0x000820 });
+      const white = new THREE.MeshStandardMaterial({ emissive: 0xffffff, emissiveIntensity: 0.45, color: 0x101010 });
+      const spots: { x: number; y: number; z: number; ry: number; k: number }[] = [];
+      const collect = (bldX: number, bldY: number, bldZ: number, cols: number, rows: number, spacing: number, side: number) => {
+        for (let c = 0; c < cols; c++) {
+          for (let r = 0; r < rows; r++) {
+            if (Math.random() < 0.35) continue;
+            const roll = Math.random();
+            const k = roll < 0.75 ? 0 : roll < 0.9 ? 1 : 2;
+            spots.push({
+              x: bldX + (c - cols / 2 + 0.5) * spacing,
+              y: bldY - 2 + r * spacing * 1.3,
+              z: bldZ + side * 0.06,
+              ry: side > 0 ? 0 : Math.PI,
+              k,
+            });
+          }
         }
-      }
-    };
-    addWindows(12, 9, -2.1, 3, 6, 2.0, -1);
-    addWindows(-16, 7, 1.1, 4, 5, 1.8, 1);
-    addWindows(14, 11, -19.1, 4, 7, 1.9, -1);
+      };
+      collect(12, 9, -2.1, 3, 6, 2.0, -1);
+      collect(-16, 7, 1.1, 4, 5, 1.8, 1);
+      collect(14, 11, -19.1, 4, 7, 1.9, -1);
+      const byKind = [[], [], []] as typeof spots[];
+      for (const s of spots) byKind[s.k].push(s);
+      const mats = [warm, cool, white];
+      const dummy = new THREE.Object3D();
+      byKind.forEach((list, k) => {
+        if (!list.length) return;
+        const im = new THREE.InstancedMesh(winGeo, mats[k], list.length);
+        list.forEach((s, i) => {
+          dummy.position.set(s.x, s.y, s.z);
+          dummy.rotation.set(0, s.ry, 0);
+          // Variación barata de brillo por instancia (tinte del emissive no, pero el color sí modula)
+          dummy.updateMatrix();
+          im.setMatrixAt(i, dummy.matrix);
+        });
+        im.instanceMatrix.needsUpdate = true;
+        scene.add(im);
+        disposables.push({ geo: winGeo, mat: mats[k] });
+      });
 
-    // Dumpster
+      // 2 TVs que parpadean (únicas ventanas dinámicas)
+      const tvGeoA = new THREE.PlaneGeometry(0.55, 0.7);
+      const tvMatA = new THREE.MeshStandardMaterial({ emissive: 0x9db8ff, emissiveIntensity: 1.4, color: 0x05070f });
+      const tvA = new THREE.Mesh(tvGeoA, tvMatA);
+      tvA.position.set(12 + 2.0, 9 + 1.5, -2.1 - 0.06);
+      tvA.rotation.y = Math.PI;
+      scene.add(tvA);
+      disposables.push({ geo: tvGeoA, mat: tvMatA });
+      tvMats.push(tvMatA);
+      const tvGeoB = new THREE.PlaneGeometry(0.55, 0.7);
+      const tvMatB = new THREE.MeshStandardMaterial({ emissive: 0x9db8ff, emissiveIntensity: 1.1, color: 0x05070f });
+      const tvB = new THREE.Mesh(tvGeoB, tvMatB);
+      tvB.position.set(-16 - 1.8, 7 - 0.5, 1.1 + 0.06);
+      scene.add(tvB);
+      disposables.push({ geo: tvGeoB, mat: tvMatB });
+      tvMats.push(tvMatB);
+    }
+
+    // Cartel neón "ON AIR" en el edificio izquierdo (1 draw + 1 halo, parpadeo en animate)
+    let neonMat: THREE.MeshBasicMaterial | null = null;
+    let neonHaloMat: THREE.SpriteMaterial | null = null;
+    {
+      const c = document.createElement("canvas");
+      c.width = 256; c.height = 96;
+      const ctx = c.getContext("2d")!;
+      ctx.clearRect(0, 0, 256, 96);
+      ctx.font = "bold 44px 'Courier New', monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = "rgba(255,40,80,0.9)";
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = "#ff2a55";
+      ctx.fillText("ON AIR", 128, 50);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#ff8aa0";
+      ctx.fillText("ON AIR", 128, 50);
+      const neonTex = new THREE.CanvasTexture(c);
+      neonMat = new THREE.MeshBasicMaterial({ map: neonTex, transparent: true, depthWrite: false });
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.9), neonMat);
+      sign.position.set(-11.44, 4.6, -10);
+      sign.rotation.y = Math.PI / 2;
+      scene.add(sign);
+      disposables.push({ geo: sign.geometry, mat: neonMat });
+      (neonTex as THREE.Texture).colorSpace = THREE.SRGBColorSpace;
+      disposables.push({ geo: new THREE.BufferGeometry(), mat: { dispose: () => neonTex.dispose() } as unknown as THREE.Material });
+
+      neonHaloMat = new THREE.SpriteMaterial({
+        map: softTex, color: 0xff2a55, transparent: true, opacity: 0.28,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      });
+      const halo = new THREE.Sprite(neonHaloMat);
+      halo.scale.set(4.2, 2.0, 1);
+      halo.position.set(-11.2, 4.6, -10);
+      scene.add(halo);
+      disposables.push({ geo: halo.geometry as unknown as THREE.BufferGeometry, mat: neonHaloMat });
+    }
+
+    // Dumpster + bolsas de basura (siluetas que rompen la línea recta de la calle)
     const dumpster = makeBox(1.2, 0.9, 0.6, new THREE.MeshStandardMaterial({ color: 0x0a1208, roughness: 0.9, metalness: 0.4 }));
     dumpster.position.set(7.5, 0.45, 0.5);
     scene.add(dumpster);
     track(dumpster);
+    const bagMat = new THREE.MeshStandardMaterial({ color: 0x0b0d10, roughness: 0.55, metalness: 0.1 });
+    const bagGeos: THREE.BufferGeometry[] = [];
+    [[7.0, 0.28, 1.4, 0.55], [8.1, 0.22, 1.0, 0.45], [7.4, 0.7, 0.2, 0.4]].forEach(([x, y, z, s]) => {
+      const g = new THREE.SphereGeometry(s, 7, 6);
+      const b = new THREE.Mesh(g, bagMat);
+      b.position.set(x as number, y as number, z as number);
+      b.scale.y = 0.75;
+      scene.add(b);
+      bagGeos.push(g);
+      disposables.push({ geo: g, mat: bagMat });
+    });
 
     // ── Van ─────────────────────────────────────────────────
     const vanGroup = new THREE.Group();
     vanGroup.position.set(1.0, 0, -35);
     scene.add(vanGroup);
 
-    headlightL.position.set(-0.8, 1.2, 2.8);
-    headlightR.position.set(0.8, 1.2, 2.8);
     vanGroup.add(headlightL);
     vanGroup.add(headlightR);
-    interiorRed.position.set(0, 1.5, 0.5);
     vanGroup.add(interiorRed);
-    gasLight.position.set(0, 1.2, 1.0);
     vanGroup.add(gasLight);
+
+    // Haz principal de faros: 1 SpotLight (más barato que 2 points a full + da cono real)
+    const headSpot = new THREE.SpotLight(0xcfe4ff, 0, 45, 0.55, 0.6, 1.1);
+    headSpot.position.set(0, 1.3, 2.6);
+    const headTarget = new THREE.Object3D();
+    headTarget.position.set(0, 0.2, 14);
+    vanGroup.add(headTarget);
+    headSpot.target = headTarget;
+    vanGroup.add(headSpot);
+
+    // Flares de faros (sprites, 0 luces) + luces de freno traseras
+    const flareMatL = new THREE.SpriteMaterial({ map: softTex, color: 0xd8ecff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+    const flareL = new THREE.Sprite(flareMatL);
+    flareL.scale.set(1.6, 1.6, 1);
+    flareL.position.set(-0.8, 1.1, 2.85);
+    vanGroup.add(flareL);
+    const flareMatR = flareMatL.clone();
+    const flareR = new THREE.Sprite(flareMatR);
+    flareR.scale.set(1.6, 1.6, 1);
+    flareR.position.set(0.8, 1.1, 2.85);
+    vanGroup.add(flareR);
+    disposables.push({ geo: flareL.geometry as unknown as THREE.BufferGeometry, mat: flareMatL });
+    disposables.push({ geo: flareR.geometry as unknown as THREE.BufferGeometry, mat: flareMatR });
+
+    const brakeMat = new THREE.MeshStandardMaterial({ color: 0x1a0505, emissive: 0xff0808, emissiveIntensity: 0.35, roughness: 0.3 });
+    const brakeGeoL = new THREE.BoxGeometry(0.3, 0.13, 0.06);
+    const brakeL = new THREE.Mesh(brakeGeoL, brakeMat);
+    brakeL.position.set(-0.72, 1.15, -2.78);
+    vanGroup.add(brakeL);
+    const brakeGeoR = new THREE.BoxGeometry(0.3, 0.13, 0.06);
+    const brakeR = new THREE.Mesh(brakeGeoR, brakeMat);
+    brakeR.position.set(0.72, 1.15, -2.78);
+    vanGroup.add(brakeR);
+    disposables.push({ geo: brakeGeoL, mat: brakeMat });
+    disposables.push({ geo: brakeGeoR, mat: brakeMat });
 
     const vanData = { mixer: null as THREE.AnimationMixer | null, doorAction: null as THREE.AnimationAction | null };
 
@@ -343,6 +559,7 @@ export const playersInvite: Cinematic3DDefinition = {
       legR.position.set(0.15, 0.08, 0.2);
       g.add(legR);
       track(legR);
+      g.userData.torso = torso;
       return g;
     }
 
@@ -402,9 +619,9 @@ export const playersInvite: Cinematic3DDefinition = {
     textPlane.position.set(-0.85, 1.2, -0.5);
     textPlane.rotation.y = -Math.PI / 2;
     vanGroup.add(textPlane);
-    disposables.push({ geo: textPlane.geometry, mat: textPlane.material });
+    disposables.push({ geo: textPlane.geometry, mat: textPlane.material as THREE.Material });
 
-    // Load van GLB
+    // Load van GLB (sin sombras: ninguna luz proyecta, ahorramos el shadow pass)
     const gltfLoader = new GLTFLoader();
     gltfLoader.load(
       "https://cdn.saltouruguayserver.com/guerra-streamers/3d-models/camioneta.glb",
@@ -420,8 +637,8 @@ export const playersInvite: Cinematic3DDefinition = {
         model.traverse(child => {
           if ((child as THREE.Mesh).isMesh) {
             const m = child as THREE.Mesh;
-            m.castShadow = true;
-            m.receiveShadow = true;
+            m.castShadow = false;
+            m.receiveShadow = false;
             if (m.material) {
               const mats = Array.isArray(m.material) ? m.material : [m.material];
               mats.forEach((mat: THREE.Material) => {
@@ -470,12 +687,97 @@ export const playersInvite: Cinematic3DDefinition = {
       },
     );
 
-    // ── Gas System ──────────────────────────────────────────
-    const gas = createGasSystem(scene, {
-      count: 150, color: new THREE.Color(0.4, 0.9, 0.6),
-      opacity: 0.85, spreadX: 3.5, spreadZ: 4.5, spreadY: 3.0, spawnSide: false,
-    });
+    // ── Gas verde: 1 draw call (antes ~150 Sprites) ─────────
+    const gas = makePuffSystem({ count: 110, color: new THREE.Color(0.35, 1.0, 0.6), baseSize: 2.6, sizeVar: 3.0 });
     gas.setIntensity(0);
+    gas.points.position.set(0, 1.2, 0);
+    scene.add(gas.points);
+
+    // ── Humo del escape: 1 draw call, 26 partículas ─────────
+    const exhaust = makePuffSystem({ count: 26, color: new THREE.Color(0.32, 0.34, 0.38), baseSize: 0.5, sizeVar: 0.7 });
+    exhaust.setIntensity(0.25);
+    vanGroup.add(exhaust.points);
+
+    // ── Lluvia: 1 LineSegments, 340 gotas, 0 texturas ───────
+    const RAIN = 340;
+    const rainPos = new Float32Array(RAIN * 6);
+    const rainSpeed = new Float32Array(RAIN);
+    const rainGeo = new THREE.BufferGeometry();
+    const resetDrop = (i: number, randomY = false) => {
+      const x = -12 + Math.random() * 24;
+      const y = randomY ? Math.random() * 10 : 8 + Math.random() * 3;
+      const z = -32 + Math.random() * 42;
+      rainSpeed[i] = 16 + Math.random() * 10;
+      rainPos[i * 6] = x;
+      rainPos[i * 6 + 1] = y;
+      rainPos[i * 6 + 2] = z;
+      rainPos[i * 6 + 3] = x + 0.06;
+      rainPos[i * 6 + 4] = y - 0.55;
+      rainPos[i * 6 + 5] = z;
+    };
+    for (let i = 0; i < RAIN; i++) resetDrop(i, true);
+    rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPos, 3));
+    const rainMat = new THREE.LineBasicMaterial({ color: 0x8fa3c7, transparent: true, opacity: 0.22 });
+    const rain = new THREE.LineSegments(rainGeo, rainMat);
+    rain.frustumCulled = false;
+    scene.add(rain);
+
+    // ── Polillas/polvo alrededor de los faroles: 1 Points ────
+    const MOTHS = 36;
+    const mothGeo = new THREE.BufferGeometry();
+    const mothPos = new Float32Array(MOTHS * 3);
+    const mothSeed = new Float32Array(MOTHS * 4); // cx, radio, velocidad, fase
+    const lampA = new THREE.Vector3(3.9, 7.55, -2);
+    const lampB = new THREE.Vector3(-7.1, 7.55, -18);
+    for (let i = 0; i < MOTHS; i++) {
+      mothSeed[i * 4] = i % 2; // qué farol
+      mothSeed[i * 4 + 1] = 0.2 + Math.random() * 0.55;
+      mothSeed[i * 4 + 2] = 2 + Math.random() * 4.5;
+      mothSeed[i * 4 + 3] = Math.random() * Math.PI * 2;
+    }
+    mothGeo.setAttribute("position", new THREE.BufferAttribute(mothPos, 3));
+    const mothMat = new THREE.PointsMaterial({
+      map: softTex, size: 0.09, color: 0xffc878, transparent: true, opacity: 0.85,
+      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+    });
+    const moths = new THREE.Points(mothGeo, mothMat);
+    moths.frustumCulled = false;
+    scene.add(moths);
+
+    // ── Niebla baja a ras de suelo: 3 planos a la deriva ────
+    const fogPlanes: THREE.Mesh[] = [];
+    {
+      const fg = new THREE.PlaneGeometry(30, 7);
+      for (let i = 0; i < 3; i++) {
+        const fm = new THREE.MeshBasicMaterial({
+          map: softTex, color: 0x2a3a4a, transparent: true,
+          opacity: 0.05 + i * 0.012, depthWrite: false,
+        });
+        const f = new THREE.Mesh(fg, fm);
+        f.rotation.x = -Math.PI / 2;
+        f.position.set((Math.random() - 0.5) * 6, 0.18 + i * 0.16, -16 + i * 9);
+        scene.add(f);
+        fogPlanes.push(f);
+        disposables.push({ geo: fg, mat: fm });
+      }
+    }
+
+    // ── Papeles al viento: 5 quads reciclados ───────────────
+    const papers: THREE.Mesh[] = [];
+    const paperVel: number[] = [];
+    {
+      const pg = new THREE.PlaneGeometry(0.24, 0.3);
+      for (let i = 0; i < 5; i++) {
+        const pm = new THREE.MeshBasicMaterial({ color: 0x9aa0a8, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
+        const p = new THREE.Mesh(pg, pm);
+        p.position.set(-12 + Math.random() * 24, 0.15 + Math.random() * 0.8, -28 + Math.random() * 34);
+        p.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+        scene.add(p);
+        papers.push(p);
+        paperVel.push(0.5 + Math.random() * 0.9);
+        disposables.push({ geo: pg, mat: pm });
+      }
+    }
 
     // ── First-person Camera State ─────────────────────────
     const VX = 1.0;
@@ -500,11 +802,22 @@ export const playersInvite: Cinematic3DDefinition = {
       fpCam,
       gasState,
       gas,
+      exhaust,
+      rain, rainPos, rainSpeed, rainGeo,
+      moths, mothPos, mothSeed, mothGeo, lampA, lampB,
+      fogPlanes,
+      papers, paperVel,
+      glowSprites,
+      flareMatL, flareMatR,
+      brakeMat,
+      tvMats,
+      neonMat, neonHaloMat,
       vanGroup,
       vanData,
       guard,
       streetLamp1,
       streetLamp2,
+      headSpot,
       interiorRed,
       headlightL,
       headlightR,
@@ -515,6 +828,15 @@ export const playersInvite: Cinematic3DDefinition = {
       scene,
       htmlRefs,
       disposables,
+      puddleGeos,
+      puddleMat,
+      bagGeos,
+      prevVanZ: -35,
+      vanSpeed: 0,
+      lastFilter: "",
+      lampDip1: 0,
+      lampDip2: 0,
+      textTex,
     };
 
     if (htmlRefs.numberEl) {
@@ -530,7 +852,7 @@ export const playersInvite: Cinematic3DDefinition = {
     ];
     inviteSnd.forEach(p => playSound({ sound: p, volume: 0 }));
 
-    // ── GSAP Timeline ──────────────────────────────────────
+    // ── GSAP Timeline (timings intactos) ────────────────────
     const tl = gsap.timeline({ delay: 0.5 });
 
     // Play background sound immediately, but fade it in with the musical cues
@@ -557,6 +879,12 @@ export const playersInvite: Cinematic3DDefinition = {
 
     tl.to(headlightL, { intensity: 8.0, duration: 0.5, ease: "power2.in" }, 13.5);
     tl.to(headlightR, { intensity: 8.0, duration: 0.5, ease: "power2.in" }, 13.5);
+    tl.to(headSpot, { intensity: 55, duration: 0.6, ease: "power2.in" }, 13.5);
+    tl.to(flareMatL, { opacity: 0.9, duration: 0.6 }, 13.5);
+    tl.to(flareMatR, { opacity: 0.9, duration: 0.6 }, 13.5);
+    // Frenada: las luces traseras se encienden justo antes de detenerse
+    tl.to(brakeMat, { emissiveIntensity: 4.5, duration: 0.25, ease: "power2.out" }, 18.2);
+    tl.to(brakeMat, { emissiveIntensity: 0.8, duration: 1.2, ease: "power2.inOut" }, 19.2);
 
     tl.to(fpCam, { bx: -0.9, gx: 1, gz: 1, gy: 1.3, duration: 3, ease: "power2.inOut" }, 12);
     tl.to(fpCam, { bx: -0.5, duration: 1.8, ease: "power2.inOut" }, 15.5);
@@ -638,57 +966,176 @@ export const playersInvite: Cinematic3DDefinition = {
     return { state, timeline: tl };
   },
 
-  animate(dt, _time, state, _scene, camera) {
-    const { fpCam, gas, vanGroup, vanData, streetLamp1, streetLamp2, htmlRefs, renderer } = state;
+  animate(dt, time, state, _scene, camera) {
+    const { fpCam, gas, exhaust, vanGroup, vanData, streetLamp1, streetLamp2, htmlRefs, renderer } = state;
     if (!fpCam) return;
 
     state.s0time += dt;
+    const t = state.s0time;
+    const clampedDt = Math.min(dt, 0.05);
 
     // Van animation mixer
-    if (vanData?.mixer) vanData.mixer.update(dt);
+    if (vanData?.mixer) vanData.mixer.update(clampedDt);
+
+    // Velocidad real de la van (para vibración motor + escape)
+    const vz = vanGroup ? vanGroup.position.z : 0;
+    const rawSpeed = Math.abs(vz - (state.prevVanZ ?? vz)) / Math.max(clampedDt, 0.001);
+    state.prevVanZ = vz;
+    state.vanSpeed = (state.vanSpeed ?? 0) * 0.92 + rawSpeed * 0.08;
+
+    // Ralentí + traqueteo en marcha: sin allocs, solo offsets
+    if (vanGroup) {
+      const idle = 0.006;
+      const drive = Math.min(state.vanSpeed * 0.004, 0.03);
+      vanGroup.position.y += Math.sin(t * 31) * (idle + drive) * clampedDt * 8 * 0.12;
+      vanGroup.rotation.z = Math.sin(t * 27) * (0.0012 + drive * 0.04);
+      vanGroup.rotation.x = Math.sin(t * 23 + 1) * (0.001 + drive * 0.03);
+    }
+
+    // Escape sigue al tubo trasero (coordenadas locales de la van)
+    if (exhaust) {
+      exhaust.points.position.set(0.7, 0.35, -2.9);
+      exhaust.setIntensity(0.2 + Math.min(state.vanSpeed * 0.12, 0.8));
+      exhaust.update(clampedDt, (spawn) => {
+        if (Math.random() < 0.5) spawn(0, 0, 0, 0.25);
+      }, -0.35);
+    }
 
     // Spring physics: head position
     const k = 5.5, d = 3.2;
-    fpCam.hvx += (fpCam.bx - fpCam.hx) * k * dt - fpCam.hvx * d * dt;
-    fpCam.hvz += (fpCam.bz - fpCam.hz) * k * dt - fpCam.hvz * d * dt;
-    fpCam.hvy += (fpCam.by - fpCam.hy) * k * dt - fpCam.hvy * d * dt;
-    fpCam.hx += fpCam.hvx * dt;
-    fpCam.hz += fpCam.hvz * dt;
-    fpCam.hy += fpCam.hvy * dt;
+    fpCam.hvx += (fpCam.bx - fpCam.hx) * k * clampedDt - fpCam.hvx * d * clampedDt;
+    fpCam.hvz += (fpCam.bz - fpCam.hz) * k * clampedDt - fpCam.hvz * d * clampedDt;
+    fpCam.hvy += (fpCam.by - fpCam.hy) * k * clampedDt - fpCam.hvy * d * clampedDt;
+    fpCam.hx += fpCam.hvx * clampedDt;
+    fpCam.hz += fpCam.hvz * clampedDt;
+    fpCam.hy += fpCam.hvy * clampedDt;
 
     // Spring physics: gaze
     const gk = 4.0, gd = 2.8;
-    fpCam.avx += (fpCam.gx - fpCam.ax) * gk * dt - fpCam.avx * gd * dt;
-    fpCam.avy += (fpCam.gy - fpCam.ay) * gk * dt - fpCam.avy * gd * dt;
-    fpCam.avz += (fpCam.gz - fpCam.az) * gk * dt - fpCam.avz * gd * dt;
-    fpCam.ax += fpCam.avx * dt;
-    fpCam.ay += fpCam.avy * dt;
-    fpCam.az += fpCam.avz * dt;
+    fpCam.avx += (fpCam.gx - fpCam.ax) * gk * clampedDt - fpCam.avx * gd * clampedDt;
+    fpCam.avy += (fpCam.gy - fpCam.ay) * gk * clampedDt - fpCam.avy * gd * clampedDt;
+    fpCam.avz += (fpCam.gz - fpCam.az) * gk * clampedDt - fpCam.avz * gd * clampedDt;
+    fpCam.ax += fpCam.avx * clampedDt;
+    fpCam.ay += fpCam.avy * clampedDt;
+    fpCam.az += fpCam.avz * clampedDt;
 
     // Spring physics: roll
     const rk = 4.5, rd = 3.0;
-    fpCam.rollV += (fpCam.rollTarget - fpCam.roll) * rk * dt - fpCam.rollV * rd * dt;
-    fpCam.roll += fpCam.rollV * dt;
+    fpCam.rollV += (fpCam.rollTarget - fpCam.roll) * rk * clampedDt - fpCam.rollV * rd * clampedDt;
+    fpCam.roll += fpCam.rollV * clampedDt;
 
     // Breathing
-    fpCam.bp += dt * 1.2;
+    fpCam.bp += clampedDt * 1.2;
     const by = Math.sin(fpCam.bp) * fpCam.ba;
     const bx = Math.sin(fpCam.bp * 0.7) * fpCam.ba * 0.3;
 
     // Wobble
-    fpCam.wobblePhase += dt * 2.5;
+    fpCam.wobblePhase += clampedDt * 2.5;
     const wx = Math.sin(fpCam.wobblePhase) * fpCam.wobbleAmp;
     const wz = Math.cos(fpCam.wobblePhase * 0.7) * fpCam.wobbleAmp * 0.5;
 
-    // Lamp flicker
-    const flicker = 6.0 + Math.sin(state.s0time * 17.3) * 0.12 + Math.sin(state.s0time * 5.1) * 0.18;
-    if (streetLamp1) streetLamp1.intensity = flicker;
-    if (streetLamp2) streetLamp2.intensity = flicker * 0.75;
+    // Lámparas: flicker independiente + micro-cortes ocasionales
+    if (state.lampDip1 > 0) state.lampDip1 -= clampedDt;
+    else if (Math.random() < 0.004) state.lampDip1 = 0.09;
+    if (state.lampDip2 > 0) state.lampDip2 -= clampedDt;
+    else if (Math.random() < 0.004) state.lampDip2 = 0.12;
+    const f1 = (6.0 + Math.sin(t * 17.3) * 0.12 + Math.sin(t * 5.1) * 0.18) * (state.lampDip1 > 0 ? 0.35 : 1);
+    const f2 = (6.0 + Math.sin(t * 15.1 + 2) * 0.14 + Math.sin(t * 4.3 + 1) * 0.2) * (state.lampDip2 > 0 ? 0.3 : 1);
+    if (streetLamp1) streetLamp1.intensity = f1;
+    if (streetLamp2) streetLamp2.intensity = f2 * 0.78;
+    if (state.glowSprites?.[0]) (state.glowSprites[0].material as THREE.SpriteMaterial).opacity = 0.45 + (f1 / 6) * 0.15;
+    if (state.glowSprites?.[1]) (state.glowSprites[1].material as THREE.SpriteMaterial).opacity = 0.45 + (f2 / 6) * 0.15;
 
-    // Gas follows van
+    // Guardia: respiración + micro-cabeceo (el eje Y lo sigue moviendo el timeline)
+    if (state.guard?.userData?.headYaw) {
+      state.guard.userData.headYaw.rotation.x = Math.sin(t * 0.9) * 0.045;
+      state.guard.userData.headYaw.position.y = 0.9 + Math.sin(t * 1.4) * 0.008;
+    }
+    if (state.guard?.userData?.torso) {
+      const ts = 1 + Math.sin(t * 1.4) * 0.012;
+      state.guard.userData.torso.scale.set(1, ts, 1);
+    }
+
+    // TVs parpadeando como zapping lejano
+    if (state.tvMats) {
+      state.tvMats[0].emissiveIntensity = 1.25 + Math.sin(t * 13.7) * 0.35 + Math.sin(t * 41.3) * 0.2;
+      state.tvMats[1].emissiveIntensity = 1.0 + Math.sin(t * 11.3 + 2) * 0.3 + Math.sin(t * 37.7) * 0.18;
+    }
+    // Neón ON AIR: casi siempre on, con caídas raras
+    if (state.neonMat) {
+      const drop = Math.sin(t * 23.7) > 0.985 || Math.sin(t * 7.3 + 1) > 0.992 ? 0.25 : 1;
+      state.neonMat.opacity = drop;
+      if (state.neonHaloMat) state.neonHaloMat.opacity = 0.28 * drop;
+    }
+
+    // Lluvia: cae y recicla (340 segmentos, 1 draw)
+    {
+      const p = state.rainPos as Float32Array;
+      const sp = state.rainSpeed as Float32Array;
+      for (let i = 0; i < sp.length; i++) {
+        const vy = sp[i] * clampedDt;
+        p[i * 6 + 1] -= vy;
+        p[i * 6 + 4] -= vy;
+        p[i * 6] += 1.1 * clampedDt;
+        p[i * 6 + 3] += 1.1 * clampedDt;
+        if (p[i * 6 + 1] < 0) {
+          const x = -12 + Math.random() * 24;
+          const z = -32 + Math.random() * 42;
+          const y = 8 + Math.random() * 3;
+          sp[i] = 16 + Math.random() * 10;
+          p[i * 6] = x; p[i * 6 + 1] = y; p[i * 6 + 2] = z;
+          p[i * 6 + 3] = x + 0.06; p[i * 6 + 4] = y - 0.55; p[i * 6 + 5] = z;
+        }
+      }
+      (state.rainGeo as THREE.BufferGeometry).getAttribute("position").needsUpdate = true;
+    }
+
+    // Polillas orbitando los faroles
+    {
+      const mp = state.mothPos as Float32Array;
+      const ms = state.mothSeed as Float32Array;
+      for (let i = 0; i < 36; i++) {
+        const c: THREE.Vector3 = (ms[i * 4] < 0.5 ? state.lampA : state.lampB) as THREE.Vector3;
+        const r = ms[i * 4 + 1];
+        const s = ms[i * 4 + 2];
+        const ph = ms[i * 4 + 3];
+        mp[i * 3] = c.x + Math.cos(t * s + ph) * r;
+        mp[i * 3 + 1] = c.y + Math.sin(t * s * 1.35 + ph) * 0.28;
+        mp[i * 3 + 2] = c.z + Math.sin(t * s + ph) * r;
+      }
+      (state.mothGeo as THREE.BufferGeometry).getAttribute("position").needsUpdate = true;
+    }
+
+    // Niebla baja a la deriva
+    if (state.fogPlanes) {
+      for (let i = 0; i < state.fogPlanes.length; i++) {
+        const f = state.fogPlanes[i] as THREE.Mesh;
+        f.position.x = Math.sin(t * 0.07 + i * 2.1) * 3;
+      }
+    }
+
+    // Papeles al viento, reciclados
+    if (state.papers) {
+      for (let i = 0; i < state.papers.length; i++) {
+        const p = state.papers[i] as THREE.Mesh;
+        const v = (state.paperVel as number[])[i];
+        p.position.x += v * clampedDt * (1 + Math.sin(t * 0.8 + i) * 0.4);
+        p.position.y = 0.15 + Math.abs(Math.sin(t * 1.7 + i * 1.9)) * 0.7;
+        p.rotation.x += clampedDt * (1 + i * 0.3);
+        p.rotation.y += clampedDt * 1.4;
+        if (p.position.x > 13) {
+          p.position.x = -13;
+          p.position.z = -28 + Math.random() * 34;
+        }
+      }
+    }
+
+    // Gas sigue a la van (el Points vive en world space)
     if (gas && vanGroup) {
-      gas.group.position.copy(vanGroup.position);
-      gas.group.position.y += 1.2;
+      gas.points.position.set(vanGroup.position.x, vanGroup.position.y + 1.2, vanGroup.position.z);
+      gas.update(clampedDt, (spawn) => {
+        if (Math.random() < 0.6) spawn(0, 0.4, 0.6, 3.2);
+      }, -0.06);
     }
 
     // Apply camera
@@ -702,38 +1149,49 @@ export const playersInvite: Cinematic3DDefinition = {
     camera.lookAt(fpCam.ax, fpCam.ay + by * 0.5, fpCam.az);
     camera.rotation.z = fpCam.roll;
 
-    // Vision effects
+    // Vision effects: escribir style.filter SOLO si cambió (evita reflow por frame)
     if (htmlRefs?.canvas) {
-      htmlRefs.canvas.style.filter = fpCam.blur > 0.05 ? `blur(${fpCam.blur.toFixed(2)}px)` : "none";
+      const target = fpCam.blur > 0.05 ? `blur(${fpCam.blur.toFixed(2)}px)` : "none";
+      if (target !== state.lastFilter) {
+        htmlRefs.canvas.style.filter = target;
+        state.lastFilter = target;
+      }
     }
     if (renderer) {
       renderer.toneMappingExposure = fpCam.exposure;
     }
-
-    // Gas update
-    if (gas) gas.update(dt);
   },
 
   cleanup(state) {
-    const { scene, renderer, gas, disposables } = state;
+    const { scene, renderer, gas, exhaust, disposables } = state;
     if (!scene) return;
 
-    // Dispose gas particles
-    if (gas) {
-      const { group, particles } = gas;
-      if (particles) {
-        for (const sp of particles) {
-          (sp.material as THREE.SpriteMaterial).dispose();
-        }
-      }
-      if (group) scene.remove(group);
+    try { gas?.dispose(); } catch { /* noop */ }
+    try { exhaust?.dispose(); } catch { /* noop */ }
+    try { (state.rainGeo as THREE.BufferGeometry)?.dispose(); } catch { /* noop */ }
+    try { (state.mothGeo as THREE.BufferGeometry)?.dispose(); } catch { /* noop */ }
+    if (state.rain) {
+      try { ((state.rain as THREE.LineSegments).material as THREE.Material).dispose(); } catch { /* noop */ }
+    }
+    if (state.moths) {
+      try { ((state.moths as THREE.Points).material as THREE.Material).dispose(); } catch { /* noop */ }
+    }
+    if (state.textTex) {
+      try { (state.textTex as THREE.Texture).dispose(); } catch { /* noop */ }
+    }
+    for (const g of (state.puddleGeos as THREE.BufferGeometry[] | undefined) ?? []) {
+      try { g.dispose(); } catch { /* noop */ }
+    }
+    try { (state.puddleMat as THREE.Material)?.dispose(); } catch { /* noop */ }
+    for (const g of (state.bagGeos as THREE.BufferGeometry[] | undefined) ?? []) {
+      try { g.dispose(); } catch { /* noop */ }
     }
 
     // Dispose tracked geometries & materials
     if (disposables) {
       for (const { geo, mat } of disposables) {
-        geo.dispose();
-        mat.dispose();
+        try { (geo as THREE.BufferGeometry)?.dispose(); } catch { /* noop */ }
+        try { (mat as THREE.Material)?.dispose(); } catch { /* noop */ }
       }
     }
 

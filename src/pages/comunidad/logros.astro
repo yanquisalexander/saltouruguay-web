@@ -1,5 +1,5 @@
 ---
-import { ACHIEVEMENTS, ACHIEVEMENTS_TEXTS } from "@/consts/Achievements";
+import { ACHIEVEMENTS, ACHIEVEMENTS_TEXTS, getAchievementIconUrl } from "@/consts/Achievements";
 import CommunityLayout from "@/layouts/CommunityLayout.astro";
 import Layout from "@/layouts/Layout.astro";
 import { getUserAchievements } from "@/utils/user";
@@ -166,7 +166,7 @@ const formatDate = (dateString: Date) => {
             (ua) => ua.achievementId === achievementId
           );
           const unlockedAt = userAchievement?.unlockedAt;
-          const iconUrl = `/images/achievements/${achievementId}.svg`;
+          const iconUrl = getAchievementIconUrl(achievementId);
 
           // Estado visual
           const isUnlocked = !!unlockedAt;
