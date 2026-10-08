@@ -3,21 +3,23 @@ import { revokeToken, getApprovedClient } from "@/lib/oauth";
 
 export const POST: APIRoute = async ({ request }) => {
     try {
-        // Require HTTP Basic Auth (client_id:client_secret)
+        // Confidential clients: HTTP Basic Auth (client_id:client_secret).
+        // Public native clients (PKCE, no secret): allow unauthenticated —
+        // presenting the token itself is proof of possession (RFC 7009 §2.1
+        // lets the server support unauthenticated revocation for public clients).
         const authHeader = request.headers.get("Authorization");
-        if (!authHeader?.startsWith("Basic ")) {
-            return json({ error: "invalid_client" }, 401);
-        }
-        const decoded = atob(authHeader.slice(6));
-        const colonIdx = decoded.indexOf(":");
-        if (colonIdx === -1) {
-            return json({ error: "invalid_client" }, 401);
-        }
-        const clientId = decoded.slice(0, colonIdx);
-        const clientSecret = decoded.slice(colonIdx + 1);
-        const client = await getApprovedClient(clientId);
-        if (!client || client.clientSecret !== clientSecret) {
-            return json({ error: "invalid_client" }, 401);
+        if (authHeader?.startsWith("Basic ")) {
+            const decoded = atob(authHeader.slice(6));
+            const colonIdx = decoded.indexOf(":");
+            if (colonIdx === -1) {
+                return json({ error: "invalid_client" }, 401);
+            }
+            const clientId = decoded.slice(0, colonIdx);
+            const clientSecret = decoded.slice(colonIdx + 1);
+            const client = await getApprovedClient(clientId);
+            if (!client || client.clientSecret !== clientSecret) {
+                return json({ error: "invalid_client" }, 401);
+            }
         }
 
         const formData = await request.formData();

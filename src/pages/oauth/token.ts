@@ -152,14 +152,22 @@ export const POST: APIRoute = async ({ request }) => {
                 return json({ error: "invalid_request" }, 400);
             }
 
-            if (!clientSecret || client.clientSecret !== clientSecret) {
-                log("client_secret validation failed in refresh_token");
-                return json({ error: "invalid_client" }, 401);
+            // Confidential clients: validate secret when provided.
+            // Public native clients (PKCE, no secret): allow with client_id binding —
+            // the refresh token itself is the credential (RFC 6749 §6, RFC 8252).
+            // The binding (RT issued to this client_id) is enforced in refreshTokens().
+            if (clientSecret) {
+                if (client.clientSecret !== clientSecret) {
+                    log("client_secret validation failed in refresh_token");
+                    return json({ error: "invalid_client" }, 401);
+                }
+            } else {
+                log("public client refresh (no secret), binding to clientId", clientId);
             }
 
             try {
                 log("refreshing tokens...");
-                const tokens = await refreshTokens(refreshTokenValue);
+                const tokens = await refreshTokens(refreshTokenValue, clientId);
                 log("tokens refreshed");
                 return json({
                     access_token: tokens.accessToken,

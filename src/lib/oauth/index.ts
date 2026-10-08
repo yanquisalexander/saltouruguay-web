@@ -194,6 +194,7 @@ export async function generateTokens(params: {
 
 export async function refreshTokens(
     refreshTokenValue: string,
+    expectedClientId?: string,
 ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
     const secret = getSigningSecret();
     let payload: { sub: string; client_id: string; type: string; token_id: string };
@@ -212,6 +213,12 @@ export async function refreshTokens(
         throw new Error("Invalid token type");
     }
 
+    // Bind the refresh token to the requesting client (RFC 6749 §6 / RFC 8252).
+    // Public native clients have no secret — the RT itself is the credential.
+    if (expectedClientId && payload.client_id !== expectedClientId) {
+        throw new Error("Refresh token was not issued to this client");
+    }
+
     const tokenRecord = await db.query.SUSOAuthTokensTable.findFirst({
         where: and(
             eq(SUSOAuthTokensTable.refreshToken, refreshTokenValue),
@@ -221,6 +228,10 @@ export async function refreshTokens(
 
     if (!tokenRecord) {
         throw new Error("Refresh token not found or revoked");
+    }
+
+    if (expectedClientId && tokenRecord.clientId !== expectedClientId) {
+        throw new Error("Refresh token was not issued to this client");
     }
 
     // Verify the client still allows all these scopes
