@@ -42,6 +42,7 @@ import { acreconre } from "./acreconre";
 import { cumple } from "./cumple";
 import { onboarding } from "./users/onboarding";
 import { album } from "./album";
+import { inscriptions } from "./inscriptions";
 
 
 
@@ -59,6 +60,7 @@ export const server = {
     vip,
     notes,
     events,
+    inscriptions,
     banco,
     pet,
     friends,
