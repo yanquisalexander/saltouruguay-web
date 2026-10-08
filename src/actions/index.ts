@@ -43,6 +43,7 @@ import { cumple } from "./cumple";
 import { onboarding } from "./users/onboarding";
 import { album } from "./album";
 import { inscriptions } from "./inscriptions";
+import { achievements } from "./users/achievements";
 
 
 
@@ -657,6 +658,7 @@ export const server = {
     voice,
     users: {
         //oauth,
-        twoFactor
+        twoFactor,
+        achievements
     }
 }
