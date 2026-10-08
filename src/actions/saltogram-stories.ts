@@ -4,32 +4,81 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { client } from "@/db/client";
 import { SaltogramStoriesTable, SaltogramStoryViewsTable, SaltogramStoryLikesTable, FriendsTable, UsersTable, SaltogramVipListTable, NotificationsTable } from "@/db/schema";
 import { eq, and, or, gt, desc, asc, sql, inArray } from "drizzle-orm";
+import { uploadMedia } from "@/services/saltogram-storage";
+
+const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50MB, igual que POST /api/saltogram/stories
+const MAX_TEXT_OVERLAYS = 20;
+
+/** Metadata opcional (textos/música) con el mismo shape que el composer web. */
+function parseStoryMetadata(raw: string | undefined): Record<string, unknown> {
+    if (!raw) return {};
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(raw);
+    } catch {
+        throw new ActionError({ code: "BAD_REQUEST", message: "metadata inválida (no es JSON)" });
+    }
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+        throw new ActionError({ code: "BAD_REQUEST", message: "metadata inválida" });
+    }
+    const meta = parsed as { texts?: unknown; music?: unknown };
+    if (meta.texts !== undefined && !Array.isArray(meta.texts)) {
+        throw new ActionError({ code: "BAD_REQUEST", message: "metadata.texts debe ser un array" });
+    }
+    if (Array.isArray(meta.texts) && meta.texts.length > MAX_TEXT_OVERLAYS) {
+        throw new ActionError({ code: "BAD_REQUEST", message: `Máximo ${MAX_TEXT_OVERLAYS} textos` });
+    }
+    if (meta.music !== undefined && (typeof meta.music !== "object" || meta.music === null)) {
+        throw new ActionError({ code: "BAD_REQUEST", message: "metadata.music inválida" });
+    }
+    return { ...(meta.texts !== undefined ? { texts: meta.texts } : {}), ...(meta.music !== undefined ? { music: meta.music } : {}) };
+}
 
 export const stories = {
     create: defineAction({
+        accept: "form",
         input: z.object({
-            mediaUrl: z.string().url(),
-            mediaType: z.enum(["image", "video"]),
-            duration: z.number().min(1).max(60).default(5),
+            file: z.instanceof(File),
+            duration: z.coerce.number().min(1).max(60).default(5),
             visibility: z.enum(["public", "friends", "vip"]).default("public"),
+            /** JSON stringificado con `{ texts?, music? }` (mismo shape web). */
+            metadata: z.string().optional(),
         }),
-        handler: async ({ mediaUrl, mediaType, duration, visibility }, { request }) => {
+        handler: async ({ file, duration, visibility, metadata }, { request }) => {
             const auth = await getAuthenticatedUser(request);
             if (!auth) {
                 throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
             }
 
             const userId = auth.user.id;
+
+            if (file.size === 0) {
+                throw new ActionError({ code: "BAD_REQUEST", message: "Archivo vacío" });
+            }
+            if (file.size > MAX_FILE_BYTES) {
+                throw new ActionError({ code: "BAD_REQUEST", message: "Archivo muy grande (max 50MB)" });
+            }
+            const isVideo = file.type.startsWith("video/");
+            const isImage = file.type.startsWith("image/");
+            if (!isVideo && !isImage) {
+                throw new ActionError({ code: "BAD_REQUEST", message: "Solo se permiten imágenes o videos" });
+            }
+
+            const storyMetadata = parseStoryMetadata(metadata);
+            const buffer = Buffer.from(await file.arrayBuffer());
+            const { url: mediaUrl } = await uploadMedia(buffer, file.name || `story.${isVideo ? "mp4" : "jpg"}`, userId, file.type);
+
             const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
             const [story] = await client.insert(SaltogramStoriesTable)
                 .values({
                     userId,
                     mediaUrl,
-                    mediaType,
-                    duration,
+                    mediaType: isVideo ? "video" : "image",
+                    duration: Math.round(duration),
                     visibility,
-                    expiresAt
+                    expiresAt,
+                    metadata: storyMetadata,
                 })
                 .returning();
 
