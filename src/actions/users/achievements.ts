@@ -3,10 +3,10 @@ import {
     getAchievementCardUrl,
     getAchievementIconUrl,
 } from "@/consts/Achievements";
+import { getAuthenticatedUser, isUserAuth } from "@/lib/auth";
 import { getUserAchievements } from "@/utils/user";
 import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
-import { getSession } from "auth-astro/server";
 
 /** Las rutas de arte son relativas (`/images/...`); el mobile las necesita absolutas. */
 const SITE_URL = "https://saltouruguayserver.com";
@@ -28,11 +28,15 @@ export const achievements = {
             })
             .optional(),
         handler: async (input, { request }) => {
-            const session = await getSession(request);
+            // Acepta sesión por cookie (web) y Bearer OAuth (mobile).
+            // `getSession` de auth-astro solo lee cookies: desde el mobile
+            // siempre daba null y todo quedaba como no desbloqueado.
+            const auth = await getAuthenticatedUser(request);
+            const userId = isUserAuth(auth) ? auth.user.id : null;
 
             const unlockedById = new Map<string, Date>();
-            if (session?.user?.id) {
-                const rows = await getUserAchievements(session.user.id);
+            if (userId !== null) {
+                const rows = await getUserAchievements(userId);
                 for (const row of rows) {
                     if (row.achievementId && !unlockedById.has(row.achievementId)) {
                         unlockedById.set(row.achievementId, row.unlockedAt);
