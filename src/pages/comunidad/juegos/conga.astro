@@ -1,0 +1,16 @@
+---
+import CommunityLayout from "@/layouts/CommunityLayout.astro";
+import { CongaArcade } from "@/components/games/CongaArcade";
+import { getSession } from "auth-astro/server";
+import { getCurrentCongaRoomCode } from "@/utils/games/conga";
+
+const authSession = await getSession(Astro.request);
+if (!authSession) return Astro.redirect("/signin?redirect=/comunidad/juegos/conga");
+
+const userId = Number(authSession.user.id);
+const initialRoomCode = await getCurrentCongaRoomCode(userId);
+---
+
+<CommunityLayout title="Conga · Arcade Saltano" hideSidebar>
+  <CongaArcade userId={userId} initialRoomCode={initialRoomCode} client:only />
+</CommunityLayout>

@@ -4,6 +4,8 @@ import type { Session } from "@auth/core/types";
 export const PRELOADED_SESSION_ID = 'preloaded-session';
 
 export const getPreloadedSession = (): Session['user'] | null => {
+    if (typeof document === 'undefined') return null;
+
     const element = $<HTMLScriptElement>(`#${PRELOADED_SESSION_ID}`);
     if (!element || !element.textContent) return null;
     try {

@@ -4,6 +4,7 @@ import { fishingGame } from "./fishing";
 import { ruletaLoca } from "./ruleta-loca";
 import { andIChallenge } from "./and-i-challenge";
 import { boton } from "./boton";
+import { conga } from "./conga";
 
 export const games = {
     simonSays,
@@ -12,4 +13,5 @@ export const games = {
     ruletaLoca,
     andiChallenge: andIChallenge,
     boton,
+    conga,
 }

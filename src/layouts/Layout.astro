@@ -86,7 +86,18 @@ preload?.push({
 // Pausado para revisión AdSense: reactivar solo tras aprobación.
 // Ver https://www.google.com/adsense — redes agresivas durante la revisión
 // suelen motivar rechazo por "contenido de poco valor".
-const shouldShowAds = true;
+const adFreePathPrefixes = [
+  "/auth",
+  "/link",
+  "/signin",
+  "/api/linked-accounts",
+  "/oauth",
+  "/gamecenter/oauth",
+];
+const isAdFreeFlow = adFreePathPrefixes.some(
+  (prefix) => Astro.url.pathname === prefix || Astro.url.pathname.startsWith(`${prefix}/`),
+);
+const shouldShowAds = !isAdFreeFlow;
 ---
 
 <!doctype html>
@@ -102,10 +113,12 @@ const shouldShowAds = true;
     />
     {!disableViewTransition && <ClientRouter />}
     <LoadingIndicator color="#1f97ff" height="3px" />
-    <script
-      async
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7631620665837459"
-      crossorigin="anonymous"></script>
+    {shouldShowAds && (
+      <script
+        async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7631620665837459"
+        crossorigin="anonymous"></script>
+    )}
     <script is:inline type="application/json" id="preloaded-session" data-preload-session={JSON.stringify(session?.user || null)} />
      
   </head>

@@ -53,7 +53,7 @@ export default defineConfig({
       SUS_OAUTH_AUTH_CODE_EXPIRY: envField.number({ context: 'server', access: 'public', default: 600 }),
       SUS_OAUTH_SERVICE_TOKEN_EXPIRY: envField.number({ context: 'server', access: 'public', default: 3600 }),
       INSCRIPTIONS_API_KEY: envField.string({ context: 'server', access: 'secret' }),
-      INSCRIPTIONS_API_URL: envField.string({ context: 'server', access: 'public' }),
+      INSCRIPTIONS_API_URL: envField.string({ context: 'server', access: 'public', optional: true }),
       CLOUDFLARE_API_TOKEN: envField.string({ context: 'server', access: 'secret' }),
       CLOUDFLARE_ZONE_ID: envField.string({ context: 'server', access: 'secret' }),
       CLOUDFLARE_SRV_NAME: envField.string({ context: 'server', access: 'public', default: '_minecraft._tcp.extremo.play.saltouruguayserver.com' }),

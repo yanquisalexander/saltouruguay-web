@@ -158,6 +158,15 @@ export const PUSHER_EVENTS_RULETA = {
   GAME_STALEMATE: 'game:stalemate',
 } as const;
 
+export const PUSHER_CHANNELS_CONGA = {
+  ROOM: (roomCode: string) => `presence-conga-${roomCode}`,
+} as const;
+
+export const PUSHER_EVENTS_CONGA = {
+  ROOM_UPDATED: 'conga:room-updated',
+  GAME_UPDATED: 'conga:game-updated',
+} as const;
+
 export const PUSHER_CHANNELS_ALBUM = {
   USER: (userId: number) => `private-album-${userId}`,
 } as const;

@@ -706,6 +706,17 @@ export const RuletaLocaGameSessionsTable = pgTable('ruleta_loca_game_sessions', 
     gameMode: varchar('game_mode', { enum: ['single', 'multi'] }).notNull().default('single'),
 })
 
+export const CongaGameRoomsTable = pgTable('conga_game_rooms', {
+    id: serial('id').primaryKey(),
+    roomCode: varchar('room_code', { length: 6 }).notNull().unique(),
+    ownerId: integer('owner_id').notNull().references(() => UsersTable.id, { onDelete: 'cascade' }),
+    playerIds: integer('player_ids').array().notNull().default(sql`'{}'::integer[]`),
+    status: varchar('status', { enum: ['waiting', 'playing', 'finished'] }).notNull().default('waiting'),
+    state: jsonb('state').$type<any>().notNull().default(sql`'{}'::jsonb`),
+    createdAt: timestamp('created_at').notNull().default(sql`current_timestamp`),
+    updatedAt: timestamp('updated_at').notNull().default(sql`current_timestamp`),
+})
+
 export const RuletaLocaPlayerStatsTable = pgTable('ruleta_loca_player_stats', {
     id: serial('id').primaryKey(),
     userId: integer('user_id').notNull().unique().references(() => UsersTable.id, { onDelete: 'cascade' }),

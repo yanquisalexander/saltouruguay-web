@@ -1,6 +1,6 @@
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
-import { getSession } from "auth-astro/server";
+import { getAuthenticatedUser } from "@/lib/auth";
 import {
     createGameSession,
     getCurrentGameSession,
@@ -22,6 +22,19 @@ import {
     completeMultiplayerGame,
 } from "@/utils/games/ruleta-loca";
 import { RuletaLocaPusher } from "@/services/ruleta-loca-pusher";
+/** Resolves both browser sessions and OAuth Bearer tokens used by the mobile app. */
+async function getRuletaAuth(request: Request) {
+    const auth = await getAuthenticatedUser(request);
+    if (!auth?.user?.id) return null;
+
+    return {
+        user: {
+            id: auth.user.id,
+            name: auth.user.displayName || auth.user.username || "Anónimo",
+            image: auth.user.avatar || null,
+        },
+    };
+}
 
 export const ruletaLoca = {
     /**
@@ -29,7 +42,7 @@ export const ruletaLoca = {
      */
     startGame: defineAction({
         handler: async (_, { request }) => {
-            const session = await getSession(request);
+            const session = await getRuletaAuth(request);
 
             if (!session) {
                 throw new ActionError({
@@ -63,7 +76,7 @@ export const ruletaLoca = {
      */
     getGameState: defineAction({
         handler: async (_, { request }) => {
-            const session = await getSession(request);
+            const session = await getRuletaAuth(request);
 
             if (!session) {
                 throw new ActionError({
@@ -92,7 +105,7 @@ export const ruletaLoca = {
      */
     spinWheel: defineAction({
         handler: async (_, { request }) => {
-            const session = await getSession(request);
+            const session = await getRuletaAuth(request);
 
             if (!session) {
                 throw new ActionError({
@@ -134,7 +147,7 @@ export const ruletaLoca = {
             wheelValue: z.number(),
         }),
         handler: async ({ sessionId, letter, wheelValue }, { request }) => {
-            const session = await getSession(request);
+            const session = await getRuletaAuth(request);
 
             if (!session) {
                 throw new ActionError({
@@ -186,7 +199,7 @@ export const ruletaLoca = {
             guess: z.string(),
         }),
         handler: async ({ sessionId, guess }, { request }) => {
-            const session = await getSession(request);
+            const session = await getRuletaAuth(request);
 
             if (!session) {
                 throw new ActionError({
@@ -209,7 +222,7 @@ export const ruletaLoca = {
             sessionId: z.number(),
         }),
         handler: async ({ sessionId }, { request }) => {
-            const session = await getSession(request);
+            const session = await getRuletaAuth(request);
 
             if (!session) {
                 throw new ActionError({
@@ -232,7 +245,7 @@ export const ruletaLoca = {
      */
     getStats: defineAction({
         handler: async (_, { request }) => {
-            const session = await getSession(request);
+            const session = await getRuletaAuth(request);
 
             if (!session) {
                 throw new ActionError({
@@ -251,10 +264,10 @@ export const ruletaLoca = {
 
     createRoom: defineAction({
         handler: async (_, { request }) => {
-            const s = await getSession(request);
+            const s = await getRuletaAuth(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
-            const result = await createMultiplayerRoom(parseInt(s.user.id));
+            const result = await createMultiplayerRoom(s.user.id);
             return result;
         },
     }),
@@ -262,14 +275,14 @@ export const ruletaLoca = {
     joinRoom: defineAction({
         input: z.object({ roomCode: z.string() }),
         handler: async ({ roomCode }, { request }) => {
-            const s = await getSession(request);
+            const s = await getRuletaAuth(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
-            const result = await joinRoomByCode(roomCode, parseInt(s.user.id));
+            const result = await joinRoomByCode(roomCode, s.user.id);
 
             await RuletaLocaPusher.playerJoined(
                 roomCode,
-                parseInt(s.user.id),
+                s.user.id,
                 s.user.name || "Anónimo",
                 s.user.image || null
             );
@@ -280,27 +293,27 @@ export const ruletaLoca = {
 
     leaveRoom: defineAction({
         handler: async (_, { request }) => {
-            const s = await getSession(request);
+            const s = await getRuletaAuth(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
-            const room = await getCurrentRoomSession(parseInt(s.user.id));
+            const room = await getCurrentRoomSession(s.user.id);
             if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en ninguna sala" });
 
-            await RuletaLocaPusher.playerLeft(room.session.roomCode, parseInt(s.user.id));
+            await RuletaLocaPusher.playerLeft(room.session.roomCode, s.user.id);
 
-            return await leaveRoomByCode(room.session.roomCode, parseInt(s.user.id));
+            return await leaveRoomByCode(room.session.roomCode, s.user.id);
         },
     }),
 
     startMultiplayerGame: defineAction({
         handler: async (_, { request }) => {
-            const s = await getSession(request);
+            const s = await getRuletaAuth(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
-            const room = await getCurrentRoomSession(parseInt(s.user.id));
+            const room = await getCurrentRoomSession(s.user.id);
             if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en ninguna sala" });
 
-            const result = await startMultiplayerGame(room.session.roomCode, parseInt(s.user.id));
+            const result = await startMultiplayerGame(room.session.roomCode, s.user.id);
 
             await RuletaLocaPusher.gameStarting(room.session.roomCode, result.phrase, result.session.turnOrder || []);
             await RuletaLocaPusher.turnChanged(room.session.roomCode, (result.session.turnOrder || [])[0]);
@@ -311,19 +324,19 @@ export const ruletaLoca = {
 
     getRoomState: defineAction({
         handler: async (_, { request }) => {
-            const s = await getSession(request);
+            const s = await getRuletaAuth(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
-            return await getCurrentRoomSession(parseInt(s.user.id));
+            return await getCurrentRoomSession(s.user.id);
         },
     }),
 
     spinWheelMulti: defineAction({
         handler: async (_, { request }) => {
-            const s = await getSession(request);
+            const s = await getRuletaAuth(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
-            const userId = parseInt(s.user.id);
+            const userId = s.user.id;
             const room = await getCurrentRoomSession(userId);
             if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
             if (room.session.status !== "playing") throw new ActionError({ code: "BAD_REQUEST", message: "El juego no está activo" });
@@ -360,10 +373,10 @@ export const ruletaLoca = {
     guessLetterMulti: defineAction({
         input: z.object({ letter: z.string().length(1), wheelValue: z.number() }),
         handler: async ({ letter, wheelValue }, { request }) => {
-            const s = await getSession(request);
+            const s = await getRuletaAuth(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
-            const userId = parseInt(s.user.id);
+            const userId = s.user.id;
             const room = await getCurrentRoomSession(userId);
             if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
             if (room.session.status !== "playing") throw new ActionError({ code: "BAD_REQUEST", message: "El juego no está activo" });
@@ -417,10 +430,10 @@ export const ruletaLoca = {
     solvePuzzleMulti: defineAction({
         input: z.object({ guess: z.string() }),
         handler: async ({ guess }, { request }) => {
-            const s = await getSession(request);
+            const s = await getRuletaAuth(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
-            const userId = parseInt(s.user.id);
+            const userId = s.user.id;
             const room = await getCurrentRoomSession(userId);
             if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
             if (room.session.status !== "playing") throw new ActionError({ code: "BAD_REQUEST", message: "El juego no está activo" });
@@ -459,10 +472,10 @@ export const ruletaLoca = {
 
     passTurnMulti: defineAction({
         handler: async (_, { request }) => {
-            const s = await getSession(request);
+            const s = await getRuletaAuth(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
-            const userId = parseInt(s.user.id);
+            const userId = s.user.id;
             const room = await getCurrentRoomSession(userId);
             if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
             if (room.session.status !== "playing") throw new ActionError({ code: "BAD_REQUEST", message: "El juego no está activo" });
@@ -486,10 +499,10 @@ export const ruletaLoca = {
 
     forfeitMulti: defineAction({
         handler: async (_, { request }) => {
-            const s = await getSession(request);
+            const s = await getRuletaAuth(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
-            const userId = parseInt(s.user.id);
+            const userId = s.user.id;
             const room = await getCurrentRoomSession(userId);
             if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
 
@@ -510,10 +523,10 @@ export const ruletaLoca = {
     buyVowelMulti: defineAction({
         input: z.object({ letter: z.string().length(1) }),
         handler: async ({ letter }, { request }) => {
-            const s = await getSession(request);
+            const s = await getRuletaAuth(request);
             if (!s) throw new ActionError({ code: "UNAUTHORIZED", message: "Debes iniciar sesión" });
 
-            const userId = parseInt(s.user.id);
+            const userId = s.user.id;
             const room = await getCurrentRoomSession(userId);
             if (!room?.session.roomCode) throw new ActionError({ code: "BAD_REQUEST", message: "No estás en una sala" });
             if (room.session.status !== "playing") throw new ActionError({ code: "BAD_REQUEST", message: "El juego no está activo" });

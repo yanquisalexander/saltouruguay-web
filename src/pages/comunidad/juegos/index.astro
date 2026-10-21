@@ -1,0 +1,42 @@
+---
+import CommunityLayout from "@/layouts/CommunityLayout.astro";
+import { LucideArrowRight, LucideGamepad2, LucideSparkles, LucideUsers } from "lucide-preact";
+---
+
+<CommunityLayout title="Arcade Saltano" hideSidebar>
+  <main class="min-h-screen overflow-hidden bg-[#100e20] px-4 pb-20 pt-10 text-white sm:pt-14">
+    <div class="pointer-events-none fixed inset-0 opacity-20" style="background-image:radial-gradient(#39e7ef 1px,transparent 1px),radial-gradient(#ff42c5 1px,transparent 1px);background-size:36px 36px;background-position:0 0,18px 18px"></div>
+    <div class="relative mx-auto max-w-6xl">
+      <a href="/comunidad" class="font-press-start-2p text-[8px] text-cyan-200/70 hover:text-cyan-100">← COMUNIDAD</a>
+      <header class="mx-auto my-12 max-w-3xl text-center sm:my-16">
+        <span class="inline-flex items-center gap-2 border-2 border-fuchsia-300/50 bg-fuchsia-400/10 px-4 py-2 font-press-start-2p text-[8px] text-fuchsia-200"><LucideGamepad2 size={15} /> SALA DE JUEGOS</span>
+        <h1 class="mt-7 font-press-start-2p text-3xl leading-relaxed text-transparent [background:linear-gradient(90deg,#36e0e8,#f34ebc,#ffe45e)] bg-clip-text sm:text-5xl">ARCADE SALTANO</h1>
+        <p class="mt-5 font-teko text-2xl tracking-wide text-white/60 sm:text-3xl">Insertá una moneda imaginaria y elegí tu partida.</p>
+      </header>
+
+      <section aria-label="Juegos disponibles" class="grid gap-6 lg:grid-cols-2">
+        <a href="/comunidad/juegos/conga" class="group relative flex min-h-[360px] flex-col justify-between overflow-hidden border-2 border-cyan-300/60 bg-[#17152a] p-6 shadow-[8px_8px_0_#0e7490] transition hover:-translate-y-1 hover:border-amber-300 sm:p-9">
+          <div class="pointer-events-none absolute -right-10 -top-8 grid grid-cols-4 gap-2 opacity-30 transition group-hover:opacity-50" aria-hidden="true">
+            {Array.from({ length: 12 }).map((_, i) => <span class="block h-24 w-16 border-2 border-amber-100 bg-gradient-to-br from-amber-100 to-amber-300 shadow-[3px_3px_0_#562e8c]" style={`transform:rotate(${(i % 2 ? 1 : -1) * (4 + i % 5)}deg)`}></span>)}
+          </div>
+          <div class="relative flex items-start justify-between">
+            <span class="border-2 border-amber-300/50 bg-amber-300/10 px-3 py-2 font-press-start-2p text-[8px] text-amber-200">¡NUEVO!</span>
+            <span class="font-press-start-2p text-[8px] text-cyan-100/50">2–4 JUGADORES</span>
+          </div>
+          <div class="relative mt-20">
+            <h2 class="font-press-start-2p text-2xl text-fuchsia-300 sm:text-4xl">CONGA!</h2>
+            <p class="mt-4 max-w-sm font-rubik text-sm leading-6 text-white/65">La clásica conga uruguaya en tiempo real. Armá tus juegos, cortá a tiempo y cantá siete.</p>
+            <span class="mt-7 inline-flex items-center gap-3 border-2 border-fuchsia-200 bg-fuchsia-500 px-5 py-3 font-press-start-2p text-[9px] text-white shadow-[0_4px_0_#a21caf] transition group-hover:bg-fuchsia-400">JUGAR <LucideArrowRight size={17} /></span>
+          </div>
+        </a>
+
+        <a href="/comunidad/juegos/ruleta-loca" class="group flex min-h-[360px] flex-col justify-between border-2 border-violet-300/40 bg-[#1b1830] p-6 shadow-[8px_8px_0_#4c1d95] transition hover:-translate-y-1 hover:border-violet-200 sm:p-9">
+          <div class="flex items-start justify-between"><span class="border-2 border-violet-300/40 bg-violet-400/10 px-3 py-2 font-press-start-2p text-[8px] text-violet-200">MULTIJUGADOR</span><LucideSparkles class="text-violet-300" /></div>
+          <div class="mt-20"><h2 class="font-press-start-2p text-xl text-violet-200 sm:text-3xl">RULETA LOCA</h2><p class="mt-4 max-w-sm font-rubik text-sm leading-6 text-white/55">Girate una frase, jugá por puntos y compartí la sala con tus amigos.</p><span class="mt-7 inline-flex items-center gap-3 border-2 border-violet-200/60 bg-violet-500/20 px-5 py-3 font-press-start-2p text-[9px] text-violet-100 transition group-hover:bg-violet-500/40">ENTRAR <LucideArrowRight size={17} /></span></div>
+        </a>
+      </section>
+
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 font-rubik text-sm text-white/45"><span class="inline-flex items-center gap-2"><LucideUsers size={16} class="text-cyan-200" /> Juegos con amigos</span><span class="inline-flex items-center gap-2"><LucideSparkles size={16} class="text-amber-200" /> Nuevos juegos pronto</span></div>
+    </div>
+  </main>
+</CommunityLayout>

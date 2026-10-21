@@ -2,6 +2,7 @@ import { pusher } from "@/utils/pusher";
 import { PUSHER_CHANNELS_RULETA } from "@/consts/pusher";
 import { client } from "@/db/client";
 import { RuletaLocaGameSessionsTable } from "@/db/schema";
+import { CongaGameRoomsTable } from "@/db/schema";
 import { sql, eq } from "drizzle-orm";
 import type { Session } from "@auth/core/types";
 import type { APIContext } from "astro";
@@ -9,6 +10,7 @@ import { getSession } from "auth-astro/server";
 
 const RULETA_PREFIX = "presence-ruleta-";
 const ALBUM_PREFIX = "private-album-";
+const CONGA_PREFIX = "presence-conga-";
 
 export const POST = async ({ params, request }: APIContext) => {
     const session = await getSession(request) as Session;
@@ -41,6 +43,20 @@ export const POST = async ({ params, request }: APIContext) => {
             return new Response("Forbidden: not a room member", {
                 status: 403,
             });
+        }
+    }
+
+    if (channelName.startsWith(CONGA_PREFIX)) {
+        const roomCode = channelName.slice(CONGA_PREFIX.length);
+        const userId = parseInt(session.user.id);
+        const [existing] = await client
+            .select({ id: CongaGameRoomsTable.id })
+            .from(CongaGameRoomsTable)
+            .where(sql`${CongaGameRoomsTable.roomCode} = ${roomCode} AND ${userId} = ANY(${CongaGameRoomsTable.playerIds}::int[])`)
+            .execute();
+
+        if (!existing) {
+            return new Response("Forbidden: not a room member", { status: 403 });
         }
     }
 
