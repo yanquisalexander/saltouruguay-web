@@ -44,6 +44,7 @@ import { onboarding } from "./users/onboarding";
 import { album } from "./album";
 import { inscriptions } from "./inscriptions";
 import { achievements } from "./users/achievements";
+import { twitch } from "./twitch";
 
 
 
@@ -61,6 +62,7 @@ export const server = {
     vip,
     notes,
     events,
+    twitch,
     inscriptions,
     banco,
     pet,

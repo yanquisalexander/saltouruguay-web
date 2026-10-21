@@ -9,6 +9,41 @@ import { uploadMedia } from "@/services/saltogram-storage";
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50MB, igual que POST /api/saltogram/stories
 const MAX_TEXT_OVERLAYS = 20;
 
+const IMAGE_EXTS = ["jpg", "jpeg", "png", "webp", "heic", "heif"];
+const VIDEO_EXTS = ["mp4", "mov", "webm"];
+
+/**
+ * El MIME que declara el cliente no es confiable (y el `fetch` nativo de
+ * RN ni siquiera lo manda bien): se valida por extensión + magic bytes.
+ */
+function sniffMediaType(buffer: Buffer, fileName: string): "image" | "video" | null {
+    const ext = (fileName.split(".").pop() || "").toLowerCase();
+    const isJpeg = buffer.length > 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+    const isPng = buffer.length > 4 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
+    const isWebp = buffer.length > 12 && buffer.toString("ascii", 0, 4) === "RIFF" && buffer.toString("ascii", 8, 12) === "WEBP";
+    const isMp4Mov = buffer.length > 12 && buffer.toString("ascii", 4, 8) === "ftyp";
+    const isWebm = buffer.length > 4 && buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3;
+
+    if (isJpeg || isPng || isWebp) return "image";
+    if (isMp4Mov || isWebm) return "video";
+    // Fallback por extensión (buffer truncado o formato con magic raro).
+    if (IMAGE_EXTS.includes(ext)) return "image";
+    if (VIDEO_EXTS.includes(ext)) return "video";
+    return null;
+}
+
+function contentTypeFor(mediaType: "image" | "video", fileName: string): string {
+    const ext = (fileName.split(".").pop() || "").toLowerCase();
+    if (mediaType === "video") {
+        if (ext === "mov") return "video/quicktime";
+        if (ext === "webm") return "video/webm";
+        return "video/mp4";
+    }
+    if (ext === "png") return "image/png";
+    if (ext === "webp") return "image/webp";
+    return "image/jpeg";
+}
+
 /** Metadata opcional (textos/música) con el mismo shape que el composer web. */
 function parseStoryMetadata(raw: string | undefined): Record<string, unknown> {
     if (!raw) return {};
@@ -58,15 +93,16 @@ export const stories = {
             if (file.size > MAX_FILE_BYTES) {
                 throw new ActionError({ code: "BAD_REQUEST", message: "Archivo muy grande (max 50MB)" });
             }
-            const isVideo = file.type.startsWith("video/");
-            const isImage = file.type.startsWith("image/");
-            if (!isVideo && !isImage) {
+
+            const buffer = Buffer.from(await file.arrayBuffer());
+            const mediaType = sniffMediaType(buffer, file.name || "");
+            if (!mediaType) {
                 throw new ActionError({ code: "BAD_REQUEST", message: "Solo se permiten imágenes o videos" });
             }
 
             const storyMetadata = parseStoryMetadata(metadata);
-            const buffer = Buffer.from(await file.arrayBuffer());
-            const { url: mediaUrl } = await uploadMedia(buffer, file.name || `story.${isVideo ? "mp4" : "jpg"}`, userId, file.type);
+            const safeName = mediaType === "video" ? "story.mp4" : "story.jpg";
+            const { url: mediaUrl } = await uploadMedia(buffer, safeName, userId, contentTypeFor(mediaType, safeName));
 
             const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
@@ -74,7 +110,7 @@ export const stories = {
                 .values({
                     userId,
                     mediaUrl,
-                    mediaType: isVideo ? "video" : "image",
+                    mediaType,
                     duration: Math.round(duration),
                     visibility,
                     expiresAt,
