@@ -2,8 +2,11 @@ import { defineAction } from "astro:actions";
 import { SALTO_BROADCASTER_ID } from "@/config";
 import { appApiClient } from "@/lib/Twitch";
 import { getLiveStream } from "@/utils/twitch-runtime";
+import cacheService from "@/services/cache";
 
-const HOME_FEED_CACHE_MS = 60_000;
+const HOME_FEED_CACHE_TTL_SECONDS = 60;
+const HOME_FEED_CACHE_KEY = "twitch:home-feed:v1";
+const twitchHomeFeedCache = cacheService.create({ ttl: HOME_FEED_CACHE_TTL_SECONDS });
 
 type TwitchHomeFeed = {
   streamStatus: "live" | "offline" | "unknown";
@@ -24,14 +27,11 @@ type TwitchHomeFeed = {
   }>;
 };
 
-let cachedHomeFeed: { expiresAt: number; data: TwitchHomeFeed } | null = null;
-
 export const twitch = {
   getHomeFeed: defineAction({
     handler: async (): Promise<TwitchHomeFeed> => {
-      if (cachedHomeFeed && cachedHomeFeed.expiresAt > Date.now()) {
-        return cachedHomeFeed.data;
-      }
+      const cached = await twitchHomeFeedCache.get<TwitchHomeFeed>(HOME_FEED_CACHE_KEY);
+      if (cached) return cached;
 
       const [streamResult, clipsResult] = await Promise.allSettled([
         getLiveStream(SALTO_BROADCASTER_ID),
@@ -71,10 +71,7 @@ export const twitch = {
             : [],
       };
 
-      cachedHomeFeed = {
-        expiresAt: Date.now() + HOME_FEED_CACHE_MS,
-        data,
-      };
+      await twitchHomeFeedCache.set(HOME_FEED_CACHE_KEY, data);
       return data;
     },
   }),
