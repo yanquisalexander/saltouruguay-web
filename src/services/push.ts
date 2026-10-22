@@ -76,6 +76,7 @@ function buildExpoMessage(entry: ExpoTokenEntry, data: PushPayload, notification
         to: entry.token,
         title: data.title,
         body: data.message,
+        channelId: "default",
         sound: "default",
         priority: "high",
         data: {

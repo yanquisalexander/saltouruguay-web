@@ -27,3 +27,6 @@ pnpm-debug.log*
 .idea/
 .vercel
 .env*.local
+
+# Redis 
+dump.rdb

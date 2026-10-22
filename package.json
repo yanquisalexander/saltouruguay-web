@@ -9,7 +9,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "tsx ./src/db/migrator.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.5",

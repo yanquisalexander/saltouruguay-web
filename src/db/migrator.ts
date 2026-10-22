@@ -1,17 +1,23 @@
 import "dotenv/config";
-import { client, pool } from "./client";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { spawnSync } from "node:child_process";
 import { seed } from "./seed";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+function runDrizzleMigrate() {
+  const result = spawnSync("drizzle-kit", ["migrate"], {
+    stdio: "inherit",
+    shell: process.platform === "win32",
+    env: process.env,
+  });
+
+  if (result.status !== 0) {
+    throw new Error(
+      "drizzle-kit migrate fallo con codigo " + (result.status ?? "desconocido")
+    );
+  }
+}
 
 export const migrateDatabase = async () => {
-  await migrate(client, {
-    migrationsFolder: resolve(__dirname, "./migrations"),
-  });
+  runDrizzleMigrate();
 
   try {
     await seed();
@@ -20,15 +26,11 @@ export const migrateDatabase = async () => {
   }
 };
 
-// Permite ejecutar el script con: node, yarn node, npm run, pnpm exec, etc.
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  migrateDatabase()
-    .then(() => {
-      console.log("Database migrated successfully");
-      pool.end();
-    })
-    .catch((err) => {
-      console.error("Error migrating database", err);
-      pool.end();
-    });
-}
+migrateDatabase()
+  .then(() => {
+    console.log("Database migrated successfully");
+  })
+  .catch((err) => {
+    console.error("Error migrating database", err);
+    process.exit(1);
+  });
