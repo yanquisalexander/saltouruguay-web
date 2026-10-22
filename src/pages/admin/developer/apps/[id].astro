@@ -16,8 +16,8 @@ if (!id) {
 ---
 
 <AdminLayout title="Edit OAuth App" session={session}>
-    <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-4">
-        <AdminPageHeader title="Edit Client" pathname="/admin/developer/apps" />
+    <div class="space-y-6">
+        <AdminPageHeader title="Edit Client" pathname="/admin/developer/apps" description="Edita la configuración de una aplicación OAuth." />
         <OAuthClientEditor client:load clientId={id} />
     </div>
 </AdminLayout>

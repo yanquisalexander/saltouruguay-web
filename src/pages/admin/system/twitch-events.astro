@@ -14,13 +14,16 @@ if (!session?.user.isAdmin) {
 ---
 
 <AdminLayout title="Eventos de Twitch" session={session}>
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+  <div class="space-y-6">
     <AdminPageHeader
       pathname="/admin/system/twitch-events"
       title="Eventos de Twitch"
+      description="Registro de eventos procesados del sistema. Información sensible con fines de depuración."
+      badge="Sistema"
+      badgeTone="amber"
     />
-    <div class="bg-red-500/20 p-4 rounded-lg mb-4">
-      <p class="text-red-300 text-sm">
+    <div class="rounded-2xl bg-amber-500/10 border border-amber-400/25 p-4">
+      <p class="text-amber-200 text-sm">
         Esta información es solo con <strong>fines de depuración</strong>, y
         puede contener información sensible. No la compartas con nadie.
       </p>

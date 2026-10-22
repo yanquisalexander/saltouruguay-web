@@ -248,10 +248,7 @@ const todayFormatted = DateTime.now()
           const style = toneStyles[stat.tone as keyof typeof toneStyles] || toneStyles.sky;
 
           return (
-            <div class="relative overflow-hidden rounded-2xl bg-[#0f0f16]/90 border border-white/[0.08] p-5 shadow-xl transition-all duration-200 hover:border-white/20 hover:translate-y-[-1px]">
-              {/* Línea superior con gradiente tenue */}
-              <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none"></div>
-
+            <div class="rounded-2xl bg-[#0f0f16] border border-white/[0.08] p-5">
               <div class="flex justify-between items-start mb-3">
                 <div class={`p-2.5 rounded-xl border ${style.icon}`}>
                   <stat.icon size={18} />
@@ -298,7 +295,7 @@ const todayFormatted = DateTime.now()
     {/* Grilla Principal: Tráfico + Gemini Intelligence */}
     <div class="grid gap-6 grid-cols-1 lg:grid-cols-3">
       {/* 1. CHART DE TRÁFICO (2 Cols) */}
-      <div class="lg:col-span-2 relative rounded-2xl bg-[#0f0f16]/90 border border-white/[0.08] p-5 sm:p-6 shadow-xl flex flex-col">
+      <div class="lg:col-span-2 rounded-2xl bg-[#0f0f16] border border-white/[0.08] p-5 sm:p-6 flex flex-col">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
           <div class="flex items-center gap-2.5">
             <span class="p-2 rounded-xl bg-violet-500/10 border border-violet-400/20 text-violet-300">
@@ -313,16 +310,6 @@ const todayFormatted = DateTime.now()
               </p>
             </div>
           </div>
-
-          <div class="flex items-center gap-2">
-            <span class="relative flex size-2 shrink-0">
-              <span class="absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-60 animate-ping"></span>
-              <span class="relative inline-flex size-2 rounded-full bg-violet-500"></span>
-            </span>
-            <span class="text-xs font-rubik font-semibold text-violet-300">
-              Métricas en Vivo
-            </span>
-          </div>
         </div>
 
         <div class="flex-1 w-full min-h-[300px] relative">
@@ -331,10 +318,7 @@ const todayFormatted = DateTime.now()
       </div>
 
       {/* 2. GEMINI INSIGHTS (1 Col) */}
-      <div class="relative rounded-2xl bg-[#0f0f16]/90 border border-violet-500/20 p-5 sm:p-6 shadow-xl flex flex-col justify-between overflow-hidden">
-        {/* Glow de acento */}
-        <div class="absolute -top-16 -right-16 size-40 bg-violet-600/15 rounded-full blur-3xl pointer-events-none"></div>
-
+      <div class="rounded-2xl bg-[#0f0f16] border border-white/[0.08] p-5 sm:p-6 flex flex-col justify-between overflow-hidden">
         <div>
           <div class="flex items-center gap-3 pb-4 mb-4 border-b border-white/[0.08]">
             <div class="p-2 bg-violet-500/15 text-violet-300 rounded-xl border border-violet-400/30">

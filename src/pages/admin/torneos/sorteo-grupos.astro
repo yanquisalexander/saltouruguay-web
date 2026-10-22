@@ -1,5 +1,6 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
 
 const TEAMS = [
   "anti-therian",
@@ -23,68 +24,62 @@ const TEAMS = [
 const GROUPS = ["A", "B", "C", "D"] as const;
 ---
 
-<AdminLayout title="Sorteo de Grupos" mainClassname="px-6 sm:px-10 pt-24 pb-32">
-  <section class="max-w-6xl mx-auto">
-    <!-- TÍTULO -->
-    <div class="text-center mb-8">
-      <p
-        class="uppercase tracking-widest text-4xl md:text-6xl font-anton font-bold mb-2 text-white drop-shadow-lg"
-      >
-        TORNEO ROCKET LEAGUE
-      </p>
-      <h1
-        class="font-anton text-4xl md:text-5xl mt-2 bg-linear-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent"
-      >
-        Sorteo de Grupos
-      </h1>
-    </div>
+<AdminLayout title="Sorteo de Grupos" description="Sorteo de grupos para Torneo Rocket League">
+  <div class="space-y-6">
+    <AdminPageHeader
+      title="Sorteo de Grupos"
+      description="Torneo Rocket League · Sorteo de grupos en vivo con overlay OBS."
+      pathname="/admin/torneos/sorteo-grupos"
+      badge="Rocket League"
+      badgeTone="amber"
+    />
 
     <!-- GRILLA PREVIEW -->
-    <div class="mb-8 flex justify-center">
+    <div class="flex justify-center">
       <div id="teamGridPreview" class="grid grid-cols-4 gap-2"></div>
     </div>
 
     <!-- CONTROLES -->
-    <div class="flex flex-wrap gap-3 mb-8">
+    <div class="flex flex-wrap gap-3">
       <select
         id="groupSelect"
-        class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white"
+        class="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm font-rubik focus:outline-none focus:border-violet-400/50"
       >
         {GROUPS.map((g) => <option value={g}>Grupo {g}</option>)}
       </select>
       <button
         id="btnDraw"
-        class="px-5 py-2 rounded-lg font-semibold bg-linear-to-r from-amber-400 to-yellow-300 text-black hover:scale-105 transition"
+        class="px-5 py-2.5 rounded-xl font-rubik font-semibold text-sm bg-amber-600 hover:bg-amber-500 text-black transition-colors cursor-pointer"
       >
-        🎲 Sortear equipo
+        Sortear equipo
       </button>
       <button
         id="btnUndo"
-        class="px-5 py-2 rounded-lg font-semibold bg-white/10 hover:bg-white/20 transition"
+        class="px-5 py-2.5 rounded-xl font-rubik font-medium text-sm bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 transition-colors cursor-pointer"
       >
-        ↩️ Undo
+        Deshacer
       </button>
       <button
         id="btnReset"
-        class="px-5 py-2 rounded-lg font-semibold bg-white/10 hover:bg-white/20 transition"
+        class="px-5 py-2.5 rounded-xl font-rubik font-medium text-sm bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 transition-colors cursor-pointer"
       >
-        🔄 Reiniciar
+        Reiniciar
       </button>
     </div>
 
     <div
       id="result"
-      class="text-center text-lg font-semibold text-green-400 mb-6"
+      class="text-center text-base font-rubik font-semibold text-amber-400"
       aria-live="polite"
     >
     </div>
 
     <!-- GRUPOS -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {
         GROUPS.map((g) => (
-          <div class="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-lg">
-            <h2 class="text-center font-bold text-2xl md:text-3xl text-amber-300 mb-4">
+          <div class="rounded-2xl border border-white/[0.08] bg-[#0f0f16] p-6">
+            <h2 class="text-center font-anton text-2xl text-amber-300 mb-4">
               Grupo {g}
             </h2>
             <ul id={`group${g}`} class="space-y-2" />
@@ -94,30 +89,29 @@ const GROUPS = ["A", "B", "C", "D"] as const;
     </div>
 
     <!-- LOGOS -->
-    <div class="mt-8 grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-16 gap-4">
+    <div class="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-16 gap-4">
       {
         TEAMS.map((team) => (
           <img
             src={`/images/team-logos/${team}.webp`}
             data-team={team}
             alt={team}
-            class="teamLogo w-full h-auto rounded-lg border border-white/10 hover:scale-110 transition"
+            class="teamLogo w-full h-auto rounded-xl border border-white/10 hover:scale-110 transition"
           />
         ))
       }
     </div>
 
     <!-- LISTA DE EQUIPOS (editable) -->
-    <div class="mt-8">
-      <label for="teamList" class="text-lg text-white mb-2 block font-semibold"
-        >Equipos para el sorteo</label
-      >
+    <div>
+      <label for="teamList" class="text-sm text-white/70 mb-2 block font-rubik font-medium">
+        Equipos para el sorteo
+      </label>
       <textarea
         id="teamList"
-        class="w-full rounded-xl border border-white/10 p-3 text-sm focus:outline-hidden focus:ring-2 focus:ring-amber-400 teamGrid"
+        class="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-sm font-rubik focus:outline-none focus:ring-2 focus:ring-amber-400 teamGrid"
         style="height:48px; overflow-x:auto; overflow-y:hidden; white-space:nowrap"
-        >{TEAMS.join("    ")}</textarea
-      >
+      >{TEAMS.join("    ")}</textarea>
     </div>
 
     <!-- OVERLAY -->
@@ -132,7 +126,7 @@ const GROUPS = ["A", "B", "C", "D"] as const;
       >
       </div>
     </div>
-  </section>
+  </div>
 </AdminLayout>
 
 <script>
@@ -206,7 +200,7 @@ const GROUPS = ["A", "B", "C", "D"] as const;
         const cell = Object.assign(document.createElement("div"), {
           textContent: team,
           className:
-            "teamCell bg-white/5 border border-white/10 rounded-lg py-2 text-center text-sm font-semibold",
+            "teamCell bg-white/5 border border-white/10 rounded-lg py-2 text-center text-sm font-rubik font-medium",
         });
         cell.dataset.team = team;
         $teamGridPreview.appendChild(cell);
@@ -222,7 +216,7 @@ const GROUPS = ["A", "B", "C", "D"] as const;
       const li = Object.assign(document.createElement("li"), {
         textContent: team,
         className:
-          "bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-semibold text-center drop",
+          "bg-white/5 border border-white/10 rounded-lg py-2 text-lg font-rubik font-semibold text-center drop",
       });
       li.dataset.team = team;
       getGroupEl(group).appendChild(li);

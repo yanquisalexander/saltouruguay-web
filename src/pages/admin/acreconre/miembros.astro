@@ -14,10 +14,11 @@ if (!session?.user.isAdmin) {
 ---
 
 <AdminLayout title="Miembros ACRECONRE" session={session}>
-  <div class="flex flex-col max-w-6xl mx-auto min-h-screen mt-16 px-4">
+  <div class="space-y-6">
     <AdminPageHeader
       title="Miembros ACRECONRE"
       pathname="/admin/acreconre/miembros"
+      description="Gestión de solicitudes de miembros del programa ACRECONRE."
     />
     <AcreconreMembersManager client:load />
   </div>

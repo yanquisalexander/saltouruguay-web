@@ -116,7 +116,7 @@ export function OAuthClientsManager() {
         <p class="text-sm text-white/60">{clients.length} client{clients.length !== 1 ? "s" : ""}</p>
         <button
           onClick={() => setShowNewForm(true)}
-          class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-md transition"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-xl transition"
         >
           <LucidePlus class="h-4 w-4" />
           New Client
@@ -124,16 +124,16 @@ export function OAuthClientsManager() {
       </div>
 
       {newSecret && (
-        <div class="bg-indigo-900/30 border border-indigo-500/30 rounded-md p-4 space-y-2">
-          <p class="text-sm font-medium text-indigo-300">New Client Secret</p>
+        <div class="bg-violet-900/30 border border-violet-500/30 rounded-xl p-4 space-y-2">
+          <p class="text-sm font-medium text-violet-300">New Client Secret</p>
           <p class="text-xs text-white/70">Copy this now. You won't be able to see it again.</p>
           <div class="flex gap-2">
-            <code class="flex-1 bg-black/40 px-3 py-2 rounded text-sm font-mono text-white break-all">
+            <code class="flex-1 bg-white/5 px-3 py-2 rounded-xl text-sm font-mono text-white break-all">
               {newSecret}
             </code>
             <button
               onClick={() => { navigator.clipboard.writeText(newSecret); toast.success("Copied!"); }}
-              class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded transition shrink-0"
+              class="px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-xs rounded-xl transition shrink-0"
             >
               Copy
             </button>
@@ -161,7 +161,7 @@ export function OAuthClientsManager() {
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
-            <tr class="border-b border-white/10 text-left text-white/40 text-xs uppercase tracking-wider">
+            <tr class="border-b border-white/[0.08] text-left text-white/50 text-xs uppercase tracking-wider">
               <th class="py-3 pr-4">Name</th>
               <th class="py-3 pr-4">Owner</th>
               <th class="py-3 pr-4">Status</th>
@@ -171,9 +171,9 @@ export function OAuthClientsManager() {
               <th class="py-3">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-white/5">
+          <tbody class="divide-y divide-white/[0.05]">
             {clients.map((client) => (
-              <tr key={client.id} class="hover:bg-white/5 transition">
+              <tr key={client.id} class="hover:bg-white/[0.03] transition">
                 <td class="py-3 pr-4">
                   <div class="flex items-center gap-2">
                     {client.icon && (
@@ -182,7 +182,7 @@ export function OAuthClientsManager() {
                     <div>
                       <a
                         href={`/admin/developer/apps/${client.id}`}
-                        class="text-white font-medium hover:text-indigo-400 transition"
+                        class="text-white font-medium hover:text-violet-300 transition"
                       >
                         {client.name}
                       </a>
@@ -229,7 +229,7 @@ export function OAuthClientsManager() {
                     )}
                     <button
                       onClick={() => handleRegenerateSecret(client.id)}
-                      class="p-1.5 hover:bg-indigo-500/20 rounded text-indigo-400 transition"
+                      class="p-1.5 hover:bg-violet-500/20 rounded text-violet-400 transition"
                       title="Regenerate secret"
                     >
                       <LucideKey class="h-4 w-4" />
@@ -328,7 +328,7 @@ function NewClientForm({
   return (
     <form
       onSubmit={handleSubmit}
-      class="bg-white/5 border border-white/10 rounded-md p-6 space-y-4"
+      class="bg-[#0f0f16] border border-white/[0.08] rounded-xl p-6 space-y-4"
     >
       <h3 class="text-lg font-medium text-white">New OAuth Client</h3>
 
@@ -338,7 +338,7 @@ function NewClientForm({
           <input
             value={name}
             onInput={(e) => setName((e.target as HTMLInputElement).value)}
-            class="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+            class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:border-violet-500/60 focus:outline-none"
             placeholder="My App"
           />
         </div>
@@ -347,7 +347,7 @@ function NewClientForm({
           <input
             value={website}
             onInput={(e) => setWebsite((e.target as HTMLInputElement).value)}
-            class="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+            class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:border-violet-500/60 focus:outline-none"
             placeholder="https://example.com"
           />
         </div>
@@ -358,7 +358,7 @@ function NewClientForm({
         <textarea
           value={description}
           onInput={(e) => setDescription((e.target as HTMLTextAreaElement).value)}
-          class="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none resize-none"
+          class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:border-violet-500/60 focus:outline-none resize-none"
           rows={2}
           placeholder="Brief description of your app"
         />
@@ -371,7 +371,7 @@ function NewClientForm({
             <input
               value={uri}
               onInput={(e) => updateRedirectUri(i, (e.target as HTMLInputElement).value)}
-              class="flex-1 bg-black/40 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+              class="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:border-violet-500/60 focus:outline-none"
               placeholder="https://example.com/callback"
             />
             <button
@@ -386,7 +386,7 @@ function NewClientForm({
         <button
           type="button"
           onClick={addRedirectUri}
-          class="text-xs text-indigo-400 hover:text-indigo-300 transition"
+          class="text-xs text-violet-400 hover:text-violet-300 transition"
         >
           + Add URI
         </button>
@@ -400,9 +400,9 @@ function NewClientForm({
               type="button"
               key={scope}
               onClick={() => toggleScope(scope)}
-              class={`text-xs px-3 py-1.5 rounded transition border ${
+              class={`text-xs px-3 py-1.5 rounded-xl transition border ${
                 selectedScopes.includes(scope)
-                  ? "bg-indigo-600/30 border-indigo-500 text-indigo-300"
+                  ? "bg-violet-600/30 border-violet-500 text-violet-300"
                   : "bg-white/5 border-white/10 text-white/50 hover:text-white/80"
               }`}
             >
@@ -423,7 +423,7 @@ function NewClientForm({
         <button
           type="submit"
           disabled={submitting}
-          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-md transition disabled:opacity-50"
+          class="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-xl transition disabled:opacity-50"
         >
           {submitting ? "Creating..." : "Create Client"}
         </button>
