@@ -13,10 +13,12 @@ import {
   LucideUsers,
   LucideSparkles,
   LucideBarChart3,
-  LucideActivity,
+  LucideExternalLink,
+  LucideArrowUpRight,
 } from "lucide-preact";
 
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
 import { getSiteStats } from "@/utils/site-admin";
 import cacheService from "@/services/cache";
 import { GeminiService } from "@/services/gemini";
@@ -33,6 +35,7 @@ if (checkResult) {
 
 // --- DATA PROCESSING ---
 const fillMissingDays = (byDay: { day: string; value: number }[]) => {
+  if (!byDay || byDay.length === 0) return [];
   const startDate = new Date(byDay[0].day);
   const endDate = new Date(byDay[byDay.length - 1].day);
   const completeDays: { day: string; value: number }[] = [];
@@ -45,24 +48,37 @@ const fillMissingDays = (byDay: { day: string; value: number }[]) => {
   return completeDays;
 };
 
-const visitorStats = await fetch(
-  "https://librecounter.org/saltouruguayserver.com/siteStats"
-).then((res) => res.json());
-const completeByDay = fillMissingDays(visitorStats.byDay);
+let visitorStats = { byDay: [], total: 0 };
+try {
+  visitorStats = await fetch(
+    "https://librecounter.org/saltouruguayserver.com/siteStats"
+  ).then((res) => res.json());
+} catch (e) {
+  console.error("Error al obtener estadísticas de visitantes:", e);
+}
+
+const completeByDay = fillMissingDays(visitorStats.byDay || []);
 
 const data = {
-  labels: completeByDay.map((stat) => stat.day),
+  labels: completeByDay.map((stat) => {
+    const parts = stat.day.split("-");
+    return `${parts[2]}/${parts[1]}`;
+  }),
   datasets: [
     createDataset({
       label: "Visitas",
       data: completeByDay.map((stat) => stat.value),
-      borderColor: "#3b82f6", // Blue-500
-      backgroundColor: "rgba(59, 130, 246, 0.1)",
-      borderWidth: 2,
-      tension: 0.3,
+      borderColor: "#8b5cf6", // Violet-500
+      backgroundColor: "rgba(139, 92, 246, 0.12)",
+      borderWidth: 2.5,
+      tension: 0.35,
       fill: true,
-      pointBackgroundColor: "#09090b",
-      pointBorderColor: "#3b82f6",
+      pointBackgroundColor: "#0c0c12",
+      pointBorderColor: "#a78bfa",
+      pointHoverBackgroundColor: "#ffffff",
+      pointHoverBorderColor: "#8b5cf6",
+      pointRadius: 3,
+      pointHoverRadius: 6,
     }),
   ],
 };
@@ -71,10 +87,27 @@ const chartOptions: Partial<ChartOptions> = {
   responsive: true,
   maintainAspectRatio: false,
   interaction: { intersect: false, mode: "index" },
-  plugins: { legend: { display: false } },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: "#171722",
+      borderColor: "rgba(255,255,255,0.1)",
+      borderWidth: 1,
+      titleColor: "#ffffff",
+      bodyColor: "#a78bfa",
+      padding: 10,
+      cornerRadius: 10,
+    },
+  },
   scales: {
-    x: { grid: { display: false }, ticks: { color: "#52525b" } },
-    y: { grid: { color: "#27272a" }, ticks: { color: "#52525b" } },
+    x: {
+      grid: { display: false },
+      ticks: { color: "#71717a", font: { family: "Rubik, sans-serif", size: 11 } },
+    },
+    y: {
+      grid: { color: "rgba(255, 255, 255, 0.05)" },
+      ticks: { color: "#71717a", font: { family: "Rubik, sans-serif", size: 11 } },
+    },
   },
 };
 
@@ -88,9 +121,9 @@ const BEAUTIFIED_STATS = [
   {
     id: "total-users",
     icon: LucideUsers,
-    title: "Usuarios Totales",
+    title: "Usuarios Registrados",
     value: stats.totalUsers,
-    color: "blue",
+    tone: "sky",
     percentage:
       stats.newSignupsWeek === 0
         ? 0
@@ -101,32 +134,31 @@ const BEAUTIFIED_STATS = [
                 100
             )
           : -100,
-    percentageText:
-      stats.newSignupsWeek === 0 ? "Sin cambios" : "vs semana pasada",
+    percentageText: "vs semana previa",
   },
   {
     id: "new-signups",
     icon: LucideBell,
-    title: "Nuevos Registros",
+    title: "Nuevas Altas",
     value: stats.newSignupsWeek,
-    color: "green",
+    tone: "emerald",
     description: "Últimos 7 días",
   },
   {
     id: "active-events",
     icon: LucideCalendar,
-    title: "Eventos Activos",
+    title: "Eventos Comunitarios",
     value: stats.activeEvents,
-    color: "purple",
-    description: "En curso o próximos",
+    tone: "violet",
+    description: "En cartelera o activos",
   },
   {
     id: "active-tournaments",
     icon: LucideTrophy,
-    title: "Torneos",
-    value: 0,
-    color: "yellow",
-    description: "Competiciones activas",
+    title: "Torneos Activos",
+    value: stats.activeTournaments ?? 0,
+    tone: "amber",
+    description: "En fase de juego",
   },
 ];
 
@@ -136,9 +168,7 @@ if (cacheValue) {
   tips = cacheValue;
 } else {
   const gemini = new GeminiService();
-
   try {
-    // Pasamos los objetos limpios, sin convertirlos a string manualmente aquí
     const generatedTips = await gemini.generateTipsForAdminPanel({
       visitorStats: visitorStats,
       generalStats: BEAUTIFIED_STATS.map((s) => ({
@@ -147,101 +177,93 @@ if (cacheValue) {
         value: s.value,
       })),
     });
-
-    // Guardamos en caché
     await cache.set(cacheKey, generatedTips, CACHE_TTL);
     tips = generatedTips;
   } catch (err) {
-    console.error(err);
-    // Fallback manual por si falla la IA
+    console.error("Error al generar tips de Gemini:", err);
     tips = [
       {
         category: "technical",
-        title: "🤖 IA Durmiendo",
-        description:
-          "El sistema de sugerencias está recargando energía. Vuelve más tarde.",
-        actionItem: "Revisar logs",
+        title: "Consejo Automático",
+        description: "Revisa la cartelera de eventos para anunciar el próximo fin de semana.",
+        actionItem: "Programar evento",
       },
     ];
   }
 }
 
-// Estilos
-const cardBase =
-  "relative overflow-hidden bg-[#0a0a0a] border border-white/5 rounded-2xl p-6 shadow-xl backdrop-blur-xs";
+const toneStyles = {
+  sky: {
+    icon: "text-sky-300 bg-sky-500/10 border-sky-400/25",
+    badge: "text-sky-300 bg-sky-500/10",
+  },
+  emerald: {
+    icon: "text-emerald-300 bg-emerald-500/10 border-emerald-400/25",
+    badge: "text-emerald-300 bg-emerald-500/10",
+  },
+  violet: {
+    icon: "text-violet-300 bg-violet-500/10 border-violet-400/25",
+    badge: "text-violet-300 bg-violet-500/10",
+  },
+  amber: {
+    icon: "text-amber-300 bg-amber-500/10 border-amber-400/25",
+    badge: "text-amber-300 bg-amber-500/10",
+  },
+};
+
+const todayFormatted = DateTime.now()
+  .setLocale("es")
+  .toFormat("cccc, dd 'de' LLLL yyyy");
 ---
 
-<AdminLayout title="Dashboard" session={session}>
-  {/* Fondo Sutil */}
-  <div class="fixed inset-0 -z-10 bg-[#050505]">
-    <div
-      class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-[0.03]"
+<AdminLayout title="Dashboard" session={session} fullWidth={true}>
+  <div class="space-y-7">
+    {/* Header unificado */}
+    <AdminPageHeader
+      title="Dashboard General"
+      description={`Resumen operativo en tiempo real de SaltoUruguayServer · ${todayFormatted}`}
+      badge="Operativo"
+      badgeTone="emerald"
+      pathname="/admin"
     >
-    </div>
-  </div>
-
-  <div class="flex flex-col w-full max-w-[1600px] mx-auto p-6 md:p-8 space-y-8">
-    {/* --- HEADER BIENVENIDA --- */}
-    <div
-      class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-    >
-      <div>
-        <h1
-          class="text-3xl font-anton text-white uppercase tracking-wide flex items-center gap-3"
-        >
-          Dashboard <span
-            class="px-2 py-0.5 rounded-md bg-white/10 text-xs font-rubik text-white/50 tracking-widest border border-white/5"
-            >BETA v2.0</span
-          >
-        </h1>
-        <p class="text-white/40 font-rubik text-sm mt-1">
-          {DateTime.now().setLocale("es").toFormat("cccc, dd 'de' LLLL yyyy")}
-        </p>
-      </div>
-
-      <div
-        class="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-xl"
-      >
-        <img
-          src={session?.user?.image}
-          alt={session?.user?.name}
-          class="size-8 rounded-full border border-white/10"
-        />
-        <div class="flex flex-col">
-          <span class="text-xs text-white/40 font-bold uppercase tracking-wider"
-            >Operador</span
-          >
-          <span class="text-sm font-medium text-white leading-none"
-            >{session?.user?.name}</span
-          >
+      <div slot="actions" class="flex items-center gap-2">
+        <div class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+          <img
+            src={session?.user?.image || "/favicon.svg"}
+            alt={session?.user?.name || "Operador"}
+            class="size-6 rounded-full border border-white/20 object-cover"
+          />
+          <div class="flex flex-col">
+            <span class="text-[10px] font-rubik text-white/40 leading-none">Operador actual</span>
+            <span class="text-xs font-semibold text-white leading-none mt-0.5">{session?.user?.name}</span>
+          </div>
         </div>
       </div>
-    </div>
+    </AdminPageHeader>
 
-    {/* --- KPI GRIDS --- */}
-    <div class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+    {/* Tarjetas KPI */}
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {
         BEAUTIFIED_STATS.map((stat) => {
-          const colors = {
-            blue: "text-blue-400 bg-blue-500/10 border-line",
-            green: "text-green-400 bg-green-500/10 border-green-500/20",
-            purple: "text-purple-400 bg-purple-500/10 border-purple-500/20",
-            yellow: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
-          };
-          const colorClass =
-            colors[stat.color as keyof typeof colors] || colors.blue;
+          const style = toneStyles[stat.tone as keyof typeof toneStyles] || toneStyles.sky;
 
           return (
-            <div
-              class={`${cardBase} group hover:border-white/10 transition-colors`}
-            >
-              <div class="flex justify-between items-start mb-4">
-                <div class={`p-3 rounded-xl border ${colorClass}`}>
-                  <stat.icon size={20} />
+            <div class="relative overflow-hidden rounded-2xl bg-[#0f0f16]/90 border border-white/[0.08] p-5 shadow-xl transition-all duration-200 hover:border-white/20 hover:translate-y-[-1px]">
+              {/* Línea superior con gradiente tenue */}
+              <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none"></div>
+
+              <div class="flex justify-between items-start mb-3">
+                <div class={`p-2.5 rounded-xl border ${style.icon}`}>
+                  <stat.icon size={18} />
                 </div>
+
                 {stat.percentage !== undefined && (
                   <span
-                    class={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${stat.percentage >= 0 ? "text-green-400 bg-green-900/20" : "text-red-400 bg-red-900/20"}`}
+                    class={`inline-flex items-center gap-1 text-xs font-rubik font-semibold px-2 py-0.5 rounded-full ${
+                      stat.percentage >= 0
+                        ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20"
+                        : "text-rose-400 bg-rose-500/10 border border-rose-500/20"
+                    }`}
                   >
                     {stat.percentage >= 0 ? (
                       <LucideTrendingUp size={12} />
@@ -254,15 +276,15 @@ const cardBase =
               </div>
 
               <div>
-                <h3 class="text-white/50 text-xs font-bold uppercase tracking-widest mb-1">
+                <p class="text-xs font-rubik font-medium text-white/50 mb-1">
                   {stat.title}
-                </h3>
-                <p class="text-3xl font-anton text-white tracking-wide">
+                </p>
+                <p class="text-3xl sm:text-4xl font-anton text-white tracking-wide tabular-nums">
                   {stat.value}
                 </p>
 
                 {(stat.percentageText || stat.description) && (
-                  <p class="text-white/30 text-xs mt-2 font-mono">
+                  <p class="text-xs text-white/35 mt-1.5 font-rubik">
                     {stat.percentageText || stat.description}
                   </p>
                 )}
@@ -273,21 +295,33 @@ const cardBase =
       }
     </div>
 
-    {/* --- MAIN CONTENT GRID --- */}
+    {/* Grilla Principal: Tráfico + Gemini Intelligence */}
     <div class="grid gap-6 grid-cols-1 lg:grid-cols-3">
-      {/* 1. CHART (Ocupa 2 columnas) */}
-      <div class={`${cardBase} lg:col-span-2 flex flex-col`}>
-        <div class="flex items-center justify-between mb-6">
-          <h3
-            class="text-xl font-anton text-white uppercase tracking-wide flex items-center gap-2"
-          >
-            <LucideBarChart3 class="text-blue-500" size={20} /> Tráfico Web
-          </h3>
-          <div class="flex gap-2">
-            <span class="size-2 rounded-full bg-blue-500 animate-pulse"></span>
-            <span class="text-xs text-blue-400 font-bold uppercase"
-              >En vivo</span
-            >
+      {/* 1. CHART DE TRÁFICO (2 Cols) */}
+      <div class="lg:col-span-2 relative rounded-2xl bg-[#0f0f16]/90 border border-white/[0.08] p-5 sm:p-6 shadow-xl flex flex-col">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+          <div class="flex items-center gap-2.5">
+            <span class="p-2 rounded-xl bg-violet-500/10 border border-violet-400/20 text-violet-300">
+              <LucideBarChart3 size={18} />
+            </span>
+            <div>
+              <h2 class="font-anton text-lg uppercase tracking-wide text-white leading-none">
+                Tráfico y Actividad Web
+              </h2>
+              <p class="font-rubik text-xs text-white/40 mt-1">
+                Visitas registradas durante los últimos días
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="relative flex size-2 shrink-0">
+              <span class="absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-60 animate-ping"></span>
+              <span class="relative inline-flex size-2 rounded-full bg-violet-500"></span>
+            </span>
+            <span class="text-xs font-rubik font-semibold text-violet-300">
+              Métricas en Vivo
+            </span>
           </div>
         </div>
 
@@ -296,41 +330,47 @@ const cardBase =
         </div>
       </div>
 
-      {/* 2. AI INSIGHTS (Ocupa 1 columna) */}
-      {
-        tips && (
-          <div
-            class={`${cardBase} border-purple-500/20 bg-linear-to-b from-[#0f0f12] to-[#0a0a0a]`}
-          >
-            <div class="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
-              <div class="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
-                <LucideSparkles size={20} />
-              </div>
-              <div>
-                <h3 class="text-lg font-anton text-white uppercase tracking-wide">
-                  Gemini Analysis
-                </h3>
-                <p class="text-xs text-purple-300/60 font-mono">
-                  Reporte Automático
-                </p>
-              </div>
-            </div>
+      {/* 2. GEMINI INSIGHTS (1 Col) */}
+      <div class="relative rounded-2xl bg-[#0f0f16]/90 border border-violet-500/20 p-5 sm:p-6 shadow-xl flex flex-col justify-between overflow-hidden">
+        {/* Glow de acento */}
+        <div class="absolute -top-16 -right-16 size-40 bg-violet-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
-            <div class="prose prose-invert prose-sm max-w-none prose-p:text-gray-400 prose-strong:text-white prose-ul:pl-4 prose-li:marker:text-purple-500">
-              <div set:html={markdown(tips).catch(() => "")} />
+        <div>
+          <div class="flex items-center gap-3 pb-4 mb-4 border-b border-white/[0.08]">
+            <div class="p-2 bg-violet-500/15 text-violet-300 rounded-xl border border-violet-400/30">
+              <LucideSparkles size={18} />
             </div>
-
-            <div class="mt-6 pt-4 border-t border-white/5 text-center">
-              <span class="text-[10px] text-white/20 uppercase tracking-widest">
-                Powered by Google Gemini
-              </span>
+            <div>
+              <h3 class="font-anton text-base uppercase tracking-wide text-white leading-none">
+                Análisis Inteligente
+              </h3>
+              <p class="text-xs text-violet-300/70 font-rubik mt-0.5">
+                Generado con Google Gemini
+              </p>
             </div>
           </div>
-        )
-      }
 
+          {
+            tips ? (
+              <div class="prose prose-invert prose-sm max-w-none prose-p:text-white/60 prose-p:text-xs prose-p:leading-relaxed prose-strong:text-white prose-ul:pl-4 prose-li:text-xs prose-li:text-white/60 prose-li:marker:text-violet-400">
+                <div set:html={markdown(tips).catch(() => "")} />
+              </div>
+            ) : (
+              <p class="text-xs text-white/40 font-rubik py-6 text-center">
+                Sin recomendaciones pendientes en este momento.
+              </p>
+            )
+          }
+        </div>
+
+        <div class="mt-6 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-rubik text-white/30">
+          <span>Sincronización diaria</span>
+          <span class="text-violet-400/80 font-semibold">Gemini 2.5 Flash</span>
+        </div>
+      </div>
+
+      {/* 3. AWARDS CURRENT VOTES (3 Cols) */}
       <div class="lg:col-span-3">
-        {/* 3. AWARDS LIVE VOTES (Ocupa 3 columnas) */}
         <AwardsCurrentVotes />
       </div>
     </div>

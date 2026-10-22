@@ -4,6 +4,7 @@ import { getSession } from "auth-astro/server";
 import { GameSelector } from "@/components/admin/streamer-wars/GameSelector";
 import { StreamerWarsAdmin } from "@/components/admin/StreamerWarsAdmin";
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
 
 const session = await getSession(Astro.request);
 
@@ -13,49 +14,17 @@ if (checkResult) {
 }
 ---
 
-<AdminLayout title="Admin Guerra Streamers" session={session}>
-  <div class="relative">
-    <!-- Scanline overlay -->
-    <div class="fixed inset-0 pointer-events-none overflow-hidden opacity-[0.03] z-0">
-      <div class="w-full h-full bg-[linear-gradient(rgba(255,255,255,0)_50%,rgba(0,0,0,0.5)_50%)] bg-size-[100%_3px]" />
-    </div>
+<AdminLayout title="Streamer Wars" session={session} description="Panel de control de Guerra de Streamers">
+  <div class="space-y-6">
+    <AdminPageHeader
+      title="Guerra de Streamers"
+      description="Gestiona jornadas, jugadores y anuncios del evento en vivo."
+      pathname="/admin/guerra-streamers"
+      badge="En Vivo"
+      badgeTone="emerald"
+    />
 
-    <!-- Decorative glyphs -->
-    <span class="fixed top-40 left-8 text-6xl opacity-[0.04] rotate-12 font-atomic-extras text-[#b4cd02] pointer-events-none select-none z-0">
-      &#x0055;
-    </span>
-    <span class="fixed bottom-40 right-8 text-6xl opacity-[0.04] -rotate-12 font-atomic-extras text-[#b4cd02] pointer-events-none select-none z-0">
-      &#x0050;
-    </span>
-
-    <div class="relative z-10 max-w-6xl mx-auto">
-      <!-- Header -->
-      <div class="mb-10">
-        <div class="flex items-center gap-4 mb-2">
-          <div class="relative">
-            <div class="size-14 rounded-full bg-[#b4cd02]/10 border border-[#b4cd02]/20 flex items-center justify-center shadow-[0_0_20px_rgba(180,205,2,0.1)]">
-              <span class="font-atomic-extras text-2xl text-[#b4cd02]">&#x0050;</span>
-            </div>
-          </div>
-          <div>
-            <h1 class="font-atomic text-3xl md:text-4xl text-white tracking-wide leading-none">
-              GUERRA DE
-            </h1>
-            <h1 class="font-atomic text-3xl md:text-4xl text-[#b4cd02] tracking-wide -mt-1 ml-6 leading-none">
-              STREAMERS
-            </h1>
-          </div>
-          <div class="hidden md:block ml-auto">
-            <span class="font-teko text-sm tracking-[0.3em] text-neutral-600 uppercase bg-neutral-900/80 border border-neutral-800 px-4 py-1.5 rounded-sm">
-              Panel de control
-            </span>
-          </div>
-        </div>
-        <p class="font-teko text-base tracking-wider text-neutral-500 mt-2 ml-1 uppercase">
-          Bienvenido, <span class="text-[#b4cd02]">{session?.user.name}</span>
-        </p>
-      </div>
-
+    <div class="relative z-10 max-w-6xl mx-auto space-y-6">
       <GameSelector client:idle />
 
       <StreamerWarsAdmin client:idle session={session!} />

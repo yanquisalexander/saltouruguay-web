@@ -1,29 +1,15 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
-import { getAuthenticatedUser } from "@/lib/auth";
+import { getAuthenticatedDbUser } from "@/lib/auth";
 import { client } from "@/db/client";
-import { NotificationsTable, PushSubscriptionsTable } from "@/db/schema";
-import { eq, and, desc, lt, count } from "drizzle-orm";
-import webpush from "web-push";
-
-// Configure Web Push
-// In production, these should be environment variables
-const VAPID_PUBLIC_KEY = import.meta.env.VAPID_PUBLIC_KEY || "BKP_123...";
-const VAPID_PRIVATE_KEY = import.meta.env.VAPID_PRIVATE_KEY || "PRIV_123...";
-const VAPID_SUBJECT = "mailto:admin@saltouruguay.com";
-
-if (import.meta.env.VAPID_PUBLIC_KEY && import.meta.env.VAPID_PRIVATE_KEY) {
-    webpush.setVapidDetails(
-        VAPID_SUBJECT,
-        import.meta.env.VAPID_PUBLIC_KEY,
-        import.meta.env.VAPID_PRIVATE_KEY
-    );
-}
+import { ExpoPushTokensTable, NotificationsTable, PushSubscriptionsTable } from "@/db/schema";
+import { eq, and, desc, count } from "drizzle-orm";
+import { sendPushToUser } from "@/services/push";
 
 export const notifications = {
     get: defineAction({
         handler: async (_, { request }) => {
-            const auth = await getAuthenticatedUser(request);
+            const auth = await getAuthenticatedDbUser(request);
             if (!auth) return { notifications: [] };
 
             const userId = auth.user.id;
@@ -43,7 +29,7 @@ export const notifications = {
             notificationIds: z.array(z.number()).optional(), // If empty, mark all
         }),
         handler: async ({ notificationIds }, { request }) => {
-            const auth = await getAuthenticatedUser(request);
+            const auth = await getAuthenticatedDbUser(request);
             if (!auth) throw new ActionError({ code: "UNAUTHORIZED", message: "Unauthorized" });
 
             const userId = auth.user.id;
@@ -78,7 +64,7 @@ export const notifications = {
             }),
         }),
         handler: async ({ endpoint, keys }, { request }) => {
-            const auth = await getAuthenticatedUser(request);
+            const auth = await getAuthenticatedDbUser(request);
             if (!auth) throw new ActionError({ code: "UNAUTHORIZED", message: "Unauthorized" });
 
             const userId = auth.user.id;
@@ -103,9 +89,59 @@ export const notifications = {
         }
     }),
 
+    registerExpoToken: defineAction({
+        input: z.object({
+            token: z.string().regex(/^Expo(nent)?PushToken\[[^\]]+\]$/, "Token de Expo inválido"),
+            platform: z.enum(["ios", "android"]).optional(),
+            deviceName: z.string().max(255).optional(),
+        }),
+        handler: async ({ token, platform, deviceName }, { request }) => {
+            const auth = await getAuthenticatedDbUser(request);
+            if (!auth) throw new ActionError({ code: "UNAUTHORIZED", message: "Unauthorized" });
+
+            await client.insert(ExpoPushTokensTable)
+                .values({
+                    userId: auth.user.id,
+                    token,
+                    platform: platform ?? null,
+                    deviceName: deviceName ?? null,
+                    updatedAt: new Date(),
+                })
+                .onConflictDoUpdate({
+                    target: ExpoPushTokensTable.token,
+                    set: {
+                        userId: auth.user.id,
+                        platform: platform ?? null,
+                        deviceName: deviceName ?? null,
+                        updatedAt: new Date(),
+                    }
+                });
+
+            return { success: true };
+        }
+    }),
+
+    unregisterExpoToken: defineAction({
+        input: z.object({
+            token: z.string().min(1),
+        }),
+        handler: async ({ token }, { request }) => {
+            const auth = await getAuthenticatedDbUser(request);
+            if (!auth) throw new ActionError({ code: "UNAUTHORIZED", message: "Unauthorized" });
+
+            await client.delete(ExpoPushTokensTable)
+                .where(and(
+                    eq(ExpoPushTokensTable.token, token),
+                    eq(ExpoPushTokensTable.userId, auth.user.id)
+                ));
+
+            return { success: true };
+        }
+    }),
+
     getUnreadCount: defineAction({
         handler: async (_, { request }) => {
-            const auth = await getAuthenticatedUser(request);
+            const auth = await getAuthenticatedDbUser(request);
             if (!auth) return { count: 0 };
 
             const userId = auth.user.id;
@@ -135,7 +171,6 @@ export async function createNotification(userId: number, data: {
     link?: string;
     image?: string;
 }) {
-    // 1. Save to DB
     const [notification] = await client.insert(NotificationsTable)
         .values({
             userId,
@@ -143,45 +178,10 @@ export async function createNotification(userId: number, data: {
         })
         .returning();
 
-    // 2. Send Push Notification
-    if (import.meta.env.VAPID_PUBLIC_KEY && import.meta.env.VAPID_PRIVATE_KEY) {
-        try {
-            const subscriptions = await client.query.PushSubscriptionsTable.findMany({
-                where: eq(PushSubscriptionsTable.userId, userId)
-            });
-
-            const payload = JSON.stringify({
-                title: data.title,
-                body: data.message,
-                icon: data.image || "/android-chrome-192x192.png",
-                url: data.link || "/",
-                data: {
-                    url: data.link || "/"
-                }
-            });
-
-            const promises = subscriptions.map(sub =>
-                webpush.sendNotification({
-                    endpoint: sub.endpoint,
-                    keys: {
-                        p256dh: sub.p256dh,
-                        auth: sub.auth
-                    }
-                }, payload).catch(async err => {
-                    if (err.statusCode === 410 || err.statusCode === 404) {
-                        // Subscription expired or invalid
-                        await client.delete(PushSubscriptionsTable)
-                            .where(eq(PushSubscriptionsTable.endpoint, sub.endpoint));
-                    }
-                    console.error("Error sending push:", err);
-                })
-            );
-
-            await Promise.all(promises);
-        } catch (e) {
-            console.error("Error in push notification process:", e);
-        }
-    }
+    await sendPushToUser(userId, {
+        ...data,
+        notificationId: notification.id
+    });
 
     return notification;
 }

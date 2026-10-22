@@ -1,69 +1,118 @@
 ---
 import { LucideChevronRight, LucideHome } from "lucide-preact";
 
-interface Props {
-  pathname?: string;
-  title?: string;
-  description?: string;
+interface BreadcrumbItem {
+  text: string;
+  href: string;
 }
 
-const { pathname = "/", title, description } = Astro.props;
+interface Props {
+  pathname?: string;
+  title: string;
+  description?: string;
+  badge?: string;
+  badgeTone?: "violet" | "emerald" | "amber" | "sky" | "rose";
+}
+
+const {
+  pathname = "/",
+  title,
+  description,
+  badge,
+  badgeTone = "violet",
+} = Astro.props;
 
 const pathSegments =
   pathname === "/" ? [] : pathname.split("/").filter(Boolean);
 
-const breadcrumbs = pathSegments.map((segment, index) => {
+const breadcrumbs: BreadcrumbItem[] = pathSegments.map((segment, index) => {
   const href = "/" + pathSegments.slice(0, index + 1).join("/");
-  return {
-    text:
-      index === 0 && segment === "admin"
-        ? "Admin"
-        : index === pathSegments.length - 1 && title
-          ? title
-          : segment,
-    href,
-  };
+  let text = segment;
+  if (index === 0 && segment === "admin") {
+    text = "Admin";
+  } else if (index === pathSegments.length - 1 && title) {
+    text = title;
+  } else {
+    text = segment.replace(/-/g, " ");
+  }
+
+  return { text, href };
 });
+
+const badgeTones = {
+  violet: "bg-violet-500/10 text-violet-300 border-violet-400/25",
+  emerald: "bg-emerald-500/10 text-emerald-300 border-emerald-400/25",
+  amber: "bg-amber-500/10 text-amber-300 border-amber-400/25",
+  sky: "bg-sky-500/10 text-sky-300 border-sky-400/25",
+  rose: "bg-rose-500/10 text-rose-300 border-rose-400/25",
+};
 ---
 
-<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-white/10">
-  <div class="space-y-1.5 min-w-0">
-    {/* Migas de pan / Breadcrumbs */}
-    <nav aria-label="Breadcrumb" class="flex items-center gap-1.5 text-xs text-white/40 font-mono mb-2 overflow-x-auto py-0.5">
-      <a href="/admin" class="hover:text-purple-400 transition-colors flex items-center gap-1 shrink-0">
+<header class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/[0.08]">
+  <div class="space-y-2 min-w-0">
+    <nav
+      aria-label="Breadcrumb"
+      class="flex items-center gap-1.5 text-xs text-white/40 font-rubik overflow-x-auto py-0.5"
+    >
+      <a
+        href="/admin"
+        class="hover:text-violet-300 transition-colors flex items-center gap-1 shrink-0"
+      >
         <LucideHome size={12} />
         <span>Admin</span>
       </a>
+
       {
-        breadcrumbs.slice(1).map((b) => (
-          <div class="flex items-center gap-1.5 shrink-0">
-            <LucideChevronRight size={12} className="text-white/20" />
-            <a href={b.href} class="hover:text-white transition-colors capitalize">
-              {b.text}
-            </a>
-          </div>
-        ))
+        breadcrumbs.slice(1).map((crumb, idx) => {
+          const isLast = idx === breadcrumbs.length - 2;
+          return (
+            <div class="flex items-center gap-1.5 shrink-0">
+              <LucideChevronRight size={12} className="text-white/20" />
+              {isLast ? (
+                <span class="text-white/80 font-medium capitalize truncate max-w-[200px]">
+                  {crumb.text}
+                </span>
+              ) : (
+                <a
+                  href={crumb.href}
+                  class="hover:text-white transition-colors capitalize text-white/50"
+                >
+                  {crumb.text}
+                </a>
+              )}
+            </div>
+          );
+        })
       }
     </nav>
 
-    {/* Título Principal de la Página */}
-    <h2 class="text-3xl sm:text-4xl font-anton uppercase tracking-wide text-white flex items-center gap-3">
-      <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-purple-400 drop-shadow-xs truncate">
+    <div class="flex flex-wrap items-center gap-3">
+      <h1 class="text-2xl sm:text-3xl font-anton uppercase tracking-wide text-white leading-none">
         {title}
-      </span>
-    </h2>
+      </h1>
+
+      {
+        badge && (
+          <span
+            class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-rubik font-semibold border ${badgeTones[badgeTone]}`}
+          >
+            {badge}
+          </span>
+        )
+      }
+    </div>
 
     {
       description && (
-        <p class="text-xs sm:text-sm text-white/50 font-rubik max-w-2xl leading-relaxed">
+        <p class="text-xs sm:text-sm text-white/50 font-rubik max-w-3xl leading-relaxed">
           {description}
         </p>
       )
     }
   </div>
 
-  {/* Contenedor de Acciones (para botones adicionales de cada página) */}
-  <div class="flex items-center gap-3 shrink-0">
+  <div class="flex flex-wrap items-center gap-2.5 shrink-0 pt-2 md:pt-0">
     <slot name="actions" />
+    <slot />
   </div>
-</div>
+</header>

@@ -12,10 +12,12 @@ import {
     Upload,
     X,
     RefreshCw,
-    Star
+    Star,
+    Search,
+    ExternalLink
 } from "lucide-preact";
 import type { getPaginatedEvents } from "@/lib/events";
-import { DateTime } from 'luxon';
+import { DateTime } from "luxon";
 
 export default function EventsManager() {
     // --- STATE ---
@@ -23,6 +25,7 @@ export default function EventsManager() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [search, setSearch] = useState("");
     const limit = 10;
 
     // Refs
@@ -39,7 +42,7 @@ export default function EventsManager() {
         endDate: "",
         location: "",
         description: "",
-        cover: "", // Nuevo campo para la imagen (Base64 o URL)
+        cover: "",
         featured: false
     };
 
@@ -51,7 +54,7 @@ export default function EventsManager() {
         endDate: string | null;
         location: string;
         description: string;
-        cover: string; // Nuevo campo
+        cover: string;
         featured: boolean;
         originalEvent: any;
     }>(null);
@@ -73,7 +76,7 @@ export default function EventsManager() {
         } finally {
             setLoading(false);
         }
-    }, [limit]); // Removed 'loading' dependency to avoid stale closures if needed, though usually safe with check
+    }, [limit]);
 
     useEffect(() => { fetchEvents(1, true); }, []);
 
@@ -110,8 +113,6 @@ export default function EventsManager() {
         const input = e.target as HTMLInputElement;
         if (input.files && input.files[0]) {
             const file = input.files[0];
-
-            // Validar tamaño (ej. 2MB)
             if (file.size > 2 * 1024 * 1024) {
                 toast.error("La imagen es demasiado pesada (Máx 2MB)");
                 return;
@@ -160,13 +161,22 @@ export default function EventsManager() {
     };
 
     const validateEvent = (event: any) => {
-        if (!event.name?.trim()) return toast.error("El nombre es obligatorio");
-        if (!event.startDate && !event.originalEvent?.startDate) return toast.error("La fecha de inicio es obligatoria");
+        if (!event.name?.trim()) {
+            toast.error("El nombre es obligatorio");
+            return false;
+        }
+        if (!event.startDate && !event.originalEvent?.startDate) {
+            toast.error("La fecha de inicio es obligatoria");
+            return false;
+        }
 
         if (event.startDate && event.endDate) {
             const start = DateTime.fromISO(event.startDate);
             const end = DateTime.fromISO(event.endDate);
-            if (end < start) return toast.error("La fecha final no puede ser antes que la inicial");
+            if (end < start) {
+                toast.error("La fecha final no puede ser previa a la inicial");
+                return false;
+            }
         }
         return true;
     };
@@ -193,7 +203,7 @@ export default function EventsManager() {
             const eventToSubmit = prepareEventForSubmission(currentEvent, currentEvent.originalEvent);
             const { error } = await actions.admin.events.updateEvent(eventToSubmit);
             if (error) throw new Error(error.message);
-            toast.success("Evento actualizado");
+            toast.success("Evento actualizado correctamente");
             refreshEvents();
             closeEditorDialog();
         } catch (error) {
@@ -203,7 +213,7 @@ export default function EventsManager() {
     };
 
     const deleteEvent = async (id: number) => {
-        if (!confirm("¿Eliminar este evento permanentemente?")) return;
+        if (!confirm("¿Eliminar este evento permanentemente de la agenda?")) return;
         try {
             const { error } = await actions.admin.events.deleteEvent(id);
             if (error) throw new Error(error.message);
@@ -217,7 +227,10 @@ export default function EventsManager() {
 
     // --- DIALOGS ---
     const openDialog = () => dialogRef.current?.showModal();
-    const closeDialog = () => { dialogRef.current?.close(); setNewEvent(initialEventState); };
+    const closeDialog = () => {
+        dialogRef.current?.close();
+        setNewEvent(initialEventState);
+    };
 
     const openEditorDialog = (event: typeof events[number]) => {
         try {
@@ -233,138 +246,180 @@ export default function EventsManager() {
                 originalEvent: event
             });
             editorDialogRef.current?.showModal();
-        } catch (e) { toast.error("Error al abrir editor"); }
+        } catch (e) {
+            toast.error("Error al abrir editor");
+        }
     };
-    const closeEditorDialog = () => { editorDialogRef.current?.close(); setCurrentEvent(null); };
+
+    const closeEditorDialog = () => {
+        editorDialogRef.current?.close();
+        setCurrentEvent(null);
+    };
 
     // --- FORMATTERS ---
     const getStatusBadge = (event: typeof events[number]) => {
-        if (!event.startDate) return <span class="px-2 py-1 rounded-sm text-xs bg-gray-800 text-gray-400">Borrador</span>;
+        if (!event.startDate) {
+            return (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-rubik font-medium bg-white/[0.04] text-white/50 border border-white/10">
+                    Borrador
+                </span>
+            );
+        }
 
         const start = DateTime.fromJSDate(event.startDate);
         const end = event.endDate ? DateTime.fromJSDate(event.endDate) : null;
         const now = DateTime.local();
 
-        if (end && end < now) return <span class="px-2 py-1 rounded-sm text-xs bg-red-900/30 text-red-400 border border-red-900/50">Finalizado</span>;
-        if (start <= now && (!end || end > now)) return <span class="px-2 py-1 rounded-sm text-xs bg-green-900/30 text-green-400 border border-green-900/50 animate-pulse">En curso</span>;
-        return <span class="px-2 py-1 rounded-sm text-xs bg-blue-900/30 text-blue-400 border border-blue-900/50">Próximo</span>;
+        if (end && end < now) {
+            return (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-rubik font-medium bg-white/[0.03] text-white/40 border border-white/[0.08]">
+                    Finalizado
+                </span>
+            );
+        }
+        if (start <= now && (!end || end > now)) {
+            return (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-rubik font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
+                    <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    En curso
+                </span>
+            );
+        }
+        return (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-rubik font-medium bg-violet-500/15 text-violet-300 border border-violet-400/30">
+                <span className="size-1.5 rounded-full bg-violet-400"></span>
+                Próximo
+            </span>
+        );
     };
 
     // --- RENDER FORM ---
-    const renderForm = (data: any, isNew: boolean, onChangeInput: (e: any, f: string, n: boolean) => void, onChangeDate: (e: any, f: string, n: boolean) => void) => (
+    const renderForm = (
+        data: any,
+        isNew: boolean,
+        onChangeInput: (e: any, f: string, n: boolean) => void,
+        onChangeDate: (e: any, f: string, n: boolean) => void
+    ) => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Columna Izquierda: Datos */}
             <div className="space-y-4">
                 <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Nombre del Evento</label>
+                    <label className="text-xs font-rubik font-medium text-white/60">Nombre del Evento</label>
                     <input
                         type="text"
                         value={data.name}
                         onInput={(e) => onChangeInput(e, 'name', isNew)}
-                        className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-hidden transition-colors"
-                        placeholder="Ej: Torneo de Bedwars"
+                        className="w-full px-3.5 py-2.5 bg-black/40 text-white placeholder:text-white/25 border border-white/10 rounded-xl focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all font-rubik text-sm"
+                        placeholder="Ej: Torneo de Bedwars Nocturno"
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Inicio</label>
+                        <label className="text-xs font-rubik font-medium text-white/60">Inicio</label>
                         <input
                             type="datetime-local"
                             value={data.startDate || ""}
                             onInput={(e) => onChangeDate(e, 'startDate', isNew)}
-                            className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-hidden"
+                            className="w-full px-3 py-2 bg-black/40 text-white border border-white/10 rounded-xl focus:border-violet-500/60 focus:outline-none text-xs"
                             style={{ colorScheme: "dark" }}
                         />
                     </div>
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Fin (Opcional)</label>
+                        <label className="text-xs font-rubik font-medium text-white/60">Fin (Opcional)</label>
                         <input
                             type="datetime-local"
                             value={data.endDate || ""}
                             onInput={(e) => onChangeDate(e, 'endDate', isNew)}
-                            className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-hidden"
+                            className="w-full px-3 py-2 bg-black/40 text-white border border-white/10 rounded-xl focus:border-violet-500/60 focus:outline-none text-xs"
                             style={{ colorScheme: "dark" }}
                         />
                     </div>
                 </div>
 
                 <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ubicación</label>
+                    <label className="text-xs font-rubik font-medium text-white/60">Lugar o Canal</label>
                     <div className="relative">
-                        <MapPin size={16} className="absolute left-3 top-3.5 text-gray-500" />
+                        <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
                         <input
                             type="text"
                             value={data.location || ""}
                             onInput={(e) => onChangeInput(e, 'location', isNew)}
-                            className="w-full p-3 pl-10 bg-black/40 text-white border border-white/10 rounded-xl focus:border-blue-500 focus:outline-hidden"
-                            placeholder="Ej: Discord, Twitch, Lobby 1"
+                            className="w-full pl-9 pr-3.5 py-2.5 bg-black/40 text-white placeholder:text-white/25 border border-white/10 rounded-xl focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 focus:outline-none text-sm"
+                            placeholder="Ej: Discord Stage, Twitch, Servidor MC"
                         />
                     </div>
                 </div>
 
                 <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Descripción</label>
+                    <label className="text-xs font-rubik font-medium text-white/60">Descripción</label>
                     <textarea
                         value={data.description || ""}
                         onInput={(e) => onChangeInput(e, 'description', isNew)}
-                        className="w-full p-3 bg-black/40 text-white border border-white/10 rounded-xl h-32 resize-none focus:border-blue-500 focus:outline-hidden"
-                        placeholder="Detalles del evento..."
+                        className="w-full p-3 bg-black/40 text-white placeholder:text-white/25 border border-white/10 rounded-xl h-28 resize-y focus:border-violet-500/60 focus:outline-none text-sm font-rubik"
+                        placeholder="Detalles y requisitos del evento..."
                     />
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                <div className="flex items-center gap-3 p-3 bg-white/[0.03] rounded-xl border border-white/[0.08]">
                     <input
                         type="checkbox"
                         id={isNew ? "new-featured" : "edit-featured"}
                         checked={data.featured}
                         onChange={(e) => onChangeInput(e, 'featured', isNew)}
-                        className="w-5 h-5 rounded-sm border-gray-600 text-blue-600 focus:ring-blue-500 bg-gray-700"
+                        className="size-4 rounded-md border-white/20 text-violet-600 focus:ring-violet-500 bg-black/40 cursor-pointer"
                     />
-                    <label htmlFor={isNew ? "new-featured" : "edit-featured"} className="text-sm font-medium text-white cursor-pointer select-none">
-                        Destacar evento
+                    <label
+                        htmlFor={isNew ? "new-featured" : "edit-featured"}
+                        className="text-xs font-rubik font-medium text-white cursor-pointer select-none"
+                    >
+                        Destacar evento en página principal y cartelera
                     </label>
                 </div>
             </div>
 
-            {/* Columna Derecha: Portada */}
+            {/* Portada */}
             <div className="space-y-4">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Portada del Evento</label>
+                <label className="text-xs font-rubik font-medium text-white/60">Portada del Evento</label>
 
                 <div
                     className={`
-                        relative w-full aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden group
-                        ${data.cover ? 'border-blue-500/50 bg-black' : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'}
+                        relative w-full aspect-video rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden group
+                        ${data.cover ? 'border-violet-500/40 bg-black/80' : 'border-white/15 bg-black/30 hover:border-violet-400/30 hover:bg-white/[0.03]'}
                     `}
                 >
                     {data.cover ? (
                         <>
                             <img src={data.cover} alt="Preview" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-xs">
                                 <button
+                                    type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="p-2 bg-blue-600 rounded-lg text-white hover:bg-blue-500" title="Cambiar"
+                                    className="p-2.5 bg-violet-600 rounded-xl text-white hover:bg-violet-500 transition-colors cursor-pointer"
+                                    title="Reemplazar portada"
                                 >
-                                    <Pencil size={18} />
+                                    <Pencil size={16} />
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => removeImage(isNew)}
-                                    className="p-2 bg-red-600 rounded-lg text-white hover:bg-red-500" title="Eliminar"
+                                    className="p-2.5 bg-rose-600/80 rounded-xl text-white hover:bg-rose-500 transition-colors cursor-pointer"
+                                    title="Quitar portada"
                                 >
-                                    <Trash2 size={18} />
+                                    <Trash2 size={16} />
                                 </button>
                             </div>
                         </>
                     ) : (
                         <button
+                            type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="flex flex-col items-center text-gray-500 hover:text-white transition-colors"
+                            className="flex flex-col items-center text-white/40 hover:text-white transition-colors cursor-pointer p-4 text-center"
                         >
-                            <div className="p-3 rounded-full bg-white/5 mb-2">
-                                <ImageIcon size={32} />
+                            <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10 mb-2.5 text-violet-300">
+                                <ImageIcon size={26} />
                             </div>
-                            <span className="text-sm font-medium">Subir Portada</span>
-                            <span className="text-xs text-gray-600">Recomendado: 1920x1080 (Máx 2MB)</span>
+                            <span className="text-xs font-rubik font-semibold text-white">Subir Portada</span>
+                            <span className="text-[11px] text-white/35 mt-0.5">Formato 16:9 · JPG, PNG, WebP (Máx 2MB)</span>
                         </button>
                     )}
 
@@ -377,116 +432,154 @@ export default function EventsManager() {
                     />
                 </div>
 
-                <div className="bg-blue-900/10 border border-blue-900/20 p-3 rounded-lg flex gap-3 items-start">
-                    <div className="p-1 bg-blue-500/20 rounded-sm text-blue-400 mt-0.5"><Upload size={14} /></div>
-                    <p className="text-xs text-blue-200/70 leading-relaxed">
-                        La imagen se subirá automáticamente al guardar. Asegúrate de tener derechos sobre la imagen utilizada.
+                <div className="bg-violet-950/20 border border-violet-500/20 p-3.5 rounded-xl flex gap-2.5 items-start">
+                    <div className="p-1 bg-violet-500/20 rounded-lg text-violet-300 mt-0.5 shrink-0">
+                        <Upload size={13} />
+                    </div>
+                    <p className="text-xs text-violet-200/70 font-rubik leading-relaxed">
+                        La portada se optimiza y almacena en el CDN al guardar el evento. Aparecerá en la tarjeta de inicio.
                     </p>
                 </div>
             </div>
         </div>
     );
 
-    // Helpers para inputs del render
     const handleInp = (e: any, f: string, n: boolean) => {
         const val = e.target.type === 'checkbox' ? e.target.checked : e.currentTarget.value;
         if (n) setNewEvent(p => ({ ...p, [f]: val }));
         else setCurrentEvent(p => p ? { ...p, [f]: val } : null);
     };
+
     const handleDate = (e: any, f: string, n: boolean) => {
         const val = e.target.value;
         if (n) setNewEvent(p => ({ ...p, [f]: val }));
         else setCurrentEvent(p => p ? { ...p, [f]: val } : null);
     };
 
+    const filteredEvents = events.filter(e =>
+        !search.trim() ||
+        e.name.toLowerCase().includes(search.toLowerCase()) ||
+        (e.location && e.location.toLowerCase().includes(search.toLowerCase()))
+    );
+
     return (
-        <div className="relative w-full space-y-6">
-            {/* HEADER */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#0a0a0a] border border-white/5 p-4 rounded-2xl shadow-lg">
-                <div>
-                    <h2 className="text-2xl font-anton text-white uppercase tracking-wide">Eventos</h2>
-                    <p className="text-sm text-gray-500 font-rubik">Gestiona la agenda de la comunidad</p>
+        <div className="space-y-4">
+            {/* Barra de Herramientas y Acciones */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[#0f0f16]/90 border border-white/[0.08] shadow-xl">
+                {/* Buscador */}
+                <div className="relative flex-1 min-w-[240px] max-w-md">
+                    <Search
+                        size={16}
+                        className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Buscar por nombre o lugar..."
+                        value={search}
+                        onInput={(e) => setSearch((e.target as HTMLInputElement).value)}
+                        className="w-full pl-10 pr-9 py-2 text-sm bg-black/40 text-white placeholder:text-white/30 border border-white/10 rounded-xl focus:outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 transition-all font-rubik"
+                    />
+                    {search && (
+                        <button
+                            onClick={() => setSearch("")}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors cursor-pointer"
+                        >
+                            <X size={14} />
+                        </button>
+                    )}
                 </div>
-                <div className="flex gap-3">
+
+                {/* Botones de acción */}
+                <div className="flex items-center gap-2">
                     <button
                         onClick={refreshEvents}
-                        className="p-2 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all"
-                        title="Recargar lista"
+                        className="p-2.5 text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] rounded-xl border border-white/10 transition-colors cursor-pointer"
+                        title="Actualizar lista"
                     >
-                        <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+                        <RefreshCw size={16} className={loading ? "animate-spin text-violet-400" : ""} />
                     </button>
                     <button
                         onClick={openDialog}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl font-bold uppercase tracking-wider text-sm shadow-lg shadow-blue-900/20 transition-all hover:scale-105"
+                        className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:brightness-110 text-white px-4 py-2 rounded-xl font-rubik font-semibold text-xs uppercase tracking-wider shadow-lg shadow-violet-950/50 border border-violet-400/30 transition-all cursor-pointer"
                     >
-                        <Plus size={18} /> Nuevo Evento
+                        <Plus size={15} />
+                        <span>Nuevo Evento</span>
                     </button>
                 </div>
             </div>
 
-            {/* TABLA / LISTA */}
-            <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden shadow-xl min-h-[400px] relative">
+            {/* Tabla de Eventos */}
+            <div className="relative overflow-hidden rounded-2xl bg-[#0f0f16]/90 border border-white/[0.08] shadow-xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
-                        <thead className="bg-white/5 text-xs uppercase tracking-widest text-gray-400 font-bold">
-                            <tr>
-                                <th className="p-4 w-24 text-center">Portada</th>
-                                <th className="p-4">Evento</th>
-                                <th className="p-4">Estado</th>
-                                <th className="p-4">Ubicación</th>
-                                <th className="p-4 text-right">Acciones</th>
+                        <thead>
+                            <tr className="border-b border-white/[0.08] bg-white/[0.02] text-xs font-rubik font-semibold text-white/50 tracking-wider">
+                                <th className="py-3.5 px-4 w-16">Portada</th>
+                                <th className="py-3.5 px-4">Evento</th>
+                                <th className="py-3.5 px-4">Estado</th>
+                                <th className="py-3.5 px-4">Lugar</th>
+                                <th className="py-3.5 px-4 text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {events.map(event => (
-                                <tr key={event.id} className="group hover:bg-white/2 transition-colors">
-                                    <td className="p-4">
-                                        <div className="size-12 rounded-lg bg-white/5 overflow-hidden border border-white/10">
+                        <tbody className="divide-y divide-white/[0.05] text-sm">
+                            {filteredEvents.map(event => (
+                                <tr key={event.id} className="group hover:bg-white/[0.03] transition-colors">
+                                    <td className="py-3.5 px-4">
+                                        <div className="size-12 rounded-xl bg-black/60 overflow-hidden border border-white/10 shrink-0">
                                             <img
                                                 src={event.cover || "/og.webp"}
                                                 alt=""
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             />
                                         </div>
                                     </td>
-                                    <td className="p-4">
-                                        <div className="font-bold text-white text-base mb-0.5 flex items-center gap-2">
+                                    <td className="py-3.5 px-4">
+                                        <div className="font-rubik font-semibold text-white text-sm mb-1 flex items-center gap-2">
                                             {event.name}
-                                            {event.featured && <Star size={14} className="text-yellow-400 fill-yellow-400" />}
+                                            {event.featured && (
+                                                <span title="Evento Destacado">
+                                                    <Star size={14} className="text-amber-400 fill-amber-400 shrink-0" />
+                                                </span>
+                                            )}
                                         </div>
-                                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                                            <Calendar size={12} />
-                                            {event.startDate
-                                                ? DateTime.fromJSDate(event.startDate).toFormat("dd MMM yyyy, HH:mm")
-                                                : "Sin fecha"
-                                            }
+                                        <div className="flex items-center gap-1.5 text-xs text-white/40 font-rubik">
+                                            <Calendar size={13} className="text-white/30" />
+                                            <span>
+                                                {event.startDate
+                                                    ? DateTime.fromJSDate(event.startDate).toFormat("dd MMM yyyy, HH:mm")
+                                                    : "Sin fecha programada"
+                                                }
+                                            </span>
                                         </div>
                                     </td>
-                                    <td className="p-4">
+                                    <td className="py-3.5 px-4">
                                         {getStatusBadge(event)}
                                     </td>
-                                    <td className="p-4 text-sm text-gray-400">
+                                    <td className="py-3.5 px-4 text-xs font-rubik text-white/60">
                                         {event.location ? (
-                                            <span className="flex items-center gap-1.5"><MapPin size={14} /> {event.location}</span>
+                                            <span className="flex items-center gap-1.5 truncate max-w-[200px]">
+                                                <MapPin size={13} className="text-white/30 shrink-0" />
+                                                <span className="truncate">{event.location}</span>
+                                            </span>
                                         ) : (
-                                            <span className="text-gray-600 italic">--</span>
+                                            <span className="text-white/20 italic">No especificado</span>
                                         )}
                                     </td>
-                                    <td className="p-4 text-right">
-                                        <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                    <td className="py-3.5 px-4 text-right">
+                                        <div className="flex justify-end gap-1.5">
                                             <button
                                                 onClick={() => openEditorDialog(event)}
-                                                className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
-                                                title="Editar"
+                                                className="p-2 text-violet-300 hover:text-white hover:bg-violet-600/20 rounded-lg transition-colors cursor-pointer"
+                                                title="Editar evento"
                                             >
-                                                <Pencil size={18} />
+                                                <Pencil size={15} />
                                             </button>
                                             <button
                                                 onClick={() => deleteEvent(event.id)}
-                                                className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                                                title="Eliminar"
+                                                className="p-2 text-rose-400/80 hover:text-rose-300 hover:bg-rose-500/20 rounded-lg transition-colors cursor-pointer"
+                                                title="Eliminar evento"
                                             >
-                                                <Trash2 size={18} />
+                                                <Trash2 size={15} />
                                             </button>
                                         </div>
                                     </td>
@@ -497,56 +590,110 @@ export default function EventsManager() {
                 </div>
 
                 {/* Empty State */}
-                {events.length === 0 && !loading && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-                        <Calendar size={48} className="mb-4 opacity-20" />
-                        <p>No hay eventos registrados</p>
+                {filteredEvents.length === 0 && !loading && (
+                    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                        <div className="size-12 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-white/30 mb-3">
+                            <Calendar size={22} />
+                        </div>
+                        <p className="font-rubik font-medium text-white text-sm">
+                            No se encontraron eventos
+                        </p>
+                        <p className="font-rubik text-xs text-white/40 mt-1 max-w-sm">
+                            {search
+                                ? `No hay coincidencias para "${search}".`
+                                : "Aún no hay eventos registrados en la agenda comunitaria."}
+                        </p>
                     </div>
                 )}
 
-                {/* Loading / Infinite Scroll Trigger */}
+                {/* Infinite Scroll Trigger */}
                 {(hasMore || loading) && (
-                    <div ref={loadMoreRef} className="p-6 flex justify-center">
-                        {loading && <Loader2 size={24} className="animate-spin text-blue-500" />}
+                    <div ref={loadMoreRef} className="p-4 flex justify-center">
+                        {loading && (
+                            <div className="flex items-center gap-2 text-xs font-rubik text-white/40">
+                                <Loader2 size={16} className="animate-spin text-violet-400" />
+                                <span>Cargando eventos...</span>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
 
-            {/* MODAL CREAR */}
+            {/* MODAL CREAR EVENTO */}
             <dialog
                 ref={dialogRef}
-                className="backdrop:bg-black/80 backdrop:backdrop-blur-xs bg-[#111] text-white border border-white/10 rounded-2xl shadow-2xl p-0 w-full max-w-4xl m-auto open:animate-in open:fade-in open:zoom-in-95"
+                className="backdrop:bg-black/80 backdrop:backdrop-blur-md bg-[#0f0f16] text-white border border-white/10 rounded-2xl shadow-2xl p-0 w-full max-w-4xl m-auto"
                 onClick={(e) => e.target === dialogRef.current && closeDialog()}
             >
-                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#15151a]">
-                    <h3 className="text-xl font-bold font-anton uppercase tracking-wide">Nuevo Evento</h3>
-                    <button onClick={closeDialog} className="text-gray-500 hover:text-white transition-colors"><X size={20} /></button>
+                <div className="p-5 border-b border-white/[0.08] flex justify-between items-center bg-[#13131c]">
+                    <div>
+                        <h3 className="text-lg font-anton uppercase tracking-wide text-white leading-none">
+                            Nuevo Evento Comunitario
+                        </h3>
+                        <p className="font-rubik text-xs text-white/40 mt-1">Completa los datos para publicar en cartelera.</p>
+                    </div>
+                    <button
+                        onClick={closeDialog}
+                        className="text-white/40 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                    >
+                        <X size={18} />
+                    </button>
                 </div>
-                <div className="p-6 md:p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div className="p-6 max-h-[75vh] overflow-y-auto">
                     {renderForm(newEvent, true, handleInp, handleDate)}
                 </div>
-                <div className="p-6 border-t border-white/10 bg-[#15151a] flex justify-end gap-3">
-                    <button onClick={closeDialog} className="px-4 py-2 text-sm font-bold text-gray-400 hover:text-white transition-colors">Cancelar</button>
-                    <button onClick={createEvent} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg transition-all">Crear Evento</button>
+                <div className="p-4 border-t border-white/[0.08] bg-[#13131c] flex justify-end gap-2.5">
+                    <button
+                        onClick={closeDialog}
+                        className="px-4 py-2 text-xs font-rubik font-medium text-white/60 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={createEvent}
+                        className="px-5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:brightness-110 text-white rounded-xl text-xs font-rubik font-semibold uppercase tracking-wider shadow-lg shadow-violet-950/50 border border-violet-400/30 transition-all cursor-pointer"
+                    >
+                        Crear Evento
+                    </button>
                 </div>
             </dialog>
 
-            {/* MODAL EDITAR */}
+            {/* MODAL EDITAR EVENTO */}
             <dialog
                 ref={editorDialogRef}
-                className="backdrop:bg-black/80 backdrop:backdrop-blur-xs bg-[#111] text-white border border-white/10 rounded-2xl shadow-2xl p-0 w-full max-w-4xl m-auto open:animate-in open:fade-in open:zoom-in-95"
+                className="backdrop:bg-black/80 backdrop:backdrop-blur-md bg-[#0f0f16] text-white border border-white/10 rounded-2xl shadow-2xl p-0 w-full max-w-4xl m-auto"
                 onClick={(e) => e.target === editorDialogRef.current && closeEditorDialog()}
             >
-                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#15151a]">
-                    <h3 className="text-xl font-bold font-anton uppercase tracking-wide">Editar Evento</h3>
-                    <button onClick={closeEditorDialog} className="text-gray-500 hover:text-white transition-colors"><X size={20} /></button>
+                <div className="p-5 border-b border-white/[0.08] flex justify-between items-center bg-[#13131c]">
+                    <div>
+                        <h3 className="text-lg font-anton uppercase tracking-wide text-white leading-none">
+                            Editar Evento
+                        </h3>
+                        <p className="font-rubik text-xs text-white/40 mt-1">Modifica los detalles de la agenda.</p>
+                    </div>
+                    <button
+                        onClick={closeEditorDialog}
+                        className="text-white/40 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                    >
+                        <X size={18} />
+                    </button>
                 </div>
-                <div className="p-6 md:p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div className="p-6 max-h-[75vh] overflow-y-auto">
                     {currentEvent && renderForm(currentEvent, false, handleInp, handleDate)}
                 </div>
-                <div className="p-6 border-t border-white/10 bg-[#15151a] flex justify-end gap-3">
-                    <button onClick={closeEditorDialog} className="px-4 py-2 text-sm font-bold text-gray-400 hover:text-white transition-colors">Cancelar</button>
-                    <button onClick={updateEvent} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg transition-all">Guardar Cambios</button>
+                <div className="p-4 border-t border-white/[0.08] bg-[#13131c] flex justify-end gap-2.5">
+                    <button
+                        onClick={closeEditorDialog}
+                        className="px-4 py-2 text-xs font-rubik font-medium text-white/60 hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={updateEvent}
+                        className="px-5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:brightness-110 text-white rounded-xl text-xs font-rubik font-semibold uppercase tracking-wider shadow-lg shadow-violet-950/50 border border-violet-400/30 transition-all cursor-pointer"
+                    >
+                        Guardar Cambios
+                    </button>
                 </div>
             </dialog>
         </div>

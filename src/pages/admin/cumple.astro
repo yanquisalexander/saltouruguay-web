@@ -1,5 +1,6 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
 import { checkAdmin } from "@/lib/checkAdmin";
 import { getSession } from "auth-astro/server";
 import BirthdayAdmin from "@/components/admin/BirthdayAdmin";
@@ -9,6 +10,15 @@ const checkResult = await checkAdmin(session);
 if (checkResult) return checkResult;
 ---
 
-<AdminLayout title="Admin — Mensajes de Cumpleaños">
+<AdminLayout title="Cumpleaños" session={session} description="Gestión de mensajes de cumpleaños pendientes">
+  <div class="space-y-6">
+    <AdminPageHeader
+      title="Mensajes de Cumpleaños"
+      description="Revisa y aprueba los mensajes de cumpleaños enviados por la comunidad."
+      pathname="/admin/cumple"
+      badge="Comunidad"
+      badgeTone="violet"
+    />
     <BirthdayAdmin client:only="preact" />
+  </div>
 </AdminLayout>

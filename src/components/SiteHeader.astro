@@ -266,13 +266,15 @@ const getBadgeStyles = (label: string, colorClassName?: string) => {
                   transition:name="discord-widget-count"
                 />
               </div>
-              <div class="opacity-70 hover:opacity-100 transition-opacity duration-200">
-                <Notifications
-                  client:load
-                  transition:persist
-                  transition:name="notifications"
-                />
-              </div>
+              {session?.user && (
+                <div class="opacity-70 hover:opacity-100 transition-opacity duration-200">
+                  <Notifications
+                    client:load
+                    transition:persist
+                    transition:name="notifications"
+                  />
+                </div>
+              )}
               <div class="relative z-50">
                 <CurrentUser
                   user={session?.user || null}

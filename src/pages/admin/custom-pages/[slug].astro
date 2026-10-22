@@ -23,12 +23,15 @@ if (!customPage) {
 }
 ---
 
-<AdminLayout title={`Editando "${customPage.title}"`} session={session}>
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16 pb-16">
+<AdminLayout title={`Editor · ${customPage.title}`} session={session}>
+  <div class="space-y-6">
     <AdminPageHeader
-      title={`Editando "${customPage.title}"`}
+      title={`Editor: ${customPage.title}`}
+      description="Personaliza el contenido en bloques, revisa el historial de versiones y publica cambios en vivo."
       pathname={`/admin/custom-pages/${slug}`}
+      badge={customPage.isDraft ? "Borrador" : "Publicado"}
+      badgeTone={customPage.isDraft ? "amber" : "emerald"}
     />
-    <CustomPageEditor customPage={customPage} client:only />
+    <CustomPageEditor customPage={customPage} client:only="preact" />
   </div>
 </AdminLayout>

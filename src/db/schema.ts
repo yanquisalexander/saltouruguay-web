@@ -551,6 +551,7 @@ export const userRelations = relations(UsersTable, ({ one, many }) => ({
     sessions: many(SessionsTable),
     extremo3RepechajeVotes: many(Extremo3RepechajeVotesTable),
     linkedAccounts: many(LinkedAccountsTable),
+    expoPushTokens: many(ExpoPushTokensTable),
 }))
 
 export const linkedAccountsRelations = relations(LinkedAccountsTable, ({ one }) => ({
@@ -1230,6 +1231,16 @@ export const PushSubscriptionsTable = pgTable("push_subscriptions", {
     p256dh: varchar("p256dh").notNull(),
     auth: varchar("auth").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const ExpoPushTokensTable = pgTable("expo_push_tokens", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => UsersTable.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    platform: varchar("platform", { length: 20 }),
+    deviceName: varchar("device_name", { length: 255 }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // --- TOURNAMENTS SYSTEM ---

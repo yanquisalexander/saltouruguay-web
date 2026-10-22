@@ -216,7 +216,7 @@ const shouldShowAds = !isAdFreeFlow;
     <ChatDock client:only="preact" currentUser={session?.user || null} />
 
     <DebugInfo client:load transition:name="debug-info" transition:persist />
-    <PushNotificationBanner client:idle />
+    {session?.user && <PushNotificationBanner client:idle isAuthenticated />}
 
     <img
       src="https://librecounter.org/counter.svg"

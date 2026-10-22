@@ -13,13 +13,19 @@ if (!session?.user.isAdmin) {
 }
 ---
 
-<AdminLayout title="Eventos" session={session}>
-  <div class="flex flex-col w-full max-w-6xl mx-auto space-y-6">
+<AdminLayout
+  title="Eventos"
+  session={session}
+  description="Gestión y programación de eventos comunitarios"
+>
+  <div class="space-y-6">
     <AdminPageHeader
       title="Gestión de Eventos"
-      description="Crea, edita y administra los eventos comunitarios y calendarios en vivo."
+      description="Crea, edita y administra los eventos comunitarios y el calendario en vivo del servidor."
       pathname="/admin/eventos"
+      badge="Agenda"
+      badgeTone="violet"
     />
-    <EventsManager client:only />
+    <EventsManager client:only="preact" />
   </div>
 </AdminLayout>

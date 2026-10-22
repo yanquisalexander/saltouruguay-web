@@ -1,5 +1,6 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
 import { checkAdmin } from "@/lib/checkAdmin";
 import { getSession } from "auth-astro/server";
 import { client as db } from "@/db/client";
@@ -9,7 +10,6 @@ import {
   LucidePlus,
   LucideTrophy,
   LucideUsers,
-  LucideCalendar,
   LucideEye,
   LucideSettings,
 } from "lucide-preact";
@@ -27,135 +27,138 @@ const tournaments = await db.query.TournamentsTable.findMany({
 });
 ---
 
-<AdminLayout title="Gestión de Torneos">
-  <div class="flex justify-between items-center mb-8">
-    <div>
-      <h1 class="text-3xl font-bold text-white mb-2">Torneos</h1>
-      <p class="text-gray-400">Administra los torneos de la plataforma.</p>
-    </div>
-    <a
-      href="/torneos"
-      target="_blank"
-      class="bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors"
+<AdminLayout title="Gestión de Torneos" session={session} description="Administra los torneos de la plataforma">
+  <div class="space-y-6">
+    <AdminPageHeader
+      title="Torneos"
+      description="Administra los torneos de la plataforma."
+      pathname="/admin/torneos"
+      badge="Competición"
+      badgeTone="violet"
     >
-      <LucidePlus className="w-5 h-5" />
-      Crear Nuevo (Vista Pública)
-    </a>
-  </div>
+      <div slot="actions" class="flex items-center gap-2">
+        <a
+          href="/torneos"
+          target="_blank"
+          class="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-xl font-rubik font-semibold text-xs uppercase tracking-wider transition-colors"
+        >
+          <LucidePlus size={15} />
+          Crear Nuevo (Vista Pública)
+        </a>
+      </div>
+    </AdminPageHeader>
 
-  <div class="bg-[#1a1b1e] border border-white/10 rounded-xl overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr
-            class="bg-white/5 border-b border-white/10 text-gray-400 text-sm uppercase tracking-wider"
-          >
-            <th class="p-4 font-medium">Nombre</th>
-            <th class="p-4 font-medium">Estado</th>
-            <th class="p-4 font-medium">Formato</th>
-            <th class="p-4 font-medium">Participantes</th>
-            <th class="p-4 font-medium">Creador</th>
-            <th class="p-4 font-medium">Fecha</th>
-            <th class="p-4 font-medium text-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-white/5">
-          {
-            tournaments.map((tournament) => (
-              <tr class="hover:bg-white/5 transition-colors">
-                <td class="p-4">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-sm bg-white/10 flex items-center justify-center overflow-hidden">
-                      {tournament.bannerUrl ? (
-                        <img
-                          src={tournament.bannerUrl}
-                          alt=""
-                          class="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <LucideTrophy className="w-5 h-5 text-gray-500" />
-                      )}
-                    </div>
-                    <div>
-                      <div class="font-bold text-white flex items-center gap-2">
-                        {tournament.name}
-                        {tournament.showTeamsFeatured && (
-                          <span class="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs font-bold rounded-sm border border-blue-500/30" title="Equipos destacados en página principal">
-                            EQUIPOS DESTACADOS
-                          </span>
+    <div class="rounded-2xl bg-[#0f0f16] border border-white/[0.08] overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-white/[0.08] bg-white/[0.02] text-xs font-rubik font-semibold text-white/50 tracking-wider">
+              <th class="p-4 font-medium">Nombre</th>
+              <th class="p-4 font-medium">Estado</th>
+              <th class="p-4 font-medium">Formato</th>
+              <th class="p-4 font-medium">Participantes</th>
+              <th class="p-4 font-medium">Creador</th>
+              <th class="p-4 font-medium">Fecha</th>
+              <th class="p-4 font-medium text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/[0.05]">
+            {
+              tournaments.map((tournament) => (
+                <tr class="hover:bg-white/[0.03] transition-colors text-sm">
+                  <td class="p-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center overflow-hidden shrink-0">
+                        {tournament.bannerUrl ? (
+                          <img
+                            src={tournament.bannerUrl}
+                            alt=""
+                            class="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <LucideTrophy size={18} className="text-white/40" />
                         )}
                       </div>
-                      <div class="text-xs text-gray-500">
-                        ID: {tournament.id}
+                      <div class="min-w-0">
+                        <div class="font-rubik font-semibold text-white">
+                          {tournament.name}
+                        </div>
+                        <div class="text-xs text-white/40 font-mono">
+                          ID: {tournament.id}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </td>
-                <td class="p-4">
-                  <span
-                    class={`px-2 py-1 rounded text-xs font-bold uppercase
-                                    ${
-                                      tournament.status === "registration"
-                                        ? "bg-green-500/20 text-green-400"
-                                        : tournament.status === "in_progress"
-                                          ? "bg-blue-500/20 text-blue-400"
-                                          : tournament.status === "completed"
-                                            ? "bg-gray-500/20 text-gray-400"
-                                            : "bg-yellow-500/20 text-yellow-400"
-                                    }`}
-                  >
-                    {tournament.status}
-                  </span>
-                </td>
-                <td class="p-4 text-gray-300 capitalize">
-                  {tournament.format.replace("_", " ")}
-                </td>
-                <td class="p-4 text-gray-300">
-                  <div class="flex items-center gap-1">
-                    <LucideUsers className="w-4 h-4 text-gray-500" />
-                    {tournament.participants.length} /{" "}
-                    {tournament.maxParticipants || "∞"}
-                  </div>
-                </td>
-                <td class="p-4 text-gray-300">
-                  {tournament.creator.displayName}
-                </td>
-                <td class="p-4 text-gray-300 text-sm">
-                  {new Date(tournament.createdAt).toLocaleDateString()}
-                </td>
-                <td class="p-4 text-right">
-                  <div class="flex gap-2 justify-end">
-                    <a
-                      href={`/admin/torneos/${tournament.id}`}
-                      class="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-violet-600/20 hover:bg-violet-600/30 text-violet-400 hover:text-violet-300 transition-colors border border-violet-500/20"
-                      title="Gestionar Torneo"
+                  </td>
+                  <td class="p-4">
+                    <span
+                      class={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-rubik font-semibold border ${
+                        tournament.status === "registration"
+                          ? "bg-emerald-500/10 text-emerald-300 border-emerald-400/25"
+                          : tournament.status === "in_progress"
+                            ? "bg-sky-500/10 text-sky-300 border-sky-400/25"
+                            : tournament.status === "completed"
+                              ? "bg-white/5 text-white/50 border-white/10"
+                              : "bg-amber-500/10 text-amber-300 border-amber-400/25"
+                      }`}
                     >
-                      <LucideSettings className="w-4 h-4" />
-                    </a>
-                    <a
-                      href={`/torneos/${tournament.id}`}
-                      target="_blank"
-                      class="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                      title="Ver Torneo"
-                    >
-                      <LucideEye className="w-4 h-4" />
-                    </a>
-                  </div>
-                </td>
-              </tr>
-            ))
-          }
-          {
-            tournaments.length === 0 && (
-              <tr>
-                <td colspan="7" class="p-8 text-center text-gray-500">
-                  No hay torneos registrados.
-                </td>
-              </tr>
-            )
-          }
-        </tbody>
-      </table>
+                      {tournament.status}
+                    </span>
+                  </td>
+                  <td class="p-4 text-white/70 font-rubik capitalize">
+                    {tournament.format.replace("_", " ")}
+                  </td>
+                  <td class="p-4 text-white/70 font-rubik">
+                    <div class="flex items-center gap-1.5">
+                      <LucideUsers size={14} className="text-white/40" />
+                      {tournament.participants.length} /{" "}
+                      {tournament.maxParticipants || "∞"}
+                    </div>
+                  </td>
+                  <td class="p-4 text-white/70 font-rubik">
+                    {tournament.creator.displayName}
+                  </td>
+                  <td class="p-4 text-white/50 text-xs font-rubik">
+                    {new Date(tournament.createdAt).toLocaleDateString()}
+                  </td>
+                  <td class="p-4 text-right">
+                    <div class="flex gap-1.5 justify-end">
+                      <a
+                        href={`/admin/torneos/${tournament.id}`}
+                        class="inline-flex items-center justify-center size-8 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 border border-violet-400/20 transition-colors"
+                        title="Gestionar Torneo"
+                      >
+                        <LucideSettings size={15} />
+                      </a>
+                      <a
+                        href={`/torneos/${tournament.id}`}
+                        target="_blank"
+                        class="inline-flex items-center justify-center size-8 rounded-xl bg-white/5 hover:bg-white/10 text-white/50 hover:text-white border border-white/10 transition-colors"
+                        title="Ver Torneo"
+                      >
+                        <LucideEye size={15} />
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            }
+            {
+              tournaments.length === 0 && (
+                <tr>
+                  <td colspan="7" class="p-12 text-center">
+                    <div class="flex flex-col items-center gap-3">
+                      <div class="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/30">
+                        <LucideTrophy size={22} />
+                      </div>
+                      <p class="font-rubik text-sm text-white/50">No hay torneos registrados.</p>
+                    </div>
+                  </td>
+                </tr>
+              )
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </AdminLayout>

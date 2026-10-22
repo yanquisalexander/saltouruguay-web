@@ -1,4 +1,4 @@
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useCallback } from "preact/hooks";
 import { actions } from "astro:actions";
 
 // Helper to convert VAPID key
@@ -17,32 +17,81 @@ function urlBase64ToUint8Array(base64String: string) {
     return outputArray;
 }
 
-export function usePushNotifications() {
+export function usePushNotifications(enabled = true) {
     const [permission, setPermission] = useState<NotificationPermission>("default");
     const [isSupported, setIsSupported] = useState(false);
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
-            setIsSupported(true);
-            setPermission(Notification.permission);
+    const syncSubscription = useCallback(async (subscription: PushSubscription | null) => {
+        if (!subscription) {
+            setIsSubscribed(false);
+            return;
+        }
 
-            // Check if already subscribed
-            navigator.serviceWorker.ready.then(registration => {
-                registration.pushManager.getSubscription().then(subscription => {
-                    setIsSubscribed(!!subscription);
-                });
+        const keys = subscription.toJSON().keys;
+        if (!keys?.p256dh || !keys?.auth) {
+            setIsSubscribed(false);
+            return;
+        }
+
+        try {
+            await actions.notifications.subscribe({
+                endpoint: subscription.endpoint,
+                keys: {
+                    p256dh: keys.p256dh,
+                    auth: keys.auth
+                }
             });
+            setIsSubscribed(true);
+        } catch (error) {
+            console.error("Error syncing push subscription:", error);
+            setIsSubscribed(false);
         }
     }, []);
 
+    useEffect(() => {
+        if (!enabled) {
+            setIsSupported(false);
+            setIsSubscribed(false);
+            return;
+        }
+
+        if (!('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window)) {
+            return;
+        }
+
+        setIsSupported(true);
+        setPermission(Notification.permission);
+
+        let cancelled = false;
+
+        (async () => {
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                const subscription = await registration.pushManager.getSubscription();
+                if (!cancelled) {
+                    await syncSubscription(subscription);
+                }
+            } catch (error) {
+                console.error("Error checking push subscription:", error);
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [enabled, syncSubscription]);
+
     const subscribe = async () => {
-        if (!isSupported) return;
+        if (!enabled || !isSupported) return;
         setLoading(true);
         try {
-            const registration = await navigator.serviceWorker.register('/sw.js');
-            await navigator.serviceWorker.ready;
+            const permissionResult = await Notification.requestPermission();
+            setPermission(permissionResult);
+            if (permissionResult !== 'granted') {
+                return;
+            }
 
             const vapidKey = import.meta.env.PUBLIC_VAPID_KEY;
             if (!vapidKey) {
@@ -50,27 +99,20 @@ export function usePushNotifications() {
                 return;
             }
 
-            const subscription = await registration.pushManager.subscribe({
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            if (!registration.active) {
+                await navigator.serviceWorker.ready;
+            }
+
+            const existing = await registration.pushManager.getSubscription();
+            const subscription = existing ?? await registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(vapidKey)
             });
 
-            // Send to server
-            const keys = subscription.toJSON().keys;
-            if (keys && keys.p256dh && keys.auth) {
-                await actions.notifications.subscribe({
-                    endpoint: subscription.endpoint,
-                    keys: {
-                        p256dh: keys.p256dh,
-                        auth: keys.auth
-                    }
-                });
-                setPermission("granted");
-                setIsSubscribed(true);
-            }
+            await syncSubscription(subscription);
         } catch (error) {
             console.error("Error subscribing to push notifications:", error);
-            // If permission was denied during the process
             if (Notification.permission === 'denied') {
                 setPermission('denied');
             }

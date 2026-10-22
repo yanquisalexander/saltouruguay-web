@@ -465,7 +465,7 @@ export default function SaltogramApp({
 
                             <div className="w-px h-7 bg-white/10 mx-0.5 hidden sm:block" />
 
-                            <Notifications unreadCount={unreadNotificationsCount} />
+                            {user && <Notifications unreadCount={unreadNotificationsCount} />}
 
                             {/* Avatar del usuario */}
                             {user && (

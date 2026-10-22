@@ -2,11 +2,16 @@ import { useState, useEffect } from "preact/hooks";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { LucideBell, LucideX } from "lucide-preact";
 
-export default function PushNotificationBanner() {
-    const { permission, isSupported, loading, subscribe } = usePushNotifications();
+export default function PushNotificationBanner({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
+    const { permission, isSupported, loading, subscribe } = usePushNotifications(isAuthenticated);
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
+        if (!isAuthenticated) {
+            setIsVisible(false);
+            return;
+        }
+
         // Show only if supported, permission is default (not granted/denied), and not dismissed
         const dismissed = localStorage.getItem("push-banner-dismissed");
         if (isSupported && permission === "default" && !dismissed) {
@@ -16,7 +21,7 @@ export default function PushNotificationBanner() {
         } else {
             setIsVisible(false);
         }
-    }, [isSupported, permission]);
+    }, [isAuthenticated, isSupported, permission]);
 
     const handleDismiss = () => {
         setIsVisible(false);
@@ -28,7 +33,7 @@ export default function PushNotificationBanner() {
         // If successful (permission becomes granted), the effect will hide the banner
     };
 
-    if (!isVisible) return null;
+    if (!isAuthenticated || !isVisible) return null;
 
     return (
         <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 animate-in slide-in-from-bottom-10 fade-in duration-500">

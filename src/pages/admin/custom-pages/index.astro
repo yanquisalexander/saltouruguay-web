@@ -13,13 +13,19 @@ if (!session?.user.isAdmin) {
 }
 ---
 
-<AdminLayout title="Páginas personalizadas" session={session}>
-  <div class="flex flex-col max-w-5xl mx-auto min-h-screen mt-16">
+<AdminLayout
+  title="CMS Páginas"
+  session={session}
+  description="Gestor de contenido estático y páginas personalizadas del sitio"
+>
+  <div class="space-y-6">
     <AdminPageHeader
-      title="Páginas personalizadas"
+      title="CMS de Páginas"
+      description="Crea, edita y publica artículos, reglamentos y páginas informativas independientes con editor visual por bloques."
       pathname="/admin/custom-pages"
+      badge="Editor CMS"
+      badgeTone="violet"
     />
-
     <CustomPagesManager client:idle />
   </div>
 </AdminLayout>

@@ -22,6 +22,7 @@ import { oauth as adminOauth } from "./admin/oauth";
 import { oauth as userOauth } from "./oauth";
 import { friends } from "./friends";
 import { events as adminEvents } from "./admin/events";
+import { notifications as adminNotifications } from "./admin/notifications";
 import { banco } from "./banco";
 import { pet } from "./pet";
 import { saltogram } from "./saltogram";
@@ -393,6 +394,7 @@ export const server = {
         serverTools,
         customPages,
         events: adminEvents,
+        notifications: adminNotifications,
         oauth: adminOauth,
         launchCinematic: defineAction({
             input: z.object({

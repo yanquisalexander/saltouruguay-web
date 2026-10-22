@@ -1,5 +1,6 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminPageHeader from "@/components/admin/AdminPageHeader.astro";
 import AdminExtremoPlayers from "@/components/admin/AdminExtremoPlayers.tsx";
 import { client } from "@/db/client";
 import { SaltoCraftExtremo3InscriptionsTable } from "@/db/schema";
@@ -11,10 +12,7 @@ import {
   LucideUserX,
   LucideRefreshCw,
   LucideTrash2,
-  LucideGamepad2,
   LucideEye,
-  LucideSwords,
-  LucideHistory,
   LucideServer,
   LucideSave,
 } from "lucide-preact";
@@ -49,40 +47,30 @@ const kpis = [
   { label: "Total inscriptos", value: totalInsc, icon: LucideUsers, iconClass: "text-sky-300", chipClass: "bg-sky-500/15 border-sky-400/25" },
   { label: "Con Minecraft", value: conMinecraft, icon: LucideUserCheck, iconClass: "text-emerald-300", chipClass: "bg-emerald-500/15 border-emerald-400/25" },
   { label: "Sin Minecraft", value: sinMinecraft, icon: LucideUserX, iconClass: "text-amber-300", chipClass: "bg-amber-500/15 border-amber-400/25" },
-  { label: "Jugaron SC previo", value: participaron, icon: LucideHistory, iconClass: "text-violet-300", chipClass: "bg-violet-500/15 border-violet-400/25" },
+  { label: "Jugaron SC previo", value: participaron, icon: LucideUsers, iconClass: "text-violet-300", chipClass: "bg-violet-500/15 border-violet-400/25" },
 ];
 ---
 
 <AdminLayout title="MC Extremo" description="Gestión de inscriptos de SaltoCraft Extremo 3" session={session}>
   <div class="space-y-6">
-    {/* Header de página */}
-    <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
-      <div class="min-w-0">
-        <p class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-violet-300/80 bg-violet-500/10 border border-violet-400/25 rounded-full px-3 py-1 mb-3">
-          <LucideSwords size={12} /> SaltoCraft · Extremo 3
-        </p>
-        <h2 class="font-anton text-3xl sm:text-4xl text-white uppercase leading-none flex items-center gap-3">
-          <span class="size-11 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-950/50 border border-violet-300/30 shrink-0">
-            <LucideGamepad2 size={22} className="text-white" />
-          </span>
-          Gestión de jugadores
-        </h2>
-        <p class="text-sm text-white/40 mt-2">
-          Sincronizá inscripciones, confirmá participantes y administrá vidas.
-        </p>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2 shrink-0">
+    <AdminPageHeader
+      title="SaltoCraft Extremo"
+      description="Sincronizá inscripciones, confirmá participantes y administrá vidas."
+      pathname="/admin/mc-extremo"
+      badge="Extremo 3"
+      badgeTone="violet"
+    >
+      <div slot="actions" class="flex flex-wrap items-center gap-2">
         <button
           id="preview-btn"
-          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-xs font-rubik font-medium transition-colors cursor-pointer"
         >
           <LucideEye size={15} />
           Preview
         </button>
         <button
           id="sync-btn"
-          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:brightness-110 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-violet-950/50 border border-violet-300/25 cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-rubik font-semibold transition-colors cursor-pointer"
         >
           <LucideRefreshCw size={15} />
           Sincronizar
@@ -90,18 +78,18 @@ const kpis = [
         <button
           id="clear-sync-btn"
           title="Eliminar inscripciones locales y sincronizar desde cero"
-          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 border border-red-500/25 hover:border-red-500 text-red-300 hover:text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-xs font-rubik font-medium transition-colors cursor-pointer"
         >
           <LucideTrash2 size={15} />
           Limpiar y sincronizar
         </button>
       </div>
-    </div>
+    </AdminPageHeader>
 
     {/* KPI strip */}
-    <dl class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+    <dl class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {kpis.map((kpi) => (
-        <div class="rounded-2xl bg-white/[0.04] border border-white/[0.07] hover:border-white/15 transition-colors px-4 py-3.5 flex items-center gap-3">
+        <div class="rounded-2xl bg-[#0f0f16] border border-white/[0.08] px-4 py-3.5 flex items-center gap-3">
           <span class={`size-10 rounded-xl border flex items-center justify-center shrink-0 ${kpi.chipClass}`}>
             <kpi.icon size={18} class={kpi.iconClass} />
           </span>
@@ -117,84 +105,80 @@ const kpis = [
     <div id="sync-status" class="hidden rounded-2xl border text-sm font-rubik px-4 py-3.5"></div>
 
     {/* DNS SRV — Cloudflare */}
-    <section class="relative rounded-3xl border border-white/10 bg-zinc-950/60 backdrop-blur-xl shadow-xl overflow-hidden">
-      <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent pointer-events-none"></div>
-      <div class="px-5 sm:px-6 py-5">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div class="flex items-center gap-3 min-w-0">
-            <span class="size-10 rounded-xl bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center shrink-0">
-              <LucideServer size={18} class="text-emerald-300" />
-            </span>
-            <div class="min-w-0">
-              <h3 class="font-anton text-lg text-white uppercase tracking-wide leading-none">DNS SRV · Extremo</h3>
-              <p class="text-xs text-white/40 mt-1 font-mono truncate">_minecraft._tcp.extremo.play.saltouruguayserver.com · TTL 60s</p>
-            </div>
+    <section class="rounded-2xl bg-[#0f0f16] border border-white/[0.08] p-5 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="size-10 rounded-xl bg-emerald-500/15 border border-emerald-400/25 flex items-center justify-center shrink-0">
+            <LucideServer size={18} class="text-emerald-300" />
+          </span>
+          <div class="min-w-0">
+            <h3 class="font-anton text-lg text-white uppercase tracking-wide leading-none">DNS SRV · Extremo</h3>
+            <p class="text-xs text-white/40 mt-1 font-mono truncate">_minecraft._tcp.extremo.play.saltouruguayserver.com · TTL 60s</p>
           </div>
+        </div>
+        <button
+          id="srv-refresh-btn"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-xs font-rubik font-medium transition-colors cursor-pointer shrink-0"
+        >
+          <LucideRefreshCw size={14} />
+          Actualizar
+        </button>
+      </div>
+
+      <div id="srv-status" class="hidden rounded-2xl border text-sm font-rubik px-4 py-3 mb-4"></div>
+
+      <div class="rounded-xl bg-black/40 border border-white/10 px-4 py-3.5 mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
+        <span class="text-[11px] font-bold uppercase tracking-widest text-white/40 shrink-0">Actual</span>
+        <span id="srv-current" class="font-mono text-emerald-200 truncate">Cargando…</span>
+        <span id="srv-meta" class="text-xs text-white/40 font-rubik sm:ml-auto shrink-0"></span>
+      </div>
+
+      <form id="srv-form" class="grid grid-cols-1 sm:grid-cols-[1fr_160px_auto] gap-2.5">
+        <label class="block">
+          <span class="text-[11px] font-bold uppercase tracking-widest text-white/40">Target</span>
+          <input
+            id="srv-target"
+            type="text"
+            placeholder="ej: br pools.host.com"
+            autocomplete="off"
+            spellcheck={false}
+            class="mt-1.5 w-full rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400/50 focus:bg-white/[0.07] outline-none px-3.5 py-2.5 text-sm font-mono text-white placeholder:text-white/25 transition-colors"
+          />
+        </label>
+        <label class="block">
+          <span class="text-[11px] font-bold uppercase tracking-widest text-white/40">Puerto</span>
+          <input
+            id="srv-port"
+            type="number"
+            min="1"
+            max="65535"
+            placeholder="25565"
+            class="mt-1.5 w-full rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400/50 focus:bg-white/[0.07] outline-none px-3.5 py-2.5 text-sm font-mono text-white placeholder:text-white/25 transition-colors"
+          />
+        </label>
+        <div class="flex items-end">
           <button
-            id="srv-refresh-btn"
-            class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0"
+            type="submit"
+            id="srv-save-btn"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-rubik font-semibold transition-colors cursor-pointer"
           >
-            <LucideRefreshCw size={14} />
-            Actualizar
+            <LucideSave size={15} />
+            Guardar
           </button>
         </div>
-
-        <div id="srv-status" class="hidden rounded-2xl border text-sm font-rubik px-4 py-3 mb-4"></div>
-
-        <div class="rounded-2xl bg-black/40 border border-white/10 px-4 py-3.5 mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
-          <span class="text-[11px] font-bold uppercase tracking-widest text-white/40 shrink-0">Actual</span>
-          <span id="srv-current" class="font-mono text-emerald-200 truncate">Cargando…</span>
-          <span id="srv-meta" class="text-xs text-white/40 font-rubik sm:ml-auto shrink-0"></span>
-        </div>
-
-        <form id="srv-form" class="grid grid-cols-1 sm:grid-cols-[1fr_160px_auto] gap-2.5">
-          <label class="block">
-            <span class="text-[11px] font-bold uppercase tracking-widest text-white/40">Target</span>
-            <input
-              id="srv-target"
-              type="text"
-              placeholder="ej: br pools.host.com"
-              autocomplete="off"
-              spellcheck={false}
-              class="mt-1.5 w-full rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400/50 focus:bg-white/[0.07] outline-none px-3.5 py-2.5 text-sm font-mono text-white placeholder:text-white/25 transition-colors"
-            />
-          </label>
-          <label class="block">
-            <span class="text-[11px] font-bold uppercase tracking-widest text-white/40">Puerto</span>
-            <input
-              id="srv-port"
-              type="number"
-              min="1"
-              max="65535"
-              placeholder="25565"
-              class="mt-1.5 w-full rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400/50 focus:bg-white/[0.07] outline-none px-3.5 py-2.5 text-sm font-mono text-white placeholder:text-white/25 transition-colors"
-            />
-          </label>
-          <div class="flex items-end">
-            <button
-              type="submit"
-              id="srv-save-btn"
-              class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-emerald-950/50 border border-emerald-300/25 cursor-pointer"
-            >
-              <LucideSave size={15} />
-              Guardar
-            </button>
-          </div>
-        </form>
-        <p class="text-[11px] text-white/30 font-rubik mt-3">Priority y weight se conservan. TTL fijo en 60s para propagación rápida. El cambio redirige a los jugadores al próximo ping del server.</p>
-      </div>
+      </form>
+      <p class="text-[11px] text-white/30 font-rubik mt-3">Priority y weight se conservan. TTL fijo en 60s para propagación rápida. El cambio redirige a los jugadores al próximo ping del server.</p>
     </section>
 
     {/* Player Management */}
-    <section class="relative rounded-3xl border border-white/10 bg-zinc-950/60 backdrop-blur-xl shadow-xl overflow-hidden">
-      <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-400/30 to-transparent pointer-events-none"></div>
+    <section class="rounded-2xl bg-[#0f0f16] border border-white/[0.08] overflow-hidden">
       <AdminExtremoPlayers client:idle />
     </section>
   </div>
 
   {/* Dry Run Modal */}
   <dialog id="dry-run-modal" class="backdrop:bg-black/80 backdrop:backdrop-blur-sm bg-transparent p-4 m-auto w-full max-w-4xl">
-    <div class="bg-[#131318] border border-white/10 rounded-3xl overflow-hidden shadow-2xl w-full max-h-[80vh] flex flex-col">
+    <div class="bg-[#131318] border border-white/10 rounded-2xl overflow-hidden shadow-2xl w-full max-h-[80vh] flex flex-col">
       <div class="px-6 py-4 border-b border-white/10 bg-white/[0.03] flex justify-between items-center shrink-0">
         <div>
           <h3 class="font-anton text-lg text-white uppercase tracking-wide leading-none">Preview de sincronización</h3>
@@ -235,7 +219,7 @@ const kpis = [
         <button id="modal-cancel-btn" class="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white rounded-xl font-bold transition-all text-xs uppercase tracking-wider cursor-pointer">
           Cerrar
         </button>
-        <button id="modal-sync-btn" class="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:brightness-110 text-white rounded-xl font-bold flex items-center gap-2 transition-all text-xs uppercase tracking-wider shadow-lg shadow-violet-950/50 border border-violet-300/25 cursor-pointer">
+        <button id="modal-sync-btn" class="px-4 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-bold flex items-center gap-2 transition-colors text-xs uppercase tracking-wider cursor-pointer">
           <LucideRefreshCw className="w-4 h-4" />
           Sincronizar ahora
         </button>
