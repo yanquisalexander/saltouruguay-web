@@ -43,10 +43,10 @@ export default function TwitchProcessedEvents() {
     }, [page, hasMore]);
 
     return (
-        <div className="relative w-full overflow-auto rounded-md">
+        <div className="relative w-full overflow-auto rounded-2xl">
             <table className="w-full caption-bottom text-sm">
-                <thead className="[&_tr]:border-b bg-[#13131f]">
-                    <tr class="border-b transition-colors border-[#1f1f2f] hover:bg-[#13131f]">
+                <thead className="[&_tr]:border-b bg-[#0f0f16]">
+                    <tr class="border-b transition-colors border-white/[0.08] hover:bg-[#0f0f16]">
                         <th className="h-12 px-4 text-left align-middle font-medium text-slate-400 w-[180px]">Fecha</th>
                         <th className="h-12 px-4 text-left align-middle font-medium text-slate-400">Tipo de Evento</th>
                         <th className="h-12 px-4 text-left align-middle font-medium text-slate-400">ID del Mensaje</th>
@@ -55,7 +55,7 @@ export default function TwitchProcessedEvents() {
                 </thead>
                 <tbody class="[&_tr:last-child]:border-0">
                     {events.map(event => (
-                        <tr key={event.messageId} className="border-b transition-colors border-[#1f1f2f] hover:bg-[#13131f] bg-[#09090f]">
+                        <tr key={event.messageId} className="border-b transition-colors border-white/[0.08] hover:bg-white/[0.03] bg-[#0f0f16]">
                             <td className="p-4 align-middle text-slate-300 font-mono text-xs">
                                 <div className="flex items-center gap-2">
                                     {new Date(event.processedAt).toLocaleString()}
@@ -69,11 +69,11 @@ export default function TwitchProcessedEvents() {
 
 
 
-                            <td className="p-4 align-middle font-mono text-xs text-indigo-300 overflow-hidden text-ellipsis">
+                            <td className="p-4 align-middle font-mono text-xs text-violet-300 overflow-hidden text-ellipsis">
                                 {event.messageId}
                             </td>
 
-                            <td className="p-4 align-middle font-mono text-xs text-indigo-300 overflow-hidden text-ellipsis max-h-[200px]">
+                            <td className="p-4 align-middle font-mono text-xs text-violet-300 overflow-hidden text-ellipsis max-h-[200px]">
                                 <pre className="whitespace-pre-wrap"
                                     dangerouslySetInnerHTML={event.eventData ? { __html: event.eventData } : { __html: "Sin datos" }}>
                                 </pre>

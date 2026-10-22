@@ -68,20 +68,20 @@ export default function BirthdayAdmin() {
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             <div className="flex items-center gap-3">
-                <LucideCake className="text-pink-400" size={24} />
+                <LucideCake className="text-violet-300" size={24} />
                 <h1 className="text-2xl font-bold text-white">Mensajes de Cumpleaños</h1>
-                <span className="bg-pink-500/20 text-pink-300 text-xs font-medium px-2.5 py-1 rounded-full">
+                <span className="bg-violet-500/10 text-violet-300 text-xs font-medium px-2.5 py-1 rounded-full">
                     {pending.length} pendiente{pending.length !== 1 ? "s" : ""}
                 </span>
             </div>
 
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4">
-                    <LucideLoader2 size={32} className="animate-spin text-pink-400" />
+                    <LucideLoader2 size={32} className="animate-spin text-violet-300" />
                     <p className="text-white/30 text-sm">Cargando mensajes...</p>
                 </div>
             ) : pending.length === 0 ? (
-                <div className="bg-[#1a1b2e] rounded-2xl border border-[#2a2d4a] p-10 text-center">
+                <div className="bg-[#0f0f16] rounded-2xl border border-white/[0.08] p-10 text-center">
                     <LucideCake className="text-white/10 mx-auto mb-3" size={48} />
                     <p className="text-white/30 text-sm">No hay mensajes pendientes</p>
                 </div>
@@ -90,12 +90,12 @@ export default function BirthdayAdmin() {
                     {pending.map((msg) => (
                         <div
                             key={msg.id}
-                            className="bg-[#1a1b2e] rounded-2xl border border-[#2a2d4a] p-4 flex items-start gap-4"
+                            className="bg-[#0f0f16] rounded-2xl border border-white/[0.08] p-4 flex items-start gap-4"
                         >
                             <img
                                 src={getAvatar(msg.avatar, msg.username)}
                                 alt={msg.displayName}
-                                className="w-10 h-10 rounded-full object-cover border-2 border-[#2a2d4a] shrink-0"
+                                className="w-10 h-10 rounded-full object-cover border-2 border-white/[0.08] shrink-0"
                             />
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
@@ -111,7 +111,7 @@ export default function BirthdayAdmin() {
                             <div className="flex gap-2 shrink-0">
                                 <button
                                     onClick={() => handleApprove(msg.id)}
-                                    className="p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors"
+                                    className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
                                     title="Aprobar"
                                 >
                                     <LucideCheck size={16} />

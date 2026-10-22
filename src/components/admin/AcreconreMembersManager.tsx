@@ -65,23 +65,23 @@ export default function AcreconreMembersManager() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case "approved":
-                return <span class="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold uppercase">Aprobado</span>;
+                return <span class="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/25 text-xs font-bold uppercase">Aprobado</span>;
             case "rejected":
-                return <span class="px-2 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-bold uppercase">Rechazado</span>;
+                return <span class="px-2 py-1 rounded-full bg-red-500/10 text-red-300 border border-red-400/25 text-xs font-bold uppercase">Rechazado</span>;
             default:
-                return <span class="px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-bold uppercase">Pendiente</span>;
+                return <span class="px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-300 border border-yellow-400/25 text-xs font-bold uppercase">Pendiente</span>;
         }
     };
 
     return (
         <div class="space-y-6">
-            <div class="flex flex-col md:flex-row gap-4 justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10">
+            <div class="flex flex-col md:flex-row gap-4 justify-between items-center bg-[#0f0f16] p-4 rounded-2xl border border-white/[0.08]">
                 <div class="relative w-full md:w-96">
                     <LucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                         type="text"
                         placeholder="Buscar por canal, discord o email..."
-                        class="w-full pl-10 pr-4 py-2 bg-black/20 border border-white/10 rounded-xl text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50"
+                        class="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-hidden focus:ring-2 focus:ring-violet-500/50"
                         value={search}
                         onInput={(e) => setSearch((e.target as HTMLInputElement).value)}
                     />
@@ -90,7 +90,7 @@ export default function AcreconreMembersManager() {
                 <div class="flex items-center gap-3 w-full md:w-auto">
                     <LucideFilter class="text-white/40" size={18} />
                     <select
-                        class="bg-black/20 border border-white/10 rounded-xl text-white px-4 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/50"
+                        class="bg-white/5 border border-white/10 rounded-xl text-white px-4 py-2 focus:outline-hidden focus:ring-2 focus:ring-violet-500/50"
                         value={filter}
                         onChange={(e) => setFilter((e.target as HTMLSelectElement).value)}
                     >
@@ -102,10 +102,10 @@ export default function AcreconreMembersManager() {
                 </div>
             </div>
 
-            <div class="overflow-x-auto rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md">
+            <div class="overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#0f0f16] backdrop-blur-md">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="border-b border-white/10 bg-white/5">
+                        <tr class="border-b border-white/[0.08] bg-white/[0.02]">
                             <th class="p-4 text-xs font-bold uppercase tracking-wider text-white/60">Canal / Plataforma</th>
                             <th class="p-4 text-xs font-bold uppercase tracking-wider text-white/60">Discord / Email</th>
                             <th class="p-4 text-xs font-bold uppercase tracking-wider text-white/60">Estado</th>
@@ -113,7 +113,7 @@ export default function AcreconreMembersManager() {
                             <th class="p-4 text-xs font-bold uppercase tracking-wider text-white/60 text-right">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-white/5">
+                    <tbody class="divide-y divide-white/[0.05]">
                         {loading ? (
                             <tr>
                                 <td colspan={5} class="p-12 text-center text-white/40 italic">Cargando miembros...</td>
@@ -124,14 +124,14 @@ export default function AcreconreMembersManager() {
                             </tr>
                         ) : (
                             filteredMembers.map(member => (
-                                <tr key={member.id} class="hover:bg-white/2 transition-colors">
+                                <tr key={member.id} class="hover:bg-white/[0.03] transition-colors">
                                     <td class="p-4">
                                         <div class="flex flex-col">
                                             <span class="font-bold text-white">{member.canalName}</span>
                                             <div class="flex items-center gap-2 text-xs text-white/40">
                                                 <span>{member.platformName || member.platformType}</span>
                                                 {member.canalLink && (
-                                                    <a href={member.canalLink} target="_blank" class="text-indigo-400 hover:text-indigo-300">
+                                                    <a href={member.canalLink} target="_blank" class="text-violet-400 hover:text-violet-300">
                                                         <LucideExternalLink size={12} />
                                                     </a>
                                                 )}
@@ -158,7 +158,7 @@ export default function AcreconreMembersManager() {
                                             {member.status !== "approved" && (
                                                 <button
                                                     onClick={() => handleUpdateStatus(member.id, "approved")}
-                                                    class="p-2 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white transition-all"
+                                                    class="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-all"
                                                     title="Aprobar"
                                                 >
                                                     <LucideCheck size={18} />
@@ -167,7 +167,7 @@ export default function AcreconreMembersManager() {
                                             {member.status !== "rejected" && (
                                                 <button
                                                     onClick={() => handleUpdateStatus(member.id, "rejected")}
-                                                    class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                                                    class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all"
                                                     title="Rechazar"
                                                 >
                                                     <LucideX size={18} />

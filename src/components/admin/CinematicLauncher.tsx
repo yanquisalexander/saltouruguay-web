@@ -36,30 +36,30 @@ export const CinematicLauncher = () => {
     };
 
     return (
-        <div className="p-4 border rounded-md shadow-md">
-            <h2 className="text-lg font-semibold mb-4">Lanzador de Cinemáticas</h2>
+        <div className="p-4 border border-white/[0.08] rounded-2xl bg-[#0f0f16]">
+            <h2 className="text-lg font-anton uppercase mb-4">Lanzador de Cinemáticas</h2>
 
             <div className="mb-4">
-                <label htmlFor="cinematic-url" className="block text-sm font-medium mb-2">
+                <label htmlFor="cinematic-url" className="block text-xs font-rubik text-white/60 mb-2">
                     URL de la Cinemática:
                 </label>
                 <input
                     id="cinematic-url"
                     type="text"
-                    className="w-full bg-black p-2 border rounded-md"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white"
                     value={cinematicUrl || ""}
                     onInput={(e) => setCinematicUrl((e.target as HTMLInputElement).value)}
                 />
             </div>
 
             <div className="mb-4">
-                <label htmlFor="target-users" className="block text-sm font-medium mb-2">
+                <label htmlFor="target-users" className="block text-xs font-rubik text-white/60 mb-2">
                     Usuarios Objetivo (separados por comas):
                 </label>
                 <input
                     id="target-users"
                     type="text"
-                    className="w-full bg-black p-2 border rounded-md"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white"
                     value={targetUsers.join(", ")}
                     onInput={(e) =>
                         setTargetUsers(
@@ -71,7 +71,7 @@ export const CinematicLauncher = () => {
 
             <button
                 onClick={handleLaunch}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                className="px-4 py-2 bg-violet-600 text-white rounded-xl hover:bg-violet-500 transition"
             >
                 Lanzar Cinemática
             </button>

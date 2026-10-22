@@ -1,9 +1,8 @@
 ---
 import AdminSidebar from "@/components/admin/AdminSidebar";
-import PageBackdrop from "@/components/PageBackdrop.astro";
 import Layout from "@/layouts/Layout.astro";
 import type { Session } from "@auth/core/types";
-import { LucideExternalLink, LucideShieldCheck } from "lucide-preact";
+import { LucideExternalLink } from "lucide-preact";
 
 interface Props {
   session?: Session | null;
@@ -23,9 +22,7 @@ const { session = null, title = "Dashboard", description, fullWidth = false } = 
   noindex
   mainClassname="bg-[#08080c] text-white overflow-hidden p-0 selection:bg-violet-600/30 selection:text-white"
 >
-  {/* Estructura Principal: Sidebar + Canvas */}
   <div class="flex flex-col md:flex-row h-dvh w-full overflow-hidden bg-[#08080c]">
-    {/* Sidebar de navegación */}
     <AdminSidebar
       session={session}
       initialPathname={Astro.url.pathname}
@@ -33,22 +30,11 @@ const { session = null, title = "Dashboard", description, fullWidth = false } = 
       transition:persist="admin-sidebar"
     />
 
-    {/* Canvas principal */}
     <div class="flex flex-1 flex-col min-w-0 overflow-hidden bg-[#0c0c12] relative pt-16 md:pt-0">
-      {/* Top Header sticky */}
       <header
-        class="relative h-16 shrink-0 border-b border-white/[0.08] bg-[#08080c]/90 backdrop-blur-xl flex items-center px-4 md:px-7 justify-between z-30 sticky top-0"
+        class="h-16 shrink-0 border-b border-white/[0.08] bg-[#08080c]/90 backdrop-blur-xl flex items-center px-4 md:px-7 justify-between z-30 sticky top-0"
       >
-        {/* Línea superior con gradiente tenue */}
-        <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-violet-400/30 to-transparent pointer-events-none"></div>
-
-        {/* Info izquierda: Estado y Título */}
         <div class="flex items-center gap-3 min-w-0">
-          <span class="relative flex size-2 shrink-0" aria-hidden="true">
-            <span class="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping"></span>
-            <span class="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
-          </span>
-
           <span class="font-anton text-base md:text-lg uppercase tracking-wide text-white truncate leading-none">
             {title}
           </span>
@@ -65,7 +51,6 @@ const { session = null, title = "Dashboard", description, fullWidth = false } = 
           }
         </div>
 
-        {/* Acciones e Indicadores a la derecha */}
         <div class="flex items-center gap-2.5 shrink-0">
           <a
             href="/"
@@ -77,18 +62,10 @@ const { session = null, title = "Dashboard", description, fullWidth = false } = 
             <LucideExternalLink size={13} />
             <span>Sitio Público</span>
           </a>
-
-          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-500/10 border border-violet-400/25 text-violet-200 text-xs font-rubik font-semibold">
-            <LucideShieldCheck size={13} className="text-violet-400" />
-            <span class="hidden sm:inline">Modo</span> Staff
-          </div>
         </div>
       </header>
 
-      {/* Área scrollable de trabajo */}
       <main class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 relative scroll-smooth">
-        <PageBackdrop tone="violet" fixed={false} />
-
         <div class={`relative z-10 mx-auto space-y-6 ${fullWidth ? "max-w-[1700px]" : "max-w-7xl"}`}>
           <slot />
         </div>
