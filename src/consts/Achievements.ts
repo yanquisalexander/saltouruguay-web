@@ -28,7 +28,7 @@ export const ACHIEVEMENTS_TEXTS: AchievementText[] = [
         id: ACHIEVEMENTS.I_WAS_THERE_III,
         title: 'Yo estuve ahí III',
         description: 'Fuiste nominado en la tercera edición de #SaltoAwards',
-        isSvg: true,
+        card: '/images/achievements/yo-estuve-ahi-iii.webp',
     },
     {
         id: ACHIEVEMENTS.LEAGUE_WON,
