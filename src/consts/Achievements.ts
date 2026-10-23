@@ -22,7 +22,7 @@ export const ACHIEVEMENTS_TEXTS: AchievementText[] = [
         id: ACHIEVEMENTS.CREATED_MEMBER_CARD,
         title: 'Nuevo Saltano en la ciudad',
         description: 'Has creado y personalizado tu tarjeta de miembro',
-        isSvg: true,
+        card: '/images/achievements/created-member-card.webp',
     },
     {
         id: ACHIEVEMENTS.I_WAS_THERE_III,
