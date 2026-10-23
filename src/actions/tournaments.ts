@@ -5,17 +5,21 @@ import { TournamentsTable, TournamentParticipantsTable, TournamentMatchesTable, 
 import { eq, and, count, sql } from 'drizzle-orm';
 import { getSession } from "auth-astro/server";
 import { uploadTournamentCover } from '@/services/tournament-storage';
+import { emptyCompetition, competitionFrom } from '@/lib/tournament-engine';
+import { workspace } from './tournament-workspace';
 
 export const tournaments = {
+    workspace,
     /**
      * Create a new tournament
      */
     create: defineAction({
         input: z.object({
-            name: z.string().min(3).max(100),
-            description: z.string().optional(),
-            format: z.enum(['single_elimination', 'double_elimination', 'round_robin', 'groups']),
-            maxParticipants: z.number().min(2).max(128).optional(),
+            name: z.string().trim().min(3).max(100),
+            description: z.string().max(5000).optional(),
+            format: z.enum(['single_elimination', 'round_robin', 'pairs']),
+            registration: z.enum(['manual', 'open']).default('manual'),
+            maxParticipants: z.number().int().min(2).max(128).optional(),
             privacy: z.enum(['public', 'private']).default('public'),
             startDate: z.string().optional(), // ISO string
         }),
@@ -28,9 +32,10 @@ export const tournaments = {
                 });
             }
 
-            // Check if user is admin (optional, depending on requirements)
-            // const user = await db.query.UsersTable.findFirst({ where: eq(UsersTable.id, session.user.id) });
-            // if (!user?.admin) throw new ActionError({ code: 'FORBIDDEN', message: 'Solo administradores' });
+            const user = await db.query.UsersTable.findFirst({ where: eq(UsersTable.id, session.user.id) });
+            if (!user?.admin) {
+                throw new ActionError({ code: 'FORBIDDEN', message: 'Solo administradores pueden crear torneos' });
+            }
 
             try {
                 const [tournament] = await db.insert(TournamentsTable).values({
@@ -42,6 +47,7 @@ export const tournaments = {
                     startDate: input.startDate ? new Date(input.startDate) : null,
                     creatorId: session.user.id,
                     status: 'draft',
+                    config: { competition: emptyCompetition(input.registration) },
                 }).returning();
 
                 return { success: true, tournament };
@@ -75,6 +81,8 @@ export const tournaments = {
                 const tournament = await db.query.TournamentsTable.findFirst({
                     where: eq(TournamentsTable.id, input.tournamentId),
                 });
+
+                if (tournament && competitionFrom(tournament.config)) throw new ActionError({ code: 'BAD_REQUEST', message: 'Usá el panel del torneo para gestionar esta competencia.' });
 
                 if (!tournament) {
                     throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
@@ -164,7 +172,9 @@ export const tournaments = {
                 where: eq(TournamentsTable.id, input.tournamentId),
             });
 
-            if (!tournament) {
+            if (tournament && competitionFrom(tournament.config)) throw new ActionError({ code: 'BAD_REQUEST', message: 'Usá el panel del torneo para gestionar esta competencia.' });
+
+                if (!tournament) {
                 throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
             }
 
@@ -405,7 +415,9 @@ export const tournaments = {
                 where: eq(TournamentsTable.id, input.tournamentId),
             });
 
-            if (!tournament) throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
+            if (tournament && competitionFrom(tournament.config)) throw new ActionError({ code: 'BAD_REQUEST', message: 'Usá el panel del torneo para gestionar esta competencia.' });
+
+                if (!tournament) throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
 
             // Allow if user is admin, the creator, or removing themselves
             const isAdmin = user?.admin === true;
@@ -454,7 +466,9 @@ export const tournaments = {
                 where: eq(TournamentsTable.id, input.tournamentId),
             });
 
-            if (!tournament) throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
+            if (tournament && competitionFrom(tournament.config)) throw new ActionError({ code: 'BAD_REQUEST', message: 'Usá el panel del torneo para gestionar esta competencia.' });
+
+                if (!tournament) throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
 
             // Cascade delete should handle participants and matches if configured in DB, 
             // but let's be safe or rely on schema constraints.
@@ -505,7 +519,9 @@ export const tournaments = {
                 where: eq(TournamentsTable.id, input.tournamentId),
             });
 
-            if (!tournament) {
+            if (tournament && competitionFrom(tournament.config)) throw new ActionError({ code: 'BAD_REQUEST', message: 'Usá el panel del torneo para gestionar esta competencia.' });
+
+                if (!tournament) {
                 throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
             }
 
@@ -601,7 +617,9 @@ export const tournaments = {
             const tournament = await db.query.TournamentsTable.findFirst({
                 where: eq(TournamentsTable.id, input.tournamentId),
             });
-            if (!tournament) throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
+            if (tournament && competitionFrom(tournament.config)) throw new ActionError({ code: 'BAD_REQUEST', message: 'Usá el panel del torneo para gestionar esta competencia.' });
+
+                if (!tournament) throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
 
             const existingConfig = (tournament.config as Record<string, any>) ?? {};
             await db.update(TournamentsTable)
@@ -638,7 +656,9 @@ export const tournaments = {
                 where: eq(TournamentsTable.id, input.tournamentId),
             });
 
-            if (!tournament) {
+            if (tournament && competitionFrom(tournament.config)) throw new ActionError({ code: 'BAD_REQUEST', message: 'Usá el panel del torneo para gestionar esta competencia.' });
+
+                if (!tournament) {
                 throw new ActionError({ code: 'NOT_FOUND', message: 'Torneo no encontrado' });
             }
 
@@ -673,3 +693,4 @@ export const tournaments = {
         }
     }),
 };
+

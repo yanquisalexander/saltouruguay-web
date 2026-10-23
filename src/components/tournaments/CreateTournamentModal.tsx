@@ -1,16 +1,26 @@
 import { useState } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { toast } from 'sonner';
-import { LucideTrophy, LucideUsers, LucideCalendar, LucidePlus } from 'lucide-preact';
+import { LucideTrophy } from 'lucide-preact';
 
-export default function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void, onCreated: () => void }) {
+interface CreateTournamentForm {
+    name: string;
+    description: string;
+    format: 'single_elimination' | 'round_robin' | 'pairs';
+    maxParticipants: number;
+    privacy: 'public' | 'private';
+    registration: 'manual' | 'open';
+}
+
+export default function CreateTournamentModal({ onClose, onCreated }: { onClose: () => void, onCreated: (id: number) => void }) {
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<CreateTournamentForm>({
         name: '',
         description: '',
         format: 'single_elimination',
         maxParticipants: 16,
         privacy: 'public',
+        registration: 'manual',
     });
 
     const handleSubmit = async (e: Event) => {
@@ -23,7 +33,7 @@ export default function CreateTournamentModal({ onClose, onCreated }: { onClose:
                 return;
             }
             toast.success('Torneo creado exitosamente');
-            onCreated();
+            onCreated(data.tournament.id);
             onClose();
         } catch (err) {
             toast.error('Error inesperado');
@@ -59,12 +69,23 @@ export default function CreateTournamentModal({ onClose, onCreated }: { onClose:
                         <select
                             className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-hidden"
                             value={formData.format}
-                            onChange={(e: any) => setFormData({ ...formData, format: e.target.value })}
+                            onChange={(e: any) => setFormData({ ...formData, format: e.target.value as CreateTournamentForm['format'] })}
                         >
-                            <option value="single_elimination">Eliminación Simple</option>
-                            <option value="double_elimination">Doble Eliminación</option>
-                            <option value="round_robin">Round Robin (Liga)</option>
-                            <option value="groups">Fase de Grupos + Bracket</option>
+                            <option value="single_elimination">Eliminación directa</option>
+                            <option value="round_robin">Todos contra todos</option>
+                            <option value="pairs">Cruces manuales</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1">Alta de participantes</label>
+                        <select
+                            className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-hidden"
+                            value={formData.registration}
+                            onChange={(e: any) => setFormData({ ...formData, registration: e.target.value as CreateTournamentForm['registration'] })}
+                        >
+                            <option value="manual">Carga manual desde administración</option>
+                            <option value="open">Inscripción desde la página pública</option>
                         </select>
                     </div>
 
@@ -85,7 +106,7 @@ export default function CreateTournamentModal({ onClose, onCreated }: { onClose:
                             <select
                                 className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-violet-500 outline-hidden"
                                 value={formData.privacy}
-                                onChange={(e: any) => setFormData({ ...formData, privacy: e.target.value })}
+                                onChange={(e: any) => setFormData({ ...formData, privacy: e.target.value as CreateTournamentForm['privacy'] })}
                             >
                                 <option value="public">Público</option>
                                 <option value="private">Privado</option>

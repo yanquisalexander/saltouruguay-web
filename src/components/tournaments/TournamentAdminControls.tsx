@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import { LucidePlus, LucideTrophy } from "lucide-preact";
+import { LucidePlus } from "lucide-preact";
 import CreateTournamentModal from "./CreateTournamentModal";
 
 export default function TournamentAdminControls() {
@@ -18,7 +18,7 @@ export default function TournamentAdminControls() {
             {isModalOpen && (
                 <CreateTournamentModal
                     onClose={() => setIsModalOpen(false)}
-                    onCreated={() => window.location.reload()}
+                    onCreated={(id) => window.location.assign(`/admin/torneos/${id}`)}
                 />
             )}
         </>
