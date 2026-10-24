@@ -1,24 +1,73 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import TournamentWorkspace from '@/components/tournaments/TournamentWorkspace';
+import TournamentOverlay from '@/components/Overlay/TournamentOverlay';
+
+import "@/assets/styles/global.css";
+import "@fontsource/anton";
+import "@fontsource-variable/rubik";
+import "@fontsource-variable/teko";
 
 import { client as db } from '@/db/client';
 import { TournamentsTable, UsersTable } from '@/db/schema';
 import { eq, inArray } from 'drizzle-orm';
 import { getSession } from 'auth-astro/server';
 import { readCompetition } from '@/lib/tournament-legacy';
+import redis from '@/lib/redis';
+import { overlayStateKey, parseOverlayState, DEFAULT_OVERLAY_STATE } from '@/lib/tournament-overlay';
+
 const id = Number(Astro.params.id);
 if (!Number.isSafeInteger(id) || id < 1) return Astro.redirect('/404');
 const session = await getSession(Astro.request);
 const user = session?.user?.id ? await db.query.UsersTable.findFirst({ where: eq(UsersTable.id, Number(session.user.id)), columns: { id: true, admin: true } }) : null;
 const tournament = await db.query.TournamentsTable.findFirst({ where: eq(TournamentsTable.id, id), with: { participants: { with: { user: { columns: { displayName: true, username: true } } } }, matches: true } });
 if (!tournament) return Astro.redirect('/404');
-if ((tournament.privacy === 'private' || tournament.status === 'draft') && !user?.admin) return Astro.redirect('/404');
+
+const isOverlay = Astro.url.searchParams.get('overlay') === '1';
+// ?overlay=1 habilita el overlay de transmisión: se omite el bloqueo de privacidad
+// (el torneo se está transmitiendo igual) y solo se muestra bracket/tabla.
+if (!isOverlay && (tournament.privacy === 'private' || tournament.status === 'draft') && !user?.admin) return Astro.redirect('/404');
+
 const { competition, format } = readCompetition(tournament);
 const userIds = competition.entrants.flatMap(p => p.userId ? [p.userId] : []);
 const profiles = userIds.length ? await db.select({ id: UsersTable.id, username: UsersTable.username, displayName: UsersTable.displayName, avatar: UsersTable.avatar }).from(UsersTable).where(inArray(UsersTable.id, userIds)) : [];
----
-<Layout title={tournament.name} description={tournament.description ?? 'Competencia de la comunidad'} noindex={tournament.privacy === 'private'}>
-  <TournamentWorkspace client:load tournament={{ id: tournament.id, name: tournament.name, description: tournament.description, format, status: tournament.status, privacy: tournament.privacy, maxParticipants: tournament.maxParticipants, bannerUrl: tournament.bannerUrl }} competition={competition} profiles={profiles} currentUserId={user?.id} />
-</Layout>
 
+const overlayPayload = { id: tournament.id, name: tournament.name, description: tournament.description, format: tournament.format, status: tournament.status, privacy: tournament.privacy, maxParticipants: tournament.maxParticipants, bannerUrl: tournament.bannerUrl };
+
+let overlayState = DEFAULT_OVERLAY_STATE;
+if (isOverlay) {
+  try {
+    const raw = await redis.get(overlayStateKey(id));
+    if (raw) overlayState = parseOverlayState(JSON.parse(raw));
+  } catch {
+    overlayState = DEFAULT_OVERLAY_STATE;
+  }
+}
+---
+{isOverlay ? (
+  <html lang="es" data-theme="dark">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <meta name="robots" content="noindex, nofollow" />
+      <title>Overlay · {tournament.name}</title>
+    </head>
+    <body class="bg-transparent overflow-hidden">
+      <TournamentOverlay
+        client:only="preact"
+        tournament={overlayPayload}
+        format={format}
+        competition={competition}
+        profiles={profiles}
+        initialState={overlayState}
+      />
+    </body>
+    <style is:global>
+      html, body { background-color: transparent !important; margin: 0; width: 100%; height: 100%; }
+    </style>
+  </html>
+) : (
+  <Layout title={tournament.name} description={tournament.description ?? 'Competencia de la comunidad'} noindex={tournament.privacy === 'private'}>
+    <TournamentWorkspace client:load tournament={{ id: tournament.id, name: tournament.name, description: tournament.description, format, status: tournament.status, privacy: tournament.privacy, maxParticipants: tournament.maxParticipants, bannerUrl: tournament.bannerUrl }} competition={competition} profiles={profiles} currentUserId={user?.id} />
+  </Layout>
+)}

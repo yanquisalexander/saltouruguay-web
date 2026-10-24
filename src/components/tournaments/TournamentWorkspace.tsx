@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { actions } from 'astro:actions';
 import { formats, statuses, standings, type Competition, type CompetitionFormat, type Fixture } from '@/lib/tournament-engine';
+import TournamentOverlayControls from './TournamentOverlayControls';
 import '@/assets/styles/tournaments.css';
 
 export interface WorkspaceTournament {
@@ -80,7 +81,7 @@ export default function TournamentWorkspace({ tournament: t, competition: c, pro
     </header>
     {error && <div class="tw-error" role="alert">{error} <button onClick={() => window.location.reload()}>Recargar</button></div>}
     {t.status === 'completed' && <div class="tw-champion"><span>{final?.winner ? 'Ganador del torneo' : 'Competencia finalizada'}</span><strong>{final?.winner ? name(final.winner) : `${done} partidos disputados`}</strong></div>}
-    <nav class="tw-tabs" aria-label="Secciones del torneo">{[['competition', 'Competencia'], ['participants', 'Participantes'], ['standings', 'Posiciones'], ...(canManage ? [['settings', 'Configuración']] : [])].map(([id, label]) => <button aria-current={tab === id ? 'page' : undefined} onClick={() => { setTab(id); setError(''); }}>{label}</button>)}</nav>
+    <nav class="tw-tabs" aria-label="Secciones del torneo">{[['competition', 'Competencia'], ['participants', 'Participantes'], ['standings', 'Posiciones'], ...(canManage ? [['settings', 'Configuración'], ['overlay', 'Overlay OBS']] : [])].map(([id, label]) => <button aria-current={tab === id ? 'page' : undefined} onClick={() => { setTab(id); setError(''); }}>{label}</button>)}</nav>
     <div class="tw-body">
       <main>
         {tab === 'launch' && <div class="tw-panel tw-prose"><h2>Todo listo para jugar</h2><p>Se cerrará la lista de {c.entrants.length} participantes. {t.format === 'pairs' ? 'Después elegís los cruces de cada jornada.' : t.format === 'round_robin' ? `Se crearán ${c.entrants.length * (c.entrants.length - 1) / 2} partidos. Cada participante se enfrenta una vez con los demás.` : 'Se generará el cuadro y se asignarán pases libres cuando sean necesarios.'}</p><p>Orden: {c.seeding === 'random' ? 'sorteo al iniciar' : 'según la lista de participantes'}. Los participantes y el formato quedan cerrados al iniciar.</p><div class="tw-actions"><button class="tw-primary" disabled={busy} onClick={() => run({ type: 'start' })}>Iniciar torneo</button><button onClick={() => setTab('participants')}>Revisar participantes</button></div></div>}
@@ -108,6 +109,7 @@ export default function TournamentWorkspace({ tournament: t, competition: c, pro
           </article>)}</div></section>)}</div>
         </>}
         {tab === 'standings' && <><h2>Tabla de posiciones</h2><p class="tw-muted">{t.format === 'single_elimination' ? 'Estadísticas de partidos jugados. El ganador del torneo se define en la final.' : `Victoria: ${c.points.win} pts. Empate: ${c.points.draw} pts. Derrota: ${c.points.loss} pts.`} Desempate: diferencia, tantos a favor y orden inicial. Los pases libres no suman.</p><div class="tw-table-scroll"><table class="tw-table"><caption class="sr-only">Posiciones de {t.name}</caption><thead><tr>{['Pos.', 'Participante', 'PJ', 'G', 'E', 'P', 'Favor', 'Contra', 'Dif.', 'Pts.'].map(h => <th scope="col">{h}</th>)}</tr></thead><tbody>{standings(c).map((p, i) => <tr><td>{i + 1}</td><th scope="row"><span class="tw-standing-player">{avatar(p.id)}<span>{p.name}{profile(p.id) && <small>@{profile(p.id)!.username}</small>}</span></span></th><td>{p.played}</td><td>{p.won}</td><td>{p.drawn}</td><td>{p.lost}</td><td>{p.for}</td><td>{p.against}</td><td>{p.difference > 0 ? '+' : ''}{p.difference}</td><td><strong>{p.points}</strong></td></tr>)}</tbody></table></div>{!c.entrants.length && <p class="tw-muted">Las posiciones aparecerán cuando haya participantes.</p>}</>}
+        {tab === 'overlay' && canManage && <TournamentOverlayControls tournamentId={t.id} tournamentName={t.name} />}
         {tab === 'settings' && canManage && <form class="tw-panel tw-settings" onSubmit={e => { e.preventDefault(); const f = new FormData(e.currentTarget); void run({ type: 'settings', name: String(f.get('name')), description: String(f.get('description')), bannerUrl: String(f.get('bannerUrl')), format: String(f.get('format')) as CompetitionFormat, privacy: String(f.get('privacy')) as 'public' | 'private', registration: String(f.get('registration')) as Competition['registration'], seeding: String(f.get('seeding')) as Competition['seeding'], maxParticipants: Number(f.get('maxParticipants')), win: Number(f.get('win')), draw: Number(f.get('draw')), loss: Number(f.get('loss')) }); }}>
           <h2>Preparar el torneo</h2>{!preparing && <p>El torneo ya comenzó. El formato, la lista y las reglas están cerrados.</p>}
           <fieldset disabled={busy || !preparing}>

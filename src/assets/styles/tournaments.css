@@ -11,3 +11,40 @@
 @media(max-width:640px){.tw{padding:28px 16px 56px}.tw-header{align-items:flex-start;flex-direction:column}.tw-hub>.tw-header{min-height:225px;justify-content:center}.tw-tabs button{padding:12px 10px;font-size:11px}.tw-panel{padding:18px}.tw-tournament{grid-template-columns:70px minmax(0,1fr);min-height:118px;padding:15px;gap:14px}.tw-tournament-art{width:70px;height:86px}.tw-tournament h2{font-size:21px}.tw-tournament-count{display:none}.tw-format-guide{grid-template-columns:1fr;gap:4px;padding-top:38px}.tw-create-grid,.tw-pair,.tw-points{grid-template-columns:1fr}.tw-entrants li{flex-wrap:wrap;gap:11px}.tw-entrants .tw-actions{width:100%;padding-left:46px}.tw-champion,.tw-section-title{align-items:flex-start;flex-direction:column}.tw-aside{grid-template-columns:1fr}.tw-aside h3{grid-column:auto}}
 @media(prefers-reduced-motion:reduce){.tw *{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
 .tw-avatar{display:inline-grid;place-items:center;flex:0 0 auto;border:1px solid rgba(176,133,255,.22);border-radius:999px;background:linear-gradient(145deg,rgba(145,70,255,.28),rgba(145,70,255,.08));color:#fff;font-size:10px;font-weight:700;overflow:hidden}.tw-avatar img{width:100%;height:100%;object-fit:cover}.tw-avatar-small{width:25px;height:25px}.tw-avatar-large{width:40px;height:40px;font-size:13px}.tw-player{justify-content:flex-start;gap:9px;min-height:47px}.tw-player>span:not(.tw-avatar){flex:1}.tw-winner::before{margin-right:0}.tw-standing-player{display:inline-flex;align-items:center;gap:9px}.tw-standing-player>span:last-child{display:flex;flex-direction:column}.tw-standing-player small{margin-top:2px;color:rgba(255,255,255,.32);font-size:9px;font-weight:400}
+
+/* ─── Overlay de transmisión (?overlay=1) ─────────────────────────────────── */
+.tw-overlay-root{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;overflow:hidden;background:transparent;pointer-events:none;user-select:none;-webkit-user-select:none;color:#fff;font-family:var(--font-rubik,"Rubik Variable",sans-serif)}
+.tw-overlay-scaler{transform-origin:center center;transition:transform .45s cubic-bezier(.16,1,.3,1);will-change:transform}
+.tw-overlay-content{display:flex;flex-direction:column;align-items:center;gap:26px;width:max-content;max-width:96vw;padding:28px 34px}
+.tw-overlay-header{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:26px 54px 22px;border:1px solid rgba(255,255,255,.1);border-radius:20px;background:radial-gradient(ellipse at 50% 0,rgba(145,70,255,.22),transparent 65%),rgba(9,9,13,.92);box-shadow:0 30px 80px rgba(0,0,0,.55);overflow:hidden}
+.tw-overlay-banner{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.16;filter:blur(2px);pointer-events:none}
+.tw-overlay-header-inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px}
+.tw-overlay-title{position:relative;overflow:hidden;max-width:min(80vw,1000px);margin:0!important;font-size:clamp(40px,5.4vw,76px)!important;line-height:.95;letter-spacing:-.02em;text-shadow:0 8px 40px rgba(0,0,0,.75)}
+.tw-overlay-sweep{position:absolute;top:0;bottom:0;left:-45%;width:38%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-18deg);pointer-events:none;animation:twOverlaySweep 1.15s cubic-bezier(.16,1,.3,1) .45s both}
+@keyframes twOverlaySweep{from{left:-45%}to{left:125%}}
+.tw-overlay-header p{color:rgba(255,255,255,.6);font-size:14px}
+.tw-overlay-rule{position:relative;width:min(420px,60%);height:3px;border-radius:99px;background:linear-gradient(90deg,transparent,var(--violet,#9146ff),transparent);box-shadow:0 0 18px rgba(145,70,255,.65)}
+.tw-overlay-bracket{padding-top:6px;padding-bottom:14px;max-width:94vw;overflow:visible}
+.tw-overlay-bracket .tw-round{flex:0 0 auto}
+.tw-overlay-table{width:min(1100px,92vw);max-height:74vh;overflow:auto;border-color:rgba(255,255,255,.14);background:rgba(9,9,12,.92);box-shadow:0 30px 80px rgba(0,0,0,.5);border-radius:16px}
+.tw-overlay-table .tw-table thead th{background:rgba(15,15,22,.98)}
+.tw-overlay-table .tw-table tbody tr{background:#0b0b10}
+.tw-overlay-content .tw-champion{width:min(1100px,92vw);margin:0}
+@media(prefers-reduced-motion:reduce){.tw-overlay-sweep{animation:none}}
+
+/* ─── Controles admin del overlay (pestaña Overlay OBS) ───────────────────── */
+.tw-overlay-controls{display:grid;gap:22px;max-width:740px}
+.tw-overlay-controls h3{margin-bottom:8px;color:#fff}
+.tw-overlay-controls svg{vertical-align:-2px}
+.tw-overlay-row{display:grid;grid-template-columns:190px minmax(0,1fr);align-items:center;gap:16px;margin-top:14px}
+.tw-overlay-label{color:rgba(255,255,255,.72);font-size:12px;font-weight:500}
+.tw-overlay-label strong{color:var(--violet-soft);font-family:var(--font-teko,"Teko Variable",sans-serif);font-size:17px;margin-left:4px}
+.tw-overlay-row>button{justify-self:start}
+.tw-overlay-row>select{margin-top:0}
+.tw-overlay-row>input[type=range]{margin-top:0;padding:0;height:26px;accent-color:var(--violet);background:transparent;border:0;box-shadow:none}
+.tw-overlay-row>input[type=range]:focus{box-shadow:none}
+.tw-overlay-note{margin-top:16px;font-size:11px!important}
+.tw-overlay-summary{display:grid;grid-template-columns:190px minmax(0,1fr);gap:8px 16px;margin:12px 0 0;font-size:12px}
+.tw-overlay-summary dt{color:rgba(255,255,255,.4)}
+.tw-overlay-summary dd{margin:0;color:rgba(255,255,255,.88)}
+@media(max-width:640px){.tw-overlay-row,.tw-overlay-summary{grid-template-columns:1fr;gap:6px}}
