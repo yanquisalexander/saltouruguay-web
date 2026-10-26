@@ -2,7 +2,7 @@ import { ActionError, defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 import { client as db } from '@/db/client';
 import { TournamentsTable, TournamentParticipantsTable, TournamentMatchesTable, UsersTable } from '@/db/schema';
-import { eq, and, count, sql } from 'drizzle-orm';
+import { eq, and, count, sql, ne, desc, ilike } from 'drizzle-orm';
 import { getSession } from "auth-astro/server";
 import { uploadTournamentCover } from '@/services/tournament-storage';
 import { emptyCompetition, competitionFrom } from '@/lib/tournament-engine';
@@ -10,6 +10,37 @@ import { workspace } from './tournament-workspace';
 
 export const tournaments = {
     workspace,
+    /** Public catalog shared by the mobile app and the website. */
+    list: defineAction({
+        input: z.object({
+            limit: z.number().int().min(1).max(100).default(20),
+            offset: z.number().int().min(0).default(0),
+            status: z.enum(['registration', 'in_progress', 'completed']).optional(),
+            q: z.string().trim().max(100).optional(),
+        }).optional(),
+        handler: async (input) => {
+            const { limit = 20, offset = 0, status, q } = input ?? {};
+            const where = and(
+                eq(TournamentsTable.privacy, 'public'),
+                ne(TournamentsTable.status, 'draft'),
+                status ? eq(TournamentsTable.status, status) : undefined,
+                q ? ilike(TournamentsTable.name, `%${q}%`) : undefined,
+            );
+            const [rows, [total]] = await Promise.all([
+                db.query.TournamentsTable.findMany({
+                    where, orderBy: [desc(TournamentsTable.createdAt), desc(TournamentsTable.id)],
+                    limit, offset,
+                    columns: { id: true, name: true, description: true, format: true, status: true,
+                        maxParticipants: true, bannerUrl: true, startDate: true, config: true },
+                    with: { participants: { columns: { id: true } } },
+                }),
+                db.select({ count: count() }).from(TournamentsTable).where(where),
+            ]);
+            return { tournaments: rows.map(({ config, participants, ...tournament }) => ({
+                ...tournament, participantCount: competitionFrom(config)?.entrants.length ?? participants.length,
+            })), total: total.count, limit, offset };
+        },
+    }),
     /**
      * Create a new tournament
      */
