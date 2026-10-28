@@ -15,6 +15,7 @@ import {
     getSessionById
 } from "@/utils/user";
 import { getLinkedAccountsSummary } from "@/lib/linked-accounts";
+import { evaluateAchievementEvent } from "@/utils/achievements";
 
 export default defineConfig({
     providers: [
@@ -93,6 +94,17 @@ export default defineConfig({
                             },
                         })
                         .returning({ id: UsersTable.id });
+
+                    // La API confirma la sub activa, pero no su antigüedad ni racha.
+                    // Solo acreditamos el primer hito; los demás llegan por EventSub.
+                    if (twitchTier !== null) {
+                        waitUntil(
+                            evaluateAchievementEvent(upsertedUser.id, {
+                                type: 'twitch.subscription',
+                                months: 1,
+                            }).catch(error => console.error("Error syncing subscription achievements:", error))
+                        );
+                    }
 
                     // Actualizar el token con la ID real de base de datos
                     token.user = {

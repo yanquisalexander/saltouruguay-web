@@ -1,5 +1,5 @@
 ---
-import { ACHIEVEMENTS, ACHIEVEMENTS_TEXTS, getAchievementCardUrl, getAchievementIconUrl } from "@/consts/Achievements";
+import { ACHIEVEMENT_RARITIES, ACHIEVEMENTS, getAchievementsByRarity, getAchievementCardUrl, getAchievementIconUrl } from "@/consts/Achievements";
 import Layout from "@/layouts/Layout.astro";
 import PageBackdrop from "@/components/PageBackdrop.astro";
 import PageBreadcrumb from "@/components/PageBreadcrumb.astro";
@@ -127,12 +127,8 @@ const formatDate = (dateString: Date) => {
     {/* --- GRID DE CARTAS --- */}
     <ul class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-7">
       {
-        Object.keys(ACHIEVEMENTS).map((key) => {
-          // @ts-ignore
-          const achievementId = ACHIEVEMENTS[key];
-          const achievementText = ACHIEVEMENTS_TEXTS.find(
-            (t) => t.id === achievementId
-          );
+        getAchievementsByRarity().map((achievementText) => {
+          const achievementId = achievementText.id;
 
           const userAchievement = userAchievements.find(
             (ua) => ua.achievementId === achievementId
@@ -240,6 +236,7 @@ const formatDate = (dateString: Date) => {
                     <h2 class="font-minecraft text-amber-300 text-sm md:text-base leading-tight [text-shadow:0_2px_0_#000,0_3px_6px_rgba(0,0,0,0.8)] line-clamp-2">
                       {achievementText?.title.toUpperCase()}
                     </h2>
+                    <span class="text-[10px] uppercase tracking-widest text-amber-200">{achievementText && ACHIEVEMENT_RARITIES[achievementText.rarity]}</span>
                     {achievementText?.subtitle && (
                       <p class="font-minecraftia text-[8px] md:text-[9px] text-white/55 uppercase tracking-widest mt-1.5 line-clamp-2 leading-relaxed">
                         {achievementText.subtitle}

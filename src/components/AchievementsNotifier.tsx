@@ -23,8 +23,8 @@ export function AchievementsNotifier({ userId }: AchievementsNotifierProps) {
             console.log(`Logro desbloqueado para el usuario ${userId}:`, data);
             // Aquí puedes implementar la lógica adicional, como notificaciones o actualizaciones
             const audio = new Audio("/sounds/logro-desbloqueado.mp3");
-            audio.play();
-            toast(`¡Has desbloqueado el logro "${data.title}"!`, {
+            void audio.play().catch(() => {});
+            toast(data.count > 1 ? `¡Has desbloqueado ${data.count} logros!` : `¡Has desbloqueado el logro "${data.title}"!`, {
                 icon: <LucideTrophy />,
                 duration: 5000,
                 position: 'bottom-center',

@@ -1,4 +1,6 @@
 import crypto from "crypto";
+import { SALTO_BROADCASTER_ID } from "@/config";
+import { evaluateAchievementEvent } from "@/utils/achievements";
 import { ApiClient } from "@twurple/api";
 import { TWITCH_CLIENT_ID } from "astro:env/server";
 import { client as db } from "@/db/client";
@@ -135,6 +137,11 @@ export class TwitchEvents {
                 } catch (error) {
                     console.error(`Error updating user tier: ${error}`);
                 }
+                await this.unlockSubscriptionAchievements(eventData, 1);
+                break;
+
+            case 'channel.subscription.message':
+                await this.unlockSubscriptionAchievements(eventData, eventData.cumulative_months);
                 break;
 
             case 'channel.subscription.end':
@@ -164,6 +171,12 @@ export class TwitchEvents {
         }
     }
 
+    private async unlockSubscriptionAchievements(eventData: { user_id: string; broadcaster_user_id: string }, months: number): Promise<void> {
+        if (eventData.broadcaster_user_id !== SALTO_BROADCASTER_ID) return;
+        const user = await db.query.UsersTable.findFirst({ where: eq(UsersTable.twitchId, eventData.user_id) });
+        if (user) await evaluateAchievementEvent(user.id, { type: 'twitch.subscription', months });
+    }
+
     async registerEventSub(broadcasterId: string): Promise<void> {
         this.log('Registering EventSub subscriptions...');
 
@@ -188,6 +201,13 @@ export class TwitchEvents {
         try {
             // Definir las suscripciones con nombres descriptivos
             const subscriptions = [
+                {
+                    name: "channel.subscription.message",
+                    fn: this.client.eventSub.subscribeToChannelSubscriptionMessageEvents(broadcasterId, {
+                        callback: `https://${this.hostName}${this.callbackPath}`,
+                        method: 'webhook', secret: this.secret,
+                    })
+                },
                 {
                     name: "channel.subscription",
                     fn: this.client.eventSub.subscribeToChannelSubscriptionEvents(broadcasterId, {

@@ -1,5 +1,6 @@
 import {
     ACHIEVEMENTS_TEXTS,
+    getAchievementsByRarity,
     getAchievementCardUrl,
     getAchievementIconUrl,
 } from "@/consts/Achievements";
@@ -44,11 +45,13 @@ export const achievements = {
                 }
             }
 
-            let achievements = ACHIEVEMENTS_TEXTS.map((text) => {
+            let achievements = getAchievementsByRarity().map((text) => {
                 const unlockedAt = unlockedById.get(text.id) ?? null;
                 return {
                     id: text.id,
                     title: text.title,
+                    rarity: text.rarity,
+                    condition: text.condition ?? null,
                     subtitle: text.subtitle ?? null,
                     description: text.description,
                     iconUrl: toAbsoluteUrl(getAchievementIconUrl(text.id)),
