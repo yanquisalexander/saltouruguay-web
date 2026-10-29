@@ -4,7 +4,7 @@ import type { Session } from "@auth/core/types";
 import { CurrentUser } from "./CurrentUser";
 import DiscordPresenceCount from "./DiscordPresenceCount";
 import { Notifications } from "./Notifications";
-import { LucideLock } from "lucide-preact";
+import { LucideLock, LucideX, LucideArrowUpRight } from "lucide-preact";
 import { CHRISTMAS_MODE, HALLOWEEN_MODE } from "@/config";
 
 interface Props {
@@ -56,38 +56,9 @@ const isPrerenderedPath = PRERENDERED_PATHS.some((pattern) => {
   }
 });
 
-const evenLinks = links.filter((_, index) => index % 2 === 0);
-const oddLinks = links.filter((_, index) => index % 2 !== 0);
-
-// --- ESTILOS CONDICIONALES ---
-const navLinkBase =
-  "nav-link relative flex flex-col items-center justify-center px-4 py-1 group transition-all duration-300";
-const textStyle =
-  "font-teko text-xl uppercase tracking-wide transition-all duration-200 relative z-10";
-
-const activeText = HALLOWEEN_MODE
-  ? "text-orange-400 tracking-wider"
-  : CHRISTMAS_MODE
-  ? "text-red-400 tracking-wider"
-  : "text-yellow-400 tracking-wider";
-
-const inactiveText = "text-white/60 group-hover:text-white/90";
-
-const underlineActiveColor = HALLOWEEN_MODE
-  ? "from-orange-500 via-purple-400 to-orange-500"
-  : CHRISTMAS_MODE
-  ? "from-green-500 via-red-400 to-green-500"
-  : "from-yellow-600 via-yellow-300 to-yellow-600";
-
-const logoGlowColor = HALLOWEEN_MODE
-  ? "bg-orange-500/25"
-  : CHRISTMAS_MODE
-  ? "bg-red-500/20"
-  : "bg-yellow-500/15";
-
 const getBadgeStyles = (label: string, colorClassName?: string) => {
   const base =
-    "badge absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-bold font-rubik px-2 py-0.5 rounded-full border shadow-[0_0_10px_rgba(0,0,0,0.5)] tracking-widest leading-none whitespace-nowrap pointer-events-none backdrop-blur-md z-20";
+    "nav-badge text-[8px] font-bold font-rubik px-1.5 py-0.5 rounded-full border tracking-wide leading-none whitespace-nowrap pointer-events-none";
 
   if (
     CHRISTMAS_MODE &&
@@ -110,433 +81,182 @@ const getBadgeStyles = (label: string, colorClassName?: string) => {
 };
 ---
 
-{
-  !trueHideNav && (
-    <>
-      <header
-        id="site-header"
-        class="fixed top-0 left-0 right-0 z-50 w-full transition-all duration-500 py-6"
-      >
-        {/* ISLA FLOTANTE */}
-        <div
-          id="nav-island"
-          class="mx-auto flex items-center justify-between px-4 md:px-6 py-2 transition-all duration-500 w-[95%] max-w-7xl rounded-full border border-transparent"
-        >
-          {/* --- IZQUIERDA --- */}
-          <div class="flex items-center flex-1 gap-2">
-            {/* Logo Móvil */}
-            <a
-              href="/"
-              class="md:hidden block transition-transform hover:scale-105 active:scale-95"
-            >
-              <img
-                src="/favicon.svg"
-                alt="Logo"
-                class="size-10 object-contain"
-              />
-            </a>
-
-            {/* Nav Escritorio (Izquierda) */}
-            <nav class="hidden md:flex items-center gap-x-4 ml-auto mr-4">
-              {evenLinks.map((link) =>
-                link.soon ? (
-                  <div class={`${navLinkBase} opacity-40 cursor-not-allowed`}>
-                    <span class={textStyle}>{link.label}</span>
-                    <LucideLock
-                      size={12}
-                      class="absolute top-1 -right-2 text-white/30"
-                    />
-                  </div>
-                ) : (
-                  <a href={link.url} class={navLinkBase}>
-                    <span
-                      class={`${textStyle} ${currentPath.startsWith(link.url) ? activeText : inactiveText}`}
-                    >
-                      {link.label}
-                    </span>
-
-                    {link.specialComment && (
-                      <span
-                        class={getBadgeStyles(
-                          link.specialComment,
-                          link.colorClassName,
-                        )}
-                      >
-                        {link.specialComment}
-                      </span>
-                    )}
-
-                    {/* Underline activo — glow energy bar */}
-                    <span
-                      class={`nav-underline absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-linear-to-r ${underlineActiveColor} rounded-full transition-all duration-300 ${
-                        currentPath.startsWith(link.url)
-                          ? "w-full opacity-100"
-                          : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-60"
-                      }`}
-                    />
-                    {/* Glow debajo del underline (solo activo) */}
-                    {currentPath.startsWith(link.url) && (
-                      <span
-                        class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-full blur-xs bg-linear-to-r ${underlineActiveColor} rounded-full opacity-60`}
-                      />
-                    )}
-                  </a>
-                ),
-              )}
-            </nav>
-          </div>
-
-          {/* --- CENTRO (Logo Escritorio) --- */}
-          <div
-            class={`hidden md:flex shrink-0 mx-4 relative group logo-wrap ${CHRISTMAS_MODE ? "christmas-logo-nav" : ""}`}
-          >
-            <a
-              href="/"
-              id="home-button"
-              class="block transition-transform duration-300 group-hover:scale-110 active:scale-95"
-            >
-              {/* Glow bg */}
-              <div
-                class={`absolute inset-0 ${logoGlowColor} blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
-              />
-              {/* Ring de escaneo */}
-              <img
-                src="/favicon.svg"
-                loading="eager"
-                alt="Home"
-                class="size-14 object-contain relative z-10 drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-              />
-            </a>
-          </div>
-
-          {/* --- DERECHA --- */}
-          <div class="flex items-center flex-1 gap-2">
-            <nav class="hidden md:flex items-center gap-x-4 mr-auto ml-4">
-              {oddLinks.map((link) =>
-                link.soon ? (
-                  <div class={`${navLinkBase} opacity-40 cursor-not-allowed`}>
-                    <span class={textStyle}>{link.label}</span>
-                    <LucideLock
-                      size={12}
-                      class="absolute top-1 -right-2 text-white/30"
-                    />
-                  </div>
-                ) : (
-                  <a href={link.url} class={navLinkBase}>
-                    <span
-                      class={`${textStyle} ${currentPath.startsWith(link.url) ? activeText : inactiveText}`}
-                    >
-                      {link.label}
-                    </span>
-
-                    {link.specialComment && (
-                      <span
-                        class={getBadgeStyles(
-                          link.specialComment,
-                          link.colorClassName,
-                        )}
-                      >
-                        {link.specialComment}
-                      </span>
-                    )}
-
-                    <span
-                      class={`nav-underline absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-linear-to-r ${underlineActiveColor} rounded-full transition-all duration-300 ${
-                        currentPath.startsWith(link.url)
-                          ? "w-full opacity-100"
-                          : "w-0 opacity-0 group-hover:w-2/3 group-hover:opacity-60"
-                      }`}
-                    />
-                    {currentPath.startsWith(link.url) && (
-                      <span
-                        class={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-full blur-xs bg-linear-to-r ${underlineActiveColor} rounded-full opacity-60`}
-                      />
-                    )}
-                  </a>
-                ),
-              )}
-            </nav>
-
-            {/* HERRAMIENTAS */}
-            <div class="flex items-center gap-2 ml-auto md:pl-4 md:border-l border-white/10">
-              <div class="hidden md:block opacity-70 hover:opacity-100 transition-opacity duration-200">
-                <DiscordPresenceCount
-                  client:idle
-                  transition:persist
-                  transition:name="discord-widget-count"
-                />
-              </div>
-              {session?.user && (
-                <div class="opacity-70 hover:opacity-100 transition-opacity duration-200">
-                  <Notifications
-                    client:load
-                    transition:persist
-                    transition:name="notifications"
-                  />
-                </div>
-              )}
-              <div class="relative z-50">
-                <CurrentUser
-                  user={session?.user || null}
-                  isPrerenderedPath={isPrerenderedPath}
-                  client:only
-                  transition:persist
-                  transition:name="current-user"
-                />
-              </div>
-              <button
-                id="mobile-menu-btn"
-                class="md:hidden p-2 text-white/70 bg-white/5 hover:bg-white/10 rounded-full ml-1 transition-all duration-200 active:scale-95"
-              >
-                <MenuIcon class="size-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* --- MENU MÓVIL --- */}
-      <div
-        id="mobile-drawer"
-        class="fixed inset-0 z-40 hidden pointer-events-none"
-      >
-        <div
-          id="drawer-bg"
-          class="absolute inset-0 bg-black/85 backdrop-blur-xs opacity-0 transition-opacity duration-300 pointer-events-auto"
-        />
-
-        <nav
-          id="drawer-panel"
-          class="absolute top-0 right-0 h-full w-[80%] max-w-xs bg-[#080808] border-l border-white/8 shadow-2xl transform translate-x-full transition-transform duration-300 pointer-events-auto pt-24 flex flex-col"
-        >
-          <div class="px-6 flex justify-between items-center mb-6">
-            <span class="font-teko text-sm text-white/30 tracking-[0.3em] uppercase">
-              Navegación
-            </span>
-            <button
-              id="close-drawer"
-              class="text-white/40 hover:text-white/80 p-2 transition-colors"
-            >
-              <svg
-                class="w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-
-          <div class="flex-1 overflow-y-auto px-4 space-y-1">
-            <a
-              href="/"
-              class={`block px-4 py-3 rounded-lg font-teko text-xl tracking-wide transition-all duration-200 ${
-                currentPath === "/"
-                  ? CHRISTMAS_MODE
-                    ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                    : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                  : "bg-white/4 text-white/70 border border-transparent hover:bg-white/8 hover:text-white"
-              }`}
-            >
-              INICIO
-            </a>
-            {links.map((link) =>
-              link.soon ? (
-                <div class="block px-4 py-3 text-white/25 font-teko text-xl flex justify-between cursor-not-allowed">
-                  {link.label} <LucideLock size={16} />
-                </div>
-              ) : (
-                <a
-                  href={link.url}
-                  class={`block px-4 py-3 rounded-lg font-teko text-xl flex justify-between items-center transition-all duration-200 ${
-                    currentPath.startsWith(link.url)
-                      ? CHRISTMAS_MODE
-                        ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                        : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-                      : "text-white/60 border border-transparent hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  {link.label}
-                  {link.specialComment && (
-                    <span
-                      class={`text-[9px] font-rubik font-bold px-2 py-0.5 rounded tracking-widest ${
-                        link.specialComment === "VOTACIÓN"
-                          ? CHRISTMAS_MODE
-                            ? "bg-red-500/20 text-red-400 border border-red-500/20"
-                            : "bg-yellow-500/15 text-yellow-400 border border-yellow-500/20"
-                          : "bg-cyan-500/15 text-cyan-400 border border-cyan-500/20"
-                      }`}
-                    >
-                      {link.specialComment}
-                    </span>
-                  )}
-                </a>
-              ),
-            )}
-            <div class="mt-4 pt-4 border-t border-white/8 px-4">
-              <DiscordPresenceCount client:visible />
-            </div>
-          </div>
-        </nav>
+{!trueHideNav && <>
+  <header id="site-header" data-season={HALLOWEEN_MODE ? 'halloween' : CHRISTMAS_MODE ? 'christmas' : 'regular'}>
+    <div id="nav-island">
+      <a href="/" id="home-button" class:list={['site-brand', { 'christmas-logo-nav': CHRISTMAS_MODE }]} aria-label="SaltoUruguayServer, inicio">
+        <span class="site-logo"><img src="/favicon.svg" alt="" width="52" height="52" loading="eager" /></span>
+        <span class="site-brand-name">SALTO URUGUAY<span>SERVER COMMUNITY</span></span>
+      </a>
+      <nav class="desktop-navigation" aria-label="Navegación principal">{links.map(link => link.soon ?
+        <span class="site-nav-link unavailable"><span>{link.label}</span><LucideLock size={12} /></span> :
+        <a href={link.url} class="site-nav-link" aria-current={currentPath === link.url || currentPath.startsWith(link.url + '/') ? 'page' : undefined}>
+          <span>{link.label}</span>{link.specialComment && <span class={getBadgeStyles(link.specialComment, link.colorClassName)}>{link.specialComment}</span>}<span class="nav-underline" aria-hidden="true" />
+        </a>
+      )}</nav>
+      <div class="site-tools">
+        <div class="desktop-discord"><DiscordPresenceCount client:idle transition:persist transition:name="discord-widget-count" /></div>
+        {session?.user && <div class="site-notifications"><Notifications client:load transition:persist transition:name="notifications" /></div>}
+        <div class="site-account"><CurrentUser user={session?.user || null} isPrerenderedPath={isPrerenderedPath} client:only="preact" transition:persist transition:name="current-user" /></div>
+        <button id="mobile-menu-btn" type="button" aria-label="Abrir menú de navegación" aria-expanded="false" aria-controls="mobile-drawer"><MenuIcon class="size-5" /></button>
       </div>
-    </>
-  )
-}
+    </div>
+  </header>
+
+  <div id="mobile-drawer" class="drawer-hidden" role="dialog" aria-modal="true" aria-labelledby="drawer-title" aria-hidden="true" inert>
+    <div id="drawer-bg" />
+    <nav id="drawer-panel" aria-label="Navegación móvil" tabindex="-1">
+      <div class="drawer-heading"><a href="/" class="drawer-brand" aria-label="Ir al inicio"><img src="/favicon.svg" alt="" width="44" height="44" /><span>COMUNIDAD<br /><strong>SALTANA</strong></span></a><button id="close-drawer" type="button" aria-label="Cerrar menú"><LucideX size={22} /></button></div>
+      <div class="drawer-section-label" id="drawer-title">Explorá Salto</div>
+      <div class="drawer-links"><a href="/" class="drawer-link" aria-current={currentPath === '/' ? 'page' : undefined}><span>Inicio</span><LucideArrowUpRight size={18} /></a>
+        {links.map(link => link.soon ? <span class="drawer-link unavailable">{link.label}<LucideLock size={15} /></span> : <a href={link.url} class="drawer-link" aria-current={currentPath === link.url || currentPath.startsWith(link.url + '/') ? 'page' : undefined}><span>{link.label}</span>{link.specialComment && <span class={getBadgeStyles(link.specialComment, link.colorClassName)}>{link.specialComment}</span>}<LucideArrowUpRight size={18} /></a>)}
+      </div>
+      <div class="drawer-footer"><DiscordPresenceCount client:visible /><a href="/como-participar">¿Primera vez? Conocé la comunidad <LucideArrowUpRight size={14} /></a></div>
+    </nav>
+  </div>
+</>}
 
 <style>
-  @reference "../assets/styles/global.css";
-  /* SCROLL — isla compacta con glassmorphism */
-  :global(#site-header.is-scrolled) {
-    @apply py-2;
-  }
-
-  :global(#site-header.is-scrolled #nav-island) {
-    background: linear-gradient(
-      135deg,
-      rgba(8, 8, 8, 0.9) 0%,
-      rgba(14, 14, 14, 0.85) 100%
-    );
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-color: rgba(255, 255, 255, 0.07);
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-      0 8px 32px rgba(0, 0, 0, 0.6),
-      0 2px 8px rgba(0, 0, 0, 0.4);
-    max-width: 64rem; /* max-w-4xl aprox */
-  }
-
-  /* Glow line en el borde superior de la isla al scroll */
-  :global(#site-header.is-scrolled #nav-island::before) {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 10%;
-    right: 10%;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.08),
-      transparent
-    );
-    border-radius: 9999px;
-  }
-
-  /* Badge pulse sutil */
-  .badge {
-    animation: badgePulse 3s ease-in-out infinite;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .group:hover .badge {
-    transform: translateX(-50%) translateY(-3px);
-  }
-
-  @keyframes badgePulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
-  }
-
-  /* Underline: sweep al hover con ease gamer */
-  .nav-underline {
-    transition:
-      width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 0.25s ease;
-  }
-
-  /* Scan ring del logo */
-  .scan-ring {
-    transition:
-      border-color 0.3s ease,
-      box-shadow 0.3s ease,
-      inset 0.3s ease;
-  }
-
-  .logo-wrap:hover .scan-ring {
-    box-shadow: 0 0 16px rgba(255, 255, 255, 0.06);
-  }
-
-  /* 🎅 GORRO DE NAVIDAD */
-  .christmas-logo-nav::before {
-    content: "🎅";
-    position: absolute;
-    top: -18px;
-    left: -8px;
-    font-size: 2rem;
-    z-index: 50;
-    transform: rotate(-15deg);
-    animation: bounceHatNav 3s infinite ease-in-out;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-    pointer-events: none;
-  }
-
-  @keyframes bounceHatNav {
-    0%,
-    100% {
-      transform: rotate(-15deg) translateY(0);
-    }
-    50% {
-      transform: rotate(-5deg) translateY(-3px);
-    }
-  }
+  #site-header { --nav-accent:#d8b4fe; --nav-tint:#a855f71a; --nav-border:#c084fc40; position:fixed; inset:0 0 auto; width:100%; z-index:50; padding:24px 0; transition:padding .5s; }
+  #site-header[data-season='halloween'] { --nav-accent:#fdba74; --nav-tint:#f973161a; --nav-border:#f9731640; }
+  #site-header[data-season='christmas'] { --nav-accent:#fca5a5; --nav-tint:#dc26261a; --nav-border:#ef444440; }
+  #nav-island { position:relative; display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:18px; width:95%; max-width:80rem; margin:auto; padding:10px 22px; border:1px solid transparent; border-radius:999px; transition:max-width .5s,padding .5s,background .5s,border-color .5s,box-shadow .5s; }
+  .site-brand { display:flex; align-items:center; gap:10px; position:relative; min-width:0; }
+  .site-logo { position:relative; display:block; flex-shrink:0; }
+  .site-logo img { display:block; width:52px; height:52px; object-fit:contain; filter:drop-shadow(0 4px 12px #0006); transition:transform .3s,width .5s,height .5s; }
+  .site-brand:hover img { transform:scale(1.08); }
+  .site-brand-name { display:block; font-family:var(--font-anton); font-size:16px; line-height:1.25; white-space:nowrap; max-width:150px; opacity:1; overflow:hidden; transition:max-width .5s,opacity .3s; }
+  .site-brand-name > span { display:block; font-family:var(--font-rubik); font-size:7px; letter-spacing:.17em; color:var(--nav-accent); margin-top:4px; }
+  .desktop-navigation { display:flex; align-items:center; justify-content:center; gap:6px; }
+  .site-nav-link { position:relative; display:flex; align-items:center; justify-content:center; gap:7px; padding:10px 12px; border-radius:10px; color:#ffffff99; transition:color .2s,background .3s; white-space:nowrap; }
+  .site-nav-link > span:first-child { font-family:var(--font-anton); font-size:16px; text-transform:uppercase; letter-spacing:.02em; }
+  .site-nav-link:hover { color:white; background:#ffffff06; }
+  .site-nav-link[aria-current='page'] { color:var(--nav-accent); background:var(--nav-tint); }
+  .nav-underline { position:absolute; bottom:3px; left:50%; height:2px; width:0; opacity:0; transform:translateX(-50%); background:linear-gradient(90deg,transparent,var(--nav-accent),transparent); border-radius:999px; transition:width .3s,opacity .3s; }
+  .site-nav-link:hover .nav-underline { width:55%; opacity:.6; }
+  .site-nav-link[aria-current='page'] .nav-underline { width:75%; opacity:1; }
+  .site-tools { display:flex; align-items:center; justify-content:end; gap:10px; min-width:0; }
+  .desktop-discord { padding-right:12px; border-right:1px solid #ffffff18; opacity:.75; transition:opacity .2s; }
+  .desktop-discord:hover { opacity:1; }
+  .site-account { position:relative; z-index:50; }
+  #mobile-menu-btn { display:none; padding:9px; border:1px solid #ffffff20; border-radius:50%; background:#ffffff05; color:#e9d5ff; cursor:pointer; }
+  .unavailable { opacity:.35; cursor:not-allowed; }
+  :global(#site-header.is-scrolled) { padding:8px 0; }
+  :global(#site-header.is-scrolled #nav-island) { background:linear-gradient(135deg,rgba(8,8,8,.9),rgba(14,14,14,.85)); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%); border-color:rgba(255,255,255,.07); box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 8px 32px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.4); max-width:64rem; padding-block:6px; }
+  :global(#site-header.is-scrolled #nav-island::before) { content:''; position:absolute; top:0; left:10%; right:10%; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent); border-radius:999px; pointer-events:none; }
+  :global(#site-header.is-scrolled .site-brand-name) { max-width:0; opacity:0; }
+  :global(#site-header.is-scrolled .site-logo img) { width:44px; height:44px; }
+  #mobile-drawer { position:fixed; inset:0; z-index:60; --nav-accent:#d8b4fe; --nav-tint:#a855f71a; }
+  #mobile-drawer.drawer-hidden { display:none; }
+  #drawer-bg { position:absolute; inset:0; background:#000b; backdrop-filter:blur(4px); opacity:0; transition:opacity .3s; }
+  #drawer-panel { position:absolute; inset:0 0 0 auto; width:min(88vw,380px); display:flex; flex-direction:column; background:radial-gradient(ellipse at 100% 0,#7c3aed24,transparent 60%),#09080e; border-left:1px solid #c084fc30; box-shadow:-20px 0 70px #0006; padding:28px 22px max(24px,env(safe-area-inset-bottom)); transform:translateX(100%); transition:transform .3s; overflow-y:auto; }
+  #mobile-drawer.drawer-open #drawer-bg { opacity:1; }
+  #mobile-drawer.drawer-open #drawer-panel { transform:translateX(0); }
+  .drawer-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:36px; }
+  .drawer-brand { display:flex; align-items:center; gap:12px; }
+  .drawer-brand > span { font-family:var(--font-anton); font-size:17px; line-height:1.2; color:white; }
+  .drawer-brand strong { color:#c084fc; font-weight:400; }
+  #close-drawer { display:flex; padding:8px; color:#ffffff99; border:1px solid #ffffff20; border-radius:50%; cursor:pointer; }
+  .drawer-section-label { font-family:var(--font-rubik); font-size:11px; color:#ffffff60; padding-left:12px; margin-bottom:12px; }
+  .drawer-links { display:flex; flex-direction:column; gap:8px; }
+  .drawer-link { display:flex; align-items:center; gap:10px; padding:14px 12px; color:#ffffff99; border:1px solid transparent; border-radius:12px; transition:background .2s,color .2s; }
+  .drawer-link > span:first-child { font-family:var(--font-anton); text-transform:uppercase; font-size:24px; }
+  .drawer-link > svg { margin-left:auto; opacity:.5; }
+  .drawer-link[aria-current='page'] { color:#d8b4fe; background:#a855f71a; border-color:#c084fc33; }
+  .drawer-link:hover { color:white; background:#ffffff08; }
+  .drawer-footer { display:flex; flex-direction:column; align-items:start; gap:22px; margin-top:auto; padding:28px 12px 0; }
+  .drawer-footer > a { display:flex; align-items:center; gap:8px; color:#c4b5fd; font-family:var(--font-rubik); font-size:11px; }
+  a:focus-visible,button:focus-visible { outline:2px solid #d8b4fe; outline-offset:4px; }
+  .christmas-logo-nav::before { content:'🎅'; position:absolute; top:-14px; left:-6px; font-size:22px; z-index:1; transform:rotate(-15deg); pointer-events:none; }
+  @media(max-width:1270px) { .site-brand-name { display:none; } .desktop-discord { display:none; } #nav-island { gap:12px; } }
+  @media(max-width:1000px) { #nav-island { display:flex; justify-content:space-between; padding-inline:16px; } .desktop-navigation { display:none; } #mobile-menu-btn { display:flex; } .site-logo img { width:44px; height:44px; } .site-brand-name { display:block; } }
+  @media(max-width:540px) { #site-header { padding:16px 0; } #nav-island { gap:8px; padding-inline:12px; } .site-brand-name { display:none; } .site-tools { gap:7px; } }
+  @media(prefers-reduced-motion:reduce) { #site-header,#nav-island,.site-brand-name,.site-logo img,.site-nav-link,.nav-underline,#drawer-bg,#drawer-panel { transition:none !important; } }
 </style>
 
 <script>
-  import { $ } from "@/lib/dom-selector";
-
-  document.addEventListener("astro:page-load", () => {
-    const header = $("#site-header");
-    const mobileBtn = $("#mobile-menu-btn");
-    const closeBtn = $("#close-drawer");
-    const drawer = $("#mobile-drawer");
-    const drawerBg = $("#drawer-bg");
-    const drawerPanel = $("#drawer-panel");
-    const body = document.body;
-
-    // 1. Lógica de Scroll
-    const handleScroll = () => {
-      if (window.scrollY > 20) {
-        header?.classList.add("is-scrolled");
-      } else {
-        header?.classList.remove("is-scrolled");
-      }
+  let cleanup: (() => void) | undefined;
+  function setupHeader() {
+    cleanup?.();
+    const header = document.getElementById('site-header');
+    if (!header) return;
+    const button = document.getElementById('mobile-menu-btn');
+    const closeButton = document.getElementById('close-drawer');
+    const drawer = document.getElementById('mobile-drawer');
+    const background = document.getElementById('drawer-bg');
+    const panel = document.getElementById('drawer-panel');
+    if (!button || !drawer || !panel) return;
+    const events = new AbortController();
+    const options = { signal: events.signal };
+    let closeTimer: ReturnType<typeof setTimeout> | undefined;
+    let frame = 0;
+    let open = false;
+    let previousOverflow = '';
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const desktop = window.matchMedia('(min-width: 1001px)');
+    const focusable = () => Array.from(panel.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),[tabindex="0"]'));
+    const scroll = () => header.classList.toggle('is-scrolled', window.scrollY > 20);
+    const close = (restoreFocus = true) => {
+      if (!open) return;
+      open = false;
+      cancelAnimationFrame(frame);
+      drawer.classList.remove('drawer-open');
+      button.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = previousOverflow;
+      if (restoreFocus) button.focus();
+      drawer.setAttribute('aria-hidden', 'true');
+      drawer.inert = true;
+      closeTimer = setTimeout(() => drawer.classList.add('drawer-hidden'), reducedMotion.matches ? 0 : 300);
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-
-    // 2. Lógica de Menú Móvil
-    const openMenu = () => {
-      drawer?.classList.remove("hidden");
-      setTimeout(() => {
-        drawerBg?.classList.remove("opacity-0");
-        drawerPanel?.classList.remove("translate-x-full");
-      }, 10);
-      body.style.overflow = "hidden";
+    const show = () => {
+      if (open) return;
+      clearTimeout(closeTimer);
+      open = true;
+      previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      drawer.classList.remove('drawer-hidden');
+      drawer.inert = false;
+      drawer.setAttribute('aria-hidden', 'false');
+      button.setAttribute('aria-expanded', 'true');
+      // Commit the off-screen state before starting the slide transition.
+      void panel.offsetWidth;
+      frame = requestAnimationFrame(() => {
+        if (!open) return;
+        drawer.classList.add('drawer-open');
+        (focusable()[0] ?? panel).focus();
+      });
     };
-
-    const closeMenu = () => {
-      drawerBg?.classList.add("opacity-0");
-      drawerPanel?.classList.add("translate-x-full");
-      setTimeout(() => {
-        drawer?.classList.add("hidden");
-        body.style.overflow = "";
-      }, 300);
+    window.addEventListener('scroll', scroll, { ...options, passive: true });
+    button.addEventListener('click', show, options);
+    closeButton?.addEventListener('click', () => close(), options);
+    background?.addEventListener('click', () => close(), options);
+    panel.addEventListener('click', event => {
+      if ((event.target as Element).closest('a[href]')) close();
+    }, options);
+    document.addEventListener('keydown', event => {
+      if (!open) return;
+      if (event.key === 'Escape') { event.preventDefault(); close(); }
+      if (event.key !== 'Tab') return;
+      const items = focusable();
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    }, options);
+    document.addEventListener('focusin', event => {
+      if (open && !panel.contains(event.target as Node)) (focusable()[0] ?? panel).focus();
+    }, options);
+    desktop.addEventListener('change', event => { if (event.matches) close(); }, options);
+    scroll();
+    cleanup = () => {
+      events.abort();
+      clearTimeout(closeTimer);
+      cancelAnimationFrame(frame);
+      if (open) document.body.style.overflow = previousOverflow;
+      cleanup = undefined;
     };
-
-    mobileBtn?.addEventListener("click", openMenu);
-    closeBtn?.addEventListener("click", closeMenu);
-    drawerBg?.addEventListener("click", closeMenu);
-  });
+  }
+  setupHeader();
+  document.addEventListener('astro:page-load', setupHeader);
+  document.addEventListener('astro:before-swap', () => cleanup?.());
 </script>
