@@ -2,12 +2,11 @@
 import Layout from "../layouts/Layout.astro";
 import Sponsors from "@/sections/Sponsors.astro";
 import LiveStream from "@/components/LiveStream.astro";
-import VoteCallToAction from "@/components/VoteCallToAction.astro";
 import NewsOnPage from "@/sections/NewsOnPage.astro";
 import { FeaturedNews } from "@/components/FeaturedNews";
 import Advantages from "@/sections/Advantages.astro";
 import Required2FA from "@/components/admin/Required2FA.astro";
-import { LucideChevronsDown } from "lucide-preact";
+import { LucideChevronsDown, LucideUsers, LucideArrowRight, LucideGamepad2, LucideTrophy, LucideIdCard, LucideSparkles } from "lucide-preact";
 
 import { CHRISTMAS_MODE, HALLOWEEN_MODE } from "@/config";
 
@@ -24,7 +23,7 @@ const subtitleGradient = HALLOWEEN_MODE
   ? "from-orange-400 via-amber-300 to-purple-400 bg-size-[200%_auto] animate-shine"
   : CHRISTMAS_MODE
   ? "from-red-500 via-green-500 to-red-500 bg-size-[200%_auto] animate-shine"
-  : "from-blue-400 to-purple-500";
+  : "from-purple-400 to-pink-500";
 
 const titleShadow = HALLOWEEN_MODE
   ? "drop-shadow-[0_0_30px_rgba(249,115,22,0.5)]"
@@ -44,7 +43,7 @@ const heroGlow = HALLOWEEN_MODE
   description="Te damos la bienvenida a la comunidad del canal de SaltoUruguayServer en Twitch. ¡Viví los mejores eventos y streams!"
   mainClassname="p-0"
 >
-  <main class="relative w-full text-white">
+  <div class="home-page relative w-full text-white">
     {/* ❄️ EFECTO DE NIEVE */}
     {
       CHRISTMAS_MODE && (
@@ -90,7 +89,7 @@ const heroGlow = HALLOWEEN_MODE
 
     <section
       id="hero"
-      class="relative flex min-h-dvh w-full flex-col items-center justify-center overflow-hidden pt-20 pb-12"
+      class="home-hero relative flex w-full flex-col items-center justify-center overflow-hidden pt-28 pb-16 sm:pt-36 sm:pb-20"
     >
       {/* Telarañas en esquinas superiores si Halloween está activo */}
       {
@@ -177,61 +176,19 @@ const heroGlow = HALLOWEEN_MODE
           )
         }
 
-        <header
-          class="flex flex-col items-center justify-center gap-8 md:flex-row md:gap-14"
-        >
-          {/* Logo - Con un halo de luz sutil o toque Halloween al pasar el mouse */}
-          <div
-            class={`group relative animate-fade-in ${
-              HALLOWEEN_MODE
-                ? "halloween-logo"
-                : CHRISTMAS_MODE
-                ? "christmas-logo"
-                : ""
-            }`}
-          >
-            <div
-              class={`absolute -inset-4 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100 ${
-                HALLOWEEN_MODE ? "bg-orange-500/30" : "bg-white/10"
-              }`}
-            >
-            </div>
-            <img
-              src="/favicon.svg"
-              alt="SaltoUruguayServer Logo"
-              draggable="false"
-              fetchpriority="high"
-              loading="eager"
-              class={`relative h-28 w-auto object-contain transition-all duration-500 ease-out group-hover:scale-105 md:h-40 ${
-                HALLOWEEN_MODE
-                  ? "drop-shadow-[0_0_25px_rgba(249,115,22,0.4)] group-hover:drop-shadow-[0_0_35px_rgba(249,115,22,0.7)]"
-                  : "drop-shadow-[0_0_15px_rgba(255,255,255,0.05)] group-hover:drop-shadow-[0_0_25px_rgba(255,255,255,0.15)]"
-              }`}
-            />
-          </div>
-
-          {/* Títulos */}
-          <div class="animate-fade-in-up space-y-3 text-center md:text-left">
-            {/* Título Principal */}
-            <h1
-              class={`font-anton text-5xl tracking-wide text-white transition-all duration-500 sm:text-6xl md:text-7xl ${titleShadow}`}
-            >
-              SALTO URUGUAY
-            </h1>
-
-            {/* Subtítulo con Gradiente Dinámico */}
-            <h2
-              class={`bg-linear-to-r ${subtitleGradient} bg-clip-text font-sans text-lg font-semibold tracking-[0.25em] text-transparent md:text-xl`}
-            >
-              SERVER COMMUNITY
-            </h2>
-          </div>
+        <header class="home-welcome">
+          <img src="/favicon.svg" alt="SaltoUruguayServer" width="100" height="100" fetchpriority="high" class="home-logo" />
+          <div class="home-badge"><LucideUsers size={14} /><span>Comunidad saltana</span></div>
+          <h1 class:list={['font-anton text-white uppercase tracking-tight', titleShadow]}>Salto Uruguay<br /><span class:list={['text-transparent bg-clip-text bg-linear-to-r', subtitleGradient]}>Server Community</span></h1>
+          <p>De Salto, Uruguay, para cualquiera que quiera ser parte.<br class="hidden sm:block" /> Directos, juegos y momentos para compartir.</p>
+          <div class="home-hero-actions"><a class="home-primary" href="/comunidad">Explorar comunidad <LucideArrowRight size={18} /></a></div>
+          <a class="home-first-visit" href="/como-participar">¿Primera vez? Te contamos cómo participar.</a>
         </header>
       </div>
 
       {/* Scroll indicator - Estilo más técnico/gaming */}
       <a
-        href="#stream-section"
+        href="#explore-title"
         class="absolute bottom-6 text-white/30 transition-all hover:-translate-y-1 hover:text-white/80 animate-bounce cursor-pointer"
         aria-label="Ir al contenido"
       >
@@ -241,45 +198,59 @@ const heroGlow = HALLOWEEN_MODE
 
     {/* CONTENIDO PRINCIPAL */}
     <div
-      class="relative z-10 mx-auto flex max-w-7xl flex-col gap-24 px-4 pb-20"
+      class="relative z-10 mx-auto flex max-w-7xl flex-col gap-16 sm:gap-20 px-4 pb-20"
     >
-      <div id="stream-section" class="scroll-mt-32">
-        <LiveStream server:defer />
-      </div>
-      <section aria-label="La comunidad en pocas palabras" class="mx-auto max-w-4xl text-center space-y-5">
-        <p class="text-xs font-bold uppercase tracking-[0.25em] text-white/40">Comunidad de gaming uruguaya · Salto</p>
-        <h2 class="font-anton text-3xl md:text-4xl text-white uppercase tracking-wide">
-          Streams, torneos y eventos en un solo lugar
-        </h2>
-        <p class="text-white/60 font-rubik leading-relaxed">
-          <strong class="text-white/80">SaltoUruguayServer</strong> es una comunidad de gaming nacida en
-          Salto, Uruguay, organizada alrededor del canal de Twitch
-          saltouruguayserver. Aquí centralizamos lo que pasa en el directo, en
-          Discord y en nuestros servidores: <a href="/torneos" class="text-violet-300 underline underline-offset-2">torneos</a> de
-          Minecraft (SaltoCraft Extremo), Liga Fortnite y Rocket League, la
-          <a href="/comunidad/guerra" class="text-violet-300 underline underline-offset-2"> Guerra de Streamers</a>,
-          los SaltoAwards con votación abierta y la <a href="/eventos" class="text-violet-300 underline underline-offset-2">cartelera de eventos</a>.
-          Mirar es gratis; para competir solo necesitás iniciar sesión con
-          Twitch o Discord, como explicamos en <a href="/como-participar" class="text-violet-300 underline underline-offset-2">cómo participar</a>.
-        </p>
-        <p class="text-white/60 font-rubik leading-relaxed">
-          Además del competitivo, la web reúne la vida diaria de la comunidad:
-          Member Cards, Saltogram, mascotas virtuales, SaltoCoins, logros y
-          minijuegos como la Ruleta Loca, todo desde el <a href="/comunidad" class="text-violet-300 underline underline-offset-2">hub de comunidad</a>.
-          Jugamos con reglamento claro y tolerancia cero al acoso: podés leerlo en el
-          <a href="/reglamento" class="text-violet-300 underline underline-offset-2"> reglamento</a> y resolver
-          dudas en las <a href="/preguntas-frecuentes" class="text-violet-300 underline underline-offset-2">preguntas frecuentes</a>.
-        </p>
+      <LiveStream server:defer />
+      <section class="home-explore" aria-labelledby="explore-title">
+        <header class="home-section-header"><div class="home-badge"><LucideSparkles size={14} /><span>Mucho más que un directo</span></div><h2 id="explore-title" class="font-anton">Encontrá tu <span>lugar</span></h2><p>Elegí por dónde empezar. El resto lo hacemos entre todos.</p></header>
+        <div class="home-explore-grid">
+          <a class="home-destination home-events" href="/eventos"><img src="/images/SaltoCraft 4.webp" alt="" loading="lazy" /><div class="home-destination-copy"><span class="destination-icon"><LucideTrophy size={23} /></span><h3>Eventos y torneos</h3><p>Conocé las ediciones, los desafíos y las historias de la comunidad.</p><span class="destination-action">Explorar eventos <LucideArrowRight size={16} /></span></div></a>
+          <a class="home-destination home-games" href="/comunidad/juegos"><img src="/images/arcade-bg.webp" alt="" loading="lazy" /><div class="home-destination-copy"><span class="destination-icon"><LucideGamepad2 size={23} /></span><h3>Juegos con amigos</h3><p>Conga, Ruleta Loca y una excusa más para quedarse un rato.</p><span class="destination-action">Entrar al arcade <LucideArrowRight size={16} /></span></div></a>
+          <a class="home-destination home-community" href="/comunidad"><img src="/images/member-card.webp" alt="" loading="lazy" /><div class="home-destination-copy"><span class="destination-icon"><LucideIdCard size={23} /></span><h3>Tu espacio saltano</h3><p>Tu Member Card, tus logros y todo lo que te hace parte.</p><span class="destination-action">Descubrir comunidad <LucideArrowRight size={16} /></span></div></a>
+        </div>
       </section>
-      <FeaturedNews client:only />
-      <Advantages />
+      <FeaturedNews client:only="preact" />
       <NewsOnPage />
+      <Advantages />
       <Sponsors />
     </div>
-  </main>
+  </div>
 </Layout>
 
 <style>
+  .home-welcome { display:flex; flex-direction:column; align-items:center; }
+  .home-logo { width:88px; height:88px; margin-bottom:22px; object-fit:contain; filter:drop-shadow(0 0 25px #a855f744); }
+  .home-badge { display:inline-flex; align-items:center; gap:8px; padding:5px 12px; border-radius:999px; border:1px solid #a855f733; background:#a855f71a; color:#d8b4fe; font:700 11px var(--font-rubik); text-transform:uppercase; letter-spacing:.08em; backdrop-filter:blur(12px); }
+  .home-welcome h1 { margin-top:18px; font-size:clamp(2.7rem,6.5vw,5.5rem); line-height:1.05; }
+  .home-welcome h1 span { display:inline-block; }
+  .home-welcome > p { margin-top:20px; font-family:var(--font-rubik); color:#ffffff99; font-size:14px; line-height:1.8; max-width:48ch; }
+  .home-hero-actions { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:14px; margin-top:28px; }
+  .home-primary { display:inline-flex; align-items:center; gap:12px; border-radius:999px; padding:13px 22px; font:500 13px var(--font-rubik); transition:background .15s,border-color .15s; }
+  .home-primary { background:#a855f71f; color:#f3e8ff; border:1px solid #c084fc70; }
+  .home-primary:hover { background:#a855f738; border-color:#d8b4fe; }
+  .home-first-visit { font:400 11px var(--font-rubik); color:#ffffff70; margin-top:22px; text-decoration:underline; text-underline-offset:4px; }
+  .home-section-header { text-align:center; margin-bottom:30px; }
+  .home-section-header h2 { margin-top:16px; font-size:clamp(32px,4vw,52px); line-height:1.1; text-transform:uppercase; letter-spacing:-.02em; }
+  .home-section-header h2 span { color:transparent; background:linear-gradient(90deg,#c084fc,#ec4899); background-clip:text; }
+  .home-section-header > p { font-family:var(--font-rubik); margin-top:12px; color:#ffffff80; font-size:13px; line-height:1.7; }
+  .home-explore-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; }
+  .home-destination { position:relative; isolation:isolate; display:flex; align-items:end; min-height:350px; border:1px solid #ffffff26; border-radius:22px; overflow:hidden; --accent:#fbbf24; background:#09090b; }
+  .home-destination > img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:-2; }
+  .home-destination::before { content:''; position:absolute; inset:0; z-index:-1; background:linear-gradient(0deg,#09090b 0%,#09090bef 18%,#09090b80 65%,#09090b10); }
+  .home-destination-copy { padding:26px; width:100%; }
+  .destination-icon { display:inline-flex; padding:11px; background:#09090b99; border:1px solid var(--accent); color:var(--accent); border-radius:12px; margin-bottom:40px; }
+  .home-destination h3 { font-family:var(--font-anton); font-size:29px; text-transform:uppercase; line-height:1.15; }
+  .home-destination p { font-family:var(--font-rubik); color:#ffffffa6; font-size:12px; line-height:1.8; margin:12px 0 22px; max-width:33ch; }
+  .destination-action { display:inline-flex; align-items:center; gap:8px; color:var(--accent); font-family:var(--font-rubik); font-size:12px; font-weight:500; }
+  .home-games { --accent:#67e8f9; }
+  .home-community { --accent:#d8b4fe; }
+  .home-destination:hover { border-color:var(--accent); }
+  .home-destination:hover h3 { color:var(--accent); }
+  .home-page a:focus-visible { outline:2px solid #e9d5ff; outline-offset:5px; }
+  @media(max-width:800px) { .home-explore-grid { grid-template-columns:1fr; gap:16px; } .home-destination { min-height:270px; } .home-destination > img { object-position:center 35%; } .destination-icon { margin-bottom:20px; } }
+  @media(max-width:540px) { .home-welcome h1 { font-size:clamp(2.1rem,9vw,3rem); } .home-welcome > p { font-size:12px; } .home-logo { width:72px; height:72px; } .home-primary { padding:12px 16px; font-size:11px; } .home-destination-copy { padding:22px; } }
+  @media(prefers-reduced-motion:reduce) { .home-page *, .home-page *::before, .home-page *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } .animate-fade-in-up { opacity:1 !important; } }
+
   /* Animaciones CSS Puras */
   .animate-fade-in {
     animation: fadeIn 1s ease-out forwards;

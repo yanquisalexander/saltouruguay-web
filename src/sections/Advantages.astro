@@ -12,8 +12,8 @@ const ADVANTAGES = [
     href: "https://discord.gg/XwHSRRwnzS",
     image: "/images/advantages/ventaja-discord.webp",
     description:
-      "Únete al servidor oficial. Soporte 24/7, canales de voz y roles exclusivos para miembros.",
-    stats: "3.5k+ Miembros", // Ejemplo de dato
+      "Charlá con la comunidad, armá una partida y seguí las novedades.",
+    stats: "La comunidad", // Ejemplo de dato
     theme: {
       bg: "hover:shadow-[#5865F2]/20",
       border: "group-hover:border-[#5865F2]/50",
@@ -30,7 +30,7 @@ const ADVANTAGES = [
     href: "https://www.twitch.tv/SaltoUruguayServer",
     image: "/images/advantages/ventaja-twitch.webp",
     description:
-      "No te pierdas ningún directo. Sorteos, torneos en vivo y drops exclusivos para subs.",
+      "Sumate al directo y compartí los eventos con el chat saltano.",
     stats: "Interacciones en Vivo", // Ejemplo de dato
     theme: {
       bg: "hover:shadow-[#9146FF]/20",
@@ -78,7 +78,7 @@ const ADVANTAGES = [
             target="_blank"
             rel="noopener noreferrer"
             class={`
-                group relative h-[400px] md:h-[450px] rounded-[32px] border border-white/10 bg-[#0a0a0a] overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl ${item.theme.bg} ${item.theme.border}
+                group relative min-h-[330px] md:min-h-[360px] rounded-[32px] border border-white/10 bg-[#0a0a0a] overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl ${item.theme.bg} ${item.theme.border}
             `}
           >
             {/* 1. IMAGEN DE FONDO (Full Cover con Overlay) */}
@@ -131,7 +131,7 @@ const ADVANTAGES = [
                 <h3 class="text-4xl md:text-5xl font-anton text-white uppercase mb-4 leading-none">
                   {item.title}
                 </h3>
-                <p class="text-white/60 font-rubik text-sm md:text-base leading-relaxed mb-8 max-w-xs">
+                <p class="text-white/60 font-rubik text-sm leading-relaxed mb-6 max-w-xs">
                   {item.description}
                 </p>
 

@@ -2,258 +2,109 @@
 import { SALTO_BROADCASTER_ID } from "@/config";
 import { getLiveStream } from "@/utils/twitch-runtime";
 import TwitchEmbed from "./TwitchEmbed.astro";
-import { LucideExternalLink, LucideMessageSquare, LucideTv } from "lucide-preact";
+import { LucideArrowUpRight, LucideMessageSquare, LucideRadio, LucideChevronDown } from "lucide-preact";
 
-const stream = await getLiveStream(import.meta.env.DEV ? '277624494' : SALTO_BROADCASTER_ID);
-const PREVIEW = stream?.getThumbnailUrl(1280, 720);
+const broadcasterId = import.meta.env.DEV ? '277624494' : SALTO_BROADCASTER_ID;
+let stream: Awaited<ReturnType<typeof getLiveStream>> = null;
+try {
+  stream = await getLiveStream(broadcasterId);
+} catch (error) {
+  console.error('Could not load the live stream:', error);
+}
+const preview = stream?.getThumbnailUrl(1280, 720);
 ---
 
-{
-  stream && (
-    <section id="live-stream" class="w-full max-w-7xl mx-auto px-4 py-12">
-        
-        {/* HEADER DE TRANSMISIÓN */}
-        <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-3">
-                <div class="relative flex h-3 w-3">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                </div>
-                <h2 class="text-xl md:text-2xl font-anton uppercase text-white tracking-wide">
-                    En Vivo Ahora: <span class="text-white/60">{stream.title}</span>
-                </h2>
-            </div>
-            
-            <div class="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40">
-                <LucideTv size={14} /> SaltoUruguayServer
-            </div>
-        </div>
-
-        {/* CONTENEDOR PRINCIPAL (GRID) */}
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
-            
-            {/* VIDEO (Ocupa 3 columnas en desktop) */}
-            <div class="lg:col-span-3 rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-900/10 bg-black relative group">
-                {/* Glow ambiental detrás del video */}
-                <div class="absolute -inset-1 bg-linear-to-r from-purple-600 to-blue-600 rounded-2xl blur-sm opacity-20 group-hover:opacity-30 transition duration-1000"></div>
-                
-                <div class="relative z-10 w-full h-full bg-black rounded-xl overflow-hidden">
-                    <TwitchEmbed
-                        channelId={SALTO_BROADCASTER_ID}
-                        username={stream.userName}
-                        placeholder={PREVIEW || ""}
-                        data-title={stream.title}
-                        extraClasses="w-full h-full aspect-video"
-                    />
-                </div>
-            </div>
-
-            {/* CHAT (Ocupa 1 columna) */}
-            <div class="lg:col-span-1 flex flex-col h-[500px] lg:h-auto rounded-2xl border border-white/10 bg-[#0f0f11] overflow-hidden shadow-xl">
-                
-                {/* Header Chat */}
-                <div class="p-4 border-b border-white/5 bg-[#15151a] flex items-center justify-between">
-                    <span class="font-bold text-sm text-white uppercase tracking-widest flex items-center gap-2">
-                        <LucideMessageSquare size={14} className="text-purple-400"/> Chat del Stream
-                    </span>
-                    <div class="size-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]"></div>
-                </div>
-
-                {/* Área de Mensajes */}
-                <div 
-                    class="chat-box flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
-                    style="scroll-behavior: smooth;"
-                >
-                    {/* Los mensajes se inyectan aquí */}
-                    <div class="text-center py-10 text-white/20 text-xs italic">
-                        Conectando al chat...
-                    </div>
-                </div>
-
-                {/* Footer Chat */}
-                <div class="p-4 border-t border-white/5 bg-[#15151a]">
-                    <a
-                        href={`https://www.twitch.tv/${stream.userName}/chat`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-[#9146FF] hover:bg-[#772CE8] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-lg shadow-purple-900/20"
-                    >
-                        Unirse a la conversación <LucideExternalLink size={12} />
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <template id="chat-message">
-      <div class="group flex gap-3 items-start animate-fade-in-left">
-        <img
-          src="/favicon.svg"
-          alt="Avatar"
-          class="size-8 rounded-full bg-white/5 object-cover shrink-0 border border-white/10"
-        />
-        <div class="flex flex-col min-w-0">
-          <div class="flex items-baseline gap-2">
-              <span class="font-bold text-xs text-[#a970ff] username truncate">Usuario</span>
-              <span class="text-[10px] text-white/30 timestamp hidden group-hover:inline">Justo ahora</span>
-          </div>
-          <p class="text-sm text-white/80 message wrap-break-word leading-snug"></p>
-        </div>
+{stream && <section id="live-stream" class="live-room" aria-labelledby="live-room-title">
+  <header class="live-room-heading">
+    <span class="live-room-badge"><LucideRadio size={14} /><span>Estamos en vivo</span></span>
+    <h2 id="live-room-title">El directo se vive <span>juntos</span></h2>
+    <p>Ya empezó. Ponete cómodo y sumate al chat.</p>
+  </header>
+  <div class="live-room-frame">
+    <div class="live-room-topbar"><span class="live-channel"><span class="live-channel-dot" />{stream.userDisplayName}</span><span class="live-channel-status">En directo</span></div>
+    <div class="live-room-grid">
+      <div class="live-video-column">
+        <div class="live-video"><TwitchEmbed channelId={broadcasterId} username={stream.userName} placeholder={preview || ''} extraClasses="w-full aspect-video" /></div>
+        <div class="live-video-info"><div><span class="live-category">{stream.gameName || 'En comunidad'}</span><h3>{stream.title}</h3></div><a href={'https://www.twitch.tv/' + stream.userName} target="_blank" rel="noopener noreferrer">Abrir en Twitch <LucideArrowUpRight size={16} /></a></div>
       </div>
-    </template>
-  )
-}
+      <details class="live-chat-panel" open>
+        <summary><span><LucideMessageSquare size={16} />El chat saltano</span><LucideChevronDown size={16} class="live-chat-chevron" /></summary>
+        <div class="live-chat-body"><saltano-live-chat data-channel={stream.userName}><p class="live-chat-placeholder">Cargando el chat de Twitch…</p></saltano-live-chat><a class="live-chat-external" href={'https://www.twitch.tv/' + stream.userName + '/chat'} target="_blank" rel="noopener noreferrer">Abrir chat en Twitch <LucideArrowUpRight size={13} /></a></div>
+      </details>
+    </div>
+  </div>
+</section>}
 
 <style>
-    .animate-fade-in-left {
-        animation: fadeInLeft 0.3s ease-out forwards;
-    }
-    @keyframes fadeInLeft {
-        from { opacity: 0; transform: translateX(-10px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
+  .live-room { width:100%; min-width:0; font-family:var(--font-rubik); color:white; scroll-margin-top:100px; }
+  .live-room-heading { text-align:center; margin-bottom:30px; }
+  .live-room-badge { display:inline-flex; align-items:center; gap:8px; padding:5px 12px; border-radius:999px; color:#fda4af; background:#f43f5e12; border:1px solid #fb718533; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+  .live-room-heading h2 { font-family:var(--font-anton); font-weight:400; font-size:clamp(32px,4vw,52px); text-transform:uppercase; letter-spacing:-.02em; line-height:1.1; margin-top:16px; }
+  .live-room-heading h2 span { color:transparent; background:linear-gradient(90deg,#c084fc,#ec4899); background-clip:text; }
+  .live-room-heading > p { margin-top:12px; color:#ffffff80; font-size:13px; line-height:1.7; }
+  .live-room-frame { background:#0c0912; border:1px solid #c084fc33; border-radius:22px; overflow:hidden; }
+  .live-room-topbar { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 22px; border-bottom:1px solid #ffffff12; background:linear-gradient(90deg,#a855f712,transparent); }
+  .live-channel { display:flex; align-items:center; gap:9px; font-size:12px; font-weight:500; }
+  .live-channel-dot { width:7px; height:7px; border-radius:50%; background:#fb7185; box-shadow:0 0 12px #fb718566; }
+  .live-channel-status { color:#fda4af; font-size:10px; }
+  .live-room-grid { display:grid; grid-template-columns:minmax(0,1fr) 320px; align-items:stretch; }
+  .live-video-column { min-width:0; }
+  .live-video { aspect-ratio:16/9; background:black; }
+  .live-video-info { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px; }
+  .live-category { font-size:10px; color:#d8b4fe; }
+  .live-video-info h3 { font-family:var(--font-rubik); font-weight:500; font-size:15px; line-height:1.6; margin-top:6px; overflow-wrap:anywhere; }
+  .live-video-info > a { display:inline-flex; align-items:center; gap:8px; font-size:11px; color:#e9d5ff; border:1px solid #c084fc50; background:#a855f712; border-radius:999px; padding:9px 14px; flex-shrink:0; }
+  .live-video-info > a:hover { background:#a855f72a; }
+  .live-chat-panel { position:relative; min-width:0; border-left:1px solid #ffffff12; background:#0e0b16; }
+  .live-chat-panel > summary { display:flex; align-items:center; justify-content:space-between; gap:12px; height:52px; padding:0 16px; border-bottom:1px solid #ffffff10; color:#e9d5ff; font-size:12px; list-style:none; cursor:pointer; }
+  .live-chat-panel > summary::-webkit-details-marker { display:none; }
+  .live-chat-panel > summary > span { display:flex; align-items:center; gap:8px; }
+  .live-chat-panel[open] .live-chat-chevron { transform:rotate(180deg); }
+  .live-chat-body { position:absolute; inset:52px 0 0; display:flex; flex-direction:column; }
+  saltano-live-chat { display:block; flex:1; min-height:0; width:100%; }
+  .live-chat-placeholder { font-size:12px; text-align:center; color:#ffffff70; padding:32px 16px; }
+  .live-chat-external { display:flex; align-items:center; justify-content:center; gap:6px; padding:12px; font-size:10px; color:#c4b5fd; border-top:1px solid #ffffff10; }
+  a:focus-visible, summary:focus-visible { outline:2px solid #d8b4fe; outline-offset:-3px; }
+  @media(max-width:1050px) { .live-room-grid { grid-template-columns:1fr; } .live-chat-panel { border-left:0; border-top:1px solid #ffffff12; } .live-chat-body { position:static; height:400px; } }
+  @media(max-width:540px) { .live-room-frame { border-radius:16px; } .live-room-topbar { padding:12px 16px; } .live-video-info { align-items:start; flex-direction:column; gap:14px; padding:18px; } .live-video-info h3 { font-size:13px; } .live-chat-body { height:360px; } }
 </style>
 
 <script>
-import { $ } from "@/lib/dom-selector";
+  class SaltanoLiveChat extends HTMLElement {
+    private panel: HTMLDetailsElement | null = null;
+    private viewport: MediaQueryList | null = null;
 
-let isChatInitialized = false;
-
-const initChat = () => {
-  if (isChatInitialized) return;
-  
-  const $chat = $(".chat-box") as HTMLElement;
-  if (!$chat) return; // Seguridad si no hay stream
-
-  isChatInitialized = true;
-  const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
-  const SALTO_USERNAME = "SaltoUruguayServer";
-  const LIMIT_MESSAGES = 20;
-  const LOADED_AVATARS = new Map<string, string>();
-  const DECAPI_AVATAR_PREFIX = "https://decapi.me/twitch/avatar/";
-  const $messageTemplate = $("#chat-message") as HTMLTemplateElement;
-
-  // Limpiar mensaje de "Conectando..."
-  const clearLoading = () => {
-      if($chat.innerText.includes("Conectando")) $chat.innerHTML = "";
-  }
-
-  const parseEmotes = (message: string, emotesTag: string) => {
-    if (!emotesTag) return message;
-    const emotes = emotesTag.split("/").map(emote => {
-        const [emoteId, positions] = emote.split(":");
-        return positions.split(",").map(position => ({
-        id: emoteId,
-        start: parseInt(position.split("-")[0]),
-        end: parseInt(position.split("-")[1]),
-        }));
-    }).flat();
-
-    let parsedMessage = "";
-    let lastIndex = 0;
-    emotes.sort((a, b) => a.start - b.start).forEach(({ id, start, end }) => {
-        parsedMessage += message.slice(lastIndex, start);
-        parsedMessage += `<img src="https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/1.0" class="inline-block h-5 align-middle mx-0.5" alt="Emote">`;
-        lastIndex = end + 1;
-    });
-    parsedMessage += message.slice(lastIndex);
-    return parsedMessage;
-  };
-  
-  const getAvatar = async (username: string) => {
-    if (LOADED_AVATARS.has(username)) return LOADED_AVATARS.get(username)!;
-    try {
-        const response = await fetch(`${DECAPI_AVATAR_PREFIX}${username}`);
-        if (!response.ok) throw new Error("Error avatar");
-        const avatarUrl = await response.text();
-        LOADED_AVATARS.set(username, avatarUrl);
-        return avatarUrl;
-    } catch (error) {
-        return "";
-    }
-  };
-
-  const handleNewMessage = (message: { avatar: string; username: string; message: string }) => {
-    clearLoading();
-    const $clone = $messageTemplate.content.cloneNode(true) as HTMLElement;
-    const $avatar = $clone.querySelector("img") as HTMLImageElement;
-    const $username = $clone.querySelector(".username") as HTMLElement;
-    const $messageText = $clone.querySelector(".message") as HTMLElement;
-
-    // Asignar datos
-    $username.textContent = message.username;
-    $username.style.color = stringToColor(message.username); // Color consistente por usuario
-    $messageText.innerHTML = message.message;
-
-    // Cargar avatar asíncronamente
-    getAvatar(message.username).then(url => {
-        if(url) $avatar.src = url;
-        else $avatar.src = `https://ui-avatars.com/api/?name=${message.username}&background=random&color=fff`;
-    });
-
-    $chat.appendChild($clone);
-    
-    // Auto-scroll si está cerca del final
-    if ($chat.scrollTop + $chat.clientHeight >= $chat.scrollHeight - 100) {
-        $chat.scrollTop = $chat.scrollHeight;
-    }
-
-    if ($chat.children.length > LIMIT_MESSAGES) {
-        $chat.removeChild($chat.children[0]);
-    }
-  };
-
-  // Helper para color consistente
-  const stringToColor = (str: string) => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const c = (hash & 0x00ffffff).toString(16).toUpperCase();
-    return '#' + '00000'.substring(0, 6 - c.length) + c;
-  }
-
-  const parseTmiMessage = (message: string) => {
-    if (message.startsWith("PING")) {
-        ws.send("PONG :tmi.twitch.tv");
-        return;
-    }
-    const tagMatch = message.match(/^@(.*?) /);
-    const messageParts = message.split("PRIVMSG");
-    if (!tagMatch || messageParts.length < 2) return;
-
-    const tags = tagMatch[1];
-    const messageText = messageParts[1].split(" :")[1]?.trim();
-    if (!messageText) return;
-
-    const tagMap: Record<string, string> = Object.fromEntries(
-        tags.split(";").map(tag => tag.split("=").map(decodeURIComponent))
-    );
-
-    return {
-        username: tagMap["display-name"] || "Chatter",
-        avatar: "", // Se carga después
-        message: parseEmotes(messageText, tagMap["emotes"]),
+    private load = () => {
+      if (!this.panel?.open || this.querySelector('iframe')) return;
+      const channel = this.dataset.channel;
+      if (!channel) return;
+      const url = new URL('https://www.twitch.tv/embed/' + encodeURIComponent(channel) + '/chat');
+      url.searchParams.set('parent', window.location.hostname);
+      url.searchParams.set('darkpopout', '');
+      const frame = document.createElement('iframe');
+      frame.src = url.href;
+      frame.title = 'Chat de Twitch de ' + channel;
+      frame.width = '100%';
+      frame.height = '100%';
+      frame.style.cssText = 'display:block;border:0;width:100%;height:100%;';
+      this.replaceChildren(frame);
     };
-  };
-
-  ws.onopen = function () {
-    ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
-    ws.send("PASS SCHMOOPIIE"); // Token anónimo válido para leer
-    ws.send("NICK justinfan12345");
-    ws.send(`JOIN #${SALTO_USERNAME}`);
-  };
-
-  ws.onmessage = function (event) {
-    const data = event.data.trim();
-    const messages = data.split("\r\n");
-    messages.forEach((line: string) => {
-        const message = parseTmiMessage(line);
-        if (message) handleNewMessage(message);
-    });
-  };
-};
-
-document.addEventListener("astro:page-load", initChat);
-initChat();
+    private syncViewport = () => {
+      if (this.panel && this.viewport) this.panel.open = this.viewport.matches;
+      this.load();
+    };
+    connectedCallback() {
+      this.panel = this.closest('details');
+      this.viewport = window.matchMedia('(min-width: 1051px)');
+      this.panel?.addEventListener('toggle', this.load);
+      this.viewport.addEventListener('change', this.syncViewport);
+      this.syncViewport();
+    }
+    disconnectedCallback() {
+      this.panel?.removeEventListener('toggle', this.load);
+      this.viewport?.removeEventListener('change', this.syncViewport);
+      this.querySelector('iframe')?.remove();
+    }
+  }
+  if (!customElements.get('saltano-live-chat')) customElements.define('saltano-live-chat', SaltanoLiveChat);
 </script>
