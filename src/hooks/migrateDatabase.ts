@@ -5,6 +5,10 @@ export default function migrateDatabaseIntegration() {
         name: "migrate-database-integration",
         hooks: {
             "astro:build:done": async () => {
+                if (import.meta.env.DEV) {
+                    console.log("Skipping database migration in development mode.");
+                    return;
+                }
                 try {
                     console.log("Starting database migration...");
                     await migrateDatabase();

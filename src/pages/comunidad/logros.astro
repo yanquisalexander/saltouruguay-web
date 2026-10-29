@@ -1,464 +1,230 @@
 ---
-import { ACHIEVEMENT_RARITIES, ACHIEVEMENTS, getAchievementsByRarity, getAchievementCardUrl, getAchievementIconUrl } from "@/consts/Achievements";
+import { ACHIEVEMENT_RARITIES, getAchievementsByRarity, getAchievementCardUrl, getAchievementIconUrl, type AchievementRarity } from "@/consts/Achievements";
 import Layout from "@/layouts/Layout.astro";
 import PageBackdrop from "@/components/PageBackdrop.astro";
 import PageBreadcrumb from "@/components/PageBreadcrumb.astro";
 import { getUserAchievements } from "@/utils/user";
 import { getSession } from "auth-astro/server";
-import {
-  LucideLock,
-  LucideTrophy,
-  LucideCalendar,
-  LucideSparkles,
-  LucideMedal,
-} from "lucide-preact";
+import { LucideLock, LucideTrophy, LucideCheck, LucideArrowUpRight } from "lucide-preact";
 
 const session = await getSession(Astro.request);
-
-if (!session) {
-  return new Response(null, {
-    status: 404,
-  });
-}
-
-const userAchievements = await getUserAchievements(session.user.id);
-const totalAchievements = Object.keys(ACHIEVEMENTS).length;
-const unlockedCount = userAchievements.length;
-const progressPercentage = Math.round(
-  (unlockedCount / totalAchievements) * 100
-);
-
-// Helper para formatear fecha
-const formatDate = (dateString: Date) => {
-  return new Date(dateString).toLocaleDateString("es-ES", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-};
+if (!session) return new Response(null, { status: 404 });
+const rows = await getUserAchievements(session.user.id);
+const catalog = getAchievementsByRarity().map(achievement => ({
+  ...achievement,
+  unlockedAt: rows.find(row => row.achievementId === achievement.id)?.unlockedAt ?? null,
+  category: achievement.condition?.event === 'twitch.subscription' ? 'twitch' : achievement.id === 'created-member-card' ? 'community' : 'events',
+}));
+const unlocked = catalog.filter(a => a.unlockedAt);
+const progress = Math.round(unlocked.length / catalog.length * 100);
+const recent = [...unlocked].sort((a, b) => b.unlockedAt!.getTime() - a.unlockedAt!.getTime())[0];
+const nextCommunity = catalog.find(a => a.category === 'community' && !a.unlockedAt);
+const nextTwitch = catalog.find(a => a.category === 'twitch' && !a.unlockedAt);
+const next = [nextCommunity, nextTwitch].filter((a): a is typeof catalog[number] => !!a);
+const rarities = Object.keys(ACHIEVEMENT_RARITIES) as AchievementRarity[];
+const formatDate = (date: Date) => date.toLocaleDateString('es-UY', { day: 'numeric', month: 'short', year: 'numeric' });
 ---
 
-<Layout
-  title="Mis Logros"
-  description="Descubre los logros que has desbloqueado."
-  noindex
->
+<Layout title="Mis logros" description="Tu historia en la comunidad, logro a logro." noindex>
   <PageBackdrop tone="amber" />
+  <div class="achievement-hall max-w-6xl mx-auto mt-14 sm:mt-20 px-4 pb-24">
+    <PageBreadcrumb pathname="/comunidad/logros" breadcrumbs={[{ text: 'Comunidad', href: '/comunidad' }, { text: 'Salón de logros', href: '/comunidad/logros' }]} />
 
-  <div class="flex flex-col max-w-6xl mx-auto min-h-screen mt-14 sm:mt-20 px-4 mb-20">
-    <PageBreadcrumb
-      pathname="/comunidad/logros"
-      breadcrumbs={[{ text: "Comunidad", href: "/comunidad" }, { text: "Salón de Logros", href: "/comunidad/logros" }]}
-    />
-
-    {/* --- HEADER --- */}
-    <header class="relative flex flex-col items-center justify-center mb-8 mt-2 text-center">
-      <div class="flex items-center justify-center gap-3 sm:gap-4 mb-4">
-        <span class="size-14 sm:size-16 rounded-2xl bg-amber-400/10 border border-amber-300/25 flex items-center justify-center shrink-0 drop-shadow-[0_0_25px_rgba(251,191,36,0.3)]">
-          <LucideTrophy size={30} class="text-amber-300" />
-        </span>
-        <div class="text-left">
-          <p class="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-amber-200/80 bg-amber-400/10 border border-amber-300/25 rounded-full px-3 py-1 mb-2">
-            <LucideMedal size={12} /> Tu legado saltano
-          </p>
-          <h1 class="font-anton text-4xl sm:text-5xl text-white uppercase leading-[0.9]">
-            Salón de{" "}
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-500">
-              logros
-            </span>
-          </h1>
-        </div>
+    <header class="hall-intro">
+      <div>
+        <h1>Salón de logros</h1>
+        <p>Las partidas terminan. Las historias se quedan.<br />Esta es tu huella en la comunidad saltana.</p>
       </div>
-
-      <p class="text-sm sm:text-base text-white/50 font-rubik max-w-xl mx-auto leading-relaxed">
-        Desbloquea hitos únicos participando en las actividades de la comunidad
-        y la web. Cada carta es un pedazo de historia saltana.
-      </p>
-
-      <div class="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-400/25 text-violet-100 text-[13px] font-medium">
-        <LucideSparkles size={15} class="text-amber-300 shrink-0" />
-        <span>
-          <span class="text-amber-300 font-bold tabular-nums">{unlockedCount}</span>{" "}
-          de {totalAchievements} logros · {progressPercentage}%
-        </span>
-      </div>
+      <a href="#collection" class="collection-link">Ver mi colección <LucideArrowUpRight size={18} /></a>
     </header>
 
-    {/* --- TU PROGRESO --- */}
-    <section aria-label="Tu progreso" class="mb-10">
-      <div class="flex items-center gap-2.5 mb-4 px-1">
-        <span class="size-8 rounded-lg bg-amber-400/10 border border-amber-300/25 flex items-center justify-center shrink-0">
-          <LucideTrophy size={16} class="text-amber-300" />
-        </span>
-        <h2 class="font-anton text-xl sm:text-2xl text-white uppercase tracking-wide">Tu progreso</h2>
-        <span class="text-[11px] font-mono text-white/30 tabular-nums">{unlockedCount}/{totalAchievements}</span>
-        <div class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent ml-1"></div>
+    <section class="personal-shelf" aria-label="Tu colección personal">
+      <div class="collection-summary">
+        <LucideTrophy size={28} class="text-amber-300" />
+        <h2>{unlocked.length ? 'Cada logro tiene su historia.' : 'Tu historia empieza acá.'}</h2>
+        <p>{unlocked.length ? 'Un pedacito de todo lo que compartiste con nosotros.' : 'Participá, hacete parte y empezá tu colección.'}</p>
+        <div class="collection-count"><strong>{unlocked.length}</strong><span>de {catalog.length}<br />logros desbloqueados</span></div>
+        <div class="collection-progress" role="progressbar" aria-label="Logros desbloqueados" aria-valuenow={unlocked.length} aria-valuemin={0} aria-valuemax={catalog.length}><span style={{ width: progress + '%' }} /></div>
+        <span class="progress-caption">{progress}% de tu colección</span>
       </div>
-
-      <div class="rounded-3xl border border-white/10 bg-zinc-950/70 backdrop-blur-xl p-5">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-[11px] font-rubik text-white/40 uppercase tracking-widest">Novato</span>
-          <span class="text-[11px] font-rubik text-amber-300 font-bold tracking-widest uppercase">Leyenda Saltana</span>
-        </div>
-        <div class="relative h-3.5 w-full bg-white/5 rounded-full border border-white/10 overflow-hidden">
-          <div
-            class="h-full bg-gradient-to-r from-amber-300 to-orange-500 rounded-full transition-all duration-1000"
-            style={{ width: `${progressPercentage}%` }}
-          >
-          </div>
-        </div>
-        <div class="mt-2 text-right text-[11px] font-mono text-white/35 tabular-nums">
-          {progressPercentage}% completado
-        </div>
+      <div class="recent-achievement" data-rarity={recent?.rarity ?? 'bronze'}>
+        {recent ? <>
+          <div class="recent-art"><img src={getAchievementCardUrl(recent.id)} alt="" loading="eager" /></div>
+          <div class="recent-copy"><span class="quiet-label">Tu último logro</span><span class="rarity-label">{ACHIEVEMENT_RARITIES[recent.rarity]}</span><h2>{recent.title}</h2><p>{recent.description}</p><span class="unlocked-date"><LucideCheck size={14} /> {formatDate(recent.unlockedAt!)}</span></div>
+        </> : <div class="empty-shelf"><LucideTrophy size={64} /><h2>Un lugar para tu primer logro</h2><p>Cuando lo desbloquees, lo vas a encontrar acá.</p><a href="#next-achievements">Encontrá por dónde empezar</a></div>}
       </div>
     </section>
 
-    {/* --- COLECCIÓN --- */}
-    <section aria-label="Colección de logros">
-      <div class="flex items-center gap-2.5 mb-4 px-1">
-        <span class="size-8 rounded-lg bg-violet-400/10 border border-violet-300/25 flex items-center justify-center shrink-0">
-          <LucideMedal size={16} class="text-violet-300" />
-        </span>
-        <h2 class="font-anton text-xl sm:text-2xl text-white uppercase tracking-wide">Colección</h2>
-        <span class="text-[11px] font-mono text-white/30 tabular-nums">{totalAchievements}</span>
-        <div class="h-px flex-1 bg-gradient-to-r from-white/15 to-transparent ml-1"></div>
+    {next.length > 0 && <section id="next-achievements" class="next-section" aria-labelledby="next-title">
+      <h2 id="next-title" class="section-title">Todavía hay historia por hacer</h2>
+      <div class="next-grid">{next.map(a => <a class="next-achievement" href={a.category === 'twitch' ? 'https://www.twitch.tv/saltouruguayserver' : '/comunidad/member-card'}>
+        <img src={getAchievementIconUrl(a.id)} alt="" loading="lazy" />
+        <div><span class="quiet-label">{a.category === 'twitch' ? 'Tu próximo hito en Twitch' : 'Empezá por acá'}</span><h3>{a.title}</h3><p>{a.condition ? 'Acumulá ' + a.condition.minMonths + (a.condition.minMonths === 1 ? ' mes' : ' meses') + ' de suscripción en Twitch.' : 'Creá y personalizá tu tarjeta de miembro.'}</p></div><LucideArrowUpRight size={20} />
+      </a>)}</div>
+      {nextTwitch && <p class="twitch-note">Los hitos de meses se actualizan cuando compartís tu resuscripción en el chat de Twitch.</p>}
+    </section>}
+
+    <section id="collection" aria-labelledby="collection-title">
+      <div class="collection-heading"><h2 id="collection-title" class="section-title">Tu colección</h2><span>{catalog.length} historias para coleccionar</span></div>
+      <div class="collection-controls">
+        <div class="status-filters" role="group" aria-label="Filtrar por estado">
+          <button type="button" data-status-filter="all" aria-pressed="true">Todos <span>{catalog.length}</span></button>
+          <button type="button" data-status-filter="unlocked" aria-pressed="false">Desbloqueados <span>{unlocked.length}</span></button>
+          <button type="button" data-status-filter="locked" aria-pressed="false">Pendientes <span>{catalog.length - unlocked.length}</span></button>
+        </div>
+        <label class="category-filter">Categoría <select id="achievement-category"><option value="all">Todas</option><option value="community">Comunidad</option><option value="events">Eventos</option><option value="twitch">Twitch</option></select></label>
       </div>
-
-    {/* --- GRID DE CARTAS --- */}
-    <ul class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-7">
-      {
-        getAchievementsByRarity().map((achievementText) => {
-          const achievementId = achievementText.id;
-
-          const userAchievement = userAchievements.find(
-            (ua) => ua.achievementId === achievementId
-          );
-          const unlockedAt = userAchievement?.unlockedAt;
-          const iconUrl = getAchievementIconUrl(achievementId);
-          const cardUrl = getAchievementCardUrl(achievementId);
-          const hasCardArt = !!achievementText?.card;
-
-          // Estado visual
-          const isUnlocked = !!unlockedAt;
-
-          return (
-            <li
-              class="group relative cursor-pointer transition-all duration-300 hover:-translate-y-2"
-              data-achievement-card
-              data-achievement-id={achievementId}
-              data-achievement-title={achievementText?.title}
-              data-achievement-subtitle={achievementText?.subtitle ?? ""}
-              data-achievement-description={achievementText?.description}
-              data-achievement-icon={iconUrl}
-              data-achievement-card-art={cardUrl}
-              data-achievement-has-card={hasCardArt ? "true" : "false"}
-              data-achievement-unlocked={isUnlocked ? "true" : "false"}
-              data-achievement-date={unlockedAt ? formatDate(unlockedAt) : ""}
-            >
-              {/* Marco dorado / gris */}
-              <div
-                class={`
-                  rounded-2xl p-[5px] transition-all duration-300
-                  ${
-                    isUnlocked
-                      ? "bg-gradient-to-b from-yellow-200 via-amber-500 to-yellow-800 shadow-[0_0_25px_rgba(234,179,8,0.15)] group-hover:shadow-[0_0_45px_rgba(234,179,8,0.35)]"
-                      : "bg-gradient-to-b from-zinc-700/70 to-zinc-900/70"
-                  }
-                `}
-              >
-                <div class="relative overflow-hidden rounded-xl bg-[#150c08] aspect-[2/3] flex flex-col">
-                  {/* === ARTE en ventana (puede recortar; el modal la muestra completa) === */}
-                  <div class="absolute inset-x-0 top-0 bottom-[31%] overflow-hidden">
-                    {/* Fallback icono */}
-                    <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[radial-gradient(ellipse_at_center,#3b1d0e_0%,#150c08_70%)]">
-                      <div class="absolute inset-0 bg-[url('/images/pattern-grid.svg')] opacity-10 pointer-events-none" />
-                      <img
-                        src={iconUrl}
-                        alt=""
-                        aria-hidden="true"
-                        class={`relative size-24 object-contain drop-shadow-[0_0_15px_rgba(234,179,8,0.3)] ${isUnlocked ? "" : "grayscale opacity-60"}`}
-                        style="image-rendering: pixelated;"
-                      />
-                    </div>
-                    {/* Arte webp sobre el icono */}
-                    {hasCardArt && (
-                      <img
-                        src={cardUrl}
-                        alt={achievementText?.title}
-                        loading="lazy"
-                        onError="this.style.display='none'"
-                        class={`absolute inset-0 h-full w-full object-cover object-top transition-all duration-300 group-hover:scale-105 ${isUnlocked ? "" : "grayscale"}`}
-                      />
-                    )}
-                    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#150c08] pointer-events-none" />
-                    <div class="absolute inset-0 shadow-[inset_0_0_30px_rgba(0,0,0,0.6)] pointer-events-none" />
-                  </div>
-
-                  {/* === Overlay bloqueado === */}
-                  {!isUnlocked && (
-                    <div class="absolute inset-x-0 top-0 bottom-[31%] bg-black/55 flex items-center justify-center z-10">
-                      <div class="bg-black/60 border border-white/15 p-3 rounded-full text-white/50 backdrop-blur-sm">
-                        <LucideLock size={28} />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* === Badge superior === */}
-                  <div class="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between z-20">
-                    <span
-                      class={`
-                        font-minecraftia text-[9px] uppercase tracking-widest px-2 py-1 rounded border backdrop-blur-sm
-                        ${isUnlocked ? "bg-black/60 border-amber-400/50 text-amber-300" : "bg-black/60 border-white/10 text-white/40"}
-                      `}
-                    >
-                      {isUnlocked ? "Desbloqueado" : "Bloqueado"}
-                    </span>
-                    {isUnlocked ? (
-                      <div class="bg-amber-400/90 text-black p-1.5 rounded-lg shadow-[0_0_12px_rgba(251,191,36,0.6)]">
-                        <LucideMedal size={16} />
-                      </div>
-                    ) : (
-                      <div class="bg-black/60 border border-white/10 p-1.5 rounded-lg text-white/30">
-                        <LucideLock size={16} />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* === Remaches de esquina === */}
-                  <span class="absolute top-1.5 left-1.5 size-2.5 border-t-2 border-l-2 border-amber-200/70 rounded-tl-sm z-20 pointer-events-none" />
-                  <span class="absolute top-1.5 right-1.5 size-2.5 border-t-2 border-r-2 border-amber-200/70 rounded-tr-sm z-20 pointer-events-none" />
-                  <span class="absolute bottom-1.5 left-1.5 size-2.5 border-b-2 border-l-2 border-amber-200/70 rounded-bl-sm z-20 pointer-events-none" />
-                  <span class="absolute bottom-1.5 right-1.5 size-2.5 border-b-2 border-r-2 border-amber-200/70 rounded-br-sm z-20 pointer-events-none" />
-
-                  {/* === PLACA INFERIOR (siempre: webp o svg) === */}
-                  <div class="absolute inset-x-0 bottom-0 h-[31%] bg-[#0d0d0f] border-t-2 border-amber-500/60 flex flex-col items-center justify-center text-center px-3 py-2 z-10">
-                    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-300 to-transparent" />
-                    <h2 class="font-minecraft text-amber-300 text-sm md:text-base leading-tight [text-shadow:0_2px_0_#000,0_3px_6px_rgba(0,0,0,0.8)] line-clamp-2">
-                      {achievementText?.title.toUpperCase()}
-                    </h2>
-                    <span class="text-[10px] uppercase tracking-widest text-amber-200">{achievementText && ACHIEVEMENT_RARITIES[achievementText.rarity]}</span>
-                    {achievementText?.subtitle && (
-                      <p class="font-minecraftia text-[8px] md:text-[9px] text-white/55 uppercase tracking-widest mt-1.5 line-clamp-2 leading-relaxed">
-                        {achievementText.subtitle}
-                      </p>
-                    )}
-                    <div class="mt-1.5 flex items-center gap-1.5">
-                      {isUnlocked ? (
-                        <>
-                          <LucideCalendar size={11} class="text-green-400" />
-                          <span class="text-[10px] font-mono text-green-400/90">
-                            {formatDate(unlockedAt)}
-                          </span>
-                        </>
-                      ) : (
-                        <span class="text-[10px] font-mono text-white/25 uppercase tracking-widest">
-                          ???
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* === Brillo hover === */}
-                  <div class="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none z-30" />
-                </div>
+      <p id="collection-empty" class="collection-empty" role="status" hidden>No hay logros con estos filtros. Probá otra categoría o estado.</p>
+      {rarities.map(rarity => {
+        const group = catalog.filter(a => a.rarity === rarity);
+        return <section class="rarity-section" data-rarity={rarity} data-rarity-group aria-label={ACHIEVEMENT_RARITIES[rarity]}>
+          <div class="rarity-heading"><h3><span class="rarity-dot" />{ACHIEVEMENT_RARITIES[rarity]}</h3><span>{group.filter(a => a.unlockedAt).length} de {group.length} desbloqueados</span></div>
+          <ul class="achievement-grid">{group.map(a => <li data-collection-item data-category={a.category} data-state={a.unlockedAt ? 'unlocked' : 'locked'}>
+            <button type="button" class="achievement-card" data-open-achievement={a.id} aria-label={'Ver logro: ' + a.title}>
+              <div class="card-art" class:list={{ 'is-locked': !a.unlockedAt, 'has-card-art': !!a.card }}><img src={a.card ? getAchievementCardUrl(a.id) : getAchievementIconUrl(a.id)} alt="" loading="lazy" />
+                <span class="card-state">{a.unlockedAt ? <><LucideCheck size={13} /> Desbloqueado</> : <><LucideLock size={13} /> Pendiente</>}</span>
               </div>
-            </li>
-          );
-        })
-      }
-    </ul>
-    </section>
-
-    {/* --- DIALOG MODAL: carta ampliada --- */}
-    <dialog
-      id="achievement-dialog"
-      class="m-auto backdrop:bg-black/85 backdrop:backdrop-blur-xs bg-transparent p-0 max-w-2xl w-[calc(100vw-2rem)] rounded-2xl max-h-[92vh] overflow-y-auto"
-    >
-      <div class="rounded-2xl p-[5px] bg-gradient-to-b from-yellow-200 via-amber-500 to-yellow-800 shadow-2xl">
-        <div class="relative overflow-hidden rounded-xl bg-[#150c08] flex flex-col md:flex-row">
-          {/* Carta completa 2:3 sin recorte (altura fija: compacto en móvil) */}
-          <div class="relative shrink-0 self-center md:self-auto w-auto h-[42vh] md:h-[68vh] md:min-h-[380px] aspect-[2/3] overflow-hidden bg-[radial-gradient(ellipse_at_center,#3b1d0e_0%,#150c08_70%)]">
-            <div class="absolute inset-0 flex items-center justify-center">
-              <img
-                id="dialog-icon"
-                src=""
-                alt=""
-                class="relative size-28 object-contain"
-                style="image-rendering: pixelated;"
-              />
-            </div>
-            <img
-              id="dialog-card-art"
-              src=""
-              alt=""
-              class="absolute inset-0 h-full w-full object-cover"
-              onError="this.style.display='none'"
-            />
-          </div>
-
-          {/* Info lateral */}
-          <div class="flex-1 min-w-[240px] bg-[#0d0d0f] border-t-2 md:border-t-0 md:border-l-2 border-amber-500/60 px-5 py-5 flex flex-col items-center md:items-start justify-center text-center md:text-left gap-2">
-            <div id="dialog-status" class="flex items-center gap-2">
-              {/* Se llena dinámicamente */}
-            </div>
-            <h2
-              id="dialog-title"
-              class="font-minecraft text-amber-300 text-lg leading-tight [text-shadow:0_2px_0_#000]"
-            >
-            </h2>
-            <p
-              id="dialog-subtitle"
-              class="font-minecraftia text-[10px] text-white/55 uppercase tracking-widest"
-            >
-            </p>
-            <p
-              id="dialog-description"
-              class="font-rubik text-white/70 text-sm leading-relaxed"
-            >
-            </p>
-            <button
-              id="dialog-close"
-              class="mt-5 px-6 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white font-rubik text-sm transition-colors"
-            >
-              Cerrar
+              <div class="card-copy"><span class="rarity-label">{ACHIEVEMENT_RARITIES[a.rarity]}</span><h4>{a.title}</h4><p>{a.unlockedAt ? formatDate(a.unlockedAt) : a.condition ? a.condition.minMonths + (a.condition.minMonths === 1 ? ' mes' : ' meses') + ' de suscripción' : a.id === 'created-member-card' ? 'Personalizá tu tarjeta de miembro' : a.subtitle || 'Descubrí cómo conseguirlo'}</p></div>
             </button>
-          </div>
-        </div>
-      </div>
-    </dialog>
+            <dialog id={'achievement-' + a.id} class="achievement-dialog" aria-labelledby={'title-' + a.id}>
+              <div class="dialog-layout"><div class="dialog-art"><img src={getAchievementCardUrl(a.id)} alt="" loading="lazy" class:list={{ 'full-art': !!a.card }} /></div><div class="dialog-copy"><span class="rarity-label">{ACHIEVEMENT_RARITIES[a.rarity]}</span><h2 id={'title-' + a.id}>{a.title}</h2><p>{a.description}</p><span class="dialog-status">{a.unlockedAt ? 'Desbloqueado el ' + formatDate(a.unlockedAt) : 'Todavía por desbloquear'}</span><form method="dialog"><button class="close-dialog">Volver a la colección</button></form></div></div>
+            </dialog>
+          </li>)}</ul>
+        </section>;
+      })}
+    </section>
   </div>
 </Layout>
 
 <style>
-  /* Animación de entrada del dialog */
-  dialog[open] {
-    animation: dialog-show 0.3s ease-out forwards;
-  }
-
-  dialog::backdrop {
-    animation: backdrop-show 0.3s ease-out forwards;
-  }
-
-  @keyframes dialog-show {
-    from {
-      opacity: 0;
-      transform: scale(0.95) translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-  }
-
-  @keyframes backdrop-show {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
+  .achievement-hall { color: #f4f1eb; font-family: var(--font-rubik); }
+  .hall-intro { display:flex; align-items:end; justify-content:space-between; gap:24px; margin:32px 0; }
+  h1, .section-title, .collection-summary h2, .recent-copy h2, .empty-shelf h2, .dialog-copy h2 { font-family:var(--font-anton); font-weight:400; }
+  h1 { font-size:clamp(2.8rem,7vw,5rem); line-height:1.05; letter-spacing:-.025em; }
+  .hall-intro p { color:#a8a5b2; line-height:1.7; margin-top:16px; }
+  .collection-link { display:flex; gap:8px; align-items:center; white-space:nowrap; padding-bottom:6px; border-bottom:1px solid #8d743e; color:#e9cd8c; font-size:13px; }
+  .personal-shelf { display:grid; grid-template-columns:1fr 1.4fr; border:1px solid #ffffff18; border-radius:20px; overflow:hidden; background:#111018; }
+  .collection-summary { padding:32px; background:#191620; }
+  .collection-summary h2 { font-size:28px; margin:18px 0 12px; max-width:280px; line-height:1.2; }
+  .collection-summary p, .recent-copy p { color:#b7b1be; font-size:13px; line-height:1.7; max-width:42ch; }
+  .collection-count { display:flex; align-items:center; gap:16px; margin-top:26px; }
+  .collection-count strong { font-family:var(--font-anton); font-size:64px; line-height:1; color:#ebcd8c; }
+  .collection-count span { font-size:12px; color:#b7b1be; line-height:1.6; }
+  .collection-progress { height:5px; background:#ffffff12; border-radius:4px; margin-top:20px; overflow:hidden; }
+  .collection-progress span { display:block; height:100%; background:#ebcd8c; }
+  .progress-caption { display:block; font-size:11px; color:#aaa1b3; margin-top:8px; }
+  [data-rarity="bronze"] { --rarity:#e0a47d; --rarity-bg:#2b201d; }
+  [data-rarity="silver"] { --rarity:#c2d2e4; --rarity-bg:#1d2530; }
+  [data-rarity="gold"] { --rarity:#efcc78; --rarity-bg:#2c2618; }
+  [data-rarity="legendary"] { --rarity:#c9a4ff; --rarity-bg:#281e38; }
+  .recent-achievement { display:flex; align-items:stretch; min-width:0; background:var(--rarity-bg); }
+  .recent-art { width:40%; flex-shrink:0; position:relative; overflow:hidden; }
+  .recent-art img { width:100%; height:100%; object-fit:cover; }
+  .recent-copy { padding:32px 24px; align-self:center; }
+  .quiet-label { display:block; font-size:11px; color:#b7b1be; margin-bottom:12px; }
+  .rarity-label { font-size:11px; color:var(--rarity,#ebcd8c); }
+  .recent-copy h2 { font-size:30px; line-height:1.2; margin:8px 0 16px; }
+  .unlocked-date { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--rarity); margin-top:16px; }
+  .empty-shelf { padding:32px; margin:auto; text-align:center; }
+  .empty-shelf svg { margin:0 auto 20px; color:#968271; }
+  .empty-shelf h2 { font-size:26px; }
+  .empty-shelf p { color:#b7b1be; font-size:13px; margin:12px 0 20px; }
+  .empty-shelf a { color:#ebcd8c; font-size:13px; text-decoration:underline; text-underline-offset:4px; }
+  .next-section { margin:40px 0 48px; scroll-margin-top:90px; }
+  .section-title { font-size:28px; }
+  .next-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-top:18px; }
+  .next-achievement { display:flex; gap:16px; align-items:center; padding:20px; border:1px solid #ffffff18; border-radius:12px; background:#14121c; }
+  .next-achievement:hover { border-color:#ebcd8c70; }
+  .next-achievement img { width:48px; height:48px; object-fit:contain; flex-shrink:0; }
+  .next-achievement .quiet-label { margin-bottom:4px; }
+  .next-achievement h3 { font-size:15px; font-weight:600; }
+  .next-achievement p { color:#b7b1be; font-size:12px; margin-top:6px; }
+  .next-achievement > svg { margin-left:auto; flex-shrink:0; color:#ebcd8c; }
+  .twitch-note { color:#a8a5b2; font-size:11px; margin-top:12px; }
+  #collection { margin-top:40px; scroll-margin-top:90px; }
+  .collection-heading { display:flex; gap:16px; align-items:center; justify-content:space-between; }
+  .collection-heading > span { font-size:12px; color:#aaa1b3; }
+  .collection-controls { display:flex; gap:20px; align-items:center; justify-content:space-between; margin:24px 0 32px; flex-wrap:wrap; }
+  .status-filters { display:flex; gap:4px; flex-wrap:wrap; }
+  .status-filters button { padding:9px 12px; border-radius:6px; color:#b7b1be; font-size:12px; cursor:pointer; }
+  .status-filters button[aria-pressed="true"] { background:#ebcd8c; color:#21190c; }
+  .status-filters button span { margin-left:5px; opacity:.7; }
+  .category-filter { display:flex; gap:10px; align-items:center; font-size:12px; color:#b7b1be; }
+  select { background:#191620; color:#f4f1eb; border:1px solid #ffffff25; border-radius:6px; padding:8px; }
+  .rarity-section { margin-bottom:32px; }
+  .rarity-heading { display:flex; align-items:center; gap:16px; justify-content:space-between; padding-bottom:14px; border-bottom:1px solid #ffffff18; margin-bottom:18px; }
+  .rarity-heading h3 { display:flex; align-items:center; gap:10px; color:var(--rarity); font-size:16px; font-weight:500; }
+  .rarity-dot { width:9px; height:9px; background:var(--rarity); transform:rotate(45deg); }
+  .rarity-heading > span { color:#aaa1b3; font-size:11px; }
+  .achievement-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; list-style:none; }
+  .achievement-card { display:block; width:100%; text-align:left; overflow:hidden; border-radius:12px; background:#15131c; border:1px solid #ffffff20; cursor:pointer; height:100%; transition:border-color .15s; }
+  .achievement-card:hover { border-color:var(--rarity); }
+  .card-art { position:relative; height:170px; background:var(--rarity-bg); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .card-art img { width:76px; height:76px; object-fit:contain; }
+  .card-art.has-card-art img { width:100%; height:100%; object-fit:cover; object-position:top; }
+  .card-art.is-locked img { filter:grayscale(1); opacity:.5; }
+  .card-state { position:absolute; top:10px; left:10px; display:flex; align-items:center; gap:5px; font-size:10px; color:#ece8ef; background:#111018e6; padding:5px 8px; border-radius:4px; }
+  .card-copy { padding:16px; border-top:2px solid var(--rarity); }
+  .card-copy h4 { font-weight:600; font-size:15px; line-height:1.4; margin:6px 0 10px; }
+  .card-copy p { color:#b7b1be; font-size:11px; line-height:1.6; }
+  .collection-empty { padding:40px 20px; text-align:center; color:#b7b1be; }
+  [hidden] { display:none !important; }
+  .achievement-dialog { margin:auto; width:min(740px,calc(100vw - 32px)); max-height:90dvh; padding:0; overflow:auto; border:1px solid var(--rarity); border-radius:16px; background:#15131c; color:#f4f1eb; }
+  .achievement-dialog::backdrop { background:#090710df; backdrop-filter:blur(6px); }
+  .dialog-layout { display:grid; grid-template-columns:1fr 1fr; }
+  .dialog-art { min-height:300px; background:var(--rarity-bg); display:flex; align-items:center; justify-content:center; }
+  .dialog-art img { width:100px; height:100px; object-fit:contain; }
+  .dialog-art img.full-art { width:100%; height:100%; max-height:65dvh; object-fit:contain; }
+  .dialog-copy { padding:32px; align-self:center; }
+  .dialog-copy h2 { font-size:32px; line-height:1.2; margin:12px 0 20px; }
+  .dialog-copy p { color:#ccc4d0; font-size:14px; line-height:1.8; }
+  .dialog-status { display:block; margin:24px 0; font-size:12px; color:var(--rarity); }
+  .close-dialog { padding:10px 14px; background:#ffffff10; border:1px solid #ffffff30; border-radius:6px; font-size:12px; cursor:pointer; }
+  button:focus-visible, a:focus-visible, select:focus-visible { outline:2px solid #ebcd8c; outline-offset:4px; }
+  @media(max-width:800px) { .personal-shelf { grid-template-columns:1fr; } .recent-art { width:35%; max-height:280px; } .achievement-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .hall-intro { align-items:start; } .collection-link { display:none; } }
+  @media(max-width:540px) { .hall-intro { margin:24px 0; } .hall-intro p { font-size:13px; } .collection-summary { padding:24px; } .recent-copy { padding:24px 18px; } .recent-copy h2 { font-size:24px; } .recent-copy p { font-size:12px; } .next-grid { grid-template-columns:1fr; } .achievement-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; } .card-art { height:140px; } .card-copy { padding:12px; } .card-copy h4 { font-size:13px; } .collection-heading { align-items:start; flex-direction:column; gap:4px; } .dialog-layout { grid-template-columns:1fr; } .dialog-art { min-height:180px; max-height:35dvh; } .dialog-art img.full-art { max-height:35dvh; } .dialog-copy { padding:24px; } .status-filters button { padding:8px; font-size:11px; } }
+  @media(prefers-reduced-motion:reduce) { * { transition:none !important; scroll-behavior:auto !important; } }
 </style>
 
 <script>
-  import { $, $$ } from "@/lib/dom-selector";
-
-  const setupAchievementDialog = () => {
-    const dialog = $("#achievement-dialog") as HTMLDialogElement;
-    const cards = $$("[data-achievement-card]");
-    const closeBtn = $("#dialog-close");
-
-    // Elementos del dialog
-    const dialogIcon = $("#dialog-icon") as HTMLImageElement;
-    const dialogCardArt = $("#dialog-card-art") as HTMLImageElement;
-    const dialogTitle = $("#dialog-title");
-    const dialogSubtitle = $("#dialog-subtitle");
-    const dialogDescription = $("#dialog-description");
-    const dialogStatus = $("#dialog-status");
-
-    cards.forEach((card) => {
-      card.addEventListener("click", () => {
-        const title = card.getAttribute("data-achievement-title") || "";
-        const subtitle = card.getAttribute("data-achievement-subtitle") || "";
-        const description =
-          card.getAttribute("data-achievement-description") || "";
-        const icon = card.getAttribute("data-achievement-icon") || "";
-        const cardArt = card.getAttribute("data-achievement-card-art") || icon;
-        const hasCard =
-          card.getAttribute("data-achievement-has-card") === "true";
-        const isUnlocked =
-          card.getAttribute("data-achievement-unlocked") === "true";
-        const date = card.getAttribute("data-achievement-date") || "";
-
-        // Actualizar contenido
-        if (dialogIcon) {
-          dialogIcon.src = icon;
-          dialogIcon.alt = title;
-          dialogIcon.className = isUnlocked
-            ? "relative size-28 object-contain"
-            : "relative size-28 object-contain grayscale opacity-60";
-        }
-        if (dialogCardArt) {
-          if (hasCard) {
-            dialogCardArt.style.display = "";
-            dialogCardArt.src = cardArt;
-            dialogCardArt.alt = title;
-            dialogCardArt.className = isUnlocked
-              ? "absolute inset-0 h-full w-full object-cover"
-              : "absolute inset-0 h-full w-full object-cover grayscale";
-          } else {
-            dialogCardArt.style.display = "none";
-            dialogCardArt.removeAttribute("src");
-          }
-        }
-        if (dialogTitle) dialogTitle.textContent = title.toUpperCase();
-        if (dialogSubtitle) {
-          dialogSubtitle.textContent = subtitle;
-          (dialogSubtitle as HTMLElement).style.display = subtitle ? "" : "none";
-        }
-        if (dialogDescription) dialogDescription.textContent = description;
-
-        // Actualizar status
-        if (dialogStatus) {
-          if (isUnlocked) {
-            dialogStatus.innerHTML = `
-              <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 border border-amber-400/50 text-amber-300 text-xs font-medium backdrop-blur-sm">
-                ★ Desbloqueado el ${date}
-              </span>
-            `;
-          } else {
-            dialogStatus.innerHTML = `
-              <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 border border-white/10 text-white/50 text-xs font-medium backdrop-blur-sm">
-                Aún no desbloqueado
-              </span>
-            `;
-          }
-        }
-
-        dialog.showModal();
+  function setupHall() {
+    const hall = document.querySelector<HTMLElement>('.achievement-hall');
+    if (!hall || hall.dataset.initialized) return;
+    hall.dataset.initialized = 'true';
+    let status = 'all';
+    const category = hall.querySelector<HTMLSelectElement>('#achievement-category');
+    const filters = hall.querySelectorAll<HTMLButtonElement>('[data-status-filter]');
+    function applyFilters() {
+      let visible = 0;
+      hall!.querySelectorAll<HTMLElement>('[data-collection-item]').forEach(item => {
+        item.hidden = !(status === 'all' || item.dataset.state === status) || !(category?.value === 'all' || item.dataset.category === category?.value);
+        if (!item.hidden) visible++;
+      });
+      hall!.querySelectorAll<HTMLElement>('[data-rarity-group]').forEach(group => {
+        group.hidden = !Array.from(group.querySelectorAll<HTMLElement>('[data-collection-item]')).some(item => !item.hidden);
+      });
+      const empty = hall!.querySelector<HTMLElement>('#collection-empty');
+      if (empty) empty.hidden = visible > 0;
+    }
+    filters.forEach(button => button.addEventListener('click', () => {
+      status = button.dataset.statusFilter || 'all';
+      filters.forEach(filter => filter.setAttribute('aria-pressed', String(filter === button)));
+      applyFilters();
+    }));
+    category?.addEventListener('change', applyFilters);
+    hall.querySelectorAll<HTMLButtonElement>('[data-open-achievement]').forEach(button => {
+      button.addEventListener('click', () => {
+        const dialog = document.getElementById('achievement-' + button.dataset.openAchievement) as HTMLDialogElement | null;
+        dialog?.showModal();
       });
     });
-
-    // Cerrar con botón
-    closeBtn?.addEventListener("click", () => {
-      dialog.close();
+    hall.querySelectorAll<HTMLDialogElement>('dialog').forEach(dialog => {
+      dialog.addEventListener('click', event => {
+        const rect = dialog.getBoundingClientRect();
+        if (event.target === dialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) dialog.close();
+      });
     });
-
-    // Cerrar al hacer click fuera
-    dialog.addEventListener("click", (e) => {
-      if (e.target === dialog) {
-        dialog.close();
-      }
-    });
-
-    // Cerrar con Escape (ya viene por defecto, pero por si acaso)
-    dialog.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        dialog.close();
-      }
-    });
-  };
-
-  // Ejecutar en carga y en navegación de Astro
-  document.addEventListener("astro:page-load", setupAchievementDialog);
+  }
+  setupHall();
+  document.addEventListener('astro:page-load', setupHall);
 </script>

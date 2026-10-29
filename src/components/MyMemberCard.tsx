@@ -2,314 +2,143 @@ import type { Session } from "@auth/core/types";
 import { Container3D } from "./Container3D";
 import { MemberCard } from "./MemberCard";
 import { useEffect, useState, useRef } from "preact/hooks";
-import { Download, Loader2, Palette, Sticker, Sparkles } from "lucide-preact";
+import { Download, Loader2, Palette, Sticker, Sparkles, Check, Lock, X, AlertCircle } from "lucide-preact";
 import { toPng } from "html-to-image";
-import { $ } from "@/lib/dom-selector";
 import { STICKERS } from "@/consts/Stickers";
 import { actions } from "astro:actions";
 import { toast } from "sonner";
 import { MemberCardSkins } from "@/consts/MemberCardSkins";
+import "./styles/member-card-studio.css";
 
-export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'classic' }: { session: Session, stickers: string[], tier: number | null, initialSkin: typeof MemberCardSkins[number]['id'] }) => {
+type SkinId = typeof MemberCardSkins[number]['id'];
+type StickerSlots = (string | null)[];
+type SaveStatus = 'saved' | 'saving' | 'error';
 
-    // --- STATE & LOGIC ---
-    const [selectedStickers, setSelectedStickers] = useState(() => {
-        const stickersList = new Array(3).fill(null);
-        stickers.forEach((sticker, index) => { stickersList[index] = sticker });
-        return { limit: tier === null ? 0 : tier, list: stickersList };
-    });
-
+export const MyMemberCard = ({ session, stickers = [], tier, initialSkin = 'classic' }: {
+    session: Session; stickers: string[]; tier: number | null; initialSkin: SkinId;
+}) => {
+    const limit = Math.max(0, Math.min(tier ?? 0, 3));
+    const [slots, setSlots] = useState<StickerSlots>(() => Array.from({ length: 3 }, (_, i) => stickers[i] ?? null));
+    const [skin, setSkin] = useState<SkinId>(() => MemberCardSkins.some(s => s.id === initialSkin) ? initialSkin : 'classic');
+    const [status, setStatus] = useState<SaveStatus>('saved');
     const [generating, setGenerating] = useState(false);
-    const [skin, setSkin] = useState(initialSkin);
-    const username = session?.user?.name as string;
-    const avatar = session?.user?.image as string;
+    const saving = useRef(false);
+    const exportCard = useRef<HTMLDivElement>(null);
+    const objectUrls = useRef<string[]>([]);
+    const username = session.user.name ?? 'Saltano';
+    const avatar = session.user.image ?? '';
+    const user = { avatar, username, playerNumber: session.user.streamerWarsPlayerNumber };
+    const selectedStickers = { limit, list: slots };
+    const skinInfo = MemberCardSkins.find(s => s.id === skin)!;
+    const busy = status === 'saving' || generating;
 
-    // --- HELPERS ---
-    async function dataUrlToFile(dataUrl: string, fileName: string): Promise<File> {
-        const res = await fetch(dataUrl);
-        const blob = await res.blob();
-        return new File([blob], fileName, { type: 'image/png' });
+    useEffect(() => () => objectUrls.current.forEach(url => URL.revokeObjectURL(url)), []);
+
+    async function changeSkin(nextSkin: SkinId) {
+        if (saving.current || generating || nextSkin === skin) return;
+        const previous = skin;
+        saving.current = true;
+        setSkin(nextSkin);
+        setStatus('saving');
+        try {
+            const { error } = await actions.updateMemberCardSkin({ skin: nextSkin });
+            if (error) throw error;
+            setStatus('saved');
+        } catch {
+            setSkin(previous);
+            setStatus('error');
+            toast.error('No pudimos guardar la skin. Volvé a intentarlo.');
+        } finally { saving.current = false; }
     }
 
-    async function generateImage() {
-        const $saveButton = $('.save-button');
-        const $memberCard = $('#member-card-hidden'); // ID específico para el elemento oculto
-
-        if ($memberCard) {
-            setGenerating(true);
-            try {
-                // Pequeño delay para asegurar renderizado
-                await new Promise(r => setTimeout(r, 100));
-
-                const dataUrl = await toPng($memberCard, {
-                    quality: 1.0,
-                    pixelRatio: 2, // Mejor calidad
-                    cacheBust: true
-                });
-
-                const file = await dataUrlToFile(dataUrl, `SaltoCard-${username}.png`);
-                const url = URL.createObjectURL(file);
-
-                $saveButton?.setAttribute('href', url);
-                $saveButton?.setAttribute('download', `SaltoCard-${username}.png`);
-            } catch (e) {
-                console.error("Error generando imagen", e);
-            } finally {
-                setGenerating(false);
-            }
-        }
+    async function saveStickers(next: StickerSlots) {
+        if (saving.current || generating) return;
+        const previous = slots;
+        saving.current = true;
+        setSlots(next);
+        setStatus('saving');
+        try {
+            const { error } = await actions.updateStickers({ stickers: next });
+            if (error) throw error;
+            setStatus('saved');
+        } catch {
+            setSlots(previous);
+            setStatus('error');
+            toast.error('No pudimos guardar los stickers. Volvé a intentarlo.');
+        } finally { saving.current = false; }
     }
 
-    const updateStickers = async (newStickers: string[]) => {
-        const stickersList = new Array(3).fill(null);
-        newStickers.forEach((sticker, index) => { stickersList[index] = sticker });
-
-        // Optimistic update
-        const { error } = await actions.updateStickers({ stickers: stickersList });
-        if (error) {
-            toast.error('Error al guardar stickers');
-            return;
-        }
-        // Regenerar imagen tras guardar
-        setTimeout(generateImage, 500);
-    };
-
-    const handleSelectSticker = async (selectedSticker: string) => {
-        const newStickers = [...selectedStickers.list];
-
-        // Si ya está, no hacer nada
-        if (newStickers.includes(selectedSticker)) return;
-
-        // Buscar slot vacío
-        const emptyIndex = newStickers.indexOf(null);
-
-        // Si no hay espacio o supera el límite del tier
-        if (emptyIndex === -1 || selectedStickers.limit <= newStickers.filter(Boolean).length) {
-            toast.warning(`Límite de stickers alcanzado (Tier ${selectedStickers.limit})`);
-            return;
-        }
-
-        newStickers[emptyIndex] = selectedSticker;
-
-        setSelectedStickers(prev => ({ ...prev, list: newStickers }));
-        await updateStickers(newStickers);
-    };
-
-    const handleRemoveSticker = async (index: number) => {
-        // 1. IMPORTANTE: Creamos una copia del array usando el spread operator [...]
-        // Si no hacemos esto, Preact no detecta el cambio.
-        const newStickers = [...selectedStickers.list];
-
-        // 2. Modificamos la copia
-        newStickers[index] = null;
-
-        // 3. Lógica para corregir bugs de tiers (opcional, mantenido de tu código)
-        if (selectedStickers.limit < newStickers.filter(Boolean).length) {
-            for (let i = newStickers.length - 1; i >= 0; i--) {
-                if (newStickers[i] !== null) {
-                    newStickers[i] = null;
-                    break;
-                }
-            }
-        }
-
-        // 4. Actualizamos el estado con la copia
-        setSelectedStickers(prev => ({
-            ...prev, // Mantenemos el límite
-            list: newStickers, // Guardamos la nueva lista
-        }));
-
-        // 5. Guardamos en el servidor (asegúrate que updateStickers acepte (string|null)[])
-        await updateStickers(newStickers as string[]);
+    function selectSticker(id: string) {
+        if (slots.includes(id)) return;
+        const empty = slots.findIndex((value, i) => value === null && i < limit);
+        if (empty === -1) return;
+        const next = [...slots];
+        next[empty] = id;
+        void saveStickers(next);
     }
 
-    const handleSkinChange = async (newSkin: string) => {
-        setSkin(newSkin);
-        const { error } = await actions.updateMemberCardSkin({ skin: newSkin });
-        if (error) toast.error('Error guardando skin');
-        else setTimeout(generateImage, 500);
-    };
+    function removeSticker(index: number) {
+        const next = [...slots];
+        next[index] = null;
+        void saveStickers(next);
+    }
 
-    // Generar imagen inicial
-    useEffect(() => { generateImage(); }, []);
+    async function downloadCard() {
+        if (!exportCard.current || generating || saving.current) return;
+        setGenerating(true);
+        try {
+            await document.fonts.ready;
+            const dataUrl = await toPng(exportCard.current, { pixelRatio: 2, cacheBust: true });
+            const blob = await (await fetch(dataUrl)).blob();
+            const url = URL.createObjectURL(blob);
+            objectUrls.current.push(url);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = 'SaltoCard-' + username + '.png';
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+        } catch {
+            toast.error('No pudimos generar la imagen. Volvé a intentarlo.');
+        } finally { setGenerating(false); }
+    }
 
+    return <div class="member-studio">
+        <div class="member-export" aria-hidden="true"><div ref={exportCard} style={{ width: '800px' }}>
+            <MemberCard number={Number(session.user.id)} selectedStickers={selectedStickers} skin={skin} user={user} className="shadow-none" />
+        </div></div>
 
-    // --- RENDER ---
-    return (
-        <div className="relative w-full max-w-7xl mx-auto px-4 py-8 lg:py-12">
-
-            <div className="grid lg:grid-cols-[1fr_400px] gap-12 items-start">
-
-                {/* COLUMNA IZQUIERDA: PREVIEW 3D */}
-                <div className="relative flex flex-col items-center">
-
-                    {/* Elemento oculto para generación de imagen (Alta Calidad) */}
-                    <div className="absolute left-[-9999px] top-0 pointer-events-none">
-                        <div id="member-card-hidden" className="w-[800px] h-[400px] p-4 bg-transparent">
-                            <MemberCard
-                                number={parseInt(session?.user?.id as string)}
-                                selectedStickers={selectedStickers}
-                                skin={skin}
-                                user={{ avatar, username, playerNumber: session?.user?.streamerWarsPlayerNumber }}
-                                className="shadow-none border-none"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Spotlight de fondo */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-linear-to-b from-purple-500/20 to-transparent blur-[100px] rounded-full pointer-events-none"></div>
-
-                    {/* Contenedor 3D Interactivo */}
-                    <div className="relative z-10 w-full max-w-2xl aspect-2/1 perspective-1000 group">
-                        <Container3D>
-                            <MemberCard
-                                number={parseInt(session?.user?.id as string)}
-                                selectedStickers={selectedStickers}
-                                handleRemoveSticker={handleRemoveSticker}
-                                skin={skin}
-                                user={{ avatar, username, playerNumber: session?.user?.streamerWarsPlayerNumber }}
-                            />
-                        </Container3D>
-
-                        {/* Hint de interacción */}
-                        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-white/30 text-xs font-rubik uppercase tracking-widest flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Sparkles size={12} /> Mueve el cursor para interactuar
-                        </div>
-                    </div>
-
-                    {/* Botón de Descarga */}
-                    <div className="mt-16">
-                        <a
-                            download={`SaltoCard-${username}.png`}
-                            className={`
-                                save-button group relative flex items-center gap-3 px-8 py-4 rounded-xl font-bold uppercase tracking-wide transition-all
-                                ${generating
-                                    ? 'bg-white/5 text-white/50 cursor-wait'
-                                    : 'bg-white text-black hover:bg-yellow-400 hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.2)]'
-                                }
-                            `}
-                        >
-                            {generating ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
-                            <span>{generating ? 'Renderizando...' : 'Descargar Tarjeta'}</span>
-                        </a>
-                    </div>
-                    <div className="mt-4">
-                        <button
-                            onClick={async () => {
-                                try {
-                                    const res = await fetch('/api/wallet/generate', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({
-                                            userId: session.user.id,
-                                            name: session.user.name,
-                                            avatar,
-                                            cardNumber: session.user.id
-                                        })
-                                    });
-                                    const data = await res.json();
-                                    if (!res.ok) throw new Error(data.error || 'Error generando pass');
-                                    window.open(data.saveUrl, '_blank');
-                                } catch (e) {
-                                    console.error(e);
-                                    toast.error(e.message || 'No se pudo generar la pass');
-                                }
-                            }}
-                            className="relative flex items-center gap-2 px-6 py-3 rounded-xl font-bold uppercase tracking-wide bg-linear-to-r from-blue-600 to-sky-500 text-white hover:opacity-95 shadow-lg"
-                        >
-                            <Sparkles size={16} />
-                            <span>Añadir a Google Wallet</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* COLUMNA DERECHA: CONTROLES (WORKSHOP) */}
-                <div className="space-y-8 relative z-20">
-
-                    {/* Selector de Skins */}
-                    <div className="bg-[#0f0f11]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl">
-                        <h3 className="text-white font-anton text-lg uppercase tracking-wide mb-4 flex items-center gap-2">
-                            <Palette size={18} className="text-purple-400" /> Skins Disponibles
-                        </h3>
-
-                        <div className="grid grid-cols-4 gap-3">
-                            {MemberCardSkins.map(({ id, description }) => (
-                                <button
-                                    key={id}
-                                    onClick={() => handleSkinChange(id)}
-                                    className={`
-                                        group relative aspect-square rounded-xl border-2 transition-all overflow-hidden
-                                        ${skin === id
-                                            ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.3)] scale-105 z-10'
-                                            : 'border-white/10 hover:border-white/40 hover:bg-white/5'
-                                        }
-                                    `}
-                                    title={description}
-                                >
-                                    <div className="absolute inset-0 flex items-center justify-center p-2">
-                                        <img
-                                            src={`/images/member-card-skins/${id}-icon.webp`}
-                                            alt={id}
-                                            className={`w-full h-full object-contain transition-transform ${skin === id ? 'scale-110' : 'group-hover:scale-110'}`}
-                                        />
-                                    </div>
-                                    {/* Indicador Activo */}
-                                    {skin === id && (
-                                        <div className="absolute inset-0 bg-yellow-400/10 mix-blend-overlay"></div>
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Selector de Stickers */}
-                    <div className="bg-[#0f0f11]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-white font-anton text-lg uppercase tracking-wide flex items-center gap-2">
-                                <Sticker size={18} className="text-green-400" /> Stickers
-                            </h3>
-                            <span className="text-xs font-rubik text-white/40 bg-white/5 px-2 py-1 rounded-sm">
-                                {selectedStickers.list.filter(Boolean).length} / {selectedStickers.limit} Usados
-                            </span>
-                        </div>
-
-                        <div className="grid grid-cols-5 gap-3 max-h-60 overflow-y-auto custom-scrollbar p-1">
-                            {STICKERS.map(({ id }) => {
-                                const isSelected = selectedStickers.list.includes(id);
-                                return (
-                                    <button
-                                        key={id}
-                                        onClick={() => handleSelectSticker(id)}
-                                        disabled={isSelected}
-                                        className={`
-                                            relative aspect-square rounded-lg flex items-center justify-center bg-white/5 transition-all
-                                            ${isSelected
-                                                ? 'opacity-30 cursor-not-allowed grayscale'
-                                                : 'hover:bg-white/10 hover:scale-110 cursor-pointer'
-                                            }
-                                        `}
-                                    >
-                                        <img
-                                            src={`/images/stickers/${id}.webp`}
-                                            alt={id}
-                                            className="w-8 h-8 object-contain"
-                                        />
-                                        {isSelected && (
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className="size-2 bg-green-500 rounded-full shadow-lg"></div>
-                                            </div>
-                                        )}
-                                    </button>
-                                )
-                            })}
-                        </div>
-                        <p className="text-xs text-white/30 mt-4 text-center">
-                            Mejora tu Tier en Twitch para desbloquear más espacios.
-                        </p>
-                    </div>
-
-                </div>
-            </div>
+        <div class="studio-preview-column">
+            <section class="studio-preview" aria-labelledby="card-preview-title">
+                <div class="studio-panel-heading"><h2 id="card-preview-title">Tu Member Card</h2><span class="studio-member-number">#{String(session.user.id).padStart(5, '0')}</span></div>
+                <div class="studio-card-stage"><Container3D><MemberCard number={Number(session.user.id)} selectedStickers={selectedStickers} skin={skin} user={user} /></Container3D></div>
+                <div class="studio-preview-footer"><span><Sparkles size={14} /> Skin {skinInfo.name}</span><span class="studio-save-status" data-status={status} role="status" aria-live="polite">{status === 'saving' ? <><Loader2 size={13} class="animate-spin" /> Guardando…</> : status === 'error' ? <><AlertCircle size={13} /> Cambio sin guardar</> : <><Check size={13} /> Cambios guardados</>}</span></div>
+            </section>
+            <section class="studio-takeaway" aria-labelledby="takeaway-title"><div><h2 id="takeaway-title">Llevá tu identidad con vos</h2><p>Descargá tu diseño en PNG y compartí tu tarjeta con la comunidad.</p></div><div class="studio-export-actions">
+                <button type="button" class="studio-download" onClick={downloadCard} disabled={busy}>{generating ? <Loader2 size={18} class="animate-spin" /> : <Download size={18} />}{generating ? 'Generando imagen…' : 'Descargar PNG'}</button>
+            </div></section>
         </div>
-    );
+
+        <div class="studio-tools">
+            <section class="studio-tool-panel" aria-labelledby="skins-title"><div class="studio-tool-heading"><span class="studio-tool-icon"><Palette size={20} /></span><div><h2 id="skins-title">Elegí tu skin</h2><p>Un diseño para cada saltano.</p></div><span class="studio-counter">{MemberCardSkins.length}</span></div>
+                <div class="studio-skin-grid">{MemberCardSkins.map(option => <button type="button" key={option.id} class="studio-skin" aria-pressed={skin === option.id} disabled={busy} onClick={() => changeSkin(option.id)} title={option.description}>
+                    <div class="studio-skin-image"><img src={option.image} alt="" loading="lazy" />{skin === option.id && <span class="studio-skin-check"><Check size={13} /></span>}</div><span>{option.name}</span>
+                </button>)}</div>
+                <p class="studio-selected-skin"><span>Seleccionada</span> {skinInfo.name}</p>
+            </section>
+
+            <section class="studio-tool-panel studio-stickers" aria-labelledby="stickers-title"><div class="studio-tool-heading"><span class="studio-tool-icon"><Sticker size={20} /></span><div><h2 id="stickers-title">Dale tu toque</h2><p>Elegí los stickers de tu tarjeta.</p></div><span class="studio-counter">{slots.slice(0, limit).filter(Boolean).length}/{limit}</span></div>
+                <div class="studio-slots" aria-label="Espacios de stickers">{slots.map((id, index) => <div key={index} class="studio-slot" data-locked={index >= limit}>
+                    {id ? <><img src={'/images/stickers/' + id + '.webp'} alt={id} /><button type="button" aria-label={'Quitar sticker ' + id} onClick={() => removeSticker(index)} disabled={busy}><X size={13} /></button></> : index >= limit ? <><Lock size={18} /><span>Tier {index + 1}</span></> : <><Sticker size={20} /><span>Espacio libre</span></>}
+                </div>)}</div>
+                {limit === 0 ? <p class="studio-tier-note"><Lock size={15} /><span>Tu tarjeta ya es tuya. Con una suscripción en Twitch podés añadir stickers: un espacio por cada tier.</span></p> : <p class="studio-tier-note"><Sparkles size={15} /><span>Tenés {limit} {limit === 1 ? 'espacio' : 'espacios'} por tu suscripción Tier {limit}. Quitá un sticker con la × para cambiarlo.</span></p>}
+                <h3 class="studio-sticker-label">Stickers de la comunidad</h3>
+                <div class="studio-sticker-grid">{STICKERS.map(({ id }) => {
+                    const selected = slots.includes(id);
+                    const full = !slots.some((value, i) => value === null && i < limit);
+                    return <button type="button" key={id} class="studio-sticker" aria-label={selected ? 'Quitar ' + id : 'Añadir ' + id} aria-pressed={selected} disabled={busy || (!selected && full)} onClick={() => selected ? removeSticker(slots.indexOf(id)) : selectSticker(id)}><img src={'/images/stickers/' + id + '.webp'} alt="" loading="lazy" />{selected && <Check size={12} class="studio-sticker-check" />}</button>;
+                })}</div>
+            </section>
+        </div>
+    </div>;
 };
